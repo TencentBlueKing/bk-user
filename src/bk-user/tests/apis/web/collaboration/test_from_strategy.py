@@ -72,6 +72,35 @@ class TestCollaborationFromStrategyUpdateApi:
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
+    @pytest.mark.usefixtures("_init_random_tenant_custom_fields")
+    @pytest.mark.usefixtures("_init_collaboration_tenant_custom_fields")
+    def test_update_target_organization_scope_config(
+        self, api_client, random_tenant, collaborate_from_strategy, strategy_target_config
+    ):
+        # 先确认一下策略，不然没法更新
+        collaborate_from_strategy.target_status = CollaborationStrategyStatus.ENABLED
+        collaborate_from_strategy.save()
+
+        # 目前不支持范围，所以这里随便的 dict 配置都是 ok 的，后面改建模了，这个单测会挂，需要同步调整
+        strategy_target_config["organization_scope_config"] = {"a": "b", "c": ["d", "e"]}
+        resp = api_client.put(
+            reverse("collaboration.from-strategy.update", kwargs={"id": collaborate_from_strategy.id}),
+            data={"target_config": strategy_target_config},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_with_invalid_target_config(self, api_client, random_tenant, collaborate_from_strategy):
+        # 先确认一下策略，不然没法更新
+        collaborate_from_strategy.target_status = CollaborationStrategyStatus.ENABLED
+        collaborate_from_strategy.save()
+
+        resp = api_client.put(
+            reverse("collaboration.from-strategy.update", kwargs={"id": collaborate_from_strategy.id}),
+            data={"target_config": {}},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "策略配置不合法" in resp.data["message"]
+
     def test_update_before_confirmed(
         self, api_client, random_tenant, collaborate_from_strategy, strategy_target_config
     ):

@@ -87,14 +87,14 @@ class TestCollaborationStrategyUpdateApi:
         collaborate_to_strategy.refresh_from_db()
         assert collaborate_to_strategy.name == "new_name"
 
-    def test_with_old_name(self, api_client, random_tenant, collaborate_to_strategy):
+    def test_update_with_old_name(self, api_client, random_tenant, collaborate_to_strategy):
         resp = api_client.put(
             reverse("collaboration.to-strategy.update_destroy", kwargs={"id": collaborate_to_strategy.id}),
             data={"name": collaborate_to_strategy.name, "source_config": collaborate_to_strategy.source_config},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_edit_source_config(self, api_client, random_tenant, collaborate_to_strategy, strategy_source_config):
+    def test_update_source_config(self, api_client, random_tenant, collaborate_to_strategy, strategy_source_config):
         # 目前不支持范围，所以这里随便的 dict 配置都是 ok 的，后面改建模了，这个单测会挂，需要同步调整
         strategy_source_config["field_scope_config"] = {"a": "b", "c": ["d", "e"]}
         resp = api_client.put(
@@ -124,6 +124,7 @@ class TestCollaborationStrategyDestroyApi:
         init_data_source_users_depts_and_relations(data_source)
         sync_users_depts_to_tenant(collaboration_tenant, data_source)
 
+        # 先停用，待会才能删除
         collaborate_to_strategy.source_status = CollaborationStrategyStatus.DISABLED
         collaborate_to_strategy.save()
 

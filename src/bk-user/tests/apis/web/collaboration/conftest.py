@@ -77,7 +77,12 @@ def collaborate_from_strategy(
     return _create_strategy(collaboration_tenant, random_tenant, strategy_source_config, strategy_target_config)
 
 
-def _init_tenant_custom_fields(tenant: Tenant) -> None:
+def _create_tenant_custom_fields(tenant: Tenant) -> None:
+    """
+    创建测试用的租户用户自定义字段
+
+    以租户 ID 为前缀，分别是 age(number), gender(enum), region(string)
+    """
     TenantUserCustomField.objects.create(
         tenant=tenant,
         name=f"{tenant.id}-age",
@@ -85,9 +90,6 @@ def _init_tenant_custom_fields(tenant: Tenant) -> None:
         data_type=UserFieldDataType.NUMBER,
         required=False,
         default=0,
-        personal_center_visible=True,
-        personal_center_editable=False,
-        manager_editable=True,
     )
     TenantUserCustomField.objects.create(
         tenant=tenant,
@@ -96,9 +98,6 @@ def _init_tenant_custom_fields(tenant: Tenant) -> None:
         data_type=UserFieldDataType.ENUM,
         required=True,
         default="male",
-        personal_center_visible=True,
-        personal_center_editable=True,
-        manager_editable=True,
         options=[
             {"id": "male", "value": "男"},
             {"id": "female", "value": "女"},
@@ -112,17 +111,14 @@ def _init_tenant_custom_fields(tenant: Tenant) -> None:
         data_type=UserFieldDataType.STRING,
         required=True,
         default="china",
-        personal_center_visible=False,
-        personal_center_editable=False,
-        manager_editable=True,
     )
 
 
 @pytest.fixture()
 def _init_random_tenant_custom_fields(random_tenant):
-    _init_tenant_custom_fields(random_tenant)
+    _create_tenant_custom_fields(random_tenant)
 
 
 @pytest.fixture()
 def _init_collaboration_tenant_custom_fields(collaboration_tenant):
-    _init_tenant_custom_fields(collaboration_tenant)
+    _create_tenant_custom_fields(collaboration_tenant)
