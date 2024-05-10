@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
+import { computed, defineProps, inject, reactive, ref, watch, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
@@ -114,6 +114,13 @@ const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const userStore = useUser();
 
+const props = defineProps({
+  active: {
+    type: String,
+    default: '',
+  },
+});
+
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
@@ -122,10 +129,6 @@ const isDataEmpty = ref(false);
 const isDataError = ref(false);
 const isSearchEmpty = ref(false);
 const search = ref('');
-
-onMounted(() => {
-  fetchToStrategies();
-});
 
 // 获取协同策略列表
 const fetchToStrategies = async () => {
@@ -145,6 +148,12 @@ const fetchToStrategies = async () => {
     isLoading.value = false;
   }
 };
+
+watchEffect(() => {
+  if (props.active === 'local') {
+    fetchToStrategies();
+  }
+});
 
 const statusFilters = [
   { text: t('启用'), value: 'enabled' },
