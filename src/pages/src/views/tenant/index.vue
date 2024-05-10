@@ -413,7 +413,7 @@ const fetchTenantsList = () => {
 
         const rows = getRows();
         for (const i of rows) {
-          i.style.background = '#DCFFE2';
+          i.style.background = '#F2FCF5';
         }
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));

@@ -1,5 +1,7 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="user-info-wrapper user-scroll-y">
+  <div
+    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    :class="['user-info-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <!-- 一期不做 -->
     <!-- <header>
       <bk-button text theme="primary" @click="handleUpdateRecord">
@@ -206,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, reactive, ref } from 'vue';
+import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 
@@ -214,11 +216,19 @@ import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store';
+import { useMainViewStore, useUser } from '@/store';
 import { dataSourceStatus } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
+const userStore = useUser();
+
+const props = defineProps({
+  active: {
+    type: String,
+    default: '',
+  },
+});
 
 const tableMaxHeight = useTableMaxHeight(238);
 const editLeaveBefore = inject('editLeaveBefore');
@@ -245,26 +255,36 @@ const detailsConfig = reactive({
   type: '',
 });
 
-onMounted(() => {
-  fetchFromStrategies();
-});
-
 const fetchFromStrategies = async () => {
   try {
     isLoading.value = true;
     isDataEmpty.value = false;
     isDataError.value = false;
     const res = await getFromStrategies();
-    tableData.value = res?.data;
-    if (tableData.value.length === 0) {
-      isDataEmpty.value = true;
-    }
+    tableData.value = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
+
+    const table = document.querySelector('.user-info-table');
+    const rows = table.querySelectorAll('.hover-highlight');
+    rows.forEach((row) => {
+      const statusCell = row.cells[1];
+      if (statusCell.textContent.trim() === t('待确认')) {
+        row.classList.add('unconfirmed');
+      }
+    });
+
+    isDataEmpty.value = tableData.value.length === 0;
   } catch (error) {
     isDataError.value = true;
   } finally {
     isLoading.value = false;
   }
 };
+
+watchEffect(() => {
+  if (props.active === 'other') {
+    fetchFromStrategies();
+  }
+});
 
 const handleFilter = ({ checked }) => {
   if (checked.length === 0) return isDataEmpty.value = false;
@@ -328,6 +348,10 @@ const updateList = () => {
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 180px) !important;
+}
+
 .user-info-wrapper {
   width: 100%;
   height: calc(100vh - 140px);
@@ -348,6 +372,10 @@ const updateList = () => {
   }
 
   :deep(.user-info-table) {
+    .unconfirmed td {
+      background-color: #F2FCF5;
+    }
+
     .bk-table-head {
       table thead th {
         text-align: center;

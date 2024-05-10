@@ -271,7 +271,7 @@ const handleSave = async () => {
     },
   };
 
-  await props.config.type === 'view' ? putFromStrategies(params) : putFromStrategiesConfirm(params);
+  props.config.type === 'view' ? await putFromStrategies(params) : await putFromStrategiesConfirm(params);
   Message({ theme: 'success', message: t('更新成功') });
   emit('updateList');
 };
