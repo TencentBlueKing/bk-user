@@ -1,41 +1,46 @@
 <template>
-  <bk-resize-layout
-    class="h-[calc(100vh-52px)] user-aside"
-    immediate
-    :min="280"
-    :max="400"
-    :initial-divide="280">
-    <template #aside>
-      <search></search>
-      <div v-show="appStore.isSearchTree">
-        <search-result-tree></search-result-tree>
-      </div>
-      <bk-resize-layout
-        v-show="!appStore.isSearchTree"
-        :key="appStore.reloadIndex"
-        placement="top"
-        style="height: calc(100vh - 106px);"
-        :border="false"
-        immediate
-        :min="140"
-        :max="900"
-        :initial-divide="'50%'">
-        <template #aside>
-          <aside-tenant />
-        </template>
-        <template #main>
-          <aside-collaboration />
-        </template>
-      </bk-resize-layout>
-    </template>
-    <template #main>
-      <section>
-        <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
-          {{ appStore.currentOrg?.name }}
+  <div v-if="isLoading"></div>
+  <div v-else>
+    <BlankPage v-if="isShow"></BlankPage>
+    <bk-resize-layout
+      v-else
+      class="h-[calc(100vh-52px)] user-aside"
+      immediate
+      :min="280"
+      :max="400"
+      :initial-divide="280">
+      <template #aside>
+        <search></search>
+        <div v-show="appStore.isSearchTree">
+          <search-result-tree></search-result-tree>
         </div>
-      </section>
-    </template>
-  </bk-resize-layout>
+        <bk-resize-layout
+          v-show="!appStore.isSearchTree"
+          :key="appStore.reloadIndex"
+          placement="top"
+          style="height: calc(100vh - 106px)"
+          :border="false"
+          immediate
+          :min="140"
+          :max="900"
+          :initial-divide="'50%'">
+          <template #aside>
+            <aside-tenant />
+          </template>
+          <template #main>
+            <aside-collaboration />
+          </template>
+        </bk-resize-layout>
+      </template>
+      <template #main>
+        <section>
+          <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
+            {{ appStore.currentOrg?.name }}
+          </div>
+        </section>
+      </template>
+    </bk-resize-layout>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -46,8 +51,26 @@ import Search from './components/search.vue';
 import SearchResultTree from './components/search-result-tree.vue';
 
 import useAppStore from '@/store/app';
+import BlankPage from './components/BlankPage.vue';
+import { getCurrentTenant, getDepartmentsList, getCollaboration} from "@/http/organizationFiles";
+import { ref } from "vue";
 
 const appStore = useAppStore();
+const isShow = ref(null);
+const isLoading = ref(false);
+const getList = async () => {
+  isLoading.value = true;
+  const tenantData = await getCurrentTenant();
+  const collaborationData = await getCollaboration();
+  const deptData = await getDepartmentsList(0, tenantData?.data?.id);
+  isLoading.value = false;
+  if (deptData.data.length === 0 && collaborationData.data.length === 0) {
+    isShow.value = true;
+  } else {
+    isShow.value = false;
+  }
+};
+getList();
 </script>
 
 <style lang="postcss" scoped>
