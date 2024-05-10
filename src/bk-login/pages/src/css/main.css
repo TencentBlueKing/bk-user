@@ -1,7 +1,6 @@
 .app {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   background: #f5f7fb;
   color: #63656e;
   font-size: 12px;
@@ -9,4 +8,12 @@
   width: 100vw;
   height: 100vh;
   overflow: auto;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.inline-flex {
+  display: inline-flex;
 }

@@ -170,7 +170,7 @@ onMounted(() => {
   left: 50%;
   top: 35%;
   transform: translate(-50%, -35%);
-  padding: 32px 40px;
+  padding: 52px 40px 32px;
 }
 .main-content {
   height: 100%;
