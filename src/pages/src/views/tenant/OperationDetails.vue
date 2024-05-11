@@ -200,9 +200,11 @@ const handleError = (file) => {
 // 校验表单
 async function handleSubmit() {
   if (isEmail.value) {
-    handleBlur();
-  } else if (formData.phone === '') {
-    changeTelError(true);
+    return handleBlur();
+  }
+
+  if (formData.phone === '') {
+    return changeTelError(true);
   }
 
   await formRef.value.validate();
