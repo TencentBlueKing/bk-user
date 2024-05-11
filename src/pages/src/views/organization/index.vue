@@ -1,7 +1,7 @@
 <template>
   <div v-if="isLoading"></div>
   <div v-else>
-    <BlankPage v-if="isShow"></BlankPage>
+    <blank-page v-if="isShow"></blank-page>
     <bk-resize-layout
       v-else
       class="h-[calc(100vh-52px)] user-aside"
@@ -51,7 +51,7 @@ import Search from './components/search.vue';
 import SearchResultTree from './components/search-result-tree.vue';
 
 import useAppStore from '@/store/app';
-import BlankPage from './components/BlankPage.vue';
+import BlankPage from './components/blank-page.vue'; 
 import { getCurrentTenant, getDepartmentsList, getCollaboration} from "@/http/organizationFiles";
 import { ref } from "vue";
 

@@ -16,7 +16,7 @@
       </div>
     </div>
     <bk-button class="bottom" size="large" theme="primary" @click="$router.push({ name: 'dataSource' })">
-      配置数据源
+      {{ $t('配置数据源') }}
     </bk-button>
   </div>
 </template>
@@ -29,25 +29,26 @@ import imgOne from "@/images/1.png";
 import imgTwo from "@/images/2.png";
 import imgThree from "@/images/3.png";
 import { AngleDoubleRightLine } from "bkui-vue/lib/icon";
+import { t } from '@/language/index';
 
 const list = [
   {
     img: typeImg,
     numberImg: imgOne,
-    title: '选择数据源类型',
-    content: '支持多种类、多平台异构数据源快速接入，助力全方位分析',
+    title: t('选择数据源类型'),
+    content: t('支持多种类、多平台异构数据源快速接入，助力全方位分析'),
   },
   {
     img: sourceImg,
     numberImg: imgTwo,
-    title: '配置数据源',
-    content: '包含丰富图表组件，自由式拖拽布局轻松搞定仪表盘',
+    title: t('配置数据源'),
+    content: t('包含丰富图表组件，自由式拖拽布局轻松搞定仪表盘'),
   },
   {
     img: orgImg,
     numberImg: imgThree,
-    title: '查看组织架构',
-    content: '快速指定与SQL齐飞, 入门与进阶方式任你挑选，满足多样化分析需求',
+    title: t('查看组织架构'),
+    content: t('快速指定与SQL齐飞, 入门与进阶方式任你挑选，满足多样化分析需求'),
   },
 ];
 
@@ -121,12 +122,12 @@ const list = [
     }
   }
   .bottom {
-    width: 102px;
     height: 32px;
     background: #3a84ff;
     border-radius: 2px;
     margin: 0 auto;
     margin-top: 52px;
+    font-size: 14px;
   }
 }
 </style>
