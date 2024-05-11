@@ -15,7 +15,7 @@
           <Empty
             :is-data-empty="fieldData.isTableDataEmpty"
             :is-data-error="fieldData.isTableDataError"
-            @handleUpdate="fetchFieldList"
+            @handle-update="fetchFieldList"
           />
         </template>
         <bk-table-column prop="display_name" :label="$t('字段名称')">
@@ -83,8 +83,8 @@
       <FieldsAdd
         :set-type="fieldData.setType"
         :current-editor-data="fieldData.currentEditorData"
-        @submitData="submitData"
-        @handleCancel="handleCancel" />
+        @submit-data="submitData"
+        @handle-cancel="handleCancel" />
     </bk-sideslider>
   </div>
 </template>

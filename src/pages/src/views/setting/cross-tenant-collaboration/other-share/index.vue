@@ -1,5 +1,7 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="user-info-wrapper user-scroll-y">
+  <div
+    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    :class="['user-info-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <!-- 一期不做 -->
     <!-- <header>
       <bk-button text theme="primary" @click="handleUpdateRecord">
@@ -19,39 +21,40 @@
         <Empty
           :is-data-empty="isDataEmpty"
           :is-data-error="isDataError"
-          @handle-update="fetchCollaborationData"
+          @handle-update="fetchFromStrategies"
         />
       </template>
-      <bk-table-column prop="name" :label="$t('源租户')">
+      <bk-table-column prop="source_tenant_id" :label="$t('源租户')">
         <template #default="{ row }">
           <span>
-            {{ row.name }}
+            {{ row.source_tenant_id }}
           </span>
         </template>
       </bk-table-column>
-      <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: statusFilters }">
+      <bk-table-column prop="target_status" :label="$t('状态')" :filter="{ list: statusFilters }">
         <template #default="{ row }">
           <div>
-            <img :src="dataSourceStatus[row.status]?.icon" class="account-status-icon" />
-            <span>{{ dataSourceStatus[row.status]?.text }}</span>
+            <img :src="dataSourceStatus[row.target_status]?.icon" class="account-status-icon" />
+            <span>{{ dataSourceStatus[row.target_status]?.text }}</span>
           </div>
         </template>
       </bk-table-column>
       <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
-      <bk-table-column prop="enable" :label="$t('启/停')" :filter="{ list: enableFilters }">
+      <bk-table-column prop="target_status" :label="$t('启/停')" :filter="{ list: enableFilters }">
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
             size="small"
-            v-model="row.enable"
-            :disabled="row.status === 'confirmed'"
+            :value="row.target_status === 'enabled'"
+            :disabled="row.target_status === 'unconfirmed'"
+            @change="handleChange(row)"
           />
         </template>
       </bk-table-column>
       <bk-table-column :label="$t('操作')">
         <template #default="{ row }">
           <bk-button
-            v-if="row.status === 'confirmed'"
+            v-if="row.target_status === 'unconfirmed'"
             text
             theme="primary"
             @click="handleDetails(row, 'edit')"
@@ -73,10 +76,11 @@
     <bk-sideslider
       :width="960"
       quick-close
-      v-model:isShow="detailsConfig.isShow"
+      :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
+      :before-close="handleBeforeClose"
     >
-      <OperationDetails :details-config="detailsConfig" />
+      <OperationDetails :config="detailsConfig" @update-list="updateList" />
     </bk-sideslider>
     <!-- 数据更新记录 -->
     <bk-dialog
@@ -204,20 +208,30 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks';
+import { getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store';
+import { useMainViewStore, useUser } from '@/store';
 import { dataSourceStatus } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
+const userStore = useUser();
+
+const props = defineProps({
+  active: {
+    type: String,
+    default: '',
+  },
+});
 
 const tableMaxHeight = useTableMaxHeight(238);
+const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
 const isDataEmpty = ref(false);
@@ -226,12 +240,12 @@ const isDataError = ref(false);
 const statusFilters = [
   { text: t('正常'), value: 'enabled' },
   { text: t('未启用'), value: 'disabled' },
-  { text: t('待确认'), value: 'confirmed' },
+  { text: t('待确认'), value: 'unconfirmed' },
 ];
 
 const enableFilters = [
-  { text: t('启用'), value: true },
-  { text: t('停用'), value: false },
+  { text: t('启用'), value: 'enabled' },
+  { text: t('停用'), value: 'disabled' },
 ];
 
 const detailsConfig = reactive({
@@ -241,27 +255,36 @@ const detailsConfig = reactive({
   type: '',
 });
 
-onMounted(() => {
-  fetchCollaborationData();
-});
-
-const fetchCollaborationData = async () => {
+const fetchFromStrategies = async () => {
   try {
     isLoading.value = true;
     isDataEmpty.value = false;
     isDataError.value = false;
-    setTimeout(() => {
-      tableData.value = [];
-      if (tableData.value.length === 0) {
-        isDataEmpty.value = true;
+    const res = await getFromStrategies();
+    tableData.value = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
+
+    const table = document.querySelector('.user-info-table');
+    const rows = table.querySelectorAll('.hover-highlight');
+    rows.forEach((row) => {
+      const statusCell = row.cells[1];
+      if (statusCell.textContent.trim() === t('待确认')) {
+        row.classList.add('unconfirmed');
       }
-    }, 1000);
+    });
+
+    isDataEmpty.value = tableData.value.length === 0;
   } catch (error) {
     isDataError.value = true;
   } finally {
     isLoading.value = false;
   }
 };
+
+watchEffect(() => {
+  if (props.active === 'other') {
+    fetchFromStrategies();
+  }
+});
 
 const handleFilter = ({ checked }) => {
   if (checked.length === 0) return isDataEmpty.value = false;
@@ -297,9 +320,38 @@ const handleDetails = (item, type) => {
   detailsConfig.title = type === 'view' ? t('协同数据详情') : t('确认协同数据');
   detailsConfig.data = item;
 };
+
+const handleChange = (row) => {
+  putFromStrategiesStatus(row.id).then((res) => {
+    row.target_status = res?.data?.target_status;
+  });
+};
+
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    detailsConfig.isShow = false;
+  } else {
+    detailsConfig.isShow = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+};
+
+const updateList = () => {
+  detailsConfig.isShow = false;
+  window.changeInput = false;
+  fetchFromStrategies();
+};
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 180px) !important;
+}
+
 .user-info-wrapper {
   width: 100%;
   height: calc(100vh - 140px);
@@ -320,6 +372,10 @@ const handleDetails = (item, type) => {
   }
 
   :deep(.user-info-table) {
+    .unconfirmed td {
+      background-color: #F2FCF5;
+    }
+
     .bk-table-head {
       table thead th {
         text-align: center;

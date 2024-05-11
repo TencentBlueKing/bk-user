@@ -97,6 +97,10 @@ export const dataSourceStatus = {
     icon: warningImg,
     text: t('待确认'),
   },
+  unconfirmed: {
+    icon: warningImg,
+    text: t('待确认'),
+  },
 };
 
 export const validTime = {

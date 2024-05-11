@@ -27,7 +27,7 @@
         :data-source="dataSource"
         :config="true"
         :show-content="showContent"
-        @handleCollapse="handleCollapse">
+        @handle-collapse="handleCollapse">
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
@@ -75,11 +75,11 @@
     <div :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]" v-else>
       <div class="info" v-if="!dataSource?.id">
         <i class="user-icon icon-info-i" />
-        <span>当前还没有数据源，需要先选择数据源类型并进行配置</span>
+        <span>{{ $t('当前还没有数据源，需要先选择数据源类型并进行配置') }}</span>
       </div>
       <DataSourceCard
         :plugins="dataSourcePlugins"
-        @handleCollapse="handleClick" />
+        @handle-collapse="handleClick" />
     </div>
     <!-- 导入 -->
     <bk-dialog
@@ -188,8 +188,8 @@ import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { dataRecordStatus } from '@/utils';
 import { useUser } from '@/store';
+import { dataRecordStatus } from '@/utils';
 
 const userStore = useUser();
 

@@ -26,7 +26,7 @@
       @node-click="handleNodeClick"
       :async="{
         callback: getRemoteData,
-        cache: false,
+        cache: true,
       }"
     >
       <template #node="node">

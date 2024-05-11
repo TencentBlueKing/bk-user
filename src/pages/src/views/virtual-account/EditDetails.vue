@@ -38,8 +38,8 @@
           :form-data="formData"
           :tel-error="telError"
           :required="false"
-          @changeCountryCode="changeCountryCode"
-          @changeTelError="changeTelError" />
+          @change-country-code="changeCountryCode"
+          @change-tel-error="changeTelError" />
       </bk-form-item>
     </bk-form>
     <div class="footer">
