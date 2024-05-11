@@ -16,6 +16,7 @@
       {{ tenant?.name }}
     </div>
     <bk-tree
+      v-if="treeData.length"
       :data="treeData"
       :selected="appStore.currentOrg"
       label="name"
