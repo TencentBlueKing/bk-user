@@ -16,6 +16,7 @@
       :max-height="tableMaxHeight"
       show-overflow-tooltip
       @column-filter="handleFilter"
+      :row-class="tableRowClassName"
     >
       <template #empty>
         <Empty
@@ -255,6 +256,14 @@ const detailsConfig = reactive({
   type: '',
 });
 
+//  状态为unconfirmed的行添加class
+const tableRowClassName = (item) => {
+  if (item.target_status === 'unconfirmed') {
+    return 'unconfirmed';
+  }
+  return '';
+};
+
 const fetchFromStrategies = async () => {
   try {
     isLoading.value = true;
@@ -262,15 +271,6 @@ const fetchFromStrategies = async () => {
     isDataError.value = false;
     const res = await getFromStrategies();
     tableData.value = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
-
-    const table = document.querySelector('.user-info-table');
-    const rows = table.querySelectorAll('.hover-highlight');
-    rows.forEach((row) => {
-      const statusCell = row.cells[1];
-      if (statusCell.textContent.trim() === t('待确认')) {
-        row.classList.add('unconfirmed');
-      }
-    });
 
     isDataEmpty.value = tableData.value.length === 0;
   } catch (error) {

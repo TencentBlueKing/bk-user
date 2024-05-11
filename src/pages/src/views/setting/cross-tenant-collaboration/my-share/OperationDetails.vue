@@ -93,7 +93,7 @@
     </bk-form>
     <div class="footer fixed">
       <bk-button theme="primary" @click="handleSave" :loading="btnLoading">
-        {{ $t('保存并启用') }}
+        {{ config.type === 'add' ? $t('保存并启用') : $t('保存')}}
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
         {{ $t('取消') }}

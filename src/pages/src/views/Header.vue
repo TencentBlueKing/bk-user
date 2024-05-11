@@ -129,7 +129,7 @@
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { computed, reactive, ref, onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import NoticeComponent from '@blueking/notice-component';
@@ -138,12 +138,11 @@ import ReleaseNote from '@blueking/release-note';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
-import { getVersionLogs } from '@/http';
+import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { logoConvert } from '@/utils';
-import { getVersionLogs, getTenantInfo } from '@/http';
 
 const state = reactive({
   logoutDropdown: false,
@@ -311,9 +310,9 @@ const openVersionLog = async () => {
         }
 
         .tenant-id {
+          max-width: 150px;
           margin: 0 8px 0 4px;
           color: #FFF;
-          max-width: 150px;
         }
 
         .icon-shezhi {
