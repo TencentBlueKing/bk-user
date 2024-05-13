@@ -99,7 +99,7 @@ class TenantIdpListApi(View):
         tenant_id = kwargs["tenant_id"]
         idp_owner_tenant_id = kwargs["idp_owner_tenant_id"]
 
-        # 查询本租户配置的认证源
+        # 获取指定租户中 本租户可用 且 已启用 的认证源
         idps = bk_user_api.list_idp(tenant_id, idp_owner_tenant_id)
 
         return APISuccessResponse(data=[i.model_dump() for i in idps])

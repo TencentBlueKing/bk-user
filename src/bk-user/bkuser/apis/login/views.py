@@ -80,9 +80,8 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             source_status=CollaborationStrategyStatus.ENABLED, target_status=CollaborationStrategyStatus.ENABLED
         ).values("source_tenant_id", "target_tenant_id")
 
-        # 所有启用的租户
-        # FIXME(nan): 是否过滤不可见呢？
-        tenant_map = {i.id: i for i in Tenant.objects.filter(status=TenantStatus.ENABLED)}
+        # 所有启用的租户, 对于协同场景，不过滤不可见的
+        tenant_map = {t.id: t for t in Tenant.objects.filter(status=TenantStatus.ENABLED)}
 
         # 每个租户对应的协同租户列表
         collaboration_tenant_map = defaultdict(list)
@@ -115,7 +114,7 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     serializer_class = IdpListOutputSLZ
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        return {"data_source_type_map": {i["id"]: i["type"] for i in DataSource.objects.all().values("id", "type")}}
+        return {"data_source_type_map": {ds["id"]: ds["type"] for ds in DataSource.objects.values("id", "type")}}
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
@@ -127,7 +126,7 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             and not CollaborationStrategy.objects.filter(
                 source_status=CollaborationStrategyStatus.ENABLED,
                 target_status=CollaborationStrategyStatus.ENABLED,
-                source_tenant__id=idp_owner_tenant_id,
+                source_tenant_id=idp_owner_tenant_id,
                 target_tenant_id=tenant_id,
             ).exists()
         ):
@@ -142,7 +141,7 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
 
             queryset = queryset.filter(data_source_id=ds.id)
 
-        return queryset.select_related("plugin")
+        return queryset
 
 
 class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):

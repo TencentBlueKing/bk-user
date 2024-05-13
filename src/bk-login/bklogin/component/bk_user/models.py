@@ -46,7 +46,7 @@ class IdpPluginInfo(BaseModel):
     name: str
 
 
-class IdpDetailInfo(BaseModel):
+class IdpDetail(BaseModel):
     """认证源详情"""
 
     id: str

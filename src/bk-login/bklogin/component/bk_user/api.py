@@ -18,7 +18,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.component.http import HttpStatusCode, http_get, http_post
 from bklogin.utils.url import urljoin
 
-from .models import IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
+from .models import IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +72,10 @@ def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
     return [IdpInfo(**i) for i in data]
 
 
-def get_idp(idp_id: str) -> IdpDetailInfo:
+def get_idp(idp_id: str) -> IdpDetail:
     """获取IDP信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v1/login/idps/{idp_id}/")
-    return IdpDetailInfo(**data)
+    return IdpDetail(**data)
 
 
 def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:

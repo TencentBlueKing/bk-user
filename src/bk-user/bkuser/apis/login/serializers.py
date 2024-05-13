@@ -70,7 +70,7 @@ class TenantListOutputSLZ(serializers.Serializer):
 class IdpListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源 ID")
     name = serializers.CharField(help_text="认证源名称")
-    plugin_id = serializers.CharField(help_text="认证源 ID", source="plugin.id")
+    plugin_id = serializers.CharField(help_text="认证源 ID")
     data_source_type = serializers.SerializerMethodField(help_text="数据源类型")
 
     class Meta:
@@ -100,6 +100,7 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
         ref_name = "login.IdpRetrieveOutputSLZ"
 
     def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
+        # Note: 不能直接 obj.plugin_config，因为该对象里包含加密的敏感信息，而登录流程是必须使原始数据的
         return obj.get_plugin_cfg().model_dump()
 
 
