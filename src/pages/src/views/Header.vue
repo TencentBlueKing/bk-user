@@ -20,7 +20,10 @@
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
         </div>
         <div class="tenant-style" v-if="!isTenant">
-          <span class="logo">{{ userData?.logo || logoConvert(userData?.name) }}</span>
+          <div class="logo">
+            <img v-if="userData.logo" :src="userData.logo" alt="">
+            <span v-else>{{logoConvert(userData?.name) }}</span>
+          </div>
           <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
           <i
             v-if="userStore.user?.role === 'super_manager'"
@@ -298,7 +301,6 @@ const openVersionLog = async () => {
         align-items: center;
 
         .logo {
-          display: inline-block;
           width: 16px;
           font-size: 12px;
           font-weight: 700;
