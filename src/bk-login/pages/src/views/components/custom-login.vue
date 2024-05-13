@@ -1,7 +1,6 @@
 <template>
   <bk-form form-type="vertical">
     <div class="logo">
-      <img src="../../../static/images/user.svg" />
     </div>
     <bk-form-item>
       <div style="text-align: center;">

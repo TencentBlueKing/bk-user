@@ -50,8 +50,7 @@
 </template>
 
 
-<script setup lang="ts">
-import { clickoutside as vClickoutside, InfoBox } from 'bkui-vue';
+<script setup lang="ts">import { clickoutside as vClickoutside, InfoBox } from 'bkui-vue';
 import { computed, h, ref } from 'vue';
 
 import { addDepartment, deleteDepartment, updateDepartment } from '@/http/organizationFiles';
@@ -148,7 +147,7 @@ const handleDelete = () => {
       ],
     ),
     onConfirm: () => {
-      deleteDepartment(props.dept.id).then((res) => {
+      deleteDepartment(props.dept.id).then(() => {
         emits('deleteNode', props.dept.id);
       });
     },

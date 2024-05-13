@@ -111,8 +111,4 @@ onMounted(async () => {
     }
   }
 }
-
-::v-deep .label-content .label-key {
-  width: 150px !important;
-}
 </style>

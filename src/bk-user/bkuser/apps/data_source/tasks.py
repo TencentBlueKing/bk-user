@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def remove_dropped_field_in_field_mapping(tenant_id: str, field_name: str):
-    """删除租户某个用户自定义字段后，需要将非本地数据源的 FieldMapping 中该字段映射一并清除"""
+def remove_dropped_field_in_data_source_field_mapping(tenant_id: str, field_name: str):
+    """删除租户某个用户自定义字段后，需要将各数据源的 FieldMapping 中的该字段一并清除"""
     data_sources = DataSource.objects.filter(owner_tenant_id=tenant_id).exclude(plugin_id=DataSourcePluginEnum.LOCAL)
     for ds in data_sources:
         ds.field_mapping = [m for m in ds.field_mapping if m["target_field"] != field_name]

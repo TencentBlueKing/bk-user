@@ -32,8 +32,8 @@
           :is-data-empty="isDataEmpty"
           :is-search-empty="isEmptySearch"
           :is-data-error="isDataError"
-          @handleEmpty="handleClear"
-          @handleUpdate="initVirtualUsers"
+          @handle-empty="handleClear"
+          @handle-update="initVirtualUsers"
         />
       </template>
       <template #prepend v-if="selectList.length">
@@ -84,8 +84,8 @@
     >
       <EditDetails
         :details-info="detailsInfo"
-        @updateUsers="updateUsers"
-        @handleCancelEdit="handleCancelEdit" />
+        @update-users="updateUsers"
+        @handle-cancel-edit="handleCancelEdit" />
     </bk-sideslider>
   </div>
 </template>
@@ -99,8 +99,8 @@ import EditDetails from './EditDetails.vue';
 import Empty from '@/components/Empty.vue';
 import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
-import { copy } from '@/utils';
 import { useUser } from '@/store';
+import { copy } from '@/utils';
 
 const userStore = useUser();
 

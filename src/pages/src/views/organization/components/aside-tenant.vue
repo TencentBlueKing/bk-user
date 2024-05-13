@@ -29,7 +29,7 @@
         @node-click="handleNodeClick"
         :async="{
           callback: getRemoteData,
-          cache: false,
+          cache: true,
         }"
       >
         <template #node="node">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 
 import OperateMore from './operate-more.vue';
 

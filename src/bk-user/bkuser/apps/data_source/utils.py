@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def gen_tenant_user_id(user_tenant_id: str, data_source: DataSource, user: DataSourceUser) -> str:
     """根据规则生成租户用户 ID"""
 
-    # 考虑协同数据源的情况，只有数据源所属的租户，才能按规则生成用户 ID，其他的协同数据源，都是 uuid
+    # FIXME (su) 协同数据源，也需要支持按照规则生成 tenant_user_id
     if user_tenant_id != data_source.owner_tenant_id:
         return generate_uuid()
 

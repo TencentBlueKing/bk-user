@@ -459,7 +459,7 @@ class TenantDepartmentSyncer:
         self.tenant = tenant
 
     def sync(self):
-        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
+        """TODO (su) 协同支持指定数据范围后，需要考虑限制"""
         exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_departments = DataSourceDepartment.objects.filter(data_source=self.data_source)
 
@@ -506,7 +506,7 @@ class TenantUserSyncer:
         self.user_account_expired_at = self._get_user_account_expired_at()
 
     def sync(self):
-        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
+        """TODO (su) 协同支持指定数据范围后，需要考虑限制"""
         exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_users = DataSourceUser.objects.filter(data_source=self.data_source)
 

@@ -5,32 +5,31 @@
     type="unborder-card"
   >
     <bk-tab-panel
-      v-for="(item, index) in panels"
-      :key="index"
+      v-for="item in panels"
+      :key="item.name"
       :name="item.name"
       :label="item.label"
     >
-      <MyShare v-if="active === 'local'" />
-      <OtherShare v-else />
+      <component :is="item.component" :active="active"></component>
     </bk-tab-panel>
   </bk-tab>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
-import MyShare from './my-share/index.vue';
-import OtherShare from './other-share/index.vue';
+import { defineAsyncComponent, ref } from 'vue';
 
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
+
+const MyShare = defineAsyncComponent(() => import('./my-share/index.vue'));
+const OtherShare = defineAsyncComponent(() => import('./other-share/index.vue'));
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
 const panels = [
-  { name: 'local', label: t('我分享的') },
-  { name: 'other', label: t('其他租户分享的') },
+  { name: 'local', label: t('我分享的'), component: MyShare },
+  { name: 'other', label: t('其他租户分享的'), component: OtherShare },
 ];
 const active = ref('local');
 </script>

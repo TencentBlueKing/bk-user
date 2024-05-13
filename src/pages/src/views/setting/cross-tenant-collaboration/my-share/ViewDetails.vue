@@ -1,8 +1,9 @@
 <template>
   <div class="view-details-wrapper">
     <div class="view-details-content">
-      <LabelContent :label="$t('策略名称')"></LabelContent>
-      <LabelContent :label="$t('目标公司')"></LabelContent>
+      <LabelContent :label="$t('策略名称')">{{ data.name }}</LabelContent>
+      <LabelContent :label="$t('目标租户')">{{ data.target_tenant_id }}</LabelContent>
+      <LabelContent :label="$t('协同范围')">{{ $t('所有部门 + 用户') }}</LabelContent>
       <!-- 一期不做 -->
       <!-- <div class="content-item">
         <span class="item-key">{{ $t('协同范围') }}：</span>
@@ -16,8 +17,9 @@
           </div>
         </div>
       </div> -->
-      <LabelContent :label="$t('同步范围')"></LabelContent>
-      <LabelContent :label="$t('字段预览')">
+      <LabelContent :label="$t('同步范围')">{{ $t('所有字段') }}</LabelContent>
+      <!-- 一期不做 -->
+      <!-- <LabelContent :label="$t('字段预览')">
         <bk-table
           class="mt-[8px]"
           :data="tableData"
@@ -27,7 +29,7 @@
             <Empty
               :is-data-empty="isDataEmpty"
               :is-data-error="isDataError"
-              @handleUpdate="handleUpdate"
+              @handle-update="handleUpdate"
             />
           </template>
           <bk-table-column prop="username" :label="$t('用户名')" />
@@ -36,15 +38,15 @@
           <bk-table-column prop="phone" :label="$t('手机号')" />
           <bk-table-column prop="organization" :label="$t('组织')" />
         </bk-table>
-      </LabelContent>
+      </LabelContent> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, onMounted, ref } from 'vue';
+import { defineProps } from 'vue';
 
-import Empty from '@/components/Empty.vue';
+// import Empty from '@/components/Empty.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 
 defineProps({
@@ -72,19 +74,9 @@ defineProps({
 //   }
 // };
 
-const tableData = ref([]);
-const isDataEmpty = ref(false);
-const isDataError = ref(false);
-
-onMounted(() => {
-  isDataEmpty.value = false;
-  isDataError.value = false;
-  setTimeout(() => {
-    if (tableData.value.length === 0) {
-      isDataEmpty.value = true;
-    }
-  }, 1000);
-});
+// const tableData = ref([]);
+// const isDataEmpty = ref(false);
+// const isDataError = ref(false);
 </script>
 
 <style lang="less" scoped>

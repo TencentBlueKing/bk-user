@@ -34,15 +34,15 @@ class TestTenantUserSearchApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_multi_tenant(self, api_client, random_tenant, collaborative_tenant):
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
+    def test_multi_tenant(self, api_client, random_tenant, collaboration_tenant):
         resp = api_client.get(reverse("organization.tenant_user.search"), data={"keyword": "hi"})
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 6  # noqa: PLR2004  magic number here is ok
 
         assert {u["username"] for u in resp.data} == {"lushi", "linshiyi", "baishier"}
-        assert {u["tenant_id"] for u in resp.data} == {random_tenant.id, collaborative_tenant.id}
+        assert {u["tenant_id"] for u in resp.data} == {random_tenant.id, collaboration_tenant.id}
         assert {p for u in resp.data for p in u["organization_paths"]} == {
             "公司/部门A/中心AB/小组ABA",
             "公司/部门B/中心BA",

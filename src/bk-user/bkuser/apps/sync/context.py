@@ -259,7 +259,19 @@ class TenantSyncTaskContext:
         self.task.status = status.value
         self.task.duration = timezone.now() - self.task.start_at
         self.task.has_warning = self.logger.has_warning
-        self.task.save(update_fields=["status", "duration", "has_warning", "updated_at"])
+        self.task.summary = {
+            "user": {
+                "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.USER)),
+                "update": len(self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.USER)),
+                "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.USER)),
+            },
+            "department": {
+                "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.DEPARTMENT)),
+                "update": len(self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.DEPARTMENT)),
+                "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.DEPARTMENT)),
+            },
+        }
+        self.task.save(update_fields=["status", "duration", "has_warning", "summary", "updated_at"])
 
     def _store_records_into_db(self):
         """将变更记录存入数据库"""
