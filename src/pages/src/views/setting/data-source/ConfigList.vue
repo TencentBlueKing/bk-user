@@ -313,6 +313,7 @@ const confirmImportUsers = async () => {
     if (res.data.data.status === 'success') {
       importDialog.isShow = false;
       InfoBox({
+        width: 450,
         infoType: 'success',
         title: t('导入成功'),
         confirmText: t('查看组织架构'),
