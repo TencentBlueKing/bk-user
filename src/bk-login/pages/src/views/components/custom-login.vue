@@ -1,16 +1,18 @@
 <template>
   <bk-form form-type="vertical">
     <div class="logo">
-      <img src="../../../static/images/user.png" />
+      <img src="../../../static/images/user.svg" />
     </div>
     <bk-form-item>
-      <bk-button
-        theme="primary"
-        size="large"
-        class="login-btn"
-        @click="handleLogin">
-        立即登录
-      </bk-button>
+      <div style="text-align: center;">
+        <bk-button
+          theme="primary"
+          size="large"
+          class="login-btn"
+          @click="handleLogin">
+          立即登录
+        </bk-button>
+      </div>
     </bk-form-item>
   </bk-form>
 </template>
@@ -34,11 +36,11 @@ const handleLogin = () => {
 .logo {
   text-align: center;
   img {
-    height: 123px;
+    height: 170px;
   }
 }
 .login-btn {
-  width: 100%;
+  width: 140px;
   margin-top: 10px;
 }
 </style>
