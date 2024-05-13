@@ -23,7 +23,7 @@ class TestAuthenticationMatcher:
         default_idp = Idp.objects.filter(owner_tenant_id=default_tenant.id).first()
         assert default_idp is not None
 
-        self.matcher = AuthenticationMatcher(default_tenant.id, default_idp.id)
+        self.matcher = AuthenticationMatcher(default_idp.id)
 
     @pytest.mark.parametrize(
         ("field", "excepted_filter_key"),

@@ -18,8 +18,9 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.serializers import StringArrayField
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
@@ -44,27 +45,26 @@ class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
 
 
 class TenantListInputSLZ(serializers.Serializer):
-    tenant_ids = serializers.CharField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
 
-    def validate_tenant_ids(self, value: str) -> List[str]:
-        """将使用英文逗号分隔的字符串转换为列表"""
-        if not value:
-            return []
 
-        return [i for i in value.split(",") if i]
+class CollaborationTenantSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID")
+    name = serializers.CharField(help_text="租户名称")
 
 
 class TenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.CharField(help_text="租户 Logo")
+    collaboration_tenants = serializers.SerializerMethodField(help_text="协同租户列表")
 
     class Meta:
         ref_name = "login.TenantListOutputSLZ"
 
-
-class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
-    ...
+    def get_collaboration_tenants(self, obj: Tenant) -> List[Dict[str, Any]]:
+        collaboration_tenants = self.context["collaboration_tenant_map"].get(obj.id) or []
+        return CollaborationTenantSLZ(collaboration_tenants, many=True).data
 
 
 class EnabledIdpOutputSLZ(serializers.Serializer):
@@ -85,6 +85,19 @@ class GlobalInfoRetrieveOutputSLZ(serializers.Serializer):
     )
 
 
+class IdpListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源 ID")
+    name = serializers.CharField(help_text="认证源名称")
+    plugin_id = serializers.CharField(help_text="认证源 ID", source="plugin.id")
+    data_source_type = serializers.SerializerMethodField(help_text="数据源类型")
+
+    class Meta:
+        ref_name = "login.IdpListOutputSLZ"
+
+    def get_data_source_type(self, obj: Idp) -> str:
+        return self.context["data_source_type_map"].get(obj.data_source_id, "")
+
+
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件 ID")
     name = serializers.CharField(help_text="认证源插件名称")
@@ -93,18 +106,12 @@ class IdpPluginOutputSLZ(serializers.Serializer):
         ref_name = "login.IdpPluginOutputSLZ"
 
 
-class IdpListOutputSLZ(serializers.Serializer):
+class IdpRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源 ID")
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="状态", choices=IdpStatus.get_choices())
-    plugin = IdpPluginOutputSLZ(help_text="认证源插件")
-
-    class Meta:
-        ref_name = "login.IdpListOutputSLZ"
-
-
-class IdpRetrieveOutputSLZ(IdpListOutputSLZ):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
+    plugin = IdpPluginOutputSLZ(help_text="认证源插件")
     plugin_config = serializers.SerializerMethodField(help_text="认证源插件配置")
 
     class Meta:

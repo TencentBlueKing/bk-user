@@ -26,8 +26,8 @@ from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
 from bklogin.component.bk_user.constants import IdpStatus
-from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls, get_plugin_type
-from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum, PluginTypeEnum
+from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
+from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
 from bklogin.idp_plugins.exceptions import (
     InvalidParamError,
     ParseRequestBodyError,
@@ -72,38 +72,8 @@ class LoginView(View):
         # 存储到当前session里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
-        # 当只有一个租户且该租户有且仅有一种登录方式，且该登录方式为联邦登录，则直接重定向到第三方登录
-        global_info = bk_user_api.get_global_info()
-        if (
-            global_info.enabled_auth_tenant_number == 1
-            and global_info.only_enabled_auth_tenant
-            and len(global_info.only_enabled_auth_tenant.enabled_idps) == 1
-        ):
-            idp = global_info.only_enabled_auth_tenant.enabled_idps[0]
-            # 判断是否联邦登录
-            if get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
-                # session记录登录的租户
-                request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = global_info.only_enabled_auth_tenant.id
-                # 联邦登录，则直接重定向到第三方登录
-                return HttpResponseRedirect(
-                    f"{settings.SITE_URL}auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
-                )
-
         # 返回登录页面
         return render(request, self.template_name)
-
-
-class TenantGlobalInfoRetrieveApi(View):
-    def get(self, request, *args, **kwargs):
-        """
-        租户的全局信息
-        """
-        global_info = bk_user_api.get_global_info()
-        return APISuccessResponse(
-            data=global_info.model_dump(
-                include={"tenant_visible", "enabled_auth_tenant_number", "only_enabled_auth_tenant"}
-            )
-        )
 
 
 class TenantListApi(View):
@@ -115,51 +85,9 @@ class TenantListApi(View):
         tenant_ids_str = request.GET.get("tenant_ids", "")
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
-        # 无tenant_ids表示需要获取全部租户，这时候需要检查租户是否可见
-        global_setting = bk_user_api.get_global_info()
-        if not tenant_ids and not global_setting.tenant_visible:
-            raise error_codes.NO_PERMISSION.f(_("租户信息不可见"))
-
         tenants = bk_user_api.list_tenant(tenant_ids)
 
-        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
-
-
-class TenantRetrieveApi(View):
-    def get(self, request, *args, **kwargs):
-        """
-        通过租户ID，查询单个租户信息
-        """
-        tenant_id = kwargs["tenant_id"]
-        tenant = bk_user_api.get_tenant(tenant_id)
-        if tenant is None:
-            raise error_codes.OBJECT_NOT_FOUND.f(f"租户 {tenant_id} 不存在", replace=True)
-
-        return APISuccessResponse(data=tenant.model_dump(include={"id", "name", "logo"}))
-
-
-class SignInTenantCreateApi(View):
-    def post(self, request, *args, **kwargs):
-        """
-        确认选择要登录的租户
-        """
-        request_body = parse_request_body_json(request.body)
-        tenant_id = request_body.get("tenant_id")
-
-        # 校验参数
-        if not tenant_id:
-            raise error_codes.VALIDATION_ERROR.f(_("tenant_id参数必填"))
-
-        # 校验租户是否存在
-        tenants = bk_user_api.list_tenant()
-        tenant_id_set = {i.id for i in tenants}
-        if tenant_id not in tenant_id_set:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})未找到").format(tenant_id))
-
-        # session记录登录的租户
-        request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = tenant_id
-
-        return APISuccessResponse()
+        return APISuccessResponse(data=[t.model_dump() for t in tenants])
 
 
 class TenantIdpListApi(View):
@@ -167,17 +95,14 @@ class TenantIdpListApi(View):
         """
         获取需要登录租户的认证方式列表
         """
-        # Session里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
+        # 获取路径参数
+        tenant_id = kwargs["tenant_id"]
+        idp_owner_tenant_id = kwargs["idp_owner_tenant_id"]
 
         # 查询本租户配置的认证源
-        idps = bk_user_api.list_idp(sign_in_tenant_id)
+        idps = bk_user_api.list_idp(tenant_id, idp_owner_tenant_id)
 
-        return APISuccessResponse(
-            data=[i.model_dump(include={"id", "name", "plugin"}) for i in idps if i.status == IdpStatus.ENABLED],
-        )
+        return APISuccessResponse(data=[i.model_dump() for i in idps])
 
 
 class IdpBasicInfo(pydantic.BaseModel):
@@ -209,6 +134,10 @@ class IdpPluginDispatchView(View):
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
+            sign_in_tenant_id = kwargs.get("tenant_id")
+            # session记录登录的租户
+            request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
+        if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
         # 获取参数
@@ -218,11 +147,6 @@ class IdpPluginDispatchView(View):
 
         # 获取认证源信息
         idp = bk_user_api.get_idp(idp_id)
-        # 判断是否当前登录租户所属数据源
-        # TODO: 后续协同租户的数据源，需要调整判断关系
-        if idp.owner_tenant_id != sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("非当前登录租户所配置的认证源"))
-
         if idp.status != IdpStatus.ENABLED:
             raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
 

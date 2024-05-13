@@ -18,7 +18,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.component.http import HttpStatusCode, http_get, http_post
 from bklogin.utils.url import urljoin
 
-from .models import GlobalInfo, IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
+from .models import IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +54,6 @@ def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
 
 
-def get_global_info() -> GlobalInfo:
-    """获取全局信息"""
-    data = _call_bk_user_api_20x(http_get, "/api/v1/login/global-infos/")
-    return GlobalInfo(**data)
-
-
 def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
     """查询租户列表，支持过滤"""
     params = {}
@@ -70,22 +64,11 @@ def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
     return [TenantInfo(**i) for i in data]
 
 
-def get_tenant(tenant_id: str) -> TenantInfo | None:
-    """通过租户 ID 获取租户信息"""
-    resp = _call_bk_user_api(
-        http_get,
-        f"/api/v1/login/tenants/{tenant_id}/",
-        allow_error_status_func=lambda s: s.is_not_found,
-    )
-    if resp.get("error"):
-        return None
-
-    return TenantInfo(**resp["data"])
-
-
-def list_idp(tenant_id: str) -> List[IdpInfo]:
+def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
     """获取租户关联的认证源"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenants/{tenant_id}/idps/")
+    data = _call_bk_user_api_20x(
+        http_get, f"/api/v1/login/tenants/{tenant_id}/idp-owner-tenants/{idp_owner_tenant_id}/idps/"
+    )
     return [IdpInfo(**i) for i in data]
 
 
