@@ -2,13 +2,12 @@
   <div
     v-bkloading="{ loading: isLoading, zIndex: 9 }"
     :class="['user-info-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
-    <!-- 一期不做 -->
-    <!-- <header>
-      <bk-button text theme="primary" @click="handleUpdateRecord">
+    <header>
+      <bk-button text theme="primary" @click="showUpdateRecord">
         <i class="user-icon icon-lishijilu" />
         {{ $t('数据更新记录') }}
       </bk-button>
-    </header> -->
+    </header>
     <bk-table
       class="user-info-table"
       :data="tableData"
@@ -92,20 +91,25 @@
       :is-show="dialogConfig.isShow"
       @closed="dialogConfig.isShow = false">
       <bk-table
+        v-bkloading="{ loading: dialogConfig.loading, zIndex: 9 }"
         class="update-record-table"
         :data="dialogConfig.list"
         :border="['outer']"
         show-overflow-tooltip
+        remote-pagination
+        :pagination="pagination"
+        @page-limit-change="pageLimitChange"
+        @page-value-change="pageCurrentChange"
       >
         <template #empty>
           <Empty
             :is-data-empty="dialogConfig.isDataEmpty"
             :is-data-error="dialogConfig.isDataError"
-            @handle-update="fetchDataUpdateRecord"
+            @handle-update="fetchUpdateRecord"
           />
         </template>
-        <bk-table-column type="expand" width="60"></bk-table-column>
-        <template #expandRow="row">
+        <!-- <bk-table-column type="expand" width="60"></bk-table-column> -->
+        <!-- <template #expandRow="row">
           <div class="expand-wrapper">
             <div class="expand-item">
               <span class="w-[60px] text-[#EA3636]">{{ $t('删除') }}:</span>
@@ -171,35 +175,31 @@
               </div>
             </div>
           </div>
-        </template>
-        <bk-table-column prop="updated_at" :label="$t('时间')" width="160">
-          <template #default="{ row }">
-            <span>{{ row.updated_at }}</span>
-          </template>
-        </bk-table-column>
-        <bk-table-column prop="source_tenant" :label="$t('源租户')"></bk-table-column>
+        </template> -->
+        <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
+        <bk-table-column prop="source_tenant_name" :label="$t('源租户')"></bk-table-column>
         <bk-table-column :label="$t('更新内容')" width="480">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
               <i class="bk-sq-icon icon-personal-user" />
-              <span>{{ row.delete?.users?.length }}</span>
+              <span>{{ row.content?.delete?.user }}</span>
               <i class="bk-sq-icon icon-file-close" />
-              <span>{{ row.delete?.departments?.length }}</span>
+              <span>{{ row.content?.delete?.department }}</span>
             </bk-tag>
             <bk-tag theme="warning">
               {{ $t('变更') }}：
               <i class="bk-sq-icon icon-personal-user" />
-              <span>{{ row.change?.users?.length }}</span>
+              <span>{{ row.content?.update?.user }}</span>
               <i class="bk-sq-icon icon-file-close" />
-              <span>{{ row.change?.departments?.length }}</span>
+              <span>{{ row.content?.update?.department }}</span>
             </bk-tag>
             <bk-tag theme="success">
               {{ $t('新增') }}：
               <i class="bk-sq-icon icon-personal-user" />
-              <span>{{ row.add?.users?.length }}</span>
+              <span>{{ row.content?.create?.user }}</span>
               <i class="bk-sq-icon icon-file-close" />
-              <span>{{ row.add?.departments?.length }}</span>
+              <span>{{ row.content?.create?.department }}</span>
             </bk-tag>
           </template>
         </bk-table-column>
@@ -215,7 +215,7 @@ import OperationDetails from './OperationDetails.vue';
 
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks';
-import { getFromStrategies, putFromStrategiesStatus } from '@/http';
+import { getCollaborationSyncRecords, getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
 import { dataSourceStatus } from '@/utils';
@@ -296,23 +296,62 @@ const dialogConfig = reactive({
   list: [],
   isDataEmpty: false,
   isDataError: false,
+  loading: false,
 });
 
-// 一期不做
-// const handleUpdateRecord = async () => {
-//   try {
-//     dialogConfig.isShow = true;
-//     dialogConfig.isDataEmpty = false;
-//     dialogConfig.isDataError = false;
-//     setTimeout(() => {
-//       dialogConfig.list = [];
-//     }, 1000);
-//   } catch (error) {
-//     dialogConfig.isDataError = true;
-//   } finally {
-//     dialogConfig.isShow = false;
-//   }
-// };
+const pagination = reactive({
+  current: 1,
+  count: 0,
+  limit: 10,
+});
+
+// 数据更新记录
+const showUpdateRecord = () => {
+  dialogConfig.isShow = true;
+  fetchUpdateRecord();
+};
+
+const fetchUpdateRecord = async () => {
+  try {
+    dialogConfig.loading = true;
+    dialogConfig.isDataEmpty = false;
+    dialogConfig.isDataError = false;
+
+    const res = await getCollaborationSyncRecords({
+      page: pagination.current,
+      pageSize: pagination.limit,
+    });
+    const { count, results } = res.data;
+
+    pagination.count = count;
+    dialogConfig.isDataEmpty = count === 0;
+    dialogConfig.list = results;
+
+    dialogConfig.list?.forEach((item) => {
+      const { department, user } = item.summary;
+      item.content = {
+        create: { department: department.create, user: user.create },
+        delete: { department: department.delete, user: user.delete },
+        update: { department: department.update, user: user.update },
+      };
+    });
+  } catch (error) {
+    dialogConfig.isDataError = true;
+  } finally {
+    dialogConfig.loading = false;
+  }
+};
+
+const pageLimitChange = (limit: number) => {
+  pagination.limit = limit;
+  pagination.current = 1;
+  fetchUpdateRecord();
+};
+
+const pageCurrentChange = (current: number) => {
+  pagination.current = current;
+  fetchUpdateRecord();
+};
 
 const handleDetails = (item, type) => {
   detailsConfig.isShow = true;
@@ -485,6 +524,11 @@ const updateList = () => {
   }
 
   .update-record-table {
+    :deep(.bk-table-footer) {
+      padding: 0 15px;
+      background: #fff;
+    }
+
     .expand-wrapper {
       max-height: 300px;
       overflow-y: auto;

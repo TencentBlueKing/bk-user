@@ -109,3 +109,11 @@ export interface FromStrategiesConfirmParams {
     }[],
   },
 }
+
+/**
+ * 跨租户协同-数据更新记录
+ */
+export interface CollaborationSyncRecordsParams {
+  page?: number,
+  pageSize?: number,
+}

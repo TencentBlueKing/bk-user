@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  CollaborationSyncRecordsParams,
   FromStrategiesConfirmParams,
   NewCustomFieldsParams,
   NewToStrategiesParams,
@@ -136,3 +137,8 @@ export const putFromStrategiesConfirm = (params: FromStrategiesConfirmParams) =>
  * 跨租户协同-编辑协同策略
  */
 export const putFromStrategies = (params: FromStrategiesConfirmParams) => http.put(`/api/v1/web/collaboration/from-strategies/${params.id}/`, params);
+
+/**
+ * 跨租户协同-数据更新记录
+ */
+export const getCollaborationSyncRecords = (params: CollaborationSyncRecordsParams) => http.get('/api/v1/web/collaboration/sync-records/', params);
