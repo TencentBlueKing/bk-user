@@ -1,5 +1,5 @@
 <template>
-  <bk-form form-type="vertical" v-bkloading="{ loading }">
+  <bk-form v-show="!isAdminShow" form-type="vertical" v-bkloading="{ loading }">
     <div class="tenant-logo">
       <img src="../../static/images/blueking.png" />
     </div>
@@ -66,7 +66,7 @@
     </section>
 
     <section v-else-if="hasStorage">
-      <bk-link v-if="hasBuiltin && hasRealUser" @click.prevent="handleAdminLogin" class="admin-login">
+      <bk-link v-if="hasBuiltin && hasRealUser" @click.prevent="isAdminShow = true" class="admin-login">
         管理员登录 >
       </bk-link>
       <div class="tenant-header">
@@ -153,6 +153,12 @@
       <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
     </section>
   </bk-form>
+  <div v-show="isAdminShow" style="margin-top: -28px">
+    <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; 返回上一级</bk-link>
+    <h1 class="admin-title">管理员登录</h1>
+    <span class="admin-desc">可使用内置管理员账号进行登录</span>
+    <Password is-admin :idp-id="appStore.manageIdpId"></Password>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -161,7 +167,6 @@ import { Transfer } from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
-import { useRouter } from 'vue-router';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
 
@@ -428,10 +433,7 @@ const getUserGroupName = (tenant: Tenant) => {
 /**
  * 管理员登录
  */
-const router = useRouter();
-const handleAdminLogin = () => {
-  router.push({ name: 'admin' });
-};
+const isAdminShow = ref(false);
 
 </script>
 
@@ -639,5 +641,21 @@ const handleAdminLogin = () => {
     font-size: 14px;
   }
 }
-
+.admin-back {
+  display: inline-block;
+  font-size: 14px;
+  padding-bottom: 16px;
+}
+.admin-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #313238;
+  margin-bottom: 12px;
+}
+.admin-desc {
+  display: inline-block;
+  font-size: 14px;
+  color: #63656E;
+  margin-bottom: 24px;
+}
 </style>
