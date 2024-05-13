@@ -451,6 +451,7 @@
   "需要先停用租户才能删除": "Need to deactivate the tenant before deleting",
   "重置管理员密码": "Reset Administrator Password",
   "确定停用当前租户？": "Are you sure to deactivate the current tenant?",
+  "确定启用当前租户？": "Are you sure to enable the current tenant?",
   "停用后，用户将无法看到该租户信息": "Once deactivated, users will not be able to see this tenant",
   "租户停用成功": "Tenant successfully deactivated",
   "租户启用成功": "Tenant successfully activated",

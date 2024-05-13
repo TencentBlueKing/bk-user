@@ -22,13 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import typeImg from "@/images/type.png";
-import sourceImg from "@/images/source.png";
-import orgImg from "@/images/org.png";
-import imgOne from "@/images/1.png";
-import imgTwo from "@/images/2.png";
-import imgThree from "@/images/3.png";
-import { AngleDoubleRightLine } from "bkui-vue/lib/icon";
+import { AngleDoubleRightLine } from 'bkui-vue/lib/icon';
+
+import imgOne from '@/images/1.png';
+import imgTwo from '@/images/2.png';
+import imgThree from '@/images/3.png';
+import orgImg from '@/images/org.png';
+import sourceImg from '@/images/source.png';
+import typeImg from '@/images/type.png';
 import { t } from '@/language/index';
 
 const list = [
