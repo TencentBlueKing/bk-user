@@ -121,13 +121,23 @@
         <custom-login v-else :idp-id="activeIdp.id"></custom-login>
       </section>
 
-      <section v-else-if="hasBuiltin && !hasRealUser">
+      <section v-else-if="!hasRealUser && hasBuiltin">
         <h2 class="h2-title">该租户未完成用户登录的配置，请以管理员模式登录</h2>
         <Password
           v-if="activeIdp?.plugin_id === 'local'"
           is-admin
           :idp-id="activeIdp.id"
         />
+      </section>
+
+      <section v-else-if="!hasRealUser && !hasBuiltin" class="unset">
+        <div class="unset-logo">
+          <img src="../../static/images/unset.svg" />
+        </div>
+        <div class="unset-header">
+          {{ userGroupName === '本租户' ? '当前' : '协同' }}租户未完成用户登录配置，无法登录
+        </div>
+        <div v-if="userGroupName !== '本租户'" class="unset-content">协同租户：{{ userGroupName }}</div>
       </section>
 
       <div class="tenant-password">
@@ -610,4 +620,24 @@ const handleAdminLogin = () => {
   line-height: 24px;
   margin-bottom: 16px;
 }
+.unset {
+  text-align: center;
+  color: #313238;
+  margin-bottom: 20px;
+
+  .unset-logo {
+    img {
+      height: 120px;
+    }
+  }
+  .unset-header {
+    font-size: 16px;
+    line-height: 22px;
+    padding: 8px 0;
+  }
+  .unset-content {
+    font-size: 14px;
+  }
+}
+
 </style>
