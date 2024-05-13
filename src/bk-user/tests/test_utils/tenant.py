@@ -28,7 +28,6 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         defaults={
             "name": tenant_id,
             "is_default": bool(tenant_id == DEFAULT_TENANT),
-            "feature_flags": {"user_number_visible": True},
         },
     )
 
