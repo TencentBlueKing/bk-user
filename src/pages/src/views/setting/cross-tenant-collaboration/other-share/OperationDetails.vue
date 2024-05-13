@@ -46,8 +46,8 @@
             :field-setting-data="fieldSettingData"
             :api-fields="apiFields"
             :rules="rulesFieldSetting"
-            :source-field="$t('源租户用户字段')"
-            :target-field="$t('本租户用户字段')"
+            :source-field="$t('本租户用户字段')"
+            :target-field="$t('源租户用户字段')"
             :disabled-builtin-field="true"
             @change-api-fields="changeApiFields"
             @handle-add-field="handleAddField"
@@ -147,7 +147,9 @@ onMounted(() => {
 const initFields = async () => {
   try {
     isLoading.value = true;
-    fieldSettingData.addFieldList = JSON.parse(JSON.stringify(formData.target_config.field_mapping));
+    if (formData.target_config?.field_mapping) {
+      fieldSettingData.addFieldList = JSON.parse(JSON.stringify(formData.target_config.field_mapping));
+    }
 
     const [fieldsRes, customRes] = await Promise.all([getFields(), getSourceTenantCustomFields(formData.id)]);
 
@@ -157,14 +159,26 @@ const initFields = async () => {
         source_field: fields.name,
         disabled: isDisabled,
       });
-      apiFields.value.push({ key: fields.name, disabled: isDisabled });
 
-      const targetFieldList = fieldSettingData.field_mapping[fieldMappingType];
-      targetFieldList.push(fields);
+      if (fieldMappingType !== 'source_fields') {
+        const targetFieldList = fieldSettingData.field_mapping[fieldMappingType];
+        targetFieldList.push(fields);
+      }
+
+      const filterKeys = new Set(fieldSettingData.addFieldList?.map(item => (fieldMappingType === 'custom_fields'
+        ? item.target_field
+        : item.source_field
+      )));
+      fields.disabled = filterKeys.has(fields.name);
 
       if (fieldMappingType === 'custom_fields') {
-        const filterKeys = new Set(fieldSettingData.addFieldList?.map(item => item.source_field));
-        fields.disabled = filterKeys.has(fields.name);
+        fieldSettingData.field_mapping.custom_fields?.forEach((item) => {
+          if (filterKeys.has(item.name)) {
+            item.disabled = true;
+          }
+        });
+      } else if (fieldMappingType === 'source_fields') {
+        apiFields.value.push({ key: fields.name, disabled: isDisabled, display_name: fields.display_name });
         apiFields.value.forEach((item) => {
           if (filterKeys.has(item.key)) {
             item.disabled = true;
@@ -173,9 +187,9 @@ const initFields = async () => {
       }
     };
     // 自定义字段的数据来源是本租户的自定义字段
-    fieldsRes.data.custom_fields = customRes?.data || [];
     fieldsRes.data?.builtin_fields?.forEach(field => mapFields(field, true, 'builtin_fields'));
     fieldsRes.data?.custom_fields?.forEach(field => mapFields(field, false, 'custom_fields'));
+    customRes?.data?.forEach(field => mapFields(field, false, 'source_fields'));
   } finally {
     isLoading.value = false;
   }
@@ -256,9 +270,11 @@ const cancelEdit = () => {
 const saveEdit = async () => {
   await formRef.value.validate();
   if (props.config.type === 'view') {
-    handleSave();
+    await handleSave();
+    isEdit.value = false;
+  } else {
+    isEdit.value = false;
   }
-  isEdit.value = false;
 };
 
 const handleSave = async () => {
@@ -271,7 +287,7 @@ const handleSave = async () => {
     },
   };
 
-  await props.config.type === 'view' ? putFromStrategies(params) : putFromStrategiesConfirm(params);
+  props.config.type === 'view' ? await putFromStrategies(params) : await putFromStrategiesConfirm(params);
   Message({ theme: 'success', message: t('更新成功') });
   emit('updateList');
 };

@@ -81,9 +81,9 @@
             v-for="option in apiFields"
             :key="option.key"
             :id="option.key"
-            :name="option.key"
+            :name="formatOptionName(option)"
             :disabled="option.disabled">
-            <span>{{option.key}}</span>
+            <span>{{ formatOptionName(option) }}</span>
           </bk-option>
         </bk-select>
       </bk-form-item>
@@ -134,6 +134,8 @@ const customConditions = ref([
   { name: t('直接'), key: 'direct' },
   { name: t('表达式'), key: 'expression' },
 ]);
+
+const formatOptionName = (option: any) => (option.display_name ? `${option.display_name}（${option.key}）` : option.key);
 </script>
 
 <style lang="less" scoped>
