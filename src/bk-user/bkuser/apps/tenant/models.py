@@ -32,7 +32,6 @@ class Tenant(AuditedModel):
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
-    feature_flags = models.JSONField("租户特性标志集", default=dict)
     status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
     # 特性
     visible = models.BooleanField("租户可见性", default=True)

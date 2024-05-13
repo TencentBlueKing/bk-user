@@ -28,7 +28,6 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=128, unique=True, verbose_name='租户名称')),
                 ('logo', models.TextField(blank=True, default='', null=True, verbose_name='Logo')),
                 ('is_default', models.BooleanField(default=False, verbose_name='是否默认租户')),
-                ('feature_flags', models.JSONField(default=dict, verbose_name='租户特性标志集')),
                 ('status', models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用')], default=bkuser.apps.tenant.constants.TenantStatus['ENABLED'], max_length=32, verbose_name='状态')),
                 ('visible', models.BooleanField(default=True, verbose_name='租户可见性')),
                 ('user_number_visible', models.BooleanField(default=True, verbose_name='人员数量是否可见')),
