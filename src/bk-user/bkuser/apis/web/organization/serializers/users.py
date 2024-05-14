@@ -169,7 +169,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if invalid_leader_ids:
-            raise ValidationError(_("指定的直属上级 {} 不存在").format(invalid_leader_ids))
+            raise ValidationError(_("指定的直属上级 {} 不存在").format(",".join(invalid_leader_ids)))
 
         return leader_ids
 
@@ -286,7 +286,8 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
         exists_extras = DataSourceUser.objects.get(id=self.context["data_source_user_id"]).extras
         for f in custom_fields.filter(manager_editable=False):
-            extras[f.name] = exists_extras[f.name]
+            if f.name in exists_extras:
+                extras[f.name] = exists_extras[f.name]
 
         return extras
 
