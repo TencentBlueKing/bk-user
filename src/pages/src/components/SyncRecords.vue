@@ -345,18 +345,18 @@ onBeforeUnmount(() => {
     }
   }
 
-  ::v-deep .bk-modal-content {
-    overflow-y: auto;
+  // ::v-deep .bk-modal-content {
+  //   overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
-  }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
+  // }
 }
 </style>

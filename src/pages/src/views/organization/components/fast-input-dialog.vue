@@ -1,5 +1,6 @@
 <template>
   <bk-dialog
+    :width="640"
     :height="485"
     :is-show="isShow"
     :title="$t('快速录入')"

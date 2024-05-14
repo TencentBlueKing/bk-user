@@ -240,24 +240,24 @@ const pageCurrentChange = (current) => {
     }
   }
 
-  :deep(.bk-modal-content) {
-    overflow-y: auto;
+  // :deep(.bk-modal-content) {
+  //   overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
 
-    &:hover {
-      &::-webkit-scrollbar-thumb {
-        background-color: #979ba5;
-      }
-    }
-  }
+  //   &:hover {
+  //     &::-webkit-scrollbar-thumb {
+  //       background-color: #979ba5;
+  //     }
+  //   }
+  // }
 }
 </style>

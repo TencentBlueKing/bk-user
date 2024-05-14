@@ -9,7 +9,8 @@
                 <i class="user-icon icon-add-2 mr8" />
                 {{ $t('快速录入') }}
             </bk-button>
-            <bk-button v-if="!isTenant">{{ $t('拉取已有用户') }}</bk-button>
+            <bk-button v-if="!isTenant"
+              @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
             <bk-checkbox class="ml-[16px] h-[32px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
@@ -26,89 +27,131 @@
             />
         </div>
         <bk-table
-            class="organization-table-main"
             height="100%"
+            class="organization-table-main"
             :border="['outer']"
-            :columns="columns"
             :data="tableData"
             :pagination="pagination"
             v-bkloading="{ loading: isLoading }"
             row-hover="auto"
+            remote-pagination
             @select="handleSelectTable"
             @select-all="handleSelectAll"
+            @page-limit-change="pageLimitChange"
+            @page-value-change="pageCurrentChange"
         >
-            <template #prepend v-if="!isTenant && selectList.length">
-                <div class="table-total">
-                    <span>当前已选择 <b>{{selectList.length}}</b> 条数据，可以批量</span>
-                    <label
-                        v-for="(item, index) in operationList.filter(item => item.isShow)"
-                        :key="index"
-                        class="table-operate ml-[12px]"
-                        @click="() => {
-                            currentHandle = item;
-                            item.handle(true);
-                        }"
-                    >{{$t(item.label)}}</label>   
-                </div>
-            </template>
-            <template
-                v-for="(column, ind) in columnsRender"
-                :key="column.label"
+          <template #empty>
+            <Empty
+              :is-data-empty="isDataEmpty"
+              :is-search-empty="isEmptySearch"
+              :is-data-error="isDataError"
+              @handle-empty="handleClear"
+              @handle-update="initTenantsUserList"
+            />
+          </template>
+          <template #prepend v-if="!isTenant && selectList.length">
+              <div class="table-total">
+                  <span>当前已选择 <b>{{selectList.length}}</b> 条数据，可以批量</span>
+                  <label
+                      v-for="(item, index) in operationList.filter(item => item.isShow)"
+                      :key="index"
+                      class="table-operate ml-[12px]"
+                      @click="() => {
+                          currentHandle = item;
+                          item.handle(true);
+                      }"
+                  >{{$t(item.label)}}</label>   
+              </div>
+          </template>
+          <template
+            v-for="(column, ind) in columnsRender"
+            :key="ind"
+          >
+            <bk-table-column
+              :label="column.label"
+              :type="column.type"
+              :field="column.field"
+              :width="column.width"
+              :index="ind"
             >
-                <bk-table-column
-                    :label="column.label"
-                    :type="column.type"
-                    :field="column.field"
-                    :width="column.width"
-                    :index="ind"
-                >
-                <template #default="{ row, column, index }">
-                    <span v-if="column?.field === 'username'"
-                        @click="() => editInfoHandle(row)">
-                        <label class="table-operate">{{row[column?.field]}}</label>
-                    </span>
-                    <span v-else-if="column?.field === 'status'" class="status-main">
-                        <label :class="`status-label ${row.status}`"></label>
-                        {{statusEnum[row.status]}}
-                    </span>
-                    <span v-else-if="column?.field === 'operation'">
-                        <label class="table-operate" @click="() => editInfoHandle(row, true)">{{$t('编辑')}}</label>
-                        <bk-popover
-                            ext-cls="operate-popover"
-                            :ref="(el) => setItemRef(el, `dropdownRef${index}`)"
-                            theme="light"
-                            trigger="click"
-                            :arrow="false"
-                            placement="bottom"
-                            allowHtml
-                        >
-                            <template #content>
-                                <ul class="operate-menu-list">
-                                    <li
-                                        class="operate-list-item"
-                                        v-for="(item, ind) in rowOperation"
-                                        :key="ind"
-                                        @click="() => {
-                                            detailsInfo = row;
-                                            dropdownRefs[`dropdownRef${index}`]?.hide();
-                                            item.handle(false, row);
-                                        }"
-                                    >
-                                        {{ operationLabel(item, row) }}
-                                    </li>
-                                </ul>
-                            </template>
-                            <div class="operate-popover-main">
-                                <i class="user-icon icon-more ml8" />
-                            </div>
-                        </bk-popover>
-                    </span>
-                    <label v-else>{{formatField(row[column?.field])}}</label>
-                </template>
-                </bk-table-column>
+            <template #default="{ row, column, index }">
+                <span v-if="column?.field === 'username'"
+                    @click="() => editInfoHandle(row)">
+                    <label class="table-operate">{{row[column?.field]}}</label>
+                </span>
+                <span v-else-if="column?.field === 'status'" class="status-main">
+                    <label :class="`status-label ${row.status}`"></label>
+                    {{statusEnum[row.status]}}
+                </span>
+                <span v-else-if="column?.field === 'operation'">
+                    <label class="table-operate" @click="() => editInfoHandle(row, true)">{{$t('编辑')}}</label>
+                    <bk-popover
+                        ext-cls="operate-popover"
+                        :ref="(el) => setItemRef(el, `dropdownRef${index}`)"
+                        theme="light"
+                        trigger="click"
+                        :arrow="false"
+                        placement="bottom"
+                        allowHtml
+                    >
+                        <template #content>
+                            <ul class="operate-menu-list">
+                                <li
+                                    class="operate-list-item"
+                                    v-for="(item, ind) in rowOperation"
+                                    :key="ind"
+                                    @click="() => {
+                                        detailsInfo = row;
+                                        dropdownRefs[`dropdownRef${index}`]?.hide();
+                                        item.handle(false, row);
+                                    }"
+                                >
+                                    {{ operationLabel(item, row) }}
+                                </li>
+                            </ul>
+                        </template>
+                        <div class="operate-popover-main">
+                            <i class="user-icon icon-more ml8" />
+                        </div>
+                    </bk-popover>
+                </span>
+                <label v-else>{{formatField(row[column?.field])}}</label>
             </template>
+            </bk-table-column>
+          </template>
         </bk-table>
     </div>
+    <!-- 拉取已有用户 -->
+    <bk-dialog
+      :is-show="getUsersDialogShow"
+      :title="$t('拉取已有用户')"
+      :theme="'primary'"
+      :size="'normal'"
+      @closed="() => getUsersDialogShow = false"
+      @confirm="() => confirmGetUser()"
+    >
+      <bk-select
+        v-model="getUsersValue"
+        class="user-select-main"
+        :list="getUserList"
+        filterable
+        multiple
+        auto-focus
+        :clearable="false"
+        allowCreate
+        id-key="id"
+        display-key="username"
+        :remoteMethod="remoteMethod"
+        @select="handleSelect"
+      >
+        <template #optionRender="{ item }" class="test">
+          <div class="user-info-option">
+            <p class="text-[#313238]">{{ item.username }}({{ item.full_name }}) <label class="text-[#FF9C01]">@{{item.tenant_name}}</label></p>
+            <!-- <p class="text-[#979BA5]">{{item.organization_paths.join('/')}}</p> -->
+          </div>
+        </template>
+      </bk-select>
+    </bk-dialog>
     <!-- 移动至组织/添加至组织弹框 -->
     <bk-dialog
       :is-show="moveDialogShow"
@@ -145,6 +188,7 @@
     </bk-dialog>
     <!-- 重置密码弹框 -->
     <bk-dialog
+      :width="500"
       :is-show="passwordDialogShow"
       :title="$t('重置密码')"
       :theme="'primary'"
@@ -181,7 +225,7 @@
     >
       <EditDetails
         v-if="isDetailSlider"
-        :details-info="detailsInfo"
+        :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
       <ViewUser :user-data="detailsInfo" v-else />
@@ -197,14 +241,15 @@
 <script setup lang="ts">
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
+  import Empty from '@/components/Empty.vue';
   import { Upload } from 'bkui-vue/lib/icon';
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
-  import EditDetails from '../../virtual-account/EditDetails.vue';
+  import EditDetails from './edit-detail.vue';
   import ImportDialog from '@/components/import-dialog/import-dialog.vue'
-//   import EditDetailsInfo from '../details/EditDetailsInfo.vue'
   import ViewUser from '../details/ViewUser.vue';
   import { randomPasswords } from '@/http';
+  import { getFields } from '@/http/settingFiles';
   import {
     getTenantsUserList,
     getFieldsTips,
@@ -212,11 +257,14 @@
     updateTenantsUserStatus,
     delTenantsUser,
     batchDeleteUser,
-    departmentsList,
+    optionalDepartmentsList,
     batchDelete,
     batchUpdate,
     batchCreate,
-    batchDelUpdate
+    batchDelUpdate,
+    getTenantsUserDetail,
+    getOrganizationPaths,
+    getUsersList
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
 
@@ -233,6 +281,8 @@
   const isTenant = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
   });
+  const isDataError = ref(false);
+  const isEmptySearch = ref(false);
   const detailsInfo = ref({});
   const selectList = ref([]);
   const password = ref('');
@@ -250,6 +300,10 @@
   const passwordDialogShow = ref(false);
   const fastInputDialogShow = ref(false);
   const importDialogShow = ref(false);
+  const editDetailsInfo = ref({});
+  const getUsersDialogShow = ref(false);
+  const getUsersValue = ref([]);
+  const getUserList = ref([]);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
@@ -395,6 +449,34 @@
     }]];
   });
 
+  /** 点击拉取已有用户按钮 */
+  const handleGetUsersDialog = () => {
+    getUsersValue.value = [];
+    getUsersDialogShow.value = true;
+  }
+
+  const remoteMethod = async (word) => {
+    if (word.length > 1) {
+      const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
+      getUserList.value = res.data;
+    }
+  }
+  /** 确认拉取已有用户 */
+  const confirmGetUser = async () => {
+    try {
+      const param = {
+        target_department_ids: [appStore.currentOrg.id], 
+        user_ids: getUsersValue.value
+      }
+      const res = await batchCreate(param);
+      getUsersDialogShow.value = false;
+      Message({ theme: 'success', message: $t('拉取已有用户成功') });
+      handleClear();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   const getBatchUserIds = (isArray = false) => {
     const userId = [];
     selectList.value.map(item => userId.push(item.id));
@@ -406,7 +488,7 @@
   /** 点击移动/移动至组织按钮 */
   const handleOperations = async (status, title) => {
     moveDialogShow.value = true;
-    const res = await departmentsList();
+    const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
 
@@ -422,7 +504,7 @@
             };
             await currentHandle.value.confirmFn(params);
             moveDialogShow.value = false;
-            initTenantsUserList();
+            handleClear();
         }
     });
   }
@@ -447,9 +529,10 @@
   
   const initTenantsUserList = async () => {
     try {
+        tableData.value = [];
         selectList.value = [];
         isLoading.value = true;
-        // isDataError.value = false;
+        isDataError.value = false;
         const params = {
           page: pagination.current,
           page_size: pagination.limit,
@@ -458,14 +541,14 @@
           recursive: !recursive.value
         };
         const res = await getTenantsUserList(appStore.currentTenant.id, params);
-        // if (res.data?.count === 0) {
-        //   searchVal.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
-        // }
+        if (res.data?.count === 0) {
+          keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+        }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
     } catch (e) {
         console.warn(e);
-        // isDataError.value = true;
+        isDataError.value = true;
     } finally {
         isLoading.value = false;
     }
@@ -487,7 +570,7 @@
         await resetTenantsUserPassword(detailsInfo.value.id, param);
         passwordDialogShow.value = false;
         Message({ theme: 'success', message: $t('重置密码成功') });
-        initTenantsUserList();
+        handleClear();
     } catch (e) {
         console.warn(e);
     }
@@ -498,7 +581,7 @@
   }
   const fastInputSuccess = () => {
     fastInputDialogShow.value = false;
-    initTenantsUserList();
+    handleClear();
   };
   const handleEnter = () => {
     pagination.current = 1;
@@ -537,26 +620,69 @@
     editDetailsShow.value = false;
     window.changeInput = false;
     Message({ theme: 'success', message });
-    // initTenantsUserList();
+    handleClear();
+  };
+  const pageLimitChange = (limit: number) => {
+    pagination.limit = limit;
+    pagination.current = 1;
+    initTenantsUserList();
+  };
+
+  const pageCurrentChange = (current: number) => {
+    pagination.current = current;
+    initTenantsUserList();
   };
 
   const handleCancelEdit = () => {
     window.changeInput = false;
     editDetailsShow.value = false;
   };
-  const editInfoHandle = (row, isDetail = false) => {
+  const getIdList = (data, key = 'id') => {
+    if (!Array.isArray(data)) {
+        return;
+    }
+    const values = data.reduce((acc, obj) => {
+        if (key in obj) {
+            acc.push(obj[key]);
+        }
+        return acc;
+    }, []);
+    return values;
+  };
+  const editInfoHandle = async (row, isDetail = false) => {
     isDetailSlider.value = isDetail;
     detailsInfo.value = row;
+    const [useRes, fieldsRes] = await Promise.all([
+        getTenantsUserDetail(row.id),
+        getFields(),
+    ]);
+    const data = useRes.data;
+    const extrasList = fieldsRes.data.custom_fields;
+    extrasList.map(item => item.value = data.extras[item.name]);
+    Object.assign(data, {
+      departments: getIdList(data?.departments),
+      leaders: getIdList(data?.leaders),
+      extras: extrasList
+    })
+    editDetailsInfo.value = data;
     editDetailsShow.value = true;
   }
 </script>
 <style lang="less">
-    .operate-popover {
-        padding: 5px 0 !important;
+  .operate-popover {
+      padding: 5px 0 !important;
+  }
+  .organization-table-main {
+    .bk-table-head thead th {
+      &:first-child {
+        text-align: center;
+      }
     }
+  }
 </style>
 <style lang="less" scoped>
     .organization-table {
+      height: 100%;
         .table-search {
             width: 100%;
             position: relative;
@@ -634,6 +760,9 @@
             }
         }
     }
+    .user-select-main {
+
+    }
     .operate-menu-list {
         .operate-list-item {
             color: #63656E;
@@ -644,6 +773,9 @@
                 background: #F5F7FA;
             }
         }
+    }
+    .user-info-option {
+      // height: 52px;
     }
 </style>
   

@@ -93,6 +93,11 @@ export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/
 export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/`, params);
 
 /**
+ * 更新租户用户
+ */
+export const getOrganizationPaths = (id: string, params: any) => http.get(`${prefix}/tenants/users/${id}/organization-paths/`, params);
+
+/**
  * 删除租户用户
  */
 export const delTenantsUser = (id: string) => http.delete(`${prefix}/tenants/users/${id}/`);
@@ -153,7 +158,12 @@ export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/
 /**
  * 可选部门
  */
-export const departmentsList = (params: any) => http.get(`${prefix}/tenants/optional-departments/`, params);
+export const optionalDepartmentsList = (params: any) => http.get(`${prefix}/tenants/optional-departments/`, params);
+
+/**
+ * 可选leader
+ */
+export const optionalLeaderList = (params: any) => http.get(`${prefix}/tenants/optional-leaders/`, params);
 
 /**
  * 搜索组织
@@ -169,3 +179,8 @@ export const searchUser = (params: any) => http.get(`${prefix}/tenants/users/`, 
  * 租户下部门单个用户详情
  */
 export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
+
+/**
+ * 搜索租户用户
+ */
+export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`, params);

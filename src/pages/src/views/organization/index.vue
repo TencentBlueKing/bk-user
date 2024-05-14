@@ -33,7 +33,9 @@
         <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
           {{ appStore.currentOrg?.name }}
         </div>
-        <TableList />
+        <div class="table-main">
+          <TableList />
+        </div>
       </section>
     </template>
   </bk-resize-layout>
@@ -53,6 +55,9 @@ const appStore = useAppStore();
 </script>
 
 <style lang="postcss" scoped>
+.table-main {
+  height: calc(100vh - 170px);
+}
 :deep(.bk-node-row) {
   &:hover {
     background-color: #F0F1F5;
