@@ -170,6 +170,8 @@
           :field-setting-data="fieldSettingData"
           :api-fields="apiFields"
           :rules="rulesFieldSetting"
+          :source-field="$t('用户管理字段')"
+          :target-field="$t('API返回字段')"
           @change-api-fields="changeApiFields"
           @handle-add-field="handleAddField"
           @handle-delete-field="handleDeleteField"

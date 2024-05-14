@@ -9,23 +9,26 @@
       </bk-button>
       <bk-input
         class="header-right"
-        v-model="searchVal"
+        v-model="search"
         type="search"
         clearable
-        @enter="handleEnter"
-        @clear="handleClear"
+        :placeholder="$t('搜索策略名称')"
       />
     </header>
     <bk-table
-      :data="tableData"
+      :data="searchList"
       :border="['outer']"
       :max-height="tableMaxHeight"
-      show-overflow-tooltip>
+      show-overflow-tooltip
+      @column-filter="handleFilter"
+    >
       <template #empty>
         <Empty
           :is-data-empty="isDataEmpty"
+          :is-search-empty="isSearchEmpty"
           :is-data-error="isDataError"
-          @handle-update="handleUpdate"
+          @handle-empty="search = ''"
+          @handle-update="fetchToStrategies"
         />
       </template>
       <bk-table-column prop="name" :label="$t('策略名称')">
@@ -35,19 +38,17 @@
           </bk-button>
         </template>
       </bk-table-column>
-      <bk-table-column prop="target" :label="$t('目标租户')">
-        <template #default="{ row }">
-          <span>{{ row.target?.map(item => item.name).join(', ') || '--' }}</span>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="operator" :label="$t('创建人')"></bk-table-column>
+      <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
+      <bk-table-column prop="creator" :label="$t('创建人')" />
       <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
-      <bk-table-column prop="enable" :label="$t('启/停')" :filter="{ list: statusFilters }">
+      <bk-table-column
+        prop="source_status" :label="$t('启/停')"
+        :filter="{ list: statusFilters }">
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
             size="small"
-            v-model="row.enable"
+            :value="row.source_status === 'enabled'"
             @change="handleChange(row)"
           />
         </template>
@@ -57,8 +58,8 @@
           <bk-button text theme="primary" class="mr8" @click="handleClick('edit', row)">
             {{ $t('编辑') }}
           </bk-button>
-          <span v-bk-tooltips="{ content: $t('删除前必须停用该策略'), disabled: !row.enable }">
-            <bk-button text theme="primary" :disabled="row.enable" @click="handleDelete(row)">
+          <span v-bk-tooltips="{ content: $t('删除前必须停用该策略'), disabled: row.source_status === 'disabled' }">
+            <bk-button text theme="primary" :disabled="row.source_status === 'enabled'" @click="handleDelete(row.id)">
               {{ $t('删除') }}
             </bk-button>
           </span>
@@ -89,6 +90,7 @@
           v-else
           :config="detailsConfig"
           @handle-cancel-edit="handleCancelEdit"
+          @update-list="updateList"
         />
       </template>
     </bk-sideslider>
@@ -96,14 +98,15 @@
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
-import { computed, inject, onMounted, reactive, ref } from 'vue';
+import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+import { computed, defineProps, inject, reactive, ref, watch, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks';
+import { deleteToStrategies, getToStrategies, putToStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
 
@@ -111,43 +114,79 @@ const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const userStore = useUser();
 
+const props = defineProps({
+  active: {
+    type: String,
+    default: '',
+  },
+});
+
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
 const isDataEmpty = ref(false);
 const isDataError = ref(false);
-const searchVal = ref('');
+const isSearchEmpty = ref(false);
+const search = ref('');
 
-onMounted(() => {
+// 获取协同策略列表
+const fetchToStrategies = async () => {
   try {
     isLoading.value = true;
     isDataEmpty.value = false;
     isDataError.value = false;
-    setTimeout(() => {
-      tableData.value = [];
-      if (tableData.value.length === 0) {
-        isDataEmpty.value = true;
-      }
-    }, 1000);
+    isSearchEmpty.value = false;
+    const res = await getToStrategies();
+    tableData.value = res?.data;
+    if (tableData.value.length === 0) {
+      isDataEmpty.value = true;
+    }
   } catch (error) {
     isDataError.value = true;
   } finally {
     isLoading.value = false;
   }
+};
+
+watchEffect(() => {
+  if (props.active === 'local') {
+    fetchToStrategies();
+  }
 });
 
 const statusFilters = [
-  { text: t('启用'), value: true },
-  { text: t('停用'), value: false },
+  { text: t('启用'), value: 'enabled' },
+  { text: t('停用'), value: 'disabled' },
 ];
 
-const handleDelete = (row) => {
+const handleFilter = ({ checked }) => {
+  if (checked.length === 0) return isDataEmpty.value = false;
+  isDataEmpty.value = !tableData.value.some(item => checked.includes(item.status));
+};
+
+// 搜索协同列表
+const searchList = computed(() => tableData.value.filter(item => !search.value || item.name.includes(search.value)));
+
+watch(() => search.value, (val) => {
+  isSearchEmpty.value = val && !searchList.value.length;
+});
+
+const handleChange = (row: any) => {
+  putToStrategiesStatus(row.id).then((res) => {
+    row.source_status = res?.data?.status;
+  });
+};
+
+// 删除协同策略
+const handleDelete = (id: number) => {
   InfoBox({
     title: t('是否删除当前协同？'),
     subTitle: t('删除后，目标租户的用户数据也会同步删除'),
-    onConfirm() {
-      console.log('删除成功', row);
+    onConfirm: async () => {
+      await deleteToStrategies(id);
+      Message({ theme: 'success', message: t('删除成功') });
+      fetchToStrategies();
     },
   });
 };
@@ -158,10 +197,13 @@ const detailsConfig = reactive({
   type: '',
   data: {
     name: '',
-    tenant_id: '',
-    tenant_name: '',
-    methods: 'organization',
-    sync_type: 'all',
+    target_tenant_id: '',
+    source_config: {
+      organization_scope_type: 'all',
+      organization_scope_config: {},
+      field_scope_type: 'all',
+      field_scope_config: {},
+    },
   },
 });
 
@@ -181,6 +223,21 @@ const enumData = {
 };
 
 const isView = computed(() => detailsConfig.type === 'view');
+
+watch(() => detailsConfig.isShow, (val) => {
+  if (!val) {
+    detailsConfig.data = {
+      name: '',
+      target_tenant_id: '',
+      source_config: {
+        organization_scope_type: 'all',
+        organization_scope_config: {},
+        field_scope_type: 'all',
+        field_scope_config: {},
+      },
+    };
+  }
+});
 
 const handleClick = (type: string, item?: any) => {
   if (type !== 'add') {
@@ -212,6 +269,12 @@ const handleBeforeClose = async () => {
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
   }
+};
+
+const updateList = () => {
+  detailsConfig.isShow = false;
+  window.changeInput = false;
+  fetchToStrategies();
 };
 </script>
 

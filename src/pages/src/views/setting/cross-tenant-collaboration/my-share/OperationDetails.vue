@@ -12,8 +12,12 @@
           <bk-form-item class="w-[590px]" :label="$t('策略名称')" property="name" required>
             <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
-          <bk-form-item class="w-[590px]" :label="$t('目标公司')" property="name" required>
-            <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
+          <bk-form-item class="w-[590px]" :label="$t('目标租户')" property="target_tenant_id" required>
+            <bk-input
+              v-model="formData.target_tenant_id"
+              :placeholder="validate.name.message"
+              :disabled="config.type === 'edit'"
+              @focus="handleChange" />
           </bk-form-item>
         </div>
       </div>
@@ -35,11 +39,11 @@
         <div class="operation-content-info flex">
           <bk-form-item class="w-[350px]" :label="$t('同步范围')" required>
             <bk-radio-group
-              v-model="formData.sync_type"
+              v-model="formData.source_config.field_scope_type"
             >
               <bk-radio label="all">{{ $t('所有字段') }}</bk-radio>
-              <!-- <bk-radio label="appoint">{{ $t('指定字段') }}</bk-radio>
-              <bk-radio label="basics">{{ $t('仅基础字段') }}</bk-radio> -->
+              <bk-radio label="appoint" disabled>{{ $t('指定字段') }}</bk-radio>
+              <bk-radio label="basics" disabled>{{ $t('仅基础字段') }}</bk-radio>
             </bk-radio-group>
           </bk-form-item>
           <bk-form-item
@@ -63,7 +67,8 @@
             </bk-select>
           </bk-form-item>
         </div>
-        <div class="operation-content-info mt-[24px]">
+        <!-- 一期不做 -->
+        <!-- <div class="operation-content-info mt-[24px]">
           <bk-form-item class="w-[800px]" :label="$t('字段预览')">
             <bk-table
               :data="tableData"
@@ -83,12 +88,12 @@
               <bk-table-column prop="organization" :label="$t('组织')" />
             </bk-table>
           </bk-form-item>
-        </div>
+        </div> -->
       </div>
     </bk-form>
     <div class="footer fixed">
-      <bk-button theme="primary" @click="handleSave">
-        {{ $t('保存并启用') }}
+      <bk-button theme="primary" @click="handleSave" :loading="btnLoading">
+        {{ config.type === 'add' ? $t('保存并启用') : $t('保存')}}
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
         {{ $t('取消') }}
@@ -98,12 +103,15 @@
 </template>
 
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import { defineEmits, defineProps, onMounted, reactive, ref } from 'vue';
 
-import Empty from '@/components/Empty.vue';
+// import Empty from '@/components/Empty.vue';
 import { useValidate } from '@/hooks';
+import { postToStrategies, putToStrategies } from '@/http';
+import { t } from '@/language';
 
-defineEmits(['handleCancelEdit']);
+const emit = defineEmits(['handleCancelEdit', 'updateList']);
 
 const props = defineProps({
   config: {
@@ -144,8 +152,29 @@ const handleChange = () => {
   window.changeInput = true;
 };
 
+const btnLoading = ref(false);
+// 表单校验
 const handleSave = async () => {
-  await basicRef.value.validate();
+  try {
+    await basicRef.value.validate();
+    btnLoading.value = true;
+    if (props.config.type === 'add') {
+      await postToStrategies(formData);
+      Message({ theme: 'success', message: t('协同策略创建成功') });
+      emit('updateList');
+    } else {
+      const params = {
+        name: formData.name,
+        target_tenant_id: formData.target_tenant_id,
+        source_config: formData.source_config,
+      };
+      await putToStrategies(formData.id, params);
+      Message({ theme: 'success', message: t('协同策略更新成功') });
+      emit('updateList');
+    }
+  } finally {
+    btnLoading.value = false;
+  }
 };
 </script>
 

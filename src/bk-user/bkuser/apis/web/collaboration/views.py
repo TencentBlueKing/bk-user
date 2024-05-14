@@ -275,7 +275,7 @@ class CollaborationFromStrategyUpdateApi(CurrentUserTenantMixin, ExcludePatchAPI
         slz = CollaborationFromStrategyUpdateInputSLZ(
             data=request.data,
             context={
-                "source_tenant_id": strategy.target_tenant_id,
+                "source_tenant_id": strategy.source_tenant_id,
                 "target_tenant_id": self.get_current_tenant_id(),
             },
         )
@@ -284,7 +284,7 @@ class CollaborationFromStrategyUpdateApi(CurrentUserTenantMixin, ExcludePatchAPI
 
         strategy.target_config = data["target_config"]
         strategy.updater = request.user.username
-        strategy.save(update_fields=["target_status", "target_config", "updater", "updated_at"])
+        strategy.save(update_fields=["target_config", "updater", "updated_at"])
 
         # 确认协同后，立即触发同步
         start_collaboration_tenant_sync(strategy)
@@ -321,7 +321,7 @@ class CollaborationFromStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAP
         slz = CollaborationFromStrategyConfirmInputSLZ(
             data=request.data,
             context={
-                "source_tenant_id": strategy.target_tenant_id,
+                "source_tenant_id": strategy.source_tenant_id,
                 "target_tenant_id": self.get_current_tenant_id(),
             },
         )

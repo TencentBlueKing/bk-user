@@ -16,6 +16,7 @@
       {{ tenant?.name }}
     </div>
     <bk-tree
+      v-if="treeData.length"
       :data="treeData"
       :selected="appStore.currentOrg"
       label="name"
@@ -25,7 +26,7 @@
       @node-click="handleNodeClick"
       :async="{
         callback: getRemoteData,
-        cache: false,
+        cache: true,
       }"
     >
       <template #node="node">

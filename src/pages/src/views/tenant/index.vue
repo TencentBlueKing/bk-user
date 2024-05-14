@@ -413,7 +413,7 @@ const fetchTenantsList = () => {
 
         const rows = getRows();
         for (const i of rows) {
-          i.style.background = '#DCFFE2';
+          i.style.background = '#F2FCF5';
         }
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
@@ -476,14 +476,16 @@ const handleClickEnter = () => {
 
 // 停用租户
 const handleClickDisable = (item) => {
+  const isEnabled = item.status === 'enabled';
+  const title = isEnabled ? t('确定停用当前租户？') : t('确定启用当前租户？');
+  const successMessage = isEnabled ? t('租户停用成功') : t('租户启用成功');
   InfoBox({
     width: 400,
-    title: t('确定停用当前租户？'),
+    title,
     subTitle: t('停用后，用户将无法看到该租户信息'),
     onConfirm: async () => {
       await putTenantsStatus(item.id);
-      const text = item.status === 'enabled' ? t('租户停用成功') : t('租户启用成功');
-      Message({ theme: 'success', message: text });
+      Message({ theme: 'success', message: successMessage });
       fetchTenantsList();
     },
   });

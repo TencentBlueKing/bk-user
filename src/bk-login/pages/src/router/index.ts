@@ -13,17 +13,17 @@ export default createRouter({
     {
       path: `${window.SITE_URL}/`,
       component: Home,
-      name: 'Login',
+      name: 'login',
     },
     {
       path: `${window.SITE_URL}/plain/`,
       component: Home,
-      name: 'LoginPlain',
+      name: 'login-plain',
     },
     {
       path: `${window.SITE_URL}/page/users/`,
       component: User,
-      name: 'User',
+      name: 'user',
     },
   ],
 });
