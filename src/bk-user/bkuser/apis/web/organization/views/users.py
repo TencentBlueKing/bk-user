@@ -651,7 +651,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         tags=["organization.user"],
         operation_description="租户用户快速录入",
         request_body=TenantUserBatchCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
