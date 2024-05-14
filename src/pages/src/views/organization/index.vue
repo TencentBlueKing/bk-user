@@ -37,6 +37,9 @@
           <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
             {{ appStore.currentOrg?.name }}
           </div>
+          <div class="table-main">
+            <TableList />
+          </div>
         </section>
       </template>
     </bk-resize-layout>
@@ -48,6 +51,7 @@
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
 import Search from './components/search.vue';
+import TableList from './components/table-list.vue'
 import SearchResultTree from './components/search-result-tree.vue';
 
 import useAppStore from '@/store/app';
@@ -74,6 +78,9 @@ getList();
 </script>
 
 <style lang="postcss" scoped>
+.table-main {
+  height: calc(100vh - 170px);
+}
 :deep(.bk-node-row) {
   &:hover {
     background-color: #F0F1F5;

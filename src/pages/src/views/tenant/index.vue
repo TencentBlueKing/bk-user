@@ -681,26 +681,26 @@ const {
 }
 
 .details-edit-wrapper {
-  :deep(.bk-modal-content) {
-    height: calc(100vh - 52px);
-    background: #f5f7fa;
+  // :deep(.bk-modal-content) {
+  //   height: calc(100vh - 52px);
+  //   background: #f5f7fa;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
-  }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
+  // }
 }
 
 .dialog-wrapper {
-  :deep(.bk-modal-content) {
-    overflow: visible !important;
-  }
+  // :deep(.bk-modal-content) {
+  //   overflow: visible !important;
+  // }
 }
 
 .error {
