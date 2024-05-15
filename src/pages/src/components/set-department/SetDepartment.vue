@@ -14,7 +14,7 @@
           <Tree
             :tree-data="treeDataList"
             :search-key="searchKey"
-            @checkedList="checkedList" />
+            @checked-list="checkedList" />
         </div>
       </div>
     </div>

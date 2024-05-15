@@ -71,7 +71,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
-    """可选租户用户列表（下拉框数据用）"""
+    """可选租户用户上级列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -121,21 +121,22 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
-        keyword = slz.validated_data["keyword"]
+        params = slz.validated_data
+
+        queryset = TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.REAL
+        )
+        if tenant_id := params.get("tenant_id"):
+            queryset = queryset.filter(data_source__owner_tenant_id=tenant_id)
 
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
-        return (
-            TenantUser.objects.filter(
-                tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.REAL
-            )
-            .filter(
-                Q(data_source_user__username__icontains=keyword)
-                | Q(data_source_user__full_name__icontains=keyword)
-                | Q(data_source_user__email__icontains=keyword)
-                | Q(data_source_user__phone__icontains=keyword)
-            )
-            .select_related("data_source", "data_source_user")[: self.search_limit]
-        )
+        keyword = params["keyword"]
+        return queryset.filter(
+            Q(data_source_user__username__icontains=keyword)
+            | Q(data_source_user__full_name__icontains=keyword)
+            | Q(data_source_user__email__icontains=keyword)
+            | Q(data_source_user__phone__icontains=keyword)
+        ).select_related("data_source", "data_source_user")[: self.search_limit]
 
     def _get_user_organization_paths_map(self, tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
         """获取租户部门的组织路径信息"""
@@ -650,7 +651,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         tags=["organization.user"],
         operation_description="租户用户快速录入",
         request_body=TenantUserBatchCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()

@@ -8,15 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List, Optional
+from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.data_source.utils import gen_tenant_user_id
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import SyncTaskTrigger
+from bkuser.apps.sync.data_models import TenantSyncOptions
+from bkuser.apps.sync.managers import TenantSyncManager
+from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.utils.uuid import generate_uuid
 
 # 默认租户 ID & 名称
 DEFAULT_TENANT = "default"
@@ -29,7 +30,6 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         defaults={
             "name": tenant_id,
             "is_default": bool(tenant_id == DEFAULT_TENANT),
-            "feature_flags": {"user_number_visible": True},
         },
     )
 
@@ -47,62 +47,5 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
 
 def sync_users_depts_to_tenant(tenant: Tenant, data_source: DataSource) -> None:
     """将数据源数据同步到租户下（租户用户 & 租户部门）"""
-    tenant_users = [
-        TenantUser(
-            tenant=tenant,
-            data_source_user=user,
-            data_source=data_source,
-            id=gen_tenant_user_id(tenant.id, data_source, user),
-        )
-        for user in DataSourceUser.objects.filter(data_source=data_source)
-    ]
-    TenantUser.objects.bulk_create(tenant_users)
-
-    tenant_depts = [
-        TenantDepartment(
-            tenant=tenant,
-            data_source_department=dept,
-            data_source=data_source,
-        )
-        for dept in DataSourceDepartment.objects.filter(data_source=data_source)
-    ]
-    TenantDepartment.objects.bulk_create(tenant_depts)
-
-
-# TODO (su) deprecated
-def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser]) -> List[TenantUser]:
-    """创建租户用户"""
-
-    # FIXME (su) existed_tenant_users 变量名不准确，且 data_source_users 数据不应该有冲突
-    existed_tenant_users = TenantUser.objects.filter(tenant=tenant).values_list("data_source_user_id", flat=True)
-
-    tenant_users = [
-        TenantUser(
-            data_source_user=user,
-            data_source=user.data_source,
-            tenant=tenant,
-            id=generate_uuid(),
-        )
-        for user in data_source_users
-        if user.id not in existed_tenant_users
-    ]
-    TenantUser.objects.bulk_create(tenant_users)
-    return TenantUser.objects.filter(tenant=tenant, data_source_user__in=data_source_users)
-
-
-# TODO (su) deprecated
-def create_tenant_departments(
-    tenant: Tenant, data_source_departments: List[DataSourceDepartment]
-) -> List[TenantDepartment]:
-    """创建租户部门"""
-
-    tenant_departments = [
-        TenantDepartment(
-            data_source_department=department,
-            data_source=department.data_source,
-            tenant=tenant,
-        )
-        for department in data_source_departments
-    ]
-    TenantDepartment.objects.bulk_create(tenant_departments)
-    return TenantDepartment.objects.filter(tenant=tenant)
+    sync_opts = TenantSyncOptions(operator="unittest", async_run=False, trigger=SyncTaskTrigger.MANUAL)
+    TenantSyncManager(data_source, tenant.id, sync_opts).execute()

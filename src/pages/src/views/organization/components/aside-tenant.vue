@@ -29,7 +29,7 @@
         @node-click="handleNodeClick"
         :async="{
           callback: getRemoteData,
-          cache: false,
+          cache: true,
         }"
       >
         <template #node="node">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 
 import OperateMore from './operate-more.vue';
 
@@ -78,6 +78,7 @@ onBeforeMount(async () => {
   loading.value = true;
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
+  appStore.currentTenant = tenantData?.data;
   appStore.currentOrg = tenantData?.data;
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);

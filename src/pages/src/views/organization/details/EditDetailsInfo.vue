@@ -72,6 +72,7 @@
 import { Message } from 'bkui-vue';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, defineExpose } from 'vue';
 import { getBase64 } from '@/utils';
+import CustomFields from '@/components/custom-fields/index.vue';
 import MemberSelector from '@/views/tenant/MemberSelector.vue';
 import { getTenantOrganizationUsersList, putTenantOrganizationDetails } from '@/http';
 import PhoneInput from '@/components/phoneInput.vue';

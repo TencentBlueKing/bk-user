@@ -1,6 +1,7 @@
 <template>
-  <div class="details-wrapper user-scroll-y">
+  <div class="details-wrapper">
     <bk-form
+      class="px-[24px] pt-[24px] pb-[60px]"
       form-type="vertical"
       ref="formRef"
       :model="formData"
@@ -122,7 +123,7 @@
             :reset-password-email="$t('重设密码后的邮件')"
             :create-account-sms="$t('创建账户短信')"
             :reset-password-sms="$t('重设密码后的短信')"
-            @handleEditorText="handleEditorText">
+            @handle-editor-text="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
@@ -209,7 +210,7 @@
             :expired-email-key="'password_expired'"
             :expiring-sms-key="'password_expiring'"
             :expired-sms-key="'password_expired'"
-            @handleEditorText="handleEditorText">
+            @handle-editor-text="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group

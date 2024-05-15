@@ -148,7 +148,7 @@ const handleDelete = () => {
       ],
     ),
     onConfirm: () => {
-      deleteDepartment(props.dept.id).then((res) => {
+      deleteDepartment(props.dept.id).then(() => {
         emits('deleteNode', props.dept.id);
       });
     },

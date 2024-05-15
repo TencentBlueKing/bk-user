@@ -11,10 +11,10 @@
       v-model="valueHtml"
       :default-config="editorConfig"
       :mode="mode"
-      @onCreated="handleCreated"
-      @onChange="handleChange"
-      @onFocus="handleFocus"
-      @onBlur="handleBlur"
+      @on-created="handleCreated"
+      @on-change="handleChange"
+      @on-focus="handleFocus"
+      @on-blur="handleBlur"
     />
   </div>
 </template>
@@ -44,7 +44,7 @@ const editorRef = shallowRef();
 
 // 内容 HTML
 const valueHtml = computed(() => props.htmlText);
-const editorConfig = { placeholder: t('请输入内容...') };
+const editorConfig = { placeholder: t('请输入内容') };
 const mode = ref('simple');
 const isActive = ref(false);
 

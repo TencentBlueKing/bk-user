@@ -30,8 +30,8 @@
             :is-data-empty="state.isTableDataEmpty"
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isTableDataError"
-            @handleEmpty="search = ''"
-            @handleUpdate="fetchTenantsList"
+            @handle-empty="search = ''"
+            @handle-update="fetchTenantsList"
           />
         </template>
         <bk-table-column
@@ -128,22 +128,26 @@
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
-      :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
+      :class="[{ 'details-edit-wrapper': !isView }]"
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close
+      transfer
     >
       <template #header>
-        <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
-          <bk-button
-            outline
-            theme="primary"
-            @click="handleClick('edit', state.tenantsData)"
-          >{{ $t('编辑') }}</bk-button
-          >
+        <div class="flex items-center justify-between w-[100%] pr-[16px]">
+          <span>{{ detailsConfig.title }}</span>
+          <div v-if="isView">
+            <bk-button
+              outline
+              theme="primary"
+              @click="handleClick('edit', state.tenantsData)"
+            >{{ $t('编辑') }}</bk-button
+            >
+          </div>
         </div>
       </template>
       <template #default>
@@ -153,14 +157,14 @@
           :type="detailsConfig.type"
           :tenants-data="state.tenantsData"
           :is-email="isEmail"
-          @handleCancelEdit="handleCancelEdit"
-          @updateTenantsList="updateTenantsList"
+          @handle-cancel-edit="handleCancelEdit"
+          @update-tenants-list="updateTenantsList"
         />
       </template>
     </bk-sideslider>
     <!-- 重置管理员密码 -->
     <bk-dialog
-      class="dialog-wrapper"
+      :width="640"
       :is-show="adminPasswordConfig.isShow"
       :title="adminPasswordConfig.title"
       :is-loading="adminPasswordConfig.isLoading"
@@ -190,7 +194,7 @@
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -218,8 +222,8 @@
             v-else
             :form-data="adminPasswordData"
             :tel-error="telError"
-            @changeCountryCode="changeCountryCode"
-            @changeTelError="changeTelError" />
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
         </bk-form-item>
       </bk-form>
     </bk-dialog>
@@ -413,7 +417,7 @@ const fetchTenantsList = () => {
 
         const rows = getRows();
         for (const i of rows) {
-          i.style.background = '#DCFFE2';
+          i.style.background = '#F2FCF5';
         }
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
@@ -476,14 +480,16 @@ const handleClickEnter = () => {
 
 // 停用租户
 const handleClickDisable = (item) => {
+  const isEnabled = item.status === 'enabled';
+  const title = isEnabled ? t('确定停用当前租户？') : t('确定启用当前租户？');
+  const successMessage = isEnabled ? t('租户停用成功') : t('租户启用成功');
   InfoBox({
     width: 400,
-    title: t('确定停用当前租户？'),
+    title,
     subTitle: t('停用后，用户将无法看到该租户信息'),
     onConfirm: async () => {
       await putTenantsStatus(item.id);
-      const text = item.status === 'enabled' ? t('租户停用成功') : t('租户启用成功');
-      Message({ theme: 'success', message: text });
+      Message({ theme: 'success', message: successMessage });
       fetchTenantsList();
     },
   });
@@ -608,6 +614,15 @@ const {
 } = useAdminPassword(adminPasswordData.value);
 </script>
 
+<style lang="less">
+.details-edit-wrapper {
+  .bk-modal-content {
+    height: calc(100vh - 52px) !important;
+    background: #f5f7fa !important;
+  }
+}
+</style>
+
 <style lang="less" scoped>
 .has-alert {
   height: calc(100vh - 92px) !important;
@@ -662,42 +677,6 @@ const {
         vertical-align: middle;
       }
     }
-  }
-}
-
-.details-wrapper {
-  :deep(.bk-sideslider-title) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px 0 50px !important;
-
-    .bk-button {
-      padding: 5px 17px !important;
-    }
-  }
-}
-
-.details-edit-wrapper {
-  :deep(.bk-modal-content) {
-    height: calc(100vh - 52px);
-    background: #f5f7fa;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
-  }
-}
-
-.dialog-wrapper {
-  :deep(.bk-modal-content) {
-    overflow: visible !important;
   }
 }
 

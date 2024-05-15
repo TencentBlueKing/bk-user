@@ -24,16 +24,15 @@ from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 class AuthenticationMatcher:
     """认证匹配，用于对认证后的用户字段匹配到对应的数据源"""
 
-    def __init__(self, tenant_id: str, idp_id: str):
-        # TODO: 后续支持协同租户的数据源用户匹配
-        self.idp = Idp.objects.get(id=idp_id, owner_tenant_id=tenant_id)
+    def __init__(self, idp_id: str):
+        self.idp = Idp.objects.get(id=idp_id)
         # 内置字段
         self.builtin_field_data_type_map = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
         # Note: Local登录允许匹配ID
         self.builtin_field_data_type_map["id"] = UserFieldDataType.NUMBER
         # 自定义字段
         self.custom_field_data_type_map = dict(
-            TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", "data_type")
+            TenantUserCustomField.objects.filter(tenant_id=self.idp.owner_tenant_id).values_list("name", "data_type")
         )
 
     def match(self, idp_users: List[Dict[str, Any]]) -> List[int]:

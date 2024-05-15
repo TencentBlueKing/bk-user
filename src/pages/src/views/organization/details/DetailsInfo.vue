@@ -64,8 +64,8 @@
       v-else
       :tenants-data="state"
       :managers="state.managers"
-      @handleCancel="handleCancel"
-      @updateTenantsList="updateTenantsList" />
+      @handle-cancel="handleCancel"
+      @update-tenants-list="updateTenantsList" />
   </div>
 </template>
 

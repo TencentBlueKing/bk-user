@@ -6,7 +6,7 @@
     <DataSourceCard
       v-if="!isSuccess"
       :plugins="currentPlugins"
-      @handleCollapse="handleCollapse">
+      @handle-collapse="handleCollapse">
       <template #right>
         <bk-button
           class="min-w-[64px]"
@@ -30,8 +30,8 @@
             :cur-step="curStep"
             :data-source-id="dataSourceId"
             :is-reset="isReset"
-            @updateCurStep="updateCurStep"
-            @updateSuccess="updateSuccess" />
+            @update-cur-step="updateCurStep"
+            @update-success="updateSuccess" />
         </div>
       </template>
     </DataSourceCard>

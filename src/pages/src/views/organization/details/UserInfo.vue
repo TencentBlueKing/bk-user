@@ -36,8 +36,8 @@
           :is-data-empty="props.isDataEmpty"
           :is-search-empty="props.isEmptySearch"
           :is-data-error="props.isDataError"
-          @handleEmpty="handleClear"
-          @handleUpdate="handleClear" />
+          @handle-empty="handleClear"
+          @handle-update="handleClear" />
       </template>
       <template v-for="(item, index) in tableSettings.fields" :key="index">
         <bk-table-column :prop="item.field" :label="item.name">
@@ -240,24 +240,24 @@ const pageCurrentChange = (current) => {
     }
   }
 
-  :deep(.bk-modal-content) {
-    overflow-y: auto;
+  // :deep(.bk-modal-content) {
+  //   overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
 
-    &:hover {
-      &::-webkit-scrollbar-thumb {
-        background-color: #979ba5;
-      }
-    }
-  }
+  //   &:hover {
+  //     &::-webkit-scrollbar-thumb {
+  //       background-color: #979ba5;
+  //     }
+  //   }
+  // }
 }
 </style>

@@ -25,13 +25,14 @@
         <div class="details-content-item">
           <bk-overflow-title type="tips" class="details-content-key">{{ $t('所属组织') }}：</bk-overflow-title>
           <span class="details-content-value" v-if="userData.departments.length > 0">
-            {{ formatConvert(userData.departments) }}
+            <!-- {{ formatConvert(userData.departments) }} -->
+            {{ userData.departments.join('、') }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('直属上级') }}：</span>
-          <span class="details-content-value" v-if="userData.leaders.length > 0">
+          <span class="details-content-value" v-if="(userData.leaders || []).length > 0">
             {{ formatConvert(userData.leaders) }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>

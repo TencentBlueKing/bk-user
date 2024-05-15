@@ -79,3 +79,41 @@ export interface PutTenantInfoParams {
   visible: boolean,
   user_number_visible: boolean,
 }
+
+/**
+ * 跨租户协同-新建协同策略
+ */
+export interface NewToStrategiesParams {
+  name: string,
+  target_tenant_id: string,
+  source_config: {
+    organization_scope_type: string,
+    organization_scope_config: object,
+    field_scope_type: string,
+    field_scope_config: object,
+  },
+}
+
+/**
+ * 跨租户协同-确认协同策略
+ */
+export interface FromStrategiesConfirmParams {
+  id: number,
+  target_config: {
+    organization_scope_type: string,
+    organization_scope_config: object,
+    field_mapping: {
+      source_field: string,
+      mapping_operation: string,
+      target_field: string,
+    }[],
+  },
+}
+
+/**
+ * 跨租户协同-数据更新记录
+ */
+export interface CollaborationSyncRecordsParams {
+  page?: number,
+  pageSize?: number,
+}

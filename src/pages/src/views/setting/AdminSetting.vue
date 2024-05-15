@@ -68,9 +68,9 @@
               class="w-[300px]"
               :state="realUsers"
               :params="params"
-              @changeSelectList="changeSelectList"
-              @searchUserList="fetchRealUsers"
-              @scrollChange="scrollChange"
+              @change-select-list="changeSelectList"
+              @search-user-list="fetchRealUsers"
+              @scroll-change="scrollChange"
             />
             <bk-button
               text
@@ -114,7 +114,7 @@
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -180,10 +180,10 @@ const changeStatus = () => {
   InfoBox({
     width: 400,
     infoType: adminAccount.value.enable_login ? 'warning' : undefined,
-    title: t(adminAccount.value.enable_login ? '是否停用管理员账号？' : '是否启用管理员账号？'),
-    subTitle: t(adminAccount.value.enable_login
-      ? '停用后，将不可使用管理员账号进行登录'
-      : '停用后，可使用管理员账号进行登录'),
+    title: adminAccount.value.enable_login ? t('是否停用管理员账号？') : t('是否启用管理员账号？'),
+    subTitle: adminAccount.value.enable_login
+      ? t('停用后，将不可使用管理员账号进行登录')
+      : t('停用后，可使用管理员账号进行登录'),
     confirmText: adminAccount.value.enable_login ? t('停用') : undefined,
     theme: adminAccount.value.enable_login ? 'danger' : undefined,
     onConfirm: async () => {

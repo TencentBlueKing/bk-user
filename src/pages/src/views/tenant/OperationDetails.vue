@@ -1,5 +1,5 @@
 <template>
-  <div class="operation-wrapper user-scroll-y">
+  <div class="operation-wrapper">
     <bk-form
       class="operation-content"
       ref="formRef"
@@ -59,7 +59,7 @@
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -88,8 +88,8 @@
             v-else
             :form-data="formData"
             :tel-error="telError"
-            @changeCountryCode="changeCountryCode"
-            @changeTelError="changeTelError" />
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
         </bk-form-item>
       </Row>
     </bk-form>
@@ -199,13 +199,16 @@ const handleError = (file) => {
 
 // 校验表单
 async function handleSubmit() {
+  await formRef.value.validate();
+
   if (isEmail.value) {
-    handleBlur();
-  } else if (formData.phone === '') {
-    changeTelError(true);
+    return handleBlur();
   }
 
-  await formRef.value.validate();
+  if (formData.phone === '') {
+    return changeTelError(true);
+  }
+
   if (telError.value) return;
 
   state.isLoading = true;

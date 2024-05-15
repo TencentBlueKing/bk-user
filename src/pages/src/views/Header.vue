@@ -13,13 +13,18 @@
       <template #side-header>
         <div
           style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
+          class="cursor-pointer"
+          @click="onGoBack"
         >
           <i class="user-icon icon-user-logo-i" />
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
         </div>
         <div class="tenant-style" v-if="!isTenant">
-          <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
-          <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
+          <div class="logo">
+            <img v-if="userData.logo" :src="userData.logo" alt="">
+            <span v-else>{{logoConvert(userData?.name) }}</span>
+          </div>
+          <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
           <i
             v-if="userStore.user?.role === 'super_manager'"
             class="user-icon icon-shezhi"
@@ -46,8 +51,9 @@
             @show="() => (state.languageDropdown = true)"
           >
             <div class="help-info" :class="state.languageDropdown && 'active'">
-              <i :class="['bk-sq-icon', $i18n.locale === 'en'
-                ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
+              <i
+                :class="['bk-sq-icon', $i18n.locale === 'en'
+                  ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
             </div>
             <template #content>
               <bk-dropdown-menu>
@@ -126,7 +132,7 @@
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import NoticeComponent from '@blueking/notice-component';
@@ -135,11 +141,11 @@ import ReleaseNote from '@blueking/release-note';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
+import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { logoConvert } from '@/utils';
-import { getVersionLogs } from '@/http';
 
 const state = reactive({
   logoutDropdown: false,
@@ -149,7 +155,6 @@ const state = reactive({
 
 const userStore = useUser();
 const headerNav = ref([]);
-
 const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
@@ -217,6 +222,24 @@ const toTenant = () => {
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
+const userData = ref({});
+const initTenantInfo = async () => {
+  const res = await getTenantInfo();
+  userData.value = res.data;
+};
+onMounted(() => {
+  initTenantInfo();
+});
+
+const onGoBack = () => {
+  const { role } = userStore.user;
+  if (role === 'super_manager' && route.name !== 'tenant') {
+    router.push({ name: 'tenant' });
+    headerNav.value = [];
+  } else if (role === 'tenant_manager' && route.name !== 'organization') {
+    router.push({ name: 'organization' });
+  } else if (role === 'natural_user') return;
+};
 
 // 产品文档
 const docUrl = window.BK_USER_DOC_URL;
@@ -278,7 +301,6 @@ const openVersionLog = async () => {
         align-items: center;
 
         .logo {
-          display: inline-block;
           width: 16px;
           font-size: 12px;
           font-weight: 700;
@@ -290,6 +312,7 @@ const openVersionLog = async () => {
         }
 
         .tenant-id {
+          max-width: 150px;
           margin: 0 8px 0 4px;
           color: #FFF;
         }

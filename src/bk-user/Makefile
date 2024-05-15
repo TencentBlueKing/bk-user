@@ -14,7 +14,7 @@ init: ## 初始化 pre-commit, python 依赖包
 ##@ 研发命令
 
 test: ## 执行项目单元测试（pytest）
-	pytest --maxfail=1 -l --reuse-db tests --disable-warnings
+	pytest --maxfail=1 -l --reuse-db tests --disable-warnings -vv
 
 i18n-po: ## 将源代码 & 模版中的 message 采集到 django.po
 	python manage.py makemessages -d django -l en -e html,part -e py

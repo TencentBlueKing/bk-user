@@ -25,6 +25,7 @@ from bkuser.apis.web.collaboration.serializers import (
     CollaborationFromStrategyUpdateInputSLZ,
     CollaborationSourceTenantCustomFieldListOutputSLZ,
     CollaborationSyncRecordListOutputSLZ,
+    CollaborationSyncRecordRetrieveOutputSLZ,
     CollaborationToStrategyCreateInputSLZ,
     CollaborationToStrategyCreateOutputSLZ,
     CollaborationToStrategyListOutputSLZ,
@@ -275,7 +276,7 @@ class CollaborationFromStrategyUpdateApi(CurrentUserTenantMixin, ExcludePatchAPI
         slz = CollaborationFromStrategyUpdateInputSLZ(
             data=request.data,
             context={
-                "source_tenant_id": strategy.target_tenant_id,
+                "source_tenant_id": strategy.source_tenant_id,
                 "target_tenant_id": self.get_current_tenant_id(),
             },
         )
@@ -284,7 +285,7 @@ class CollaborationFromStrategyUpdateApi(CurrentUserTenantMixin, ExcludePatchAPI
 
         strategy.target_config = data["target_config"]
         strategy.updater = request.user.username
-        strategy.save(update_fields=["target_status", "target_config", "updater", "updated_at"])
+        strategy.save(update_fields=["target_config", "updater", "updated_at"])
 
         # 确认协同后，立即触发同步
         start_collaboration_tenant_sync(strategy)
@@ -321,7 +322,7 @@ class CollaborationFromStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAP
         slz = CollaborationFromStrategyConfirmInputSLZ(
             data=request.data,
             context={
-                "source_tenant_id": strategy.target_tenant_id,
+                "source_tenant_id": strategy.source_tenant_id,
                 "target_tenant_id": self.get_current_tenant_id(),
             },
         )
@@ -397,3 +398,25 @@ class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class CollaborationSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    serializer_class = CollaborationSyncRecordRetrieveOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantSyncTask]:
+        cur_tenant_id = self.get_current_tenant_id()
+        return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
+            data_source__owner_tenant_id=cur_tenant_id
+        )
+
+    @swagger_auto_schema(
+        tags=["collaboration"],
+        operation_description="协同策略同步记录详情",
+        responses={status.HTTP_200_OK: CollaborationSyncRecordRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)

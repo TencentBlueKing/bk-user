@@ -2,9 +2,9 @@
   <div>
     <div class="field-mapping">
       <div class="field-title">
-        <bk-form-item class="w-[240px]" :label="$t('用户管理字段')" required />
+        <bk-form-item class="w-[240px]" :label="sourceField" required />
         <bk-form-item class="w-[100px]" :label="$t('映射关系')" />
-        <bk-form-item class="w-[240px]" :label="$t('API返回字段')" required />
+        <bk-form-item class="w-[240px]" :label="targetField" required />
       </div>
       <div class="field-content" v-for="(item, index) in fieldSettingData?.field_mapping?.builtin_fields" :key="index">
         <div class="field-name">
@@ -29,6 +29,7 @@
           <bk-select
             class="w-[240px]"
             v-model="item.source_field"
+            :disabled="disabledBuiltinField"
             @change="(val, oldVal) => emit('changeApiFields', val, oldVal)">
             <bk-option
               v-for="option in apiFields"
@@ -80,9 +81,9 @@
             v-for="option in apiFields"
             :key="option.key"
             :id="option.key"
-            :name="option.key"
+            :name="formatOptionName(option)"
             :disabled="option.disabled">
-            <span>{{option.key}}</span>
+            <span>{{ formatOptionName(option) }}</span>
           </bk-option>
         </bk-select>
       </bk-form-item>
@@ -96,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { defineEmits, defineProps, ref } from 'vue';
 
 import { t } from '@/language/index';
 
@@ -113,6 +114,18 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  sourceField: {
+    type: String,
+    default: '',
+  },
+  targetField: {
+    type: String,
+    default: '',
+  },
+  disabledBuiltinField: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['changeApiFields', 'handleAddField', 'handleDeleteField', 'changeCustomField']);
@@ -121,6 +134,8 @@ const customConditions = ref([
   { name: t('直接'), key: 'direct' },
   { name: t('表达式'), key: 'expression' },
 ]);
+
+const formatOptionName = (option: any) => (option.display_name ? `${option.display_name}（${option.key}）` : option.key);
 </script>
 
 <style lang="less" scoped>

@@ -114,11 +114,6 @@ export const getSyncRecords = (params: SyncRecordsParams) => http.get(`/api/v1/w
 export const getSyncLogs = (id: string) => http.get(`/api/v1/web/data-sources/sync-records/${id}/`);
 
 /**
- * 数据源用户所属部门组织路径
- */
-export const getOrganizationPaths = (id: string) => http.get(`/api/v1/web/data-sources/users/${id}/organization-paths/`);
-
-/**
  * 重置数据源用户密码
  */
 export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/v1/web/data-sources/users/${params.id}/password/`, params);
