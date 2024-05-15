@@ -75,7 +75,7 @@ export const updateDepartment = (id: string, params: any) => http.put(`${prefix}
 /**
  * 获取当前租户的协作租户信息
  */
-export const getCollaboration = () => http.get(`${prefix}/collaborative-tenants/`);
+export const getCollaboration = () => http.get(`${prefix}/collaboration-tenants/`);
 
 /**
  * 拉取租户用户列表

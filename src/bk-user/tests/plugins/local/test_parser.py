@@ -23,7 +23,7 @@ from bkuser.plugins.local.exceptions import (
     UserSheetNotExists,
 )
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
-from bkuser.plugins.local.utils import gen_code
+from bkuser.plugins.local.utils import gen_dept_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
@@ -116,18 +116,18 @@ class TestLocalDataSourceDataParser:
         parser = LocalDataSourceDataParser(logger, user_wk)
         parser.parse()
 
-        company_code = gen_code("公司")
-        dept_a_code = gen_code("公司/部门A")
-        dept_b_code = gen_code("公司/部门B")
-        dept_c_code = gen_code("公司/部门C")
-        center_aa_code = gen_code("公司/部门A/中心AA")
-        center_ab_code = gen_code("公司/部门A/中心AB")
-        group_aaa_code = gen_code("公司/部门A/中心AA/小组AAA")
-        group_aba_code = gen_code("公司/部门A/中心AB/小组ABA")
-        center_ba_code = gen_code("公司/部门B/中心BA")
-        group_baa_code = gen_code("公司/部门B/中心BA/小组BAA")
-        center_ca_code = gen_code("公司/部门C/中心CA")
-        group_caa_code = gen_code("公司/部门C/中心CA/小组CAA")
+        company_code = gen_dept_code("公司")
+        dept_a_code = gen_dept_code("公司/部门A")
+        dept_b_code = gen_dept_code("公司/部门B")
+        dept_c_code = gen_dept_code("公司/部门C")
+        center_aa_code = gen_dept_code("公司/部门A/中心AA")
+        center_ab_code = gen_dept_code("公司/部门A/中心AB")
+        group_aaa_code = gen_dept_code("公司/部门A/中心AA/小组AAA")
+        group_aba_code = gen_dept_code("公司/部门A/中心AB/小组ABA")
+        center_ba_code = gen_dept_code("公司/部门B/中心BA")
+        group_baa_code = gen_dept_code("公司/部门B/中心BA/小组BAA")
+        center_ca_code = gen_dept_code("公司/部门C/中心CA")
+        group_caa_code = gen_dept_code("公司/部门C/中心CA/小组CAA")
 
         assert sorted(parser.get_departments(), key=lambda d: d.name) == [
             RawDataSourceDepartment(code=center_aa_code, name="中心AA", parent=dept_a_code),
@@ -149,7 +149,7 @@ class TestLocalDataSourceDataParser:
         parser.parse()
 
         def gen_depts(orgs: List[str]) -> List[str]:
-            return [gen_code(o) for o in orgs]
+            return [gen_dept_code(o) for o in orgs]
 
         assert sorted(parser.get_users(), key=lambda u: u.properties["age"]) == [
             RawDataSourceUser(
