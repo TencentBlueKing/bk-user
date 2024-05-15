@@ -69,7 +69,6 @@
             :key="ind"
           >
             <bk-table-column
-              :key="ind"
               :label="column.label"
               :type="column.type"
               :field="column.field"
@@ -479,7 +478,7 @@
       }
       const res = await batchCreate(param);
       getUsersDialogShow.value = false;
-      Message({ theme: 'success', message: $t('拉取已有用户成功') });
+      Message({ theme: 'success', message: t('拉取已有用户成功') });
       handleClear();
     } finally {
       isLoading.value = false;
