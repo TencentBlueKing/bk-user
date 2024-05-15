@@ -445,7 +445,7 @@
         minWidth: 40,
         type: "selection"
     }], ...columns]
-    return !isLocalDataSource.value ? columnsList : [...columnsList, ...[{
+    return isLocalDataSource.value ? columnsList : [...columnsList, ...[{
         label: "操作",
         field: "operation",
     }]];

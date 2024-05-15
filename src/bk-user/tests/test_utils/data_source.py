@@ -24,15 +24,15 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
     """
     为数据源初始化用户，部门，用户部门关系，用户 leader 关系，部门关系等
 
-    部门 & 部门用户关系
+    部门 & 部门用户关系(* 表示该用户属于多个部门)
     公司                         zhangsan
-     ├── 部门 A                  lisi, wangwu
-     │     ├── 中心 AA           lisi, zhaoliu
+     ├── 部门 A                  lisi*, wangwu*
+     │     ├── 中心 AA           lisi*, zhaoliu
      │     │     └── 小组 AAA    liuqi
      │     └── 中心 AB           maiba, yangjiu
-     │           └── 小组 ABA    lushi, linshiyi
-     └── 部门 B                  wangwu
-           └── 中心 BA           lushi
+     │           └── 小组 ABA    lushi*, linshiyi
+     └── 部门 B                  wangwu*
+           └── 中心 BA           lushi*
                  └── 小组 BAA    baishier
 
     用户 Leader 关系(* 表示该用户有多个 leader)

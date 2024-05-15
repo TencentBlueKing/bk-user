@@ -128,22 +128,26 @@
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
-      :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
+      :class="[{ 'details-edit-wrapper': !isView }]"
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close
+      transfer
     >
       <template #header>
-        <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
-          <bk-button
-            outline
-            theme="primary"
-            @click="handleClick('edit', state.tenantsData)"
-          >{{ $t('编辑') }}</bk-button
-          >
+        <div class="flex items-center justify-between w-[100%] pr-[16px]">
+          <span>{{ detailsConfig.title }}</span>
+          <div v-if="isView">
+            <bk-button
+              outline
+              theme="primary"
+              @click="handleClick('edit', state.tenantsData)"
+            >{{ $t('编辑') }}</bk-button
+            >
+          </div>
         </div>
       </template>
       <template #default>
@@ -160,7 +164,7 @@
     </bk-sideslider>
     <!-- 重置管理员密码 -->
     <bk-dialog
-      class="dialog-wrapper"
+      :width="640"
       :is-show="adminPasswordConfig.isShow"
       :title="adminPasswordConfig.title"
       :is-loading="adminPasswordConfig.isLoading"
@@ -610,6 +614,15 @@ const {
 } = useAdminPassword(adminPasswordData.value);
 </script>
 
+<style lang="less">
+.details-edit-wrapper {
+  .bk-modal-content {
+    height: calc(100vh - 52px) !important;
+    background: #f5f7fa !important;
+  }
+}
+</style>
+
 <style lang="less" scoped>
 .has-alert {
   height: calc(100vh - 92px) !important;
@@ -665,42 +678,6 @@ const {
       }
     }
   }
-}
-
-.details-wrapper {
-  :deep(.bk-sideslider-title) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px 0 50px !important;
-
-    .bk-button {
-      padding: 5px 17px !important;
-    }
-  }
-}
-
-.details-edit-wrapper {
-  // :deep(.bk-modal-content) {
-  //   height: calc(100vh - 52px);
-  //   background: #f5f7fa;
-
-  //   &::-webkit-scrollbar {
-  //     width: 4px;
-  //     background-color: transparent;
-  //   }
-
-  //   &::-webkit-scrollbar-thumb {
-  //     background-color: #dcdee5;
-  //     border-radius: 4px;
-  //   }
-  // }
-}
-
-.dialog-wrapper {
-  // :deep(.bk-modal-content) {
-  //   overflow: visible !important;
-  // }
 }
 
 .error {

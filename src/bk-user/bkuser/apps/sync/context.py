@@ -108,13 +108,13 @@ class DataSourceSyncTaskContext:
             self.task.data_source_id,
         )
         self.logger.info(f"sync task started, task_id is {self.task.id}...")  # noqa: G004
-        self._update_task_status(SyncTaskStatus.RUNNING)
+        self._update_task(SyncTaskStatus.RUNNING)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             self.logger.info("sync task success!")
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+            self._update_task(SyncTaskStatus.SUCCESS)
             self._store_records_into_db()
             self._store_logs_into_db()
             return
@@ -124,15 +124,21 @@ class DataSourceSyncTaskContext:
             "sync task failed! All data modifications in this sync will be rollback.\n\n"  # noqa: G004
             f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
-        self._update_task_status(SyncTaskStatus.FAILED)
+        self._update_task(SyncTaskStatus.FAILED)
         self._store_logs_into_db()
 
-    def _update_task_status(self, status: SyncTaskStatus):
-        """任务完成/失败后更新 task 状态"""
+    def _update_task(self, status: SyncTaskStatus):
+        """更新 task 记录"""
         self.task.status = status.value
-        self.task.duration = timezone.now() - self.task.start_at
-        self.task.has_warning = self.logger.has_warning
-        self.task.save(update_fields=["status", "duration", "has_warning", "updated_at"])
+        update_fields = ["status", "updated_at"]
+
+        # 到达稳定状态，再更新任务耗时等信息
+        if status in [SyncTaskStatus.SUCCESS, SyncTaskStatus.FAILED]:
+            self.task.duration = timezone.now() - self.task.start_at
+            self.task.has_warning = self.logger.has_warning
+            update_fields += ["duration", "has_warning"]
+
+        self.task.save(update_fields=update_fields)
 
     def _store_records_into_db(self):
         """将变更记录存入数据库"""
@@ -235,13 +241,13 @@ class TenantSyncTaskContext:
             self.task.tenant_id,
         )
         self.logger.info(f"sync task started, task_id is {self.task.id}...")  # noqa: G004
-        self._update_task_status(SyncTaskStatus.RUNNING)
+        self._update_task(SyncTaskStatus.RUNNING)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             self.logger.info("sync task success!")
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+            self._update_task(SyncTaskStatus.SUCCESS)
             self._store_records_into_db()
             self._store_logs_into_db()
             return
@@ -251,27 +257,31 @@ class TenantSyncTaskContext:
             "sync task failed! All data modifications in this sync will be rollback.\n\n"  # noqa: G004
             f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
-        self._update_task_status(SyncTaskStatus.FAILED)
+        self._update_task(SyncTaskStatus.FAILED)
         self._store_logs_into_db()
 
-    def _update_task_status(self, status: SyncTaskStatus):
-        """任务完成/失败后更新 task 状态"""
+    def _update_task(self, status: SyncTaskStatus):
+        """更新 task 记录"""
         self.task.status = status.value
-        self.task.duration = timezone.now() - self.task.start_at
-        self.task.has_warning = self.logger.has_warning
-        self.task.summary = {
-            "user": {
-                "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.USER)),
-                "update": len(self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.USER)),
-                "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.USER)),
-            },
-            "department": {
-                "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.DEPARTMENT)),
-                "update": len(self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.DEPARTMENT)),
-                "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.DEPARTMENT)),
-            },
-        }
-        self.task.save(update_fields=["status", "duration", "has_warning", "summary", "updated_at"])
+        update_fields = ["status", "updated_at"]
+
+        # 到达稳定状态，再更新任务耗时等信息
+        if status in [SyncTaskStatus.SUCCESS, SyncTaskStatus.FAILED]:
+            self.task.duration = timezone.now() - self.task.start_at
+            self.task.has_warning = self.logger.has_warning
+            self.task.summary = {
+                "user": {
+                    "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.USER)),
+                    "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.USER)),
+                },
+                "department": {
+                    "create": len(self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.DEPARTMENT)),
+                    "delete": len(self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.DEPARTMENT)),
+                },
+            }
+            update_fields += ["duration", "has_warning", "summary"]
+
+        self.task.save(update_fields=update_fields)
 
     def _store_records_into_db(self):
         """将变更记录存入数据库"""
@@ -286,11 +296,6 @@ class TenantSyncTaskContext:
                 self._build_user_change_logs(SyncOperation.DELETE, deleted_users), batch_size=self.batch_size
             )
 
-        if updated_users := self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.USER):
-            TenantUserChangeLog.objects.bulk_create(
-                self._build_user_change_logs(SyncOperation.UPDATE, updated_users), batch_size=self.batch_size
-            )
-
         # 部门变更记录
         if created_depts := self.recorder.get(SyncOperation.CREATE, TenantSyncObjectType.DEPARTMENT):
             TenantDepartmentChangeLog.objects.bulk_create(
@@ -300,11 +305,6 @@ class TenantSyncTaskContext:
         if deleted_depts := self.recorder.get(SyncOperation.DELETE, TenantSyncObjectType.DEPARTMENT):
             TenantDepartmentChangeLog.objects.bulk_create(
                 self._build_dept_change_logs(SyncOperation.DELETE, deleted_depts), batch_size=self.batch_size
-            )
-
-        if updated_depts := self.recorder.get(SyncOperation.UPDATE, TenantSyncObjectType.DEPARTMENT):
-            TenantDepartmentChangeLog.objects.bulk_create(
-                self._build_dept_change_logs(SyncOperation.UPDATE, updated_depts), batch_size=self.batch_size
             )
 
     def _build_user_change_logs(self, operation: SyncOperation, users: List[TenantUser]) -> List[TenantUserChangeLog]:
@@ -320,7 +320,8 @@ class TenantSyncTaskContext:
                 tenant=self.task.tenant,
                 data_source=self.task.data_source,
                 operation=operation,
-                user_id=u.id,
+                tenant_user_id=u.id,
+                data_source_user_id=u.data_source_user_id,
             )
             for u in users
         ]
@@ -340,7 +341,8 @@ class TenantSyncTaskContext:
                 tenant=self.task.tenant,
                 data_source=self.task.data_source,
                 operation=operation,
-                department_id=d.id,
+                tenant_department_id=d.id,
+                data_source_department_id=d.data_source_department_id,
             )
             for d in depts
         ]

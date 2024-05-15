@@ -286,3 +286,25 @@ class TestTenantDepartmentSearchApi:
         resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "2887"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
+
+
+class TestOptionalTenantDepartmentListApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_dept(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "部门"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
+        assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_aa_keyword(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "AA"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {dept["name"] for dept in resp.data} == {"中心AA", "小组AAA", "小组BAA"}
+        assert {dept["organization_path"] for dept in resp.data} == {
+            "公司/部门A/中心AA",
+            "公司/部门A/中心AA/小组AAA",
+            "公司/部门B/中心BA/小组BAA",
+        }
