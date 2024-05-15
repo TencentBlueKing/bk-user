@@ -221,7 +221,9 @@
       :is-show="editDetailsShow"
       :title="isDetailSlider ? $t('编辑用户') : $t('用户详情')"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close
+      transfer
     >
       <EditDetails
         v-if="isDetailSlider"
@@ -443,7 +445,7 @@
         minWidth: 40,
         type: "selection"
     }], ...columns]
-    return isLocalDataSource.value ? columnsList : [...columnsList, ...[{
+    return !isLocalDataSource.value ? columnsList : [...columnsList, ...[{
         label: "操作",
         field: "operation",
     }]];
