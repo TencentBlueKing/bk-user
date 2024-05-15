@@ -207,7 +207,7 @@ class TestCollaborationFromStrategyTargetStatusUpdateApi:
         assert "请先确认策略，再尝试修改状态" in resp.data["message"]
 
 
-class TestCollaborationSyncRecordListApi:
+class TestCollaborationSyncRecordListAndRetrieveApi:
     def test_standard(
         self,
         api_client,
@@ -237,6 +237,15 @@ class TestCollaborationSyncRecordListApi:
         assert record["status"] == "success"
         assert record["source_tenant_id"] == collaboration_tenant.id
         assert record["summary"] == {
-            "user": {"create": 11, "update": 0, "delete": 0},
-            "department": {"create": 9, "update": 0, "delete": 0},
+            "user": {"create": 11, "delete": 0},
+            "department": {"create": 9, "delete": 0},
         }
+
+        # 测试获取详情
+        resp = api_client.get(reverse("collaboration.sync-record.retrieve", kwargs={"id": record["id"]}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["logs"] != ""
+        assert resp.data["created_objs"]["user_count"] == 11  # noqa: PLR2004
+        assert resp.data["created_objs"]["department_count"] == 9  # noqa: PLR2004
+        assert resp.data["deleted_objs"]["user_count"] == 0
+        assert resp.data["deleted_objs"]["department_count"] == 0

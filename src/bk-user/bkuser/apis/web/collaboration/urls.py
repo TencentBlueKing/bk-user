@@ -69,4 +69,10 @@ urlpatterns = [
         views.CollaborationSyncRecordListApi.as_view(),
         name="collaboration.sync-record.list",
     ),
+    # 协同数据更新记录详情
+    path(
+        "sync-records/<str:id>/",
+        views.CollaborationSyncRecordRetrieveApi.as_view(),
+        name="collaboration.sync-record.retrieve",
+    ),
 ]
