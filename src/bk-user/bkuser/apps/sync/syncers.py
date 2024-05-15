@@ -407,11 +407,12 @@ class DataSourceUserSyncer:
         if self.incremental:
             # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
             if self.overwrite:
-                just_create_relation_user_ids = {user_id for user_id, _ in waiting_create_user_leader_id_tuples}
+                # 如果指定 leader 为空，也算是修改了关联边，在覆盖的模式下，需要清理掉旧的数据
+                just_update_relation_user_ids = {user_code_id_map[user.code] for user in self.raw_users}
                 waiting_delete_user_leader_id_tuples = {
                     (user_id, dept_id)
                     for user_id, dept_id in waiting_delete_user_leader_id_tuples
-                    if user_id in just_create_relation_user_ids
+                    if user_id in just_update_relation_user_ids
                 }
             # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
             else:
@@ -474,11 +475,12 @@ class DataSourceUserSyncer:
         if self.incremental:
             # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
             if self.overwrite:
-                just_create_relation_user_ids = {user_id for user_id, _ in waiting_create_user_dept_id_tuples}
+                # 如果指定部门为空，也算是修改了关联边，在覆盖的模式下，需要清理掉旧的数据
+                just_update_relation_user_ids = {user_code_id_map[user.code] for user in self.raw_users}
                 waiting_delete_user_dept_id_tuples = {
                     (user_id, dept_id)
                     for user_id, dept_id in waiting_delete_user_dept_id_tuples
-                    if user_id in just_create_relation_user_ids
+                    if user_id in just_update_relation_user_ids
                 }
             # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
             else:

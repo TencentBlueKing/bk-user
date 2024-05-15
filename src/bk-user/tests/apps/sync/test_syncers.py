@@ -296,6 +296,8 @@ class TestDataSourceUserSyncer:
             user_leader_relation_cnt_before_sync + 1
         )
 
+    # FIXME (su) 增量 x 覆盖的几种模式需要全面补全一下单元测试
+
     def test_update_with_invalid_leader(self, data_source_sync_task_ctx, full_local_data_source, random_raw_user):
         """全量同步模式，要求用户的 leader 必须也在数据中，否则会有警告"""
         random_raw_user.leaders.append("lisi")
