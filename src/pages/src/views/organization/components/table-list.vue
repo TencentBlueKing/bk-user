@@ -35,6 +35,7 @@
             v-bkloading="{ loading: isLoading }"
             row-hover="auto"
             remote-pagination
+            :is-row-select-enable="!isTenant && isLocalDataSource"
             @select="handleSelectTable"
             @select-all="handleSelectAll"
             @page-limit-change="pageLimitChange"
@@ -68,6 +69,7 @@
             :key="ind"
           >
             <bk-table-column
+              :key="ind"
               :label="column.label"
               :type="column.type"
               :field="column.field"
@@ -412,6 +414,11 @@
   });
   const columns= reactive([
     {
+        width: 40,
+        minWidth: 40,
+        type: "selection"
+    },
+    {
         label: t("用户名"),
         field: "username",
     },
@@ -439,16 +446,16 @@
   const tableData = ref([]);
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    let columnsList = [];
-    columnsList = (isTenant.value || isLocalDataSource.value) ? columns : [...[{
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    }], ...columns]
-    return isLocalDataSource.value ? [...columnsList, ...[{
+    // let columnsList = [];
+    // columnsList = (!isTenant.value) ? [...[{
+    //     width: 40,
+    //     minWidth: 40,
+    //     type: "selection"
+    // }], ...columns] : columns;
+    return isLocalDataSource.value ? [...columns, ...[{
         label: "操作",
         field: "operation",
-    }]] : columnsList;
+    }]] : columns;
   });
 
   /** 点击拉取已有用户按钮 */
