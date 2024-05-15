@@ -16,6 +16,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 
 
