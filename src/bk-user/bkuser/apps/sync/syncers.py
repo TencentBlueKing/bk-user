@@ -401,10 +401,22 @@ class DataSourceUserSyncer:
                 f"create {len(waiting_create_user_leader_relations)} user-leader relations"  # noqa: G004
             )
 
-        # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表（注意：增量更新时，不应该删除关系）
-        waiting_delete_user_leader_id_tuples = (
-            exists_user_leader_id_tuples - user_leader_id_tuples if not self.incremental else set()
-        )
+        # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
+        # 全量模式，没有覆不覆盖一说，就是覆盖，不需要特殊判断
+        waiting_delete_user_leader_id_tuples = exists_user_leader_id_tuples - user_leader_id_tuples
+        if self.incremental:
+            # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
+            if self.overwrite:
+                just_create_relation_user_ids = {user_id for user_id, _ in waiting_create_user_leader_id_tuples}
+                waiting_delete_user_leader_id_tuples = {
+                    (user_id, dept_id)
+                    for user_id, dept_id in waiting_delete_user_leader_id_tuples
+                    if user_id in just_create_relation_user_ids
+                }
+            # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
+            else:
+                waiting_delete_user_leader_id_tuples = set()
+
         if waiting_delete_user_leader_id_tuples:
             waiting_delete_user_leader_relation_ids = [
                 exists_user_leader_relations_map[t] for t in waiting_delete_user_leader_id_tuples
@@ -456,10 +468,22 @@ class DataSourceUserSyncer:
                 f"create {len(waiting_create_user_dept_relations)} user-department relations"  # noqa: G004
             )
 
-        # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表（注意：增量更新时，不应该删除关系）
-        waiting_delete_user_dept_id_tuples = (
-            exists_user_dept_id_tuples - user_dept_id_tuples if not self.incremental else set()
-        )
+        # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
+        # 全量模式，没有覆不覆盖一说，就是覆盖，不需要特殊判断
+        waiting_delete_user_dept_id_tuples = exists_user_dept_id_tuples - user_dept_id_tuples
+        if self.incremental:
+            # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
+            if self.overwrite:
+                just_create_relation_user_ids = {user_id for user_id, _ in waiting_create_user_dept_id_tuples}
+                waiting_delete_user_dept_id_tuples = {
+                    (user_id, dept_id)
+                    for user_id, dept_id in waiting_delete_user_dept_id_tuples
+                    if user_id in just_create_relation_user_ids
+                }
+            # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
+            else:
+                waiting_delete_user_dept_id_tuples = set()
+
         if waiting_delete_user_dept_id_tuples:
             waiting_delete_user_dept_relation_ids = [
                 exists_user_dept_relations_map[t] for t in waiting_delete_user_dept_id_tuples
