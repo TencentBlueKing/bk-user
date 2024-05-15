@@ -445,10 +445,10 @@
         minWidth: 40,
         type: "selection"
     }], ...columns]
-    return isLocalDataSource.value ? columnsList : [...columnsList, ...[{
+    return isLocalDataSource.value ? [...columnsList, ...[{
         label: "操作",
         field: "operation",
-    }]];
+    }]] : columnsList;
   });
 
   /** 点击拉取已有用户按钮 */
