@@ -2705,10 +2705,10 @@ binary-extensions@^2.0.0:
   resolved "https://mirrors.tencent.com/npm/binary-extensions/-/binary-extensions-2.3.0.tgz"
   integrity sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==
 
-bkui-vue@0.0.2-beta.124:
-  version "0.0.2-beta.124"
-  resolved "https://mirrors.tencent.com/npm/bkui-vue/-/bkui-vue-0.0.2-beta.124.tgz"
-  integrity sha512-Nv8D8UiUonnhTB8PJ5KNEKhLHDypjO8fJ+wkWH4qcJk4SHTQ6+Bud6W/6f8+RFxGq3VCYVSNpIqEGYUiEe/6fQ==
+bkui-vue@1.0.3-beta.67.dialog.5:
+  version "1.0.3-beta.67.dialog.5"
+  resolved "https://mirrors.tencent.com/npm/bkui-vue/-/bkui-vue-1.0.3-beta.67.dialog.5.tgz"
+  integrity sha512-OPx0Ttmk4lnM7gydxNy8mxAvPzWfWFh8xO4ryw+rY47zNHnO7Huf8knoYeLMuPqQGUr3L+m7CwhAJzP8TDcC/A==
   dependencies:
     "@floating-ui/dom" "~1.5.0"
     "@popperjs/core" "~2.11.8"
@@ -6006,7 +6006,28 @@ minimalistic-assert@^1.0.0:
   resolved "https://mirrors.tencent.com/npm/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz"
   integrity sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==
 
-minimatch@^3.0.4, minimatch@^3.0.5, minimatch@^3.1.1, minimatch@^3.1.2:
+minimatch@^3.0.4:
+  version "3.1.2"
+  resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-3.1.2.tgz"
+  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
+  dependencies:
+    brace-expansion "^1.1.7"
+
+minimatch@^3.0.5:
+  version "3.1.2"
+  resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-3.1.2.tgz"
+  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
+  dependencies:
+    brace-expansion "^1.1.7"
+
+minimatch@^3.1.1:
+  version "3.1.2"
+  resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-3.1.2.tgz"
+  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
+  dependencies:
+    brace-expansion "^1.1.7"
+
+minimatch@^3.1.2:
   version "3.1.2"
   resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-3.1.2.tgz"
   integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
@@ -6020,14 +6041,7 @@ minimatch@^5.0.1:
   dependencies:
     brace-expansion "^2.0.1"
 
-minimatch@^9.0.1:
-  version "9.0.4"
-  resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-9.0.4.tgz"
-  integrity sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==
-  dependencies:
-    brace-expansion "^2.0.1"
-
-minimatch@^9.0.4:
+minimatch@^9.0.1, minimatch@^9.0.4:
   version "9.0.4"
   resolved "https://mirrors.tencent.com/npm/minimatch/-/minimatch-9.0.4.tgz"
   integrity sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==
