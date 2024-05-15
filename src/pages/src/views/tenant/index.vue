@@ -128,7 +128,7 @@
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
-      :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
+      :class="[{ 'details-edit-wrapper': !isView }]"
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
@@ -614,6 +614,15 @@ const {
 } = useAdminPassword(adminPasswordData.value);
 </script>
 
+<style lang="less">
+.details-edit-wrapper {
+  .bk-modal-content {
+    height: calc(100vh - 52px) !important;
+    background: #f5f7fa !important;
+  }
+}
+</style>
+
 <style lang="less" scoped>
 .has-alert {
   height: calc(100vh - 92px) !important;
@@ -669,23 +678,6 @@ const {
       }
     }
   }
-}
-
-.details-edit-wrapper {
-  // :deep(.bk-modal-content) {
-  //   height: calc(100vh - 52px);
-  //   background: #f5f7fa;
-
-  //   &::-webkit-scrollbar {
-  //     width: 4px;
-  //     background-color: transparent;
-  //   }
-
-  //   &::-webkit-scrollbar-thumb {
-  //     background-color: #dcdee5;
-  //     border-radius: 4px;
-  //   }
-  // }
 }
 
 .error {
