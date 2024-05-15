@@ -69,7 +69,6 @@
             :key="ind"
           >
             <bk-table-column
-              :key="ind"
               :label="column.label"
               :type="column.type"
               :field="column.field"
