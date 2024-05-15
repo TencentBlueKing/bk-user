@@ -64,9 +64,9 @@ class DataSourceUserChangeLog(TimestampedModel):
         DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="user_change_logs"
     )
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
-    user_id = models.CharField("数据源用户 ID", max_length=64)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
-    # 数据源原始数据
+
+    user_id = models.CharField("数据源用户 ID", max_length=64)
     user_code = models.CharField("用户唯一标识", max_length=128)
     username = models.CharField("用户名", max_length=128)
     full_name = models.CharField("用户姓名", max_length=128)
@@ -81,8 +81,8 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
     )
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
+
     department_id = models.CharField("数据源部门 ID", max_length=128)
-    # 数据源原始数据
     department_code = models.CharField("部门唯一标识", max_length=128)
     department_name = models.CharField("部门名称", max_length=255)
 
@@ -92,6 +92,7 @@ class TenantSyncTask(TimestampedModel):
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source_sync_task = models.ForeignKey(DataSourceSyncTask, on_delete=models.DO_NOTHING, db_constraint=False)
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     has_warning = models.BooleanField("任务执行是否有警告", default=False)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
@@ -120,7 +121,9 @@ class TenantUserChangeLog(TimestampedModel):
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
-    user_id = models.CharField("用户 ID", max_length=64)
+
+    tenant_user_id = models.CharField("租户用户 ID", max_length=64)
+    data_source_user_id = models.IntegerField("数据源用户 ID")
 
 
 class TenantDepartmentChangeLog(TimestampedModel):
@@ -133,4 +136,6 @@ class TenantDepartmentChangeLog(TimestampedModel):
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
-    department_id = models.CharField("部门 ID", max_length=128)
+
+    tenant_department_id = models.IntegerField("租户部门 ID")
+    data_source_department_id = models.IntegerField("数据源部门 ID")

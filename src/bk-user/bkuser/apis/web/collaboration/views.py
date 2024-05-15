@@ -25,6 +25,7 @@ from bkuser.apis.web.collaboration.serializers import (
     CollaborationFromStrategyUpdateInputSLZ,
     CollaborationSourceTenantCustomFieldListOutputSLZ,
     CollaborationSyncRecordListOutputSLZ,
+    CollaborationSyncRecordRetrieveOutputSLZ,
     CollaborationToStrategyCreateInputSLZ,
     CollaborationToStrategyCreateOutputSLZ,
     CollaborationToStrategyListOutputSLZ,
@@ -397,3 +398,25 @@ class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class CollaborationSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    serializer_class = CollaborationSyncRecordRetrieveOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantSyncTask]:
+        cur_tenant_id = self.get_current_tenant_id()
+        return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
+            data_source__owner_tenant_id=cur_tenant_id
+        )
+
+    @swagger_auto_schema(
+        tags=["collaboration"],
+        operation_description="协同策略同步记录详情",
+        responses={status.HTTP_200_OK: CollaborationSyncRecordRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)

@@ -39,11 +39,12 @@ def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContex
 
 
 @pytest.fixture()
-def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
+def tenant_sync_task(bare_local_data_source, default_tenant, data_source_sync_task) -> TenantSyncTask:
     """租户数据同步任务"""
     return TenantSyncTask.objects.create(
         tenant=default_tenant,
         data_source=bare_local_data_source,
+        data_source_sync_task=data_source_sync_task,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",

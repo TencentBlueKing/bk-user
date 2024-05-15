@@ -16,7 +16,14 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.sync.models import TenantSyncTask
+from bkuser.apps.sync.constants import SyncOperation, SyncTaskStatus
+from bkuser.apps.sync.models import (
+    DataSourceDepartmentChangeLog,
+    DataSourceUserChangeLog,
+    TenantDepartmentChangeLog,
+    TenantSyncTask,
+    TenantUserChangeLog,
+)
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.data_models import CollaborationStrategySourceConfig, CollaborationStrategyTargetConfig
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
@@ -212,7 +219,7 @@ class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
     source_tenant_id = serializers.CharField(help_text="源租户 ID", source="data_source.owner_tenant_id")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
     has_warning = serializers.BooleanField(help_text="是否有警告")
-    status = serializers.CharField(help_text="同步状态")
+    status = serializers.ChoiceField(help_text="同步状态", choices=SyncTaskStatus.get_choices())
     start_at = serializers.DateTimeField(help_text="创建时间")
     duration = serializers.DurationField(help_text="持续时间")
     summary = serializers.JSONField(help_text="任务执行概述")
@@ -220,3 +227,52 @@ class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_source_tenant_name(self, obj: TenantSyncTask) -> str:
         return self.context["tenant_name_map"][obj.data_source.owner_tenant_id]
+
+
+def get_collaboration_objects_info(obj: TenantSyncTask, operation: SyncOperation) -> Dict[str, Any]:
+    # 记录中只会保留租户用户 & 数据源用户 ID，需要查询对应的数据源记录才可以拿到用户名
+    tenant_user_change_logs = TenantUserChangeLog.objects.filter(task_id=obj.id, operation=operation)
+    data_source_user_ids = [cl.data_source_user_id for cl in tenant_user_change_logs[:50]]
+    data_source_user_change_logs = DataSourceUserChangeLog.objects.filter(
+        task_id=obj.data_source_sync_task_id, user_id__in=data_source_user_ids
+    )
+
+    # 记录中只会保留租户部门 & 数据源部门 ID，需要查询对应的数据源记录才可以拿到部门名称
+    tenant_dept_change_logs = TenantDepartmentChangeLog.objects.filter(task_id=obj.id, operation=operation)
+    data_source_dept_ids = [cl.data_source_department_id for cl in tenant_dept_change_logs[:50]]
+    data_source_dept_change_logs = DataSourceDepartmentChangeLog.objects.filter(
+        task_id=obj.data_source_sync_task_id, department_id__in=data_source_dept_ids
+    )
+
+    return {
+        "user_count": tenant_user_change_logs.count(),
+        "usernames": [f"{cl.username}({cl.full_name})" for cl in data_source_user_change_logs],
+        "department_count": tenant_dept_change_logs.count(),
+        "department_names": [cl.department_name for cl in data_source_dept_change_logs],
+    }
+
+
+class CollaborationObjectsSLZ(serializers.Serializer):
+    user_count = serializers.IntegerField(help_text="用户数量")
+    usernames = serializers.ListField(help_text="用户列表", child=serializers.CharField())
+    department_count = serializers.IntegerField(help_text="部门数量")
+    department_names = serializers.ListField(help_text="部门列表", child=serializers.CharField())
+
+
+class CollaborationSyncRecordRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="同步记录 ID")
+    status = serializers.ChoiceField(help_text="同步状态", choices=SyncTaskStatus.get_choices())
+    has_warning = serializers.BooleanField(help_text="是否有警告")
+    start_at = serializers.DateTimeField(help_text="创建时间")
+    duration = serializers.DurationField(help_text="持续时间")
+    logs = serializers.CharField(help_text="同步日志")
+    created_objs = serializers.SerializerMethodField(help_text="创建的对象")
+    deleted_objs = serializers.SerializerMethodField(help_text="删除的对象")
+
+    @swagger_serializer_method(serializer_or_field=CollaborationObjectsSLZ())
+    def get_created_objs(self, obj: TenantSyncTask) -> Dict[str, Any]:
+        return CollaborationObjectsSLZ(get_collaboration_objects_info(obj, SyncOperation.CREATE)).data
+
+    @swagger_serializer_method(serializer_or_field=CollaborationObjectsSLZ())
+    def get_deleted_objs(self, obj: TenantSyncTask) -> Dict[str, Any]:
+        return CollaborationObjectsSLZ(get_collaboration_objects_info(obj, SyncOperation.DELETE)).data

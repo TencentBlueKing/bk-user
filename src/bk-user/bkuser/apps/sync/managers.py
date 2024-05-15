@@ -76,9 +76,15 @@ class TenantSyncManager:
 
     def execute(self) -> TenantSyncTask:
         """同步数据源用户，部门信息到租户，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
+
+        # Q: 为什么不是使用传入 data_source_sync_task 信息而是直接获取最新？
+        # A: 在创建租户同步任务时，才拿取最新的数据源同步任务，可以避免因延时获取的不是最新的
+        data_source_sync_task = DataSourceSyncTask.objects.filter(data_source=self.data_source).order_by("-id").first()
+
         task = TenantSyncTask.objects.create(
             tenant_id=self.tenant_id,
             data_source=self.data_source,
+            data_source_sync_task=data_source_sync_task,
             status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
