@@ -1,5 +1,5 @@
 <template>
-  <div class="operation-wrapper user-scroll-y">
+  <div class="operation-wrapper">
     <bk-form
       class="operation-content"
       ref="formRef"
@@ -199,6 +199,8 @@ const handleError = (file) => {
 
 // 校验表单
 async function handleSubmit() {
+  await formRef.value.validate();
+
   if (isEmail.value) {
     return handleBlur();
   }
@@ -207,7 +209,6 @@ async function handleSubmit() {
     return changeTelError(true);
   }
 
-  await formRef.value.validate();
   if (telError.value) return;
 
   state.isLoading = true;

@@ -1,5 +1,5 @@
 <template>
-  <bk-loading class="details-wrapper user-scroll-y" :loading="isLoading">
+  <bk-loading class="details-wrapper" :loading="isLoading">
     <div class="details-type">
       <img :src="authSourceData.plugin?.logo">
       <div>
@@ -120,7 +120,6 @@ const processMatchRules = (list) => {
 
 <style lang="less" scoped>
 .details-wrapper {
-  height: calc(100vh - 52px);
   padding: 28px 40px;
 
   .details-type {

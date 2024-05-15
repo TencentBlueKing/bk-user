@@ -1,6 +1,7 @@
 <template>
-  <div class="details-wrapper user-scroll-y">
+  <div class="details-wrapper">
     <bk-form
+      class="px-[24px] pt-[24px] pb-[60px]"
       form-type="vertical"
       ref="formRef"
       :model="formData"
