@@ -133,17 +133,21 @@
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close
+      transfer
     >
       <template #header>
-        <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
-          <bk-button
-            outline
-            theme="primary"
-            @click="handleClick('edit', state.tenantsData)"
-          >{{ $t('编辑') }}</bk-button
-          >
+        <div class="flex items-center justify-between w-[100%] pr-[16px]">
+          <span>{{ detailsConfig.title }}</span>
+          <div v-if="isView">
+            <bk-button
+              outline
+              theme="primary"
+              @click="handleClick('edit', state.tenantsData)"
+            >{{ $t('编辑') }}</bk-button
+            >
+          </div>
         </div>
       </template>
       <template #default>
@@ -160,7 +164,7 @@
     </bk-sideslider>
     <!-- 重置管理员密码 -->
     <bk-dialog
-      class="dialog-wrapper"
+      :width="640"
       :is-show="adminPasswordConfig.isShow"
       :title="adminPasswordConfig.title"
       :is-loading="adminPasswordConfig.isLoading"
@@ -667,19 +671,6 @@ const {
   }
 }
 
-.details-wrapper {
-  :deep(.bk-sideslider-title) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px 0 50px !important;
-
-    .bk-button {
-      padding: 5px 17px !important;
-    }
-  }
-}
-
 .details-edit-wrapper {
   // :deep(.bk-modal-content) {
   //   height: calc(100vh - 52px);
@@ -694,12 +685,6 @@ const {
   //     background-color: #dcdee5;
   //     border-radius: 4px;
   //   }
-  // }
-}
-
-.dialog-wrapper {
-  // :deep(.bk-modal-content) {
-  //   overflow: visible !important;
   // }
 }
 

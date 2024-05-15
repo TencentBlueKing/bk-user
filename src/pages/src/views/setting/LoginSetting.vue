@@ -438,7 +438,7 @@ const handleDataSource = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px 0 50px !important;
+  padding-right: 24px;
 
   .bk-button {
     padding: 5px 17px !important;

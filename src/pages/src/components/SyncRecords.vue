@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper user-scroll-y">
+  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper">
     <div class="data-record-content">
       <bk-table
         class="user-info-table"
@@ -65,6 +65,7 @@
       :width="800"
       quick-close
       :before-close="beforeClose"
+      transfer
     >
       <template #header>
         <div class="logs-header">
@@ -220,7 +221,6 @@ const handleLogDetails = async (row) => {
 };
 
 const beforeClose = () => {
-  logsDetails.value = {};
   logConfig.value.isShow = false;
 };
 
@@ -251,7 +251,7 @@ onBeforeUnmount(() => {
 <style lang="less" scoped>
 .sync-records-wrapper {
   width: 100%;
-  height: calc(100vh - 140px);
+  height: calc(100vh - 52px);
   padding: 28px 30px;
 
   :deep(.user-info-table) {
