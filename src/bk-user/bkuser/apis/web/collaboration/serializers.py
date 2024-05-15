@@ -231,6 +231,7 @@ class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
 
 def get_collaboration_objects_info(obj: TenantSyncTask, operation: SyncOperation) -> Dict[str, Any]:
     # 记录中只会保留租户用户 & 数据源用户 ID，需要查询对应的数据源记录才可以拿到用户名
+    # FIXME (su) 如果 obj.data_source_sync_task_id 为 0 会拿不到数据，需要看下怎么处理比较合适
     tenant_user_change_logs = TenantUserChangeLog.objects.filter(task_id=obj.id, operation=operation)
     data_source_user_ids = [cl.data_source_user_id for cl in tenant_user_change_logs[:50]]
     data_source_user_change_logs = DataSourceUserChangeLog.objects.filter(

@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.data_source.utils import gen_tenant_user_id
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import SyncTaskTrigger
+from bkuser.apps.sync.data_models import TenantSyncOptions
+from bkuser.apps.sync.managers import TenantSyncManager
+from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -45,23 +47,5 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
 
 def sync_users_depts_to_tenant(tenant: Tenant, data_source: DataSource) -> None:
     """将数据源数据同步到租户下（租户用户 & 租户部门）"""
-    tenant_users = [
-        TenantUser(
-            tenant=tenant,
-            data_source_user=user,
-            data_source=data_source,
-            id=gen_tenant_user_id(tenant.id, data_source, user),
-        )
-        for user in DataSourceUser.objects.filter(data_source=data_source)
-    ]
-    TenantUser.objects.bulk_create(tenant_users)
-
-    tenant_depts = [
-        TenantDepartment(
-            tenant=tenant,
-            data_source_department=dept,
-            data_source=data_source,
-        )
-        for dept in DataSourceDepartment.objects.filter(data_source=data_source)
-    ]
-    TenantDepartment.objects.bulk_create(tenant_depts)
+    sync_opts = TenantSyncOptions(operator="unittest", async_run=False, trigger=SyncTaskTrigger.MANUAL)
+    TenantSyncManager(data_source, tenant.id, sync_opts).execute()
