@@ -35,7 +35,9 @@ pytestmark = pytest.mark.django_db
 
 class TestDataSourceDepartmentSyncer:
     def test_initial(self, data_source_sync_task_ctx, bare_local_data_source, raw_departments):
-        DataSourceDepartmentSyncer(data_source_sync_task_ctx, bare_local_data_source, raw_departments).sync()
+        DataSourceDepartmentSyncer(
+            data_source_sync_task_ctx, bare_local_data_source, raw_departments, overwrite=True, incremental=False
+        ).sync()
 
         # 验证部门信息
         departments = DataSourceDepartment.objects.filter(data_source=bare_local_data_source)
@@ -54,7 +56,9 @@ class TestDataSourceDepartmentSyncer:
             RawDataSourceDepartment(code="dept_c", name="部门C", parent="company", extras={"region": "SH"}),
             RawDataSourceDepartment(code="center_ca", name="中心CA", parent="dept_c", extras={"region": "CS"}),
         ]
-        DataSourceDepartmentSyncer(data_source_sync_task_ctx, full_local_data_source, raw_departments).sync()
+        DataSourceDepartmentSyncer(
+            data_source_sync_task_ctx, full_local_data_source, raw_departments, overwrite=True, incremental=False
+        ).sync()
 
         # 验证部门信息
         departments = DataSourceDepartment.objects.filter(data_source=full_local_data_source)
@@ -69,9 +73,35 @@ class TestDataSourceDepartmentSyncer:
             data_source=full_local_data_source
         ) == self._gen_parent_relations_from_raw_departments(raw_departments)
 
+    def test_update_with_incremental(self, data_source_sync_task_ctx, full_local_data_source, random_raw_department):
+        dept_relation_cnt_before_sync = DataSourceDepartmentRelation.objects.filter(
+            data_source=full_local_data_source
+        ).count()
+        excepted_dept_codes = set(
+            DataSourceDepartment.objects.filter(data_source=full_local_data_source).values_list("code", flat=True)
+        )
+        excepted_dept_codes.add(random_raw_department.code)
+
+        DataSourceDepartmentSyncer(
+            data_source_sync_task_ctx,
+            full_local_data_source,
+            [random_raw_department],
+            overwrite=True,
+            incremental=True,
+        ).sync()
+
+        depts = DataSourceDepartment.objects.filter(data_source=full_local_data_source)
+        assert set(depts.values_list("code", flat=True)) == excepted_dept_codes
+        # 随机部门只有一个父部门，所以应该会多一个关系
+        assert DataSourceDepartmentRelation.objects.filter(data_source=full_local_data_source).count() == (
+            dept_relation_cnt_before_sync + 1
+        )
+
     def test_destroy(self, data_source_sync_task_ctx, full_local_data_source):
         raw_departments: List[RawDataSourceDepartment] = []
-        DataSourceDepartmentSyncer(data_source_sync_task_ctx, full_local_data_source, raw_departments).sync()
+        DataSourceDepartmentSyncer(
+            data_source_sync_task_ctx, full_local_data_source, raw_departments, overwrite=True, incremental=False
+        ).sync()
 
         # 同步了空的数据，导致该数据源的所有部门，部门关系信息都被删除
         assert not DataSourceDepartment.objects.filter(data_source=full_local_data_source).exists()
@@ -99,13 +129,11 @@ class TestDataSourceUserSyncer:
         raw_users,
     ):
         # 先同步部门数据，再同步用户数据
-        DataSourceDepartmentSyncer(data_source_sync_task_ctx, bare_local_data_source, raw_departments).sync()
+        DataSourceDepartmentSyncer(
+            data_source_sync_task_ctx, bare_local_data_source, raw_departments, overwrite=True, incremental=False
+        ).sync()
         DataSourceUserSyncer(
-            data_source_sync_task_ctx,
-            bare_local_data_source,
-            raw_users,
-            overwrite=True,
-            incremental=False,
+            data_source_sync_task_ctx, bare_local_data_source, raw_users, overwrite=True, incremental=False
         ).sync()
 
         # 验证用户信息
@@ -239,12 +267,17 @@ class TestDataSourceUserSyncer:
         assert zhangsan.extras == {}
 
     def test_update_with_incremental(self, data_source_sync_task_ctx, full_local_data_source, random_raw_user):
+        dept_user_relation_cnt_before_sync = DataSourceDepartmentUserRelation.objects.filter(
+            data_source=full_local_data_source
+        ).count()
+        user_leader_relation_cnt_before_sync = DataSourceUserLeaderRelation.objects.filter(
+            data_source=full_local_data_source
+        ).count()
         user_codes = set(
-            DataSourceUser.objects.filter(
-                data_source=full_local_data_source,
-            ).values_list("code", flat=True)
+            DataSourceUser.objects.filter(data_source=full_local_data_source).values_list("code", flat=True)
         )
         user_codes.add(random_raw_user.code)
+
         DataSourceUserSyncer(
             data_source_sync_task_ctx,
             full_local_data_source,
@@ -255,6 +288,13 @@ class TestDataSourceUserSyncer:
 
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
         assert set(users.values_list("code", flat=True)) == user_codes
+        # 随机用户属于一个部门 & 拥有一个 leader，因此两种关系的数量应该都是 + 1
+        assert DataSourceDepartmentUserRelation.objects.filter(data_source=full_local_data_source).count() == (
+            dept_user_relation_cnt_before_sync + 1
+        )
+        assert DataSourceUserLeaderRelation.objects.filter(data_source=full_local_data_source).count() == (
+            user_leader_relation_cnt_before_sync + 1
+        )
 
     def test_update_with_invalid_leader(self, data_source_sync_task_ctx, full_local_data_source, random_raw_user):
         """全量同步模式，要求用户的 leader 必须也在数据中，否则会有警告"""
