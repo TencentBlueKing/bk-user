@@ -117,8 +117,8 @@
           <div class="expand-wrapper">
             <div
               v-if="
-                row?.deleted_objs?.usernames.length ||
-                  row?.deleted_objs?.department_names.length
+                row?.deletedObjs?.usernames.length ||
+                  row?.deletedObjs?.department_names.length
               "
               class="expand-item">
               <span class="w-[60px] text-[#EA3636]">{{ $t('删除') }}:</span>
@@ -126,14 +126,14 @@
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-if="row?.deleted_objs?.usernames.length">
+                    <span v-if="row?.deletedObjs?.usernames.length">
                       <span
-                        v-for="(item, index) in row?.deleted_objs?.usernames.slice(0, 50)"
+                        v-for="(item, index) in row?.deletedObjs?.usernames.slice(0, 50)"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.deleted_objs?.usernames.length > 50">
-                        ... {{$t('共') + row?.deleted_objs?.user_count + $t('个用户')}}
+                      <span v-if="row?.deletedObjs?.usernames.length > 50">
+                        ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
                       </span>
                     </span>
                     <span v-else>--</span>
@@ -142,14 +142,14 @@
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-if="row?.deleted_objs?.department_names.length">
+                    <span v-if="row?.deletedObjs?.department_names.length">
                       <span
-                        v-for="(item, index) in row?.deleted_objs?.department_names.slice(0, 50)"
+                        v-for="(item, index) in row?.deletedObjs?.department_names.slice(0, 50)"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.deleted_objs?.department_names.length > 50">
-                        ... {{$t('共') + row?.deleted_objs?.department_count + $t('个部门')}}
+                      <span v-if="row?.deletedObjs?.department_names.length > 50">
+                        ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
                       </span>
                     </span>
                     <span v-else>--</span>
@@ -158,22 +158,22 @@
               </div>
             </div>
             <div
-              v-if="row?.created_objs?.usernames.length ||
-                row?.created_objs?.department_names.length"
+              v-if="row?.createdObjs?.usernames.length ||
+                row?.createdObjs?.department_names.length"
               class="expand-item">
               <span class="w-[60px] text-[#2DCB56]">{{ $t('新增') }}:</span>
               <div class="expand-item-content">
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-if="row?.created_objs?.usernames.length">
+                    <span v-if="row?.createdObjs?.usernames.length">
                       <span
-                        v-for="(item, index) in row?.created_objs?.usernames.slice(0, 50)"
+                        v-for="(item, index) in row?.createdObjs?.usernames.slice(0, 50)"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.created_objs?.usernames.length > 50">
-                        ... {{$t('共') + row?.created_objs?.user_count + $t('个用户')}}
+                      <span v-if="row?.createdObjs?.usernames.length > 50">
+                        ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
                       </span>
                     </span>
                     <span v-else>--</span>
@@ -182,14 +182,14 @@
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-if="row?.created_objs?.department_names.length">
+                    <span v-if="row?.createdObjs?.department_names.length">
                       <span
-                        v-for="(item, index) in row?.created_objs?.department_names.slice(0, 50)"
+                        v-for="(item, index) in row?.createdObjs?.department_names.slice(0, 50)"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.created_objs?.department_names.length > 50">
-                        ... {{$t('共') + row?.created_objs?.department_count + $t('个部门')}}
+                      <span v-if="row?.createdObjs?.department_names.length > 50">
+                        ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
                       </span>
                     </span>
                     <span v-else>--</span>
@@ -471,11 +471,13 @@ const beforeClose = () => {
 };
 
 const handleRowExpand = async ({ row }) => {
-  const res = await getCollaborationSyncRecordsLogs(row.id);
-  Object.assign(row, {
-    created_objs: res.data?.created_objs,
-    deleted_objs: res.data?.deleted_objs,
-  });
+  if (!row.createdObjs) {
+    const res = await getCollaborationSyncRecordsLogs(row.id);
+    Object.assign(row, {
+      createdObjs: res.data?.created_objs,
+      deletedObjs: res.data?.deleted_objs,
+    });
+  }
 };
 
 const durationText = (value) => {
