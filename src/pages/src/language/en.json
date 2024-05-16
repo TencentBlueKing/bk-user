@@ -475,5 +475,8 @@
   "协同数据选择": "Select Collaboration Data",
   "已协同": "Already collaborated",
   "源租户用户字段": "Source tenant user fields",
-  "本租户用户字段": "This tenant's user fields"
+  "本租户用户字段": "This tenant's user fields",
+  "共": "A total of",
+  "个部门": "departments",
+  "个用户": "users"
 }

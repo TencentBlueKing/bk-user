@@ -83,13 +83,16 @@
       <OperationDetails :config="detailsConfig" @update-list="updateList" />
     </bk-sideslider>
     <!-- 数据更新记录 -->
-    <bk-dialog
+    <bk-sideslider
       width="960"
       class="update-record-dialog"
       dialog-type="show"
       :title="$t('数据更新记录')"
       :is-show="dialogConfig.isShow"
-      @closed="dialogConfig.isShow = false">
+      @closed="dialogConfig.isShow = false"
+      render-directive
+      quick-close
+      trensfer>
       <bk-table
         v-bkloading="{ loading: dialogConfig.loading, zIndex: 9 }"
         class="update-record-table"
@@ -100,6 +103,7 @@
         :pagination="pagination"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
+        @row-expand="handleRowExpand"
       >
         <template #empty>
           <Empty
@@ -108,74 +112,93 @@
             @handle-update="fetchUpdateRecord"
           />
         </template>
-        <!-- <bk-table-column type="expand" width="60"></bk-table-column> -->
-        <!-- <template #expandRow="row">
+        <bk-table-column type="expand" width="60"></bk-table-column>
+        <template #expandRow="row">
           <div class="expand-wrapper">
-            <div class="expand-item">
+            <div
+              v-if="
+                row?.deletedObjs?.usernames.length ||
+                  row?.deletedObjs?.department_names.length
+              "
+              class="expand-item">
               <span class="w-[60px] text-[#EA3636]">{{ $t('删除') }}:</span>
               <div class="expand-item-content">
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-for="(item, index) in row.delete.users" :key="index">
-                      {{ item }}
+                    <span v-if="row?.deletedObjs?.usernames.length">
+                      <span
+                        v-for="(item, index) in row?.deletedObjs?.usernames.slice(0, 50)"
+                        :key="index">
+                        {{ item }}
+                      </span>
+                      <span v-if="row?.deletedObjs?.usernames.length > 50">
+                        ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
+                      </span>
                     </span>
+                    <span v-else>--</span>
                   </div>
                 </div>
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-for="(item, index) in row.delete.departments" :key="index">
-                      {{ item }}
+                    <span v-if="row?.deletedObjs?.department_names.length">
+                      <span
+                        v-for="(item, index) in row?.deletedObjs?.department_names.slice(0, 50)"
+                        :key="index">
+                        {{ item }}
+                      </span>
+                      <span v-if="row?.deletedObjs?.department_names.length > 50">
+                        ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
+                      </span>
                     </span>
+                    <span v-else>--</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="expand-item">
-              <p class="w-[60px] text-[#FF9C01]">{{ $t('变更') }}:</p>
-              <div class="expand-item-content">
-                <div class="content-users">
-                  <i class="bk-sq-icon icon-personal-user" />
-                  <div class="flex">
-                    <span v-for="(item, index) in row.change.users" :key="index">
-                      {{ item }}
-                    </span>
-                  </div>
-                </div>
-                <div class="content-departments">
-                  <i class="bk-sq-icon icon-file-close" />
-                  <div class="flex">
-                    <span v-for="(item, index) in row.change.departments" :key="index">
-                      {{ item }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="expand-item">
+            <div
+              v-if="row?.createdObjs?.usernames.length ||
+                row?.createdObjs?.department_names.length"
+              class="expand-item">
               <span class="w-[60px] text-[#2DCB56]">{{ $t('新增') }}:</span>
               <div class="expand-item-content">
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-for="(item, index) in row.add.users" :key="index">
-                      {{ item }}
+                    <span v-if="row?.createdObjs?.usernames.length">
+                      <span
+                        v-for="(item, index) in row?.createdObjs?.usernames.slice(0, 50)"
+                        :key="index">
+                        {{ item }}
+                      </span>
+                      <span v-if="row?.createdObjs?.usernames.length > 50">
+                        ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
+                      </span>
                     </span>
+                    <span v-else>--</span>
                   </div>
                 </div>
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-for="(item, index) in row.add.departments" :key="index">
-                      {{ item }}
+                    <span v-if="row?.createdObjs?.department_names.length">
+                      <span
+                        v-for="(item, index) in row?.createdObjs?.department_names.slice(0, 50)"
+                        :key="index">
+                        {{ item }}
+                      </span>
+                      <span v-if="row?.createdObjs?.department_names.length > 50">
+                        ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
+                      </span>
                     </span>
+                    <span v-else>--</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </template> -->
+        </template>
         <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
         <bk-table-column prop="source_tenant_name" :label="$t('源租户')"></bk-table-column>
         <bk-table-column :label="$t('更新内容')" width="480">
@@ -187,13 +210,6 @@
               <i class="bk-sq-icon icon-file-close" />
               <span>{{ row.content?.delete?.department }}</span>
             </bk-tag>
-            <bk-tag theme="warning">
-              {{ $t('变更') }}：
-              <i class="bk-sq-icon icon-personal-user" />
-              <span>{{ row.content?.update?.user }}</span>
-              <i class="bk-sq-icon icon-file-close" />
-              <span>{{ row.content?.update?.department }}</span>
-            </bk-tag>
             <bk-tag theme="success">
               {{ $t('新增') }}：
               <i class="bk-sq-icon icon-personal-user" />
@@ -203,22 +219,72 @@
             </bk-tag>
           </template>
         </bk-table-column>
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
+          <template #default="{ row }">
+            <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
+            <span>{{ dataRecordStatus[row.status]?.text }}</span>
+          </template>
+        </bk-table-column>
+        <bk-table-column :label="$t('操作')">
+          <template #default="{ row }">
+            <bk-button
+              text
+              theme="primary"
+              style="margin-right: 8px;"
+              @click="handleLogDetails(row)"
+            >
+              {{ $t('日志详情') }}
+            </bk-button>
+            <ExclamationCircleShape
+              class="circle-shape"
+              v-if="row.has_warning"
+              v-bk-tooltips="{ content: t('有部分数据失败') }" />
+          </template>
+        </bk-table-column>
       </bk-table>
-    </bk-dialog>
+    </bk-sideslider>
+    <!-- 日志详情 -->
+    <bk-sideslider
+      ext-cls="log-wrapper"
+      :is-show="logConfig.isShow"
+      :title="$t('日志详情')"
+      :width="800"
+      quick-close
+      :before-close="beforeClose"
+    >
+      <template #header>
+        <div class="logs-header">
+          <span>{{ $t('日志详情') }}</span>
+          <bk-tag>{{ logsDetails.start_at }}</bk-tag>
+          <bk-tag :theme="dataRecordStatus[logsDetails.status]?.theme">
+            {{ dataRecordStatus[logsDetails.status]?.text }}
+          </bk-tag>
+          <span class="logs-duration">{{ $t('总耗时') }} {{ durationText(logsDetails.duration) }}</span>
+        </div>
+      </template>
+      <template #default>
+        <SQLFile
+          v-model="logsDetails.logs"
+          readonly
+          :title="$t('执行日志')" />
+      </template>
+    </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
 import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { useTableMaxHeight } from '@/hooks';
-import { getCollaborationSyncRecords, getFromStrategies, putFromStrategiesStatus } from '@/http';
+import { getCollaborationSyncRecords, getCollaborationSyncRecordsLogs, getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
-import { dataSourceStatus } from '@/utils';
+import { dataRecordStatus, dataSourceStatus } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -249,6 +315,11 @@ const enableFilters = [
   { text: t('停用'), value: 'disabled' },
 ];
 
+const updateStatusFilters = [
+  { text: t('成功'), value: 'success' },
+  { text: t('失败'), value: 'failed' },
+  { text: t('同步中'), value: 'running' },
+];
 const detailsConfig = reactive({
   isShow: false,
   title: '',
@@ -383,6 +454,52 @@ const updateList = () => {
   detailsConfig.isShow = false;
   window.changeInput = false;
   fetchFromStrategies();
+};
+const logsDetails = ref({});
+const logConfig = ref({
+  isShow: false,
+});
+
+const handleLogDetails = async (row) => {
+  logConfig.value.isShow = true;
+  const res = await getCollaborationSyncRecordsLogs(row.id);
+  logsDetails.value = res.data;
+};
+const beforeClose = () => {
+  logsDetails.value = {};
+  logConfig.value.isShow = false;
+};
+
+const handleRowExpand = async ({ row }) => {
+  if (!row.createdObjs) {
+    const res = await getCollaborationSyncRecordsLogs(row.id);
+    Object.assign(row, {
+      createdObjs: res.data?.created_objs,
+      deletedObjs: res.data?.deleted_objs,
+    });
+  }
+};
+
+const durationText = (value) => {
+  if (value) {
+    value = value.slice(6);
+    if (value < 60) {
+      return `<1 ${t('分钟')}`;
+    }
+    if (60 <= value && value < 3600) {
+      const time = value / 60;
+      const min = time.toString().split('.')[0];
+      const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
+      return `${min} ${t('分钟')} ${sec} ${t('秒')}`;
+    }
+    if (3600 <= value) {
+      const time = value / 3600;
+      const hour = time.toString().split('.')[0];
+      const min = parseInt(time.toString().split('.')[1][0], 10) * 6;
+      return `${hour}小时${min}分钟`;
+    }
+    return value;
+  }
 };
 </script>
 
@@ -583,6 +700,38 @@ const updateList = () => {
           flex-wrap: wrap;
         }
       }
+    }
+    .account-status-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  }
+}
+.log-wrapper {
+  .logs-header {
+    span, .bk-tag {
+      margin-right: 8px;
+    }
+
+    .logs-time, .logs-duration {
+      font-size: 12px;
+    }
+  }
+
+  ::v-deep .bk-modal-content {
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #dcdee5;
+      border-radius: 4px;
     }
   }
 }
