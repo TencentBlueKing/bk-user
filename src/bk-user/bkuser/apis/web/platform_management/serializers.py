@@ -33,7 +33,7 @@ class TenantListOutputSLZ(serializers.Serializer):
     status = serializers.CharField(help_text="租户状态")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
     is_default = serializers.BooleanField(help_text="是否默认租户")
-    created_at = serializers.CharField(help_text="创建时间", source="created_at_display")
+    created_at = serializers.DateTimeField(help_text="创建时间")
 
     class Meta:
         ref_name = "platform_management.TenantListOutputSLZ"

@@ -91,7 +91,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     custom_phone = serializers.SerializerMethodField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
 
-    account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
     extras = serializers.SerializerMethodField(help_text="自定义字段")

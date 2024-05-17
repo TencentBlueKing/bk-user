@@ -38,7 +38,7 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     target_tenant_name = serializers.SerializerMethodField(help_text="目标租户名称")
     creator = serializers.SerializerMethodField(help_text="创建人")
-    created_at = serializers.CharField(help_text="创建时间", source="created_at_display")
+    created_at = serializers.DateTimeField(help_text="创建时间")
     source_status = serializers.ChoiceField(
         help_text="策略状态（分享方）",
         choices=CollaborationStrategyStatus.get_choices(),
@@ -128,7 +128,7 @@ class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
     source_tenant_id = serializers.CharField(help_text="源租户 ID")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
-    updated_at = serializers.CharField(help_text="最近更新时间", source="updated_at_display")
+    updated_at = serializers.DateTimeField(help_text="最近更新时间")
     target_status = serializers.ChoiceField(
         help_text="策略状态（接受方）",
         choices=CollaborationStrategyStatus.get_choices(),

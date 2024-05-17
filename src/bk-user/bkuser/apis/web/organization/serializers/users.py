@@ -217,6 +217,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
 
