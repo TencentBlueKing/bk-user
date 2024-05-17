@@ -81,6 +81,12 @@ urlpatterns = [
     ),
     # 重置租户用户密码
     path(
+        "tenants/users/<str:id>/password-rule/",
+        views.TenantUserPasswordRuleApi.as_view(),
+        name="organization.tenant_user.password_rule",
+    ),
+    # 重置租户用户密码
+    path(
         "tenants/users/<str:id>/password/",
         views.TenantUserPasswordResetApi.as_view(),
         name="organization.tenant_user.password.reset",
