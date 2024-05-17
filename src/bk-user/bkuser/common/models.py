@@ -10,24 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 from django.db import models
 
-from bkuser.common.time import datetime_to_display
-
 
 class TimestampedModel(models.Model):
     """Model with 'created' and 'updated' fields."""
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    @property
-    def created_at_display(self):
-        # 转换成本地时间
-        return datetime_to_display(self.created_at)
-
-    @property
-    def updated_at_display(self):
-        # 转换成本地时间
-        return datetime_to_display(self.updated_at)
 
     class Meta:
         abstract = True

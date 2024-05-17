@@ -79,6 +79,12 @@ urlpatterns = [
         views.TenantUserRetrieveUpdateDestroyApi.as_view(),
         name="organization.tenant_user.retrieve_update_destroy",
     ),
+    # 获取租户用户密码规则提示
+    path(
+        "tenants/users/<str:id>/password-rule/",
+        views.TenantUserPasswordRuleRetrieveApi.as_view(),
+        name="organization.tenant_user.password_rule",
+    ),
     # 重置租户用户密码
     path(
         "tenants/users/<str:id>/password/",

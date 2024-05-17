@@ -36,6 +36,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
     TenantUserPasswordResetInputSLZ,
+    TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
@@ -68,6 +69,7 @@ from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
@@ -510,6 +512,39 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source_user.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserPasswordRuleRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+    """租户管理员获取用户密码规则"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="获取租户用户密码规则提示",
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source = tenant_user.data_source
+        plugin_config = data_source.get_plugin_cfg()
+
+        if not (data_source.is_local and data_source.is_real_type and plugin_config.enable_password):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
+
+        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+        assert plugin_config.password_rule is not None
+
+        resp_data = {"password_rule_tips": plugin_config.password_rule.to_rule()}
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(resp_data).data, status=status.HTTP_200_OK)
 
 
 class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):

@@ -24,6 +24,7 @@ from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, Syn
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
+from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import PasswordRuleConfig
@@ -333,13 +334,7 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
     data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
-    status = serializers.CharField(help_text="数据源同步状态", required=False)
-
-    def validate(self, attrs):
-        if attrs.get("status"):
-            attrs["statuses"] = attrs["status"].split(",")
-
-        return attrs
+    statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
@@ -348,24 +343,18 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
     operator = serializers.SerializerMethodField(help_text="操作人")
-    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
-    def get_start_at(self, obj: DataSourceSyncTask) -> str:
-        return obj.start_at_display
-
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     status = serializers.CharField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
-    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
-
-    def get_start_at(self, obj: DataSourceSyncTask) -> str:
-        return obj.start_at_display

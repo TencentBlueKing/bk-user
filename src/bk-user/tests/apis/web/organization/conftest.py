@@ -30,7 +30,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
     """
     age_field = TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-age",
+        name=f"{tenant.id}_age",
         display_name="年龄",
         data_type=UserFieldDataType.NUMBER,
         required=True,
@@ -38,7 +38,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
     )
     gender_field = TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-gender",
+        name=f"{tenant.id}_gender",
         display_name="性别",
         data_type=UserFieldDataType.ENUM,
         required=True,
@@ -51,7 +51,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
     )
     region_field = TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-region",
+        name=f"{tenant.id}_region",
         display_name="籍贯",
         data_type=UserFieldDataType.STRING,
         required=True,
@@ -59,11 +59,11 @@ def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
     )
     hobbies_field = TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-hobbies",
+        name=f"{tenant.id}_hobbies",
         display_name="爱好",
         data_type=UserFieldDataType.MULTI_ENUM,
         required=True,
-        default=["music", "reading"],
+        default=["singing", "reading"],
         options=[
             {"id": "singing", "value": "唱歌"},
             {"id": "shopping", "value": "购物"},
@@ -136,9 +136,9 @@ def _init_collaboration_users_depts(
             "organization_scope_config": {},
             "field_mapping": [
                 {
-                    "source_field": f"{collaboration_tenant.id}-{field}",
+                    "source_field": f"{collaboration_tenant.id}_{field}",
                     "mapping_operation": "direct",
-                    "target_field": f"{random_tenant.id}-{field}",
+                    "target_field": f"{random_tenant.id}_{field}",
                 }
                 for field in ["age", "gender", "region"]
             ],

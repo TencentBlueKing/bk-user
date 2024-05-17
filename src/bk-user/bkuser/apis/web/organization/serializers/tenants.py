@@ -23,6 +23,11 @@ class TenantDataSourceSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    enable_password = serializers.SerializerMethodField(help_text="是否启用密码")
+
+    @swagger_serializer_method(serializer_or_field=serializers.BooleanField)
+    def get_enable_password(self, obj: DataSource) -> bool:
+        return bool(obj.plugin_config["enable_password"])
 
 
 class TenantListOutputSLZ(serializers.Serializer):

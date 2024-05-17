@@ -155,7 +155,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
 
 
 class OptionalTenantDepartmentListInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
 
 
 class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):

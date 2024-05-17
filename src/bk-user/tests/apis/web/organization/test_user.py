@@ -187,10 +187,10 @@ class TestTenantUserCreateApi:
             "phone": "12345678901",
             "phone_country_code": "86",
             "extras": {
-                f"{random_tenant.id}-age": 18,
-                f"{random_tenant.id}-gender": "male",
-                f"{random_tenant.id}-region": "shenzhen",
-                f"{random_tenant.id}-hobbies": ["shopping", "reading"],
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+                f"{random_tenant.id}_region": "shenzhen",
+                f"{random_tenant.id}_hobbies": ["shopping", "reading"],
             },
             "department_ids": [],
             "leader_ids": [],
@@ -275,10 +275,10 @@ class TestTenantUserUpdateApi:
             "phone": "12345678901",
             "phone_country_code": "86",
             "extras": {
-                f"{random_tenant.id}-age": 18,
-                f"{random_tenant.id}-gender": "male",
-                f"{random_tenant.id}-region": "shenzhen",
-                f"{random_tenant.id}-hobbies": ["reading", "shopping"],
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+                f"{random_tenant.id}_region": "shenzhen",
+                f"{random_tenant.id}_hobbies": ["reading", "shopping"],
             },
             "department_ids": [],
             "leader_ids": [],
@@ -292,13 +292,13 @@ class TestTenantUserUpdateApi:
         # 修改不能编辑的字段
         TenantUserCustomField.objects.filter(
             tenant=random_tenant,
-            name=f"{random_tenant.id}-age",
+            name=f"{random_tenant.id}_age",
         ).update(manager_editable=False)
 
         tenant_user_data["extras"].update(
             {
-                f"{random_tenant.id}-age": 19,
-                f"{random_tenant.id}-region": "beijing",
+                f"{random_tenant.id}_age": 19,
+                f"{random_tenant.id}_region": "beijing",
             }
         )
 
@@ -308,8 +308,8 @@ class TestTenantUserUpdateApi:
 
         wangwu.refresh_from_db()
         extras = wangwu.data_source_user.extras
-        assert extras[f"{random_tenant.id}-age"] == 18  # noqa: PLR2004  magic number here is ok
-        assert extras[f"{random_tenant.id}-region"] == "beijing"
+        assert extras[f"{random_tenant.id}_age"] == 18  # noqa: PLR2004  magic number here is ok
+        assert extras[f"{random_tenant.id}_region"] == "beijing"
 
         # 把自己设置为自己的 leader
         tenant_user_data["leader_ids"] = [wangwu.id]
