@@ -299,8 +299,8 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         return super().validate_leader_ids(leader_ids)
 
 
-class TenantUserPasswordRuleOutputSLZ(serializers.Serializer):
-    password_rule = serializers.CharField(help_text="用户密码规则")
+class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
+    password_rule_tips = serializers.CharField(help_text="用户密码规则提示")
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):

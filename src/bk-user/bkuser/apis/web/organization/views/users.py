@@ -36,7 +36,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
     TenantUserPasswordResetInputSLZ,
-    TenantUserPasswordRuleOutputSLZ,
+    TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
@@ -514,7 +514,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserPasswordRuleApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+class TenantUserPasswordRuleRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     """租户管理员获取用户密码规则"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -529,8 +529,8 @@ class TenantUserPasswordRuleApi(CurrentUserTenantMixin, generics.RetrieveAPIView
 
     @swagger_auto_schema(
         tags=["organization.user"],
-        operation_description="获取租户用户密码规则",
-        responses={status.HTTP_200_OK: TenantUserPasswordRuleOutputSLZ()},
+        operation_description="获取租户用户密码规则提示",
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
@@ -543,10 +543,8 @@ class TenantUserPasswordRuleApi(CurrentUserTenantMixin, generics.RetrieveAPIView
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_rule is not None
 
-        return Response(
-            TenantUserPasswordRuleOutputSLZ({"password_rule": plugin_config.password_rule.to_rule()}).data,
-            status=status.HTTP_200_OK,
-        )
+        resp_data = {"password_rule_tips": plugin_config.password_rule.to_rule()}
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(resp_data).data, status=status.HTTP_200_OK)
 
 
 class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
