@@ -90,7 +90,7 @@ const handleClick = (id: string) => {
 
 const isShow = ref(!props.dataSource?.id);
 
-const text = computed(() => (isShow.value ? t('收起') : t('查看数据源类型')));
+const text = computed(() => (isShow.value ? t('收起') : t('查看所有数据源')));
 
 const toggleState = () => {
   isShow.value = !isShow.value;

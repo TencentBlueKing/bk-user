@@ -91,7 +91,7 @@
         </div> -->
       </div>
     </bk-form>
-    <div class="footer fixed">
+    <div class="footer">
       <bk-button theme="primary" @click="handleSave" :loading="btnLoading">
         {{ config.type === 'add' ? $t('保存并启用') : $t('保存')}}
       </bk-button>

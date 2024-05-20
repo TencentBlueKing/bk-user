@@ -391,7 +391,7 @@
   "快速指定与SQL齐飞, 入门与进阶方式任你挑选，满足多样化分析需求": "Fast specification and SQL fly together, you can choose the entry and advanced way to meet the diverse analysis needs",
   "若需切换数据源需要先对当前已选数据源进行重置操作": "To switch data sources, reset the current one first",
   "收起": "Collapse",
-  "查看数据源类型": "View Data Source Types",
+  "查看所有数据源": "View all data sources",
   "删除租户将导致以下数据被删除:": "Deleting this tenant will delete the following data:",
   "重置将导致以下数据被删除:": "Resetting will delete the following data:",
   "本租户下的数据：共计": "Data under this tenant totals:",
@@ -478,5 +478,7 @@
   "本租户用户字段": "This tenant's user fields",
   "共": "A total of",
   "个部门": "departments",
-  "个用户": "users"
+  "个用户": "users",
+  "删除字段， 将一并删除数据里的该字段数据": "Deleting a field will delete the data in that field",
+  "针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等": "Update the corresponding field values for the same user coverage, including the department and superior"
 }

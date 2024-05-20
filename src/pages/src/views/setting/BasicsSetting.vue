@@ -53,6 +53,7 @@
         class="min-w-[88px] mr-[8px]"
         theme="primary"
         @click="saveEdit"
+        :disabled="isDisabled"
       >
         {{ $t('保存') }}
       </bk-button>
@@ -132,11 +133,17 @@ onMounted(() => {
   initTenantInfo();
 });
 
+let originalData = {};
+const isDisabled = ref(true);
 const initTenantInfo = async () => {
   const res = await getTenantInfo();
+  originalData = JSON.stringify(res.data);
   formData.value = res.data;
 };
 
+watch(formData, () => {
+  isDisabled.value = originalData  === JSON.stringify(formData.value);
+}, { deep: true });
 // 上传头像
 const files = computed(() => {
   const img = [];
@@ -179,6 +186,7 @@ const saveEdit = () => {
   const { id, ...params } = formData.value;
   PutTenantInfo(params).then(() => {
     isEdit.value = false;
+    Message({ theme: 'success', message: t('保存成功') });
     initTenantInfo();
   });
 };

@@ -229,7 +229,9 @@
                 <div class="item-div">
                   <li>
                     <span class="key">{{ $t('所属租户ID') }}：</span>
-                    <span class="value">{{ currentTenantInfo.tenant?.id }}</span>
+                    <span class="value">
+                      {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
+                    </span>
                   </li>
                   <li>
                     <span class="key">{{ $t('所属组织') }}：</span>
@@ -461,6 +463,7 @@ const changeCustomFields = async (item) => {
     await putPersonalCenterUserExtrasFields(params);
     extrasList.value = JSON.parse(JSON.stringify(currentUserInfo.value.extras));
     item.isEdit = false;
+    Message({ theme: 'success', message: t('保存成功') });
   } catch (error) {
     console.warn(error);
   }
@@ -516,6 +519,7 @@ const changeEmail = async () => {
   }).then(() => {
     isEditEmail.value = false;
     isEditing();
+    Message({ theme: 'success', message: t('保存成功') });
   });
 };
 // 取消编辑邮箱
@@ -556,6 +560,7 @@ const changePhone = () => {
   }).then(() => {
     isEditPhone.value = false;
     isEditing();
+    Message({ theme: 'success', message: t('保存成功') });
   });
 };
 // 取消编辑手机号

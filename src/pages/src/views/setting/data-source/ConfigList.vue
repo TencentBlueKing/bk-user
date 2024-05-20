@@ -136,7 +136,7 @@
             </bk-checkbox>
             <bk-popover
               ext-cls="popover-wrapper"
-              :content="$t('勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。')"
+              :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
               placement="top"
               width="280"
             >

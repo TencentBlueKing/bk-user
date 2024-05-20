@@ -67,7 +67,7 @@
       </bk-table-column>
     </bk-table>
     <bk-sideslider
-      :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
+      :class="['details-wrapper', { 'details-edit-wrapper': !isView }]"
       :width="960"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
@@ -313,19 +313,19 @@ const updateList = () => {
 }
 
 .details-edit-wrapper {
-  // :deep(.bk-modal-content) {
-  //   height: calc(100vh - 52px);
-  //   background: #f5f7fa;
+  :deep(.bk-modal-content) {
+    height: calc(100vh - 52px) !important;
+    background: #f5f7fa !important;
 
-  //   &::-webkit-scrollbar {
-  //     width: 4px;
-  //     background-color: transparent;
-  //   }
+    // &::-webkit-scrollbar {
+    //   width: 4px;
+    //   background-color: transparent;
+    // }
 
-  //   &::-webkit-scrollbar-thumb {
-  //     background-color: #dcdee5;
-  //     border-radius: 4px;
-  //   }
-  // }
+    // &::-webkit-scrollbar-thumb {
+    //   background-color: #dcdee5;
+    //   border-radius: 4px;
+    // }
+  }
 }
 </style>

@@ -556,8 +556,8 @@ const blurId = () => findFirstDuplicate('id');
 const blurValue = () => findFirstDuplicate('value');
 </script>
 
-<style lang="less">
-.enum-dialog-wrapper .enum-dialog-content {
+<style lang="less" scoped>
+.enum-dialog-content {
   .header {
     margin-bottom: 12px;
     text-align: center;
