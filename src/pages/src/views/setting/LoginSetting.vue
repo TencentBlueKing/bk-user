@@ -27,6 +27,7 @@
                   class="tag-info"
                   type="stroke"
                   theme="info"
+                  @click="handleClickActive(item)"
                 >
                   {{ $t('本地') }}
                 </bk-tag>
@@ -296,6 +297,8 @@ const weComSuccess = (url: string) => {
           h('p', {
             style: {
               width: '230px',
+              wordBreak: 'break-all',
+              wordWrap: 'break-word',
             },
           }, url),
           h('i', {
