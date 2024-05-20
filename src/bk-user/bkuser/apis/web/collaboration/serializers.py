@@ -27,6 +27,7 @@ from bkuser.apps.sync.models import (
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.data_models import CollaborationStrategySourceConfig, CollaborationStrategyTargetConfig
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
+from bkuser.common.serializers import StringArrayField
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 # ---------------------------------- 分享方 SLZ ----------------------------------
@@ -119,6 +120,15 @@ class CollaborationToStrategyUpdateInputSLZ(serializers.Serializer):
 
 class CollaborationToStrategySourceStatusUpdateOutputSLZ(serializers.Serializer):
     source_status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
+
+
+class CollaborationTargetTenantListInputSLZ(serializers.Serializer):
+    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+
+
+class CollaborationTargetTenantListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID")
+    name = serializers.CharField(help_text="租户名称")
 
 
 # ---------------------------------- 接受方 SLZ ----------------------------------

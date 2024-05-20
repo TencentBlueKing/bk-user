@@ -165,3 +165,26 @@ class TestCollaborationToStrategySourceStatusUpdateApi:
         assert resp.status_code == status.HTTP_200_OK
         # 再切换一次，变回 enabled
         assert resp.data["source_status"] == CollaborationStrategyStatus.ENABLED
+
+
+class TestCollaborationTargetTenantListApi:
+    def test_list(self, api_client, random_tenant, default_tenant):
+        url = reverse("collaboration.target_tenant.list")
+
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        tenant_ids = [i["id"] for i in resp.data]
+        assert default_tenant.id in tenant_ids
+        assert random_tenant.id not in tenant_ids
+
+        # 修改默认租户可见性
+        default_tenant.visible = False
+        default_tenant.save(update_fields=["visible"])
+        # 无过滤条件
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert default_tenant.id not in [i["id"] for i in resp.data]
+        # 有过滤条件
+        resp = api_client.get(url, data={"tenant_ids": default_tenant.id})
+        assert resp.status_code == status.HTTP_200_OK
+        assert default_tenant.id in [i["id"] for i in resp.data]
