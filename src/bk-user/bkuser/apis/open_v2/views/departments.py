@@ -80,7 +80,6 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                     (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
                 ),
                 "level": dept.data_source_department.department_relation.level,
-                # TODO 支持软删除后需要特殊处理
                 "enabled": True,
             }
             # 特殊指定 fields 的情况下仅返回指定的字段

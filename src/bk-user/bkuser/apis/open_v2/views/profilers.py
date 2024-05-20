@@ -74,7 +74,6 @@ class TenantUserListToUserInfosMixin:
 
             # 不会放大查询的字段
             user_info = {
-                # TODO 目前 ID 指的是数据源用户 ID，未来支持协同之后，需要重新考虑
                 "id": tenant_user.data_source_user.id,
                 # 租户用户 ID 即为对外的 username / bk_username
                 "username": tenant_user.id,
@@ -87,7 +86,6 @@ class TenantUserListToUserInfosMixin:
                 "language": tenant_user.language,
                 "wx_userid": tenant_user.wx_userid,
                 "domain": tenant_user.data_source.domain,
-                # TODO: 协同需要调整
                 "category_id": tenant_user.data_source_id,
                 # TODO 1. 支持软删除后需要特殊处理 2. 支持状态时需要特殊处理
                 "status": "",

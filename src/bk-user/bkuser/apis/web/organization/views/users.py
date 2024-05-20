@@ -606,6 +606,7 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
+    pagination_class = None
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantUser]:
