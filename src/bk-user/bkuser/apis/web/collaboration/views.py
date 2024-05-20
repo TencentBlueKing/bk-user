@@ -217,6 +217,12 @@ class CollaborationTargetTenantListApi(CurrentUserTenantMixin, generics.ListAPIV
         # 只获取启用的租户，不启用没有协同的必要
         queryset = Tenant.objects.filter(status=TenantStatus.ENABLED).exclude(id=self.get_current_tenant_id())
 
+        # 去除掉已经协同过的目标租户
+        if exist_target_tenant_ids := CollaborationStrategy.objects.filter(
+            source_tenant_id=self.get_current_tenant_id()
+        ).values_list("target_tenant_id", flat=True):
+            queryset = queryset.exclude(id__in=exist_target_tenant_ids)
+
         # 根据指定的租户 ID(s) 查询
         if tenant_ids := data["tenant_ids"]:
             queryset = queryset.filter(id__in=tenant_ids)
