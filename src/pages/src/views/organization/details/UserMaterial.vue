@@ -144,7 +144,7 @@
 
 <script>
 import { dateConvert, expireDate } from '@/common/util';
-const Base64 = require('js-base64').Base64;
+import { Base64 } from 'js-base64';
 export default {
   directives: {
     focus: {
