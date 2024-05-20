@@ -73,20 +73,22 @@ def validate_user_new_password(
     if not plugin_config.password_initial.cannot_use_previous_password:  # type: ignore
         return password
 
+    # 限制了不能与之前使用过的密码相同，则优先判断是否与当前密码相同
+    identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
+    if check_password(password, identify_info.password):
+        raise ValidationError(_("新密码不能与当前密码相同"))
+
+    # 根据配置的前面次数，进一步判断
     reserved_cnt = plugin_config.password_initial.reserved_previous_password_count  # type: ignore
     if reserved_cnt <= 1:
         # 当历史密码保留数量小于等于 1 时，只需要检查不与当前密码相同即可
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
-        if check_password(password, identify_info.password):
-            raise ValidationError(_("新密码不能与当前密码相同"))
-
         return password
 
     used_passwords = (
         DataSourceUserDeprecatedPasswordRecord.objects.filter(
             user_id=data_source_user_id,
         )
-        .order_by("-created_at")[: reserved_cnt - 1]
+        .order_by("-id")[: reserved_cnt - 1]
         .values_list("password", flat=True)
     )
 

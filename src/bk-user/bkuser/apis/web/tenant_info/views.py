@@ -114,9 +114,13 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         data = slz.validated_data
 
         # 若当前内置的租户管理员是唯一的管理员，则无法禁用
-        if not TenantManager.objects.filter(
-            tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
-        ).exists():
+        if (
+            # Note: 这里不能直接 if not data.get("enable_login"), 因为对于 None 情况，不会更新，所以不需要判断
+            data.get("enable_login") is False
+            and not TenantManager.objects.filter(
+                tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
+            ).exists()
+        ):
             raise error_codes.VALIDATION_ERROR.f(_("不存在实名管理员，无法禁用内置管理员账号登录"))
 
         # 内建数据源 & 用户 & 认证源
