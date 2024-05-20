@@ -26,6 +26,8 @@ from bkuser.apis.web.collaboration.serializers import (
     CollaborationSourceTenantCustomFieldListOutputSLZ,
     CollaborationSyncRecordListOutputSLZ,
     CollaborationSyncRecordRetrieveOutputSLZ,
+    CollaborationTargetTenantListInputSLZ,
+    CollaborationTargetTenantListOutputSLZ,
     CollaborationToStrategyCreateInputSLZ,
     CollaborationToStrategyCreateOutputSLZ,
     CollaborationToStrategyListOutputSLZ,
@@ -37,7 +39,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.models import TenantSyncTask
 from bkuser.apps.sync.shortcuts import start_collaboration_tenant_sync
-from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStatus
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     Tenant,
@@ -197,6 +199,47 @@ class CollaborationToStrategySourceStatusUpdateApi(
         start_collaboration_tenant_sync(strategy)
 
         return Response(data=CollaborationToStrategySourceStatusUpdateOutputSLZ(strategy).data)
+
+
+class CollaborationTargetTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """协同的目标租户列表"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    serializer_class = CollaborationTargetTenantListOutputSLZ
+
+    def get_queryset(self):
+        slz = CollaborationTargetTenantListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 只获取启用的租户，不启用没有协同的必要
+        queryset = Tenant.objects.filter(status=TenantStatus.ENABLED).exclude(id=self.get_current_tenant_id())
+
+        # 去除掉已经协同过的目标租户
+        if exist_target_tenant_ids := CollaborationStrategy.objects.filter(
+            source_tenant_id=self.get_current_tenant_id()
+        ).values_list("target_tenant_id", flat=True):
+            queryset = queryset.exclude(id__in=exist_target_tenant_ids)
+
+        # 根据指定的租户 ID(s) 查询
+        if tenant_ids := data["tenant_ids"]:
+            queryset = queryset.filter(id__in=tenant_ids)
+        else:
+            # 无指定需查询的租户，则只查询可见的租户
+            queryset = queryset.filter(visible=True)
+
+        return queryset
+
+    @swagger_auto_schema(
+        tags=["collaboration"],
+        operation_description="获取协同的目标租户列表（分享方）",
+        query_serializer=CollaborationTargetTenantListInputSLZ(),
+        responses={status.HTTP_200_OK: CollaborationTargetTenantListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 # --------------------------------------------- 接受方 API ---------------------------------------------
