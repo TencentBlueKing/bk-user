@@ -208,7 +208,10 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         )
         if kw := params.get("keyword"):
             queryset = queryset.filter(
-                Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
+                Q(data_source_user__username__icontains=kw)
+                | Q(data_source_user__full_name__icontains=kw)
+                | Q(data_source_user__email__icontains=kw)
+                | Q(data_source_user__phone__icontains=kw)
             )
 
         # 指定具体的部门的情况
