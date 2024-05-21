@@ -195,7 +195,7 @@ const loading = ref(false);
 const allTenantList: Ref<Tenant[]> = ref([]);
 const tenantMap = ref({});
 const tenantList = ref<Tenant[]>([]);
-const hasStorage = ref(!!localStorage.getItem('tenantId'));
+const hasStorage = ref(!!localStorage.getItem('userGroup'));
 
 /**
  * 选中的用户群
@@ -348,11 +348,7 @@ const handleChangeStorageTenant = (item: Tenant) => {
 };
 
 const handleChangeIdp = (idp: Idp) => {
-  // const customPlugins = ['local'];
   activeIdp.value = idp;
-  // if (!customPlugins.includes(idp.plugin_id)) {
-  //   window.location.href = `${window.SITE_URL}/tenants/${appStore.tenantId}/idps/${idp.id}/actions/login/`;
-  // }
 };
 
 const protocolVisible = ref(false);
@@ -392,7 +388,11 @@ onBeforeMount(() => {
  * 用户群列表
  */
 const userGroupList = computed(() => {
-  const currentTenant = allTenantList.value.find(item => item.id === appStore.tenantId);
+  let currentTenant = allTenantList.value.find(item => item.id === appStore.tenantId);
+  // 通过输入搜索出来的租户，匹配不到用户群，需要从inputTenant获取
+  if (inputTenant.value) {
+    currentTenant = inputTenant.value;
+  }
   const list = currentTenant?.collaboration_tenants || [];
   const current = [{
     id: appStore.tenantId,
