@@ -36,7 +36,7 @@ class DepartmentProfileRelationListApi(
     cache_timeout = 60 * 10
 
     def get_queryset(self) -> QuerySet[DataSourceDepartmentUserRelation]:
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
             DataSourceDepartmentUserRelation.objects.filser(
                 data_source__in=self.get_default_tenant_real_user_data_source()
@@ -80,7 +80,7 @@ class DepartmentProfileRelationListApi(
         return Response(relations)
 
     def _convert(self, data_source_dept_user_relations: List[Dict]) -> List[Dict]:
-        """将数据源部门 ID 转换成租户部门 ID 注：在兼容 v2 的 openapi 中，用户 ID 即为数据源用户 ID，无需转换"""
+        """将数据源部门 ID 转换成租户部门 ID 注：在兼容 v2 的 OpenAPI 中，用户 ID 即为数据源用户 ID，无需转换"""
         dept_id_map = dict(
             TenantDepartment.objects.filter(
                 data_source_department_id__in=[rel["department_id"] for rel in data_source_dept_user_relations],
@@ -102,7 +102,7 @@ class ProfileLeaderRelationListApi(
     cache_timeout = 60 * 10
 
     def get_queryset(self) -> QuerySet[DataSourceUserLeaderRelation]:
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
             DataSourceUserLeaderRelation.objects.filter(
                 data_source__in=self.get_default_tenant_real_user_data_source()

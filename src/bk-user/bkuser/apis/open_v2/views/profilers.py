@@ -240,7 +240,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet[TenantUser]:
         """根据参数过滤, 生成 TenantUser QuerySet"""
         # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = TenantUser.objects.select_related("data_source_user").filter(tenant_id=DEFAULT_TENANT_ID).distinct()
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
@@ -359,7 +359,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         # 路径参数
         lookup_value = kwargs["lookup_value"]
 
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         filters = {"tenant_id": DEFAULT_TENANT_ID}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4

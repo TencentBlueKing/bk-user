@@ -128,7 +128,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         return resp_data
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet:
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
             TenantDepartment.objects.select_related("data_source_department__department_relation")
             .filter(tenant_id=DEFAULT_TENANT_ID)
@@ -181,12 +181,12 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = (
             TenantDepartment.objects.select_related(
                 "data_source_department__department_relation",
             )
-            .filter(id=kwargs["id"], tenant__id=DEFAULT_TENANT_ID)
+            .filter(id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID)
             .first()
         )
 
@@ -322,7 +322,7 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     pagination_class = LegacyOpenApiPagination
 
     def get(self, request, *args, **kwargs):
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = TenantDepartment.objects.filter(tenant_id=DEFAULT_TENANT_ID, id=kwargs["lookup_value"]).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['lookup_value']} not found")
@@ -356,7 +356,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # 注：兼容 v2 的 openapi 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         filters = {"tenant_id": DEFAULT_TENANT_ID}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
