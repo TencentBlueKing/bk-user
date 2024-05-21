@@ -56,14 +56,21 @@
               >
                 {{ $t('编辑') }}
               </bk-button>
-              <bk-button
-                v-else
-                class="min-w-[64px]"
-                theme="primary"
-                @click="handleSync"
-              >
-                {{ $t('同步') }}
-              </bk-button>
+              <div v-else>
+                <bk-pop-confirm
+                  ref="popConfirmRef"
+                  :content="$t('确认同步？')"
+                  trigger="click"
+                  @confirm="handleSync"
+                >
+                  <bk-button
+                    class="min-w-[64px]"
+                    theme="primary"
+                  >
+                    {{ $t('同步') }}
+                  </bk-button>
+                </bk-pop-confirm>
+              </div>
             </div>
           </div>
         </template>

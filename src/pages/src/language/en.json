@@ -466,7 +466,7 @@
   "是否停用管理员账号？": "Disable Administrator Account?",
   "是否启用管理员账号？": "Enable Administrator Account?",
   "停用后，将不可使用管理员账号进行登录": "After deactivation, the administrator account cannot be used for logging in",
-  "停用后，可使用管理员账号进行登录": "After deactivation, the administrator account can still be used for logging in",
+  "启用后，可使用管理员账号进行登录": "After this function is enabled, you can log in as an administrator",
   "当前还没有数据源，需要先选择数据源类型并进行配置": "There is currently no data source; you need to select a data source type and configure it first",
   "搜索策略名称": "Search Strategy Name",
   "协同策略创建成功": "Collaboration Strategy Created Successfully",
@@ -482,5 +482,11 @@
   "删除字段， 将一并删除数据里的该字段数据": "Deleting a field will delete the data in that field",
   "请选择租户或输入租户ID": "Please select the tenant or enter the tenant ID",
   "请输入至少2个字符搜索": "Please enter at least 2 characters to search",
-  "针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等": "Update the corresponding field values for the same user coverage, including the department and superior"
+  "针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等": "Update the corresponding field values for the same user coverage, including the department and superior",
+  "确认同步？": "Confirm synchronization?",
+  "停用成功":"Successful deactivation ",
+  "启用成功":"Enabled successfully",
+  "确定删除字段": "Confirm deletion field",
+  "姓名":"Name",
+  "唯一的管理员不能停用":"The unique administrator cannot be disabled"
 }

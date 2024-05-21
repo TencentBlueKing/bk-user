@@ -5,7 +5,13 @@
         <bk-tag :theme="adminAccount.enable_login ? 'success' : ''">
           {{ adminAccount.enable_login ? $t('启用') : $t('未启用') }}
         </bk-tag>
-        <bk-button text theme="primary" @click="changeStatus">
+        <bk-button
+          text
+          theme="primary"
+          @click="changeStatus"
+          :disabled="adminAccount.enable_login && isDisabled"
+          @mouseover="mouseOverEvent(adminAccount.enable_login && isDisabled)"
+          :title="title">
           {{ adminAccount.enable_login ? $t('去停用') : $t('去启用') }}
         </bk-button>
       </LabelContent>
@@ -17,7 +23,7 @@
             @click="editUsername" />
         </template>
         <template v-else>
-          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" />
+          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" @enter="saveUsername" />
           <bk-button
             text
             theme="primary"
@@ -185,12 +191,14 @@ const changeStatus = () => {
     title: adminAccount.value.enable_login ? t('是否停用管理员账号？') : t('是否启用管理员账号？'),
     subTitle: adminAccount.value.enable_login
       ? t('停用后，将不可使用管理员账号进行登录')
-      : t('停用后，可使用管理员账号进行登录'),
-    confirmText: adminAccount.value.enable_login ? t('停用') : undefined,
+      : t('启用后，可使用管理员账号进行登录'),
+    confirmText: adminAccount.value.enable_login ? t('停用') : t('启用'),
     theme: adminAccount.value.enable_login ? 'danger' : undefined,
     onConfirm: async () => {
       await patchBuiltinManager({ enable_login: !adminAccount.value.enable_login });
       initBuiltinManager();
+      const message = adminAccount.value.enable_login ? t('停用成功') : t('启用成功');
+      Message({ theme: 'success', message });
     },
   });
 };
@@ -207,6 +215,7 @@ watch(() => isEditUsername.value, (val) => {
 const saveUsername = async () => {
   await patchBuiltinManager({ username: adminAccount.value.username });
   isEditUsername.value = false;
+  Message({ theme: 'success', message: t('保存成功') });
 };
 
 const cancelUsername = () => {
@@ -285,11 +294,12 @@ const params = reactive({
   keyword: '',
   exclude_manager: true,
 });
-
+const isDisabled = ref(false);
 const initRealManagers = async () => {
   try {
     const res = await getRealManagers();
     selectedValue.value = res.data;
+    isDisabled.value = !selectedValue.value.length;
   } finally {
     isLoading.value = false;
   }
@@ -352,6 +362,14 @@ const saveRealUsers = () => {
 
 const cancelRealUsers = () => {
   showSelectInput.value = false;
+};
+const title = ref('');
+const mouseOverEvent = (params) => {
+  if (params) {
+    title.value = t('唯一的管理员不能停用');
+  } else {
+    title.value = '';
+  }
 };
 </script>
 

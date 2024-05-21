@@ -21,7 +21,7 @@ defineProps({
 
 <style lang="less" scoped>
 .row-wrapper {
-  padding: 0 24px 8px;
+  padding: 0 24px 24px;
   margin-bottom: 16px;
   background: #FFF;
   border-radius: 2px;

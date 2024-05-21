@@ -34,7 +34,7 @@
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '130px' }">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
