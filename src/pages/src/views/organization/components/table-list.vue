@@ -143,11 +143,12 @@
         id-key="id"
         display-key="username"
         :remoteMethod="remoteMethod"
+        :placeholder="$t('2个字符起搜索')"
         @select="handleSelect"
       >
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option">
-            <p class="text-[#313238]">{{ item.username }}({{ item.full_name }}) <label class="text-[#FF9C01]">@{{item.tenant_name}}</label></p>
+            <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
             <!-- <p class="text-[#979BA5]">{{item.organization_paths.join('/')}}</p> -->
           </div>
         </template>
@@ -231,7 +232,7 @@
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="detailsInfo" v-else />
+      <ViewUser :user-data="editDetailsInfo" v-else />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog
@@ -317,10 +318,11 @@
   const defaultOperation = reactive([
     {
       label: t('删除'),
-      isShow: isLocalDataSource.value,
+      isShow: !isLocalDataSource.value,
       handle: (isBatch, item) => {
           InfoBox({
-            title: isBatch ? t('确认批量删除用户？') : t('确认删除用户？'),
+            title: isBatch ? t('确认批量删除用户？') : t(`确认删除用户${detailsInfo.value.username}？`),
+            subTitle: t('删除后，用户将被彻底删除，无法恢复'),
             height: 184,
             onConfirm: async () => {
                 if (isBatch) {
@@ -386,9 +388,10 @@
       key: 'status',
       handle: (isBatch, item) => {
         const isEnabled = item.status === 'enabled';
+        console.log(detailsInfo.value, 'detailsInfo')
         InfoBox({
-            title: isEnabled ? t('确定停用当前组织架构') : t('确定启用当前组织架构'),
-            subTitle: isEnabled ? t('停用后，用户将无法看到该组织架构信息') : t('启用后，用户将看到该组织架构信息'),
+            title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
+            subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
             height: 184,
             onConfirm: async () => {
                 await updateTenantsUserStatus(item.id);
@@ -413,16 +416,11 @@
   });
   const columns= reactive([
     {
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    },
-    {
         label: t("用户名"),
         field: "username",
     },
     {
-        label: t("全名"),
+        label: t("姓名"),
         field: "full_name",
     },
     {
@@ -445,16 +443,16 @@
   const tableData = ref([]);
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    // let columnsList = [];
-    // columnsList = (!isTenant.value) ? [...[{
-    //     width: 40,
-    //     minWidth: 40,
-    //     type: "selection"
-    // }], ...columns] : columns;
-    return isLocalDataSource.value ? [...columns, ...[{
+    let columnsList = [];
+    columnsList = (!isTenant.value) ? [...[{
+        width: 40,
+        minWidth: 40,
+        type: "selection"
+    }], ...columns] : columns;
+    return isLocalDataSource.value ? [...columnsList, ...[{
         label: "操作",
         field: "operation",
-    }]] : columns;
+    }]] : columnsList;
   });
 
   /** 点击拉取已有用户按钮 */
@@ -568,7 +566,7 @@
   }
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
-    const res = await randomPasswords({data_source_id: appStore.currentOrg.data_source.id});
+    const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
     password.value = res.data?.password;
   };
   /** 重置密码 */
@@ -777,6 +775,7 @@
             height: 32px;
             line-height: 32px;
             padding: 0 12px;
+            cursor: pointer;
             &:hover {
                 background: #F5F7FA;
             }

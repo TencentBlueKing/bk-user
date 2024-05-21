@@ -14,8 +14,9 @@ from bkuser.apps.idp.models import Idp
 from bkuser.biz.idp import AuthenticationMatcher
 from django.db.models import Q
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db()
+
 class TestAuthenticationMatcher:
     @pytest.fixture(autouse=True)
     def _initialize(self, default_tenant, tenant_user_custom_fields):

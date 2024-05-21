@@ -28,4 +28,11 @@ defineProps({
 <style lang="less" scoped>
 @import url("@/css/viewUser.less");
 </style>
+<style  lang="less">
+.details-content-key, .details-content-value {
+  .text-ov {
+    font-size: 14px;
+  }
+}
+</style>
 

@@ -99,9 +99,6 @@ class Migration(migrations.Migration):
                 ('operator', models.CharField(max_length=128, verbose_name='操作人')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_source.datasourceuser')),
             ],
-            options={
-                'ordering': ['-created_at'],
-            },
         ),
         migrations.AddField(
             model_name='datasource',
