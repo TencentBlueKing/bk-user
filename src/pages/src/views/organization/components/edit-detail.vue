@@ -56,6 +56,7 @@
                 v-for="item in departmentsList"
                 :key="item.id"
                 :value="item.id"
+                :name="item.organization_path"
                 :label="item.name" />
             </bk-select>
           </bk-form-item>
@@ -73,6 +74,7 @@
                 v-for="item in leaderList"
                 :key="item.id"
                 :value="item.id"
+                :name="`${item.username}(${item.full_name})`"
                 :label="`${item.username}(${item.full_name})`" />
             </bk-select>
           </bk-form-item>
@@ -129,6 +131,11 @@
   };
   
   const isLoading = ref(false);
+
+  onMounted(() => {
+    getOptionalDepartmentsList();
+    optionalLeaderList();
+  })
   
   const changeCountryCode = (code: string) => {
     formData.phone_country_code = code;
@@ -139,25 +146,26 @@
   const changeTelError = (value: boolean) => {
     telError.value = value;
   };
+  const getOptionalDepartmentsList = (value = '') => {
+    optionalDepartmentsList({keyword: value}).then((res) => {
+        departmentsList.value = res.data;
+    })
+    .catch((e) => {
+        console.warn(e);
+    });
+  }
+  const getOptionalLeaderList = (value = '') => {
+    optionalLeaderList({keyword: value, excluded_user_id: formData.id}).then((res) => {
+        leaderList.value = res.data;
+    }).catch((e) => {
+        console.warn(e);
+    });
+  }
   const searchDepartments = (value: string) => {
-    if (value.length > 1) {
-        optionalDepartmentsList({keyword: value}).then((res) => {
-            departmentsList.value = res.data;
-        })
-        .catch((e) => {
-            console.warn(e);
-        });
-    }
+    getOptionalDepartmentsList(value);
   };
   const searchLeaders = (value: string) => {
-    if (value.length > 1) {
-        optionalLeaderList({keyword: value, excluded_user_id: formData.id}).then((res) => {
-            leaderList.value = res.data;
-        })
-        .catch((e) => {
-            console.warn(e);
-        });
-    }
+    optionalLeaderList(value);
   };
   
   const handleSubmit = async () => {
@@ -165,10 +173,10 @@
       await formRef.value.validate();
       if (telError.value) return;
       isLoading.value = true;
-      const { id, logo, status, extras, ...param} = formData;
+      const { id, logo, status, extras, departments, leaders, ...param} = formData;
       const extraData = {};
       extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, {...param, ...{extras: extraData}});
+      await updateTenantsUserDetail(id, {...param, ...{extras: extraData, leader_ids: leaders, department_ids: departments}});
       emit('updateUsers', t('更新成功'));
     } finally {
       isLoading.value = false;
