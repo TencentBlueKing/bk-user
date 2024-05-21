@@ -207,7 +207,6 @@ onBeforeMount(async () => {
  * @param id 租户ID
  */
 const handleTenantChange = async (id: string) => {
-  console.log('🚀 ~ handleTenantChange ~ id:', id);
   window.changeInput = true;
   // 清空时清空输入租户名称
   if (!id) {
@@ -219,7 +218,6 @@ const handleTenantChange = async (id: string) => {
     const res = await getTenantList({
       tenant_ids: id,
     });
-    console.log('res', res);
     const searchResult = res.data[0];
     selected = searchResult;
     inputTenant.value = searchResult;
