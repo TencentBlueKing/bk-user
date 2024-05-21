@@ -28,6 +28,7 @@ from bkuser.apis.open_v2.serializers.profilers import (
     ProfileListInputSLZ,
     ProfileRetrieveInputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
@@ -241,7 +242,11 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         """根据参数过滤, 生成 TenantUser QuerySet"""
         # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        queryset = TenantUser.objects.select_related("data_source_user").filter(tenant_id=DEFAULT_TENANT_ID).distinct()
+        queryset = (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
+            .distinct()
+        )
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
         if not lookup_field:
@@ -360,7 +365,10 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         lookup_value = kwargs["lookup_value"]
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        filters = {"tenant_id": DEFAULT_TENANT_ID}
+        filters = {
+            "tenant_id": DEFAULT_TENANT_ID,
+            "data_source__type": DataSourceTypeEnum.REAL,
+        }
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
             filters["id"] = lookup_value
@@ -506,7 +514,9 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         params = slz.validated_data
         no_page = params["no_page"]
 
-        tenant_dept = TenantDepartment.objects.filter(tenant_id=DEFAULT_TENANT_ID, id=kwargs["id"]).first()
+        tenant_dept = TenantDepartment.objects.filter(
+            id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+        ).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['id']} not found")
 
@@ -553,7 +563,9 @@ class ProfileLanguageUpdateApi(ExcludePatchAPIViewMixin, LegacyOpenApiCommonMixi
         slz = ProfileLanguageUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        tenant_user = TenantUser.objects.filter(tenant_id=DEFAULT_TENANT_ID, id=kwargs["username"]).first()
+        tenant_user = TenantUser.objects.filter(
+            id=kwargs["username"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+        ).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")
 

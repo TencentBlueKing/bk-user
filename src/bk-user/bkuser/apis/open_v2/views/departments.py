@@ -24,6 +24,7 @@ from bkuser.apis.open_v2.serializers.departments import (
     DepartmentRetrieveInputSLZ,
     ProfileDepartmentListInputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
@@ -131,7 +132,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
             TenantDepartment.objects.select_related("data_source_department__department_relation")
-            .filter(tenant_id=DEFAULT_TENANT_ID)
+            .filter(tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
         )
         if not params.get("lookup_field"):
@@ -183,10 +184,8 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = (
-            TenantDepartment.objects.select_related(
-                "data_source_department__department_relation",
-            )
-            .filter(id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID)
+            TenantDepartment.objects.select_related("data_source_department__department_relation")
+            .filter(id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
             .first()
         )
 
@@ -323,7 +322,9 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        tenant_dept = TenantDepartment.objects.filter(tenant_id=DEFAULT_TENANT_ID, id=kwargs["lookup_value"]).first()
+        tenant_dept = TenantDepartment.objects.filter(
+            id=kwargs["lookup_value"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+        ).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['lookup_value']} not found")
 
@@ -357,7 +358,10 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         params = slz.validated_data
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        filters = {"tenant_id": DEFAULT_TENANT_ID}
+        filters = {
+            "tenant_id": DEFAULT_TENANT_ID,
+            "data_source__type": DataSourceTypeEnum.REAL,
+        }
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
             filters["id"] = kwargs["lookup_value"]
