@@ -1,15 +1,15 @@
 <template>
     <div class="organization-table px-[24px] py-[24px]">
         <div class="table-search mb-[16px]">
-            <bk-button v-if="isTenant && isLocalDataSource" @click="() => importDialogShow = true">
+            <bk-button v-if="isTenantStatus && isLocalDataSource" @click="() => importDialogShow = true">
                 <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
-                v-if="!isTenant">
+                v-if="!isTenantStatus">
                 <i class="user-icon icon-add-2 mr8" />
                 {{ $t('快速录入') }}
             </bk-button>
-            <bk-button v-if="!isTenant"
+            <bk-button v-if="!isTenantStatus"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
             <bk-checkbox class="ml-[16px] h-[32px]"
                 :label="$t('仅显示本级用户')"
@@ -19,7 +19,7 @@
             <bk-input
                 class="header-right"
                 v-model="keyword"
-                :placeholder="$t('搜索用户名、全名')"
+                :placeholder="$t('搜索用户名、姓名')"
                 type="search"
                 clearable
                 @enter="handleEnter"
@@ -35,7 +35,7 @@
             v-bkloading="{ loading: isLoading }"
             row-hover="auto"
             remote-pagination
-            :is-row-select-enable="!isTenant && isLocalDataSource"
+            :columns="columnsRender"
             @select="handleSelectTable"
             @select-all="handleSelectAll"
             @page-limit-change="pageLimitChange"
@@ -50,9 +50,9 @@
               @handle-update="initTenantsUserList"
             />
           </template>
-          <template #prepend v-if="!isTenant && selectList.length">
+          <template #prepend v-if="selectList.length">
               <div class="table-total">
-                  <span>当前已选择 <b>{{selectList.length}}</b> 条数据，可以批量</span>
+                  <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
                   <label
                       v-for="(item, index) in operationList.filter(item => item.isShow)"
                       :key="index"
@@ -63,62 +63,6 @@
                       }"
                   >{{$t(item.label)}}</label>   
               </div>
-          </template>
-          <template
-            v-for="(column, ind) in columnsRender"
-            :key="ind"
-          >
-            <bk-table-column
-              :label="column.label"
-              :type="column.type"
-              :field="column.field"
-              :width="column.width"
-              :index="ind"
-            >
-            <template #default="{ row, column, index }">
-                <span v-if="column?.field === 'username'"
-                    @click="() => editInfoHandle(row)">
-                    <label class="table-operate">{{row[column?.field]}}</label>
-                </span>
-                <span v-else-if="column?.field === 'status'" class="status-main">
-                    <label :class="`status-label ${row.status}`"></label>
-                    {{statusEnum[row.status]}}
-                </span>
-                <span v-else-if="column?.field === 'operation'">
-                    <label class="table-operate" @click="() => editInfoHandle(row, true)">{{$t('编辑')}}</label>
-                    <bk-popover
-                        ext-cls="operate-popover"
-                        :ref="(el) => setItemRef(el, `dropdownRef${index}`)"
-                        theme="light"
-                        trigger="click"
-                        :arrow="false"
-                        placement="bottom"
-                        allowHtml
-                    >
-                        <template #content>
-                            <ul class="operate-menu-list">
-                                <li
-                                    class="operate-list-item"
-                                    v-for="(item, ind) in rowOperation"
-                                    :key="ind"
-                                    @click="() => {
-                                        detailsInfo = row;
-                                        dropdownRefs[`dropdownRef${index}`]?.hide();
-                                        item.handle(false, row);
-                                    }"
-                                >
-                                    {{ operationLabel(item, row) }}
-                                </li>
-                            </ul>
-                        </template>
-                        <div class="operate-popover-main">
-                            <i class="user-icon icon-more ml8" />
-                        </div>
-                    </bk-popover>
-                </span>
-                <label v-else>{{formatField(row[column?.field])}}</label>
-            </template>
-            </bk-table-column>
           </template>
         </bk-table>
     </div>
@@ -139,7 +83,6 @@
         multiple
         auto-focus
         :clearable="false"
-        allowCreate
         id-key="id"
         display-key="username"
         :remoteMethod="remoteMethod"
@@ -149,7 +92,7 @@
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option">
             <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
-            <!-- <p class="text-[#979BA5]">{{item.organization_paths.join('/')}}</p> -->
+            <p class="text-[#979BA5] mt-[6px]">{{item.organization_paths.join('、')}}</p>
           </div>
         </template>
       </bk-select>
@@ -182,7 +125,7 @@
                         :id="item.id"
                         :key="index"
                         :name="item.name"
-                        :disabled="item.disabled"
+                        :disabled="chooseDepartments.includes(item.name)"
                     />
                 </bk-select>
             </bk-form-item>
@@ -207,7 +150,7 @@
                 <bk-input :style="{width: '80%'}"
                     v-model="password"
                     type="password"
-                    :placeholder="$t('至少六位，需保护英文、数字与符号中的两种')"
+                    :placeholder="passwordTips"
                     clearable
                 />
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
@@ -242,7 +185,7 @@
     />
   </template>
   
-<script setup lang="ts">
+<script setup lang="tsx">
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
@@ -268,7 +211,8 @@
     batchDelUpdate,
     getTenantsUserDetail,
     getOrganizationPaths,
-    getUsersList
+    getUsersList,
+    passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
 
@@ -282,7 +226,7 @@
   const selectedValue = ref([]);
   const isDetailSlider = ref(false);
   /** 是否为租户层级 */
-  const isTenant = computed(() => {
+  const isTenantStatus = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
   });
   const isDataError = ref(false);
@@ -290,15 +234,7 @@
   const detailsInfo = ref({});
   const selectList = ref([]);
   const password = ref('');
-  const dataSource = ref([
-    {
-      value: 'climbing',
-      label: '爬山',
-    },
-    {
-      value: 'running',
-      label: '跑步',
-    }]);
+  const dataSource = ref([]);
   const moveDialogShow = ref(false);
   const currentHandle = ref({});
   const passwordDialogShow = ref(false);
@@ -308,13 +244,37 @@
   const getUsersDialogShow = ref(false);
   const getUsersValue = ref([]);
   const getUserList = ref([]);
+  const chooseDepartments = ref([]);
+  const passwordTips = ref('');
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
   });
   const dataSourceId = computed(() => {
     return appStore.currentTenant?.data_source?.id;
+  });
+  const isEnabledPassword = computed(() => {
+    return appStore.currentTenant?.data_source?.enable_password;
   })
+
+  const editInfoHandle = async (row, isDetail = false) => {
+    isDetailSlider.value = isDetail;
+    detailsInfo.value = row;
+    const [useRes, fieldsRes] = await Promise.all([
+        getTenantsUserDetail(row.id),
+        getFields(),
+    ]);
+    const data = useRes.data;
+    const extrasList = fieldsRes.data.custom_fields;
+    extrasList.map(item => item.value = data.extras[item.name]);
+    Object.assign(data, {
+      departments: getIdList(data?.departments),
+      leaders: getIdList(data?.leaders),
+      extras: extrasList
+    })
+    editDetailsInfo.value = data;
+    editDetailsShow.value = true;
+  }
   const defaultOperation = reactive([
     {
       label: t('删除'),
@@ -347,7 +307,7 @@
             height: 184,
             onConfirm: async () => {
                 const params = {
-                    user_ids: getBatchUserIds(),
+                    user_ids: getBatchUserIds(true),
                     source_department_id: appStore.currentOrg.id
                 }
                 await batchDelete(params);
@@ -388,7 +348,6 @@
       key: 'status',
       handle: (isBatch, item) => {
         const isEnabled = item.status === 'enabled';
-        console.log(detailsInfo.value, 'detailsInfo')
         InfoBox({
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
@@ -402,8 +361,12 @@
     },
     {
       label: t('重置密码'),
+      disabled: isEnabledPassword.value,
       handle: () => {
         passwordDialogShow.value = true;
+        passwordRule(detailsInfo.value.id).then(res => {
+          passwordTips.value = res.data?.password_rule_tips;
+        });
       }
     },
   ], ...defaultOperation]);
@@ -414,10 +377,19 @@
     disabled: t('停用'),
     expired: t('冻结')
   });
-  const columns= reactive([
+  const isDataEmpty = ref(false);
+  const columns = reactive([
+    {
+        width: 40,
+        minWidth: 40,
+        type: "selection"
+    },
     {
         label: t("用户名"),
         field: "username",
+        render: ({ row, column }) => (
+          <span class="table-operate" onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
+        )
     },
     {
         label: t("姓名"),
@@ -425,7 +397,11 @@
     },
     {
         label: t("账号状态"),
-        field: "status"
+        field: "status",
+        render: ({ row, column }) => (<span class="status-main">
+            <label class={`status-label ${row.status}`}></label>
+            {statusEnum[row.status]}
+        </span>)
     },
     {
         label: t("邮箱"),
@@ -438,27 +414,73 @@
     {
         label: t("所属组织"),
         field: "departments",
+        render: ({ row, column }) => {
+          // const tips = '';
+          // const config = {
+          //   content: '提示信息',
+          //   onShow: () => {
+          //     const res = getOrganizationPaths(row.id);
+          //     console.log(res, '---')
+          //   },
+          // }
+          return <span >{row[column?.field].join('、') || '--'}</span>
+        }
     }
   ]);
   const tableData = ref([]);
+  const renderOperation = ({ row, column, index }) => {
+    return (<span>
+        <label class="table-operate" onClick={() => editInfoHandle(row, true)}>{t('编辑')}</label>
+        <bk-popover
+          ext-cls="operate-popover"
+          ref={(el) => setItemRef(el, `dropdownRef${index}`)}
+          theme="light"
+          trigger="click"
+          arrow={false}
+          placement="bottom"
+          allowHtml
+          v-slots={{
+            content: () => (
+              <ul class="operate-menu-list">
+                {
+                  rowOperation.map((item, ind) => <li
+                    class={["operate-list-item", {disabled: item.disabled}]}
+                    key="ind"
+                    onClick={() => {
+                        if (item.disabled) {
+                          return;
+                        }
+                        detailsInfo.value = row;
+                        dropdownRefs.value[`dropdownRef${index}`]?.hide();
+                        item.handle(false, row);
+                    }}>
+                    { operationLabel(item, row) }
+                  </li>)
+                }
+              </ul>
+            )
+          }}>
+          <div class="operate-popover-main">
+            <i class="user-icon icon-more ml8" />
+          </div>
+        </bk-popover>
+    </span>)
+  }
+  const hasOperationColumns = [...columns, ...[{
+    label: t("操作"),
+    field: "operation",
+    render: renderOperation
+  }]]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    let columnsList = [];
-    columnsList = (!isTenant.value) ? [...[{
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    }], ...columns] : columns;
-    return isLocalDataSource.value ? [...columnsList, ...[{
-        label: "操作",
-        field: "operation",
-    }]] : columnsList;
+    return isLocalDataSource.value ? hasOperationColumns : columns;
   });
 
   /** 点击拉取已有用户按钮 */
   const handleGetUsersDialog = () => {
     getUsersValue.value = [];
     getUsersDialogShow.value = true;
+    getUserList.value = [];
   }
 
   const remoteMethod = async (word) => {
@@ -493,26 +515,24 @@
   }
   /** 点击移动/移动至组织按钮 */
   const handleOperations = async (status, title) => {
+    chooseDepartments.value = [];
     moveDialogShow.value = true;
+    selectedValue.value = [];
+    dataSource.value = [];
+    selectList.value.map(item => chooseDepartments.value.push(...item.departments));
     const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
 
   const confirmOperations = async () => {
-    InfoBox({
-        title: t(`确认将选中的用户${currentHandle.value.label}`),
-        height: 184,
-        onConfirm: async () => {
-            const params = {
-                user_ids: getBatchUserIds(),
-                target_department_ids: selectedValue.value,
-                source_department_id: appStore.currentOrg.id
-            };
-            await currentHandle.value.confirmFn(params);
-            moveDialogShow.value = false;
-            handleClear();
-        }
-    });
+    const params = {
+      user_ids: getBatchUserIds(),
+      target_department_ids: selectedValue.value,
+      source_department_id: appStore.currentOrg.id
+    };
+    await currentHandle.value.confirmFn(params);
+    moveDialogShow.value = false;
+    handleClear();
   }
 
   const operationLabel = (item, row) => {
@@ -534,6 +554,8 @@
   });
   
   const initTenantsUserList = async () => {
+    console.log(appStore.currentOrg, 'appStore.currentOrg')
+    const { id, isTenant } = appStore.currentOrg;
     try {
         tableData.value = [];
         selectList.value = [];
@@ -543,10 +565,10 @@
           page: pagination.current,
           page_size: pagination.limit,
           keyword: keyword.value,
-          department_id: isTenant.value ?  0 : appStore.currentOrg.id,
+          department_id: isTenant ?  0 : appStore.currentOrg.id,
           recursive: !recursive.value
         };
-        const res = await getTenantsUserList(appStore.currentTenant.id, params);
+        const res = await getTenantsUserList(isTenant ? id : appStore.currentTenant.id, params);
         if (res.data?.count === 0) {
           keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
         }
@@ -575,8 +597,8 @@
         const param = { password: password.value };
         await resetTenantsUserPassword(detailsInfo.value.id, param);
         passwordDialogShow.value = false;
-        Message({ theme: 'success', message: $t('重置密码成功') });
         handleClear();
+        Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
         console.warn(e);
     }
@@ -655,27 +677,9 @@
     }, []);
     return values;
   };
-  const editInfoHandle = async (row, isDetail = false) => {
-    isDetailSlider.value = isDetail;
-    detailsInfo.value = row;
-    const [useRes, fieldsRes] = await Promise.all([
-        getTenantsUserDetail(row.id),
-        getFields(),
-    ]);
-    const data = useRes.data;
-    const extrasList = fieldsRes.data.custom_fields;
-    extrasList.map(item => item.value = data.extras[item.name]);
-    Object.assign(data, {
-      departments: getIdList(data?.departments),
-      leaders: getIdList(data?.leaders),
-      extras: extrasList
-    })
-    editDetailsInfo.value = data;
-    editDetailsShow.value = true;
-  }
 </script>
 <style lang="less">
-  .operate-popover {
+.operate-popover {
       padding: 5px 0 !important;
   }
   .organization-table-main {
@@ -685,104 +689,103 @@
       }
     }
   }
-</style>
-<style lang="less" scoped>
-    .organization-table {
-      height: 100%;
-        .table-search {
-            width: 100%;
-            position: relative;
-            display: flex;
-            .header-right {
-                width: 30%;
-                min-width: 400px;
-                position: absolute;
-                right: 0;
-            }
-        }
-        .organization-table-main {
-            background: #fff;
-            .table-total {
-                width: 100%;
-                height: 32px;
-                line-height: 32px;
-                background: #F0F1F5;
-                text-align: center;
-                color: #63656E;
-            }
-            .icon-more {
-                display: inline-block;
-                width: 24px;
-                height: 24px;
-                font-size: 16px;
-                line-height: 24px;
-                margin-left: 8px;
-                cursor: pointer;
-                &:hover {
-                    background: #F0F1F5;
-                    border-radius: 50%;
-                }
-            }
-            .table-operate {
-                cursor: pointer;
-                color: #3A84FF;
-            }
-            .operate-popover-main {
-                display: inline-block;
-            }
-            .status-label {
-                display: inline-block;
-                width: 13px;
-                height: 13px;
-                border-radius: 50%;
-                background: #3fc06d29;
-                position: relative;
-                top: 2px;
-                margin-right: 3px;
-                &::before {
-                    content: '';
-                    display: inline-block;
-                    border-radius: 50%;
-                    width: 7px;
-                    height: 7px;
-                    background: #3FC06D;
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    transform: translate(-50%, -50%);
-                }
-                &.disabled {
-                    background: #979ba529;
-                    &::before {
-                        background: #979BA5;
-                    }
-                }
-                &.expired {
-                    background: #ff9c0129;
-                    &::before {
-                        background: #FF9C01;
-                    }
-                }
-            }
-        }
-    }
-    .user-select-main {
+  .organization-table {
+    height: 100%;
+      .table-search {
+          width: 100%;
+          position: relative;
+          display: flex;
+          .header-right {
+              width: 30%;
+              min-width: 400px;
+              position: absolute;
+              right: 0;
+          }
+      }
+      .organization-table-main {
+          background: #fff;
+          .table-total {
+              width: 100%;
+              height: 32px;
+              line-height: 32px;
+              background: #F0F1F5;
+              text-align: center;
+              color: #63656E;
+          }
+          .icon-more {
+              display: inline-block;
+              width: 24px;
+              height: 24px;
+              font-size: 16px;
+              line-height: 24px;
+              margin-left: 8px;
+              cursor: pointer;
+              &:hover {
+                  background: #F0F1F5;
+                  border-radius: 50%;
+              }
+          }
+          .table-operate {
+              cursor: pointer;
+              color: #3A84FF;
+          }
+          .operate-popover-main {
+              display: inline-block;
+          }
+          .status-label {
+              display: inline-block;
+              width: 13px;
+              height: 13px;
+              border-radius: 50%;
+              background: #3fc06d29;
+              position: relative;
+              top: 2px;
+              margin-right: 3px;
+              &::before {
+                  content: '';
+                  display: inline-block;
+                  border-radius: 50%;
+                  width: 7px;
+                  height: 7px;
+                  background: #3FC06D;
+                  position: absolute;
+                  left: 50%;
+                  top: 50%;
+                  transform: translate(-50%, -50%);
+              }
+              &.disabled {
+                  background: #979ba529;
+                  &::before {
+                      background: #979BA5;
+                  }
+              }
+              &.expired {
+                  background: #ff9c0129;
+                  &::before {
+                      background: #FF9C01;
+                  }
+              }
+          }
+      }
+  }
+  .user-select-main {
 
-    }
-    .operate-menu-list {
-        .operate-list-item {
-            color: #63656E;
-            height: 32px;
-            line-height: 32px;
-            padding: 0 12px;
-            cursor: pointer;
-            &:hover {
-                background: #F5F7FA;
-            }
-        }
-    }
-    .user-info-option {
-      // height: 52px;
-    }
+  }
+  .operate-menu-list {
+      .operate-list-item {
+          color: #63656E;
+          height: 32px;
+          line-height: 32px;
+          padding: 0 12px;
+          cursor: pointer;
+          &:hover {
+              background: #F5F7FA;
+          }
+          &.disabled {
+            color: #c4c6cc;
+            cursor: not-allowed;
+          }
+      }
+  }
 </style>
   
