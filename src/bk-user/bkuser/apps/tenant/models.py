@@ -24,7 +24,6 @@ from bkuser.apps.tenant.constants import (
 )
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
-from bkuser.common.time import datetime_to_display
 
 
 class Tenant(AuditedModel):
@@ -114,10 +113,6 @@ class TenantUser(AuditedModel):
         unique_together = [
             ("data_source_user", "tenant"),
         ]
-
-    @property
-    def account_expired_at_display(self) -> str:
-        return datetime_to_display(self.account_expired_at)
 
     @property
     def email(self) -> str:

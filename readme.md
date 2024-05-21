@@ -25,7 +25,6 @@
 
 ## 快速开始
 
-- [Helm 快速部署指引](/deploy/helm/bk-user/README.md)
 - [本地开发部署指引](/docs/develop_guide.md)
 
 ## 路线图

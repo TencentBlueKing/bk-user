@@ -43,7 +43,7 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
     excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（Leader 不能是自己）", required=False)
 
 
@@ -217,11 +217,12 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
 
-    departments = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
-    leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID 列表")
+    departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
+    leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
 
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
@@ -296,6 +297,10 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
             raise ValidationError(_("不能设置自己为自己的直接上级"))
 
         return super().validate_leader_ids(leader_ids)
+
+
+class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
+    password_rule_tips = serializers.CharField(help_text="用户密码规则提示")
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):

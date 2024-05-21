@@ -71,7 +71,7 @@
           <ul
             v-for="(item, index) in fieldSettingData.field_mapping.builtin_fields"
             :key="index">
-            <li>{{ item.display_name }}</li>
+            <li>{{`${item.display_name}（${item.name}）`}}</li>
             <li>{{ getCustomCondition(item.mapping_operation) }}</li>
             <li>{{ item.source_field }}</li>
           </ul>

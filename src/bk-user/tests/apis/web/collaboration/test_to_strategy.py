@@ -165,3 +165,37 @@ class TestCollaborationToStrategySourceStatusUpdateApi:
         assert resp.status_code == status.HTTP_200_OK
         # 再切换一次，变回 enabled
         assert resp.data["source_status"] == CollaborationStrategyStatus.ENABLED
+
+
+class TestCollaborationTargetTenantListApi:
+    def test_list(self, api_client, random_tenant, collaboration_tenant):
+        url = reverse("collaboration.target_tenant.list")
+
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        tenant_ids = [i["id"] for i in resp.data]
+        assert collaboration_tenant.id in tenant_ids
+        assert random_tenant.id not in tenant_ids
+
+        # 修改租户可见性
+        collaboration_tenant.visible = False
+        collaboration_tenant.save(update_fields=["visible"])
+        # 无过滤条件
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert collaboration_tenant.id not in [i["id"] for i in resp.data]
+        # 有过滤条件
+        resp = api_client.get(url, data={"tenant_ids": collaboration_tenant.id})
+        assert resp.status_code == status.HTTP_200_OK
+        assert collaboration_tenant.id in [i["id"] for i in resp.data]
+
+    def test_list_for_exist_strategy(self, api_client, random_tenant, collaboration_tenant, collaborate_to_strategy):
+        url = reverse("collaboration.target_tenant.list")
+
+        # 确保租户是可见的
+        collaboration_tenant.visible = True
+        collaboration_tenant.save(update_fields=["visible"])
+        # 租户已经被协同过了
+        resp = api_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        assert collaboration_tenant.id not in [i["id"] for i in resp.data]

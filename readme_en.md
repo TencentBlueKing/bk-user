@@ -26,7 +26,6 @@ For details, please refer to [features](https://bk.tencent.com/docs/document/6.0
 
 ## Getting Started
 
-- [Deploy by Helm](/deploy/helm/bk-user/README.md)
 - [Local Developing](/docs/develop_guide.md)
 
 ## Roadmap

@@ -142,3 +142,7 @@ export const putFromStrategies = (params: FromStrategiesConfirmParams) => http.p
  * 跨租户协同-数据更新记录
  */
 export const getCollaborationSyncRecords = (params: CollaborationSyncRecordsParams) => http.get('/api/v1/web/collaboration/sync-records/', params);
+/**
+ * 跨租户协同-数据更新记录-日志详情
+ */
+export const getCollaborationSyncRecordsLogs = (id: number) => http.get(`/api/v1/web/collaboration/sync-records/${id}/`);

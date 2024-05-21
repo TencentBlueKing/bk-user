@@ -32,6 +32,12 @@ urlpatterns = [
         views.CollaborationToStrategySourceStatusUpdateApi.as_view(),
         name="collaboration.to-strategy.source-status.update",
     ),
+    # 目标租户列表（目标租户可能是不可见的，则需要通过过滤的方式）
+    path(
+        "target-tenants/",
+        views.CollaborationTargetTenantListApi.as_view(),
+        name="collaboration.target_tenant.list",
+    ),
     # ----------------------------- 接受方 -----------------------------
     # 其他租户分享给本租户的协同策略
     path(
