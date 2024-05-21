@@ -178,9 +178,15 @@ export const searchUser = (params: any) => http.get(`${prefix}/tenants/users/`, 
 /**
  * 租户下部门单个用户详情
  */
-export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
+export const getUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
 
 /**
  * 搜索租户用户
  */
 export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+
+/**
+ * 密码规则
+ */
+export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/
+`)

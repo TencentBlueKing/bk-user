@@ -22,11 +22,10 @@
             @mouseleave="isHover = false">
             <i class="user-icon icon-excel" />
             <div class="file-text">
-              <div
-                v-overflow-tips
+              <bk-overflow-title
                 class="text-overflow">
                 {{ file.name }}
-              </div>
+              </bk-overflow-title>
               <p class="text-overflow file-status">
                 <i v-if="!isError" class="user-icon icon-check-line" />
                 {{ textTips }}
@@ -86,6 +85,7 @@
   import { ref, reactive } from 'vue';
   import { t } from '@/language/index';
   import useAppStore from '@/store/app';
+  import { InfoLine } from 'bkui-vue/lib/icon';
   import { InfoBox, Message } from 'bkui-vue';
   const props = defineProps({
     isShow: {
