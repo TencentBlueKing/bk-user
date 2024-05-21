@@ -61,7 +61,6 @@ class ProfileRetrieveInputSLZ(ProfileFieldsSLZ):
     lookup_field = serializers.ChoiceField(
         help_text="指定路径参数值的字段", choices=["id", "username"], required=False, default="username"
     )
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", required=False, default=False)
 
 
 class ProfileListInputSLZ(ProfileFieldsSLZ):
@@ -81,7 +80,6 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
             # 生命周期相关
             "status",
             "staff_status",
-            "enabled",
             # IAM 特有
             "create_time",
         ],
@@ -89,13 +87,11 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
     )
     exact_lookups = StringArrayField(help_text="精确匹配字段", required=False)
     fuzzy_lookups = StringArrayField(help_text="模糊匹配字段", required=False)
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", required=False, default=False)
     no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)
 
 
 class DepartmentProfileListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", required=False, default=False)
     no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)
 
 
