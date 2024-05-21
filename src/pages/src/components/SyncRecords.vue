@@ -199,7 +199,7 @@ const dataRecordFilter = ({ checked }) => {
   if (checked.length === 0) {
     pagination.current = 1;
   }
-  dataRecordConfig.status = checked;
+  dataRecordConfig.status = checked.join(',');
   pagination.current = 1;
   getSyncRecordsList();
 };

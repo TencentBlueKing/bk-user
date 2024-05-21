@@ -3,6 +3,7 @@
     <bk-input
       v-model="search"
       type="search"
+      :placeholder="$t('请输入至少2个字符搜索')"
       :clearable="true"
       @change="handleSearch"
       @clear="handleClear"
@@ -65,6 +66,7 @@
                   {{ item.organization_paths[0] }}
                 </bk-overflow-title>
                 <bk-tag
+                  v-if="item.organization_paths.length > 1"
                   theme="info"
                   class="inline-block !m-0 h-[20px] !ml-[2px]"
                   v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
@@ -100,6 +102,7 @@
         :is-show="detailsConfig.isShow"
         :title="detailsConfig.title"
         :before-close="handleBeforeClose"
+        render-directive="if"
         quick-close
       >
         <template #header>

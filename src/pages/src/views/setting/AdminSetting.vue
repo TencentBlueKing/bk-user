@@ -52,7 +52,9 @@
             class="tag-style"
             v-for="item in selectedValue"
             :key="item.id"
-            :closable="!showSelectInput"
+            :closable="item.isMouseenter"
+            @mouseenter="item.isMouseenter = true"
+            @mouseleave="item.isMouseenter = false"
             @close="deleteAccount(item.id)">
             <template #icon>
               <i class="user-icon icon-yonghu" />

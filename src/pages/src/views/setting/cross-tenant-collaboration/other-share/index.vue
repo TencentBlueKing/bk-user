@@ -701,6 +701,7 @@ const durationText = (value) => {
         }
       }
     }
+
     .account-status-icon {
       display: inline-block;
       width: 16px;
@@ -710,6 +711,7 @@ const durationText = (value) => {
     }
   }
 }
+
 .log-wrapper {
   .logs-header {
     span, .bk-tag {

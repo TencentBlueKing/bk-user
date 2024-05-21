@@ -19,14 +19,14 @@
           <i class="user-icon icon-user-logo-i" />
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
         </div>
-        <div class="tenant-style" v-if="!isTenant">
+        <div class="tenant-style" v-if="!isTenant && role !== 'natural_user'">
           <div class="logo">
             <img v-if="userData.logo" :src="userData.logo" alt="">
             <span v-else>{{logoConvert(userData?.name) }}</span>
           </div>
           <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
           <i
-            v-if="userStore.user?.role === 'super_manager'"
+            v-if="role === 'super_manager'"
             class="user-icon icon-shezhi"
             @click="toTenant"
           />
@@ -155,18 +155,18 @@ const state = reactive({
 
 const userStore = useUser();
 const headerNav = ref([]);
+const role = computed(() => userStore.user.role);
 const userInfo = computed(() => {
-  const { role } = userStore.user;
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
     { name: t('虚拟账号'), path: 'virtual-account' },
     { name: t('设置'), path: 'setting' },
   ];
-  if (role === 'super_manager' && !isTenant.value) {
+  if (role.value === 'super_manager' && !isTenant.value) {
     headerNav.value = baseNav;
-  } else if (role === 'tenant_manager') {
+  } else if (role.value === 'tenant_manager') {
     headerNav.value = baseNav;
-  } else if (role === 'natural_user') {
+  } else if (role.value === 'natural_user') {
     router.push({ name: 'personalCenter' });
   }
   return userStore.user;
@@ -228,17 +228,18 @@ const initTenantInfo = async () => {
   userData.value = res.data;
 };
 onMounted(() => {
-  initTenantInfo();
+  if (role.value && role.value !== 'natural_user') {
+    initTenantInfo();
+  }
 });
 
 const onGoBack = () => {
-  const { role } = userStore.user;
-  if (role === 'super_manager' && route.name !== 'tenant') {
+  if (role.value === 'super_manager' && route.name !== 'tenant') {
     router.push({ name: 'tenant' });
     headerNav.value = [];
-  } else if (role === 'tenant_manager' && route.name !== 'organization') {
+  } else if (role.value === 'tenant_manager' && route.name !== 'organization') {
     router.push({ name: 'organization' });
-  } else if (role === 'natural_user') return;
+  } else if (role.value === 'natural_user') return;
 };
 
 // 产品文档
@@ -415,7 +416,7 @@ const openVersionLog = async () => {
     }
 
     .active-route {
-      color: #3a84ff;
+      // color: #3a84ff;
     }
 
     .help-info-icon {

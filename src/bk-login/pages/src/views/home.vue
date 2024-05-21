@@ -14,7 +14,7 @@
           filterable
           input-search
           allow-create
-          placeholder="请选择或输入租户"
+          placeholder="请选择租户或输入租户ID"
           @change="handleTenantChange">
           <bk-option
             v-for="item in allTenantList"
@@ -195,7 +195,7 @@ const loading = ref(false);
 const allTenantList: Ref<Tenant[]> = ref([]);
 const tenantMap = ref({});
 const tenantList = ref<Tenant[]>([]);
-const hasStorage = ref(!!localStorage.getItem('tenantId'));
+const hasStorage = ref(!!localStorage.getItem('userGroup'));
 
 /**
  * 选中的用户群
@@ -211,6 +211,11 @@ const inputTenant = ref(null);
  * @param id 租户ID
  */
 const handleTenantChange = async (id: string) => {
+  // 清空时清空输入租户名称
+  if (!id) {
+    inputTenant.value = null;
+    return;
+  }
   let selected = allTenantList.value.find(item => item.id === id);
   if (!selected) {
     const res = await getTenantList({
@@ -220,10 +225,6 @@ const handleTenantChange = async (id: string) => {
     selected = searchResult;
     inputTenant.value = searchResult;
   } else {
-    inputTenant.value = null;
-  }
-  // 清空时清空输入租户名称
-  if (!id) {
     inputTenant.value = null;
   }
   tenant.value = selected;
@@ -347,11 +348,7 @@ const handleChangeStorageTenant = (item: Tenant) => {
 };
 
 const handleChangeIdp = (idp: Idp) => {
-  // const customPlugins = ['local'];
   activeIdp.value = idp;
-  // if (!customPlugins.includes(idp.plugin_id)) {
-  //   window.location.href = `${window.SITE_URL}/tenants/${appStore.tenantId}/idps/${idp.id}/actions/login/`;
-  // }
 };
 
 const protocolVisible = ref(false);
@@ -391,7 +388,11 @@ onBeforeMount(() => {
  * 用户群列表
  */
 const userGroupList = computed(() => {
-  const currentTenant = allTenantList.value.find(item => item.id === appStore.tenantId);
+  let currentTenant = allTenantList.value.find(item => item.id === appStore.tenantId);
+  // 通过输入搜索出来的租户，匹配不到用户群，需要从inputTenant获取
+  if (inputTenant.value) {
+    currentTenant = inputTenant.value;
+  }
   const list = currentTenant?.collaboration_tenants || [];
   const current = [{
     id: appStore.tenantId,

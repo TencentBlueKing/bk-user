@@ -117,3 +117,7 @@ export interface CollaborationSyncRecordsParams {
   page?: number,
   pageSize?: number,
 }
+
+export interface TenantItem {
+  tenant_ids: string
+}

@@ -480,5 +480,7 @@
   "个部门": "departments",
   "个用户": "users",
   "删除字段， 将一并删除数据里的该字段数据": "Deleting a field will delete the data in that field",
+  "请选择租户或输入租户ID": "Please select the tenant or enter the tenant ID",
+  "请输入至少2个字符搜索": "Please enter at least 2 characters to search",
   "针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等": "Update the corresponding field values for the same user coverage, including the department and superior"
 }

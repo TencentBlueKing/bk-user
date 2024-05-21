@@ -3,7 +3,7 @@
     placement="bottom-start"
     theme="light"
     width="500"
-    trigger="click"
+    trigger="manual"
     :is-show="isShow"
     @after-hidden="Cancel"
   >
