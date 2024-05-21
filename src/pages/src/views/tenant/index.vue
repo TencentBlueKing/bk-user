@@ -96,8 +96,7 @@
                 class="dot-menu"
                 placement="bottom-start"
                 theme="light"
-                :arrow="false"
-                offset="15">
+                :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>
                   <ul class="dot-menu-list">

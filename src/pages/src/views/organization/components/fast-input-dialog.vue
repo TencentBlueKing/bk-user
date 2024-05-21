@@ -28,7 +28,7 @@
             <div class="info-content theme">
                 <i class="user-icon icon-info-i theme-icon" />
                 <p>{{$t('快速将用户录入到当前组织，如需添加到其他组织，请使用「导入」功能。')}}</p>
-                <p>{{$t('录入字段为 设置 > 字段设置 中配置，如需修改可去 字段设置 修改。')}}</p>
+                <p>{{$t('录入字段为 设置 > 字段设置 中配置。')}}</p>
             </div>
             <div class="info-content">
                 <p>{{$t('录入格式：')}}<label class="info-txt">{{tipsInfo}}</label></p>
@@ -37,7 +37,6 @@
             <bk-input
                 v-model="val"
                 type="textarea"
-                :rows="4"
                 :placeholder="$t('输入案例：zhangsan, 张三, 10000@qq.com, 15709998877')"
                 :maxlength="100"
             />
