@@ -194,9 +194,6 @@ class DataSourceUserDeprecatedPasswordRecord(TimestampedModel):
     password = models.CharField("用户曾用密码", max_length=128)
     operator = models.CharField("操作人", max_length=128)
 
-    class Meta:
-        ordering = ["-created_at"]
-
 
 class DataSourceDepartment(TimestampedModel):
     """

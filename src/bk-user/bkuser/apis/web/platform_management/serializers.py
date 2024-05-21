@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -42,13 +42,15 @@ class TenantListOutputSLZ(serializers.Serializer):
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
-def _validate_notification(notification_method: str, email: str, phone: str, phone_country_code: str):
+def _validate_notification(
+    notification_methods: List[str], email: str, phone: str, phone_country_code: str
+) -> Tuple[List[str], str, str, str]:
     """通知参数校验"""
     # 根据选择的通知方式，校验通知账号信息
-    if notification_method == NotificationMethod.EMAIL and not email:
+    if NotificationMethod.EMAIL in notification_methods and not email:
         raise ValidationError(_("选择邮箱通知方式时，邮箱不能为空"))
 
-    if notification_method == NotificationMethod.SMS:
+    if NotificationMethod.SMS in notification_methods:
         if not phone:
             raise ValidationError(_("选择短信通知方式时，手机号不能为空"))
         # 校验手机号是否合法
@@ -56,6 +58,14 @@ def _validate_notification(notification_method: str, email: str, phone: str, pho
             validate_phone_with_country_code(phone=phone, country_code=phone_country_code)
         except ValueError as e:
             raise ValidationError(str(e))
+
+    # Note: 不选择通知方式时，则对应联系信息需置空，避免后续单独选择通知方式出现非法联系信息的可能
+    return (
+        list(set(notification_methods)),
+        email if NotificationMethod.EMAIL in notification_methods else "",
+        phone if NotificationMethod.SMS in notification_methods else "",
+        phone_country_code if NotificationMethod.SMS in notification_methods else "",
+    )
 
 
 class TenantCreateInputSLZ(serializers.Serializer):
@@ -71,7 +81,13 @@ class TenantCreateInputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
     # [内置管理]类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
-    notification_method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
+    notification_methods = serializers.ListField(
+        help_text="通知方式(支持多选或不选)",
+        child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
+        required=False,
+        default=[],
+        allow_empty=True,
+    )
     # 内置管理账号信息
     email = serializers.EmailField(help_text="管理员邮箱", required=False, default="", allow_blank=True)
     phone = serializers.CharField(help_text="管理员手机号", required=False, default="", allow_blank=True)
@@ -105,9 +121,12 @@ class TenantCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验通知信息是否正确
-        _validate_notification(
-            attrs["notification_method"], attrs["email"], attrs["phone"], attrs["phone_country_code"]
+        notification_methods, email, phone, phone_country_code = _validate_notification(
+            attrs["notification_methods"], attrs["email"], attrs["phone"], attrs["phone_country_code"]
         )
+        attrs["notification_methods"] = notification_methods
+        attrs["email"], attrs["phone"], attrs["phone_country_code"] = email, phone, phone_country_code
+
         return attrs
 
 
@@ -174,7 +193,13 @@ class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
 class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
     # [内置管理]类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
-    notification_method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
+    notification_methods = serializers.ListField(
+        help_text="通知方式(支持多选或不选)",
+        child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
+        required=False,
+        default=[],
+        allow_empty=True,
+    )
     # 内置管理账号信息
     email = serializers.EmailField(help_text="管理员邮箱", required=False, default="", allow_blank=True)
     phone = serializers.CharField(help_text="管理员手机号", required=False, default="", allow_blank=True)
@@ -194,7 +219,10 @@ class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验通知信息是否正确
-        _validate_notification(
-            attrs["notification_method"], attrs["email"], attrs["phone"], attrs["phone_country_code"]
+        notification_methods, email, phone, phone_country_code = _validate_notification(
+            attrs["notification_methods"], attrs["email"], attrs["phone"], attrs["phone_country_code"]
         )
+        attrs["notification_methods"] = notification_methods
+        attrs["email"], attrs["phone"], attrs["phone_country_code"] = email, phone, phone_country_code
+
         return attrs
