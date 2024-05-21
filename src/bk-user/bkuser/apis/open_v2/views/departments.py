@@ -17,7 +17,7 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.departments import (
     DepartmentListInputSLZ,
@@ -30,13 +30,12 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
 )
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_ID
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.common.error_codes import error_codes
 from bkuser.utils.tree import Tree
 
 
-class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """查询部门列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -132,7 +131,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
             TenantDepartment.objects.select_related("data_source_department__department_relation")
-            .filter(tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
+            .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
         )
         if not params.get("lookup_field"):
@@ -174,7 +173,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
 
-class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
+class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.RetrieveAPIView):
     """查询单个部门"""
 
     def get(self, request, *args, **kwargs):
@@ -185,7 +184,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = (
             TenantDepartment.objects.select_related("data_source_department__department_relation")
-            .filter(id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
+            .filter(id=kwargs["id"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .first()
         )
 
@@ -315,7 +314,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         return dept_relation.level
 
 
-class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """获取某部门的子部门列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -323,7 +322,7 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = TenantDepartment.objects.filter(
-            id=kwargs["lookup_value"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+            id=kwargs["lookup_value"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
         ).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['lookup_value']} not found")
@@ -347,7 +346,7 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         return Response(resp_data)
 
 
-class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """查询单个用户的部门列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -359,7 +358,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         filters = {
-            "tenant_id": DEFAULT_TENANT_ID,
+            "tenant_id": self.default_tenant.id,
             "data_source__type": DataSourceTypeEnum.REAL,
         }
         if params["lookup_field"] == "username":

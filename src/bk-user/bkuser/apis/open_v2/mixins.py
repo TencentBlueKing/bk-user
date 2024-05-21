@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from functools import cached_property
+
 from django.db.models import Q, QuerySet
 from rest_framework.permissions import IsAuthenticated
 
@@ -15,8 +17,8 @@ from bkuser.apis.open_v2.authentications import ESBAuthentication
 from bkuser.apis.open_v2.renderers import BkLegacyApiJSONRenderer
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_ID, CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant
 
 
 class LegacyOpenApiCommonMixin:
@@ -25,15 +27,21 @@ class LegacyOpenApiCommonMixin:
     renderer_classes = [BkLegacyApiJSONRenderer]
 
 
-class DefaultTenantRealUserDataSourceMixin:
-    def get_default_tenant_real_user_data_source(self) -> QuerySet[DataSource]:
+class DefaultTenantMixin:
+    """默认租户 Mixin"""
+
+    @cached_property
+    def default_tenant(self) -> Tenant:
+        return Tenant.objects.filter(is_default=True).first()
+
+    def get_real_user_data_source(self) -> QuerySet[DataSource]:
         """获取默认租户真实用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
         # 接受方确认过的数据源，就是认为是有数据的
         collaboration_tenant_ids = (
-            CollaborationStrategy.objects.filter(target_tenant_id=DEFAULT_TENANT_ID)
+            CollaborationStrategy.objects.filter(target_tenant=self.default_tenant)
             .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
             .values_list("source_tenant_id", flat=True)
         )
         return DataSource.objects.filter(
-            Q(owner_tenant_id=DEFAULT_TENANT_ID) | Q(owner_tenant_id__in=collaboration_tenant_ids)
+            Q(owner_tenant_id=self.default_tenant.id) | Q(owner_tenant_id__in=collaboration_tenant_ids)
         ).filter(type=DataSourceTypeEnum.REAL)

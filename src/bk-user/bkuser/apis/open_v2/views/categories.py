@@ -12,19 +12,18 @@ from django.db.models import QuerySet
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import DefaultTenantRealUserDataSourceMixin, LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.categories import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_ID
 from bkuser.apps.tenant.models import Tenant
 
 
-class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantRealUserDataSourceMixin, generics.ListAPIView):
+class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     pagination_class = LegacyOpenApiPagination
 
     def get_queryset(self) -> QuerySet[DataSource]:
-        return self.get_default_tenant_real_user_data_source()
+        return self.get_real_user_data_source()
 
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)
@@ -37,7 +36,7 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantRealUserDataSourc
                 # 由于新版本中，单个租户只会有一个数据源，因此这里以租户名称作为数据源名称
                 "display_name": tenant_name_map[ds.owner_tenant_id],
                 "domain": ds.domain,
-                "default": ds.owner_tenant_id == DEFAULT_TENANT_ID,
+                "default": ds.owner_tenant_id == self.default_tenant.id,
                 "status": "normal",
                 "enabled": True,
             }

@@ -20,7 +20,7 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.profilers import (
     DepartmentProfileListInputSLZ,
@@ -34,7 +34,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_ID
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
@@ -215,7 +214,9 @@ class TenantUserListToUserInfosMixin:
         return dept_map
 
 
-class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserListToUserInfosMixin):
+class ProfileListApi(
+    LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView, TenantUserListToUserInfosMixin
+):
     """用户列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -244,7 +245,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL)
+            .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
         )
         # 过滤查询的字段
@@ -353,7 +354,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         )
 
 
-class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
+class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.RetrieveAPIView):
     """查询单个用户"""
 
     def get(self, request, *args, **kwargs):
@@ -366,7 +367,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         filters = {
-            "tenant_id": DEFAULT_TENANT_ID,
+            "tenant_id": self.default_tenant.id,
             "data_source__type": DataSourceTypeEnum.REAL,
         }
         if params["lookup_field"] == "username":
@@ -503,7 +504,9 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         return user_info
 
 
-class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserListToUserInfosMixin):
+class DepartmentProfileListApi(
+    LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView, TenantUserListToUserInfosMixin
+):
     """部门下用户"""
 
     pagination_class = LegacyOpenApiPagination
@@ -515,7 +518,7 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         no_page = params["no_page"]
 
         tenant_dept = TenantDepartment.objects.filter(
-            id=kwargs["id"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+            id=kwargs["id"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
         ).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['id']} not found")
@@ -556,7 +559,9 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         ).select_related("data_source_user")
 
 
-class ProfileLanguageUpdateApi(ExcludePatchAPIViewMixin, LegacyOpenApiCommonMixin, generics.UpdateAPIView):
+class ProfileLanguageUpdateApi(
+    ExcludePatchAPIViewMixin, DefaultTenantMixin, LegacyOpenApiCommonMixin, generics.UpdateAPIView
+):
     """更新用户国际化语言"""
 
     def put(self, request, *args, **kwargs):
@@ -564,7 +569,7 @@ class ProfileLanguageUpdateApi(ExcludePatchAPIViewMixin, LegacyOpenApiCommonMixi
         slz.is_valid(raise_exception=True)
 
         tenant_user = TenantUser.objects.filter(
-            id=kwargs["username"], tenant_id=DEFAULT_TENANT_ID, data_source__type=DataSourceTypeEnum.REAL
+            id=kwargs["username"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
         ).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")
