@@ -10,6 +10,7 @@
       @blur="verifyInput"
       @focus="hiddenVerify"
       @input="handleInput"
+      autofocus
     />
     <template v-if="tooltips">
       <bk-popover

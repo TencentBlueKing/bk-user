@@ -18,7 +18,7 @@
             @handle-update="fetchFieldList"
           />
         </template>
-        <bk-table-column prop="display_name" :label="$t('字段名称')">
+        <bk-table-column prop="display_name" :label="$t('字段名称')" width="200">
           <template #default="{ row }">
             <div class="field-name">
               <span class="name">{{ row.display_name }}</span>
@@ -200,7 +200,7 @@ const editField = (item) => {
 
 const deleteField = (row) => {
   InfoBox({
-    title: t('确认要删除吗？'),
+    title: `${t('确定删除字段')}: ${row.display_name}？`,
     subTitle: t('删除字段， 将一并删除数据里的该字段数据'),
     confirmText: t('确认'),
     onConfirm: () => {
@@ -264,7 +264,7 @@ const fetchFieldList = () => {
     }
 
     .icon-duihao-i {
-      font-size: 16px;
+      font-size: 24px;
       color: #2dcb56;
     }
 
