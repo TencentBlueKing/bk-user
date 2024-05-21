@@ -3,7 +3,7 @@
     <div
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
       :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"
-      @click="handleNodeClick(tenant)"
+      @click="handleNodeClick(tenant, true)"
     >
       <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
       <span
@@ -23,7 +23,7 @@
       node-key="id"
       children="children"
       :prefix-icon="getPrefixIcon"
-      @node-click="handleNodeClick"
+      @node-click="(node) => handleNodeClick(node)"
       :async="{
         callback: getRemoteData,
         cache: true,

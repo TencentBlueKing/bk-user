@@ -25,8 +25,8 @@ export default function useOrganizationAside(currentTenant: any) {
     return formatTreeData(res?.data);
   };
 
-  const handleNodeClick = (item: IOrg) => {
-    appStore.currentOrg = item;
+  const handleNodeClick = (item: IOrg, isTenant = false) => {
+    appStore.currentOrg = {...item, isTenant};
   };
 
   const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
