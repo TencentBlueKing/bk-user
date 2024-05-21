@@ -40,9 +40,9 @@ def strategy_target_config(random_tenant, collaboration_tenant) -> Dict:
         "organization_scope_config": {},
         "field_mapping": [
             {
-                "source_field": f"{collaboration_tenant.id}-{field}",
+                "source_field": f"{collaboration_tenant.id}_{field}",
                 "mapping_operation": "direct",
-                "target_field": f"{random_tenant.id}-{field}",
+                "target_field": f"{random_tenant.id}_{field}",
             }
             for field in ["age", "gender", "region"]
         ],
@@ -85,7 +85,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> None:
     """
     TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-age",
+        name=f"{tenant.id}_age",
         display_name="年龄",
         data_type=UserFieldDataType.NUMBER,
         required=False,
@@ -93,7 +93,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> None:
     )
     TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-gender",
+        name=f"{tenant.id}_gender",
         display_name="性别",
         data_type=UserFieldDataType.ENUM,
         required=True,
@@ -106,7 +106,7 @@ def _create_tenant_custom_fields(tenant: Tenant) -> None:
     )
     TenantUserCustomField.objects.create(
         tenant=tenant,
-        name=f"{tenant.id}-region",
+        name=f"{tenant.id}_region",
         display_name="籍贯",
         data_type=UserFieldDataType.STRING,
         required=True,

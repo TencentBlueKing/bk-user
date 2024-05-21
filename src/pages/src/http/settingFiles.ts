@@ -11,6 +11,7 @@ import type {
   PutTenantInfoParams,
   PutUserValidityParams,
   RealUsersParams,
+  TenantItem,
 } from './types/settingFiles';
 
 /**
@@ -146,3 +147,8 @@ export const getCollaborationSyncRecords = (params: CollaborationSyncRecordsPara
  * 跨租户协同-数据更新记录-日志详情
  */
 export const getCollaborationSyncRecordsLogs = (id: number) => http.get(`/api/v1/web/collaboration/sync-records/${id}/`);
+
+/**
+ * 跨租户协同-新建协同策略-目标租户
+ */
+export const getTenantList = (params: TenantItem) => http.get('/api/v1/web/collaboration/target-tenants/', params);

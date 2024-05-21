@@ -348,6 +348,7 @@
       key: 'status',
       handle: (isBatch, item) => {
         const isEnabled = item.status === 'enabled';
+        console.log(detailsInfo.value, 'detailsInfo')
         InfoBox({
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
@@ -379,11 +380,6 @@
   });
   const isDataEmpty = ref(false);
   const columns = reactive([
-    {
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    },
     {
         label: t("用户名"),
         field: "username",

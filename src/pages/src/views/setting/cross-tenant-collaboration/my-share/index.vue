@@ -72,10 +72,11 @@
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close>
       <template #header>
         <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
+        <div v-if="isView" class="mr-[24px]">
           <bk-button
             outline
             theme="primary"
@@ -174,7 +175,7 @@ watch(() => search.value, (val) => {
 
 const handleChange = (row: any) => {
   putToStrategiesStatus(row.id).then((res) => {
-    row.source_status = res?.data?.status;
+    row.source_status = res?.data?.source_status;
   });
 };
 
@@ -304,7 +305,7 @@ const updateList = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 24px 0 50px !important;
+    // padding: 0 24px 0 50px !important;
 
     .bk-button {
       padding: 5px 17px !important;

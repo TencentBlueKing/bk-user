@@ -13,13 +13,29 @@
             <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
           <bk-form-item class="w-[590px]" :label="$t('目标租户')" property="target_tenant_id" required>
-            <bk-input
-              v-model="formData.target_tenant_id"
-              :placeholder="validate.name.message"
+            <bk-input v-if="config.type === 'edit'" disabled :value="formData.target_tenant_name" />
+            <bk-select
+              v-else
+              filterable
+              input-search
+              allow-create
+              :placeholder="$t('请选择租户或输入租户ID')"
               :disabled="config.type === 'edit'"
-              @focus="handleChange" />
-          </bk-form-item>
-        </div>
+              @change="handleTenantChange">
+              <bk-option
+                v-for="item in allTenantList"
+                class="tenant-option"
+                :id="item.id"
+                :key="item.id"
+                :name="item.name">
+                {{ item.name }}
+              </bk-option>
+            </bk-select>
+            <span v-if="inputTenant !== null">
+              <span v-if="inputTenant?.name">匹配到以下租户: {{ inputTenant?.name }}</span>
+              <span v-else>暂无匹配租户</span>
+            </span>
+          </bk-form-item></div>
       </div>
       <!-- 一期不做 -->
       <!-- <div class="operation-card">
@@ -104,11 +120,11 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, reactive, ref } from 'vue';
+import { defineEmits, defineProps, onBeforeMount, onMounted, reactive, ref  } from 'vue';
 
 // import Empty from '@/components/Empty.vue';
 import { useValidate } from '@/hooks';
-import { postToStrategies, putToStrategies } from '@/http';
+import { getTenantList, postToStrategies, putToStrategies } from '@/http';
 import { t } from '@/language';
 
 const emit = defineEmits(['handleCancelEdit', 'updateList']);
@@ -175,6 +191,40 @@ const handleSave = async () => {
   } finally {
     btnLoading.value = false;
   }
+};
+
+
+// 目标租户
+const allTenantList = ref([]);
+const inputTenant = ref(null);
+
+onBeforeMount(async () => {
+  const res = await getTenantList({});
+  allTenantList.value = res.data || [];
+});
+/**
+ * 选择/输入租户
+ * @param id 租户ID
+ */
+const handleTenantChange = async (id: string) => {
+  window.changeInput = true;
+  // 清空时清空输入租户名称
+  if (!id) {
+    inputTenant.value = null;
+    return;
+  }
+  let selected = allTenantList.value.find(item => item.id === id);
+  if (!selected) {
+    const res = await getTenantList({
+      tenant_ids: id,
+    });
+    const searchResult = res.data[0];
+    selected = searchResult;
+    inputTenant.value = searchResult;
+  } else {
+    inputTenant.value = null;
+  }
+  formData.target_tenant_id = id;
 };
 </script>
 

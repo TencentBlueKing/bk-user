@@ -5,7 +5,9 @@ export const useUser = defineStore('user', {
   state: () => ({
     user: {
       username: '',
-      avatar_url: '',
+      display_name: '',
+      role: '',
+      tenant_id: '',
     },
     showAlert: false, // 消息通知显示状态
   }),

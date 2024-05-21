@@ -52,7 +52,7 @@ class TestCollaborationStrategySourceTenantCustomFieldListApi:
         )
         assert len(resp.data) == 3  # noqa: PLR2004
         assert [field["name"] for field in resp.data] == [
-            f"{collaboration_tenant.id}-{f}" for f in ["age", "gender", "region"]
+            f"{collaboration_tenant.id}_{f}" for f in ["age", "gender", "region"]
         ]
 
 
@@ -153,8 +153,8 @@ class TestCollaborationFromStrategyConfirmApi:
         self, api_client, random_tenant, collaboration_tenant, collaborate_from_strategy, strategy_target_config
     ):
         # 第一个和第二个字段映射，互相换一下源字段，导致字段类型不一致
-        strategy_target_config["field_mapping"][0]["source_field"] = f"{collaboration_tenant.id}-gender"
-        strategy_target_config["field_mapping"][1]["source_field"] = f"{collaboration_tenant.id}-age"
+        strategy_target_config["field_mapping"][0]["source_field"] = f"{collaboration_tenant.id}_gender"
+        strategy_target_config["field_mapping"][1]["source_field"] = f"{collaboration_tenant.id}_age"
 
         resp = api_client.put(
             reverse("collaboration.from-strategy.confirm", kwargs={"id": collaborate_from_strategy.id}),
@@ -168,7 +168,7 @@ class TestCollaborationFromStrategyConfirmApi:
     def test_update_with_field_mapping_incompatible_enums(
         self, api_client, random_tenant, collaboration_tenant, collaborate_from_strategy, strategy_target_config
     ):
-        gender_field = TenantUserCustomField.objects.get(name=f"{collaboration_tenant.id}-gender")
+        gender_field = TenantUserCustomField.objects.get(name=f"{collaboration_tenant.id}_gender")
         # 修改可选枚举，导致两边枚举值不一致
         gender_field.options = [{"id": "male", "value": "男"}, {"id": "female", "value": "女"}]
         gender_field.save()

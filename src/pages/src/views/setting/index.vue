@@ -13,7 +13,7 @@
               v-for="item in menu.children"
               :key="item.key">
               <template #icon>
-                <i class="user-icon icon-qingximoban" />
+                <i :class="`user-icon ${item.icon}`" />
               </template>
               {{ item.name }}
             </bk-menu-item>
@@ -52,10 +52,12 @@ const menuData = reactive([
       {
         name: t('管理员配置'),
         key: 'admin',
+        icon: 'icon-guanliyuan',
       },
       {
         name: t('数据源配置'),
         key: 'dataSource',
+        icon: 'icon-shujuyuanshu',
       },
     ],
   },
@@ -66,6 +68,7 @@ const menuData = reactive([
       {
         name: t('跨租户协同'),
         key: 'collaboration',
+        icon: 'icon-tongbu-2',
       },
     ],
   },
@@ -76,14 +79,17 @@ const menuData = reactive([
       {
         name: t('登录设置'),
         key: 'login',
+        icon: 'icon-yonghushu',
       },
       {
         name: t('账号设置'),
         key: 'account',
+        icon: 'icon-zhanghaoshu',
       },
       // {
       //   name: t('MFA 设置'),
       //   key: 'fma',
+      //   icon: 'icon-renzheng'
       // },
     ],
   },
@@ -94,10 +100,12 @@ const menuData = reactive([
       {
         name: t('字段设置'),
         key: 'field',
+        icon: 'icon-field',
       },
       {
         name: t('基础设置'),
         key: 'basics',
+        icon: 'icon-basic',
       },
     ],
   },

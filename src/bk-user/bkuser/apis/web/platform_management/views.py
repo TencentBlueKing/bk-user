@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Tuple
+from typing import List, Tuple
 
 from django.db import transaction
 from django.db.models import Q
@@ -94,7 +94,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
             # 创建内置管理的本地数据源
             data_source = self._create_builtin_management_data_source(
-                tenant.id, data["fixed_password"], data["notification_method"]
+                tenant.id, data["fixed_password"], data["notification_methods"]
             )
 
             # 添加内置管理账号
@@ -118,7 +118,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
     @staticmethod
     def _create_builtin_management_data_source(
-        tenant_id: str, fixed_password: str, notification_method: str
+        tenant_id: str, fixed_password: str, notification_methods: List[str]
     ) -> DataSource:
         """创建租户内建管理的本地数据源"""
         # 获取本地数据源的默认配置
@@ -140,7 +140,9 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
         plugin_config.password_initial.fixed_password = fixed_password
         # 设置通知方式
-        plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(notification_method)]
+        plugin_config.password_initial.notification.enabled_methods = [
+            NotificationMethod(n) for n in notification_methods
+        ]
 
         return DataSource.objects.create(
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
@@ -347,7 +349,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
         # 修改数据源配置
         # Note: plugin_config.password_initial.fixed_password 没必要修改，
         #  直接修改管理账号密码即可，第一次创建时为了发送, 修改时不需要调整了
-        plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(data["notification_method"])]
+        plugin_config.password_initial.notification.enabled_methods = [
+            NotificationMethod(n) for n in data["notification_methods"]
+        ]
 
         # 更新
         with transaction.atomic():
