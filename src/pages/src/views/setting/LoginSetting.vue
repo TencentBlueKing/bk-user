@@ -47,7 +47,7 @@
     </ul>
     <div v-else>
       <bk-exception
-        class="exception-wrap-item"
+        class="exception-wrap-item mt-[30px]"
         type="building"
         :title="$t('暂未配置数据源')"
         :description="$t('需要先配置数据源后才可进行登录配置，当前支持使用以下方式进行登录')"

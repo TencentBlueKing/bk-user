@@ -48,16 +48,17 @@
 
 <script setup lang="ts">
 
+import { ref } from 'vue';
+
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
+import BlankPage from './components/blank-page.vue';
 import Search from './components/search.vue';
-import TableList from './components/table-list.vue'
 import SearchResultTree from './components/search-result-tree.vue';
+import TableList from './components/table-list.vue';
 
+import { getCollaboration, getCurrentTenant, getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
-import BlankPage from './components/blank-page.vue'; 
-import { getCurrentTenant, getDepartmentsList, getCollaboration} from "@/http/organizationFiles";
-import { ref } from "vue";
 
 const appStore = useAppStore();
 const isShow = ref(null);
@@ -81,6 +82,7 @@ getList();
 .table-main {
   height: calc(100vh - 170px);
 }
+
 :deep(.bk-node-row) {
   &:hover {
     background-color: #F0F1F5;

@@ -79,6 +79,7 @@
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
+      render-directive="if"
       :before-close="handleBeforeClose"
       quick-close
     >

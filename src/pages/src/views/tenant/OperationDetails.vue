@@ -53,9 +53,17 @@
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
             <bk-input
-              type="password"
+              :type="isPassword ? 'password' : 'text'"
               v-model="formData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword">
+              <template #suffix v-if="!isPassword">
+                <span
+                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+              </template>
+            </bk-input>
             <bk-button
               outline
               theme="primary"
@@ -104,7 +112,9 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { Message } from 'bkui-vue';
+<script setup lang="ts">
+import { Message } from 'bkui-vue';
+import { Eye } from 'bkui-vue/lib/icon';
 import { computed, defineEmits, defineProps, reactive, ref } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
@@ -131,6 +141,7 @@ const props = defineProps({
 const emit = defineEmits(['updateTenantsList', 'handleCancelEdit']);
 
 const validate = useValidate();
+const isPassword = ref(false);
 
 const formRef = ref();
 const formData = reactive({
@@ -202,14 +213,12 @@ async function handleSubmit() {
   await formRef.value.validate();
 
   if (isEmail.value) {
-    return handleBlur();
+    handleBlur();
+  } else if (formData.phone === '') {
+    changeTelError(true);
   }
 
-  if (formData.phone === '') {
-    return changeTelError(true);
-  }
-
-  if (telError.value) return;
+  if (emailError.value || telError.value) return;
 
   state.isLoading = true;
   props.type === 'add' ? createTenantsFn() : putTenantsFn();

@@ -14,7 +14,7 @@
           filterable
           input-search
           allow-create
-          placeholder="请选择或输入租户"
+          placeholder="请选择租户或输入租户ID"
           @change="handleTenantChange">
           <bk-option
             v-for="item in allTenantList"
@@ -211,6 +211,11 @@ const inputTenant = ref(null);
  * @param id 租户ID
  */
 const handleTenantChange = async (id: string) => {
+  // 清空时清空输入租户名称
+  if (!id) {
+    inputTenant.value = null;
+    return;
+  }
   let selected = allTenantList.value.find(item => item.id === id);
   if (!selected) {
     const res = await getTenantList({
@@ -220,10 +225,6 @@ const handleTenantChange = async (id: string) => {
     selected = searchResult;
     inputTenant.value = searchResult;
   } else {
-    inputTenant.value = null;
-  }
-  // 清空时清空输入租户名称
-  if (!id) {
     inputTenant.value = null;
   }
   tenant.value = selected;

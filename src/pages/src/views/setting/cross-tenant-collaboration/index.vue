@@ -16,9 +16,10 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref } from 'vue';
+import { defineAsyncComponent, ref  } from 'vue';
 
 import { t } from '@/language/index';
+import router from '@/router';
 import { useMainViewStore } from '@/store';
 
 const MyShare = defineAsyncComponent(() => import('./my-share/index.vue'));
@@ -31,7 +32,7 @@ const panels = [
   { name: 'local', label: t('我分享的'), component: MyShare },
   { name: 'other', label: t('其他租户分享的'), component: OtherShare },
 ];
-const active = ref('local');
+const active = ref(router.currentRoute.value.query.tab ?? 'local');
 </script>
 
 <style lang="less" scoped>
