@@ -359,7 +359,6 @@
       key: 'status',
       handle: (isBatch, item) => {
         const isEnabled = item.status === 'enabled';
-        console.log(detailsInfo.value, 'detailsInfo')
         InfoBox({
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
@@ -436,7 +435,6 @@
           //   content: '提示信息',
           //   onShow: () => {
           //     const res = getOrganizationPaths(row.id);
-          //     console.log(res, '---')
           //   },
           // }
           return <span >{row[column?.field].join('、') || '--'}</span>
@@ -541,7 +539,6 @@
       users.push(item.full_name);
     });
     moveTips.value = `${t('即将')}${title.slice(0,2)}${users.slice(0,3).join('、')}...${t('等')}${users.length}${t('个用户的现有组织')}`;
-    console.log(users.length, 'users.length')
     const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
@@ -576,7 +573,6 @@
   });
   
   const initTenantsUserList = async () => {
-    console.log(appStore.currentOrg, 'appStore.currentOrg')
     const { id, isTenant } = appStore.currentOrg;
     try {
         tableData.value = [];
@@ -644,7 +640,6 @@
     initTenantsUserList();
   };
   const handleSelect = (v) => {
-    console.log(v);
   };
   // 勾选数据行
   const handleSelectTable = ({ row, checked }) => {
@@ -659,12 +654,9 @@
     let enableLeave = true;
     if (window.changeInput) {
         enableLeave = await editLeaveBefore();
-        console.log('2')
     }
     editDetailsShow.value = false;
-    console.log(window.changeInput, '===', enableLeave)
     if (!enableLeave) {
-      console.log('3')
         return Promise.resolve(enableLeave);
     }
   };
@@ -688,7 +680,6 @@
 
   const handleCancelEdit = () => {
     window.changeInput = false;
-    console.log('===', '===')
     editDetailsShow.value = false;
   };
   const getIdList = (data, key = 'id') => {
