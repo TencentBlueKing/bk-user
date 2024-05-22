@@ -24,6 +24,9 @@ import devConf from './webpack.dev.conf';
 import ajaxMiddleware from './ajax-middleware';
 import config from './config';
 import checkVer from './check-versions';
+import https from 'https';
+import fs from 'fs';
+import os from 'os';
 
 checkVer();
 
@@ -122,7 +125,14 @@ devMiddleware.waitUntilValid(() => {
   _resolve();
 });
 
-const server = app.listen(port);
+const cred = {
+  key: fs.readFileSync(path.join(os.homedir(), 'local.bkuser-key.pem')),
+  cert: fs.readFileSync(path.join(os.homedir(), 'local.bkuser.pem')),
+}
+
+const httpsServer = https.createServer(cred, app);
+
+const server = httpsServer.listen(port);
 
 export default {
   ready: readyPromise,
