@@ -16,7 +16,7 @@
               {{ currentNaturalUser.full_name }}
             </bk-overflow-title>
             <bk-overflow-title type="tips" class="id">
-              （{{ currentNaturalUser.id }}）
+              （{{ currentUserInfo.id }}）
             </bk-overflow-title>
             <!-- <i class="user-icon icon-edit" /> -->
           </div>
@@ -43,9 +43,9 @@
                 <img v-if="item.logo" :src="item.logo" />
                 <i v-else class="user-icon icon-yonghu" />
                 <span class="name text-overflow">{{ item.full_name }}</span>
-                <span class="tenant text-overflow">@ {{ item.tenant.name }}</span>
+                <span class="tenant text-overflow">{{ `@ ${item.tenant.name}（${item.tenant.id}）` }}</span>
               </div>
-              <bk-tag type="filled" theme="success" v-if="currentNaturalUser.full_name === item.full_name">
+              <bk-tag type="filled" theme="success" v-if="currentUserInfo.id === item.id">
                 {{ $t('当前登录') }}
               </bk-tag>
             </div>
@@ -136,7 +136,7 @@
                     <span class="value">{{ currentUserInfo.username }}</span>
                   </li>
                   <li>
-                    <span class="key">{{ $t('全名') }}：</span>
+                    <span class="key">{{ $t('姓名') }}：</span>
                     <span class="value">{{ currentUserInfo.full_name }}</span>
                   </li>
                   <li>
@@ -156,7 +156,7 @@
                           v-model="currentUserInfo.email"
                           :disabled="currentUserInfo.is_inherited_email" />
                         <bk-form-item v-else class="email-input" property="custom_email">
-                          <bk-input v-model="currentUserInfo.custom_email" />
+                          <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeEmail">
                           {{ $t('确定') }}
@@ -195,7 +195,9 @@
                           class="phone-input">
                           <phoneInput
                             :form-data="currentUserInfo"
-                            :disabled="currentUserInfo.is_inherited_phone" />
+                            :disabled="currentUserInfo.is_inherited_phone"
+                            autofocus="autofocus"
+                          />
                         </bk-form-item>
                         <bk-form-item v-else class="phone-input">
                           <phoneInput
@@ -203,7 +205,8 @@
                             :tel-error="telError"
                             :custom="true"
                             @change-country-code="changeCountryCode"
-                            @change-tel-error="changeTelError" />
+                            @change-tel-error="changeTelError"
+                            @keydown.enter="changePhone" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
                           {{ $t('确定') }}
@@ -485,7 +488,7 @@ watch(() => currentUserInfo.value?.extras, (val) => {
 });
 
 const tagTheme = value => (value ? 'info' : 'warning');
-const tagText = value => (value ? t('数据源') : t('自定义'));
+const tagText = value => (value ? t('继承数据源') : t('自定义'));
 
 const isEditEmail = ref(false);
 
