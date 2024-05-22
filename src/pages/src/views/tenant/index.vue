@@ -199,17 +199,21 @@
             </bk-button>
           </div>
         </bk-form-item>
-        <bk-form-item :label="$t('通知方式')" required>
-          <bk-radio-group
-            v-model="adminPasswordData.notification_method">
-            <bk-radio label="email">
+        <bk-form-item :label="$t('通知方式')">
+          <bk-checkbox-group
+            v-model="adminPasswordData.notification_methods">
+            <bk-checkbox
+              label="email"
+              checked
+              :class="[isClickEmil ? 'active-tab' : '']"
+            >
               <span>{{ $t('邮箱') }}</span>
-            </bk-radio>
-            <bk-radio label="sms">
+            </bk-checkbox>
+            <bk-checkbox label="sms" :class="[isClickEmil ? '' : 'active-tab']" :before-change="beforeTelChange">
               <span>{{ $t('短信') }}</span>
-            </bk-radio>
-          </bk-radio-group>
-          <div v-if="isEmail">
+            </bk-checkbox>
+          </bk-checkbox-group>
+          <div v-if="isClickEmil">
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="adminPasswordData.email"
@@ -277,7 +281,7 @@ const state = reactive({
     logo: '',
     status: 'enabled',
     fixed_password: '',
-    notification_method: 'email',
+    notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
@@ -314,7 +318,7 @@ watch(
           logo: '',
           status: 'enabled',
           fixed_password: '',
-          notification_method: 'email',
+          notification_methods: ['email'],
           email: '',
           phone: '',
           phone_country_code: '86',
@@ -526,7 +530,7 @@ const adminPasswordConfig = reactive({
 
 const adminPasswordData = ref({
   fixed_password: '',
-  notification_method: 'email',
+  notification_methods: ['email'],
   email: '',
   phone: '',
   phone_country_code: '86',
@@ -538,14 +542,16 @@ const rules = {
   fixed_password: [validate.required],
 };
 
-watch(() => adminPasswordData.value.notification_method, (val) => {
-  if (val === 'email') {
-    adminPasswordData.value.phone = '';
-    adminPasswordData.value.phone_country_code = '86';
-    telError.value = false;
-  } else {
-    adminPasswordData.value.email = '';
-    emailError.value = false;
+watch(() => adminPasswordData.value.notification_methods, (val) => {
+  if (val.length === 1) {
+    if (val[0] === 'email') {
+      adminPasswordData.value.phone = '';
+      adminPasswordData.value.phone_country_code = '86';
+      telError.value = false;
+    } else if (val[0] === 'sms') {
+      adminPasswordData.value.email = '';
+      emailError.value = false;
+    }
   }
 });
 
@@ -593,7 +599,7 @@ const closedPassword = () => {
 const resetAdminPasswordData = () => {
   adminPasswordData.value = {
     fixed_password: '',
-    notification_method: 'email',
+    notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
@@ -611,6 +617,37 @@ const {
   changeCountryCode,
   changeTelError,
 } = useAdminPassword(adminPasswordData.value);
+
+const isClickEmil = ref(true);
+
+const  beforeTelChange = () => {
+  if (!adminPasswordData.value.notification_methods.includes('email')) {
+    isClickEmil.value = false;
+    new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      });
+    });
+    return true;
+  }
+  handleBlur();
+  if (adminPasswordData.value.email && emailError) {
+    isClickEmil.value = false;
+    new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      });
+    });
+    return true;
+  }
+  isClickEmil.value = true;
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(false);
+    });
+  });
+  return false;
+};
 </script>
 
 <style lang="less">
@@ -749,5 +786,8 @@ const {
       cursor: not-allowed;
     }
   }
+}
+.active-tab {
+  border-bottom: 2px solid #3A84FF;
 }
 </style>
