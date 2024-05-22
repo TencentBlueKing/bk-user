@@ -14,7 +14,7 @@ import Vue from 'vue';
 import VueCropper from 'vue-cropperjs';
 import vClickOutside from 'v-click-outside';
 import VueClipboard from 'vue-clipboard2';
-
+import { subEnv } from '@blueking/sub-saas/dist/main.js';
 import App from '@/App';
 import router from '@/router';
 import store from '@/store';
@@ -27,6 +27,7 @@ import cursor from '@/directives/cursor';
 import { Base64 } from 'js-base64';
 import xss from 'xss';
 import Rsa from '@/common/rsa';
+import IframeApp from './iframe-app.vue';
 
 Vue.component(VueCropper);
 Vue.use(vClickOutside);
@@ -55,6 +56,5 @@ window.mainComponent = new Vue({
   router,
   store,
   i18n,
-  components: { App },
-  template: '<App />',
+  render: (h) => subEnv ? h(IframeApp) : h(App),
 });
