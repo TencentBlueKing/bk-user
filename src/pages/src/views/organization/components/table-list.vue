@@ -54,7 +54,7 @@
               <div class="table-total">
                   <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
                   <label
-                      v-for="(item, index) in operationList.filter(item => item.isShow)"
+                      v-for="(item, index) in prependData.filter(item => item.isShow)"
                       :key="index"
                       class="table-operate ml-[12px]"
                       @click="() => {
@@ -106,6 +106,7 @@
       @closed="() => moveDialogShow = false"
       @confirm="() => confirmOperations()"
     >
+      <div class="mb-[16px] text-[#979BA5]">{{moveTips}}</div>
         <bk-form
             class="example"
             form-type="vertical"
@@ -170,6 +171,10 @@
       quick-close
       transfer
     >
+    <template #header>
+      <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
+      <bk-button v-if="!isDetailSlider" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
+    </template>
       <EditDetails
         v-if="isDetailSlider"
         :details-info="editDetailsInfo"
@@ -225,6 +230,7 @@
   const keyword = ref('');
   const selectedValue = ref([]);
   const isDetailSlider = ref(false);
+  const moveTips = ref('');
   /** 是否为租户层级 */
   const isTenantStatus = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
@@ -275,6 +281,9 @@
     editDetailsInfo.value = data;
     editDetailsShow.value = true;
   }
+  const handleEditDetails = (row) => {
+    editInfoHandle(row, true)
+  };
   const defaultOperation = reactive([
     {
       label: t('删除'),
@@ -297,13 +306,23 @@
       }
     },
   ]);
+  const moveOperation = reactive([
+    {
+      label: t('移至目标组织'),
+      isShow: true,
+      confirmFn: batchUpdate,
+      handle: () => {
+        handleOperations(true, t('移至目标组织'));
+      }
+    }
+  ])
   const operationList = reactive([...[
     {
       label: t('移出当前组织'),
       isShow: true,
       handle: () => {
         InfoBox({
-            title: t('确认将选中的用户移出当前组织'),
+            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.full_name}`,
             height: 184,
             onConfirm: async () => {
                 const params = {
@@ -316,15 +335,7 @@
             }
         });
       }
-    },
-    {
-      label: t('移至目标组织'),
-      isShow: true,
-      confirmFn: batchUpdate,
-      handle: () => {
-        handleOperations(true, t('移至目标组织'));
-      }
-    },    
+    },   
     {
       label: t('追加目标组织'),
       isShow: true,
@@ -341,14 +352,13 @@
         handleOperations(false, t('清空并加入组织'));
       }
     }, 
-  ], ...defaultOperation]);
+  ], ...moveOperation, ...defaultOperation]);
   const rowOperation = reactive([...[       
     {
       label: t('停用'),
       key: 'status',
       handle: (isBatch, item) => {
         const isEnabled = item.status === 'enabled';
-        console.log(detailsInfo.value, 'detailsInfo')
         InfoBox({
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
@@ -371,8 +381,12 @@
       }
     },
   ], ...defaultOperation]);
+  const prependData = computed(() => {
+    return appStore.currentOrg.isTenant ? [...moveOperation, ...defaultOperation] : operationList;
+  })
   const pagination = reactive({ count: 0, limit: 10, current: 1 })
   const isScrollLoading = ref(false);
+
   const statusEnum = reactive({
     enabled: t('正常'),
     disabled: t('停用'),
@@ -380,6 +394,11 @@
   });
   const isDataEmpty = ref(false);
   const columns = reactive([
+    {
+        width: 40,
+        minWidth: 40,
+        type: "selection"
+    },
     {
         label: t("用户名"),
         field: "username",
@@ -416,7 +435,6 @@
           //   content: '提示信息',
           //   onShow: () => {
           //     const res = getOrganizationPaths(row.id);
-          //     console.log(res, '---')
           //   },
           // }
           return <span >{row[column?.field].join('、') || '--'}</span>
@@ -515,7 +533,12 @@
     moveDialogShow.value = true;
     selectedValue.value = [];
     dataSource.value = [];
-    selectList.value.map(item => chooseDepartments.value.push(...item.departments));
+    const users = [];
+    selectList.value.map(item => {
+      chooseDepartments.value.push(...item.departments);
+      users.push(item.full_name);
+    });
+    moveTips.value = `${t('即将')}${title.slice(0,2)}${users.slice(0,3).join('、')}...${t('等')}${users.length}${t('个用户的现有组织')}`;
     const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
@@ -550,7 +573,6 @@
   });
   
   const initTenantsUserList = async () => {
-    console.log(appStore.currentOrg, 'appStore.currentOrg')
     const { id, isTenant } = appStore.currentOrg;
     try {
         tableData.value = [];
@@ -618,7 +640,6 @@
     initTenantsUserList();
   };
   const handleSelect = (v) => {
-    console.log(v);
   };
   // 勾选数据行
   const handleSelectTable = ({ row, checked }) => {

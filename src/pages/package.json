@@ -29,7 +29,7 @@
     "acorn": "8.10.0",
     "art-template": "^4.13.2",
     "axios": "^1.4.0",
-    "bkui-vue": "bkui-vue@2.0.1-beta.5",
+    "bkui-vue": "2.0.1-beta.5",
     "connect-history-api-fallback": "^2.0.0",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.5",
