@@ -1,26 +1,43 @@
 <template>
-    <div class="operation-wrapper user-scroll-y">
+    <div class="operation-wrapper">
       <bk-form
-        class="operation-content"
+        class="operation-content user-scroll-y"
         ref="formRef"
         form-type="vertical"
         :model="formData"
         :rules="rules">
-        <bk-form-item v-if="formData.id" :label="$t('用户ID')" :min-width="280">
-          <bk-input
-            v-model="formData.id"
-            disabled
+        <div class="flex justify-between">
+          <div class="w-[424px]">
+            <bk-form-item v-if="formData.id" :label="$t('用户ID')" :min-width="280">
+              <bk-input
+                v-model="formData.id"
+                disabled
+              />
+            </bk-form-item>
+            <bk-form-item :label="$t('用户名')" property="username" required>
+              <bk-input
+                v-model="formData.username"
+                :placeholder="validate.userName.message"
+                :disabled="formData.id"
+                @focus="handleChange"
+              />
+            </bk-form-item>
+          </div>
+          <bk-upload
+            class="mt-[26px]"
+            theme="picture"
+            with-credentials
+            :multiple="false"
+            :files="files"
+            :handle-res-code="handleRes"
+            :url="formData.logo"
+            :custom-request="customRequest"
+            :size="2"
+            @delete="handleDelete"
+            @error="handleError"
           />
-        </bk-form-item>
-        <bk-form-item :label="$t('用户名')" property="username" required>
-          <bk-input
-            v-model="formData.username"
-            :placeholder="validate.userName.message"
-            :disabled="formData.id"
-            @focus="handleChange"
-          />
-        </bk-form-item>
-        <bk-form-item :label="$t('全名')" property="full_name" required>
+        </div>
+        <bk-form-item :label="$t('姓名')" property="full_name" required>
           <bk-input
             v-model="formData.full_name"
             :placeholder="validate.name.message"
@@ -43,40 +60,25 @@
         </bk-form-item>
         <div class="form-item-flex">
           <bk-form-item :label="$t('所属组织')">
-            <bk-select
+            <bk-tag-input
               v-model="formData.departments"
-              filterable
-              multiple
-              :input-search="false"
-              :remote-method="searchDepartments"
-              :scroll-loading="scrollLoading"
-              @scroll-end="departmentsScrollEnd"
-              @change="handleChange">
-              <bk-option
-                v-for="item in departmentsList"
-                :key="item.id"
-                :value="item.id"
-                :name="item.organization_path"
-                :label="item.name" />
-            </bk-select>
+              trigger="focus"
+              has-delete-icon
+              :collapse-tags="true"
+              display-key="organization_path"
+              :list="departmentsList"
+            />
           </bk-form-item>
           <bk-form-item :label="$t('直属上级')">
-            <bk-select
+            <bk-tag-input
               v-model="formData.leaders"
-              filterable
-              multiple
-              :input-search="false"
-              :remote-method="searchLeaders"
-              :scroll-loading="scrollLoading"
-              @scroll-end="leadersScrollEnd"
-              @change="handleChange">
-              <bk-option
-                v-for="item in leaderList"
-                :key="item.id"
-                :value="item.id"
-                :name="`${item.username}(${item.full_name})`"
-                :label="`${item.username}(${item.full_name})`" />
-            </bk-select>
+              trigger="focus"
+              has-delete-icon
+              :collapse-tags="true"
+              display-key="username"
+              :tpl="selectTpl"
+              :list="leaderList"
+            />
           </bk-form-item>
         </div>
         <CustomFields :extras="formData.extras" :rules="rules" />
@@ -92,12 +94,13 @@
     </div>
   </template>
   
-  <script setup lang="ts">
-  import { reactive, ref, onMounted } from 'vue';
+  <script setup lang="tsx">
+  import { reactive, ref, onMounted, computed } from 'vue';
   import CustomFields from '@/components/custom-fields/index.vue';
   import PhoneInput from '@/components/phoneInput.vue';
   import { useValidate } from '@/hooks';
   import { newVirtualUsers, putVirtualUsers } from '@/http';
+  import { Message } from 'bkui-vue';
   import {
     optionalDepartmentsList,
     optionalLeaderList,
@@ -105,6 +108,7 @@
   } from '@/http/organizationFiles';
   import { getFields } from '@/http/settingFiles';
   import { t } from '@/language/index';
+  import { getBase64 } from '@/utils';
   
   const emit = defineEmits(['handleCancelEdit', 'updateUsers']);
   
@@ -114,7 +118,6 @@
       default: {},
     },
   });
-  
   const validate = useValidate();
   const formRef = ref();
   const departmentsList = ref([]);
@@ -131,10 +134,45 @@
   };
   
   const isLoading = ref(false);
+  // 上传头像
+  const files = computed(() => {
+    const img = [];
+    if (formData.logo !== '') {
+      img.push({
+        url: formData.logo,
+      });
+      return img;
+    }
+    return [];
+  });
+  const handleRes = (response: any) => {
+    if (response.id) {
+      return true;
+    }
+    return false;
+  };
+  const customRequest = (event) => {
+    getBase64(event.file).then((res) => {
+      formData.logo = res;
+    })
+      .catch((e) => {
+        console.warn(e);
+      });
+    handleChange();
+  };
+  const handleDelete = () => {
+    formData.logo = '';
+    handleChange();
+  };
+  const handleError = (file) => {
+    if (file.size > (2 * 1024 * 1024)) {
+      Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
+    }
+  };
 
   onMounted(() => {
     getOptionalDepartmentsList();
-    optionalLeaderList();
+    getOptionalLeaderList();
   })
   
   const changeCountryCode = (code: string) => {
@@ -173,7 +211,7 @@
       await formRef.value.validate();
       if (telError.value) return;
       isLoading.value = true;
-      const { id, logo, status, extras, departments, leaders, ...param} = formData;
+      const { id, status, extras, departments, leaders, ...param} = formData;
       const extraData = {};
       extras.map(item => extraData[item.name] = item.value || item.default);
       await updateTenantsUserDetail(id, {...param, ...{extras: extraData, leader_ids: leaders, department_ids: departments}});
@@ -182,18 +220,34 @@
       isLoading.value = false;
     }
   };
+
+  const selectTpl = (d) => {
+    return (<li class="tag-item-tpl">{`${d.username}(${d.full_name})`}</li>)
+  }
   
   const handleChange = () => {
     window.changeInput = true;
   };
   </script>
-  
+  <style lang="less">
+  .tag-item-tpl {
+    height: 32px;
+    line-height: 32px;
+    padding: 0 8px;
+    color: #63656e;
+  }
+  </style>
   <style lang="less" scoped>
-  .operation-wrapper {
+  .operation-content {
     padding: 28px 40px;
+    max-height: calc(100vh - 125px);
+  }
+  .operation-wrapper {
+    // padding: 28px 40px;
   
     .footer {
       margin-top: 32px;
+      padding-left: 40px;
   
       .bk-button {
         width: 88px;
