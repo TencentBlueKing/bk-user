@@ -73,23 +73,27 @@
             </bk-button>
           </div>
         </bk-form-item>
-        <bk-form-item :label="$t('通知方式')" required>
-          <bk-radio-group
-            v-model="formData.notification_method">
-            <bk-radio label="email">
+        <bk-form-item :label="$t('通知方式')">
+          <bk-checkbox-group
+            v-model="formData.notification_methods">
+            <bk-checkbox
+              label="email"
+              checked
+              :class="[isClickEmil ? 'active-tab' : '']">
               <span>{{ $t('邮箱') }}</span>
-            </bk-radio>
-            <bk-radio label="sms">
+            </bk-checkbox>
+            <bk-checkbox label="sms" :class="[isClickEmil ? '' : 'active-tab']" :before-change="beforeTelChange">
               <span>{{ $t('短信') }}</span>
-            </bk-radio>
-          </bk-radio-group>
-          <div v-if="isEmail">
+            </bk-checkbox>
+
+          </bk-checkbox-group>
+          <div v-if="isClickEmil">
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
               @focus="handleChange"
               @blur="handleBlur"
-              @input="handleInput" />
+              @input="handleInput" autofocus />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
           <PhoneInput
@@ -264,6 +268,37 @@ const {
   changeCountryCode,
   changeTelError,
 } = useAdminPassword(formData);
+
+const isClickEmil = ref(true);
+
+const  beforeTelChange = () => {
+  if (!formData.notification_methods.includes('email')) {
+    isClickEmil.value = false;
+    new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      });
+    });
+    return true;
+  }
+  handleBlur();
+  if (formData.email && emailError) {
+    isClickEmil.value = false;
+    new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      });
+    });
+    return true;
+  }
+  isClickEmil.value = true;
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(false);
+    });
+  });
+  return false;
+};
 </script>
 
 <style lang="less" scoped>
@@ -295,5 +330,8 @@ const {
 
 ::v-deep .bk-upload-trigger--picture {
   margin: 0 -4px 8px 0;
+}
+.active-tab {
+  border-bottom: 2px solid #3A84FF;
 }
 </style>
