@@ -44,6 +44,7 @@ def tenant_sync_task(bare_local_data_source, default_tenant, data_source_sync_ta
     return TenantSyncTask.objects.create(
         tenant=default_tenant,
         data_source=bare_local_data_source,
+        data_source_owner_tenant_id=bare_local_data_source.owner_tenant_id,
         data_source_sync_task_id=data_source_sync_task.id,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,

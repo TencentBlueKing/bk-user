@@ -428,7 +428,7 @@ class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
     def get_queryset(self) -> QuerySet[TenantSyncTask]:
         cur_tenant_id = self.get_current_tenant_id()
         return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
-            data_source__owner_tenant_id=cur_tenant_id
+            data_source_owner_tenant_id=cur_tenant_id
         )
 
     def get_serializer_context(self) -> Dict[str, Any]:
@@ -453,7 +453,7 @@ class CollaborationSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.Retrie
     def get_queryset(self) -> QuerySet[TenantSyncTask]:
         cur_tenant_id = self.get_current_tenant_id()
         return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
-            data_source__owner_tenant_id=cur_tenant_id
+            data_source_owner_tenant_id=cur_tenant_id
         )
 
     @swagger_auto_schema(

@@ -55,7 +55,7 @@ class OptionalTenantUserListOutputSLZ(serializers.Serializer):
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID", required=False)
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -131,6 +131,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(
         help_text="用户 Logo",
         required=False,
+        allow_blank=True,
         default=settings.DEFAULT_DATA_SOURCE_USER_LOGO,
         validators=[validate_logo],
     )
@@ -300,7 +301,22 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
-    password_rule_tips = serializers.CharField(help_text="用户密码规则提示")
+    # --- 长度限制类 ---
+    min_length = serializers.IntegerField(help_text="密码最小长度")
+    max_length = serializers.IntegerField(help_text="密码最大长度")
+    # --- 字符限制类 ---
+    contain_lowercase = serializers.BooleanField(help_text="必须包含小写字母")
+    contain_uppercase = serializers.BooleanField(help_text="必须包含大写字母")
+    contain_digit = serializers.BooleanField(help_text="必须包含数字")
+    contain_punctuation = serializers.BooleanField(help_text="必须包含特殊字符（标点符号）")
+    # --- 连续性限制类 ---
+    not_continuous_count = serializers.IntegerField(help_text="密码不允许连续 N 位出现")
+    not_keyboard_order = serializers.BooleanField(help_text="不允许键盘序")
+    not_continuous_letter = serializers.BooleanField(help_text="不允许连续字母序")
+    not_continuous_digit = serializers.BooleanField(help_text="不允许连续数字序")
+    not_repeated_symbol = serializers.BooleanField(help_text="重复字母，数字，特殊字符")
+    # --- 规则提示 ---
+    rule_tips = serializers.ListField(help_text="用户密码规则提示", child=serializers.CharField(), source="tips")
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):

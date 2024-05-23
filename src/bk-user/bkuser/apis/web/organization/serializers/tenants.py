@@ -17,6 +17,7 @@ from rest_framework import serializers
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import Tenant
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 
 class TenantDataSourceSLZ(serializers.Serializer):
@@ -27,7 +28,11 @@ class TenantDataSourceSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.BooleanField)
     def get_enable_password(self, obj: DataSource) -> bool:
-        return bool(obj.plugin_config["enable_password"])
+        # 不是本地数据源，肯定是没有本地账密的
+        if obj.plugin_id != DataSourcePluginEnum.LOCAL:
+            return False
+
+        return bool(obj.plugin_config.get("enable_password", False))
 
 
 class TenantListOutputSLZ(serializers.Serializer):
