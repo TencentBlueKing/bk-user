@@ -132,7 +132,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             queryset = queryset.filter(data_source__owner_tenant_id=tenant_id)
 
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
-        if keyword := params["keyword"]:
+        if keyword := params.get("keyword"):
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=keyword)
                 | Q(data_source_user__full_name__icontains=keyword)
