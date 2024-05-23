@@ -226,7 +226,7 @@ class CollaborationFromStrategyTargetStatusUpdateOutputSLZ(serializers.Serialize
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    source_tenant_id = serializers.CharField(help_text="源租户 ID", source="data_source.owner_tenant_id")
+    source_tenant_id = serializers.CharField(help_text="源租户 ID", source="data_source_owner_tenant_id")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     status = serializers.ChoiceField(help_text="同步状态", choices=SyncTaskStatus.get_choices())
@@ -236,12 +236,11 @@ class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_source_tenant_name(self, obj: TenantSyncTask) -> str:
-        return self.context["tenant_name_map"][obj.data_source.owner_tenant_id]
+        return self.context["tenant_name_map"].get(obj.data_source_owner_tenant_id, "--")
 
 
 def get_collaboration_objects_info(obj: TenantSyncTask, operation: SyncOperation) -> Dict[str, Any]:
     # 记录中只会保留租户用户 & 数据源用户 ID，需要查询对应的数据源记录才可以拿到用户名
-    # FIXME (su) 如果 obj.data_source_sync_task_id 为 0 会拿不到数据，需要看下怎么处理比较合适
     tenant_user_change_logs = TenantUserChangeLog.objects.filter(task_id=obj.id, operation=operation)
     data_source_user_ids = [cl.data_source_user_id for cl in tenant_user_change_logs[:50]]
     data_source_user_change_logs = DataSourceUserChangeLog.objects.filter(
