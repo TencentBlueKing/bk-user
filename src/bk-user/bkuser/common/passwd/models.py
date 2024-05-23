@@ -99,8 +99,9 @@ class PasswordRule(BaseModel):
 
         return self
 
-    def __str__(self):
-        rule = _("密码长度为 {}-{} 位").format(self.min_length, self.max_length)
+    @property
+    def tips(self) -> List[str]:
+        tips = [_("密码长度为 {}-{} 位").format(self.min_length, self.max_length)]
 
         # 校验时候已经确保一定有必须包含的字符类型
         charsets = []
@@ -113,8 +114,7 @@ class PasswordRule(BaseModel):
         if self.contain_punctuation:
             charsets.append(_("特殊符号"))
 
-        rule += _(", 必须包含：")
-        rule += _("、").join([str(c) for c in charsets])
+        tips.append(_("必须包含：") + _("、").join([str(c) for c in charsets]))
 
         if self.not_continuous_count:
             kinds = []
@@ -127,10 +127,11 @@ class PasswordRule(BaseModel):
             if self.not_repeated_symbol:
                 kinds.append(_("重复字符"))
 
-            rule += _(", 不允许连续 {} 位出现：").format(self.not_continuous_count)
-            rule += _("、").join([str(k) for k in kinds])
+            tips.append(
+                _("不允许连续 {} 位出现：").format(self.not_continuous_count) + _("、").join([str(k) for k in kinds])
+            )
 
-        return rule
+        return tips
 
 
 class ValidateResult(BaseModel):
