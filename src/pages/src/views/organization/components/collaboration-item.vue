@@ -3,7 +3,7 @@
     <div
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
       :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"
-      @click="handleNodeClick(tenant, true)"
+      @click="handleNodeClick(tenant, currentTenant.id, true)"
     >
       <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
       <span
@@ -18,12 +18,12 @@
     <bk-tree
       v-if="treeData.length"
       :data="treeData"
-      :selected="appStore.currentOrg"
+      :selected="appStore.currentOrg.id"
       label="name"
       node-key="id"
       children="children"
       :prefix-icon="getPrefixIcon"
-      @node-click="(node) => handleNodeClick(node)"
+      @node-click="(node) => handleNodeClick(node, currentTenant.id)"
       :async="{
         callback: getRemoteData,
         cache: true,

@@ -132,13 +132,15 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             queryset = queryset.filter(data_source__owner_tenant_id=tenant_id)
 
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
-        keyword = params["keyword"]
-        return queryset.filter(
-            Q(data_source_user__username__icontains=keyword)
-            | Q(data_source_user__full_name__icontains=keyword)
-            | Q(data_source_user__email__icontains=keyword)
-            | Q(data_source_user__phone__icontains=keyword)
-        ).select_related("data_source", "data_source_user")[: self.search_limit]
+        if keyword := params.get("keyword"):
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=keyword)
+                | Q(data_source_user__full_name__icontains=keyword)
+                | Q(data_source_user__email__icontains=keyword)
+                | Q(data_source_user__phone__icontains=keyword)
+            )
+
+        return queryset.select_related("data_source", "data_source_user")[: self.search_limit]
 
     def _get_user_organization_paths_map(self, tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
         """获取租户部门的组织路径信息"""
@@ -546,8 +548,8 @@ class TenantUserPasswordRuleRetrieveApi(CurrentUserTenantMixin, generics.Retriev
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_rule is not None
 
-        resp_data = {"password_rule_tips": plugin_config.password_rule.to_rule()}
-        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(resp_data).data, status=status.HTTP_200_OK)
+        passwd_rule = plugin_config.password_rule.to_rule()
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 
 class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):

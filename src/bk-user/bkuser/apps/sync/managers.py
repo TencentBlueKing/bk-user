@@ -85,6 +85,7 @@ class TenantSyncManager:
         task = TenantSyncTask.objects.create(
             tenant_id=self.tenant_id,
             data_source=self.data_source,
+            data_source_owner_tenant_id=self.data_source.owner_tenant_id,
             data_source_sync_task_id=data_source_sync_task_id,
             status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,

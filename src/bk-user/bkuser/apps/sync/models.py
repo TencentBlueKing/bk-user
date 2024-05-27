@@ -87,6 +87,9 @@ class TenantSyncTask(TimestampedModel):
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    # Q：为什么需要 data_source_owner_tenant_id 字段，而不是直接取 data_source.owner_tenant_id
+    # A：如果数据源被重置，会导致无法获取 data_source.owner_tenant_id，会影响查询历史的协同记录
+    data_source_owner_tenant_id = models.CharField("数据源所有者租户 ID", default="", max_length=128)
     data_source_sync_task_id = models.IntegerField("数据源同步任务 ID", default=0)
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     has_warning = models.BooleanField("任务执行是否有警告", default=False)
