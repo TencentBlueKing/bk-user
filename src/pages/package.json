@@ -42,6 +42,7 @@
     },
     "dependencies": {
         "@blueking/login-modal": "^1.0.1",
+        "@blueking/sub-saas": "^0.0.0-beta.8",
         "@wangeditor/editor": "5.0.1",
         "@wangeditor/editor-for-vue": "1.0.1",
         "art-template": "4.1.0",

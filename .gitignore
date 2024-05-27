@@ -196,6 +196,7 @@ npm-debug.log*
 staticfiles/
 # dev files
 src/pages/index-dev.html
+.bk.local.env
 
 # logs
 */logs/

@@ -14,6 +14,7 @@ import VueRouter from 'vue-router';
 
 import store from '@/store';
 import http from '@/api';
+import { rootPath, connectToMain } from '@blueking/sub-saas/dist/main.js';
 
 Vue.use(VueRouter);
 
@@ -27,48 +28,49 @@ const ModifyPassword = () => import(/* webpackChunkName: 'ModifyPassword' */'../
 const Recycle = () => import(/* webpackChunkName: 'Recycle' */'../views/recycle');
 const NotFound = () => import(/* webpackChunkName: 'NotFound' */'../views/404');
 
+
 const routes = [
   {
-    path: '/',
+    path: rootPath,
     redirect: '/organization',
   },
   {
-    path: '/organization',
+    path: `${rootPath}organization`,
     name: 'organization',
     component: Organization,
   },
   {
-    path: '/catalog',
+    path: `${rootPath}catalog`,
     name: 'catalog',
     component: Catalog,
   },
   {
-    path: '/setting',
+    path: `${rootPath}setting`,
     name: 'setting',
     component: Setting,
   },
   {
-    path: '/audit',
+    path: `${rootPath}audit`,
     name: 'audit',
     component: Audit,
   },
   {
-    path: '/reset_password',
+    path: `${rootPath}resetPassword`,
     name: 'resetPassword',
     component: ResetPassword,
   },
   {
-    path: '/change_password',
+    path: `${rootPath}change_password`,
     name: 'modifyPassword',
     component: ModifyPassword,
   },
   {
-    path: '/set_password',
+    path: `${rootPath}set_password`,
     name: 'setPassword',
     component: SetPassword,
   },
   {
-    path: '/recycle',
+    path: `${rootPath}recycle`,
     name: 'recycle',
     component: Recycle,
   },
@@ -84,6 +86,8 @@ const router = new VueRouter({
   base: window.SITE_URL,
   routes,
 });
+
+connectToMain(router);
 
 const cancelRequest = async () => {
   const allRequest = http.queue.get();
