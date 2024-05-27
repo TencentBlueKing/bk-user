@@ -8,6 +8,7 @@ import { IOrg } from '@/types/organization';
 const appStore = useAppStore();
 
 export default function useOrganizationAside(currentTenant: any) {
+  const treeRef = ref();
   const treeData = ref<any>({});
 
   const formatTreeData = (data = []) => {
@@ -25,8 +26,8 @@ export default function useOrganizationAside(currentTenant: any) {
     return formatTreeData(res?.data);
   };
 
-  const handleNodeClick = (item: IOrg, isTenant = false) => {
-    appStore.currentOrg = {...item, isTenant};
+  const handleNodeClick = (item: IOrg, tenantId: string, isTenant = false) => {
+    appStore.currentOrg = { ...item, tenantId, isTenant };
   };
 
   const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
@@ -107,6 +108,7 @@ export default function useOrganizationAside(currentTenant: any) {
   };
 
   return {
+    treeRef,
     treeData,
     handleNodeClick,
     getRemoteData,

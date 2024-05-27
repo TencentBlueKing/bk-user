@@ -3,6 +3,8 @@ import { ref } from 'vue';
 
 
 export default defineStore('app', () => {
+  const currentTenant = ref({});
+
   const currentOrg = ref({});
 
   const isSearchTree = ref(false);
@@ -10,6 +12,7 @@ export default defineStore('app', () => {
   const reloadIndex = ref(1);
 
   return {
+    currentTenant,
     currentOrg,
     isSearchTree,
     reloadIndex,

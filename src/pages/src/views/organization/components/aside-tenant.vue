@@ -4,7 +4,7 @@
       <div
         class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
-        @click="handleNodeClick(currentTenant, true)"
+        @click="handleNodeClick(currentTenant, currentTenant.id, true)"
       >
         <img
           v-if="currentTenant?.logo"
@@ -21,12 +21,13 @@
       </div>
       <bk-tree
         :data="treeData"
-        :selected="appStore.currentOrg"
+        :selected="appStore.currentOrg.id"
+        ref="treeRef"
         label="name"
         node-key="id"
         children="children"
         :prefix-icon="getPrefixIcon"
-        @node-click="(node) => handleNodeClick(node)"
+        @node-click="(node) => handleNodeClick(node, currentTenant.id)"
         :async="{
           callback: getRemoteData,
           cache: true,
@@ -79,7 +80,7 @@ onBeforeMount(async () => {
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
   appStore.currentTenant = tenantData?.data;
-  appStore.currentOrg = {...tenantData?.data, isTenant: true};
+  appStore.currentOrg = { ...tenantData?.data, isTenant: true };
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);
   loading.value = false;
@@ -87,6 +88,7 @@ onBeforeMount(async () => {
 
 const organizationAsideHooks = useOrganizationAside(currentTenant);
 const {
+  treeRef,
   treeData,
   getRemoteData,
   handleNodeClick,
