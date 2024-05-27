@@ -68,7 +68,7 @@
 </template>
 
 <script>
-const Base64 = require('js-base64').Base64;
+import { Base64 } from 'js-base64';
 export default {
   name: 'SetBox',
   data() {
