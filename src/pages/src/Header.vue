@@ -242,7 +242,11 @@ export default {
       this.$bkInfo({
         title: this.$t('确认退出登录_'),
         confirmFn: () => {
-          window.location.href = window.login_url;
+          const href = encodeURIComponent(window.location.href);
+          const url = window.login_url.includes('?')
+            ? `${window.login_url}&is_from_logout=1&c_url=${href}`
+            : `${window.login_url}?is_from_logout=1&c_url=${href}`;
+          window.location.href = url;
         },
       });
     },
