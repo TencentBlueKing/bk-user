@@ -68,6 +68,7 @@
 </template>
 
 <script>
+// eslint-disable-next-line no-undef
 const Base64 = require('js-base64').Base64;
 export default {
   name: 'SetBox',
