@@ -14,12 +14,12 @@
             <bk-checkbox class="ml-[16px] h-[32px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
-                @change="initTenantsUserList"
+                @change="reloadList"
             />
             <bk-input
                 class="header-right"
                 v-model="keyword"
-                :placeholder="$t('搜索用户名、姓名')"
+                :placeholder="$t('输入用户名、姓名、邮箱、手机号码搜索')"
                 type="search"
                 clearable
                 @enter="handleEnter"
@@ -47,7 +47,7 @@
               :is-search-empty="isEmptySearch"
               :is-data-error="isDataError"
               @handle-empty="handleClear"
-              @handle-update="initTenantsUserList"
+              @handle-update="reloadList"
             />
           </template>
           <template #prepend v-if="selectList.length">
@@ -90,7 +90,7 @@
         @select="handleSelect"
       >
         <template #optionRender="{ item }" class="test">
-          <div class="user-info-option">
+          <div class="user-info-option pt-[5px] pb-[5px]">
             <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
             <p class="text-[#979BA5] mt-[6px]">{{item.organization_paths.join('、')}}</p>
           </div>
@@ -118,16 +118,24 @@
                     filterable
                     multiple
                     auto-focus
+                    :list="dataSource"
                     :clearable="false"
+                    id-key="id"
                     @select="handleSelect"
                 >
-                    <bk-option
+                  <template #optionRender="{ item }" class="test">
+                    <div :class="['user-info-option pt-[5px] pb-[5px]', {'disabled': chooseDepartments.includes(item.name)}]"
+                      v-bk-tooltips="{ content: item.name }">
+                      {{item.name}}
+                    </div>
+                  </template>
+                    <!-- <bk-option
                         v-for="(item, index) in dataSource"
                         :id="item.id"
                         :key="index"
                         :name="item.name"
                         :disabled="chooseDepartments.includes(item.name)"
-                    />
+                    /> -->
                 </bk-select>
             </bk-form-item>
         </bk-form>
@@ -173,24 +181,25 @@
     >
     <template #header>
       <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
-      <bk-button v-if="!isDetailSlider" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
+      <bk-button v-if="!isDetailSlider && isLocalDataSource" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
     </template>
       <EditDetails
         v-if="isDetailSlider"
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="editDetailsInfo" v-else />
+      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" v-else />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog
       v-model:isShow="importDialogShow"
       :currentDataSourceId="dataSourceId"
-      @success="initTenantsUserList"
+      @success="reloadList"
     />
   </template>
   
 <script setup lang="tsx">
+  import { bkTooltips as vBkTooltips } from 'bkui-vue';
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
@@ -274,8 +283,8 @@
     const extrasList = fieldsRes.data.custom_fields;
     extrasList.map(item => item.value = data.extras[item.name]);
     Object.assign(data, {
-      departments: getIdList(data?.departments),
-      leaders: getIdList(data?.leaders),
+      department_ids: getIdList(data?.departments),
+      leader_ids: getIdList(data?.leaders),
       extras: extrasList
     })
     editDetailsInfo.value = data;
@@ -300,7 +309,7 @@
                 } else {
                     await delTenantsUser(detailsInfo.value.id);
                 }
-                initTenantsUserList();
+                reloadList();
             },
           });
       }
@@ -312,7 +321,7 @@
       isShow: true,
       confirmFn: batchUpdate,
       handle: () => {
-        handleOperations(true, t('移至目标组织'));
+        handleOperations(true, t('移至目标组织'), t('将'), t('从当前组织移出，并加入到以下组织'));
       }
     }
   ])
@@ -322,7 +331,7 @@
       isShow: true,
       handle: () => {
         InfoBox({
-            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.full_name}`,
+            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.name}`,
             height: 184,
             onConfirm: async () => {
                 const params = {
@@ -331,7 +340,7 @@
                 }
                 await batchDelete(params);
                 moveDialogShow.value = false;
-                initTenantsUserList();
+                reloadList();
             }
         });
       }
@@ -341,7 +350,7 @@
       isShow: true,
       confirmFn: batchCreate,
       handle: () => {
-        handleOperations(true, t('追加目标组织'));
+        handleOperations(true, t('追加目标组织'), t('将'), t('追加到以下组织'));
       }
     },
     {
@@ -349,7 +358,7 @@
       isShow: true,
       confirmFn: batchDelUpdate,
       handle: () => {
-        handleOperations(false, t('清空并加入组织'));
+        handleOperations(false, t('清空并加入组织'), t('清空'), t('的现有组织，并加入到以下组织'));
       }
     }, 
   ], ...moveOperation, ...defaultOperation]);
@@ -365,7 +374,7 @@
             height: 184,
             onConfirm: async () => {
                 await updateTenantsUserStatus(item.id);
-                initTenantsUserList();
+                reloadList();
             }
         });
       }
@@ -402,8 +411,9 @@
     {
         label: t("用户名"),
         field: "username",
+        showOverflowTooltip: true,
         render: ({ row, column }) => (
-          <span class="table-operate" onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
+          <span class="table-operate" v-bk-tooltips={{ content: t('拉取已有用户') }} onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
         )
     },
     {
@@ -437,6 +447,9 @@
           //     const res = getOrganizationPaths(row.id);
           //   },
           // }
+          // const res = getOrganizationPaths(row.id);
+          // console.log(row, '---', res)
+          // v-bk-tooltips={{ content: res?.data?.organization_paths }}
           return <span >{row[column?.field].join('、') || '--'}</span>
         }
     }
@@ -460,6 +473,9 @@
                   rowOperation.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
+                    v-bk-tooltips={{
+                      content: t('当前租户未启用账密登录，无法修改密码')
+                    }}
                     onClick={() => {
                         if (item.disabled) {
                           return;
@@ -489,18 +505,21 @@
   const columnsRender = computed(() => {
     return isLocalDataSource.value ? hasOperationColumns : columns;
   });
-
+  const getUserListFun = async (word) => {
+    const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
+    getUserList.value = res.data;
+  }
   /** 点击拉取已有用户按钮 */
   const handleGetUsersDialog = () => {
     getUsersValue.value = [];
     getUsersDialogShow.value = true;
     getUserList.value = [];
+    getUserListFun();
   }
 
-  const remoteMethod = async (word) => {
+  const remoteMethod = (word = '') => {
     if (word.length > 1) {
-      const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
-      getUserList.value = res.data;
+      getUserListFun(word);
     }
   }
   /** 确认拉取已有用户 */
@@ -528,7 +547,7 @@
     return userId;
   }
   /** 点击移动/移动至组织按钮 */
-  const handleOperations = async (status, title) => {
+  const handleOperations = async (status, title, prefix, suffix) => {
     chooseDepartments.value = [];
     moveDialogShow.value = true;
     selectedValue.value = [];
@@ -538,7 +557,9 @@
       chooseDepartments.value.push(...item.departments);
       users.push(item.full_name);
     });
-    moveTips.value = `${t('即将')}${title.slice(0,2)}${users.slice(0,3).join('、')}...${t('等')}${users.length}${t('个用户的现有组织')}`;
+    const isMore = users.length > 3;
+    const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
+    moveTips.value = `${prefix}${users.slice(0,3).join('、')}${showStr}${suffix}`;
     const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
@@ -569,7 +590,7 @@
   }
 
   watch(() => appStore.currentOrg, (val) => {
-    !!val && initTenantsUserList();
+    !!val && reloadList();
   });
   
   const initTenantsUserList = async () => {
@@ -624,6 +645,7 @@
   /** 点击快速录入按钮 */
   const fastInputHandle = () => {
     fastInputDialogShow.value = true;
+    console.log(appStore.currentOrg, '==')
   }
   const fastInputSuccess = () => {
     fastInputDialogShow.value = false;
@@ -636,8 +658,7 @@
 
   const handleClear = () => {
     keyword.value = '';
-    pagination.current = 1;
-    initTenantsUserList();
+    reloadList();
   };
   const handleSelect = (v) => {
   };
@@ -667,10 +688,13 @@
     Message({ theme: 'success', message });
     handleClear();
   };
-  const pageLimitChange = (limit: number) => {
-    pagination.limit = limit;
+  const reloadList = () => {
     pagination.current = 1;
     initTenantsUserList();
+  }
+  const pageLimitChange = (limit: number) => {
+    pagination.limit = limit;
+    reloadList();
   };
 
   const pageCurrentChange = (current: number) => {
@@ -786,7 +810,7 @@
       }
   }
   .user-select-main {
-
+    
   }
   .operate-menu-list {
       .operate-list-item {

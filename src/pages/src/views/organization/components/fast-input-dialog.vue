@@ -27,11 +27,26 @@
         >
             <div class="info-content theme">
                 <i class="user-icon icon-info-i theme-icon" />
-                <p>{{$t('快速将用户录入到当前组织，如需添加到其他组织，请使用「导入」功能。')}}</p>
-                <p>{{$t('录入字段为 设置 > 字段设置 中配置。')}}</p>
+                <p>{{$t('快速将用户录入到当前组织，如需添加到其他组织，请使用')}}
+                  <label class="text-[#3A84FF] cursor-pointer"
+                  @click="() => goToSetting('dataSource')">{{$t('「导入」')}}</label>
+                  {{$t(' 功能。')}}
+                </p>
+                <p>{{$t('录入字段为 ')}}
+                  <label class="text-[#3A84FF] cursor-pointer"
+                  @click="() => goToSetting('field')">{{$t('设置 > 字段设置')}}</label>
+                  {{$t(' 中配置。')}}
+                </p>
             </div>
             <div class="info-content">
-                <p>{{$t('录入格式：')}}<label class="info-txt">{{tipsInfo}}</label></p>
+                <p>{{$t('录入格式：')}}<label class="info-txt">
+                  <label v-for="(item, ind) in tipsInfo">
+                    <label v-bk-tooltips="{ content: item.tips, disabled: !item.tips }"
+                      :class="{tips: item.tips}">
+                      {{item.display_name}}
+                    </label><label v-if="ind !== tipsInfo.length - 1"> + </label>
+                  </label>
+                </label></p>
                 <p>{{$t('信息之间使用逗号区隔，换行可输入多个用户')}}</p>
             </div>
             <bk-input
@@ -55,9 +70,11 @@
   </bk-dialog>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
+  import { bkTooltips as vBkTooltips } from 'bkui-vue';
   import { ref, watch } from 'vue';
   import { t } from '@/language/index';
+  import router from '@/router';
   import useAppStore from '@/store/app';
   import { getFieldsTips, batchCreatePreview, operationsCreate } from '@/http/organizationFiles';
   const props = defineProps({
@@ -74,7 +91,7 @@
         field: "username",
     },
     {
-        label: t("全名"),
+        label: t("姓名"),
         field: "full_name",
     },
     {
@@ -99,7 +116,7 @@
   watch(() => props.isShow, async (val) => {
     if (val) {
       const res = await getFieldsTips();
-      tipsInfo.value = (res.data || []).map(item => item.display_name).join(' + ') || '--';
+      tipsInfo.value = (res.data || []);
     }
   })
   const handleNext = async () => {
@@ -136,6 +153,9 @@
   const closed = () => {
     emit('update:isShow', false)
   }
+  const goToSetting = (name) => {
+    router.push({ name });
+  }
 </script>
 <style lang="less" scoped>
 .fast-input-dialog {
@@ -152,6 +172,9 @@
         color: #63656E;
         .info-txt {
             color: #313238;
+            .tips {
+              border-bottom: 1px dashed #979BA5;
+            }
         }
         p {
             line-height: 24px;

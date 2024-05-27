@@ -233,7 +233,7 @@ const columns = [
     render: fieldItemFn,
   },
   {
-    label: t('全名'),
+    label: t('姓名'),
     field: "full_name",
     render: fieldItemFn,
   },

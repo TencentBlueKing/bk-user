@@ -61,7 +61,7 @@
         <div class="form-item-flex">
           <bk-form-item :label="$t('所属组织')">
             <bk-tag-input
-              v-model="formData.departments"
+              v-model="formData.department_ids"
               trigger="focus"
               has-delete-icon
               :collapse-tags="true"
@@ -71,7 +71,7 @@
           </bk-form-item>
           <bk-form-item :label="$t('直属上级')">
             <bk-tag-input
-              v-model="formData.leaders"
+              v-model="formData.leader_ids"
               trigger="focus"
               has-delete-icon
               :collapse-tags="true"
@@ -214,7 +214,7 @@
       const { id, status, extras, departments, leaders, ...param} = formData;
       const extraData = {};
       extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, {...param, ...{extras: extraData, leader_ids: leaders, department_ids: departments}});
+      await updateTenantsUserDetail(id, {...param, ...{extras: extraData}});
       emit('updateUsers', t('更新成功'));
     } finally {
       isLoading.value = false;

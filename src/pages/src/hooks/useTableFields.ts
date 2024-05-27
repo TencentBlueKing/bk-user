@@ -13,7 +13,7 @@ export const useTableFields = () => {
         disabled: true,
       },
       {
-        name: t('全名'),
+        name: t('姓名'),
         field: 'full_name',
         data_type: 'string',
         options: [],

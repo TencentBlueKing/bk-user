@@ -8,7 +8,7 @@
       <bk-input
         class="header-right"
         v-model="searchVal"
-        :placeholder="$t('搜索用户名、全名')"
+        :placeholder="$t('搜索用户名、姓名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -58,7 +58,7 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="username" :label="$t('用户名')" />
-      <bk-table-column prop="full_name" :label="$t('全名')" />
+      <bk-table-column prop="full_name" :label="$t('姓名')" />
       <bk-table-column prop="email" :label="$t('邮箱')">
         <template #default="{ row }">{{ row.email || '--' }}</template>
       </bk-table-column>
