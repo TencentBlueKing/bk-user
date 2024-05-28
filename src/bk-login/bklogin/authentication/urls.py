@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from django.urls import path
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.views.generic import TemplateView
 
 from . import views
 
@@ -20,7 +19,7 @@ urlpatterns = [
     # 登录小窗入口
     path("plain/", xframe_options_exempt(views.LoginView.as_view())),
     # 前端页面（选择登录的用户）
-    path("page/users/", TemplateView.as_view(template_name="index.html"), name="page.users"),
+    path("page/users/", views.PageUserView.as_view(), name="page.users"),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------
     # 租户信息
     path("tenants/", views.TenantListApi.as_view()),

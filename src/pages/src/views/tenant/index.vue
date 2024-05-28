@@ -188,9 +188,17 @@
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
             <bk-input
-              type="password"
+              :type="isPassword ? 'password' : 'text'"
               v-model="adminPasswordData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword">
+              <template #suffix v-if="!isPassword">
+                <span
+                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+              </template>
+            </bk-input>
             <bk-button
               outline
               theme="primary"
@@ -201,20 +209,25 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <bk-checkbox-group
-            v-model="adminPasswordData.notification_methods">
-            <bk-checkbox
-              label="email"
-              checked
-              :class="[isClickEmil ? 'active-tab' : '']"
+          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="emailClick"
             >
-              <span>{{ $t('邮箱') }}</span>
-            </bk-checkbox>
-            <bk-checkbox label="sms" :class="[isClickEmil ? '' : 'active-tab']" :before-change="beforeTelChange">
-              <span>{{ $t('短信') }}</span>
-            </bk-checkbox>
-          </bk-checkbox-group>
-          <div v-if="isClickEmil">
+              {{ $t('邮箱') }}
+            </span>
+          </span>
+          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="phoneClick"
+            >
+              {{ $t('短信') }}
+            </span>
+          </span>
+          <div v-if="isClickEmail">
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="adminPasswordData.email"
@@ -235,6 +248,7 @@
 </template>
 
 <script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+import {  Eye } from 'bkui-vue/lib/icon';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
@@ -266,6 +280,7 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
+const isPassword = ref(false);
 const state = reactive({
   list: [],
   tableLoading: true,
@@ -569,16 +584,18 @@ const resetAdminPassword = async (item) => {
 
 const confirmPassword = async () => {
   try {
-    if (isEmail.value) {
+    if (emailValue.value) {
       handleBlur();
-    } else if (!adminPasswordData.value.phone) {
+    } else if (smsValue.value && !adminPasswordData.value.phone) {
       changeTelError(true);
     }
-
     await formRef.value.validate();
     if (telError.value) return;
 
     adminPasswordConfig.isLoading = true;
+    adminPasswordData.value.notification_methods = [];
+    if (emailValue.value) adminPasswordData.value.notification_methods.push('email');
+    if (smsValue.value) adminPasswordData.value.notification_methods.push('sms');
     await putBuiltinManager(adminPasswordConfig.id, adminPasswordData.value);
     adminPasswordConfig.isShow = false;
     Message({ theme: 'success', message: t('重置密码成功') });
@@ -619,35 +636,68 @@ const {
   changeTelError,
 } = useAdminPassword(adminPasswordData.value);
 
-const isClickEmil = ref(true);
+const isClickEmail = ref(true);
+const emailValue = ref(true);
+const smsValue = ref(false);
 
+// 点击电话之前的校验
 const  beforeTelChange = () => {
-  if (!adminPasswordData.value.notification_methods.includes('email')) {
-    isClickEmil.value = false;
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      });
-    });
-    return true;
+  if (emailValue.value) {
+    if (adminPasswordData.value.email && !emailError.value) {
+      isClickEmail.value = false;
+      return true;
+    }
+    handleBlur();
+    return false;
   }
-  handleBlur();
-  if (adminPasswordData.value.email && emailError) {
-    isClickEmil.value = false;
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      });
-    });
-    return true;
+  // 邮箱未勾选， 可以切换
+  isClickEmail.value = false;
+  return true;;
+};
+
+// 点击邮箱之前的校验
+const  beforeEmailChange = () => {
+  if (smsValue.value) {
+    if (adminPasswordData.value.phone && !telError.value) {
+      isClickEmail.value = true;
+      return true;
+    }
+    changeTelError(true);
+    return false;
   }
-  isClickEmil.value = true;
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(false);
-    });
-  });
-  return false;
+  isClickEmail.value = true;
+  return true;;
+};
+
+const emailClick = () => {
+  if (smsValue.value) {
+    if (adminPasswordData.value.phone && !telError.value) {
+      isClickEmail.value = true;
+    } else {
+      changeTelError(true);
+    }
+  } else {
+    isClickEmail.value = true;
+  }
+};
+
+const phoneClick = () => {
+  if (emailValue.value) {
+    if (adminPasswordData.value.email && !emailError.value) {
+      isClickEmail.value = false;
+    } else {
+      handleBlur();
+    }
+  } else {
+    isClickEmail.value = false;
+  }
+};
+
+const changeSms = () => {
+  telError.value = smsValue.value ? telError.value : false;
+};
+const changeEmail = () => {
+  emailError.value = emailValue.value ? emailError.value : false;
 };
 </script>
 

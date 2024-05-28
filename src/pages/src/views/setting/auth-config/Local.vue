@@ -236,7 +236,9 @@
       </Row>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading">{{ $t('提交') }}</bk-button>
+      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading" :disabled="isDisabled">
+        {{ $t('提交') }}
+      </bk-button>
       <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
     </div>
   </div>
@@ -283,6 +285,8 @@ const passwordRuleError = ref(false);
 const passwordCountError = ref(false);
 const passwordConfigError = ref(false);
 const enabledMethodsError = ref(false);
+let originalData = {};
+const isDisabled = ref(true);
 
 const formData = reactive({
   name: '',
@@ -310,12 +314,17 @@ onMounted(async () => {
       formData.config = res?.data?.config || {};
       formData.config.enable_password = true;
     }
+    originalData = JSON.parse(JSON.stringify(formData));
   } catch (e) {
     console.warn(e);
   } finally {
     isLoading.value = false;
   }
 });
+
+watch(formData, () => {
+  isDisabled.value = JSON.stringify(originalData) === JSON.stringify(formData);
+}, { deep: true });
 
 // 监听密码规则
 watch(() => formData.config?.password_rule, (value) => {

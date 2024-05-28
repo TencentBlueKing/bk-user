@@ -10,8 +10,7 @@
           theme="primary"
           @click="changeStatus"
           :disabled="adminAccount.enable_login && isDisabled"
-          @mouseover="mouseOverEvent(adminAccount.enable_login && isDisabled)"
-          :title="title">
+          v-bk-tooltips="{ content: $t('唯一的管理员不能停用'), disabled: !adminAccount.enable_login || !isDisabled }">
           {{ adminAccount.enable_login ? $t('去停用') : $t('去启用') }}
         </bk-button>
       </LabelContent>
@@ -134,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { InfoBox, Message } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
@@ -290,7 +289,7 @@ const realUsers = ref({
 
 const params = reactive({
   page: 1,
-  pageSize: 10,
+  page_size: 10,
   keyword: '',
   exclude_manager: true,
 });
@@ -362,14 +361,6 @@ const saveRealUsers = () => {
 
 const cancelRealUsers = () => {
   showSelectInput.value = false;
-};
-const title = ref('');
-const mouseOverEvent = (params) => {
-  if (params) {
-    title.value = t('唯一的管理员不能停用');
-  } else {
-    title.value = '';
-  }
 };
 </script>
 

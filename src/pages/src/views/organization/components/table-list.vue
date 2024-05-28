@@ -150,10 +150,18 @@
             <bk-form-item :label="$t('新密码')" required>
                 <bk-input :style="{width: '80%'}"
                     v-model="password"
-                    type="password"
+                    :type="isPassword ? 'password' : 'text'"
                     :placeholder="passwordTips"
                     clearable
-                />
+                >
+                <template #suffix v-if="!isPassword">
+                  <span
+                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+                </template>
+                </bk-input>
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -194,7 +202,7 @@
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
-  import { Upload } from 'bkui-vue/lib/icon';
+  import { Upload, Eye} from 'bkui-vue/lib/icon';
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
   import EditDetails from './edit-detail.vue';
@@ -252,6 +260,7 @@
   const getUserList = ref([]);
   const chooseDepartments = ref([]);
   const passwordTips = ref('');
+  const isPassword = ref(false);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
