@@ -16,7 +16,11 @@ const mockTable = require('./api/table');
 
 const app = new Express();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
+
+const https = require('https');
+const fs = require('fs');
+const os = require('os');
 
 /** 仅解决空模版直接部署时，模拟的接口，防止直接部署接口404，实际项目可删除 */
 mockTable(app);
@@ -82,6 +86,12 @@ app.get('/', (req, res) => {
 
 
 app.use('/static', Express.static(path.join(distDir, '../dist/static')));
+app.use('/js', Express.static(path.join(distDir, '../dist/js')));
+app.use('/images', Express.static(path.join(distDir, '../dist/images')));
+app.use('/fonts', Express.static(path.join(distDir, '../dist/fonts')));
+app.use('/css', Express.static(path.join(distDir, '../dist/css')));
+app.use('/img', Express.static(path.join(distDir, '../dist/img')));
+app.use('/svg', Express.static(path.join(distDir, '../dist/svg')));
 // 配置视图
 app.set('views', path.join(__dirname, '../dist'));
 
@@ -90,7 +100,14 @@ app.set('views', path.join(__dirname, '../dist'));
 app.engine('html', artTemplate);
 app.set('view engine', 'html');
 
+const cred = {
+  key: fs.readFileSync(path.join(os.homedir(), 'local.bkuser-key.pem')),
+  cert: fs.readFileSync(path.join(os.homedir(), 'local.bkuser.pem')),
+}
+
+const httpsServer = https.createServer(cred, app);
+
 // 配置端口
-app.listen(PORT, () => {
+httpsServer.listen(PORT, () => {
   console.log(`App is running in port ${PORT}`);
 });

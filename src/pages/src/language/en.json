@@ -480,7 +480,7 @@
   "录入字段为 设置 > 字段设置 中配置。": "The input field is configured in Settings > Field Settings.",
   "录入格式：": "Input format:",
   "信息之间使用逗号区隔，换行可输入多个用户": "Use commas to separate information, and multiple users can enter multiple lines.",
-  "输入案例：zhangsan, 张三, 10000@qq.com, 15709998877": "Input case: zhangsan, Zhang San,10000@qq.com,15709998877",
+  "输入案例：zhangsan, 张三, 10000@qq.com, 15709998877": "Input case: zhangsan, Zhang San, 10000{'@'}qq.com, 15709998877",
   "录入用户": "Enter user",
   "预览确认": "Appointment confirmation",
   "拉取已有用户": "Pull existing users",
