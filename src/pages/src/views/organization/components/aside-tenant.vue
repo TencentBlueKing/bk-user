@@ -37,6 +37,7 @@
           <div class="org-node pr-[12px] relative">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
+              v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
               :dept="node"
               :tenant="currentTenant"
               @add-node="addNode"

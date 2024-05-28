@@ -96,6 +96,7 @@
                 class="dot-menu"
                 placement="bottom-start"
                 theme="light"
+                ext-cls="operate-popover"
                 :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>
@@ -651,6 +652,10 @@ const  beforeTelChange = () => {
 </script>
 
 <style lang="less">
+.operate-popover {
+  padding: 5px 0 !important;
+}
+
 .details-edit-wrapper {
   .bk-modal-content {
     height: calc(100vh - 52px) !important;
@@ -766,7 +771,6 @@ const  beforeTelChange = () => {
 
 .dot-menu-list {
   min-width: 50px;
-  padding: 5px 0;
   margin: 0;
   list-style: none;
 
@@ -787,6 +791,7 @@ const  beforeTelChange = () => {
     }
   }
 }
+
 .active-tab {
   border-bottom: 2px solid #3A84FF;
 }

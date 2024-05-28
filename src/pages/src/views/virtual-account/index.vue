@@ -18,6 +18,7 @@
     <bk-table
       v-bkloading="{ loading: isLoading }"
       class="table-users"
+      :min-height="180"
       :data="tableData"
       :border="['outer']"
       :pagination="pagination"

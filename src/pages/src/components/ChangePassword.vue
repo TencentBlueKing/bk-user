@@ -30,7 +30,7 @@
           type="password"
           v-model="formData.confirmPassword"
           @input="changePassword" />
-        <p class="error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</p>
+        <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
       </bk-form-item>
     </bk-form>
   </bk-dialog>
@@ -44,14 +44,13 @@ import { logout } from '@/common/auth';
 import { putPersonalCenterUserPassword } from '@/http';
 import { t } from '@/language/index';
 
-const emit = defineEmits(['closed']);
 const props = defineProps({
   config: {
     type: Object,
     default: () => ({}),
   },
 });
-
+const emit = defineEmits(['closed']);
 const formRef = ref();
 const formData = reactive({
   oldPassword: '',
