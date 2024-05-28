@@ -153,7 +153,7 @@ const getSyncRecordsList = async () => {
     dataRecordConfig.isDataError = false;
     const params = {
       page: pagination.current,
-      pageSize: pagination.limit,
+      page_size: pagination.limit,
       status: dataRecordConfig.status,
       id: props.dataSource?.id,
     };
@@ -229,7 +229,7 @@ const interval = setInterval(() => {
   dataRecordConfig.isDataError = false;
   const params = {
     page: pagination.current,
-    pageSize: pagination.limit,
+    page_size: pagination.limit,
     status: dataRecordConfig.status,
     id: props.dataSource?.id,
   };

@@ -43,7 +43,7 @@
       </bk-form-item>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" @click="handleSubmit" :loading="isLoading">
+      <bk-button theme="primary" @click="handleSubmit" :loading="isLoading" :disabled="isDisabled">
         {{ $t('保存') }}
       </bk-button>
       <bk-button @click="emit('handleCancelEdit')">
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
 import PhoneInput from '@/components/phoneInput.vue';
 import { useValidate } from '@/hooks';
@@ -76,6 +76,12 @@ const formRef = ref();
 const formData = reactive({
   ...props.detailsInfo,
 });
+const originalData = { ...props.detailsInfo };
+const isDisabled = ref(true);
+
+watch(formData, () => {
+  isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+}, { deep: true, immediate: true });
 
 const rules = {
   username: [validate.required, validate.userName],

@@ -101,7 +101,7 @@
         <CustomFields :extras="formData.extras" :rules="rules" />
       </bk-form>
       <div class="footer">
-        <bk-button theme="primary" @click="handleSubmit" :loading="isLoading">
+        <bk-button theme="primary" @click="handleSubmit" :loading="isLoading" :disabled="isDisabled">
           {{ $t('保存') }}
         </bk-button>
         <bk-button @click="emit('handleCancelEdit')">
@@ -112,7 +112,7 @@
   </template>
   
   <script setup lang="tsx">
-  import { reactive, ref, onMounted, computed } from 'vue';
+  import { reactive, ref, onMounted, computed,  watch} from 'vue';
   import CustomFields from '@/components/custom-fields/index.vue';
   import PhoneInput from '@/components/phoneInput.vue';
   import { useValidate } from '@/hooks';
@@ -143,7 +143,8 @@
   const formData = reactive({
     ...props.detailsInfo
   });
-  
+  const originalData = { ...props.detailsInfo,  extras: JSON.parse(JSON.stringify(props.detailsInfo.extras))};
+  const isDisabled = ref(true);
   const rules = {
     username: [validate.required, validate.userName],
     full_name: [validate.required, validate.name],
@@ -151,6 +152,11 @@
   };
   
   const isLoading = ref(false);
+
+  watch(formData, () => { 
+  isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+}, { deep: true, immediate: true });
+
   // 上传头像
   const files = computed(() => {
     const img = [];

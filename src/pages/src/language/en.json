@@ -263,7 +263,7 @@
   "切换为该账号登录": "Switch to this account for login",
   "身份信息": "Identity Information",
   "继承数据源": "Inherit data source",
-  "所属租户ID": "Tenant ID",
+  "所属租户": "Tenant",
   "必填项": "Required field",
   "请输入内容": "Please enter content",
   "密码修改成功后需要进行重新登录": "You need to re-login after the password is successfully changed",

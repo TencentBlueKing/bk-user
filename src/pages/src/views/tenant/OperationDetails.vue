@@ -74,26 +74,31 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <bk-checkbox-group
-            v-model="formData.notification_methods">
-            <bk-checkbox
-              label="email"
-              checked
-              :class="[isClickEmil ? 'active-tab' : '']">
-              <span>{{ $t('邮箱') }}</span>
-            </bk-checkbox>
-            <bk-checkbox label="sms" :class="[isClickEmil ? '' : 'active-tab']" :before-change="beforeTelChange">
-              <span>{{ $t('短信') }}</span>
-            </bk-checkbox>
-
-          </bk-checkbox-group>
-          <div v-if="isClickEmil">
+          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="emailClick"
+            >
+              {{ $t('邮箱') }}
+            </span>
+          </span>
+          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="phoneClick"
+            >
+              {{ $t('短信') }}
+            </span>
+          </span>
+          <div v-if="isClickEmail">
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
               @focus="handleChange"
               @blur="handleBlur"
-              @input="handleInput" autofocus />
+              @input="handleInput" />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
           <PhoneInput
@@ -106,7 +111,7 @@
       </Row>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
+      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading" :disabled="isEdit && isDisabled">
         {{ $t('提交') }}
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
@@ -119,7 +124,7 @@
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
 import { Eye } from 'bkui-vue/lib/icon';
-import { computed, defineEmits, defineProps, reactive, ref } from 'vue';
+import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import PhoneInput from '@/components/phoneInput.vue';
@@ -152,8 +157,11 @@ const formData = reactive({
   ...props.tenantsData,
 });
 
-const isEnabled = ref(props.tenantsData.status === 'enabled');
+watch(() => [formData.name, formData.logo], (val) => {
+  isDisabled.value = isEdit.value ? (props.tenantsData.name === val[0] && props.tenantsData.logo === val[1]) : false;
+});
 
+const isEnabled = ref(props.tenantsData.status === 'enabled');
 const changeStatus = () => {
   isEnabled.value = !isEnabled.value;
 };
@@ -216,10 +224,12 @@ const handleError = (file) => {
 async function handleSubmit() {
   await formRef.value.validate();
 
-  if (isEmail.value) {
-    handleBlur();
-  } else if (formData.phone === '') {
-    changeTelError(true);
+  if (props.type === 'add') {
+    if (emailValue.value) {
+      handleBlur();
+    } else if (smsValue.value && formData.phone === '') {
+      changeTelError(true);
+    }
   }
 
   if (emailError.value || telError.value) return;
@@ -231,6 +241,9 @@ async function handleSubmit() {
 // 新建租户
 function createTenantsFn() {
   formData.status = isEnabled.value ? 'enabled' : 'disabled';
+  formData.notification_methods = [];
+  if (emailValue.value) formData.notification_methods.push('email');
+  if (smsValue.value) formData.notification_methods.push('sms');
   createTenants(formData).then(() => {
     emit('updateTenantsList', 'add', formData.id);
   })
@@ -269,35 +282,68 @@ const {
   changeTelError,
 } = useAdminPassword(formData);
 
-const isClickEmil = ref(true);
+const isClickEmail = ref(true);
+const emailValue = ref(true);
+const smsValue = ref(false);
+const isDisabled = ref(true);
 
+// 点击电话之前的校验
 const  beforeTelChange = () => {
-  if (!formData.notification_methods.includes('email')) {
-    isClickEmil.value = false;
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      });
-    });
-    return true;
+  if (emailValue.value) {
+    if (formData.email && !emailError.value) {
+      isClickEmail.value = false;
+      return true;
+    }
+    handleBlur();
+    return false;
   }
-  handleBlur();
-  if (formData.email && emailError) {
-    isClickEmil.value = false;
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      });
-    });
-    return true;
+  isClickEmail.value = false;
+  return true;;
+};
+
+// 点击邮箱之前的校验
+const  beforeEmailChange = () => {
+  if (smsValue.value) {
+    if (formData.phone && !telError.value) {
+      isClickEmail.value = true;
+      return true;
+    }
+    changeTelError(true);
+    return false;
   }
-  isClickEmil.value = true;
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(false);
-    });
-  });
-  return false;
+  isClickEmail.value = true;
+  return true;;
+};
+
+const emailClick = () => {
+  if (smsValue.value) {
+    if (formData.phone && !telError.value) {
+      isClickEmail.value = true;
+    } else {
+      changeTelError(true);
+    }
+  } else {
+    isClickEmail.value = true;
+  }
+};
+
+const phoneClick = () => {
+  if (emailValue.value) {
+    if (formData.email && !emailError.value) {
+      isClickEmail.value = false;
+    } else {
+      handleBlur();
+    }
+  } else {
+    isClickEmail.value = false;
+  }
+};
+
+const changeSms = () => {
+  telError.value = smsValue.value ? telError.value : false;
+};
+const changeEmail = () => {
+  emailError.value = emailValue.value ? emailError.value : false;
 };
 </script>
 

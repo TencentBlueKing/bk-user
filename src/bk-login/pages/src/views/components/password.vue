@@ -83,8 +83,7 @@ const handleLogin = () => {
         password: formData.value.password,
       },
     ).then(() => {
-      loading.value = false;
-      router.push({ name: 'user' });
+      window.location.href = `${window.SITE_URL}/page/users/`;
     })
       .catch((error) => {
         errorMessage.value = error?.message || '登录失败';
