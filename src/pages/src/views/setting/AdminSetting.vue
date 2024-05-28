@@ -289,7 +289,7 @@ const realUsers = ref({
 
 const params = reactive({
   page: 1,
-  pageSize: 10,
+  page_size: 10,
   keyword: '',
   exclude_manager: true,
 });

@@ -187,9 +187,17 @@
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
             <bk-input
-              type="password"
+              :type="isPassword ? 'password' : 'text'"
               v-model="adminPasswordData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword">
+              <template #suffix v-if="!isPassword">
+                <span
+                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+              </template>
+            </bk-input>
             <bk-button
               outline
               theme="primary"
@@ -239,6 +247,7 @@
 </template>
 
 <script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+import {  Eye } from 'bkui-vue/lib/icon';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
@@ -270,6 +279,7 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
+const isPassword = ref(false);
 const state = reactive({
   list: [],
   tableLoading: true,
