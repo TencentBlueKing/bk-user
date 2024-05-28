@@ -18,7 +18,7 @@
     <bk-table
       v-bkloading="{ loading: isLoading }"
       class="table-users"
-      :min-height="180"
+      :min-height="150"
       :data="tableData"
       :border="['outer']"
       :pagination="pagination"
@@ -229,7 +229,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
+    detailsConfig.isShow = !enableLeave;
   } else {
     detailsConfig.isShow = false;
   }

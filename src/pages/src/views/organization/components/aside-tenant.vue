@@ -1,6 +1,6 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
-    <div v-bkloading="{ loading: loading }">
+    <div class="h-[calc(100%-36px)]" v-bkloading="{ loading: loading }">
       <div
         class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
@@ -22,6 +22,7 @@
       <bk-tree
         :data="treeData"
         :selected="appStore.currentOrg"
+        class="overflow-y-auto"
         ref="treeRef"
         label="name"
         node-key="id"

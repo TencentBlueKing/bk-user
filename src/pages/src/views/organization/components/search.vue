@@ -212,8 +212,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
-    hideSideBar();
+    if (enableLeave) {
+      detailsConfig.isShow = false;
+      hideSideBar();
+    }
   } else {
     detailsConfig.isShow = false;
     hideSideBar();
