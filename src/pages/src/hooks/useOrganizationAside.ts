@@ -27,7 +27,7 @@ export default function useOrganizationAside(currentTenant: any) {
   };
 
   const handleNodeClick = (item: IOrg, tenantId: string, isTenant = false) => {
-    appStore.currentOrg = { ...item, tenantId, isTenant };
+    appStore.currentOrg = Object.assign(item, { tenantId, isTenant });
   };
 
   const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {

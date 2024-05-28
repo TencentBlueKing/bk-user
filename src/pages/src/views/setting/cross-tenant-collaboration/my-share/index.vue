@@ -111,16 +111,15 @@ import { deleteToStrategies, getToStrategies, putToStrategiesStatus } from '@/ht
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
 
-const store = useMainViewStore();
-store.customBreadcrumbs = false;
-const userStore = useUser();
-
 const props = defineProps({
   active: {
     type: String,
     default: '',
   },
 });
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
+const userStore = useUser();
 
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
@@ -263,7 +262,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
+    detailsConfig.isShow = !enableLeave;
   } else {
     detailsConfig.isShow = false;
   }

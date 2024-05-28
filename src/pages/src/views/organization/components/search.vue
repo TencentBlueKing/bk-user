@@ -122,7 +122,7 @@ import { inject, reactive, ref } from 'vue';
 import ViewUser from './view-user.vue';
 
 import { useCustomFields } from '@/hooks';
-import { getOrganizationUsers, searchOrganization, searchUser } from '@/http/organizationFiles';
+import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
@@ -199,7 +199,7 @@ const handleUserSelect = async (user) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
-    getOrganizationUsers(user.id),
+    getTenantsUserDetail(user.id),
     getFields(),
   ]);
   state.userInfo = userRes.data;
@@ -212,8 +212,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
-    hideSideBar();
+    if (enableLeave) {
+      detailsConfig.isShow = false;
+      hideSideBar();
+    }
   } else {
     detailsConfig.isShow = false;
     hideSideBar();

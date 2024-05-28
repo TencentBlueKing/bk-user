@@ -71,7 +71,6 @@ export const useDataSource = () => {
           plugin_id: 'local',
           plugin_config: {
             ...res.data?.config,
-            enable_password: true,
           },
         }).then((res) => {
           currentDataSourceId.value = res.data?.id;

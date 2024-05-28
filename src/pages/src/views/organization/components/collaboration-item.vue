@@ -18,7 +18,7 @@
     <bk-tree
       v-if="treeData.length"
       :data="treeData"
-      :selected="appStore.currentOrg.id"
+      :selected="appStore.currentOrg"
       label="name"
       node-key="id"
       children="children"
@@ -54,14 +54,14 @@ import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
 
-const appStore = useAppStore();
-
 const props = defineProps({
   tenant: {
     type: Object,
     default: () => ({}),
   },
 });
+
+const appStore = useAppStore();
 
 const formatTreeData = (data = []) => {
   data.forEach((item) => {

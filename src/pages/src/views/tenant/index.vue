@@ -96,6 +96,7 @@
                 class="dot-menu"
                 placement="bottom-start"
                 theme="light"
+                ext-cls="operate-popover"
                 :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>
@@ -472,7 +473,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
+    detailsConfig.isShow = !enableLeave;
   } else {
     detailsConfig.isShow = false;
   }
@@ -701,6 +702,10 @@ const changeEmail = () => {
 </script>
 
 <style lang="less">
+.operate-popover {
+  padding: 5px 0 !important;
+}
+
 .details-edit-wrapper {
   .bk-modal-content {
     height: calc(100vh - 52px) !important;
@@ -816,7 +821,6 @@ const changeEmail = () => {
 
 .dot-menu-list {
   min-width: 50px;
-  padding: 5px 0;
   margin: 0;
   list-style: none;
 
@@ -837,6 +841,7 @@ const changeEmail = () => {
     }
   }
 }
+
 .active-tab {
   border-bottom: 2px solid #3A84FF;
 }

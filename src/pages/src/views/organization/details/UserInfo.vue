@@ -87,8 +87,6 @@ import {
 import { t } from '@/language/index';
 import { formatConvert, getTableValue } from '@/utils';
 
-const editLeaveBefore = inject('editLeaveBefore');
-
 const props = defineProps({
   userData: {
     type: Object,
@@ -123,7 +121,11 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
 const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent', 'handleSettingChange']);
+
+const editLeaveBefore = inject('editLeaveBefore');
+
 const isCurrentUsers = ref(true);
 const detailsConfig = reactive({
   isShow: false,
@@ -159,8 +161,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
-    hideSideBar();
+    if (enableLeave) {
+      detailsConfig.isShow = false;
+      hideSideBar();
+    }
   } else {
     detailsConfig.isShow = false;
     hideSideBar();

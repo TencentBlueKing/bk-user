@@ -262,15 +262,16 @@ import {
 import { t } from '@/language/index';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
-const validate = useValidate();
-
-const emit = defineEmits(['cancel', 'success']);
 const props = defineProps({
   currentId: {
     type: String,
     default: '',
   },
 });
+
+const emit = defineEmits(['cancel', 'success']);
+
+const validate = useValidate();
 
 const formRef = ref();
 // 初始密码
