@@ -21,7 +21,7 @@
       </div>
       <bk-tree
         :data="treeData"
-        :selected="appStore.currentOrg.id"
+        :selected="appStore.currentOrg"
         ref="treeRef"
         label="name"
         node-key="id"
