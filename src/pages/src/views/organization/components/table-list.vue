@@ -1,17 +1,19 @@
 <template>
     <div class="organization-table px-[24px] py-[24px]">
         <div class="table-search mb-[16px]">
-            <bk-button v-if="isTenantStatus && isLocalDataSource" @click="() => importDialogShow = true">
+            <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
+              class="mr-[16px]"
+              @click="() => importDialogShow = true">
                 <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
-                v-if="!isTenantStatus">
+                v-if="!isCollaborativeUsers && !isTenantStatus">
                 <i class="user-icon icon-add-2 mr8" />
                 {{ $t('快速录入') }}
             </bk-button>
-            <bk-button v-if="!isTenantStatus"
+            <bk-button class="mr-[16px]" v-if="!isCollaborativeUsers && !isTenantStatus"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <bk-checkbox class="ml-[16px] h-[32px]"
+            <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
                 @change="reloadList"
@@ -84,6 +86,7 @@
         auto-focus
         :clearable="false"
         id-key="id"
+        multiple-mode="tag"
         display-key="username"
         :remoteMethod="remoteMethod"
         :placeholder="$t('2个字符起搜索')"
@@ -92,7 +95,26 @@
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option pt-[5px] pb-[5px]">
             <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
-            <p class="text-[#979BA5] mt-[6px]">{{item.organization_paths.join('、')}}</p>
+            <p class="text-[#979BA5] mt-[6px]">
+                <bk-overflow-title
+                  style="{display: 'inline-block'}"
+                  class="text-[#979BA5] leading-[20px]"
+                  :class="{
+                    'w-[370px]': !!item.organization_paths.length,
+                    'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
+                  }"
+                >
+                  {{ item.organization_paths[0] }}
+                </bk-overflow-title>
+                <bk-tag
+                v-if="item.organization_paths.length > 1"
+                theme="info"
+                class="inline-block !m-0 h-[20px] !ml-[2px]"
+                v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
+              >
+                +{{ item.organization_paths.length }}
+              </bk-tag>
+            </p>
           </div>
         </template>
       </bk-select>
@@ -129,13 +151,6 @@
                       {{item.name}}
                     </div>
                   </template>
-                    <!-- <bk-option
-                        v-for="(item, index) in dataSource"
-                        :id="item.id"
-                        :key="index"
-                        :name="item.name"
-                        :disabled="chooseDepartments.includes(item.name)"
-                    /> -->
                 </bk-select>
             </bk-form-item>
         </bk-form>
@@ -199,7 +214,6 @@
   </template>
   
 <script setup lang="tsx">
-  import { bkTooltips as vBkTooltips } from 'bkui-vue';
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
@@ -229,7 +243,6 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
-
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
@@ -244,6 +257,10 @@
   const isTenantStatus = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
   });
+  /** 是否为协同租户 */
+  const isCollaborativeUsers = computed(() => {
+    return appStore.currentTenant?.id !== appStore.currentOrg?.tenantId
+  })
   const isDataError = ref(false);
   const isEmptySearch = ref(false);
   const detailsInfo = ref({});
@@ -299,9 +316,11 @@
       isShow: !isLocalDataSource.value,
       handle: (isBatch, item) => {
           InfoBox({
-            title: isBatch ? t('确认批量删除用户？') : t(`确认删除用户${detailsInfo.value.username}？`),
+            title: isBatch ? t('确认批量删除用户？') : t(`确认删除用户：${detailsInfo.value.username}？`),
             subTitle: t('删除后，用户将被彻底删除，无法恢复'),
             height: 184,
+            theme: 'danger',
+            infoType: 'warning',
             onConfirm: async () => {
                 if (isBatch) {
                     await batchDeleteUser(getBatchUserIds(true));
@@ -372,6 +391,8 @@
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
             height: 184,
+            infoType: 'warning',
+            theme: 'danger',
             onConfirm: async () => {
                 await updateTenantsUserStatus(item.id);
                 reloadList();
@@ -402,12 +423,7 @@
     expired: t('冻结')
   });
   const isDataEmpty = ref(false);
-  const columns = reactive([
-    {
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    },
+  const columns = ref([
     {
         label: t("用户名"),
         field: "username",
@@ -440,17 +456,11 @@
         label: t("所属组织"),
         field: "departments",
         render: ({ row, column }) => {
-          // const tips = '';
-          // const config = {
-          //   content: '提示信息',
-          //   onShow: () => {
-          //     const res = getOrganizationPaths(row.id);
-          //   },
-          // }
-          // const res = getOrganizationPaths(row.id);
-          // console.log(row, '---', res)
-          // v-bk-tooltips={{ content: res?.data?.organization_paths }}
-          return <span >{row[column?.field].join('、') || '--'}</span>
+          const config = {
+            content: row?.organization_paths,
+            disabled: row[column?.field]?.length === 0
+          }
+          return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
         }
     }
   ]);
@@ -474,7 +484,8 @@
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
                     v-bk-tooltips={{
-                      content: t('当前租户未启用账密登录，无法修改密码')
+                      content: t('当前租户未启用账密登录，无法修改密码'),
+                      disabled: !item.disabled
                     }}
                     onClick={() => {
                         if (item.disabled) {
@@ -496,14 +507,24 @@
         </bk-popover>
     </span>)
   }
-  const hasOperationColumns = [...columns, ...[{
+  const selectionColumns = ref([{
+      width: 40,
+      minWidth: 40,
+      type: "selection"
+  }]);
+  const operationColumns = ref([{
     label: t("操作"),
     field: "operation",
     render: renderOperation
-  }]]
+  }]);
+  // const hasOperationColumns = [...columns, ...operationColumns]
+  const hasOperationColumns = ref(columns.value.concat(operationColumns.value));
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    return isLocalDataSource.value ? hasOperationColumns : columns;
+    if (isCollaborativeUsers.value) {
+      return columns.value;
+    }
+    return isLocalDataSource.value ? [...selectionColumns.value, ...hasOperationColumns.value] : columns.value;
   });
   const getUserListFun = async (word) => {
     const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
@@ -594,7 +615,8 @@
   });
   
   const initTenantsUserList = async () => {
-    const { id, isTenant } = appStore.currentOrg;
+    const { id, isTenant, tenantId } = appStore.currentOrg;
+    console.log(id, isTenant, tenantId, '-----', appStore.currentTenant.id);
     try {
         tableData.value = [];
         selectList.value = [];
@@ -607,12 +629,17 @@
           department_id: isTenant ?  0 : appStore.currentOrg.id,
           recursive: !recursive.value
         };
-        const res = await getTenantsUserList(isTenant ? id : appStore.currentTenant.id, params);
+        const res = await getTenantsUserList(isTenant ? id : tenantId, params);
         if (res.data?.count === 0) {
           keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
         }
         pagination.count = res.data?.count;
-        tableData.value = res.data?.results;
+        tableData.value = res.data?.results.map(item => {
+          const res = getOrganizationPaths(item.id);
+          const organization_paths = res?.data?.organization_paths;
+          Object.assign(item, organization_paths);
+          return item
+        });
     } catch (e) {
         console.warn(e);
         isDataError.value = true;
@@ -703,8 +730,7 @@
   };
 
   const handleCancelEdit = () => {
-    window.changeInput = false;
-    editDetailsShow.value = false;
+    handleBeforeClose();
   };
   const getIdList = (data, key = 'id') => {
     if (!Array.isArray(data)) {

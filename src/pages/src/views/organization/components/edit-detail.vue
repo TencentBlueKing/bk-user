@@ -243,8 +243,6 @@
     max-height: calc(100vh - 125px);
   }
   .operation-wrapper {
-    // padding: 28px 40px;
-  
     .footer {
       margin-top: 32px;
       padding-left: 40px;
