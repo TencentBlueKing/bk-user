@@ -91,7 +91,7 @@
       </Row>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit" :disabled="isDisabled">
         {{ $t('提交') }}
       </bk-button>
       <bk-button @click="emit('cancelEdit')">
@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref } from 'vue';
+import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
@@ -150,6 +150,9 @@ const formData = ref({
     },
   ],
 });
+
+let originalData = {};
+const isDisabled = ref(true);
 
 const LoginMethod = ref('a');
 
@@ -210,6 +213,7 @@ onMounted(async () => {
         type: field.type,
       }));
     });
+    originalData = JSON.parse(JSON.stringify(formData));
   } catch (error) {
     console.error(error);
   } finally {
@@ -217,6 +221,9 @@ onMounted(async () => {
   }
 });
 
+watch(formData, () => {
+  isDisabled.value = JSON.stringify(originalData) === JSON.stringify(formData);
+}, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {

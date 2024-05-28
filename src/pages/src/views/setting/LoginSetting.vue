@@ -210,7 +210,6 @@ const cancelEdit = () => {
   if (!authDetails.value.idp_id) {
     detailsConfig.show = false;
   }
-  detailsConfig.isEdit = false;
   window.changeInput = false;
 };
 
@@ -219,10 +218,8 @@ const handleBeforeClose = async () => {
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
     detailsConfig.show = false;
-    detailsConfig.isEdit = false;
   } else {
     detailsConfig.show = false;
-    detailsConfig.isEdit = false;
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);

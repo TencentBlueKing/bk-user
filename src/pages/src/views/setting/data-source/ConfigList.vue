@@ -61,11 +61,12 @@
                   ref="popConfirmRef"
                   :content="$t('确认同步？')"
                   trigger="click"
-                  @confirm="handleSync"
+                  @confirm="handleOperationsSync"
                 >
                   <bk-button
                     class="min-w-[64px]"
                     theme="primary"
+                    @click.stop
                   >
                     {{ $t('同步') }}
                   </bk-button>
@@ -361,12 +362,6 @@ const updateConfig = reactive({
 
 const changeLog = () => {
   updateConfig.isShow = true;
-};
-
-// 同步数据源
-const handleSync = (e) => {
-  e.cancelBubble = true;
-  handleOperationsSync();
 };
 </script>
 

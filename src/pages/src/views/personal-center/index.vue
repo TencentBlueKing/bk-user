@@ -39,13 +39,18 @@
             @click="handleClickItem(item)"
           >
             <div class="account-item">
-              <div>
+              <div class="w-4/5">
                 <img v-if="item.logo" :src="item.logo" />
                 <i v-else class="user-icon icon-yonghu" />
-                <span class="name text-overflow">{{ item.full_name }}</span>
-                <span class="tenant text-overflow">{{ `@ ${item.tenant.name}（${item.tenant.id}）` }}</span>
+                <span class="name text-overflow" v-bk-tooltips="{ content: item.full_name }">{{ item.full_name }}</span>
+                <span
+                  class="tenant text-overflow"
+                  v-bk-tooltips="{ content: `@ ${item.tenant.name}（${item.tenant.id}）` }"
+                >
+                  {{ `@ ${item.tenant.name}（${item.tenant.id}）` }}
+                </span>
               </div>
-              <bk-tag type="filled" theme="success" v-if="currentUserInfo.id === item.id">
+              <bk-tag type="filled" theme="success" v-if="userInfo.username === item.id">
                 {{ $t('当前登录') }}
               </bk-tag>
             </div>
@@ -231,7 +236,7 @@
                 </div>
                 <div class="item-div">
                   <li>
-                    <span class="key">{{ $t('所属租户ID') }}：</span>
+                    <span class="key">{{ $t('所属租户') }}：</span>
                     <span class="value">
                       {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
                     </span>
@@ -341,7 +346,11 @@ import {
   putPersonalCenterUserExtrasFields,
 } from '@/http';
 import { t } from '@/language/index';
+import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
+
+const user = useUser();
+const userInfo = ref(user.user);
 
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
@@ -753,7 +762,6 @@ const hidePasswordModal = () => {
 
           .name {
             display: inline-block;
-            max-width: 100px;
             margin: 0 8px;
             font-size: 14px;
             color: #313238;
@@ -761,7 +769,6 @@ const hidePasswordModal = () => {
 
           .tenant {
             display: inline-block;
-            max-width: 100px;
             color: #ff9c01;
           }
         }

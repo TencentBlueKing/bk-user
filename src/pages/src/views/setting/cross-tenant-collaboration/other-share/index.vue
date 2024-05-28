@@ -117,22 +117,22 @@
           <div class="expand-wrapper">
             <div
               v-if="
-                row?.deletedObjs?.usernames.length ||
-                  row?.deletedObjs?.department_names.length
+                row?.deletedObjs?.user_count ||
+                  row?.deletedObjs?.department_count
               "
               class="expand-item">
-              <span class="w-[60px] text-[#EA3636]">{{ $t('删除') }}:</span>
+              <span class="w-[40px] text-[#EA3636]">{{ $t('删除') }}:</span>
               <div class="expand-item-content">
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-if="row?.deletedObjs?.usernames.length">
+                    <span v-if="row?.deletedObjs?.user_count">
                       <span
-                        v-for="(item, index) in row?.deletedObjs?.usernames.slice(0, 50)"
+                        v-for="(item, index) in row?.deletedObjs?.usernames"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.deletedObjs?.usernames.length > 50">
+                      <span v-if="row?.deletedObjs?.user_count > 50">
                         ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
                       </span>
                     </span>
@@ -142,13 +142,13 @@
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-if="row?.deletedObjs?.department_names.length">
+                    <span v-if="row?.deletedObjs?.department_count">
                       <span
-                        v-for="(item, index) in row?.deletedObjs?.department_names.slice(0, 50)"
+                        v-for="(item, index) in row?.deletedObjs?.department_names"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.deletedObjs?.department_names.length > 50">
+                      <span v-if="row?.deletedObjs?.department_count > 50">
                         ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
                       </span>
                     </span>
@@ -158,21 +158,21 @@
               </div>
             </div>
             <div
-              v-if="row?.createdObjs?.usernames.length ||
-                row?.createdObjs?.department_names.length"
-              class="expand-item">
-              <span class="w-[60px] text-[#2DCB56]">{{ $t('新增') }}:</span>
+              v-if="row?.createdObjs?.user_count ||
+                row?.createdObjs?.department_count"
+              class="expand-item box-border">
+              <div class="w-[40px] text-[#2DCB56]">{{ $t('新增') }}:</div>
               <div class="expand-item-content">
                 <div class="content-users">
                   <i class="bk-sq-icon icon-personal-user" />
                   <div class="flex">
-                    <span v-if="row?.createdObjs?.usernames.length">
+                    <span v-if="row?.createdObjs?.user_count">
                       <span
-                        v-for="(item, index) in row?.createdObjs?.usernames.slice(0, 50)"
+                        v-for="(item, index) in row?.createdObjs?.usernames"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.createdObjs?.usernames.length > 50">
+                      <span v-if="row?.createdObjs?.user_count > 50">
                         ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
                       </span>
                     </span>
@@ -182,13 +182,13 @@
                 <div class="content-departments">
                   <i class="bk-sq-icon icon-file-close" />
                   <div class="flex">
-                    <span v-if="row?.createdObjs?.department_names.length">
+                    <span v-if="row?.createdObjs?.department_count">
                       <span
-                        v-for="(item, index) in row?.createdObjs?.department_names.slice(0, 50)"
+                        v-for="(item, index) in row?.createdObjs?.department_names"
                         :key="index">
                         {{ item }}
                       </span>
-                      <span v-if="row?.createdObjs?.department_names.length > 50">
+                      <span v-if="row?.createdObjs?.department_count > 50">
                         ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
                       </span>
                     </span>
@@ -201,7 +201,7 @@
         </template>
         <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
         <bk-table-column prop="source_tenant_name" :label="$t('源租户')"></bk-table-column>
-        <bk-table-column :label="$t('更新内容')" width="480">
+        <bk-table-column :label="$t('更新内容')" width="300">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
@@ -219,7 +219,7 @@
             </bk-tag>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '100px' }">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
@@ -390,7 +390,7 @@ const fetchUpdateRecord = async () => {
 
     const res = await getCollaborationSyncRecords({
       page: pagination.current,
-      pageSize: pagination.limit,
+      page_size: pagination.limit,
     });
     const { count, results } = res.data;
 
@@ -641,6 +641,7 @@ const durationText = (value) => {
   }
 
   .update-record-table {
+    padding : 28px 30px;
     :deep(.bk-table-footer) {
       padding: 0 15px;
       background: #fff;
@@ -680,6 +681,8 @@ const durationText = (value) => {
       border-top: 1px solid #DCDEE5;
 
       .expand-item-content {
+        width: 100%;
+        box-sizing: border-box;
         i {
           margin: 0 16px 0 8px;
           font-size: 16px;
