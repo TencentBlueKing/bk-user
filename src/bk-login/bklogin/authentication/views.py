@@ -133,7 +133,8 @@ class IdpPluginDispatchView(View):
         """
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        if not sign_in_tenant_id:
+        # 路径优先
+        if kwargs.get("tenant_id"):
             sign_in_tenant_id = kwargs.get("tenant_id")
             # session记录登录的租户
             request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
@@ -305,6 +306,42 @@ class IdpPluginDispatchView(View):
             )
 
         return [i.model_dump(include={"id", "username", "full_name"}) for i in tenant_users]
+
+
+class PageUserView(View):
+    """用户选择账号页面"""
+
+    # 登录成功后默认重定向到蓝鲸桌面
+    default_redirect_to = "/console/"
+    template_name = "index.html"
+
+    def get(self, request, *args, **kwargs):
+        """账号选择页面"""
+        tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY) or []
+        if not tenant_users or len(tenant_users) > 1:
+            # 返回用户选择页面
+            return render(request, self.template_name)
+
+        # 单一用户，则直接登录成功，并重定向到业务系统
+        user_id = tenant_users[0]["id"]
+
+        response = HttpResponseRedirect(redirect_to=request.session.get("redirect_uri"))
+        # 生成Cookie
+        bk_token, expired_at = BkTokenManager().get_bk_token(user_id)
+        # 设置Cookie
+        response.set_cookie(
+            settings.BK_TOKEN_COOKIE_NAME,
+            quote_plus(bk_token),
+            expires=expired_at,
+            domain=settings.BK_COOKIE_DOMAIN,
+            httponly=True,
+            secure=False,
+        )
+
+        # 删除Session
+        request.session.clear()
+
+        return response
 
 
 class TenantUserListApi(View):

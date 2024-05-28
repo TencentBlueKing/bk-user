@@ -137,7 +137,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(
             new_username = data.get("username")
             if new_username and user.username != new_username:
                 user.username = new_username
-                user.save(update_fields=["username", "updated_at"])
+                # Note: full_name 同步修改，避免展示时一直是创建时的 username
+                user.full_name = new_username
+                user.save(update_fields=["username", "full_name", "updated_at"])
                 # Note: 必须同步修改账密信息里的用户名
                 LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=new_username)
 
