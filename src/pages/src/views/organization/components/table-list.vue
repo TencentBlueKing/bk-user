@@ -174,8 +174,9 @@
                 <bk-input :style="{width: '80%'}"
                     v-model="password"
                     type="password"
-                    :placeholder="passwordTips"
                     clearable
+                    :placeholder="passwordTips.join('、')"
+                    v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
                 />
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
@@ -214,7 +215,7 @@
   </template>
   
 <script setup lang="tsx">
-  import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
+  import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
   import { Upload } from 'bkui-vue/lib/icon';
@@ -277,7 +278,7 @@
   const getUsersValue = ref([]);
   const getUserList = ref([]);
   const chooseDepartments = ref([]);
-  const passwordTips = ref('');
+  const passwordTips = ref([]);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
@@ -406,7 +407,7 @@
       handle: () => {
         passwordDialogShow.value = true;
         passwordRule(detailsInfo.value.id).then(res => {
-          passwordTips.value = res.data?.password_rule_tips;
+          passwordTips.value = res.data?.rule_tips;
         });
       }
     },
@@ -457,7 +458,7 @@
         field: "departments",
         render: ({ row, column }) => {
           const config = {
-            content: row?.organization_paths,
+            content: (row?.organization_paths || []).join('、'),
             disabled: row[column?.field]?.length === 0
           }
           return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
@@ -616,7 +617,6 @@
   
   const initTenantsUserList = async () => {
     const { id, isTenant, tenantId } = appStore.currentOrg;
-    console.log(id, isTenant, tenantId, '-----', appStore.currentTenant.id);
     try {
         tableData.value = [];
         selectList.value = [];
@@ -634,11 +634,12 @@
           keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
         }
         pagination.count = res.data?.count;
-        tableData.value = res.data?.results.map(item => {
-          const res = getOrganizationPaths(item.id);
-          const organization_paths = res?.data?.organization_paths;
-          Object.assign(item, organization_paths);
-          return item
+        tableData.value = res.data?.results;
+        tableData.value.map(item => {
+          getOrganizationPaths(item.id).then(res => {
+            const organization_paths = res?.data?.organization_paths;
+            item.organization_paths = organization_paths;
+          });
         });
     } catch (e) {
         console.warn(e);
@@ -652,6 +653,7 @@
       dropdownRefs.value[key] = el
     }
   }
+
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
     const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
@@ -672,7 +674,6 @@
   /** 点击快速录入按钮 */
   const fastInputHandle = () => {
     fastInputDialogShow.value = true;
-    console.log(appStore.currentOrg, '==')
   }
   const fastInputSuccess = () => {
     fastInputDialogShow.value = false;

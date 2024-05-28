@@ -60,25 +60,42 @@
         </bk-form-item>
         <div class="form-item-flex">
           <bk-form-item :label="$t('所属组织')">
-            <bk-tag-input
+            <bk-select
               v-model="formData.department_ids"
-              trigger="focus"
-              has-delete-icon
-              :collapse-tags="true"
-              display-key="organization_path"
+              filterable
+              multiple
+              :input-search="false"
+              multiple-mode="tag"
+              collapse-tags
               :list="departmentsList"
-            />
+              idKey="id"
+              display-key="organization_path"
+              :remote-method="searchDepartments"
+              :scroll-loading="scrollLoading"
+              @scroll-end="departmentsScrollEnd"
+              @change="handleChange">
+            </bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('直属上级')">
-            <bk-tag-input
+            <bk-select
               v-model="formData.leader_ids"
-              trigger="focus"
-              has-delete-icon
-              :collapse-tags="true"
-              display-key="username"
-              :tpl="selectTpl"
-              :list="leaderList"
-            />
+              filterable
+              multiple
+              :input-search="false"
+              multiple-mode="tag"
+              collapse-tags
+              idKey="id"
+              :remote-method="searchLeaders"
+              :scroll-loading="scrollLoading"
+              @scroll-end="leadersScrollEnd"
+              @change="handleChange">
+              <bk-option
+                v-for="item in leaderList"
+                :key="item.id"
+                :value="item.id"
+                :name="`${item.username}(${item.full_name})`"
+                :label="`${item.username}(${item.full_name})`" />
+            </bk-select>
           </bk-form-item>
         </div>
         <CustomFields :extras="formData.extras" :rules="rules" />
@@ -203,7 +220,7 @@
     getOptionalDepartmentsList(value);
   };
   const searchLeaders = (value: string) => {
-    optionalLeaderList(value);
+    getOptionalLeaderList(value);
   };
   
   const handleSubmit = async () => {
