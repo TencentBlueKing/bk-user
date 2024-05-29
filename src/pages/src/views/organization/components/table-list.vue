@@ -1,25 +1,27 @@
 <template>
     <div class="organization-table px-[24px] py-[24px]">
         <div class="table-search mb-[16px]">
-            <bk-button v-if="isTenantStatus && isLocalDataSource" @click="() => importDialogShow = true">
+            <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
+              class="mr-[16px]"
+              @click="() => importDialogShow = true">
                 <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
-                v-if="!isTenantStatus">
+                v-if="!isCollaborativeUsers && !isTenantStatus">
                 <i class="user-icon icon-add-2 mr8" />
                 {{ $t('快速录入') }}
             </bk-button>
-            <bk-button v-if="!isTenantStatus"
+            <bk-button class="mr-[16px]" v-if="!isCollaborativeUsers && !isTenantStatus"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <bk-checkbox class="ml-[16px] h-[32px]"
+            <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
-                @change="initTenantsUserList"
+                @change="reloadList"
             />
             <bk-input
                 class="header-right"
                 v-model="keyword"
-                :placeholder="$t('搜索用户名、姓名')"
+                :placeholder="$t('输入用户名、姓名、邮箱、手机号码搜索')"
                 type="search"
                 clearable
                 @enter="handleEnter"
@@ -35,7 +37,7 @@
             v-bkloading="{ loading: isLoading }"
             row-hover="auto"
             remote-pagination
-            :columns="columnsRender"
+            :columns="tableColumns"
             @select="handleSelectTable"
             @select-all="handleSelectAll"
             @page-limit-change="pageLimitChange"
@@ -47,7 +49,7 @@
               :is-search-empty="isEmptySearch"
               :is-data-error="isDataError"
               @handle-empty="handleClear"
-              @handle-update="initTenantsUserList"
+              @handle-update="reloadList"
             />
           </template>
           <template #prepend v-if="selectList.length">
@@ -84,15 +86,35 @@
         auto-focus
         :clearable="false"
         id-key="id"
+        multiple-mode="tag"
         display-key="username"
         :remoteMethod="remoteMethod"
         :placeholder="$t('2个字符起搜索')"
         @select="handleSelect"
       >
         <template #optionRender="{ item }" class="test">
-          <div class="user-info-option">
+          <div class="user-info-option pt-[5px] pb-[5px]">
             <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
-            <p class="text-[#979BA5] mt-[6px]">{{item.organization_paths.join('、')}}</p>
+            <p class="text-[#979BA5] mt-[6px]">
+                <bk-overflow-title
+                  style="{display: 'inline-block'}"
+                  class="text-[#979BA5] leading-[20px]"
+                  :class="{
+                    'w-[370px]': !!item.organization_paths.length,
+                    'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
+                  }"
+                >
+                  {{ item.organization_paths[0] }}
+                </bk-overflow-title>
+                <bk-tag
+                v-if="item.organization_paths.length > 1"
+                theme="info"
+                class="inline-block !m-0 h-[20px] !ml-[2px]"
+                v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
+              >
+                +{{ item.organization_paths.length }}
+              </bk-tag>
+            </p>
           </div>
         </template>
       </bk-select>
@@ -118,16 +140,17 @@
                     filterable
                     multiple
                     auto-focus
+                    :list="dataSource"
                     :clearable="false"
+                    id-key="id"
                     @select="handleSelect"
                 >
-                    <bk-option
-                        v-for="(item, index) in dataSource"
-                        :id="item.id"
-                        :key="index"
-                        :name="item.name"
-                        :disabled="chooseDepartments.includes(item.name)"
-                    />
+                  <template #optionRender="{ item }" class="test">
+                    <div :class="['user-info-option pt-[5px] pb-[5px]', {'disabled': chooseDepartments.includes(item.name)}]"
+                      v-bk-tooltips="{ content: item.name }">
+                      {{item.name}}
+                    </div>
+                  </template>
                 </bk-select>
             </bk-form-item>
         </bk-form>
@@ -149,10 +172,11 @@
         >
             <bk-form-item :label="$t('新密码')" required>
                 <bk-input :style="{width: '80%'}"
-                    v-model="password"
-                    :type="isPassword ? 'password' : 'text'"
-                    :placeholder="passwordTips"
-                    clearable
+                  v-model="password"
+                  clearable
+                  :placeholder="passwordTips.join('、')"
+                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
+                  :type="isPassword ? 'password' : 'text'"
                 >
                 <template #suffix v-if="!isPassword">
                   <span
@@ -181,25 +205,25 @@
     >
     <template #header>
       <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
-      <bk-button v-if="!isDetailSlider" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
+      <bk-button v-if="!isDetailSlider && isLocalDataSource" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
     </template>
       <EditDetails
         v-if="isDetailSlider"
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="editDetailsInfo" v-else />
+      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" v-else />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog
       v-model:isShow="importDialogShow"
       :currentDataSourceId="dataSourceId"
-      @success="initTenantsUserList"
+      @success="reloadList"
     />
   </template>
   
 <script setup lang="tsx">
-  import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch } from 'vue';
+  import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
   import { Upload, Eye} from 'bkui-vue/lib/icon';
@@ -228,7 +252,6 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
-
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
@@ -243,6 +266,10 @@
   const isTenantStatus = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
   });
+  /** 是否为协同租户 */
+  const isCollaborativeUsers = computed(() => {
+    return appStore.currentTenant?.id !== appStore.currentOrg?.tenantId
+  })
   const isDataError = ref(false);
   const isEmptySearch = ref(false);
   const detailsInfo = ref({});
@@ -259,7 +286,7 @@
   const getUsersValue = ref([]);
   const getUserList = ref([]);
   const chooseDepartments = ref([]);
-  const passwordTips = ref('');
+  const passwordTips = ref([]);
   const isPassword = ref(false);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
@@ -283,8 +310,8 @@
     const extrasList = fieldsRes.data.custom_fields;
     extrasList.map(item => item.value = data.extras[item.name]);
     Object.assign(data, {
-      departments: getIdList(data?.departments),
-      leaders: getIdList(data?.leaders),
+      department_ids: getIdList(data?.departments),
+      leader_ids: getIdList(data?.leaders),
       extras: extrasList
     })
     editDetailsInfo.value = data;
@@ -299,9 +326,11 @@
       isShow: !isLocalDataSource.value,
       handle: (isBatch, item) => {
           InfoBox({
-            title: isBatch ? t('确认批量删除用户？') : t(`确认删除用户${detailsInfo.value.username}？`),
+            title: isBatch ? t('确认批量删除用户？') : t(`确认删除用户：${detailsInfo.value.username}？`),
             subTitle: t('删除后，用户将被彻底删除，无法恢复'),
             height: 184,
+            theme: 'danger',
+            infoType: 'warning',
             onConfirm: async () => {
                 if (isBatch) {
                     await batchDeleteUser(getBatchUserIds(true));
@@ -309,7 +338,7 @@
                 } else {
                     await delTenantsUser(detailsInfo.value.id);
                 }
-                initTenantsUserList();
+                reloadList();
             },
           });
       }
@@ -321,7 +350,7 @@
       isShow: true,
       confirmFn: batchUpdate,
       handle: () => {
-        handleOperations(true, t('移至目标组织'));
+        handleOperations(true, t('移至目标组织'), t('将'), t('从当前组织移出，并加入到以下组织'));
       }
     }
   ])
@@ -331,7 +360,7 @@
       isShow: true,
       handle: () => {
         InfoBox({
-            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.full_name}`,
+            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.name}`,
             height: 184,
             onConfirm: async () => {
                 const params = {
@@ -340,7 +369,7 @@
                 }
                 await batchDelete(params);
                 moveDialogShow.value = false;
-                initTenantsUserList();
+                reloadList();
             }
         });
       }
@@ -350,7 +379,7 @@
       isShow: true,
       confirmFn: batchCreate,
       handle: () => {
-        handleOperations(true, t('追加目标组织'));
+        handleOperations(true, t('追加目标组织'), t('将'), t('追加到以下组织'));
       }
     },
     {
@@ -358,7 +387,7 @@
       isShow: true,
       confirmFn: batchDelUpdate,
       handle: () => {
-        handleOperations(false, t('清空并加入组织'));
+        handleOperations(false, t('清空并加入组织'), t('清空'), t('的现有组织，并加入到以下组织'));
       }
     }, 
   ], ...moveOperation, ...defaultOperation]);
@@ -372,9 +401,11 @@
             title: isEnabled ? t(`确定停用用户${detailsInfo.value.full_name} ？`) : t(`确定启用用户${detailsInfo.value.full_name} ？`),
             subTitle: isEnabled ? t('停用后，用户将无法登录') : t('启用后，用户将恢复登录'),
             height: 184,
+            infoType: 'warning',
+            theme: 'danger',
             onConfirm: async () => {
                 await updateTenantsUserStatus(item.id);
-                initTenantsUserList();
+                reloadList();
             }
         });
       }
@@ -385,7 +416,7 @@
       handle: () => {
         passwordDialogShow.value = true;
         passwordRule(detailsInfo.value.id).then(res => {
-          passwordTips.value = res.data?.password_rule_tips;
+          passwordTips.value = res.data?.rule_tips;
         });
       }
     },
@@ -404,15 +435,11 @@
   const isDataEmpty = ref(false);
   const columns = reactive([
     {
-        width: 40,
-        minWidth: 40,
-        type: "selection"
-    },
-    {
         label: t("用户名"),
         field: "username",
+        showOverflowTooltip: true,
         render: ({ row, column }) => (
-          <span class="table-operate" onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
+          <span class="table-operate" v-bk-tooltips={{ content: t('拉取已有用户') }} onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
         )
     },
     {
@@ -439,14 +466,11 @@
         label: t("所属组织"),
         field: "departments",
         render: ({ row, column }) => {
-          // const tips = '';
-          // const config = {
-          //   content: '提示信息',
-          //   onShow: () => {
-          //     const res = getOrganizationPaths(row.id);
-          //   },
-          // }
-          return <span >{row[column?.field].join('、') || '--'}</span>
+          const config = {
+            content: (row?.organization_paths || []).join('、'),
+            disabled: row[column?.field]?.length === 0
+          }
+          return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
         }
     }
   ]);
@@ -469,6 +493,10 @@
                   rowOperation.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
+                    v-bk-tooltips={{
+                      content: t('当前租户未启用账密登录，无法修改密码'),
+                      disabled: !item.disabled
+                    }}
                     onClick={() => {
                         if (item.disabled) {
                           return;
@@ -489,27 +517,40 @@
         </bk-popover>
     </span>)
   }
-  const hasOperationColumns = [...columns, ...[{
+  const selectionColumns = reactive([{
+      width: 40,
+      minWidth: 40,
+      type: "selection"
+  }]);
+  const operationColumns = reactive([{
     label: t("操作"),
     field: "operation",
     render: renderOperation
-  }]]
+  }]);
+  const hasOperationColumns = [...columns, ...operationColumns]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    return isLocalDataSource.value ? hasOperationColumns : columns;
+    const showColumns = JSON.parse(JSON.stringify(columns));
+    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : showColumns;
   });
-
+  const tableColumns = computed(() => {
+    return isCollaborativeUsers.value ? columns : columnsRender.value;
+  })
+  const getUserListFun = async (word) => {
+    const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
+    getUserList.value = res.data;
+  }
   /** 点击拉取已有用户按钮 */
   const handleGetUsersDialog = () => {
     getUsersValue.value = [];
     getUsersDialogShow.value = true;
     getUserList.value = [];
+    getUserListFun();
   }
 
-  const remoteMethod = async (word) => {
+  const remoteMethod = (word = '') => {
     if (word.length > 1) {
-      const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
-      getUserList.value = res.data;
+      getUserListFun(word);
     }
   }
   /** 确认拉取已有用户 */
@@ -537,7 +578,7 @@
     return userId;
   }
   /** 点击移动/移动至组织按钮 */
-  const handleOperations = async (status, title) => {
+  const handleOperations = async (status, title, prefix, suffix) => {
     chooseDepartments.value = [];
     moveDialogShow.value = true;
     selectedValue.value = [];
@@ -547,7 +588,9 @@
       chooseDepartments.value.push(...item.departments);
       users.push(item.full_name);
     });
-    moveTips.value = `${t('即将')}${title.slice(0,2)}${users.slice(0,3).join('、')}...${t('等')}${users.length}${t('个用户的现有组织')}`;
+    const isMore = users.length > 3;
+    const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
+    moveTips.value = `${prefix}${users.slice(0,3).join('、')}${showStr}${suffix}`;
     const res = await optionalDepartmentsList();
     dataSource.value = res.data;
   };
@@ -578,11 +621,11 @@
   }
 
   watch(() => appStore.currentOrg, (val) => {
-    !!val && initTenantsUserList();
+    !!val && reloadList();
   });
   
   const initTenantsUserList = async () => {
-    const { id, isTenant } = appStore.currentOrg;
+    const { id, isTenant, tenantId } = appStore.currentOrg;
     try {
         tableData.value = [];
         selectList.value = [];
@@ -595,12 +638,18 @@
           department_id: isTenant ?  0 : appStore.currentOrg.id,
           recursive: !recursive.value
         };
-        const res = await getTenantsUserList(isTenant ? id : appStore.currentTenant.id, params);
+        const res = await getTenantsUserList(isTenant ? id : tenantId, params);
         if (res.data?.count === 0) {
           keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
+        tableData.value.map(item => {
+          getOrganizationPaths(item.id).then(res => {
+            const organization_paths = res?.data?.organization_paths;
+            item.organization_paths = organization_paths;
+          });
+        });
     } catch (e) {
         console.warn(e);
         isDataError.value = true;
@@ -613,6 +662,7 @@
       dropdownRefs.value[key] = el
     }
   }
+
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
     const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
@@ -645,8 +695,7 @@
 
   const handleClear = () => {
     keyword.value = '';
-    pagination.current = 1;
-    initTenantsUserList();
+    reloadList();
   };
   const handleSelect = (v) => {
   };
@@ -676,10 +725,13 @@
     Message({ theme: 'success', message });
     handleClear();
   };
-  const pageLimitChange = (limit: number) => {
-    pagination.limit = limit;
+  const reloadList = () => {
     pagination.current = 1;
     initTenantsUserList();
+  }
+  const pageLimitChange = (limit: number) => {
+    pagination.limit = limit;
+    reloadList();
   };
 
   const pageCurrentChange = (current: number) => {
@@ -688,8 +740,7 @@
   };
 
   const handleCancelEdit = () => {
-    window.changeInput = false;
-    editDetailsShow.value = false;
+    handleBeforeClose();
   };
   const getIdList = (data, key = 'id') => {
     if (!Array.isArray(data)) {
@@ -799,16 +850,35 @@
           background: #979BA5;
         }
       }
-
-      &.expired {
-        background: #ff9c0129;
-
-        &::before {
-          background: #FF9C01;
+  }
+  .user-select-main {
+    
+  }
+  .operate-menu-list {
+    .operate-list-item {
+        color: #63656E;
+        height: 32px;
+        line-height: 32px;
+        padding: 0 12px;
+        cursor: pointer;
+        &:hover {
+            background: #F5F7FA;
         }
+        &.disabled {
+          color: #c4c6cc;
+          cursor: not-allowed;
+        }
+
+    &.expired {
+      background: #ff9c0129;
+
+      &::before {
+        background: #FF9C01;
       }
     }
   }
+  }
+}
 }
 
 .user-select-main {

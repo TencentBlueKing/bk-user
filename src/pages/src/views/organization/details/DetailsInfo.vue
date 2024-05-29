@@ -45,7 +45,7 @@
               <Empty :is-data-empty="state.isDataEmpty" />
             </template>
             <bk-table-column prop="username" :label="$t('用户名')" />
-            <bk-table-column prop="full_name" :label="$t('全名')" />
+            <bk-table-column prop="full_name" :label="$t('姓名')" />
             <bk-table-column prop="email" :label="$t('邮箱')">
               <template #default="{ row }">
                 <span>{{ row.email || '--' }}</span>

@@ -1,5 +1,5 @@
 // 全量引入 bkui-vue
-import bkui, { InfoBox } from 'bkui-vue';
+import bkui, { InfoBox, bkTooltips} from 'bkui-vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 
@@ -52,4 +52,5 @@ createApp(App)
   .use(bkui)
   .use(i18n)
   .provide('editLeaveBefore', leaveBox)
+  .directive('bkTooltips', bkTooltips)
   .mount('.app');

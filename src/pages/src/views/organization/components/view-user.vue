@@ -11,7 +11,7 @@
           <span class="details-content-value">{{ userData.username }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">{{ $t('全名') }}：</span>
+          <span class="details-content-key">{{ $t('姓名') }}：</span>
           <span class="details-content-value">{{ userData.full_name }}</span>
         </div>
         <div class="details-content-item">

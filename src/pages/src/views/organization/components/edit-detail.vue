@@ -60,25 +60,42 @@
         </bk-form-item>
         <div class="form-item-flex">
           <bk-form-item :label="$t('所属组织')">
-            <bk-tag-input
-              v-model="formData.departments"
-              trigger="focus"
-              has-delete-icon
-              :collapse-tags="true"
-              display-key="organization_path"
+            <bk-select
+              v-model="formData.department_ids"
+              filterable
+              multiple
+              :input-search="false"
+              multiple-mode="tag"
+              collapse-tags
               :list="departmentsList"
-            />
+              idKey="id"
+              display-key="organization_path"
+              :remote-method="searchDepartments"
+              :scroll-loading="scrollLoading"
+              @scroll-end="departmentsScrollEnd"
+              @change="handleChange">
+            </bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('直属上级')">
-            <bk-tag-input
-              v-model="formData.leaders"
-              trigger="focus"
-              has-delete-icon
-              :collapse-tags="true"
-              display-key="username"
-              :tpl="selectTpl"
-              :list="leaderList"
-            />
+            <bk-select
+              v-model="formData.leader_ids"
+              filterable
+              multiple
+              :input-search="false"
+              multiple-mode="tag"
+              collapse-tags
+              idKey="id"
+              :remote-method="searchLeaders"
+              :scroll-loading="scrollLoading"
+              @scroll-end="leadersScrollEnd"
+              @change="handleChange">
+              <bk-option
+                v-for="item in leaderList"
+                :key="item.id"
+                :value="item.id"
+                :name="`${item.username}(${item.full_name})`"
+                :label="`${item.username}(${item.full_name})`" />
+            </bk-select>
           </bk-form-item>
         </div>
         <CustomFields :extras="formData.extras" :rules="rules" />
@@ -209,7 +226,7 @@
     getOptionalDepartmentsList(value);
   };
   const searchLeaders = (value: string) => {
-    optionalLeaderList(value);
+    getOptionalLeaderList(value);
   };
   
   const handleSubmit = async () => {
@@ -220,7 +237,7 @@
       const { id, status, extras, departments, leaders, ...param} = formData;
       const extraData = {};
       extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, {...param, ...{extras: extraData, leader_ids: leaders, department_ids: departments}});
+      await updateTenantsUserDetail(id, {...param, ...{extras: extraData}});
       emit('updateUsers', t('更新成功'));
     } finally {
       isLoading.value = false;
@@ -249,8 +266,6 @@
     max-height: calc(100vh - 125px);
   }
   .operation-wrapper {
-    // padding: 28px 40px;
-  
     .footer {
       margin-top: 32px;
       padding-left: 40px;

@@ -11,7 +11,7 @@
           <span class="details-content-value">{{ userData.username }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">{{ $t('全名') }}：</span>
+          <span class="details-content-key">{{ $t('姓名') }}：</span>
           <span class="details-content-value">{{ userData.full_name }}</span>
         </div>
         <div class="details-content-item">
@@ -32,8 +32,8 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('直属上级') }}：</span>
-          <span class="details-content-value" v-if="(userData.leaders || []).length > 0">
-            {{ userData.leaders.join('、') || '--' }}
+          <span class="details-content-value" v-if="(detail.leaders || []).length > 0">
+            {{ formatConvert(detail.leaders) || '--' }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
@@ -41,7 +41,7 @@
           <span class="details-content-key">{{ $t('账号过期时间') }}：</span>
           <span class="details-content-value">{{ userData.account_expired_at }}</span>
         </div>
-        <CustomFieldsView :extras="userData.extras" />
+        <CustomFieldsView :extras="detail.extras" />
       </div>
       <img v-if="userData.logo" class="user-logo" :src="userData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
@@ -60,6 +60,10 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  detail: {
+    type: Object,
+    default: () => ({})
+  }
 });
 </script>
 

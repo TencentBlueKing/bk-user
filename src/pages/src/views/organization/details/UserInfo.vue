@@ -12,7 +12,7 @@
       <bk-input
         class="header-right"
         v-model="searchValue"
-        :placeholder="$t('搜索用户名、全名')"
+        :placeholder="$t('搜索用户名、姓名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -173,7 +173,7 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
-// 搜索用户名、全名
+// 搜索用户名、姓名
 const handleEnter = (value: string) => {
   emit('searchUsers', value);
 };

@@ -20,7 +20,7 @@
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('全名')" property="full_name" required>
+      <bk-form-item :label="$t('姓名')" property="full_name" required>
         <bk-input
           v-model="formData.full_name"
           :placeholder="validate.name.message"
