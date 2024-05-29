@@ -97,7 +97,7 @@
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
               @focus="handleChange"
-              @blur="handleBlur"
+              @blur="emailBlur"
               @input="handleInput" />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
@@ -105,6 +105,7 @@
             v-else
             :form-data="formData"
             :tel-error="telError"
+            :required="smsValue"
             @change-country-code="changeCountryCode"
             @change-tel-error="changeTelError" />
         </bk-form-item>
@@ -344,6 +345,10 @@ const changeSms = () => {
 };
 const changeEmail = () => {
   emailError.value = emailValue.value ? emailError.value : false;
+};
+
+const emailBlur = () => {
+  emailValue.value && handleBlur();
 };
 </script>
 
