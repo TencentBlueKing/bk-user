@@ -36,8 +36,7 @@
         </template>
         <bk-table-column
           prop="name"
-          :label="$t('租户名')"
-          :sort="{ value: 'asc' }">
+          :label="$t('租户名')">
           <template #default="{ row, index }">
             <div class="item-name">
               <img v-if="row.logo" class="img-logo" :src="row.logo" />
@@ -64,7 +63,7 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="created_at" :label="$t('创建时间')" :sort="true" />
+        <bk-table-column prop="created_at" :label="$t('创建时间')" />
         <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <div class="flex items-center">
@@ -231,7 +230,7 @@
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="adminPasswordData.email"
-              @blur="handleBlur"
+              @blur="emailBlur"
               @input="handleInput" />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
@@ -239,6 +238,7 @@
             v-else
             :form-data="adminPasswordData"
             :tel-error="telError"
+            :required="smsValue"
             @change-country-code="changeCountryCode"
             @change-tel-error="changeTelError" />
         </bk-form-item>
@@ -698,6 +698,9 @@ const changeSms = () => {
 };
 const changeEmail = () => {
   emailError.value = emailValue.value ? emailError.value : false;
+};
+const emailBlur = () => {
+  emailValue.value && handleBlur();
 };
 </script>
 
