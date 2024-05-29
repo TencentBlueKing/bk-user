@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Callable, Dict, List
-from urllib.parse import quote_plus
 
 import pydantic
 from django.conf import settings
@@ -39,6 +38,8 @@ from bklogin.utils.url import urljoin
 from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager
 from .utils import url_has_allowed_host_and_scheme
+
+logger = logging.getLogger(__name__)
 
 
 # 确保无论何时，响应必然有CSRFToken Cookie
@@ -73,7 +74,17 @@ class LoginView(View):
         request.session["redirect_uri"] = redirect_url
 
         # 返回登录页面
-        return render(request, self.template_name)
+        response = render(request, self.template_name)
+
+        # [兼容 2.x] 注销当前登录态
+        # TODO: 支持 SSO，非 is_from_logout 时，登录态有效，则直接重定向回业务系统
+        is_from_logout = request.GET.get("is_from_logout")
+        bk_token = request.COOKIES.get(settings.BK_TOKEN_COOKIE_NAME)
+        if is_from_logout and bk_token:
+            BkTokenManager.set_invalid(bk_token)
+            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME)
+
+        return response
 
 
 class TenantListApi(View):
@@ -164,13 +175,13 @@ class IdpPluginDispatchView(View):
             plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
             plugin = plugin_cls(cfg=plugin_cfg)
         except pydantic.ValidationError:
-            logging.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            logger.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
             # Note: 不可将error对外，因为配置信息比较敏感
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]初始化插件配置[{}]失败").format(idp.name, idp.plugin.name),
             )
         except Exception as error:
-            logging.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            logger.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
@@ -203,7 +214,7 @@ class IdpPluginDispatchView(View):
         except UnexpectedDataError as e:
             raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
         except Exception:
-            logging.exception(
+            logger.exception(
                 "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
                 context.idp.id,
                 context.action,
@@ -327,11 +338,11 @@ class PageUserView(View):
 
         response = HttpResponseRedirect(redirect_to=request.session.get("redirect_uri"))
         # 生成Cookie
-        bk_token, expired_at = BkTokenManager().get_bk_token(user_id)
+        bk_token, expired_at = BkTokenManager().generate(user_id)
         # 设置Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
-            quote_plus(bk_token),
+            bk_token,
             expires=expired_at,
             domain=settings.BK_COOKIE_DOMAIN,
             httponly=True,
@@ -386,11 +397,11 @@ class SignInTenantUserCreateApi(View):
 
         response = APISuccessResponse({"redirect_uri": request.session.get("redirect_uri")})
         # 生成Cookie
-        bk_token, expired_at = BkTokenManager().get_bk_token(user_id)
+        bk_token, expired_at = BkTokenManager().generate(user_id)
         # 设置Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
-            quote_plus(bk_token),
+            bk_token,
             expires=expired_at,
             domain=settings.BK_COOKIE_DOMAIN,
             httponly=True,

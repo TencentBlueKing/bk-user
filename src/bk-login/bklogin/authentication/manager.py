@@ -14,7 +14,7 @@ import random
 import string
 import time
 from typing import Tuple
-from urllib.parse import unquote
+from urllib.parse import quote_plus, unquote_plus
 
 from blue_krill.encrypt.handler import EncryptHandler
 from django.conf import settings
@@ -94,7 +94,7 @@ class BkTokenManager:
         # Token生成失败的重试次数
         self.allowed_retry_count = 5
 
-    def get_bk_token(self, username: str) -> Tuple[str, datetime.datetime]:
+    def generate(self, username: str) -> Tuple[str, datetime.datetime]:
         """
         生成用户的登录态
         : return: bk_token, expires_at
@@ -119,10 +119,10 @@ class BkTokenManager:
                 # 循环结束前将bk_token置空后重新生成
                 bk_token = "" if retry_count + 1 < self.allowed_retry_count else bk_token
             retry_count += 1
+        # Note: quote_plus 是为了兼容 2.x 版本，保持一致，避免用于 Cookie 时调用方未进行 url encode
+        return quote_plus(bk_token), datetime.datetime.fromtimestamp(expires_at, timezone.get_current_timezone())
 
-        return bk_token, datetime.datetime.fromtimestamp(expires_at, timezone.get_current_timezone())
-
-    def is_bk_token_valid(self, bk_token: str) -> Tuple[bool, str, str]:
+    def is_valid(self, bk_token: str) -> Tuple[bool, str, str]:
         """
         验证用户登录态
         : return: ok, username, msg
@@ -130,7 +130,8 @@ class BkTokenManager:
         if not bk_token:
             return False, "", _("参数 bk_token 缺失")
 
-        bk_token = unquote(bk_token)
+        # Note: unquote_plus 是为了兼容 2.x 版本， 因为旧版本在设置 bk_token Cookie 时做了 quote_plus 转换编码
+        bk_token = unquote_plus(bk_token)
         # 解析bk_token获取username和过期时间
         try:
             username, expires_at = self.bk_token_processor.parse(bk_token)
@@ -169,3 +170,12 @@ class BkTokenManager:
             logger.exception("update inactive_expires_at fail")
 
         return True, username, ""
+
+    @staticmethod
+    def set_invalid(bk_token: str):
+        """
+        设置登录态失效
+        """
+        # Note: unquote_plus 是为了兼容 2.x 版本， 因为旧版本在设置 bk_token Cookie 时做了 quote_plus 转换编码
+        bk_token = unquote_plus(bk_token)
+        BkToken.objects.filter(token=bk_token).update(is_logout=True)
