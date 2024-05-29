@@ -217,7 +217,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.show = false;
+    if (enableLeave) {
+      detailsConfig.show = false;
+      detailsConfig.isEdit = false;
+    }
   } else {
     detailsConfig.show = false;
   }
