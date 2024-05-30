@@ -13,7 +13,7 @@ priority = "default"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 django = "3.2.25"
-mysqlclient = "2.2.0"
+mysqlclient = "2.2.4"
 requests = "2.31.0"
 gunicorn = "21.2.0"
 gevent = "23.9.1"
@@ -35,6 +35,7 @@ opentelemetry-api = "1.24.0"
 opentelemetry-sdk = "1.24.0"
 opentelemetry-exporter-otlp = "1.24.0"
 opentelemetry-exporter-jaeger = "1.21.0"
+deprecated = "1.2.14"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.4"
