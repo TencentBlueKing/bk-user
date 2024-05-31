@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.notification.constants import NotificationScene
@@ -48,6 +49,10 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
     # 非本地数据源直接跳过
     if not data_source.is_local:
         logger.debug("not local data source, skip initialize user identity infos")
+        return
+    # 只有能登录的数据源，才需要初始化 & 发送通知
+    if data_source.type not in [DataSourceTypeEnum.REAL, DataSourceTypeEnum.BUILTIN_MANAGEMENT]:
+        logger.debug("not real or builtin management data source, skip initialize user identity infos")
         return
 
     initializer = LocalDataSourceIdentityInfoInitializer(data_source)
