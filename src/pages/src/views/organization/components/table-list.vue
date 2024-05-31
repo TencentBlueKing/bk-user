@@ -7,11 +7,11 @@
                 <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
-                v-if="!isCollaborativeUsers && !isTenantStatus">
+                v-if="isShowBtn">
                 <i class="user-icon icon-add-2 mr8" />
                 {{ $t('快速录入') }}
             </bk-button>
-            <bk-button class="mr-[16px]" v-if="!isCollaborativeUsers && !isTenantStatus"
+            <bk-button class="mr-[16px]" v-if="isShowBtn"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
             <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
@@ -89,7 +89,6 @@
         multiple-mode="tag"
         display-key="username"
         :remoteMethod="remoteMethod"
-        :placeholder="$t('2个字符起搜索')"
         @select="handleSelect"
       >
         <template #optionRender="{ item }" class="test">
@@ -97,7 +96,7 @@
             <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
             <p class="text-[#979BA5] mt-[6px]">
                 <bk-overflow-title
-                  style="{display: 'inline-block'}"
+                  :style="{display: 'inline-block'}"
                   class="text-[#979BA5] leading-[20px]"
                   :class="{
                     'w-[370px]': !!item.organization_paths.length,
@@ -110,7 +109,7 @@
                 v-if="item.organization_paths.length > 1"
                 theme="info"
                 class="inline-block !m-0 h-[20px] !ml-[2px]"
-                v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
+                v-bk-tooltips="{ content: item.organization_paths.join('\n'), boundary: 'parent' }"
               >
                 +{{ item.organization_paths.length }}
               </bk-tag>
@@ -142,7 +141,8 @@
                     auto-focus
                     :list="dataSource"
                     :clearable="false"
-                    id-key="id"
+                    idKey="id"
+                    collapse-tags
                     @select="handleSelect"
                 >
                   <template #optionRender="{ item }" class="test">
@@ -205,7 +205,7 @@
     >
     <template #header>
       <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
-      <bk-button v-if="!isDetailSlider && isLocalDataSource" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
+      <bk-button v-if="!isDetailSlider && !isCollaborativeUsers && isLocalDataSource" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
     </template>
       <EditDetails
         v-if="isDetailSlider"
@@ -290,6 +290,7 @@
   const isPassword = ref(false);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
+    console.log(appStore.currentTenant, appStore.currentTenant?.data_source?.plugin_id === 'local')
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
   });
   const dataSourceId = computed(() => {
@@ -297,6 +298,10 @@
   });
   const isEnabledPassword = computed(() => {
     return appStore.currentTenant?.data_source?.enable_password;
+  })
+
+  const isShowBtn = computed(() => {
+    return !isCollaborativeUsers.value && !isTenantStatus.value && isLocalDataSource.value
   })
 
   const editInfoHandle = async (row, isDetail = false) => {
@@ -439,7 +444,7 @@
         field: "username",
         showOverflowTooltip: true,
         render: ({ row, column }) => (
-          <span class="table-operate" v-bk-tooltips={{ content: t('拉取已有用户') }} onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
+          <span class="table-operate" onClick={() => editInfoHandle(row)}>{row[column?.field]}</span>
         )
     },
     {
@@ -530,8 +535,8 @@
   const hasOperationColumns = [...columns, ...operationColumns]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    const showColumns = JSON.parse(JSON.stringify(columns));
-    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : showColumns;
+    // const showColumns = JSON.parse(JSON.stringify(columns));
+    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : columns;
   });
   const tableColumns = computed(() => {
     return isCollaborativeUsers.value ? columns : columnsRender.value;
