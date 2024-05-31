@@ -222,7 +222,7 @@ onMounted(async () => {
 });
 
 watch(formData, () => {
-  isDisabled.value = JSON.stringify(originalData) === JSON.stringify(formData);
+  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
 }, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {

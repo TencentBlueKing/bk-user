@@ -500,12 +500,14 @@ const handleClickEnter = () => {
 // 停用租户
 const handleClickDisable = (item) => {
   const isEnabled = item.status === 'enabled';
-  const title = isEnabled ? t('确定停用当前租户？') : t('确定启用当前租户？');
+  const title = isEnabled ? `${t('确定停用租户')}：${item.name}？` : `${t('确定启用租户')}：${item.name}？`;
+
   const successMessage = isEnabled ? t('租户停用成功') : t('租户启用成功');
   InfoBox({
     width: 400,
     title,
     subTitle: t('停用后，用户将无法看到该租户信息'),
+    confirmText: t('确定'),
     onConfirm: async () => {
       await putTenantsStatus(item.id);
       Message({ theme: 'success', message: successMessage });
