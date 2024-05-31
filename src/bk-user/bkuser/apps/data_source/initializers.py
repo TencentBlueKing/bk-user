@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple
 
 from django.utils import timezone
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
@@ -47,6 +48,9 @@ class LocalDataSourceIdentityInfoInitializer:
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
         if not data_source.is_local:
+            return
+
+        if data_source.type not in [DataSourceTypeEnum.REAL, DataSourceTypeEnum.BUILTIN_MANAGEMENT]:
             return
 
         self.plugin_cfg = data_source.get_plugin_cfg()

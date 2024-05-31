@@ -331,7 +331,7 @@ SENTRY_DSN = env.str("SENTRY_DSN", "")
 # 是否开启 OTEL 数据上报，默认不启用
 ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
 # 上报数据服务名称，一般使用默认值即可
-OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-user")
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-login")
 # sdk 采样规则（always_on / always_off ...）
 OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
 # OTEL 上报地址（grpc）

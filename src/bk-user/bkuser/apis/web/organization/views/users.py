@@ -455,7 +455,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("仅本地实名数据源支持更新用户信息"))
         # 如果数据源不是当前租户的，说明该租户用户是协同产生的
         if data_source.owner_tenant_id != cur_tenant_id:
-            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("仅可删除非协同产生的租户用户"))
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("仅可更新非协同产生的租户用户"))
 
         slz = TenantUserUpdateInputSLZ(
             data=request.data,
