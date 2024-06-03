@@ -117,6 +117,7 @@
     if (val) {
       const res = await getFieldsTips();
       tipsInfo.value = (res.data || []);
+      tableData.value = [];
     }
   })
   const handleNext = async () => {

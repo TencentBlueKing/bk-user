@@ -39,11 +39,11 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('账号过期时间') }}：</span>
-          <span class="details-content-value">{{ userData.account_expired_at }}</span>
+          <span class="details-content-value">{{ detail.account_expired_at }}</span>
         </div>
         <CustomFieldsView :extras="detail.extras" />
       </div>
-      <img v-if="userData.logo" class="user-logo" :src="userData.logo" alt="" />
+      <img v-if="userData.logo" class="user-logo" :src="detail.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
