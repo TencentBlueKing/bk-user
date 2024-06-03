@@ -49,13 +49,25 @@
                 </label></p>
                 <p>{{$t('信息之间使用逗号区隔，换行可输入多个用户')}}</p>
             </div>
-            <bk-input
-                v-model="val"
-                type="textarea"
-                :resize="false"
-                :placeholder="$t('输入案例：zhangsan, 张三, 10000@qq.com, 15709998877')"
-                :maxlength="100"
-            />
+            <bk-form
+              ref="formRef"
+              form-type="vertical"
+              :model="formData"
+              :rules="rules"
+            >
+              <bk-form-item
+                label=""
+                property="val"
+              >
+                <bk-input
+                  v-model="formData.val"
+                  type="textarea"
+                  :resize="false"
+                  :placeholder="$t('输入案例：zhangsan, 张三, 10000@qq.com, 15709998877')"
+                  :maxlength="100"
+                />
+              </bk-form-item>
+            </bk-form>
         </div>
         <bk-table v-else 
             v-bkloading="{ loading: isLoading }"
@@ -76,6 +88,7 @@
   import { t } from '@/language/index';
   import router from '@/router';
   import useAppStore from '@/store/app';
+  import { useValidate } from '@/hooks';
   import { getFieldsTips, batchCreatePreview, operationsCreate } from '@/http/organizationFiles';
   const props = defineProps({
     isShow: {
@@ -85,6 +98,7 @@
   });
   const appStore = useAppStore();
   const tipsInfo = ref('');
+  const validate = useValidate();
   const columns= [
     {
         label: t("用户名"),
@@ -104,8 +118,15 @@
         field: "phone"
     }
   ];
+  const rules = {
+    val: [validate.required],
+  }
+  const formRef = ref('');
   const tableData = ref([]);
   const val = ref('');
+  const formData = ref({
+    val: ''
+  });
   const emit = defineEmits(['update:isShow', 'success']);
   const objectSteps = ref([
     { title: t('录入用户'), icon: 1 },
@@ -115,17 +136,21 @@
   const currentId = ref(1);
   watch(() => props.isShow, async (val) => {
     if (val) {
+      currentId.value = 1;
+      formData.value.val = '';
+      formRef.value && formRef.value?.clearValidate();
       const res = await getFieldsTips();
       tipsInfo.value = (res.data || []);
       tableData.value = [];
     }
   })
   const handleNext = async () => {
-    if (currentId.value < objectSteps.value.length) {
+    formRef.value.validate();
+    if (!!formData.value.val && (currentId.value < objectSteps.value.length)) {
       currentId.value += 1;
       isLoading.value = true;
       const param = {
-        user_infos: val.value.split('\n'),
+        user_infos: formData.value.val.split('\n'),
         department_id: appStore.currentOrg.id,
       }
       try {
