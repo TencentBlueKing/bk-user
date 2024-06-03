@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="account-setting-wrapper user-scroll-y">
+  <div v-if="isEdit" class="account-setting-wrapper user-scroll-y">
     <bk-form class="account-setting-content" form-type="vertical" :model="formData" ref="formRef">
       <bk-form-item :label="$t('账号有效期开启')">
         <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="changeEnabled" />
@@ -63,16 +63,55 @@
       </div>
     </bk-form>
     <div class="account-setting-footer">
-      <bk-button theme="primary" @click="changeApplication">{{ $t('应用') }}</bk-button>
+      <bk-button
+        class="min-w-[88px] mr-[8px]"
+        theme="primary"
+        @click="changeApplication"
+        :disabled="isDisabled"
+      >
+        {{ $t('保存') }}
+      </bk-button>
+      <bk-button
+        class="min-w-[88px] mr-[8px]"
+        @click="cancelEdit"
+      >
+        {{ $t('取消') }}
+      </bk-button>
     </div>
+  </div>
+  <div v-else style="padding: 24px;">
+    <Row title="">
+      <div class="flex items-top justify-between">
+        <div>
+          <LabelContent :label="$t('账号有效期')">
+            <bk-tag :theme="formData.enabled ? 'success' : ''">
+              {{ formData.enabled ? $t('已开启') : $t('未启用') }}
+            </bk-tag>
+            {{ validityPeriod}}
+          </LabelContent>
+          <LabelContent :label="$t('续期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
+          <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
+        </div>
+        <bk-button
+          class="min-w-[64px]"
+          outline
+          theme="primary"
+          @click="isEdit = true"
+        >
+          {{ $t('编辑') }}
+        </bk-button>
+      </div>
+    </Row>
   </div>
 </template>
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
+import LabelContent from '@/components/layouts/LabelContent.vue';
+import Row from '@/components/layouts/row.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { getTenantUserValidityPeriod, putTenantUserValidityPeriod } from '@/http';
 import { t } from '@/language/index';
@@ -87,16 +126,40 @@ const formData = ref({});
 const isAccountExpire = ref(false);
 const isDropdownAccountExpire = ref(false);
 const formRef = ref();
+const isEdit = ref(false);
+const isDisabled = ref(true);
+let originalData = {};
 
 onMounted(() => {
   getAccountCongif();
 });
+
+watch(formData, () => {
+  isDisabled.value = JSON.stringify(originalData)  === JSON.stringify(formData.value);
+}, { deep: true });
+
+const validityPeriod = computed(() => VALID_TIME.find(item => item?.days === formData.value.validity_period)?.text);
+
+const remindBeforeBxpire = computed(() => findLabelsByValues(formData.value.remind_before_expire, REMIND_DAYS));
+
+const enabledNotificationMethods = computed(() => findLabelsByValues(formData.value.enabled_notification_methods, NOTIFICATION_METHODS));
+
+const findLabelsByValues = (values, array) => values?.map((value) => {
+  const item = array.find(item => item.value === value);
+  return item?.label ?? '';
+})?.join(', ') ?? '';
+
+const cancelEdit = () => {
+  isEdit.value = false;
+  getAccountCongif();
+};
 
 const getAccountCongif = async () => {
   try {
     isLoading.value = true;
     const res = await getTenantUserValidityPeriod();
     formData.value = res.data;
+    originalData = JSON.parse(JSON.stringify(res.data));
   } catch (e) {
     console.warn(e);
   } finally {

@@ -13,6 +13,7 @@
       theme="info"
       :title="$t('密码修改成功后需要进行重新登录')"
       closable
+      class="mb-[24px]"
     />
     <bk-form
       form-type="vertical"

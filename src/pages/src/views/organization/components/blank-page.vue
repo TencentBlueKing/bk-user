@@ -37,19 +37,19 @@ const list = [
     img: typeImg,
     numberImg: imgOne,
     title: t('选择数据源类型'),
-    content: t('支持多种类、多平台异构数据源快速接入，助力全方位分析'),
+    content: t('支持本地导入、通用HTTP、企业微信、LDAP、MAD等多种数据源类型接入'),
   },
   {
     img: sourceImg,
     numberImg: imgTwo,
     title: t('配置数据源'),
-    content: t('包含丰富图表组件，自由式拖拽布局轻松搞定仪表盘'),
+    content: t('根据选择的数据源类型，提供页面化指引配置'),
   },
   {
     img: orgImg,
     numberImg: imgThree,
     title: t('查看组织架构'),
-    content: t('快速指定与SQL齐飞, 入门与进阶方式任你挑选，满足多样化分析需求'),
+    content: t('数据源配置完成，可以查看组织架构和用户信息'),
   },
 ];
 

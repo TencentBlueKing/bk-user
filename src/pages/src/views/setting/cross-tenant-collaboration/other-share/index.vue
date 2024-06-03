@@ -80,7 +80,7 @@
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
     >
-      <OperationDetails :config="detailsConfig" @update-list="updateList" />
+      <OperationDetails :config="detailsConfig" @update-list="updateList" @cancel="detailsConfig.isShow = false" />
     </bk-sideslider>
     <!-- 数据更新记录 -->
     <bk-sideslider
@@ -130,13 +130,13 @@
                       <span
                         v-for="(item, index) in row?.deletedObjs?.usernames"
                         :key="index">
-                        {{ item }}
+                        <bk-tag class="mb-2">{{ item }}</bk-tag>
                       </span>
-                      <span v-if="row?.deletedObjs?.user_count > 50">
+                      <tag v-if="row?.deletedObjs?.user_count > 50" style="color: #63656e;">
                         ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
-                      </span>
+                      </tag>
                     </span>
-                    <span v-else>--</span>
+                    <tag v-else>--</tag>
                   </div>
                 </div>
                 <div class="content-departments">
@@ -146,13 +146,13 @@
                       <span
                         v-for="(item, index) in row?.deletedObjs?.department_names"
                         :key="index">
-                        {{ item }}
+                        <bk-tag class="mb-2">{{ item }}</bk-tag>
                       </span>
-                      <span v-if="row?.deletedObjs?.department_count > 50">
+                      <tag v-if="row?.deletedObjs?.department_count > 50" style="color: #63656e;">
                         ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
-                      </span>
+                      </tag>
                     </span>
-                    <span v-else>--</span>
+                    <tag v-else>--</tag>
                   </div>
                 </div>
               </div>
@@ -170,13 +170,13 @@
                       <span
                         v-for="(item, index) in row?.createdObjs?.usernames"
                         :key="index">
-                        {{ item }}
+                        <bk-tag class="mb-2">{{ item }}</bk-tag>
                       </span>
-                      <span v-if="row?.createdObjs?.user_count > 50">
+                      <tag v-if="row?.createdObjs?.user_count > 50" style="color: #63656e;">
                         ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
-                      </span>
+                      </tag>
                     </span>
-                    <span v-else>--</span>
+                    <tag v-else>--</tag>
                   </div>
                 </div>
                 <div class="content-departments">
@@ -186,13 +186,13 @@
                       <span
                         v-for="(item, index) in row?.createdObjs?.department_names"
                         :key="index">
-                        {{ item }}
+                        <bk-tag class="mb-2">{{ item }}</bk-tag>
                       </span>
-                      <span v-if="row?.createdObjs?.department_count > 50">
+                      <tag v-if="row?.createdObjs?.department_count > 50" style="color: #63656e;">
                         ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
-                      </span>
+                      </tag>
                     </span>
-                    <span v-else>--</span>
+                    <tag v-else>--</tag>
                   </div>
                 </div>
               </div>
