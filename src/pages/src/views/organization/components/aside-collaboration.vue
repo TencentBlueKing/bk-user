@@ -4,8 +4,10 @@
       <span class="user-icon icon-tongbu pr-[4px]"></span>
       {{ $t('协同租户') }}
     </div>
-    <div class="h-[calc(100%-36px)] overflow-y-auto" v-for="collaboration in collaborations" :key="collaboration.id">
-      <collaboration-item :tenant="collaboration" />
+    <div class="h-[calc(100%-36px)] overflow-y-auto">
+      <div v-for="collaboration in collaborations" :key="collaboration.id">
+        <collaboration-item :tenant="collaboration" />
+      </div>
     </div>
   </section>
 </template>
