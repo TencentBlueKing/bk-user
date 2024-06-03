@@ -87,7 +87,10 @@
     </div>
     <div class="footer fixed" v-if="config.type === 'edit'">
       <bk-button theme="primary" :disabled="isEdit" @click="handleSave">
-        {{ $t('确认') }}
+        {{ $t('确认并同步') }}
+      </bk-button>
+      <bk-button :disabled="isEdit" @click="$emit('cancel')">
+        {{ $t('取消') }}
       </bk-button>
     </div>
   </div>

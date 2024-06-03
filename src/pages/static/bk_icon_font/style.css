@@ -230,9 +230,6 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-shujuyuanshu:before {
 	content: "\e14a";
 }
-.icon-tongbu-2:before {
-	content: "\e150";
-}
 .icon-yonghushu:before {
 	content: "\e14c";
 }
@@ -244,4 +241,7 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 }
 .icon-field:before {
 	content: "\e14f";
+}
+.icon-tongbu-2:before {
+	content: "\e153";
 }

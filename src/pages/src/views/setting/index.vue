@@ -68,7 +68,7 @@ const menuData = reactive([
       {
         name: t('跨租户协同'),
         key: 'collaboration',
-        icon: 'icon-tongbu',
+        icon: 'icon-tongbu-2',
       },
     ],
   },

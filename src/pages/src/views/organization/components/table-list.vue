@@ -106,11 +106,11 @@
                   {{ item.organization_paths[0] }}
                 </bk-overflow-title>
                 <bk-tag
-                  v-if="item.organization_paths.length > 0"
-                  theme="info"
-                  class="inline-block !m-0 h-[20px] !ml-[2px]"
-                  v-bk-tooltips="{ content: item.organization_paths.join('\n'), boundary: 'parent' }"
-                >
+                v-if="item.organization_paths.length > 1"
+                theme="info"
+                class="inline-block !m-0 h-[20px] !ml-[2px]"
+                v-bk-tooltips="{ content: item.organization_paths.join('\n'), boundary: 'parent' }"
+              >
                 +{{ item.organization_paths.length }}
               </bk-tag>
             </p>
