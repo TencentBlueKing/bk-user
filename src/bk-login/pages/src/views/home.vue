@@ -296,6 +296,9 @@ const getIdps = async () => {
   if (manageIdp) {
     appStore.manageIdpId = manageIdp.id;
     hasBuiltin.value = true;
+  } else {
+    appStore.manageIdpId = '';
+    hasBuiltin.value = false;
   }
   hasRealUser.value = res.some(item => item.data_source_type === 'real');
   idpList.value = res.filter((item) => {
