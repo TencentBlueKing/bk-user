@@ -24,8 +24,12 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('所属组织') }}：</span>
-          <span class="details-content-value" v-if="userData.departments.length > 0">
+          <span class="details-content-value" v-if="userData.departments.length > 0"
+            v-bk-tooltips="{content: (userData.organization_paths || []).join('\n'),
+            disabled: userData.departments.length === 0}"
+          >
             <!-- {{ formatConvert(userData.departments) }} -->
+            {{detail.organization_paths}}
             {{ userData.departments.join('、') || '--' }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>

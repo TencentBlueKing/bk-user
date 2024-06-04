@@ -351,11 +351,11 @@
   ]);
   const moveOperation = reactive([
     {
-      label: t('移至目标组织'),
+      label: t('追加目标组织'),
       isShow: true,
-      confirmFn: batchUpdate,
+      confirmFn: batchCreate,
       handle: () => {
-        handleOperations(true, t('移至目标组织'), t('将'), t('从当前组织移出，并加入到以下组织'));
+        handleOperations(true, t('追加目标组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
       }
     }
   ])
@@ -472,7 +472,7 @@
         field: "departments",
         render: ({ row, column }) => {
           const config = {
-            content: (row?.organization_paths || []).join('、'),
+            content: (row?.organization_paths || []).join('\n'),
             disabled: row[column?.field]?.length === 0
           }
           return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
@@ -481,6 +481,7 @@
   ]);
   const tableData = ref([]);
   const renderOperation = ({ row, column, index }) => {
+    const list = isLocalDataSource.value ? rowOperation : rowOperation.slice(0, 1);
     return (<span>
         <label class="table-operate" onClick={() => editInfoHandle(row, true)}>{t('编辑')}</label>
         <bk-popover
@@ -495,7 +496,7 @@
             content: () => (
               <ul class="operate-menu-list">
                 {
-                  rowOperation.map((item, ind) => <li
+                  list.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
                     v-bk-tooltips={{
@@ -536,7 +537,7 @@
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
     // const showColumns = JSON.parse(JSON.stringify(columns));
-    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : columns;
+    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
   });
   const tableColumns = computed(() => {
     return isCollaborativeUsers.value ? columns : columnsRender.value;
@@ -630,6 +631,8 @@
   });
   
   const initTenantsUserList = async () => {
+    isDataEmpty.value = false;
+    isEmptySearch.value = false;
     const { id, isTenant, tenantId } = appStore.currentOrg;
     try {
         tableData.value = [];
