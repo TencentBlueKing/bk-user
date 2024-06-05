@@ -171,25 +171,9 @@
             form-type="vertical"
         >
             <bk-form-item :label="$t('新密码')" required>
-                <bk-input :style="{width: '80%'}"
-                  v-model="password"
-                  clearable
+              <passwordInput :style="{width: '80%'}"  v-model="password" :value="password"  clearable
                   :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-                  :type="isPassword ? 'password' : 'text'"
-                >
-                <template #suffix >
-                  <span style="position: absolute; top: 50%; right: 118px; transform: translate(0,  -50%)">
-                  <i class="user-icon icon-copy text-[#3A84FF] text-[14px]" @click="copy(password)" />
-                </span>
-                  <span
-                  v-if="!isPassword"
-                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-                </template>
-                </bk-input>
+                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"/>
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -230,7 +214,7 @@
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
-  import { Upload, Eye} from 'bkui-vue/lib/icon';
+  import { Upload} from 'bkui-vue/lib/icon';
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
   import EditDetails from './edit-detail.vue';
@@ -238,6 +222,7 @@
   import ViewUser from '../details/ViewUser.vue';
   import { randomPasswords } from '@/http';
   import { getFields } from '@/http/settingFiles';
+  import passwordInput from '@/components/passwordInput.vue';
   import {
     getTenantsUserList,
     getFieldsTips,
@@ -256,7 +241,6 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
-  import { copy} from '@/utils';
 
   const appStore = useAppStore();
   const recursive = ref(true);
@@ -917,6 +901,11 @@
       cursor: not-allowed;
     }
   }
+}
+</style>
+<style lang="less" scoped>
+:deep .copy-icon {
+  right: 118px;
 }
 </style>
   

@@ -52,25 +52,10 @@
         </bk-form-item>
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
-            <bk-input
-              :type="isPassword ? 'password' : 'text'"
+            <passwordInput
               v-model="formData.fixed_password"
-              @change="changePassword">
-              <template #suffix>
-                <span class="copy-icon">
-                  <i
-                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
-                    @click="copy(formData.fixed_password)" />
-                </span>
-                <span
-                  v-if="!isPassword"
-                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true"
-                >
-                  <eye />
-                </span>
-              </template>
-            </bk-input>
+              :value="formData.fixed_password"
+              @change="changePassword" />
             <bk-button
               outline
               theme="primary"
@@ -133,16 +118,16 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { Eye } from 'bkui-vue/lib/icon';
 import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
-import { copy, getBase64 } from '@/utils';
+import { getBase64 } from '@/utils';
 
 const userStore = useUser();
 
@@ -160,7 +145,6 @@ const props = defineProps({
 const emit = defineEmits(['updateTenantsList', 'handleCancelEdit']);
 
 const validate = useValidate();
-const isPassword = ref(false);
 
 const formRef = ref();
 const formData = reactive({
@@ -393,11 +377,5 @@ const emailBlur = () => {
 }
 .active-tab {
   border-bottom: 2px solid #3A84FF;
-}
-:deep(.copy-icon) {
-  position: absolute;
-  top: 50%;
-  right: 126px;
-  transform: translate(0,  -50%)
 }
 </style>

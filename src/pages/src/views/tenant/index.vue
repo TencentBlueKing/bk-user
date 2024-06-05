@@ -186,24 +186,10 @@
         </bk-form-item>
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
-            <bk-input
-              :type="isPassword ? 'password' : 'text'"
+            <passwordInput
               v-model="adminPasswordData.fixed_password"
-              @change="changePassword">
-              <template #suffix>
-                <span class="copy-icon">
-                  <i
-                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
-                    @click="copy(adminPasswordData.fixed_password)" />
-                </span>
-                <span
-                  v-show="!isPassword"
-                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-              </template>
-            </bk-input>
+              :value="adminPasswordData.fixed_password"
+              @change="changePassword" />
             <bk-button
               outline
               theme="primary"
@@ -255,14 +241,15 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import {  Eye } from 'bkui-vue/lib/icon';
+<script setup lang="ts">
+import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
 import {
@@ -278,7 +265,7 @@ import {
 import { t } from '@/language/index';
 import router from '@/router';
 import { useMainViewStore, useUser } from '@/store';
-import { copy, LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
+import { LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
 
 const userStore = useUser();
 const store = useMainViewStore();
@@ -288,7 +275,6 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
-const isPassword = ref(false);
 const state = reactive({
   list: [],
   tableLoading: true,
@@ -857,11 +843,5 @@ const emailBlur = () => {
 
 .active-tab {
   border-bottom: 2px solid #3A84FF;
-}
-:deep(.copy-icon) {
-  position: absolute;
-  top: 50%;
-  right: 126px;
-  transform: translate(0,  -50%)
 }
 </style>

@@ -27,23 +27,10 @@
           <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
         </bk-form-item>
         <bk-form-item label="Secret" property="plugin_config.secret" required>
-          <bk-input
-            :type="isPassword ? 'password' : 'text'"
-            v-model="formData.plugin_config.secret" @change="handleChange">
-            <template #suffix>
-              <span class="copy-icon">
-                <i
-                  class="user-icon icon-copy text-[#3A84FF] text-[14px] "
-                  @click="copy(formData.plugin_config.secret)" />
-              </span>
-              <span
-                v-show="!isPassword"
-                class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                @click="isPassword = true">
-                <eye />
-              </span>
-            </template>
-          </bk-input>
+          <passwordInput
+            v-model="formData.plugin_config.secret"
+            :value="formData.plugin_config.secret"
+            @change="handleChange" />
         </bk-form-item>
       </Row>
       <Row :title="$t('登录模式')">
@@ -119,16 +106,14 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { Eye } from 'bkui-vue/lib/icon';
 import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
-import { copy } from '@/utils';
 
-const isPassword = ref(false);
 const validate = useValidate();
 
 const emit = defineEmits(['cancelEdit', 'success']);
@@ -305,9 +290,6 @@ const {
 <style lang="less" scoped>
 @import url('./WeCom.less');
 :deep(.copy-icon) {
-  position: absolute;
-  top: 50%;
   right: 30px;
-  transform: translate(0,  -50%)
 }
 </style>

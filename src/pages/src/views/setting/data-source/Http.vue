@@ -122,24 +122,11 @@
             />
           </bk-form-item>
           <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <bk-input
-              :type="isPassword ? 'password' : 'text'"
+            <passwordInput
               v-model="serverConfigData.auth_config.password"
+              :value="serverConfigData.auth_config.password"
               @focus="handleFocus"
-              @input="handleChange"
-            >
-              <template #suffix>
-                <span class="copy-icon">
-                  <i class="user-icon icon-copy text-[14px] " @click="copy(serverConfigData.auth_config.password)" />
-                </span>
-                <span
-                  v-show="!isPassword"
-                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-              </template>
-            </bk-input>
+              @input="handleChange" />
           </bk-form-item>
         </div>
         <div class="btn">
@@ -217,13 +204,13 @@
 </template>
 
 <script setup lang="ts">
-import { Eye } from 'bkui-vue/lib/icon';
 import { inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDataSourceDetails,
@@ -234,7 +221,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { copy, SYNC_CONFIG_LIST } from '@/utils';
+import { SYNC_CONFIG_LIST } from '@/utils';
 
 const validate = useValidate();
 
@@ -253,7 +240,6 @@ const props = defineProps({
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
-const isPassword = ref(false);
 const isLoading = ref(false);
 const formRef1 = ref();
 const editLeaveBefore = inject('editLeaveBefore');
@@ -695,10 +681,6 @@ const handleCancel = () => {
   }
 }
 :deep(.copy-icon) {
-  position: absolute;
-  top: 50%;
-  right: 32px;
-  transform: translate(0,  -50%);
-  color: #3A84FF
+  right: 30px;
 }
 </style>

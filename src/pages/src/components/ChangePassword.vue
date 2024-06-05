@@ -20,53 +20,17 @@
       ref="formRef"
       :model="formData">
       <bk-form-item :label="$t('旧密码')" property="oldPassword" required>
-        <bk-input :type="isOldPassword ? 'password' : 'text'" v-model="formData.oldPassword">
-          <template #suffix>
-            <span class="copy-icon">
-              <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(formData.oldPassword)" />
-            </span>
-            <span
-              v-show="!isOldPassword"
-              class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-              @click="isOldPassword = true">
-              <eye />
-            </span>
-          </template>
-        </bk-input>
+        <passwordInput v-model="formData.oldPassword" :value="formData.oldPassword" />
       </bk-form-item>
       <bk-form-item :label="$t('新密码')" property="newPassword" required>
-        <bk-input :type="isNewPassword ? 'password' : 'text'" v-model="formData.newPassword">
-          <template #suffix>
-            <span class="copy-icon">
-              <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(formData.newPassword)" />
-            </span>
-            <span
-              v-show="!isNewPassword"
-              class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-              @click="isNewPassword = true">
-              <eye />
-            </span>
-          </template>
-        </bk-input>
+        <passwordInput v-model="formData.newPassword" :value="formData.newPassword" />
       </bk-form-item>
       <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
-        <bk-input
+        <passwordInput
           :class="{ 'is-error': isError }"
-          :type="isConfirmPassword ? 'password' : 'text'"
           v-model="formData.confirmPassword"
-          @input="changePassword">
-          <template #suffix>
-            <span class="copy-icon">
-              <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(formData.confirmPassword)" />
-            </span>
-            <span
-              v-show="!isConfirmPassword"
-              class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-              @click="isConfirmPassword = true">
-              <eye />
-            </span>
-          </template>
-        </bk-input>
+          :value="formData.confirmPassword"
+          @input="changePassword" />
         <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
       </bk-form-item>
     </bk-form>
@@ -75,17 +39,12 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { Eye } from 'bkui-vue/lib/icon';
 import { reactive, ref, watch } from 'vue';
 
 import { logout } from '@/common/auth';
+import passwordInput from '@/components/passwordInput.vue';
 import { putPersonalCenterUserPassword } from '@/http';
 import { t } from '@/language/index';
-import { copy } from '@/utils';
-
-const isOldPassword  = ref(false);
-const isNewPassword  = ref(false);
-const isConfirmPassword = ref(false);
 
 const props = defineProps({
   config: {
@@ -158,9 +117,6 @@ const confirm = async () => {
   }
 }
 :deep(.copy-icon) {
-  position: absolute;
-  top: 50%;
   right: 30px;
-  transform: translate(0,  -50%)
 }
 </style>
