@@ -64,7 +64,6 @@
                   type="textarea"
                   :resize="false"
                   :placeholder="$t('输入案例：zhangsan, 张三, 10000@qq.com, 15709998877')"
-                  :maxlength="100"
                 />
               </bk-form-item>
             </bk-form>
