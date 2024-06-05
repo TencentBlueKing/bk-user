@@ -56,10 +56,17 @@
               :type="isPassword ? 'password' : 'text'"
               v-model="formData.fixed_password"
               @change="changePassword">
-              <template #suffix v-if="!isPassword">
+              <template #suffix>
+                <span class="copy-icon">
+                  <i
+                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+                    @click="copy(formData.fixed_password)" />
+                </span>
                 <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
+                  v-if="!isPassword"
+                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true"
+                >
                   <eye />
                 </span>
               </template>
@@ -74,7 +81,7 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+          <span class="inline-flex items-center text-sm pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
             <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -83,7 +90,9 @@
               {{ $t('邮箱') }}
             </span>
           </span>
-          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+          <span
+            class="inline-flex items-center ml-[24px] text-sm pb-[8px] mb-[8px]"
+            :class="[isClickEmail ? '' : 'active-tab']">
             <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -133,7 +142,7 @@ import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
-import { getBase64 } from '@/utils';
+import { copy, getBase64 } from '@/utils';
 
 const userStore = useUser();
 
@@ -384,5 +393,11 @@ const emailBlur = () => {
 }
 .active-tab {
   border-bottom: 2px solid #3A84FF;
+}
+:deep(.copy-icon) {
+  position: absolute;
+  top: 50%;
+  right: 126px;
+  transform: translate(0,  -50%)
 }
 </style>

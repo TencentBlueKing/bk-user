@@ -115,9 +115,23 @@
         <bk-form-item :label="$t('密码')" property="password" required>
           <div class="flex justify-between">
             <bk-input
-              type="password"
+              :type="isPassword ? 'password' : 'text'"
               v-model="resetPasswordConfig.password"
-              @change="changePassword" />
+              @change="changePassword">
+              <template #suffix>
+                <span class="copy-icon">
+                  <i
+                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+                    @click="copy(resetPasswordConfig.password)" />
+                </span>
+                <span
+                  v-show="!isPassword"
+                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+              </template>
+            </bk-input>
             <bk-button
               outline
               theme="primary"
@@ -134,6 +148,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
+import { Eye } from 'bkui-vue/lib/icon';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
@@ -152,6 +167,8 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
+import { copy } from '@/utils';
+
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -164,6 +181,7 @@ const adminAccount = ref({
 });
 const fixedAdminAccount = ref({});
 const isLoading = ref(false);
+const isPassword = ref(false);
 
 onMounted(() => {
   isLoading.value = true;
@@ -417,5 +435,11 @@ const cancelRealUsers = () => {
     color: #3A84FF;
     cursor: pointer;
   }
+}
+:deep(.copy-icon) {
+  position: absolute;
+  top: 50%;
+  right: 126px;
+  transform: translate(0,  -50%)
 }
 </style>

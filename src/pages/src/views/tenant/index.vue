@@ -190,9 +190,15 @@
               :type="isPassword ? 'password' : 'text'"
               v-model="adminPasswordData.fixed_password"
               @change="changePassword">
-              <template #suffix v-if="!isPassword">
+              <template #suffix>
+                <span class="copy-icon">
+                  <i
+                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+                    @click="copy(adminPasswordData.fixed_password)" />
+                </span>
                 <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  v-show="!isPassword"
+                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
                   @click="isPassword = true">
                   <eye />
                 </span>
@@ -208,7 +214,7 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+          <span class="inline-flex items-center text-sm  pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
             <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -217,7 +223,9 @@
               {{ $t('邮箱') }}
             </span>
           </span>
-          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+          <span
+            class="inline-flex items-center ml-[24px] text-sm  pb-[8px] mb-[8px]"
+            :class="[isClickEmail ? '' : 'active-tab']">
             <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -270,7 +278,7 @@ import {
 import { t } from '@/language/index';
 import router from '@/router';
 import { useMainViewStore, useUser } from '@/store';
-import { LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
+import { copy, LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
 
 const userStore = useUser();
 const store = useMainViewStore();
@@ -849,5 +857,11 @@ const emailBlur = () => {
 
 .active-tab {
   border-bottom: 2px solid #3A84FF;
+}
+:deep(.copy-icon) {
+  position: absolute;
+  top: 50%;
+  right: 126px;
+  transform: translate(0,  -50%)
 }
 </style>

@@ -178,9 +178,13 @@
                   v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
                   :type="isPassword ? 'password' : 'text'"
                 >
-                <template #suffix v-if="!isPassword">
+                <template #suffix >
+                  <span style="position: absolute; top: 50%; right: 118px; transform: translate(0,  -50%)">
+                  <i class="user-icon icon-copy text-[#3A84FF] text-[14px]" @click="copy(password)" />
+                </span>
                   <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  v-if="!isPassword"
+                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
                   @click="isPassword = true">
                   <eye />
                 </span>
@@ -252,6 +256,8 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
+  import { copy} from '@/utils';
+
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
@@ -648,7 +654,8 @@
         };
         const res = await getTenantsUserList(isTenant ? id : tenantId, params);
         if (res.data?.count === 0) {
-          keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+          isDataEmpty.value = keyword.value === '';
+          isEmptySearch.value = keyword.value !== '';
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;

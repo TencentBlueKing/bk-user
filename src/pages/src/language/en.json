@@ -251,7 +251,6 @@
   "账号有效期开启": "Account validity period enabled",
   "账号有效期": "Account validity period",
   "续期提醒时间": "Renewal reminder time",
-  "应用": "Apply",
   "更新成功": "Update successful",
   "确认要关闭账号有效期吗？": "Close the account validity period?",
   "关闭后，存量账号有效期不变，新账号有效期永久。": "After closing, the validity period for existing accounts remains unchanged, and new accounts will have permanent validity.",
@@ -514,5 +513,6 @@
   "将": "Will",
   "从当前组织移出，并加入到以下组织": "move from current organization and join the following organization",
   "追加到以下组织": "Append to the following organization",
-  "的现有组织，并加入到以下组织": "existing organization and join the following organization"
+  "的现有组织，并加入到以下组织": "existing organization and join the following organization",
+  "确认并同步": "Acknowledge and synchronize"
 }

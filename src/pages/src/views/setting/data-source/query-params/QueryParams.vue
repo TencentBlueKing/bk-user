@@ -6,6 +6,7 @@
     trigger="manual"
     :is-show="isShow"
     @after-hidden="Cancel"
+    z-index="2000"
   >
     <bk-button v-if="count === 0" text theme="primary" @click="handleShow">
       <i class="user-icon icon-canshu mr-[6px]"></i>

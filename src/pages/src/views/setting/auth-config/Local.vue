@@ -99,7 +99,21 @@
             <bk-input
               class="input-password"
               v-model="formData.config.password_initial.fixed_password"
-              type="password" />
+              :type="isPassword ? 'password' : 'text'">
+              <template #suffix>
+                <span class="copy-icon">
+                  <i
+                    class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+                    @click="copy(formData.config.password_initial.fixed_password)" />
+                </span>
+                <span
+                  v-show="!isPassword"
+                  class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+                  @click="isPassword = true">
+                  <eye />
+                </span>
+              </template>
+            </bk-input>
             <bk-button
               outline
               theme="primary"
@@ -246,7 +260,7 @@
 
 <script setup lang="ts">
 import { InfoBox } from 'bkui-vue';
-import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
+import { AngleDown, AngleUp, Eye } from 'bkui-vue/lib/icon';
 import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
@@ -260,7 +274,7 @@ import {
   randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
-import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
+import { copy, NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
 const props = defineProps({
   currentId: {
@@ -269,6 +283,7 @@ const props = defineProps({
   },
 });
 
+const isPassword = ref(false);
 const emit = defineEmits(['cancel', 'success']);
 
 const validate = useValidate();
@@ -499,5 +514,12 @@ const handleRandomPassword = async () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
+}
+
+:deep(.copy-icon) {
+  position: absolute;
+  top: 50%;
+  right: 485px;
+  transform: translate(0,  -50%)
 }
 </style>
