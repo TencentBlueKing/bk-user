@@ -497,7 +497,7 @@
             content: () => (
               <ul class="operate-menu-list">
                 {
-                  rowOperation.map((item, ind) => <li
+                  list.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
                     v-bk-tooltips={{
@@ -526,8 +526,8 @@
     }
     return rowOperation.slice(0, 1).map(item => <label class="table-operate"
       onClick={() => {
-      detailsInfo.value = row;
-      item.handle(false, row);
+        detailsInfo.value = row;
+        item.handle(false, row);
     }}>{ operationLabel(item, row) }</label>)
   }
   const selectionColumns = reactive([{
