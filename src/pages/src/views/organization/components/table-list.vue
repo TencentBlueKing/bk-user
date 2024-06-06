@@ -139,18 +139,19 @@
                     filterable
                     multiple
                     auto-focus
-                    :list="dataSource"
                     :clearable="false"
                     idKey="id"
+                    displayKey="name"
                     collapse-tags
                     @select="handleSelect"
                 >
-                  <template #optionRender="{ item }" class="test">
-                    <div :class="['user-info-option pt-[5px] pb-[5px]', {'disabled': chooseDepartments.includes(item.name)}]"
-                      v-bk-tooltips="{ content: item.name }">
-                      {{item.name}}
-                    </div>
-                  </template>
+                <bk-option
+                  v-for="item in dataSource"
+                  :key="item.id"
+                  :disabled="chooseDepartments.includes(item.name)"
+                  :value="item.id"
+                  :name="item.name"
+                  :label="item.name" />
                 </bk-select>
             </bk-form-item>
         </bk-form>
@@ -481,8 +482,8 @@
   ]);
   const tableData = ref([]);
   const renderOperation = ({ row, column, index }) => {
-    const list = isLocalDataSource.value ? rowOperation : rowOperation.slice(0, 1);
-    return (<span>
+    if (isLocalDataSource.value) {
+      return (<span>
         <label class="table-operate" onClick={() => editInfoHandle(row, true)}>{t('编辑')}</label>
         <bk-popover
           ext-cls="operate-popover"
@@ -521,7 +522,13 @@
             <i class="user-icon icon-more ml8" />
           </div>
         </bk-popover>
-    </span>)
+      </span>)
+    }
+    return rowOperation.slice(0, 1).map(item => <label class="table-operate"
+      onClick={() => {
+        detailsInfo.value = row;
+        item.handle(false, row);
+    }}>{ operationLabel(item, row) }</label>)
   }
   const selectionColumns = reactive([{
       width: 40,
@@ -536,7 +543,6 @@
   const hasOperationColumns = [...columns, ...operationColumns]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    // const showColumns = JSON.parse(JSON.stringify(columns));
     return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
   });
   const tableColumns = computed(() => {
@@ -889,8 +895,11 @@
 }
 }
 
-.user-select-main {
-
+.user-info-option {
+  &.disabled {
+    color: #c4c6cc;
+    cursor: not-allowed;
+  }
 }
 
 .operate-menu-list {
