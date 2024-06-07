@@ -60,14 +60,3 @@ class DefaultTenantMixin:
             for strategy in strategies
             for mp in strategy.target_config["field_mapping"]
         }
-
-
-class DataSourceOwnerTenantMixin:
-    """数据源 Owner 租户相关"""
-
-    @cached_property
-    def data_source_owner_tenant_id_map(self) -> Dict[int, str]:
-        return dict(ds.id for ds in DataSource.objects.values_list("id", "owner_tenant_id"))
-
-    def get_data_source_owner_tenant_id(self, data_source_id: int) -> str:
-        return self.data_source_owner_tenant_id_map[data_source_id]

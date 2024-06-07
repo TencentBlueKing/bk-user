@@ -21,7 +21,7 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import DataSourceOwnerTenantMixin, DefaultTenantMixin, LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.profilers import (
     DepartmentProfileListInputSLZ,
@@ -58,7 +58,7 @@ TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP = {
     TenantUserStatus.EXPIRED.value: ProfileStatusEnum.EXPIRED.value,
 }
 
-PROFILE_STATUS_TENANT_USER_STATUS_MAP = {v: k for k, v in TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.items()}
+PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP = {v: k for k, v in TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.items()}
 
 
 def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
@@ -69,7 +69,7 @@ def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
     return ""
 
 
-class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceOwnerTenantMixin):
+class TenantUserListToUserInfosMixin(DefaultTenantMixin):
     """将 TenantUser 列表转换 对外的用户信息"""
 
     def build_user_infos(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
@@ -95,13 +95,13 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceOwnerTenantMi
 
             # 自定义字段
             source_extras = tenant_user.data_source_user.extras
-            data_source_owner_tenant_id = self.get_data_source_owner_tenant_id(tenant_user.data_source_id)
             # 协同时按照协同租户配置的用户自定义字段进行输出
-            if data_source_owner_tenant_id != tenant_user.tenant_id:
+            ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
+            if ds_owner_tenant_id != tenant_user.tenant_id:
                 extras = {
-                    collaboration_field_mapping[(data_source_owner_tenant_id, k)]: v
+                    collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
                     for k, v in source_extras.items()
-                    if (data_source_owner_tenant_id, k) in collaboration_field_mapping
+                    if (ds_owner_tenant_id, k) in collaboration_field_mapping
                 }
             else:
                 extras = source_extras
@@ -273,7 +273,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
-            TenantUser.objects.select_related("data_source_user")
+            TenantUser.objects.select_related("data_source_user", "data_source")
             .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
         )
@@ -360,9 +360,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 2.x 的用户状态转换为 3.x 的用户状态，不存在的状态则忽略
         lookup_values = [
-            PROFILE_STATUS_TENANT_USER_STATUS_MAP[v]  # type: ignore
+            PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP[v]  # type: ignore
             for v in values
-            if v in PROFILE_STATUS_TENANT_USER_STATUS_MAP
+            if v in PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP
         ]
         # 不存在 3.x 状态，则说明查询不到任何用户
         if not lookup_values:
@@ -553,7 +553,6 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
             "category_id": tenant_user.data_source_id,
             "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
             "enabled": True,
-            # 2.x 版本里不同数据源，自定义字段本身就不一致，所以
             "extras": extras,
             "position": int(source_extras.get("position", 0)),
             # 总是返回固定值
@@ -632,7 +631,7 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
         # 租户用户
         return TenantUser.objects.filter(
             tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
-        ).select_related("data_source_user")
+        ).select_related("data_source_user", "data_source")
 
 
 class ProfileLanguageUpdateApi(
