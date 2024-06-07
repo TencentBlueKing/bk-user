@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from functools import cached_property
+from typing import Dict, Tuple
 
 from django.db.models import Q, QuerySet
 from rest_framework.permissions import IsAuthenticated
@@ -45,3 +46,28 @@ class DefaultTenantMixin:
         return DataSource.objects.filter(
             Q(owner_tenant_id=self.default_tenant.id) | Q(owner_tenant_id__in=collaboration_tenant_ids)
         ).filter(type=DataSourceTypeEnum.REAL)
+
+    def get_collaboration_field_mapping(self) -> Dict[Tuple[str, str], str]:
+        """
+        默认租户的所有协同租户字段映射
+
+        :return: {(collaboration_tenant_id, source_field): target_field}
+        """
+        strategies = CollaborationStrategy.objects.filter(target_tenant_id=self.default_tenant.id)
+
+        return {
+            (strategy.source_tenant_id, mp["source_field"]): mp["target_field"]
+            for strategy in strategies
+            for mp in strategy.target_config["field_mapping"]
+        }
+
+
+class DataSourceOwnerTenantMixin:
+    """数据源 Owner 租户相关"""
+
+    @cached_property
+    def data_source_owner_tenant_id_map(self) -> Dict[int, str]:
+        return dict(ds.id for ds in DataSource.objects.values_list("id", "owner_tenant_id"))
+
+    def get_data_source_owner_tenant_id(self, data_source_id: int) -> str:
+        return self.data_source_owner_tenant_id_map[data_source_id]
