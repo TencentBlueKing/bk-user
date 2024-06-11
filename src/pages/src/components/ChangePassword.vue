@@ -20,17 +20,17 @@
       ref="formRef"
       :model="formData">
       <bk-form-item :label="$t('旧密码')" property="oldPassword" required>
-        <passwordInput v-model="formData.oldPassword" :value="formData.oldPassword" />
+        <passwordInput v-model="formData.oldPassword" @input="(val) => inputPassword('oldPassword', val)" />
       </bk-form-item>
       <bk-form-item :label="$t('新密码')" property="newPassword" required>
-        <passwordInput v-model="formData.newPassword" :value="formData.newPassword" />
+        <passwordInput v-model="formData.newPassword" @input="(val) => inputPassword('newPassword', val)" />
       </bk-form-item>
       <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
         <passwordInput
           :class="{ 'is-error': isError }"
           v-model="formData.confirmPassword"
           :value="formData.confirmPassword"
-          @input="changePassword" />
+          @input="(val) => inputPassword('confirmPassword', val)" />
         <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
       </bk-form-item>
     </bk-form>
@@ -71,8 +71,11 @@ watch(() => props.config?.isShow, (value: boolean) => {
   }
 });
 
-const changePassword = () => {
-  isError.value = false;
+const inputPassword = (param, val) => {
+  formData[param] = val;
+  if (param === 'confirmPassword') {
+    isError.value = false;
+  }
 };
 
 const confirm = async () => {

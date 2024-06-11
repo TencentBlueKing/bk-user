@@ -188,8 +188,8 @@
           <div class="flex justify-between">
             <passwordInput
               v-model="adminPasswordData.fixed_password"
-              :value="adminPasswordData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -355,6 +355,10 @@ const handleClick = async (type: string, item?: any) => {
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
+};
+
+const inputPassword = (val) => {
+  adminPasswordData.value.fixed_password = val;
 };
 
 const handleCancelEdit = async () => {
@@ -547,7 +551,6 @@ const adminPasswordData = ref({
   phone: '',
   phone_country_code: '86',
 });
-
 const formRef = ref();
 
 const rules = {
@@ -586,6 +589,7 @@ const confirmPassword = async () => {
       changeTelError(true);
     }
     await formRef.value.validate();
+    if (emailValue.value && emailError.value) return;
     if (telError.value) return;
 
     adminPasswordConfig.isLoading = true;
@@ -611,13 +615,13 @@ const closedPassword = () => {
 };
 
 const resetAdminPasswordData = () => {
-  adminPasswordData.value = {
+  Object.assign(adminPasswordData.value, {
     fixed_password: '',
     notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
-  };
+  });
 };
 
 const {

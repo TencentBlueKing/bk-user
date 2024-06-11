@@ -114,7 +114,7 @@
         :rules="rules">
         <bk-form-item :label="$t('密码')" property="password" required>
           <div class="flex justify-between">
-            <passwordInput v-model="resetPasswordConfig.password" :value="resetPasswordConfig.password" @change="changePassword" />
+            <passwordInput v-model="resetPasswordConfig.password" @change="changePassword" @input="changePassword" />
             <bk-button
               outline
               theme="primary"

@@ -124,9 +124,8 @@
           <bk-form-item :label="$t('密码')" property="auth_config.password" required>
             <passwordInput
               v-model="serverConfigData.auth_config.password"
-              :value="serverConfigData.auth_config.password"
               @focus="handleFocus"
-              @input="handleChange" />
+              @input="inputPassword" />
           </bk-form-item>
         </div>
         <div class="btn">
@@ -617,6 +616,11 @@ const handleChange = () => {
   window.changeInput = true;
   nextDisabled.value = true;
   connectionStatus.value = null;
+};
+
+const inputPassword = (val) => {
+  serverConfigData.value.auth_config.password = val;
+  handleChange();
 };
 
 const handleFocus = () => {

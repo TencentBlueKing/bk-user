@@ -39,6 +39,7 @@
               <bk-input
                 :placeholder="$t('请输入Key')"
                 v-model="item.key"
+                clearable
                 @input="$emit('updateStatus')" />
             </bk-form-item>
             <bk-form-item
@@ -49,6 +50,7 @@
               <bk-input
                 :placeholder="$t('请输入Value')"
                 v-model="item.value"
+                clearable
                 @input="$emit('updateStatus')" />
             </bk-form-item>
             <i class="user-icon icon-plus-fill" @click="addParams" />

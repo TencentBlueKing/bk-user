@@ -29,8 +29,8 @@
         <bk-form-item label="Secret" property="plugin_config.secret" required>
           <passwordInput
             v-model="formData.plugin_config.secret"
-            :value="formData.plugin_config.secret"
-            @change="handleChange" />
+            @change="handleChange"
+            @input="inputPassword" />
         </bk-form-item>
       </Row>
       <Row :title="$t('登录模式')">
@@ -285,6 +285,10 @@ const {
   builtinFields,
   customFields,
 );
+
+const inputPassword = (val) => {
+  formData.value.plugin_config.secret = val;
+};
 </script>
 
 <style lang="less" scoped>

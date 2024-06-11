@@ -50,6 +50,8 @@
               style="width: 85px;"
               type="number"
               behavior="simplicity"
+              :min="5"
+              :max="10"
               v-model="formData.config.password_rule.not_continuous_count"
             />
             <span>{{ $t('位 出现') }}</span>
@@ -97,8 +99,7 @@
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
             <passwordInput
-              v-model="formData.config.password_initial.fixed_password"
-              :value="formData.config.password_initial.fixed_password" />
+              v-model="formData.config.password_initial.fixed_password" />
             <bk-button
               outline
               theme="primary"

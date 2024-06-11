@@ -2,14 +2,14 @@
   <bk-input
     class="input-password"
     :type="isPassword ? 'password' : 'text'"
-    v-model="props.value"
-    @change="$emit('change', props.value)"
-    @focus="$emit('focus', props.value)"
-    @input="$emit('input', props.value)"
+    v-model="inputValue"
+    @change="$emit('change', inputValue)"
+    @focus="$emit('focus', inputValue)"
+    @input="$emit('input', inputValue); $emit('update: modelValue', inputValue)"
   >
     <template #suffix>
       <span class="copy-icon">
-        <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(props.value)" />
+        <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(inputValue)" />
       </span>
       <span
         v-show="!isPassword"
@@ -23,17 +23,23 @@
 
 <script setup lang="ts">
 import { Eye } from 'bkui-vue/lib/icon';
-import { defineEmits, defineProps, ref } from 'vue';
+import { defineEmits, defineProps, ref, watch } from 'vue';
 
 import { copy } from '@/utils';
 
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
-    default: '',
   } });
+const inputValue = ref('');
+
+watch(() => props.modelValue, (val) => {
+  inputValue.value = val;
+});
+
 const isPassword  = ref(false);
-const emit = defineEmits(['change', 'focus', 'input']);
+
+const emit = defineEmits(['change', 'focus', 'input', 'update: modelValue']);
 </script>
 
 <style lang="less" scoped>

@@ -54,8 +54,8 @@
           <div class="flex justify-between">
             <passwordInput
               v-model="formData.fixed_password"
-              :value="formData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -275,6 +275,10 @@ const {
   changeCountryCode,
   changeTelError,
 } = useAdminPassword(formData);
+
+const inputPassword = (val) => {
+  formData.fixed_password = val;
+};
 
 const isClickEmail = ref(true);
 const emailValue = ref(true);

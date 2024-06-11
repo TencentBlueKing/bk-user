@@ -2,9 +2,9 @@
     <div class="organization-table px-[24px] py-[24px]">
         <div class="table-search mb-[16px]">
             <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
-              class="mr-[16px]"
+              class="mr-[16px] button-upload"
               @click="() => importDialogShow = true">
-                <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
+                <Upload class="mr-[8px] text-[16px] icon-upload" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
                 v-if="isShowBtn">
@@ -171,7 +171,7 @@
             form-type="vertical"
         >
             <bk-form-item :label="$t('新密码')" required>
-              <passwordInput :style="{width: '80%'}"  v-model="password" :value="password"  clearable
+              <passwordInput :style="{width: '80%'}"  v-model="password" clearable
                   :placeholder="passwordTips.join('、')"
                   v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"/>
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
@@ -775,6 +775,13 @@
     display: flex;
     width: 100%;
 
+    .button-upload:hover {
+      border-color: #3A84ff;
+
+      .icon-upload {
+        color: #3A84ff;
+       }
+    }
     .header-right {
       position: absolute;
       right: 0;
