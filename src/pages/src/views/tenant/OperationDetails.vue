@@ -8,7 +8,7 @@
       :rules="rules">
       <Row :title="$t('基本信息')">
         <div class="flex justify-between">
-          <div class="w-[424px]">
+          <div class="w-[424px] mr-[28px]">
             <bk-form-item :label="$t('租户名称')" property="name" required>
               <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
@@ -40,6 +40,7 @@
             :size="2"
             @delete="handleDelete"
             @error="handleError"
+            :tip="$t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB')"
           />
         </div>
       </Row>
@@ -381,5 +382,8 @@ const emailBlur = () => {
 }
 .active-tab {
   border-bottom: 2px solid #3A84FF;
+}
+::v-deep .bk-upload__tip {
+  width: 0;
 }
 </style>

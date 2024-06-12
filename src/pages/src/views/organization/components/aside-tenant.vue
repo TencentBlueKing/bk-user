@@ -35,7 +35,7 @@
         }"
       >
         <template #node="node">
-          <div class="org-node pr-[12px] relative">
+          <div class="org-node pr-[12px] relative node-overflow">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
               v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
@@ -101,3 +101,14 @@ const {
 } = organizationAsideHooks;
 
 </script>
+
+<style lang="less" scoped>
+.node-overflow{
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: auto;
+  border-radius: 4px;
+}
+</style>

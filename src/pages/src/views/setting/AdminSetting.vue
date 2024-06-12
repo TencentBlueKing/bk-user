@@ -44,7 +44,7 @@
           theme="primary"
           @click="resetPasswordConfig.isShow = true"
         >
-          <i class="user-icon icon-refresh" />
+          <i class="user-icon icon-refresh mr-[6px]" />
           {{ $t('重置密码') }}
         </bk-button>
       </LabelContent>
