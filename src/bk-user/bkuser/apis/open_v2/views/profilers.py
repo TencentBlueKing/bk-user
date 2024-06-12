@@ -15,6 +15,7 @@ from functools import reduce
 from typing import Any, Dict, List, Tuple
 
 import phonenumbers
+from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.db.models import Q, QuerySet
 from django.http import Http404
 from rest_framework import generics
@@ -34,22 +35,41 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
 
 
+class ProfileStatusEnum(str, StructuredEnum):
+    """2.x 版本 用户状态"""
+
+    NORMAL = EnumField("NORMAL", label="正常")
+    LOCKED = EnumField("LOCKED", label="被锁定")
+    DELETED = EnumField("DELETED", label="已删除")
+    DISABLED = EnumField("DISABLED", label="被禁用")
+    EXPIRED = EnumField("EXPIRED", label="已过期")
+
+
+TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP = {
+    TenantUserStatus.ENABLED.value: ProfileStatusEnum.NORMAL.value,
+    TenantUserStatus.DISABLED.value: ProfileStatusEnum.DISABLED.value,
+    TenantUserStatus.EXPIRED.value: ProfileStatusEnum.EXPIRED.value,
+}
+
+PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP = {v: k for k, v in TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.items()}
+
+
 def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
-    """将 86 等手机国际区号 转换 CN 的 ISO 代码"""
+    """将 86 等手机国际区号 转换 CN 等 ISO 代码"""
     if phone_country_code and phone_country_code.isdigit():
         return phonenumbers.region_code_for_country_code(int(phone_country_code))
 
     return ""
 
 
-class TenantUserListToUserInfosMixin:
+class TenantUserListToUserInfosMixin(DefaultTenantMixin):
     """将 TenantUser 列表转换 对外的用户信息"""
 
     def build_user_infos(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
@@ -66,19 +86,32 @@ class TenantUserListToUserInfosMixin:
             self._get_department_map(data_source_user_ids) if not fields or "departments" in fields else {}
         )
 
+        collaboration_field_mapping = self.get_collaboration_field_mapping()
+
         user_infos = []
         for tenant_user in tenant_users:
             # 手机号和手机区号
             phone, phone_country_code = tenant_user.phone_info
+
             # 自定义字段
-            extras = tenant_user.data_source_user.extras
+            source_extras = tenant_user.data_source_user.extras
+            # 协同时按照协同租户配置的用户自定义字段进行输出
+            ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
+            if ds_owner_tenant_id != tenant_user.tenant_id:
+                extras = {
+                    collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
+                    for k, v in source_extras.items()
+                    if (ds_owner_tenant_id, k) in collaboration_field_mapping
+                }
+            else:
+                extras = source_extras
 
             # 不会放大查询的字段
             user_info = {
                 "id": tenant_user.data_source_user.id,
                 # 租户用户 ID 即为对外的 username / bk_username
                 "username": tenant_user.id,
-                "display_name": TenantUserHandler().generate_tenant_user_display_name(tenant_user),
+                "display_name": tenant_user.data_source_user.full_name,
                 "email": tenant_user.email,
                 "telephone": phone,
                 "country_code": phone_country_code,
@@ -88,16 +121,14 @@ class TenantUserListToUserInfosMixin:
                 "wx_userid": tenant_user.wx_userid,
                 "domain": tenant_user.data_source.domain,
                 "category_id": tenant_user.data_source_id,
-                # FIXME (nan) 新版状态映射成老版状态
-                "status": tenant_user.status,
-                "staff_status": "",
+                "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
                 "enabled": True,
-                # TODO: 协同时需要调整为按照协同租户配置的用户自定义字段进行输出
                 "extras": extras,
                 # 旧版本内置字段，新版本迁移在自定义字段里
-                "position": int(extras.get("position")),
+                "position": int(source_extras.get("position", 0)),
                 # 总是返回固定值
                 "logo": "",
+                "staff_status": "IN",
             }
 
             # 指定对外字段，则只返回指定的字段
@@ -157,7 +188,7 @@ class TenantUserListToUserInfosMixin:
                     {
                         "id": tenant_leader.data_source_user.id,
                         "username": tenant_leader.id,
-                        "display_name": TenantUserHandler().generate_tenant_user_display_name(tenant_leader),
+                        "display_name": tenant_leader.data_source_user.full_name,
                     }
                 )
         return leader_map
@@ -214,9 +245,7 @@ class TenantUserListToUserInfosMixin:
         return dept_map
 
 
-class ProfileListApi(
-    LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView, TenantUserListToUserInfosMixin
-):
+class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, generics.ListAPIView):
     """用户列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -244,7 +273,7 @@ class ProfileListApi(
         # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
-            TenantUser.objects.select_related("data_source_user")
+            TenantUser.objects.select_related("data_source_user", "data_source")
             .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
         )
@@ -253,33 +282,37 @@ class ProfileListApi(
         if not lookup_field:
             return queryset
 
+        # 精确过滤或模糊搜索的值列表，多值是 Or 关系
+        lookup_values = params.get("exact_lookups") or params.get("fuzzy_lookups") or []
+        if not lookup_values:
+            return queryset
+
         # 构造过滤条件的 Django Queryset Filter
+        is_exact = bool(params.get("exact_lookups"))
+        if lookup_field == "staff_status":
+            # 员工状态, 3.x 所有用户数据都是 IN 状态，无 OUT 状态
+            return TenantUser.objects.none() if "IN" not in lookup_values else queryset
+
         target_lookups = []
-        if exact_lookups := params.get("exact_lookups"):
-            # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤，这里单独处理
-            if lookup_field in ["email", "telephone"]:
-                target_lookups = [
-                    self._convert_optional_inherited_lookup_field(lookup_field, x, is_exact=True)
-                    for x in exact_lookups
-                ]
-            else:
-                # 单一条件通用转换处理
-                target_lookups = [Q(**{self._convert_lookup_field(lookup_field): x}) for x in exact_lookups]
-        elif fuzzy_lookups := params.get("fuzzy_lookups"):
-            # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤，这里单独处理
-            if lookup_field in ["email", "telephone"]:
-                target_lookups = [
-                    self._convert_optional_inherited_lookup_field(lookup_field, x, is_exact=False)
-                    for x in fuzzy_lookups
-                ]
-            elif lookup_field == "create_time":
-                # create_time 比较特殊，只针对 IAM 提供，特殊条件处理
-                target_lookups = [self._convert_create_time_lookup_field(fuzzy_lookups)]
-            else:
-                # 单一条件通用转换处理
-                target_lookups = [
-                    Q(**{f"{self._convert_lookup_field(lookup_field)}__icontains": x}) for x in fuzzy_lookups
-                ]
+        if lookup_field in ["email", "telephone"]:
+            # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤
+            target_lookups = [
+                self._convert_optional_inherited_lookup_to_query(lookup_field, value, is_exact=is_exact)
+                for value in lookup_values
+            ]
+        elif lookup_field == "create_time":
+            # 模糊查询 create_time 比较特殊，只针对 IAM 提供，特殊条件处理
+            target_lookups = [self._convert_create_time_lookup_to_query(lookup_values, is_exact=is_exact)]
+        elif lookup_field == "status":
+            status_query = self._convert_status_lookup_to_query(lookup_values, is_exact)
+            if status_query is None:
+                return TenantUser.objects.none()
+            target_lookups = [status_query]
+        else:
+            # 通用转换处理
+            target_lookups = [
+                Q(**{self._convert_lookup_field(lookup_field, is_exact=is_exact): x}) for x in lookup_values
+            ]
 
         if target_lookups:
             return queryset.filter(reduce(operator.or_, target_lookups))
@@ -287,37 +320,71 @@ class ProfileListApi(
         return queryset
 
     @staticmethod
-    def _convert_lookup_field(lookup_field: str) -> str:
-        if lookup_field == "id":
-            return "data_source_user__id"
-        if lookup_field == "username":
-            return "id"
-        if lookup_field == "display_name":
-            # Q: 为什么 display_name 使用 full_name 查询
-            # A: display_name 在旧版本实际上是姓名，所以这里直接使用 full_name
-            # TODO: 新版本 display_name 未来支持表达式，需要重新修改，根据表达式来生成
-            return "data_source_user__full_name"
-        if lookup_field == "wx_userid":
-            return "wx_userid"
-        if lookup_field == "domain":
-            return "data_source__domain"
-        if lookup_field == "category_id":
-            return "data_source_id"
-        # FIXME (nan) 老版状态映射成新版状态？
-        if lookup_field == "status":
-            return "status"
-        # FIXME 支持 staff_status 参数
-        if lookup_field == "staff_status":
-            raise error_codes.VALIDATION_ERROR.f("lookup field staff_status is not supported now")
+    def _convert_lookup_field(lookup_field: str, is_exact: bool = True) -> str:
+        """
+        Note：部分 Lookup Filed 不支持模糊匹配
+        """
+        # 支持精确匹配字段
+        allowed_exact_lookup_fields = ["id", "username", "display_name", "wx_userid", "domain", "category_id"]
+        if is_exact and lookup_field not in allowed_exact_lookup_fields:
+            raise error_codes.VALIDATION_ERROR.f(f"unsupported exact lookup field: {lookup_field}")
 
-        raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
+        # 支持模糊匹配字段
+        allowed_fuzzy_lookup_fields = ["username", "display_name"]
+        if not is_exact and lookup_field not in allowed_fuzzy_lookup_fields:
+            raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy lookup field: {lookup_field}")
+
+        lookup_field_map = {
+            "id": "data_source_user__id",
+            "username": "id",
+            # Q: 为什么 display_name 使用 full_name 查询
+            # A: display_name 在旧版本实际上是姓名，所以这里直接使用 full_name，
+            #    后续支持 DisplayName 以 v3 API 为准，v2 兼容接口不支持
+            "display_name": "data_source_user__full_name",
+            "wx_userid": "wx_userid",
+            "domain": "data_source__domain",
+            "category_id": "data_source_id",
+        }
+
+        if lookup_field not in lookup_field_map:
+            raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
+
+        return lookup_field_map[lookup_field]
 
     @staticmethod
-    def _convert_create_time_lookup_field(values: List[str]) -> Q:
+    def _convert_status_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
+        """对于状态字段的转换查询"""
+        # 不支持模糊查询
+        if not is_exact:
+            raise error_codes.VALIDATION_ERROR.f("unsupported fuzzy lookup field: status")
+
+        # 2.x 的用户状态转换为 3.x 的用户状态，不存在的状态则忽略
+        lookup_values = [
+            PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP[v]  # type: ignore
+            for v in values
+            if v in PROFILE_STATUS_TO_TENANT_USER_STATUS_MAP
+        ]
+        # 不存在 3.x 状态，则说明查询不到任何用户
+        if not lookup_values:
+            return None
+
+        return Q(status=lookup_values[0]) if len(lookup_values) == 1 else Q(status__in=lookup_values)
+
+    @staticmethod
+    def _convert_create_time_lookup_to_query(values: List[str], is_exact: bool) -> Q:
         """create_time 字段过滤条件，是 IAM 定制的，查询 start_time ~ start_time + X 内创建的用户
         IAM 代码：https://github.com/TencentBlueKing/bk-iam-saas/blob/e2f585b8d66ccbaa529b56c1058ba77f774fb8eb/saas/backend/component/usermgr.py#L64C16-L64C16
         """
-        datetime_values = [datetime.datetime.strptime(v, "%Y-%m-%d %H:%M") for v in values]
+        # 不支持精确过滤
+        if is_exact:
+            raise error_codes.VALIDATION_ERROR.f("unsupported extra lookup field: create_time")
+
+        # 时间转换异常，说明非预期内 IAM 特殊查询数据
+        try:
+            datetime_values = [datetime.datetime.strptime(v, "%Y-%m-%d %H:%M") for v in values]
+        except Exception as error:
+            raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy create_time values: {values}, error={error}")
+
         # 判断是否满足间隔一分钟
         start_time = datetime_values[0]
         if all(start_time + datetime.timedelta(minutes=idx) == i for idx, i in enumerate(datetime_values)):
@@ -326,10 +393,10 @@ class ProfileListApi(
                 created_at__lt=datetime_values[-1] + datetime.timedelta(minutes=1),
             )
 
-        raise error_codes.VALIDATION_ERROR.f("unsupported lookup field: create_time")
+        raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy create_time values: {values}")
 
     @staticmethod
-    def _convert_optional_inherited_lookup_field(lookup_field: str, value: str, is_exact: bool = True) -> Q:
+    def _convert_optional_inherited_lookup_to_query(lookup_field: str, value: str, is_exact: bool) -> Q:
         """对于可选是否继承数据源用户的字段，构造对应的查询条件，比如 email 和 phone"""
         if lookup_field == "telephone":
             lookup_field = "phone"
@@ -406,7 +473,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
             {
                 "id": i.data_source_user.id,
                 "username": i.id,
-                "display_name": TenantUserHandler().generate_tenant_user_display_name(i),
+                "display_name": i.data_source_user.full_name,
             }
             for i in leaders
         ]
@@ -455,13 +522,25 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
         phone, phone_country_code = tenant_user.phone_info
         iso_code = _phone_country_code_to_iso_code(phone_country_code)
 
-        extras = tenant_user.data_source_user.extras
+        # 自定义字段
+        source_extras = tenant_user.data_source_user.extras
+        data_source_owner_tenant_id = tenant_user.data_source.owner_tenant_id
+        # 协同时按照协同租户配置的用户自定义字段进行输出
+        if data_source_owner_tenant_id != tenant_user.tenant_id:
+            collaboration_field_mapping = self.get_collaboration_field_mapping()
+            extras = {
+                collaboration_field_mapping[(data_source_owner_tenant_id, k)]: v
+                for k, v in source_extras.items()
+                if (data_source_owner_tenant_id, k) in collaboration_field_mapping
+            }
+        else:
+            extras = source_extras
 
         user_info = {
             "id": tenant_user.data_source_user.id,
             # 租户用户 ID 即为对外的 username / bk_username
             "username": tenant_user.id,
-            "display_name": TenantUserHandler().generate_tenant_user_display_name(tenant_user),
+            "display_name": tenant_user.data_source_user.full_name,
             "email": tenant_user.email,
             "telephone": phone,
             "country_code": phone_country_code,
@@ -472,14 +551,12 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
             "wx_openid": tenant_user.wx_openid,
             "domain": tenant_user.data_source.domain,
             "category_id": tenant_user.data_source_id,
-            # FIXME (nan) 新版状态映射成老版状态？
-            "status": tenant_user.status,
-            "staff_status": "",
+            "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
             "enabled": True,
-            # TODO: 协同时需要调整为按照协同租户配置的用户自定义字段进行输出
             "extras": extras,
-            "position": int(extras.get("position", 0)),
+            "position": int(source_extras.get("position", 0)),
             # 总是返回固定值
+            "staff_status": "IN",
             "logo": "",
             "type": "",
             "role": 0,
@@ -504,9 +581,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
         return user_info
 
 
-class DepartmentProfileListApi(
-    LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView, TenantUserListToUserInfosMixin
-):
+class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, generics.ListAPIView):
     """部门下用户"""
 
     pagination_class = LegacyOpenApiPagination
@@ -556,7 +631,7 @@ class DepartmentProfileListApi(
         # 租户用户
         return TenantUser.objects.filter(
             tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
-        ).select_related("data_source_user")
+        ).select_related("data_source_user", "data_source")
 
 
 class ProfileLanguageUpdateApi(
