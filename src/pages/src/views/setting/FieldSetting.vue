@@ -15,10 +15,10 @@
           <Empty
             :is-data-empty="fieldData.isTableDataEmpty"
             :is-data-error="fieldData.isTableDataError"
-            @handleUpdate="fetchFieldList"
+            @handle-update="fetchFieldList"
           />
         </template>
-        <bk-table-column prop="display_name" :label="$t('字段名称')">
+        <bk-table-column prop="display_name" :label="$t('字段名称')" width="200">
           <template #default="{ row }">
             <div class="field-name">
               <span class="name">{{ row.display_name }}</span>
@@ -81,10 +81,11 @@
       :before-close="handleBeforeClose"
       quick-close>
       <FieldsAdd
+        v-if="fieldData.isShow"
         :set-type="fieldData.setType"
         :current-editor-data="fieldData.currentEditorData"
-        @submitData="submitData"
-        @handleCancel="handleCancel" />
+        @submit-data="submitData"
+        @handle-cancel="handleCancel" />
     </bk-sideslider>
   </div>
 </template>
@@ -185,7 +186,7 @@ const addField = () => {
     unique: false, // 是否唯一
     personal_center_visible: false, // 是否在个人中心可见
     personal_center_editable: false, // 是否在个人中心可编辑
-    manager_editable: false, // 租户管理员是否可编辑
+    manager_editable: true, // 租户管理员是否可编辑
   };
   fieldData.isShow = true;
 };
@@ -199,8 +200,9 @@ const editField = (item) => {
 
 const deleteField = (row) => {
   InfoBox({
-    title: t('确认要删除吗？'),
-    confirmText: t('确认删除'),
+    title: `${t('确定删除字段')}: ${row.display_name}？`,
+    subTitle: t('删除字段， 将一并删除数据里的该字段数据'),
+    confirmText: t('确认'),
     onConfirm: () => {
       deleteCustomFields(row.id).then(() => {
         getFieldsList();
@@ -216,7 +218,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    fieldData.isShow = false;
+    fieldData.isShow = !enableLeave;
   } else {
     fieldData.isShow = false;
   }
@@ -262,7 +264,7 @@ const fetchFieldList = () => {
     }
 
     .icon-duihao-i {
-      font-size: 16px;
+      font-size: 24px;
       color: #2dcb56;
     }
 

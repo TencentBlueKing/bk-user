@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -15,10 +15,15 @@ from django.db import models
 from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantStatus, TenantUserStatus, UserFieldDataType
+from bkuser.apps.tenant.constants import (
+    TIME_ZONE_CHOICES,
+    CollaborationStrategyStatus,
+    TenantStatus,
+    TenantUserStatus,
+    UserFieldDataType,
+)
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
-from bkuser.common.time import datetime_to_display
 
 
 class Tenant(AuditedModel):
@@ -26,7 +31,6 @@ class Tenant(AuditedModel):
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
-    feature_flags = models.JSONField("租户特性标志集", default=dict)
     status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
     # 特性
     visible = models.BooleanField("租户可见性", default=True)
@@ -59,7 +63,7 @@ class TenantUserManager(models.Manager):
         )
 
 
-class TenantUser(TimestampedModel):
+class TenantUser(AuditedModel):
     """
     租户用户即蓝鲸用户
     """
@@ -109,10 +113,6 @@ class TenantUser(TimestampedModel):
         unique_together = [
             ("data_source_user", "tenant"),
         ]
-
-    @property
-    def account_expired_at_display(self) -> str:
-        return datetime_to_display(self.account_expired_at)
 
     @property
     def email(self) -> str:
@@ -202,3 +202,35 @@ class TenantUserValidityPeriodConfig(AuditedModel):
     remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
     enabled_notification_methods = models.JSONField("通知方式", default=list)
     notification_templates = models.JSONField("通知模板", default=list)
+
+
+class CollaborationStrategy(AuditedModel):
+    """协同策略"""
+
+    name = models.CharField("策略名称", max_length=128)
+    source_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="source_tenant"
+    )
+    target_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="target_tenant"
+    )
+    source_status = models.CharField(
+        "策略状态（分享方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.ENABLED,
+        max_length=32,
+    )
+    target_status = models.CharField(
+        "策略状态（接受方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.UNCONFIRMED,
+        max_length=32,
+    )
+    source_config = models.JSONField("策略配置（分享方）", default=dict)
+    target_config = models.JSONField("策略配置（接受方）", default=dict)
+
+    class Meta:
+        unique_together = [
+            ("name", "source_tenant"),
+            ("source_tenant", "target_tenant"),
+        ]

@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Callable, Dict, List
-from urllib.parse import quote_plus
 
 import pydantic
 from django.conf import settings
@@ -26,8 +25,8 @@ from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
 from bklogin.component.bk_user.constants import IdpStatus
-from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls, get_plugin_type
-from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum, PluginTypeEnum
+from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
+from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
 from bklogin.idp_plugins.exceptions import (
     InvalidParamError,
     ParseRequestBodyError,
@@ -39,6 +38,8 @@ from bklogin.utils.url import urljoin
 from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager
 from .utils import url_has_allowed_host_and_scheme
+
+logger = logging.getLogger(__name__)
 
 
 # 确保无论何时，响应必然有CSRFToken Cookie
@@ -72,38 +73,26 @@ class LoginView(View):
         # 存储到当前session里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
-        # 当只有一个租户且该租户有且仅有一种登录方式，且该登录方式为联邦登录，则直接重定向到第三方登录
-        global_info = bk_user_api.get_global_info()
-        if (
-            global_info.enabled_auth_tenant_number == 1
-            and global_info.only_enabled_auth_tenant
-            and len(global_info.only_enabled_auth_tenant.enabled_idps) == 1
-        ):
-            idp = global_info.only_enabled_auth_tenant.enabled_idps[0]
-            # 判断是否联邦登录
-            if get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
-                # session记录登录的租户
-                request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = global_info.only_enabled_auth_tenant.id
-                # 联邦登录，则直接重定向到第三方登录
-                return HttpResponseRedirect(
-                    f"{settings.SITE_URL}auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
-                )
-
         # 返回登录页面
-        return render(request, self.template_name)
+        response = render(request, self.template_name)
+
+        # [兼容 2.x] 注销当前登录态
+        # TODO: 支持 SSO，非 is_from_logout 时，登录态有效，则直接重定向回业务系统
+        is_from_logout = request.GET.get("is_from_logout")
+        bk_token = request.COOKIES.get(settings.BK_TOKEN_COOKIE_NAME)
+        if is_from_logout and bk_token:
+            BkTokenManager.set_invalid(bk_token)
+            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME)
+
+        return response
 
 
-class TenantGlobalInfoRetrieveApi(View):
+class GlobalSettingRetrieveApi(View):
     def get(self, request, *args, **kwargs):
-        """
-        租户的全局信息
-        """
-        global_info = bk_user_api.get_global_info()
-        return APISuccessResponse(
-            data=global_info.model_dump(
-                include={"tenant_visible", "enabled_auth_tenant_number", "only_enabled_auth_tenant"}
-            )
-        )
+        """通用全局配置"""
+        gs = bk_user_api.get_global_setting()
+
+        return APISuccessResponse(data=gs.model_dump())
 
 
 class TenantListApi(View):
@@ -115,51 +104,9 @@ class TenantListApi(View):
         tenant_ids_str = request.GET.get("tenant_ids", "")
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
-        # 无tenant_ids表示需要获取全部租户，这时候需要检查租户是否可见
-        global_setting = bk_user_api.get_global_info()
-        if not tenant_ids and not global_setting.tenant_visible:
-            raise error_codes.NO_PERMISSION.f(_("租户信息不可见"))
-
         tenants = bk_user_api.list_tenant(tenant_ids)
 
-        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
-
-
-class TenantRetrieveApi(View):
-    def get(self, request, *args, **kwargs):
-        """
-        通过租户ID，查询单个租户信息
-        """
-        tenant_id = kwargs["tenant_id"]
-        tenant = bk_user_api.get_tenant(tenant_id)
-        if tenant is None:
-            raise error_codes.OBJECT_NOT_FOUND.f(f"租户 {tenant_id} 不存在", replace=True)
-
-        return APISuccessResponse(data=tenant.model_dump(include={"id", "name", "logo"}))
-
-
-class SignInTenantCreateApi(View):
-    def post(self, request, *args, **kwargs):
-        """
-        确认选择要登录的租户
-        """
-        request_body = parse_request_body_json(request.body)
-        tenant_id = request_body.get("tenant_id")
-
-        # 校验参数
-        if not tenant_id:
-            raise error_codes.VALIDATION_ERROR.f(_("tenant_id参数必填"))
-
-        # 校验租户是否存在
-        tenants = bk_user_api.list_tenant()
-        tenant_id_set = {i.id for i in tenants}
-        if tenant_id not in tenant_id_set:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})未找到").format(tenant_id))
-
-        # session记录登录的租户
-        request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = tenant_id
-
-        return APISuccessResponse()
+        return APISuccessResponse(data=[t.model_dump() for t in tenants])
 
 
 class TenantIdpListApi(View):
@@ -167,17 +114,14 @@ class TenantIdpListApi(View):
         """
         获取需要登录租户的认证方式列表
         """
-        # Session里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
+        # 获取路径参数
+        tenant_id = kwargs["tenant_id"]
+        idp_owner_tenant_id = kwargs["idp_owner_tenant_id"]
 
-        # 查询本租户配置的认证源
-        idps = bk_user_api.list_idp(sign_in_tenant_id)
+        # 获取指定租户中 本租户可用 且 已启用 的认证源
+        idps = bk_user_api.list_idp(tenant_id, idp_owner_tenant_id)
 
-        return APISuccessResponse(
-            data=[i.model_dump(include={"id", "name", "plugin"}) for i in idps if i.status == IdpStatus.ENABLED],
-        )
+        return APISuccessResponse(data=[i.model_dump() for i in idps])
 
 
 class IdpBasicInfo(pydantic.BaseModel):
@@ -208,6 +152,11 @@ class IdpPluginDispatchView(View):
         """
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
+        # 路径优先
+        if kwargs.get("tenant_id"):
+            sign_in_tenant_id = kwargs.get("tenant_id")
+            # session记录登录的租户
+            request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
         if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
@@ -218,11 +167,6 @@ class IdpPluginDispatchView(View):
 
         # 获取认证源信息
         idp = bk_user_api.get_idp(idp_id)
-        # 判断是否当前登录租户所属数据源
-        # TODO: 后续协同租户的数据源，需要调整判断关系
-        if idp.owner_tenant_id != sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("非当前登录租户所配置的认证源"))
-
         if idp.status != IdpStatus.ENABLED:
             raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
 
@@ -239,13 +183,13 @@ class IdpPluginDispatchView(View):
             plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
             plugin = plugin_cls(cfg=plugin_cfg)
         except pydantic.ValidationError:
-            logging.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            logger.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
             # Note: 不可将error对外，因为配置信息比较敏感
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]初始化插件配置[{}]失败").format(idp.name, idp.plugin.name),
             )
         except Exception as error:
-            logging.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            logger.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
@@ -278,7 +222,7 @@ class IdpPluginDispatchView(View):
         except UnexpectedDataError as e:
             raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
         except Exception:
-            logging.exception(
+            logger.exception(
                 "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
                 context.idp.id,
                 context.action,
@@ -383,6 +327,42 @@ class IdpPluginDispatchView(View):
         return [i.model_dump(include={"id", "username", "full_name"}) for i in tenant_users]
 
 
+class PageUserView(View):
+    """用户选择账号页面"""
+
+    # 登录成功后默认重定向到蓝鲸桌面
+    default_redirect_to = "/console/"
+    template_name = "index.html"
+
+    def get(self, request, *args, **kwargs):
+        """账号选择页面"""
+        tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY) or []
+        if not tenant_users or len(tenant_users) > 1:
+            # 返回用户选择页面
+            return render(request, self.template_name)
+
+        # 单一用户，则直接登录成功，并重定向到业务系统
+        user_id = tenant_users[0]["id"]
+
+        response = HttpResponseRedirect(redirect_to=request.session.get("redirect_uri"))
+        # 生成Cookie
+        bk_token, expired_at = BkTokenManager().generate(user_id)
+        # 设置Cookie
+        response.set_cookie(
+            settings.BK_TOKEN_COOKIE_NAME,
+            bk_token,
+            expires=expired_at,
+            domain=settings.BK_COOKIE_DOMAIN,
+            httponly=True,
+            secure=False,
+        )
+
+        # 删除Session
+        request.session.clear()
+
+        return response
+
+
 class TenantUserListApi(View):
     def get(self, request, *args, **kwargs):
         """
@@ -425,11 +405,11 @@ class SignInTenantUserCreateApi(View):
 
         response = APISuccessResponse({"redirect_uri": request.session.get("redirect_uri")})
         # 生成Cookie
-        bk_token, expired_at = BkTokenManager().get_bk_token(user_id)
+        bk_token, expired_at = BkTokenManager().generate(user_id)
         # 设置Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
-            quote_plus(bk_token),
+            bk_token,
             expires=expired_at,
             domain=settings.BK_COOKIE_DOMAIN,
             httponly=True,

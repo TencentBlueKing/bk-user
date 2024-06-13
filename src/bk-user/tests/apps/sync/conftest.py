@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -39,11 +39,13 @@ def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContex
 
 
 @pytest.fixture()
-def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
+def tenant_sync_task(bare_local_data_source, default_tenant, data_source_sync_task) -> TenantSyncTask:
     """租户数据同步任务"""
     return TenantSyncTask.objects.create(
         tenant=default_tenant,
         data_source=bare_local_data_source,
+        data_source_owner_tenant_id=bare_local_data_source.owner_tenant_id,
+        data_source_sync_task_id=data_source_sync_task.id,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
@@ -236,6 +238,17 @@ def raw_users() -> List[RawDataSourceUser]:
 
 
 @pytest.fixture()
+def random_raw_department() -> RawDataSourceDepartment:
+    """生成随机部门"""
+    return RawDataSourceDepartment(
+        code=generate_random_string(),
+        name="dept_random",
+        parent="company",
+        extras={"region": "random"},
+    )
+
+
+@pytest.fixture()
 def random_raw_user() -> RawDataSourceUser:
     """生成随机用户"""
     return RawDataSourceUser(
@@ -250,6 +263,6 @@ def random_raw_user() -> RawDataSourceUser:
             "gender": "other",
             "region": "britain",
         },
-        leaders=[],
-        departments=[],
+        leaders=["zhangsan"],
+        departments=["company"],
     )

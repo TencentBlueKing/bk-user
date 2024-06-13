@@ -26,7 +26,7 @@
               <edtiorTemplate
                 :toolbar-config="emailConfig"
                 :html-text="expiringEmail.content_html"
-                @updateContent="(html, text) => emit('handleEditorText', html, text, expiringEmailKey, 'email')" />
+                @update-content="(html, text) => emit('handleEditorText', html, text, expiringEmailKey, 'email')" />
             </div>
           </li>
           <li class="email-block">
@@ -48,7 +48,7 @@
               <edtiorTemplate
                 :toolbar-config="emailConfig"
                 :html-text="expiredEmail.content_html"
-                @updateContent="(html, text) => emit('handleEditorText', html, text, expiredEmailKey, 'email')" />
+                @update-content="(html, text) => emit('handleEditorText', html, text, expiredEmailKey, 'email')" />
             </div>
           </li>
         </ul>
@@ -65,7 +65,7 @@
               <edtiorTemplate
                 :toolbar-config="infoConfig"
                 :html-text="expiringSms.content_html"
-                @updateContent="(html, text) => emit('handleEditorText', html, text, expiringSmsKey, 'sms')" />
+                @update-content="(html, text) => emit('handleEditorText', html, text, expiringSmsKey, 'sms')" />
             </div>
           </li>
           <li class="email-block">
@@ -75,7 +75,7 @@
               <edtiorTemplate
                 :toolbar-config="infoConfig"
                 :html-text="expiredSms.content_html"
-                @updateContent="(html, text) => emit('handleEditorText', html, text, expiredSmsKey, 'sms')" />
+                @update-content="(html, text) => emit('handleEditorText', html, text, expiredSmsKey, 'sms')" />
             </div>
           </li>
         </ul>

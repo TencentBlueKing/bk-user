@@ -29,8 +29,8 @@
           <QueryParams
             :current-id="dataSourceId"
             :params-list="serverConfigData.server_config.user_api_query_params"
-            @saveParams="(list) => saveParams(list, 'user')"
-            @updateStatus="handleChange" />
+            @save-params="(list) => saveParams(list, 'user')"
+            @update-status="handleChange" />
         </div>
         <div class="api-url-style">
           <bk-form-item
@@ -47,8 +47,8 @@
           <QueryParams
             :current-id="dataSourceId"
             :params-list="serverConfigData.server_config.department_api_query_params"
-            @saveParams="(list) => saveParams(list, 'department')"
-            @updateStatus="handleChange" />
+            @save-params="(list) => saveParams(list, 'department')"
+            @update-status="handleChange" />
         </div>
         <div class="flex w-[560px]">
           <bk-form-item class="flex-1" :label="$t('分页请求每页数量')" property="server_config.page_size" required>
@@ -122,12 +122,10 @@
             />
           </bk-form-item>
           <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <bk-input
-              type="password"
+            <passwordInput
               v-model="serverConfigData.auth_config.password"
               @focus="handleFocus"
-              @input="handleChange"
-            />
+              @input="inputPassword" />
           </bk-form-item>
         </div>
         <div class="btn">
@@ -170,10 +168,12 @@
           :field-setting-data="fieldSettingData"
           :api-fields="apiFields"
           :rules="rulesFieldSetting"
-          @changeApiFields="changeApiFields"
-          @handleAddField="handleAddField"
-          @handleDeleteField="handleDeleteField"
-          @changeCustomField="changeCustomField" />
+          :source-field="$t('用户管理字段')"
+          :target-field="$t('API返回字段')"
+          @change-api-fields="changeApiFields"
+          @handle-add-field="handleAddField"
+          @handle-delete-field="handleDeleteField"
+          @change-custom-field="changeCustomField" />
       </Row>
       <Row :title="$t('同步配置')">
         <bk-form-item :label="$t('同步周期')" required>
@@ -209,6 +209,7 @@ import QueryParams from './query-params/QueryParams.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDataSourceDetails,
@@ -617,6 +618,11 @@ const handleChange = () => {
   connectionStatus.value = null;
 };
 
+const inputPassword = (val) => {
+  serverConfigData.value.auth_config.password = val;
+  handleChange();
+};
+
 const handleFocus = () => {
   window.changeInput = true;
 };
@@ -677,5 +683,8 @@ const handleCancel = () => {
     font-size: 14px;
     color: #2DCB56;
   }
+}
+:deep(.copy-icon) {
+  right: 30px;
 }
 </style>

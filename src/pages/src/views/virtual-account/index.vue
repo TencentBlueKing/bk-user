@@ -8,7 +8,7 @@
       <bk-input
         class="header-right"
         v-model="searchVal"
-        :placeholder="$t('搜索用户名、全名')"
+        :placeholder="$t('搜索用户名、姓名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -18,6 +18,7 @@
     <bk-table
       v-bkloading="{ loading: isLoading }"
       class="table-users"
+      :min-height="150"
       :data="tableData"
       :border="['outer']"
       :pagination="pagination"
@@ -32,8 +33,8 @@
           :is-data-empty="isDataEmpty"
           :is-search-empty="isEmptySearch"
           :is-data-error="isDataError"
-          @handleEmpty="handleClear"
-          @handleUpdate="initVirtualUsers"
+          @handle-empty="handleClear"
+          @handle-update="initVirtualUsers"
         />
       </template>
       <template #prepend v-if="selectList.length">
@@ -58,7 +59,7 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="username" :label="$t('用户名')" />
-      <bk-table-column prop="full_name" :label="$t('全名')" />
+      <bk-table-column prop="full_name" :label="$t('姓名')" />
       <bk-table-column prop="email" :label="$t('邮箱')">
         <template #default="{ row }">{{ row.email || '--' }}</template>
       </bk-table-column>
@@ -79,13 +80,14 @@
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
+      render-directive="if"
       :before-close="handleBeforeClose"
       quick-close
     >
       <EditDetails
         :details-info="detailsInfo"
-        @updateUsers="updateUsers"
-        @handleCancelEdit="handleCancelEdit" />
+        @update-users="updateUsers"
+        @handle-cancel-edit="handleCancelEdit" />
     </bk-sideslider>
   </div>
 </template>
@@ -99,8 +101,8 @@ import EditDetails from './EditDetails.vue';
 import Empty from '@/components/Empty.vue';
 import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
-import { copy } from '@/utils';
 import { useUser } from '@/store';
+import { copy } from '@/utils';
 
 const userStore = useUser();
 
@@ -137,7 +139,8 @@ const initVirtualUsers = async () => {
     };
     const res = await getVirtualUsers(params);
     if (res.data?.count === 0) {
-      searchVal.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+      isDataEmpty.value = searchVal.value === '';
+      isEmptySearch.value = searchVal.value !== '';
     }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
@@ -227,7 +230,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
+    detailsConfig.isShow = !enableLeave;
   } else {
     detailsConfig.isShow = false;
   }
@@ -244,6 +247,7 @@ const handleDelete = (item: any) => {
     onConfirm: async () => {
       await deleteVirtualUsers(item.id);
       initVirtualUsers();
+      Message({ theme: 'success', message: t('删除成功') });
     },
   });
 };

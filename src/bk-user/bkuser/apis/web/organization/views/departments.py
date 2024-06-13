@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -41,7 +41,8 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
@@ -195,12 +196,27 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 parent=parent_dept_relation,
                 data_source=data_source,
             )
-            # FIXME (su) 支持租户协同后，要把协同的租户部门也创建出来
+            # 不等同步，直接创建本租户的租户部门
             tenant_dept = TenantDepartment.objects.create(
                 tenant_id=current_tenant_id,
                 data_source_department=data_source_dept,
                 data_source=data_source,
             )
+            # 根据协同策略，将协同的租户部门也创建出来
+            collaboration_tenant_depts = [
+                TenantDepartment(
+                    tenant_id=strategy.target_tenant_id,
+                    data_source_department=data_source_dept,
+                    data_source=data_source,
+                )
+                for strategy in CollaborationStrategy.objects.filter(
+                    source_tenant_id=current_tenant_id,
+                    source_status=CollaborationStrategyStatus.ENABLED,
+                    target_status=CollaborationStrategyStatus.ENABLED,
+                )
+            ]
+            if collaboration_tenant_depts:
+                TenantDepartment.objects.bulk_create(collaboration_tenant_depts)
 
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
 

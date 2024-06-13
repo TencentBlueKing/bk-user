@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     LocalDataSourceIdentityInfo,
 )
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
@@ -90,7 +91,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     custom_phone = serializers.SerializerMethodField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
 
-    account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
@@ -208,7 +209,7 @@ class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段 ID")
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
-    data_type = serializers.CharField(help_text="字段类型")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     editable = serializers.BooleanField(help_text="是否可编辑", source="personal_center_editable")
     options = serializers.JSONField(help_text="可选项")

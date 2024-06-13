@@ -11,34 +11,21 @@ import { t } from '@/language/index';
 export * from './countryCode';
 
 export const copy = (value: string) => {
-  const textArea = document.createElement('textarea');
-  textArea.value = value;
-
-  textArea.style.zIndex = '-99999';
-  textArea.style.position = 'fixed';
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const res = document.execCommand('copy');
-    if (res) {
+  navigator.clipboard.writeText(value)
+    .then(() => {
       Message({
         message: t('复制成功'),
         theme: 'success',
         delay: 1500,
       });
-      return;
-    }
-    throw new Error();
-  } catch (e) {
-    Message({
-      message: t('复制失败'),
-      theme: 'error',
-      delay: 1500,
+    })
+    .catch(() => {
+      Message({
+        message: t('复制失败'),
+        theme: 'error',
+        delay: 1500,
+      });
     });
-  }
 };
 
 // file 转 base64
@@ -94,6 +81,10 @@ export const dataSourceStatus = {
     text: t('未启用'),
   },
   confirmed: {
+    icon: warningImg,
+    text: t('待确认'),
+  },
+  unconfirmed: {
     icon: warningImg,
     text: t('待确认'),
   },

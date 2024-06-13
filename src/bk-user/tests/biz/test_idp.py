@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -14,8 +14,9 @@ from bkuser.apps.idp.models import Idp
 from bkuser.biz.idp import AuthenticationMatcher
 from django.db.models import Q
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db()
+
 class TestAuthenticationMatcher:
     @pytest.fixture(autouse=True)
     def _initialize(self, default_tenant, tenant_user_custom_fields):
@@ -23,7 +24,7 @@ class TestAuthenticationMatcher:
         default_idp = Idp.objects.filter(owner_tenant_id=default_tenant.id).first()
         assert default_idp is not None
 
-        self.matcher = AuthenticationMatcher(default_tenant.id, default_idp.id)
+        self.matcher = AuthenticationMatcher(default_idp.id)
 
     @pytest.mark.parametrize(
         ("field", "excepted_filter_key"),

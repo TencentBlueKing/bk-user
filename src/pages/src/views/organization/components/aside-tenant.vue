@@ -1,10 +1,10 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
-    <div v-bkloading="{ loading: loading }">
+    <div class="h-[calc(100%-36px)]" v-bkloading="{ loading: loading }">
       <div
         class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
-        @click="handleNodeClick(currentTenant)"
+        @click="handleNodeClick(currentTenant, currentTenant.id, true)"
       >
         <img
           v-if="currentTenant?.logo"
@@ -22,20 +22,23 @@
       <bk-tree
         :data="treeData"
         :selected="appStore.currentOrg"
+        class="overflow-y-auto"
+        ref="treeRef"
         label="name"
         node-key="id"
         children="children"
         :prefix-icon="getPrefixIcon"
-        @node-click="handleNodeClick"
+        @node-click="(node) => handleNodeClick(node, currentTenant.id)"
         :async="{
           callback: getRemoteData,
-          cache: false,
+          cache: true,
         }"
       >
         <template #node="node">
-          <div class="org-node pr-[12px] relative">
+          <div class="org-node pr-[12px] relative node-overflow">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
+              v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
               :dept="node"
               :tenant="currentTenant"
               @add-node="addNode"
@@ -51,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 
 import OperateMore from './operate-more.vue';
 
@@ -78,7 +81,8 @@ onBeforeMount(async () => {
   loading.value = true;
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
-  appStore.currentOrg = tenantData?.data;
+  appStore.currentTenant = tenantData?.data;
+  appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);
   loading.value = false;
@@ -86,6 +90,7 @@ onBeforeMount(async () => {
 
 const organizationAsideHooks = useOrganizationAside(currentTenant);
 const {
+  treeRef,
   treeData,
   getRemoteData,
   handleNodeClick,
@@ -96,3 +101,14 @@ const {
 } = organizationAsideHooks;
 
 </script>
+
+<style lang="less" scoped>
+.node-overflow{
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: auto;
+  border-radius: 4px;
+}
+</style>

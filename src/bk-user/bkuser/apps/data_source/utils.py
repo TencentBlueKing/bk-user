@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def gen_tenant_user_id(user_tenant_id: str, data_source: DataSource, user: DataSourceUser) -> str:
     """根据规则生成租户用户 ID"""
 
-    # 考虑协同数据源的情况，只有数据源所属的租户，才能按规则生成用户 ID，其他的协同数据源，都是 uuid
+    # FIXME (su) 协同数据源，也需要支持按照规则生成 tenant_user_id
     if user_tenant_id != data_source.owner_tenant_id:
         return generate_uuid()
 

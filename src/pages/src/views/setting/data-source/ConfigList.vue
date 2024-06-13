@@ -27,7 +27,7 @@
         :data-source="dataSource"
         :config="true"
         :show-content="showContent"
-        @handleCollapse="handleCollapse">
+        @handle-collapse="handleCollapse">
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
@@ -56,14 +56,22 @@
               >
                 {{ $t('编辑') }}
               </bk-button>
-              <bk-button
-                v-else
-                class="min-w-[64px]"
-                theme="primary"
-                @click="handleSync"
-              >
-                {{ $t('同步') }}
-              </bk-button>
+              <div v-else>
+                <bk-pop-confirm
+                  ref="popConfirmRef"
+                  :content="$t('确认同步？')"
+                  trigger="click"
+                  @confirm="handleOperationsSync"
+                >
+                  <bk-button
+                    class="min-w-[64px]"
+                    theme="primary"
+                    @click.stop
+                  >
+                    {{ $t('同步') }}
+                  </bk-button>
+                </bk-pop-confirm>
+              </div>
             </div>
           </div>
         </template>
@@ -75,11 +83,11 @@
     <div :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]" v-else>
       <div class="info" v-if="!dataSource?.id">
         <i class="user-icon icon-info-i" />
-        <span>当前还没有数据源，需要先选择数据源类型并进行配置</span>
+        <span>{{ $t('当前还没有数据源，需要先选择数据源类型并进行配置') }}</span>
       </div>
       <DataSourceCard
         :plugins="dataSourcePlugins"
-        @handleCollapse="handleClick" />
+        @handle-collapse="handleClick" />
     </div>
     <!-- 导入 -->
     <bk-dialog
@@ -136,7 +144,7 @@
             </bk-checkbox>
             <bk-popover
               ext-cls="popover-wrapper"
-              :content="$t('勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。')"
+              :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
               placement="top"
               width="280"
             >
@@ -188,8 +196,8 @@ import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { dataRecordStatus } from '@/utils';
 import { useUser } from '@/store';
+import { dataRecordStatus } from '@/utils';
 
 const userStore = useUser();
 
@@ -313,6 +321,7 @@ const confirmImportUsers = async () => {
     if (res.data.data.status === 'success') {
       importDialog.isShow = false;
       InfoBox({
+        width: 450,
         infoType: 'success',
         title: t('导入成功'),
         confirmText: t('查看组织架构'),
@@ -353,12 +362,6 @@ const updateConfig = reactive({
 
 const changeLog = () => {
   updateConfig.isShow = true;
-};
-
-// 同步数据源
-const handleSync = (e) => {
-  e.cancelBubble = true;
-  handleOperationsSync();
 };
 </script>
 

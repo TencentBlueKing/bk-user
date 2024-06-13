@@ -27,6 +27,7 @@
                   class="tag-info"
                   type="stroke"
                   theme="info"
+                  @click="handleClickActive(item)"
                 >
                   {{ $t('本地') }}
                 </bk-tag>
@@ -46,7 +47,7 @@
     </ul>
     <div v-else>
       <bk-exception
-        class="exception-wrap-item"
+        class="exception-wrap-item mt-[30px]"
         type="building"
         :title="$t('暂未配置数据源')"
         :description="$t('需要先配置数据源后才可进行登录配置，当前支持使用以下方式进行登录')"
@@ -93,7 +94,7 @@
             :current-id="authDetails?.idp_id"
             @cancel="cancelEdit"
             @success="localSuccess" />
-          <LocalView v-else :current-id="authDetails?.idp_id" @updateRow="updateRow" />
+          <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
         </template>
         <template v-if="authDetails?.id === 'wecom'">
           <WeCom
@@ -101,7 +102,7 @@
             :data-source-id="currentDataSource?.id"
             :current-id="authDetails?.idp_id"
             @success="weComSuccess"
-            @cancelEdit="cancelEdit" />
+            @cancel-edit="cancelEdit" />
           <WeComView v-else :current-id="authDetails?.idp_id" />
         </template>
       </template>
@@ -109,8 +110,8 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { h, inject, onMounted, reactive, ref } from 'vue';
-import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+import { h, inject, onMounted, reactive, ref } from 'vue';
 
 import Local from './auth-config/Local.vue';
 import LocalView from './auth-config/LocalView.vue';
@@ -206,10 +207,7 @@ const handleEditDetails = () => {
 };
 
 const cancelEdit = () => {
-  if (!authDetails.value.idp_id) {
-    detailsConfig.show = false;
-  }
-  detailsConfig.isEdit = false;
+  detailsConfig.show = false;
   window.changeInput = false;
 };
 
@@ -217,11 +215,12 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.show = false;
-    detailsConfig.isEdit = false;
+    if (enableLeave) {
+      detailsConfig.show = false;
+      detailsConfig.isEdit = false;
+    }
   } else {
     detailsConfig.show = false;
-    detailsConfig.isEdit = false;
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
@@ -296,6 +295,8 @@ const weComSuccess = (url: string) => {
           h('p', {
             style: {
               width: '230px',
+              wordBreak: 'break-all',
+              wordWrap: 'break-word',
             },
           }, url),
           h('i', {
@@ -438,7 +439,7 @@ const handleDataSource = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px 0 50px !important;
+  padding-right: 24px;
 
   .bk-button {
     padding: 5px 17px !important;

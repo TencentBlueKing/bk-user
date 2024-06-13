@@ -72,6 +72,7 @@
 import { Message } from 'bkui-vue';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, defineExpose } from 'vue';
 import { getBase64 } from '@/utils';
+import CustomFields from '@/components/custom-fields/index.vue';
 import MemberSelector from '@/views/tenant/MemberSelector.vue';
 import { getTenantOrganizationUsersList, putTenantOrganizationDetails } from '@/http';
 import PhoneInput from '@/components/phoneInput.vue';
@@ -232,7 +233,7 @@ const columns = [
     render: fieldItemFn,
   },
   {
-    label: t('全名'),
+    label: t('姓名'),
     field: "full_name",
     render: fieldItemFn,
   },

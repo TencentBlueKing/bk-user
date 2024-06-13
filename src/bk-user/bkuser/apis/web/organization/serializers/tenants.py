@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -17,12 +17,22 @@ from rest_framework import serializers
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import Tenant
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 
 class TenantDataSourceSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    enable_password = serializers.SerializerMethodField(help_text="是否启用密码")
+
+    @swagger_serializer_method(serializer_or_field=serializers.BooleanField)
+    def get_enable_password(self, obj: DataSource) -> bool:
+        # 不是本地数据源，肯定是没有本地账密的
+        if obj.plugin_id != DataSourcePluginEnum.LOCAL:
+            return False
+
+        return bool(obj.plugin_config.get("enable_password", False))
 
 
 class TenantListOutputSLZ(serializers.Serializer):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -72,8 +72,13 @@ class DataSourceSyncTaskRunner:
 
     def _sync_departments(self, ctx: DataSourceSyncTaskContext):
         """同步部门信息"""
-        departments = self.plugin.fetch_departments()
-        DataSourceDepartmentSyncer(ctx, self.data_source, departments).sync()
+        DataSourceDepartmentSyncer(
+            ctx=ctx,
+            data_source=self.data_source,
+            raw_departments=self.plugin.fetch_departments(),
+            overwrite=bool(self.task.extras.get("overwrite", False)),
+            incremental=bool(self.task.extras.get("incremental", False)),
+        ).sync()
 
     def _sync_users(self, ctx: DataSourceSyncTaskContext):
         """同步用户信息"""

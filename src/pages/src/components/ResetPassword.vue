@@ -90,8 +90,8 @@ const confirm = async () => {
 
 <style lang="less" scoped>
 .dialog-reset-password {
-  ::v-deep .bk-modal-content {
-    min-height: 0;
-  }
+  // ::v-deep .bk-modal-content {
+  //   min-height: 0;
+  // }
 }
 </style>

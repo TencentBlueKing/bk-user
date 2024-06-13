@@ -1,4 +1,6 @@
 export interface IUser {
   username: string;
-  avatar_url: string;
+  display_name: string;
+  role: string;
+  tenant_id: string;
 }

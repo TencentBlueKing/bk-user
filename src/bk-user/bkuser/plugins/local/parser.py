@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -29,7 +29,7 @@ from bkuser.plugins.local.exceptions import (
     SheetColumnsNotMatch,
     UserSheetNotExists,
 )
-from bkuser.plugins.local.utils import gen_code
+from bkuser.plugins.local.utils import gen_dept_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
@@ -209,7 +209,7 @@ class LocalDataSourceDataParser:
                     organizations.add(cur_org.strip())
 
         # 组织路径：本数据源部门 Code 映射表
-        org_code_map = {org: gen_code(org) for org in organizations}
+        org_code_map = {org: gen_dept_code(org) for org in organizations}
         for org in organizations:
             parent_org, __, dept_name = org.rpartition("/")
             self.departments.append(
@@ -235,7 +235,7 @@ class LocalDataSourceDataParser:
             if organizations := properties.pop("organizations"):
                 for org in organizations.split(","):
                     if org := org.strip():
-                        departments.append(gen_code(org))
+                        departments.append(gen_dept_code(org))
 
             if leader_names := properties.pop("leaders"):
                 for ld in leader_names.split(","):

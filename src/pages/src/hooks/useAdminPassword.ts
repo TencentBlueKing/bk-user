@@ -51,7 +51,6 @@ export const useAdminPassword = (formData) => {
   };
 
   const changeCountryCode = (code: string) => {
-    console.log('code', code);
     formData.phone_country_code = code;
   };
 

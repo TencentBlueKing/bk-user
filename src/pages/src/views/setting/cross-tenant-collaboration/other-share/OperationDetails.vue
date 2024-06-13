@@ -6,19 +6,28 @@
         <ul class="operation-content-info flex">
           <li>
             <span class="key">{{ $t('租户名称') }}：</span>
-            <span class="value">{{ detailsConfig.data.name }}</span>
+            <span class="value">{{ formData.source_tenant_name }}</span>
           </li>
           <li>
             <span class="key">{{ $t('租户ID') }}：</span>
-            <span class="value">{{ detailsConfig.data.id }}</span>
+            <span class="value">{{ formData.source_tenant_id }}</span>
           </li>
         </ul>
       </div>
       <div class="operation-card">
+        <p class="operation-content-title">{{ $t('协同数据选择') }}</p>
+        <ul class="operation-content-info">
+          <li>
+            <span class="key">{{ $t('已协同') }}：</span>
+            <span class="value">{{ $t('所有部门 + 用户') }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="operation-card" v-bkloading="{ loading: isLoading }">
         <div class="operation-content-header">
           <p class="operation-content-title">{{ $t('字段映射') }}</p>
           <bk-button
-            v-if="detailsConfig.type === 'edit' && !isEdit"
+            v-if="!isEdit"
             class="min-w-[48px] mr-[24px]"
             theme="primary"
             outline
@@ -30,26 +39,30 @@
         <bk-form
           v-if="isEdit"
           form-type="vertical"
-          ref="formRef2"
+          ref="formRef"
           :model="fieldSettingData"
           :rules="rulesFieldSetting">
           <FieldMapping
             :field-setting-data="fieldSettingData"
             :api-fields="apiFields"
             :rules="rulesFieldSetting"
-            @changeApiFields="changeApiFields"
-            @handleAddField="handleAddField"
-            @handleDeleteField="handleDeleteField"
-            @changeCustomField="changeCustomField" />
+            :source-field="$t('本租户用户字段')"
+            :target-field="$t('源租户用户字段')"
+            :disabled-builtin-field="true"
+            @change-api-fields="changeApiFields"
+            @handle-add-field="handleAddField"
+            @handle-delete-field="handleDeleteField"
+            @change-custom-field="changeCustomField" />
           <div class="ml-[64px]">
             <bk-button
               class="min-w-[64px] mr-[8px]"
-              theme="primary">
+              theme="primary"
+              @click="saveEdit">
               {{ $t('保存') }}
             </bk-button>
             <bk-button
               class="min-w-[64px]"
-              @click="isEdit = false">
+              @click="cancelEdit">
               {{ $t('取消') }}
             </bk-button>
           </div>
@@ -58,7 +71,7 @@
           <ul
             v-for="(item, index) in fieldSettingData.field_mapping.builtin_fields"
             :key="index">
-            <li>{{ item.display_name }}</li>
+            <li>{{`${item.display_name}（${item.name}）`}}</li>
             <li>{{ getCustomCondition(item.mapping_operation) }}</li>
             <li>{{ item.source_field }}</li>
           </ul>
@@ -72,33 +85,46 @@
         </div>
       </div>
     </div>
-    <div class="footer fixed" v-if="isEdit">
-      <bk-button theme="primary" @click="handleSave">
-        {{ $t('确认') }}
+    <div class="footer fixed" v-if="config.type === 'edit'">
+      <bk-button theme="primary" :disabled="isEdit" @click="handleSave">
+        {{ $t('确认并同步') }}
+      </bk-button>
+      <bk-button :disabled="isEdit" @click="$emit('cancel')">
+        {{ $t('取消') }}
       </bk-button>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">import { defineProps, onMounted, reactive, ref } from 'vue';
+<script setup lang="ts">
+import { Message } from 'bkui-vue';
+import { defineEmits, defineProps, onMounted, reactive, ref } from 'vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import { useValidate } from '@/hooks';
 import {
-  getDataSourceDetails,
   getFields,
+  getSourceTenantCustomFields,
+  putFromStrategies,
+  putFromStrategiesConfirm,
 } from '@/http';
+import { t } from '@/language';
 
 const validate = useValidate();
 
-defineProps({
-  detailsConfig: {
+const emit = defineEmits(['updateList']);
+const props = defineProps({
+  config: {
     type: Object,
     default: () => ({}),
   },
 });
 
+const formData = reactive(props.config.data);
+
 const isEdit = ref(false);
+const isLoading = ref(false);
+const formRef = ref();
 
 const rulesFieldSetting = {
   target_field: [validate.required],
@@ -106,7 +132,6 @@ const rulesFieldSetting = {
 };
 
 const apiFields = ref([]);
-const fieldMappingList = ref([]);
 const fieldSettingData = reactive({
   field_mapping: {
     // 内置字段
@@ -117,45 +142,61 @@ const fieldSettingData = reactive({
   addFieldList: [],
 });
 
-onMounted(async () => {
-  const res = await getDataSourceDetails(6);
-  fieldMappingList.value = res.data?.field_mapping;
-  const fieldsRes = await getFields();
-
-  const list = [];
-  const customList = [];
-  const mapFields = (fields, item, isDisabled, fieldMappingType) => {
-    if (fields.name !== item.target_field) return;
-
-    list.push(item.source_field);
-    customList.push(fields.name);
-    Object.assign(fields, {
-      mapping_operation: item.mapping_operation,
-      source_field: item.source_field,
-      disabled: isDisabled,
-    });
-    apiFields.value.push({ key: item.source_field, disabled: isDisabled });
-
-    if (fieldMappingType === 'builtin_fields' && fields.required) {
-      fieldSettingData.field_mapping.builtin_fields.push(fields);
-    } else {
-      fieldSettingData.addFieldList.push(item);
-      fieldSettingData.field_mapping.custom_fields.push(fields);
-    }
-  };
-
-  fieldMappingList.value.forEach((item) => {
-    fieldsRes.data?.builtin_fields?.forEach(fields => mapFields(fields, item, true, 'builtin_fields'));
-    fieldsRes.data?.custom_fields?.forEach(fields => mapFields(fields, item, true, 'custom_fields'));
-  });
-
-
-  fieldsRes.data?.custom_fields?.concat(fieldsRes.data?.builtin_fields || []).forEach((fields) => {
-    if (!customList.includes(fields.name)) {
-      fieldSettingData.field_mapping.custom_fields.push(fields);
-    }
-  });
+onMounted(() => {
+  initFields();
 });
+
+// 初始化字段映射
+const initFields = async () => {
+  try {
+    isLoading.value = true;
+    if (formData.target_config?.field_mapping) {
+      fieldSettingData.addFieldList = JSON.parse(JSON.stringify(formData.target_config.field_mapping));
+    }
+
+    const [fieldsRes, customRes] = await Promise.all([getFields(), getSourceTenantCustomFields(formData.id)]);
+
+    const mapFields = (fields, isDisabled, fieldMappingType) => {
+      Object.assign(fields, {
+        mapping_operation: 'direct',
+        source_field: fields.name,
+        disabled: isDisabled,
+      });
+
+      if (fieldMappingType !== 'source_fields') {
+        const targetFieldList = fieldSettingData.field_mapping[fieldMappingType];
+        targetFieldList.push(fields);
+      }
+
+      const filterKeys = new Set(fieldSettingData.addFieldList?.map(item => (fieldMappingType === 'custom_fields'
+        ? item.target_field
+        : item.source_field
+      )));
+      fields.disabled = filterKeys.has(fields.name);
+
+      if (fieldMappingType === 'custom_fields') {
+        fieldSettingData.field_mapping.custom_fields?.forEach((item) => {
+          if (filterKeys.has(item.name)) {
+            item.disabled = true;
+          }
+        });
+      } else if (fieldMappingType === 'source_fields') {
+        apiFields.value.push({ key: fields.name, disabled: isDisabled, display_name: fields.display_name });
+        apiFields.value.forEach((item) => {
+          if (filterKeys.has(item.key)) {
+            item.disabled = true;
+          }
+        });
+      }
+    };
+    // 自定义字段的数据来源是本租户的自定义字段
+    fieldsRes.data?.builtin_fields?.forEach(field => mapFields(field, true, 'builtin_fields'));
+    fieldsRes.data?.custom_fields?.forEach(field => mapFields(field, false, 'custom_fields'));
+    customRes?.data?.forEach(field => mapFields(field, false, 'source_fields'));
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const getDisplayName = (item) => {
   const name = ref('');
@@ -217,6 +258,41 @@ const changeCustomField = (newValue, oldValue) => {
     }
   });
   handleChange();
+};
+
+// 取消编辑
+const cancelEdit = () => {
+  isEdit.value = false;
+  apiFields.value = [];
+  fieldSettingData.addFieldList = [];
+  fieldSettingData.field_mapping.builtin_fields = [];
+  fieldSettingData.field_mapping.custom_fields = [];
+  initFields();
+};
+
+const saveEdit = async () => {
+  await formRef.value.validate();
+  if (props.config.type === 'view') {
+    await handleSave();
+    isEdit.value = false;
+  } else {
+    isEdit.value = false;
+  }
+};
+
+const handleSave = async () => {
+  const params = {
+    id: formData.id,
+    target_config: {
+      organization_scope_type: 'all',
+      organization_scope_config: {},
+      field_mapping: fieldSettingData.addFieldList,
+    },
+  };
+
+  props.config.type === 'view' ? await putFromStrategies(params) : await putFromStrategiesConfirm(params);
+  Message({ theme: 'success', message: t('更新成功') });
+  emit('updateList');
 };
 
 const handleChange = () => {

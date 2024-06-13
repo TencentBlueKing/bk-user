@@ -1,5 +1,5 @@
 // 全量引入 bkui-vue
-import bkui, { InfoBox } from 'bkui-vue';
+import bkui, { bkTooltips, InfoBox } from 'bkui-vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 
@@ -25,6 +25,7 @@ const leaveBox = (opt = {}) => new Promise((resolve) => {
       window.changeInput = false;
       resolve(true);
     },
+    confirmText: i18n.global.t('确定'),
     onClose: () => {
       resolve(false);
     },
@@ -52,4 +53,5 @@ createApp(App)
   .use(bkui)
   .use(i18n)
   .provide('editLeaveBefore', leaveBox)
+  .directive('bkTooltips', bkTooltips)
   .mount('.app');

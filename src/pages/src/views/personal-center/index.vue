@@ -16,7 +16,7 @@
               {{ currentNaturalUser.full_name }}
             </bk-overflow-title>
             <bk-overflow-title type="tips" class="id">
-              （{{ currentNaturalUser.id }}）
+              （{{ currentUserInfo.id }}）
             </bk-overflow-title>
             <!-- <i class="user-icon icon-edit" /> -->
           </div>
@@ -39,13 +39,18 @@
             @click="handleClickItem(item)"
           >
             <div class="account-item">
-              <div>
+              <div class="w-4/5">
                 <img v-if="item.logo" :src="item.logo" />
                 <i v-else class="user-icon icon-yonghu" />
-                <span class="name text-overflow">{{ item.full_name }}</span>
-                <span class="tenant text-overflow">@ {{ item.tenant.name }}</span>
+                <span class="name text-overflow" v-bk-tooltips="{ content: item.full_name }">{{ item.full_name }}</span>
+                <span
+                  class="tenant text-overflow"
+                  v-bk-tooltips="{ content: `@ ${item.tenant.name}（${item.tenant.id}）` }"
+                >
+                  {{ `@ ${item.tenant.name}（${item.tenant.id}）` }}
+                </span>
               </div>
-              <bk-tag type="filled" theme="success" v-if="currentNaturalUser.full_name === item.full_name">
+              <bk-tag type="filled" theme="success" v-if="userInfo.username === item.id">
                 {{ $t('当前登录') }}
               </bk-tag>
             </div>
@@ -91,11 +96,12 @@
             </div>
           </div>
           <div class="header-right">
-            <span v-bk-tooltips="{
-              content: $t('当前用户不支持修改密码'),
-              distance: 20,
-              disabled: canChangePassword,
-            }">
+            <span
+              v-bk-tooltips="{
+                content: $t('当前用户不支持修改密码'),
+                distance: 20,
+                disabled: canChangePassword,
+              }">
               <bk-button
                 class="min-w-[88px]"
                 :disabled="!canChangePassword"
@@ -103,11 +109,12 @@
                 {{ $t('修改密码') }}
               </bk-button>
             </span>
-            <span v-bk-tooltips="{
-              content: $t('该账号已登录'),
-              distance: 20,
-              disabled: !isCurrentTenant,
-            }">
+            <span
+              v-bk-tooltips="{
+                content: $t('该账号已登录'),
+                distance: 20,
+                disabled: !isCurrentTenant,
+              }">
               <bk-button :disabled="isCurrentTenant">
                 {{ $t('切换为该账号登录') }}
               </bk-button>
@@ -134,11 +141,13 @@
                     <span class="value">{{ currentUserInfo.username }}</span>
                   </li>
                   <li>
-                    <span class="key">{{ $t('全名') }}：</span>
+                    <span class="key">{{ $t('姓名') }}：</span>
                     <span class="value">{{ currentUserInfo.full_name }}</span>
                   </li>
                   <li>
-                    <span class="key">{{ $t('邮箱') }}：</span>
+                    <span class="key">
+                      <span class="required-icon"> * </span>
+                      {{ $t('邮箱') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditEmail">
                         <bk-radio-group
@@ -154,7 +163,7 @@
                           v-model="currentUserInfo.email"
                           :disabled="currentUserInfo.is_inherited_email" />
                         <bk-form-item v-else class="email-input" property="custom_email">
-                          <bk-input v-model="currentUserInfo.custom_email" />
+                          <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeEmail">
                           {{ $t('确定') }}
@@ -177,7 +186,9 @@
                     </div>
                   </li>
                   <li class="mb-[10px]">
-                    <span class="key">{{ $t('手机号') }}：</span>
+                    <span class="key">
+                      <span class="required-icon"> * </span>
+                      {{ $t('手机号') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditPhone">
                         <bk-radio-group
@@ -193,15 +204,18 @@
                           class="phone-input">
                           <phoneInput
                             :form-data="currentUserInfo"
-                            :disabled="currentUserInfo.is_inherited_phone" />
+                            :disabled="currentUserInfo.is_inherited_phone"
+                            autofocus="autofocus"
+                          />
                         </bk-form-item>
                         <bk-form-item v-else class="phone-input">
                           <phoneInput
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
-                            @changeCountryCode="changeCountryCode"
-                            @changeTelError="changeTelError" />
+                            @change-country-code="changeCountryCode"
+                            @change-tel-error="changeTelError"
+                            @keydown.enter="changePhone" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
                           {{ $t('确定') }}
@@ -226,8 +240,10 @@
                 </div>
                 <div class="item-div">
                   <li>
-                    <span class="key">{{ $t('所属租户ID') }}：</span>
-                    <span class="value">{{ currentTenantInfo.tenant?.id }}</span>
+                    <span class="key">{{ $t('所属租户') }}：</span>
+                    <span class="value">
+                      {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
+                    </span>
                   </li>
                   <li>
                     <span class="key">{{ $t('所属组织') }}：</span>
@@ -245,7 +261,9 @@
                   v-for="(item, index) in currentUserInfo.extras"
                   :key="index"
                 >
-                  <bk-overflow-title class="key" type="tips">{{ item.display_name }}：</bk-overflow-title>
+                  <bk-overflow-title class="key" type="tips">
+                    <span v-show="item.required" class="required-icon"> * </span>
+                    {{ item.display_name }}：</bk-overflow-title>
                   <div class="value-edit custom-input">
                     <bk-overflow-title v-if="!item.isEdit" class="value" type="tips">
                       {{ customFieldsMap(item) }}
@@ -334,7 +352,11 @@ import {
   putPersonalCenterUserExtrasFields,
 } from '@/http';
 import { t } from '@/language/index';
+import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
+
+const user = useUser();
+const userInfo = ref(user.user);
 
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
@@ -459,6 +481,7 @@ const changeCustomFields = async (item) => {
     await putPersonalCenterUserExtrasFields(params);
     extrasList.value = JSON.parse(JSON.stringify(currentUserInfo.value.extras));
     item.isEdit = false;
+    Message({ theme: 'success', message: t('保存成功') });
   } catch (error) {
     console.warn(error);
   }
@@ -480,7 +503,7 @@ watch(() => currentUserInfo.value?.extras, (val) => {
 });
 
 const tagTheme = value => (value ? 'info' : 'warning');
-const tagText = value => (value ? t('数据源') : t('自定义'));
+const tagText = value => (value ? t('继承数据源') : t('自定义'));
 
 const isEditEmail = ref(false);
 
@@ -514,6 +537,7 @@ const changeEmail = async () => {
   }).then(() => {
     isEditEmail.value = false;
     isEditing();
+    Message({ theme: 'success', message: t('保存成功') });
   });
 };
 // 取消编辑邮箱
@@ -554,6 +578,7 @@ const changePhone = () => {
   }).then(() => {
     isEditPhone.value = false;
     isEditing();
+    Message({ theme: 'success', message: t('保存成功') });
   });
 };
 // 取消编辑手机号
@@ -743,7 +768,6 @@ const hidePasswordModal = () => {
 
           .name {
             display: inline-block;
-            max-width: 100px;
             margin: 0 8px;
             font-size: 14px;
             color: #313238;
@@ -751,7 +775,6 @@ const hidePasswordModal = () => {
 
           .tenant {
             display: inline-block;
-            max-width: 100px;
             color: #ff9c01;
           }
         }
@@ -1058,5 +1081,12 @@ const hidePasswordModal = () => {
       }
     }
   }
+}
+.required-icon {
+  display: inline-block;
+  margin: 0 3px 0 0px;
+  line-height: 19px;
+  color: #ff5e5e;
+  vertical-align: middle;
 }
 </style>

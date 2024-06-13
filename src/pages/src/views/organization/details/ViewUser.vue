@@ -11,7 +11,7 @@
           <span class="details-content-value">{{ userData.username }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">{{ $t('全名') }}：</span>
+          <span class="details-content-key">{{ $t('姓名') }}：</span>
           <span class="details-content-value">{{ userData.full_name }}</span>
         </div>
         <div class="details-content-item">
@@ -23,26 +23,32 @@
           <span class="details-content-value">{{ userData.phone || '--' }}</span>
         </div>
         <div class="details-content-item">
-          <bk-overflow-title type="tips" class="details-content-key">{{ $t('所属组织') }}：</bk-overflow-title>
-          <span class="details-content-value" v-if="userData.departments.length > 0">
-            {{ formatConvert(userData.departments) }}
+          <span class="details-content-key">{{ $t('所属组织') }}：</span>
+          <span class="details-content-value" v-if="userData.departments.length > 0"
+            v-bk-tooltips="{content: (userData.organization_paths || []).join('\n'),
+            placement: 'top',
+            disabled: userData.departments.length === 0}"
+          >
+            <!-- {{ formatConvert(userData.departments) }} -->
+            {{detail.organization_paths}}
+            {{ userData.departments.join('、') || '--' }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('直属上级') }}：</span>
-          <span class="details-content-value" v-if="userData.leaders.length > 0">
-            {{ formatConvert(userData.leaders) }}
+          <span class="details-content-value" v-if="(detail.leaders || []).length > 0">
+            {{ formatConvert(detail.leaders) || '--' }}
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
         <div class="details-content-item">
-          <bk-overflow-title type="tips" class="details-content-key">{{ $t('账号过期时间') }}：</bk-overflow-title>
-          <span class="details-content-value">{{ dateConvert(userData.account_expired_at) }}</span>
+          <span class="details-content-key">{{ $t('账号过期时间') }}：</span>
+          <span class="details-content-value">{{ detail.account_expired_at }}</span>
         </div>
-        <CustomFieldsView :extras="userData.extras" />
+        <CustomFieldsView :extras="detail.extras" />
       </div>
-      <img v-if="userData.logo" class="user-logo" :src="userData.logo" alt="" />
+      <img v-if="userData.logo" class="user-logo" :src="detail.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
@@ -59,6 +65,10 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  detail: {
+    type: Object,
+    default: () => ({})
+  }
 });
 </script>
 

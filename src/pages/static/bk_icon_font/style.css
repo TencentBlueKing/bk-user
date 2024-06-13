@@ -23,6 +23,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-basic:before {
+	content: "\e151";
+}
 .icon-app-store-fill:before {
 	content: "\e126";
 }
@@ -217,4 +220,28 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 }
 .icon-help-document-fill:before {
 	content: "\e148";
+}
+.icon-guanliyuan:before {
+	content: "\e149";
+}
+.icon-renzheng:before {
+	content: "\e14b";
+}
+.icon-shujuyuanshu:before {
+	content: "\e14a";
+}
+.icon-yonghushu:before {
+	content: "\e14c";
+}
+.icon-zhanghaoshu:before {
+	content: "\e14d";
+}
+.icon-zuhushu:before {
+	content: "\e14e";
+}
+.icon-field:before {
+	content: "\e14f";
+}
+.icon-tongbu-2:before {
+	content: "\e153";
 }

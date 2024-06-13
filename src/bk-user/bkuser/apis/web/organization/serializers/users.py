@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -25,7 +25,13 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    TenantDepartment,
+    TenantUser,
+    TenantUserCustomField,
+    UserBuiltinField,
+)
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
@@ -37,7 +43,7 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
     excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（Leader 不能是自己）", required=False)
 
 
@@ -48,7 +54,8 @@ class OptionalTenantUserListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
+    tenant_id = serializers.CharField(help_text="租户 ID", required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -124,6 +131,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(
         help_text="用户 Logo",
         required=False,
+        allow_blank=True,
         default=settings.DEFAULT_DATA_SOURCE_USER_LOGO,
         validators=[validate_logo],
     )
@@ -162,7 +170,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if invalid_leader_ids:
-            raise ValidationError(_("指定的直属上级 {} 不存在").format(invalid_leader_ids))
+            raise ValidationError(_("指定的直属上级 {} 不存在").format(",".join(invalid_leader_ids)))
 
         return leader_ids
 
@@ -210,15 +218,32 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
-    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
+    extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
 
-    departments = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
-    leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID 列表")
+    departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
+    leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
 
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
 
+    @swagger_serializer_method(serializer_or_field=serializers.JSONField)
+    def get_extras(self, obj: TenantUser) -> Dict[str, Any]:
+        # 租户用户租户 与 数据源所属租户 一致，说明不是协同产生，直接给 extras 即可
+        if obj.tenant_id == obj.data_source.owner_tenant_id:
+            return obj.data_source_user.extras
+
+        # 对于协同过来的用户，自定义字段需要做次映射
+        strategy = CollaborationStrategy.objects.get(
+            source_tenant_id=obj.data_source.owner_tenant_id, target_tenant_id=obj.tenant_id
+        )
+        # TODO (su) 如果后续支持表达式，则不能直接取 Dict 做映射
+        field_mapping = {mp["source_field"]: mp["target_field"] for mp in strategy.target_config["field_mapping"]}
+        # 协同的字段映射不是全量的，可能源租户提供 5 个自定义字段，目标租户只配了 3 个，需要过滤掉多余的
+        return {field_mapping[k]: v for k, v in obj.data_source_user.extras.items() if k in field_mapping}
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_logo(self, obj: TenantUser) -> str:
         return obj.data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
@@ -263,7 +288,8 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
         exists_extras = DataSourceUser.objects.get(id=self.context["data_source_user_id"]).extras
         for f in custom_fields.filter(manager_editable=False):
-            extras[f.name] = exists_extras[f.name]
+            if f.name in exists_extras:
+                extras[f.name] = exists_extras[f.name]
 
         return extras
 
@@ -272,6 +298,25 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
             raise ValidationError(_("不能设置自己为自己的直接上级"))
 
         return super().validate_leader_ids(leader_ids)
+
+
+class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
+    # --- 长度限制类 ---
+    min_length = serializers.IntegerField(help_text="密码最小长度")
+    max_length = serializers.IntegerField(help_text="密码最大长度")
+    # --- 字符限制类 ---
+    contain_lowercase = serializers.BooleanField(help_text="必须包含小写字母")
+    contain_uppercase = serializers.BooleanField(help_text="必须包含大写字母")
+    contain_digit = serializers.BooleanField(help_text="必须包含数字")
+    contain_punctuation = serializers.BooleanField(help_text="必须包含特殊字符（标点符号）")
+    # --- 连续性限制类 ---
+    not_continuous_count = serializers.IntegerField(help_text="密码不允许连续 N 位出现")
+    not_keyboard_order = serializers.BooleanField(help_text="不允许键盘序")
+    not_continuous_letter = serializers.BooleanField(help_text="不允许连续字母序")
+    not_continuous_digit = serializers.BooleanField(help_text="不允许连续数字序")
+    not_repeated_symbol = serializers.BooleanField(help_text="重复字母，数字，特殊字符")
+    # --- 规则提示 ---
+    rule_tips = serializers.ListField(help_text="用户密码规则提示", child=serializers.CharField(), source="tips")
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):

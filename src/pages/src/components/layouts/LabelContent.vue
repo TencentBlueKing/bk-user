@@ -1,6 +1,8 @@
 <template>
   <span class="label-content">
-    <span class="label-key">{{ `${label ? label + '：' : ''}` }} </span>
+    <bk-overflow-title type="tips" :class="['label-key', { 'label-key-en': $i18n.locale === 'en' }]">
+      {{ `${label ? label + '：' : ''}` }}
+    </bk-overflow-title>
     <span class="label-value">
       <slot></slot>
     </span>
@@ -27,8 +29,15 @@ defineProps({
 
   .label-key {
     width: 98px;
+    overflow: hidden;
     color: #63656E;
     text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .label-key-en {
+    width: 150px !important;
   }
 
   .label-value {

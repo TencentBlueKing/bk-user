@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="details-info-wrapper user-scroll-y">
+  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="details-info-wrapper">
     <ViewRow :title="$t('基础信息')">
       <LabelContent :label="$t('名称')">{{ idpsName }}</LabelContent>
       <LabelContent :label="$t('是否启用')">
@@ -99,7 +99,6 @@ onMounted(async () => {
 
 <style lang="less" scoped>
 .details-info-wrapper {
-  height: calc(100vh - 52px);
   padding: 28px 40px;
 
   .row-wrapper {
@@ -110,9 +109,5 @@ onMounted(async () => {
       border-bottom: none !important;
     }
   }
-}
-
-::v-deep .label-content .label-key {
-  width: 150px !important;
 }
 </style>

@@ -1,9 +1,10 @@
 <template>
   <div class="">
     <div
-      class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
+      class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full
+       cursor-pointer relative org-node hover:bg-[#F0F1F5]"
       :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"
-      @click="handleNodeClick(tenant)"
+      @click="handleNodeClick(tenant, currentTenant.id, true)"
     >
       <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
       <span
@@ -13,31 +14,26 @@
       >
         {{ currentTenant?.name.charAt(0).toUpperCase() }}
       </span>
-      {{ tenant?.name }}
+      <span>{{ tenant?.name }}</span>
+      <operate-more :is-collaboration="true"></operate-more>
     </div>
     <bk-tree
+      v-if="treeData.length"
       :data="treeData"
       :selected="appStore.currentOrg"
       label="name"
       node-key="id"
       children="children"
       :prefix-icon="getPrefixIcon"
-      @node-click="handleNodeClick"
+      @node-click="(node) => handleNodeClick(node, currentTenant.id)"
       :async="{
         callback: getRemoteData,
-        cache: false,
+        cache: true,
       }"
     >
       <template #node="node">
         <div class="org-node pr-[12px] relative">
           <span class="text-[14px]">{{ node.name }}</span>
-          <operate-more
-            :dept="node"
-            :tenant="tenant"
-            :is-collaboration="true"
-            @add-node="addNode"
-            @update-node="updateNode">
-          </operate-more>
         </div>
       </template>
     </bk-tree>
@@ -53,14 +49,14 @@ import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
 
-const appStore = useAppStore();
-
 const props = defineProps({
   tenant: {
     type: Object,
     default: () => ({}),
   },
 });
+
+const appStore = useAppStore();
 
 const formatTreeData = (data = []) => {
   data.forEach((item) => {
@@ -92,8 +88,6 @@ const {
   treeData,
   getRemoteData,
   handleNodeClick,
-  addNode,
-  updateNode,
   getPrefixIcon,
 } = organizationAsideHooks;
 

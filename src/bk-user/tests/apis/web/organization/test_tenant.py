@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -33,15 +33,15 @@ class TestCurrentTenantRetrieveApi:
         assert data_source["plugin_id"] == DataSourcePluginEnum.LOCAL
 
 
-class TestCollaborativeTenantListApi:
-    @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_standard(self, api_client, collaborative_tenant):
-        resp = api_client.get(reverse("organization.collaborative_tenant.list"))
+class TestCollaborationTenantListApi:
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
+    def test_standard(self, api_client, collaboration_tenant):
+        resp = api_client.get(reverse("organization.collaboration_tenant.list"))
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
 
         first_tenant = resp.data[0]
         assert first_tenant.keys() == {"id", "name", "logo"}
-        assert first_tenant["id"] == collaborative_tenant.id
-        assert first_tenant["name"] == collaborative_tenant.name
+        assert first_tenant["id"] == collaboration_tenant.id
+        assert first_tenant["name"] == collaboration_tenant.name

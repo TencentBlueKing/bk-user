@@ -12,10 +12,30 @@
           <bk-form-item class="w-[590px]" :label="$t('策略名称')" property="name" required>
             <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
-          <bk-form-item class="w-[590px]" :label="$t('目标公司')" property="name" required>
-            <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
-          </bk-form-item>
-        </div>
+          <bk-form-item class="w-[590px]" :label="$t('目标租户')" property="target_tenant_id" required>
+            <bk-input v-if="config.type === 'edit'" disabled :value="formData.target_tenant_name" />
+            <bk-select
+              v-else
+              filterable
+              input-search
+              allow-create
+              :placeholder="$t('请选择租户或输入租户ID')"
+              :disabled="config.type === 'edit'"
+              @change="handleTenantChange">
+              <bk-option
+                v-for="item in allTenantList"
+                class="tenant-option"
+                :id="item.id"
+                :key="item.id"
+                :name="item.name">
+                {{ item.name }}
+              </bk-option>
+            </bk-select>
+            <span v-if="inputTenant !== null">
+              <span v-if="inputTenant?.name">匹配到以下租户: {{ inputTenant?.name }}</span>
+              <span v-else>暂无匹配租户</span>
+            </span>
+          </bk-form-item></div>
       </div>
       <!-- 一期不做 -->
       <!-- <div class="operation-card">
@@ -35,11 +55,11 @@
         <div class="operation-content-info flex">
           <bk-form-item class="w-[350px]" :label="$t('同步范围')" required>
             <bk-radio-group
-              v-model="formData.sync_type"
+              v-model="formData.source_config.field_scope_type"
             >
               <bk-radio label="all">{{ $t('所有字段') }}</bk-radio>
-              <!-- <bk-radio label="appoint">{{ $t('指定字段') }}</bk-radio>
-              <bk-radio label="basics">{{ $t('仅基础字段') }}</bk-radio> -->
+              <bk-radio label="appoint" disabled>{{ $t('指定字段') }}</bk-radio>
+              <bk-radio label="basics" disabled>{{ $t('仅基础字段') }}</bk-radio>
             </bk-radio-group>
           </bk-form-item>
           <bk-form-item
@@ -63,7 +83,8 @@
             </bk-select>
           </bk-form-item>
         </div>
-        <div class="operation-content-info mt-[24px]">
+        <!-- 一期不做 -->
+        <!-- <div class="operation-content-info mt-[24px]">
           <bk-form-item class="w-[800px]" :label="$t('字段预览')">
             <bk-table
               :data="tableData"
@@ -73,7 +94,7 @@
                 <Empty
                   :is-data-empty="isDataEmpty"
                   :is-data-error="isDataError"
-                  @handleUpdate="handleUpdate"
+                  @handle-update="handleUpdate"
                 />
               </template>
               <bk-table-column prop="username" :label="$t('用户名')" />
@@ -83,12 +104,12 @@
               <bk-table-column prop="organization" :label="$t('组织')" />
             </bk-table>
           </bk-form-item>
-        </div>
+        </div> -->
       </div>
     </bk-form>
-    <div class="footer fixed">
-      <bk-button theme="primary" @click="handleSave">
-        {{ $t('保存并启用') }}
+    <div class="footer">
+      <bk-button theme="primary" @click="handleSave" :loading="btnLoading">
+        {{ config.type === 'add' ? $t('保存并启用') : $t('保存')}}
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
         {{ $t('取消') }}
@@ -98,12 +119,15 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, reactive, ref } from 'vue';
+import { Message } from 'bkui-vue';
+import { defineEmits, defineProps, onBeforeMount, onMounted, reactive, ref  } from 'vue';
 
-import Empty from '@/components/Empty.vue';
+// import Empty from '@/components/Empty.vue';
 import { useValidate } from '@/hooks';
+import { getTenantList, postToStrategies, putToStrategies } from '@/http';
+import { t } from '@/language';
 
-defineEmits(['handleCancelEdit']);
+const emit = defineEmits(['handleCancelEdit', 'updateList']);
 
 const props = defineProps({
   config: {
@@ -144,8 +168,63 @@ const handleChange = () => {
   window.changeInput = true;
 };
 
+const btnLoading = ref(false);
+// 表单校验
 const handleSave = async () => {
-  await basicRef.value.validate();
+  try {
+    await basicRef.value.validate();
+    btnLoading.value = true;
+    if (props.config.type === 'add') {
+      await postToStrategies(formData);
+      Message({ theme: 'success', message: t('协同策略创建成功') });
+      emit('updateList');
+    } else {
+      const params = {
+        name: formData.name,
+        target_tenant_id: formData.target_tenant_id,
+        source_config: formData.source_config,
+      };
+      await putToStrategies(formData.id, params);
+      Message({ theme: 'success', message: t('协同策略更新成功') });
+      emit('updateList');
+    }
+  } finally {
+    btnLoading.value = false;
+  }
+};
+
+
+// 目标租户
+const allTenantList = ref([]);
+const inputTenant = ref(null);
+
+onBeforeMount(async () => {
+  const res = await getTenantList({});
+  allTenantList.value = res.data || [];
+});
+/**
+ * 选择/输入租户
+ * @param id 租户ID
+ */
+const handleTenantChange = async (id: string) => {
+  window.changeInput = true;
+  // 清空时清空输入租户名称
+  if (!id) {
+    inputTenant.value = null;
+    return;
+  }
+  let selected = allTenantList.value.find(item => item.id === id);
+  if (!selected) {
+    const res = await getTenantList({
+      tenant_ids: id,
+    });
+    const searchResult = res.data[0];
+    selected = searchResult;
+    inputTenant.value = searchResult;
+  } else {
+    inputTenant.value = null;
+  }
+  formData.target_tenant_id = id;
 };
 </script>
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -12,9 +12,8 @@ import threading
 
 from django.conf import settings
 from opentelemetry import trace
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.sampling import _KNOWN_SAMPLERS
@@ -50,31 +49,23 @@ class LazyBatchSpanProcessor(BatchSpanProcessor):
 
 
 def setup_trace_config():
-    if not (settings.OTEL_GRPC_URL and settings.OTEL_BK_DATA_TOKEN):
-        # local environment, use jaeger as trace service
-        # docker run -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one
-        trace.set_tracer_provider(
-            tracer_provider=TracerProvider(resource=Resource.create({SERVICE_NAME: settings.OTEL_SERVICE_NAME}))
+    # 注：测试用的 jaeger 也是直接使用 otlp_exporter 即可
+    # pypi ref: https://pypi.org/project/opentelemetry-exporter-jaeger/
+    # Since v1.35, the Jaeger supports OTLP natively. Please use the OTLP exporter instead.
+    trace.set_tracer_provider(
+        tracer_provider=TracerProvider(
+            resource=Resource.create(
+                {
+                    "service.name": settings.OTEL_SERVICE_NAME,
+                    "bk.data.token": settings.OTEL_DATA_TOKEN,
+                },
+            ),
+            sampler=_KNOWN_SAMPLERS[settings.OTEL_SAMPLER],  # type: ignore
         )
-        jaeger_exporter = JaegerExporter(
-            agent_host_name="localhost", agent_port=6831, udp_split_oversized_batches=True
-        )
-        trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(jaeger_exporter))  # type: ignore
-    else:
-        trace.set_tracer_provider(
-            tracer_provider=TracerProvider(
-                resource=Resource.create(
-                    {
-                        "service.name": settings.OTEL_SERVICE_NAME,
-                        "bk.data.token": settings.OTEL_DATA_TOKEN,
-                    },
-                ),
-                sampler=_KNOWN_SAMPLERS[settings.OTEL_SAMPLER],  # type: ignore
-            )
-        )
-        otlp_exporter = OTLPSpanExporter(endpoint=settings.OTEL_GRPC_URL, insecure=True)
-        span_processor = LazyBatchSpanProcessor(otlp_exporter)
-        trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore
+    )
+    otlp_exporter = OTLPSpanExporter(endpoint=settings.OTEL_GRPC_URL, insecure=True)
+    span_processor = LazyBatchSpanProcessor(otlp_exporter)
+    trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore
 
 
 def setup_by_settings():

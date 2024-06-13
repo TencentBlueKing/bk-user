@@ -1,6 +1,7 @@
 <template>
-  <div class="details-wrapper user-scroll-y">
+  <div class="details-wrapper">
     <bk-form
+      class="px-[24px] pt-[24px] pb-[60px]"
       form-type="vertical"
       ref="formRef"
       :model="formData"
@@ -49,6 +50,8 @@
               style="width: 85px;"
               type="number"
               behavior="simplicity"
+              :min="5"
+              :max="10"
               v-model="formData.config.password_rule.not_continuous_count"
             />
             <span>{{ $t('位 出现') }}</span>
@@ -95,10 +98,8 @@
             <bk-radio label="fixed">{{ $t('固定') }}</bk-radio>
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
-            <bk-input
-              class="input-password"
-              v-model="formData.config.password_initial.fixed_password"
-              type="password" />
+            <passwordInput
+              v-model="formData.config.password_initial.fixed_password" />
             <bk-button
               outline
               theme="primary"
@@ -122,7 +123,7 @@
             :reset-password-email="$t('重设密码后的邮件')"
             :create-account-sms="$t('创建账户短信')"
             :reset-password-sms="$t('重设密码后的短信')"
-            @handleEditorText="handleEditorText">
+            @handle-editor-text="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
@@ -209,7 +210,7 @@
             :expired-email-key="'password_expired'"
             :expiring-sms-key="'password_expiring'"
             :expired-sms-key="'password_expired'"
-            @handleEditorText="handleEditorText">
+            @handle-editor-text="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
@@ -235,7 +236,9 @@
       </Row>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading">{{ $t('提交') }}</bk-button>
+      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading" :disabled="isDisabled">
+        {{ $t('提交') }}
+      </bk-button>
       <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
     </div>
   </div>
@@ -248,6 +251,7 @@ import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDefaultConfig,
@@ -259,15 +263,16 @@ import {
 import { t } from '@/language/index';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
-const validate = useValidate();
-
-const emit = defineEmits(['cancel', 'success']);
 const props = defineProps({
   currentId: {
     type: String,
     default: '',
   },
 });
+
+const emit = defineEmits(['cancel', 'success']);
+
+const validate = useValidate();
 
 const formRef = ref();
 // 初始密码
@@ -281,6 +286,8 @@ const passwordRuleError = ref(false);
 const passwordCountError = ref(false);
 const passwordConfigError = ref(false);
 const enabledMethodsError = ref(false);
+let originalData = {};
+const isDisabled = ref(true);
 
 const formData = reactive({
   name: '',
@@ -308,12 +315,17 @@ onMounted(async () => {
       formData.config = res?.data?.config || {};
       formData.config.enable_password = true;
     }
+    originalData = JSON.parse(JSON.stringify(formData));
   } catch (e) {
     console.warn(e);
   } finally {
     isLoading.value = false;
   }
 });
+
+watch(formData, () => {
+  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+}, { deep: true });
 
 // 监听密码规则
 watch(() => formData.config?.password_rule, (value) => {
@@ -488,5 +500,9 @@ const handleRandomPassword = async () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
+}
+
+:deep(.copy-icon) {
+  right: 485px;
 }
 </style>

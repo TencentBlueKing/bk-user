@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -27,6 +27,8 @@ urlpatterns = [
     path("organization/", include("bkuser.apis.web.organization.urls")),
     # 数据源 & 数据源用户/部门
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
+    # 租户间协同
+    path("collaboration/", include("bkuser.apis.web.collaboration.urls")),
     # 认证源
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置

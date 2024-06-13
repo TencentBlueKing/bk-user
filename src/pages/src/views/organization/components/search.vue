@@ -3,11 +3,12 @@
     <bk-input
       v-model="search"
       type="search"
+      :placeholder="$t('请输入至少2个字符搜索')"
       :clearable="true"
       @change="handleSearch"
       @clear="handleClear"
     ></bk-input>
-    <div 
+    <div
       class="user-icon icon-refresh bg-[#F0F1F5] h-[32px] w-[32px] ml-[8px] !leading-[32px] cursor-pointer"
       @click="handleRefresh"
     >
@@ -59,12 +60,13 @@
                   class="text-[#979BA5] leading-[20px]"
                   :class="{
                     'w-[333px]': !!item.organization_paths.length,
-                    'w-[270px]': !!item.organization_paths.length && item.status === 'disabled'
+                    'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
                   }"
                 >
                   {{ item.organization_paths[0] }}
                 </bk-overflow-title>
                 <bk-tag
+                  v-if="item.organization_paths.length > 1"
                   theme="info"
                   class="inline-block !m-0 h-[20px] !ml-[2px]"
                   v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
@@ -100,6 +102,7 @@
         :is-show="detailsConfig.isShow"
         :title="detailsConfig.title"
         :before-close="handleBeforeClose"
+        render-directive="if"
         quick-close
       >
         <template #header>
@@ -119,7 +122,7 @@ import { inject, reactive, ref } from 'vue';
 import ViewUser from './view-user.vue';
 
 import { useCustomFields } from '@/hooks';
-import { getOrganizationUsers, searchOrganization, searchUser } from '@/http/organizationFiles';
+import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
@@ -196,7 +199,7 @@ const handleUserSelect = async (user) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
-    getOrganizationUsers(user.id),
+    getTenantsUserDetail(user.id),
     getFields(),
   ]);
   state.userInfo = userRes.data;
@@ -209,8 +212,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
-    hideSideBar();
+    if (enableLeave) {
+      detailsConfig.isShow = false;
+      hideSideBar();
+    }
   } else {
     detailsConfig.isShow = false;
     hideSideBar();
@@ -222,6 +227,6 @@ const handleBeforeClose = async () => {
 
 const handleRefresh = () => {
   handleClear();
-  appStore.reloadIndex += 1
-}
+  appStore.reloadIndex += 1;
+};
 </script>

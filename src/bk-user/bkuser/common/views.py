@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -187,6 +187,8 @@ class VueTemplateView(TemplateView):
                 # 文档 & 反馈链接
                 "BK_USER_DOC_URL": settings.BK_USER_DOC_URL,
                 "BK_USER_FEEDBACK_URL": settings.BK_USER_FEEDBACK_URL,
+                # 是否启用蓝鲸通知中心功能
+                "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
             }
 
         except Exception:  # pylint: disable=broad-except

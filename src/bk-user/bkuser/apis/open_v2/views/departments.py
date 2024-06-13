@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -17,13 +17,14 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.departments import (
     DepartmentListInputSLZ,
     DepartmentRetrieveInputSLZ,
     ProfileDepartmentListInputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
@@ -34,7 +35,7 @@ from bkuser.common.error_codes import error_codes
 from bkuser.utils.tree import Tree
 
 
-class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """查询部门列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -80,7 +81,6 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                     (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
                 ),
                 "level": dept.data_source_department.department_relation.level,
-                # TODO 支持软删除后需要特殊处理
                 "enabled": True,
             }
             # 特殊指定 fields 的情况下仅返回指定的字段
@@ -128,8 +128,12 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         return resp_data
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet:
-        # TODO 支持软删除后需要考虑 include_disabled 参数
-        queryset = TenantDepartment.objects.select_related("data_source_department__department_relation").distinct()
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        queryset = (
+            TenantDepartment.objects.select_related("data_source_department__department_relation")
+            .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
+            .distinct()
+        )
         if not params.get("lookup_field"):
             return queryset
 
@@ -160,20 +164,16 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         if lookup_field == "name":
             return "data_source_department__name"
         if lookup_field == "category_id":
-            # TODO 考虑协同的情况
             return "data_source_department__data_source_id"
         if lookup_field == "parent":
             return "data_source_department__department_relation__parent"
-        if lookup_field == "enabled":
-            # FIXME 支持 enabled 参数
-            raise error_codes.VALIDATION_ERROR.f("lookup field enabled is not supported now")
         if lookup_field == "level":
             return "data_source_department__department_relation__level"
 
         raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
 
-class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
+class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.RetrieveAPIView):
     """查询单个部门"""
 
     def get(self, request, *args, **kwargs):
@@ -181,12 +181,10 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_dept = (
-            TenantDepartment.objects.select_related(
-                "data_source_department__department_relation",
-            )
-            .filter(id=kwargs["id"])
+            TenantDepartment.objects.select_related("data_source_department__department_relation")
+            .filter(id=kwargs["id"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .first()
         )
 
@@ -197,9 +195,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
             "id": tenant_dept.id,
             "name": tenant_dept.data_source_department.name,
             "extras": tenant_dept.data_source_department.extras,
-            # TODO 支持协同后不一定是数据源 ID
             "category_id": tenant_dept.data_source_department.data_source_id,
-            # TODO 支持软删除后不一定是 True
             "enabled": True,
         }
 
@@ -236,7 +232,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
     @staticmethod
     def _get_dept_full_name(tenant_dept: TenantDepartment, dept_relation: DataSourceDepartmentRelation) -> str:
         """获取部门组织路径信息"""
-        # TODO 考虑协同的情况，不能直接吐出到根部门的路径
+        # TODO 协同后续支持指定组织范围的话，不能直接吐出到根部门的路径
         if not dept_relation:
             return tenant_dept.data_source_department.name
 
@@ -314,18 +310,20 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         if not dept_relation:
             return 0
 
-        # TODO 考虑协同的情况，返回的应该是伪根到该节点的层级？
+        # TODO 协同后续支持指定组织范围的话，返回的应该是伪根到该节点的层级？
         return dept_relation.level
 
 
-class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """获取某部门的子部门列表"""
 
     pagination_class = LegacyOpenApiPagination
 
     def get(self, request, *args, **kwargs):
-        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404?
-        tenant_dept = TenantDepartment.objects.filter(id=kwargs["lookup_value"]).first()
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        tenant_dept = TenantDepartment.objects.filter(
+            id=kwargs["lookup_value"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
+        ).first()
         if not tenant_dept:
             raise Http404(f"department {kwargs['lookup_value']} not found")
 
@@ -348,7 +346,7 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         return Response(resp_data)
 
 
-class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     """查询单个用户的部门列表"""
 
     pagination_class = LegacyOpenApiPagination
@@ -358,13 +356,17 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # TODO (su) 支持软删除后需要根据 include_disabled 参数修改 filters
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        filters = {
+            "tenant_id": self.default_tenant.id,
+            "data_source__type": DataSourceTypeEnum.REAL,
+        }
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
-            filters = {"id": kwargs["lookup_value"]}
+            filters["id"] = kwargs["lookup_value"]
         else:
-            # TODO 目前 ID 指的是数据源用户 ID，未来支持协同之后，需要重新考虑
-            filters = {"data_source_user__id": kwargs["lookup_value"]}
+            # 用户 ID 即为数据源用户 ID
+            filters["data_source_user__id"] = kwargs["lookup_value"]
 
         tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
         if not tenant_user:
@@ -438,5 +440,5 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         if not dept_relation:
             return dept.name
 
-        # TODO 考虑协同的情况，不能直接吐出到根部门的路径
+        # TODO 协同后续支持指定组织范围的话，不能直接吐出到根部门的路径
         return "/".join(dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True))

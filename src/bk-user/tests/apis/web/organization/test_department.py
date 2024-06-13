@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -73,13 +73,13 @@ class TestTenantDepartmentListApi:
         assert {d["name"] for d in resp.data} == {"部门A", "部门B"}
         assert all(d["has_children"] for d in resp.data)
 
-    @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_list_collaborative_root_depts(self, api_client, collaborative_tenant):
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
+    def test_list_collaboration_root_depts(self, api_client, collaboration_tenant):
         """某协作租户的根部门"""
         resp = api_client.get(
             reverse(
                 "organization.tenant_department.list_create",
-                kwargs={"id": collaborative_tenant.id},
+                kwargs={"id": collaboration_tenant.id},
             ),
             data={"parent_department_id": 0},
         )
@@ -89,28 +89,28 @@ class TestTenantDepartmentListApi:
 
         excepted_dept = TenantDepartment.objects.get(
             data_source_department__name="公司",
-            data_source__owner_tenant_id=collaborative_tenant.id,
+            data_source__owner_tenant_id=collaboration_tenant.id,
         )
         assert resp.data[0]["id"] == excepted_dept.id
 
-    @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_list_collaborative_child_depts(self, api_client, collaborative_tenant):
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
+    def test_list_collaboration_child_depts(self, api_client, collaboration_tenant):
         """某协作租户的某级子部门"""
         dept_a = TenantDepartment.objects.get(
             data_source_department__name="部门A",
-            data_source__owner_tenant_id=collaborative_tenant.id,
+            data_source__owner_tenant_id=collaboration_tenant.id,
         )
         resp = api_client.get(
             reverse(
                 "organization.tenant_department.list_create",
-                kwargs={"id": collaborative_tenant.id},
+                kwargs={"id": collaboration_tenant.id},
             ),
             data={"parent_department_id": dept_a.id},
         )
 
         excepted_depts = TenantDepartment.objects.filter(
             data_source_department__name__contains="中心A",
-            data_source__owner_tenant_id=collaborative_tenant.id,
+            data_source__owner_tenant_id=collaboration_tenant.id,
         )
         assert resp.status_code == status.HTTP_200_OK
         assert {d["id"] for d in resp.data} == set(excepted_depts.values_list("id", flat=True))
@@ -158,8 +158,8 @@ class TestTenantDepartmentCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "上级部门中存在同名部门" in resp.data["message"]
 
-    def test_create_other_tenant_dept(self, api_client, random_tenant, collaborative_tenant):
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": collaborative_tenant.id})
+    def test_create_other_tenant_dept(self, api_client, random_tenant, collaboration_tenant):
+        url = reverse("organization.tenant_department.list_create", kwargs={"id": collaboration_tenant.id})
         resp = api_client.post(url, data={"parent_department_id": 0, "name": generate_random_string()})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "仅可创建属于当前租户的部门" in resp.data["message"]
@@ -223,9 +223,9 @@ class TestTenantDepartmentDestroyApi:
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_collaborative(self, api_client, random_tenant, collaborative_tenant, full_local_data_source):
+    def test_with_collaboration(self, api_client, random_tenant, collaboration_tenant, full_local_data_source):
         # 从随机租户协同数据到协同租户
-        sync_users_depts_to_tenant(collaborative_tenant, full_local_data_source)
+        sync_users_depts_to_tenant(collaboration_tenant, full_local_data_source)
 
         dept_b = TenantDepartment.objects.get(data_source_department__name="部门B", tenant=random_tenant)
         # 把关联数据都干掉，专心测试删除的影响情况
@@ -234,7 +234,7 @@ class TestTenantDepartmentDestroyApi:
         resp = api_client.delete(reverse("organization.tenant_department.update_destroy", kwargs={"id": dept_b.id}))
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        tenant_ids = [random_tenant.id, collaborative_tenant.id]
+        tenant_ids = [random_tenant.id, collaboration_tenant.id]
         deleted_dept_codes = ["dept_b", "center_ba", "group_baa"]
         # 租户部门和子部门都干掉了
         assert not TenantDepartment.objects.filter(
@@ -271,18 +271,40 @@ class TestTenantDepartmentSearchApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_multi_tenant(self, api_client, random_tenant, collaborative_tenant):
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
+    def test_multi_tenant(self, api_client, random_tenant, collaboration_tenant):
         resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "部门"})
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 4  # noqa: PLR2004  magic number here is ok
 
         assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
-        assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaborative_tenant.id}
+        assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaboration_tenant.id}
         assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
 
     def test_match_nothing(self, api_client):
         resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "2887"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
+
+
+class TestOptionalTenantDepartmentListApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_dept(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "部门"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
+        assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_aa_keyword(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "AA"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {dept["name"] for dept in resp.data} == {"中心AA", "小组AAA", "小组BAA"}
+        assert {dept["organization_path"] for dept in resp.data} == {
+            "公司/部门A/中心AA",
+            "公司/部门A/中心AA/小组AAA",
+            "公司/部门B/中心BA/小组BAA",
+        }

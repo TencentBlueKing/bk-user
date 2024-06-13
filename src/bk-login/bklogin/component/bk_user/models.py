@@ -15,25 +15,17 @@ from pydantic import BaseModel
 from .constants import IdpStatus
 
 
-class EnabledIdp(BaseModel):
-    id: str
-    plugin_id: str
+class GlobalSetting(BaseModel):
+    """全局配置信息"""
+
+    bk_user_url: str
 
 
-class OnlyEnabledAuthTenant(BaseModel):
+class CollaborationTenant(BaseModel):
+    """协同租户信息"""
+
     id: str
     name: str
-    logo: str = ""
-    enabled_idps: List[EnabledIdp]
-
-
-class GlobalInfo(BaseModel):
-    """全局信息"""
-
-    tenant_visible: bool
-    enabled_auth_tenant_number: int
-    # 当且仅当只有一个租户认证可用时候才有值，即 enabled_auth_tenant_number = 1 时才有值
-    only_enabled_auth_tenant: OnlyEnabledAuthTenant | None
 
 
 class TenantInfo(BaseModel):
@@ -43,10 +35,7 @@ class TenantInfo(BaseModel):
     name: str
     logo: str = ""
 
-
-class IdpPluginInfo(BaseModel):
-    id: str
-    name: str
+    collaboration_tenants: List[CollaborationTenant] = []
 
 
 class IdpInfo(BaseModel):
@@ -54,13 +43,22 @@ class IdpInfo(BaseModel):
 
     id: str
     name: str
-    status: IdpStatus
-    plugin: IdpPluginInfo
+    plugin_id: str
+    data_source_type: str
 
 
-class IdpDetailInfo(IdpInfo):
+class IdpPluginInfo(BaseModel):
+    id: str
+    name: str
+
+
+class IdpDetail(BaseModel):
     """认证源详情"""
 
+    id: str
+    name: str
+    status: IdpStatus
+    plugin: IdpPluginInfo
     owner_tenant_id: str
     plugin_config: Dict[str, Any]
 

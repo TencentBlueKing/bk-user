@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Tuple
+from typing import List, Tuple
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -28,6 +29,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantStatus
 from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
     Tenant,
     TenantDepartment,
     TenantManager,
@@ -92,7 +94,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
             # 创建内置管理的本地数据源
             data_source = self._create_builtin_management_data_source(
-                tenant.id, data["fixed_password"], data["notification_method"]
+                tenant.id, data["fixed_password"], data["notification_methods"]
             )
 
             # 添加内置管理账号
@@ -116,7 +118,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
     @staticmethod
     def _create_builtin_management_data_source(
-        tenant_id: str, fixed_password: str, notification_method: str
+        tenant_id: str, fixed_password: str, notification_methods: List[str]
     ) -> DataSource:
         """创建租户内建管理的本地数据源"""
         # 获取本地数据源的默认配置
@@ -138,7 +140,9 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
         plugin_config.password_initial.fixed_password = fixed_password
         # 设置通知方式
-        plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(notification_method)]
+        plugin_config.password_initial.notification.enabled_methods = [
+            NotificationMethod(n) for n in notification_methods
+        ]
 
         return DataSource.objects.create(
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
@@ -247,8 +251,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             for data_source in DataSource.objects.filter(owner_tenant_id=tenant.id):
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
+            # 删除协同策略，分享方 / 接受方是本租户的都删除
+            CollaborationStrategy.objects.filter(Q(source_tenant=tenant) | Q(target_tenant=tenant)).delete()
+
             # 删除剩余的，通过协同创建的租户用户 / 部门（本租户数据源同步所得的，已经在删除数据源时候删除）
-            # TODO (su) 协同相关数据的需要删除，比如协同策略，被协同的策略等等
             TenantUser.objects.filter(tenant=tenant).delete()
             TenantDepartment.objects.filter(tenant=tenant).delete()
             # 最后再删除租户
@@ -343,7 +349,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
         # 修改数据源配置
         # Note: plugin_config.password_initial.fixed_password 没必要修改，
         #  直接修改管理账号密码即可，第一次创建时为了发送, 修改时不需要调整了
-        plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(data["notification_method"])]
+        plugin_config.password_initial.notification.enabled_methods = [
+            NotificationMethod(n) for n in data["notification_methods"]
+        ]
 
         # 更新
         with transaction.atomic():

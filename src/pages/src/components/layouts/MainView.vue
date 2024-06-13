@@ -26,9 +26,10 @@
 </template>
 
 <script setup lang="ts"> import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
 import MainBreadcrumbs from './MainBreadcrumbs.vue';
 
-import { useRoute } from 'vue-router';
 import { useMainViewStore, useMenu, useUser } from '@/store';
 const menuStore = useMenu();
 const mainViewStore = useMainViewStore();
@@ -56,7 +57,7 @@ const hiddenBoxShadow = computed(() => route.meta.hiddenBoxShadow);
   background-color: #f5f7fa;
 
   &.has-breadcrumbs {
-    height: calc(100vh - 104px);
+    height: calc(100vh - 92px);
   }
 }
 

@@ -6,7 +6,7 @@
       :key="index">
       <bk-overflow-title class="details-content-key" type="tips">{{ item.display_name }}：</bk-overflow-title>
       <bk-overflow-title class="details-content-value" type="tips">
-        {{ customFieldsMap(item) }}
+        {{ customFieldsMap(item) || '--' }}
       </bk-overflow-title>
     </div>
   </div>
@@ -27,5 +27,12 @@ defineProps({
 
 <style lang="less" scoped>
 @import url("@/css/viewUser.less");
+</style>
+<style  lang="less">
+.details-content-key, .details-content-value {
+  .text-ov {
+    font-size: 14px;
+  }
+}
 </style>
 

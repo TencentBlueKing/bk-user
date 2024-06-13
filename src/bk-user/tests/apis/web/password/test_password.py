@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -81,9 +81,12 @@ class TestResetPasswordByPhoneAfterForget:
             assert resp.status_code == status.HTTP_200_OK
             assert tenant_user.id in [user["tenant_user_id"] for user in resp.data]
 
-            # 5. 通过 Token 重置密码
-            charset = string.ascii_letters + string.digits + string.punctuation
-            new_password = generate_random_string(length=32, chars=charset)
+            # 5. 通过 Token 重置密码，分批次生成再拼接，确保各种字符都有
+            new_password = (
+                generate_random_string(length=16, chars=string.ascii_letters)
+                + generate_random_string(length=8, chars=string.digits)
+                + generate_random_string(length=8, chars=string.punctuation)
+            )
             resp = api_client.post(
                 reverse("password.reset_passwd_by_token"),
                 data={

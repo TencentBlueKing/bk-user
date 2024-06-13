@@ -30,14 +30,13 @@
             :is-data-empty="state.isTableDataEmpty"
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isTableDataError"
-            @handleEmpty="search = ''"
-            @handleUpdate="fetchTenantsList"
+            @handle-empty="search = ''"
+            @handle-update="fetchTenantsList"
           />
         </template>
         <bk-table-column
           prop="name"
-          :label="$t('租户名')"
-          :sort="{ value: 'asc' }">
+          :label="$t('租户名')">
           <template #default="{ row, index }">
             <div class="item-name">
               <img v-if="row.logo" class="img-logo" :src="row.logo" />
@@ -64,7 +63,7 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="created_at" :label="$t('创建时间')" :sort="true" />
+        <bk-table-column prop="created_at" :label="$t('创建时间')" />
         <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <div class="flex items-center">
@@ -96,8 +95,8 @@
                 class="dot-menu"
                 placement="bottom-start"
                 theme="light"
-                :arrow="false"
-                offset="15">
+                ext-cls="operate-popover"
+                :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>
                   <ul class="dot-menu-list">
@@ -128,22 +127,26 @@
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
-      :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
+      :class="[{ 'details-edit-wrapper': !isView }]"
       :width="640"
       :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
+      render-directive="if"
       quick-close
+      transfer
     >
       <template #header>
-        <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
-          <bk-button
-            outline
-            theme="primary"
-            @click="handleClick('edit', state.tenantsData)"
-          >{{ $t('编辑') }}</bk-button
-          >
+        <div class="flex items-center justify-between w-[100%] pr-[16px]">
+          <span>{{ detailsConfig.title }}</span>
+          <div v-if="isView">
+            <bk-button
+              outline
+              theme="primary"
+              @click="handleClick('edit', state.tenantsData)"
+            >{{ $t('编辑') }}</bk-button
+            >
+          </div>
         </div>
       </template>
       <template #default>
@@ -153,14 +156,14 @@
           :type="detailsConfig.type"
           :tenants-data="state.tenantsData"
           :is-email="isEmail"
-          @handleCancelEdit="handleCancelEdit"
-          @updateTenantsList="updateTenantsList"
+          @handle-cancel-edit="handleCancelEdit"
+          @update-tenants-list="updateTenantsList"
         />
       </template>
     </bk-sideslider>
     <!-- 重置管理员密码 -->
     <bk-dialog
-      class="dialog-wrapper"
+      :width="640"
       :is-show="adminPasswordConfig.isShow"
       :title="adminPasswordConfig.title"
       :is-loading="adminPasswordConfig.isLoading"
@@ -183,34 +186,45 @@
         </bk-form-item>
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
-            <bk-input
-              type="password"
+            <passwordInput
               v-model="adminPasswordData.fixed_password"
-              @change="changePassword" />
+              @change="changePassword"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
           </div>
         </bk-form-item>
-        <bk-form-item :label="$t('通知方式')" required>
-          <bk-radio-group
-            v-model="adminPasswordData.notification_method">
-            <bk-radio label="email">
-              <span>{{ $t('邮箱') }}</span>
-            </bk-radio>
-            <bk-radio label="sms">
-              <span>{{ $t('短信') }}</span>
-            </bk-radio>
-          </bk-radio-group>
-          <div v-if="isEmail">
+        <bk-form-item :label="$t('通知方式')">
+          <span class="inline-flex items-center text-sm  pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
+            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="emailClick"
+            >
+              {{ $t('邮箱') }}
+            </span>
+          </span>
+          <span
+            class="inline-flex items-center ml-[24px] text-sm  pb-[8px] mb-[8px]"
+            :class="[isClickEmail ? '' : 'active-tab']">
+            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
+            <span
+              class="ml-[6px] cursor-pointer text-[#63656E]"
+              @click="phoneClick"
+            >
+              {{ $t('短信') }}
+            </span>
+          </span>
+          <div v-if="isClickEmail">
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="adminPasswordData.email"
-              @blur="handleBlur"
+              @blur="emailBlur"
               @input="handleInput" />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
@@ -218,21 +232,24 @@
             v-else
             :form-data="adminPasswordData"
             :tel-error="telError"
-            @changeCountryCode="changeCountryCode"
-            @changeTelError="changeTelError" />
+            :required="smsValue"
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
         </bk-form-item>
       </bk-form>
     </bk-dialog>
   </div>
 </template>
 
-<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+<script setup lang="ts">
+import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
 import {
@@ -274,7 +291,7 @@ const state = reactive({
     logo: '',
     status: 'enabled',
     fixed_password: '',
-    notification_method: 'email',
+    notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
@@ -311,7 +328,7 @@ watch(
           logo: '',
           status: 'enabled',
           fixed_password: '',
-          notification_method: 'email',
+          notification_methods: ['email'],
           email: '',
           phone: '',
           phone_country_code: '86',
@@ -338,6 +355,10 @@ const handleClick = async (type: string, item?: any) => {
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
+};
+
+const inputPassword = (val) => {
+  adminPasswordData.value.fixed_password = val;
 };
 
 const handleCancelEdit = async () => {
@@ -413,7 +434,7 @@ const fetchTenantsList = () => {
 
         const rows = getRows();
         for (const i of rows) {
-          i.style.background = '#DCFFE2';
+          i.style.background = '#F2FCF5';
         }
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
@@ -450,7 +471,7 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
+    detailsConfig.isShow = !enableLeave;
   } else {
     detailsConfig.isShow = false;
   }
@@ -476,14 +497,18 @@ const handleClickEnter = () => {
 
 // 停用租户
 const handleClickDisable = (item) => {
+  const isEnabled = item.status === 'enabled';
+  const title = isEnabled ? `${t('确定停用租户')}：${item.name}？` : `${t('确定启用租户')}：${item.name}？`;
+  const subTitle = isEnabled ? t('停用期间，该租户下的用户将无法登录系统') : t('启用后，该租户下的用户可以重新登录系统');
+  const successMessage = isEnabled ? t('租户停用成功') : t('租户启用成功');
   InfoBox({
     width: 400,
-    title: t('确定停用当前租户？'),
-    subTitle: t('停用后，用户将无法看到该租户信息'),
+    title,
+    subTitle,
+    confirmText: t('确定'),
     onConfirm: async () => {
       await putTenantsStatus(item.id);
-      const text = item.status === 'enabled' ? t('租户停用成功') : t('租户启用成功');
-      Message({ theme: 'success', message: text });
+      Message({ theme: 'success', message: successMessage });
       fetchTenantsList();
     },
   });
@@ -521,26 +546,27 @@ const adminPasswordConfig = reactive({
 
 const adminPasswordData = ref({
   fixed_password: '',
-  notification_method: 'email',
+  notification_methods: ['email'],
   email: '',
   phone: '',
   phone_country_code: '86',
 });
-
 const formRef = ref();
 
 const rules = {
   fixed_password: [validate.required],
 };
 
-watch(() => adminPasswordData.value.notification_method, (val) => {
-  if (val === 'email') {
-    adminPasswordData.value.phone = '';
-    adminPasswordData.value.phone_country_code = '86';
-    telError.value = false;
-  } else {
-    adminPasswordData.value.email = '';
-    emailError.value = false;
+watch(() => adminPasswordData.value.notification_methods, (val) => {
+  if (val.length === 1) {
+    if (val[0] === 'email') {
+      adminPasswordData.value.phone = '';
+      adminPasswordData.value.phone_country_code = '86';
+      telError.value = false;
+    } else if (val[0] === 'sms') {
+      adminPasswordData.value.email = '';
+      emailError.value = false;
+    }
   }
 });
 
@@ -557,16 +583,19 @@ const resetAdminPassword = async (item) => {
 
 const confirmPassword = async () => {
   try {
-    if (isEmail.value) {
+    if (emailValue.value) {
       handleBlur();
-    } else if (!adminPasswordData.value.phone) {
+    } else if (smsValue.value && !adminPasswordData.value.phone) {
       changeTelError(true);
     }
-
     await formRef.value.validate();
+    if (emailValue.value && emailError.value) return;
     if (telError.value) return;
 
     adminPasswordConfig.isLoading = true;
+    adminPasswordData.value.notification_methods = [];
+    if (emailValue.value) adminPasswordData.value.notification_methods.push('email');
+    if (smsValue.value) adminPasswordData.value.notification_methods.push('sms');
     await putBuiltinManager(adminPasswordConfig.id, adminPasswordData.value);
     adminPasswordConfig.isShow = false;
     Message({ theme: 'success', message: t('重置密码成功') });
@@ -586,13 +615,13 @@ const closedPassword = () => {
 };
 
 const resetAdminPasswordData = () => {
-  adminPasswordData.value = {
+  Object.assign(adminPasswordData.value, {
     fixed_password: '',
-    notification_method: 'email',
+    notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
-  };
+  });
 };
 
 const {
@@ -606,7 +635,87 @@ const {
   changeCountryCode,
   changeTelError,
 } = useAdminPassword(adminPasswordData.value);
+
+const isClickEmail = ref(true);
+const emailValue = ref(true);
+const smsValue = ref(false);
+
+// 点击电话之前的校验
+const  beforeTelChange = () => {
+  if (emailValue.value) {
+    if (adminPasswordData.value.email && !emailError.value) {
+      isClickEmail.value = false;
+      return true;
+    }
+    handleBlur();
+    return false;
+  }
+  // 邮箱未勾选， 可以切换
+  isClickEmail.value = false;
+  return true;;
+};
+
+// 点击邮箱之前的校验
+const  beforeEmailChange = () => {
+  if (smsValue.value) {
+    if (adminPasswordData.value.phone && !telError.value) {
+      isClickEmail.value = true;
+      return true;
+    }
+    changeTelError(true);
+    return false;
+  }
+  isClickEmail.value = true;
+  return true;;
+};
+
+const emailClick = () => {
+  if (smsValue.value) {
+    if (adminPasswordData.value.phone && !telError.value) {
+      isClickEmail.value = true;
+    } else {
+      changeTelError(true);
+    }
+  } else {
+    isClickEmail.value = true;
+  }
+};
+
+const phoneClick = () => {
+  if (emailValue.value) {
+    if (adminPasswordData.value.email && !emailError.value) {
+      isClickEmail.value = false;
+    } else {
+      handleBlur();
+    }
+  } else {
+    isClickEmail.value = false;
+  }
+};
+
+const changeSms = () => {
+  telError.value = smsValue.value ? telError.value : false;
+};
+const changeEmail = () => {
+  emailError.value = emailValue.value ? emailError.value : false;
+};
+const emailBlur = () => {
+  emailValue.value && handleBlur();
+};
 </script>
+
+<style lang="less">
+.operate-popover {
+  padding: 5px 0 !important;
+}
+
+.details-edit-wrapper {
+  .bk-modal-content {
+    height: calc(100vh - 52px) !important;
+    background: #f5f7fa !important;
+  }
+}
+</style>
 
 <style lang="less" scoped>
 .has-alert {
@@ -665,42 +774,6 @@ const {
   }
 }
 
-.details-wrapper {
-  :deep(.bk-sideslider-title) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px 0 50px !important;
-
-    .bk-button {
-      padding: 5px 17px !important;
-    }
-  }
-}
-
-.details-edit-wrapper {
-  :deep(.bk-modal-content) {
-    height: calc(100vh - 52px);
-    background: #f5f7fa;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
-  }
-}
-
-.dialog-wrapper {
-  :deep(.bk-modal-content) {
-    overflow: visible !important;
-  }
-}
-
 .error {
   position: absolute;
   left: 0;
@@ -751,7 +824,6 @@ const {
 
 .dot-menu-list {
   min-width: 50px;
-  padding: 5px 0;
   margin: 0;
   list-style: none;
 
@@ -771,5 +843,9 @@ const {
       cursor: not-allowed;
     }
   }
+}
+
+.active-tab {
+  border-bottom: 2px solid #3A84FF;
 }
 </style>

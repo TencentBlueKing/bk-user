@@ -34,7 +34,7 @@
       <Row :title="$t('认证配置')">
         <LabelContent :label="$t('认证方式')">{{ authConfig.method }}</LabelContent>
         <template v-if="authConfig.method === 'bearer_token'">
-          <LabelContent :label="$t('Token')">************</LabelContent>
+          <LabelContent label="Token">************</LabelContent>
         </template>
         <template v-else>
           <LabelContent :label="$t('用户名')">{{ authConfig.username }}</LabelContent>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -95,6 +95,11 @@ class ErrorCodes:
     TENANT_UPDATE_FAILED = ErrorCode(_("租户更新失败"))
     TENANT_DELETE_FAILED = ErrorCode(_("租户删除失败"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
+
+    # 协同策略
+    COLLABORATION_STRATEGY_DISABLED_BY_SOURCE = ErrorCode(_("协同策略被分享方禁用"))
+    COLLABORATION_STRATEGY_UPDATE_FAILED = ErrorCode(_("协同策略更新失败"))
+    COLLABORATION_STRATEGY_DELETE_FAILED = ErrorCode(_("协同策略删除失败"))
 
     # 租户部门
     TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))

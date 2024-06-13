@@ -346,20 +346,20 @@ const selectList = (val) => {
 }
 
 .department-dialog {
-  ::v-deep .bk-modal-content {
-    height: 422px !important;
-    max-height: none;
-    padding: 0 !important;
-    overflow: hidden !important;
+  // ::v-deep .bk-modal-content {
+  //   height: 422px !important;
+  //   max-height: none;
+  //   padding: 0 !important;
+  //   overflow: hidden !important;
 
-    .select-department-wrapper {
-      height: 100%;
+  //   .select-department-wrapper {
+  //     height: 100%;
 
-      .set-department-wrapper {
-        width: 100%;
-        height: 100%;
-      }
-    }
-  }
+  //     .set-department-wrapper {
+  //       width: 100%;
+  //       height: 100%;
+  //     }
+  //   }
+  // }
 }
 </style>

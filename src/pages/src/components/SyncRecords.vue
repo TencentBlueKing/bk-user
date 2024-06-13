@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper user-scroll-y">
+  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper">
     <div class="data-record-content">
       <bk-table
         class="user-info-table"
@@ -15,7 +15,7 @@
           <Empty
             :is-data-empty="dataRecordConfig.isDataEmpty"
             :is-data-error="dataRecordConfig.isDataError"
-            @handleUpdate="getSyncRecordsList"
+            @handle-update="getSyncRecordsList"
           />
         </template>
         <bk-table-column prop="start_at" :label="$t('开始时间')" :width="160" />
@@ -34,7 +34,7 @@
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '130px' }">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
@@ -65,6 +65,7 @@
       :width="800"
       quick-close
       :before-close="beforeClose"
+      transfer
     >
       <template #header>
         <div class="logs-header">
@@ -152,7 +153,7 @@ const getSyncRecordsList = async () => {
     dataRecordConfig.isDataError = false;
     const params = {
       page: pagination.current,
-      pageSize: pagination.limit,
+      page_size: pagination.limit,
       status: dataRecordConfig.status,
       id: props.dataSource?.id,
     };
@@ -198,7 +199,7 @@ const dataRecordFilter = ({ checked }) => {
   if (checked.length === 0) {
     pagination.current = 1;
   }
-  dataRecordConfig.status = checked;
+  dataRecordConfig.status = checked.join(',');
   pagination.current = 1;
   getSyncRecordsList();
 };
@@ -220,7 +221,6 @@ const handleLogDetails = async (row) => {
 };
 
 const beforeClose = () => {
-  logsDetails.value = {};
   logConfig.value.isShow = false;
 };
 
@@ -229,7 +229,7 @@ const interval = setInterval(() => {
   dataRecordConfig.isDataError = false;
   const params = {
     page: pagination.current,
-    pageSize: pagination.limit,
+    page_size: pagination.limit,
     status: dataRecordConfig.status,
     id: props.dataSource?.id,
   };
@@ -251,7 +251,7 @@ onBeforeUnmount(() => {
 <style lang="less" scoped>
 .sync-records-wrapper {
   width: 100%;
-  height: calc(100vh - 140px);
+  height: calc(100vh - 52px);
   padding: 28px 30px;
 
   :deep(.user-info-table) {
@@ -345,18 +345,18 @@ onBeforeUnmount(() => {
     }
   }
 
-  ::v-deep .bk-modal-content {
-    overflow-y: auto;
+  // ::v-deep .bk-modal-content {
+  //   overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
-  }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
+  // }
 }
 </style>

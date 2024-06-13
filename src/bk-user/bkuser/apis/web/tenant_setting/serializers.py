@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -65,7 +65,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
-    data_type = serializers.CharField(help_text="字段类型")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     unique = serializers.BooleanField(help_text="是否唯一")
     default = serializers.JSONField(help_text="默认值")
@@ -76,7 +76,7 @@ class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
-    data_type = serializers.CharField(help_text="字段类型")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     unique = serializers.BooleanField(help_text="是否唯一")
     personal_center_visible = serializers.BooleanField(help_text="是否在个人中心可见")

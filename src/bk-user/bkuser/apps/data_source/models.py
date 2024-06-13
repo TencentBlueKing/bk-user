@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -193,9 +193,6 @@ class DataSourceUserDeprecatedPasswordRecord(TimestampedModel):
     user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE)
     password = models.CharField("用户曾用密码", max_length=128)
     operator = models.CharField("操作人", max_length=128)
-
-    class Meta:
-        ordering = ["-created_at"]
 
 
 class DataSourceDepartment(TimestampedModel):

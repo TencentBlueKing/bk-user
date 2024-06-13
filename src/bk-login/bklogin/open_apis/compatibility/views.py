@@ -26,7 +26,7 @@ class TokenIntrospectCompatibilityApi(View, CompatibilityApiMixin):
     def get(self, request, *args, **kwargs):
         bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
 
-        ok, username, msg = BkTokenManager().is_bk_token_valid(bk_token)
+        ok, username, msg = BkTokenManager().is_valid(bk_token)
         if not ok:
             return self.fail_response(error_code=CompatibilityApiErrorCodeEnum.PARAM_NOT_VALID, message=msg)
 
@@ -39,7 +39,7 @@ class UserRetrieveCompatibilityApi(View, CompatibilityApiMixin):
     def get(self, request, *args, **kwargs):
         bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
 
-        ok, username, msg = BkTokenManager().is_bk_token_valid(bk_token)
+        ok, username, msg = BkTokenManager().is_valid(bk_token)
         if not ok:
             # 对于来着 ESB 请求，如果 bk_token 验证不通过，还可以通过 username 参数指定查询的用户
             username = request.GET.get(self.username_key)

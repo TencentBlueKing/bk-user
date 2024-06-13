@@ -5,7 +5,12 @@
         <bk-tag :theme="adminAccount.enable_login ? 'success' : ''">
           {{ adminAccount.enable_login ? $t('启用') : $t('未启用') }}
         </bk-tag>
-        <bk-button text theme="primary" @click="changeStatus">
+        <bk-button
+          text
+          theme="primary"
+          @click="changeStatus"
+          :disabled="adminAccount.enable_login && isDisabled"
+          v-bk-tooltips="{ content: $t('唯一的管理员不能停用'), disabled: !adminAccount.enable_login || !isDisabled }">
           {{ adminAccount.enable_login ? $t('去停用') : $t('去启用') }}
         </bk-button>
       </LabelContent>
@@ -17,7 +22,7 @@
             @click="editUsername" />
         </template>
         <template v-else>
-          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" />
+          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" @enter="saveUsername" />
           <bk-button
             text
             theme="primary"
@@ -39,7 +44,7 @@
           theme="primary"
           @click="resetPasswordConfig.isShow = true"
         >
-          <i class="user-icon icon-refresh" />
+          <i class="user-icon icon-refresh mr-[6px]" />
           {{ $t('重置密码') }}
         </bk-button>
       </LabelContent>
@@ -52,7 +57,9 @@
             class="tag-style"
             v-for="item in selectedValue"
             :key="item.id"
-            :closable="!showSelectInput"
+            :closable="item.isMouseenter"
+            @mouseenter="item.isMouseenter = true"
+            @mouseleave="item.isMouseenter = false"
             @close="deleteAccount(item.id)">
             <template #icon>
               <i class="user-icon icon-yonghu" />
@@ -68,9 +75,9 @@
               class="w-[300px]"
               :state="realUsers"
               :params="params"
-              @changeSelectList="changeSelectList"
-              @searchUserList="fetchRealUsers"
-              @scrollChange="scrollChange"
+              @change-select-list="changeSelectList"
+              @search-user-list="fetchRealUsers"
+              @scroll-change="scrollChange"
             />
             <bk-button
               text
@@ -107,14 +114,11 @@
         :rules="rules">
         <bk-form-item :label="$t('密码')" property="password" required>
           <div class="flex justify-between">
-            <bk-input
-              type="password"
-              v-model="resetPasswordConfig.password"
-              @change="changePassword" />
+            <passwordInput v-model="resetPasswordConfig.password" @change="changePassword" @input="changePassword" />
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -126,12 +130,13 @@
 </template>
 
 <script setup lang="ts">
-import { InfoBox, Message } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import Row from '@/components/layouts/row.vue';
 import MemberSelector from '@/components/MemberSelector.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   deleteRealManagers,
@@ -145,6 +150,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
+
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -180,15 +186,17 @@ const changeStatus = () => {
   InfoBox({
     width: 400,
     infoType: adminAccount.value.enable_login ? 'warning' : undefined,
-    title: t(adminAccount.value.enable_login ? '是否停用管理员账号？' : '是否启用管理员账号？'),
-    subTitle: t(adminAccount.value.enable_login
-      ? '停用后，将不可使用管理员账号进行登录'
-      : '停用后，可使用管理员账号进行登录'),
-    confirmText: adminAccount.value.enable_login ? t('停用') : undefined,
+    title: adminAccount.value.enable_login ? t('是否停用管理员账号？') : t('是否启用管理员账号？'),
+    subTitle: adminAccount.value.enable_login
+      ? t('停用后，将不可使用管理员账号进行登录')
+      : t('启用后，可使用管理员账号进行登录'),
+    confirmText: adminAccount.value.enable_login ? t('停用') : t('启用'),
     theme: adminAccount.value.enable_login ? 'danger' : undefined,
     onConfirm: async () => {
       await patchBuiltinManager({ enable_login: !adminAccount.value.enable_login });
       initBuiltinManager();
+      const message = adminAccount.value.enable_login ? t('停用成功') : t('启用成功');
+      Message({ theme: 'success', message });
     },
   });
 };
@@ -205,6 +213,7 @@ watch(() => isEditUsername.value, (val) => {
 const saveUsername = async () => {
   await patchBuiltinManager({ username: adminAccount.value.username });
   isEditUsername.value = false;
+  Message({ theme: 'success', message: t('保存成功') });
 };
 
 const cancelUsername = () => {
@@ -279,15 +288,16 @@ const realUsers = ref({
 
 const params = reactive({
   page: 1,
-  pageSize: 10,
+  page_size: 10,
   keyword: '',
   exclude_manager: true,
 });
-
+const isDisabled = ref(false);
 const initRealManagers = async () => {
   try {
     const res = await getRealManagers();
     selectedValue.value = res.data;
+    isDisabled.value = !selectedValue.value.length;
   } finally {
     isLoading.value = false;
   }

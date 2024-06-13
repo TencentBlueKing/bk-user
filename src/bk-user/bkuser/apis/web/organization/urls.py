@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -21,9 +21,9 @@ urlpatterns = [
     ),
     # 协作租户信息
     path(
-        "collaborative-tenants/",
-        views.CollaborativeTenantListApi.as_view(),
-        name="organization.collaborative_tenant.list",
+        "collaboration-tenants/",
+        views.CollaborationTenantListApi.as_view(),
+        name="organization.collaboration_tenant.list",
     ),
     # 租户用户 - 快速录入必填字段
     path(
@@ -55,7 +55,7 @@ urlpatterns = [
         views.OptionalTenantDepartmentListApi.as_view(),
         name="organization.optional_department.list",
     ),
-    # 可选租户用户列表（下拉框数据用）
+    # 可选租户用户上级列表（下拉框数据用）
     path(
         "tenants/optional-leaders/",
         views.OptionalTenantUserListApi.as_view(),
@@ -78,6 +78,12 @@ urlpatterns = [
         "tenants/users/<str:id>/",
         views.TenantUserRetrieveUpdateDestroyApi.as_view(),
         name="organization.tenant_user.retrieve_update_destroy",
+    ),
+    # 获取租户用户密码规则提示
+    path(
+        "tenants/users/<str:id>/password-rule/",
+        views.TenantUserPasswordRuleRetrieveApi.as_view(),
+        name="organization.tenant_user.password_rule",
     ),
     # 重置租户用户密码
     path(

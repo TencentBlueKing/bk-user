@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
 
-TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,30}[a-zA-Z0-9]$")
+TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{1,30}[a-zA-Z0-9]$")
 
 # 自定义字段英文标识命名规则
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
@@ -136,3 +136,26 @@ class TenantUserStatus(str, StructuredEnum):
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
     EXPIRED = EnumField("expired", label=_("已过期"))
+
+
+class CollaborationStrategyStatus(str, StructuredEnum):
+    """协同策略状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+    UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
+
+
+class CollaborationScopeType(str, StructuredEnum):
+    """协同范围类型"""
+
+    ALL = EnumField("all", label=_("全部"))
+    # TODO (su) 支持指定协同的组织范围 & 用户字段
+    # SPECIFIED = EnumField("specified", label=_("指定"))
+
+
+class FieldMappingOperation(str, StructuredEnum):
+    """字段映射关系"""
+
+    DIRECT = EnumField("direct", label=_("直接"))
+    EXPRESSION = EnumField("expression", label=_("表达式"))

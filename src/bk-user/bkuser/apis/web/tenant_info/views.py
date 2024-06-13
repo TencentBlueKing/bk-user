@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -114,9 +114,13 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         data = slz.validated_data
 
         # 若当前内置的租户管理员是唯一的管理员，则无法禁用
-        if not TenantManager.objects.filter(
-            tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
-        ).exists():
+        if (
+            # Note: 这里不能直接 if not data.get("enable_login"), 因为对于 None 情况，不会更新，所以不需要判断
+            data.get("enable_login") is False
+            and not TenantManager.objects.filter(
+                tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
+            ).exists()
+        ):
             raise error_codes.VALIDATION_ERROR.f(_("不存在实名管理员，无法禁用内置管理员账号登录"))
 
         # 内建数据源 & 用户 & 认证源
@@ -133,7 +137,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(
             new_username = data.get("username")
             if new_username and user.username != new_username:
                 user.username = new_username
-                user.save(update_fields=["username", "updated_at"])
+                # Note: full_name 同步修改，避免展示时一直是创建时的 username
+                user.full_name = new_username
+                user.save(update_fields=["username", "full_name", "updated_at"])
                 # Note: 必须同步修改账密信息里的用户名
                 LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=new_username)
 

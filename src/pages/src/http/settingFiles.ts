@@ -1,6 +1,9 @@
 import http from './fetch';
 import type {
+  CollaborationSyncRecordsParams,
+  FromStrategiesConfirmParams,
   NewCustomFieldsParams,
+  NewToStrategiesParams,
   PatchBuiltinManagerParams,
   PutCustomFieldsParams,
   PutPasswordParams,
@@ -8,6 +11,7 @@ import type {
   PutTenantInfoParams,
   PutUserValidityParams,
   RealUsersParams,
+  TenantItem,
 } from './types/settingFiles';
 
 /**
@@ -84,3 +88,67 @@ export const getTenantInfo = () => http.get('/api/v1/web/tenant-info/');
  * 基础设置-更新租户
  */
 export const PutTenantInfo = (params: PutTenantInfoParams) => http.put('/api/v1/web/tenant-info/', params);
+
+/**
+ * 跨租户协同-我分享的协同策略
+ */
+export const getToStrategies = () => http.get('/api/v1/web/collaboration/to-strategies/');
+
+/**
+ * 跨租户协同-我分享的协同策略切换状态
+ */
+export const putToStrategiesStatus = (id: number) => http.put(`/api/v1/web/collaboration/to-strategies/${id}/source-status/`);
+
+/**
+ * 跨租户协同-新建协同策略
+ */
+export const postToStrategies = (params: NewToStrategiesParams) => http.post('/api/v1/web/collaboration/to-strategies/', params);
+
+/**
+ * 跨租户协同-更新协同策略
+ */
+export const putToStrategies = (id: number, params: NewToStrategiesParams) => http.put(`/api/v1/web/collaboration/to-strategies/${id}/`, params);
+
+/**
+ * 跨租户协同-删除协同策略
+ */
+export const deleteToStrategies = (id: number) => http.delete(`/api/v1/web/collaboration/to-strategies/${id}/`);
+
+/**
+ * 跨租户协同-我接受的协同策略
+ */
+export const getFromStrategies = () => http.get('/api/v1/web/collaboration/from-strategies/');
+
+/**
+ * 跨租户协同-我接受的协同策略切换状态
+ */
+export const putFromStrategiesStatus = (id: number) => http.put(`/api/v1/web/collaboration/from-strategies/${id}/target-status/`);
+
+/**
+ * 跨租户协同-源租户自定义字段
+ */
+export const getSourceTenantCustomFields = (id: number) => http.get(`/api/v1/web/collaboration/from-strategies/${id}/source-tenant-custom-fields/`);
+
+/**
+ * 跨租户协同-确认协同策略
+ */
+export const putFromStrategiesConfirm = (params: FromStrategiesConfirmParams) => http.put(`/api/v1/web/collaboration/from-strategies/${params.id}/operations/confirm/`, params);
+
+/**
+ * 跨租户协同-编辑协同策略
+ */
+export const putFromStrategies = (params: FromStrategiesConfirmParams) => http.put(`/api/v1/web/collaboration/from-strategies/${params.id}/`, params);
+
+/**
+ * 跨租户协同-数据更新记录
+ */
+export const getCollaborationSyncRecords = (params: CollaborationSyncRecordsParams) => http.get('/api/v1/web/collaboration/sync-records/', params);
+/**
+ * 跨租户协同-数据更新记录-日志详情
+ */
+export const getCollaborationSyncRecordsLogs = (id: number) => http.get(`/api/v1/web/collaboration/sync-records/${id}/`);
+
+/**
+ * 跨租户协同-新建协同策略-目标租户
+ */
+export const getTenantList = (params: TenantItem) => http.get('/api/v1/web/collaboration/target-tenants/', params);

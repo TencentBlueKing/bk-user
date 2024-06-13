@@ -56,6 +56,7 @@ import { computed, h, ref } from 'vue';
 
 import { addDepartment, deleteDepartment, updateDepartment } from '@/http/organizationFiles';
 import { t } from '@/language/index';
+import router from '@/router';
 
 const props = defineProps({
   dept: {
@@ -105,6 +106,12 @@ const collaborationDropdownList = ref<any[]>([
   {
     name: t('协同配置'),
     action: () => {
+      router.push({
+        name: 'collaboration',
+        query: {
+          tab: 'other',
+        },
+      });
     },
   },
 ]);
@@ -148,7 +155,7 @@ const handleDelete = () => {
       ],
     ),
     onConfirm: () => {
-      deleteDepartment(props.dept.id).then((res) => {
+      deleteDepartment(props.dept.id).then(() => {
         emits('deleteNode', props.dept.id);
       });
     },

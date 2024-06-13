@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -24,7 +24,7 @@ from bkuser.apis.web.tenant_setting.serializers import (
 )
 from bkuser.apps.data_source.tasks import (
     migrate_user_extras_with_mapping,
-    remove_dropped_field_in_field_mapping,
+    remove_dropped_field_in_data_source_field_mapping,
     remove_dropped_field_in_user_extras,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -35,6 +35,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
+from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaboration_strategy_field_mapping
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -124,8 +125,9 @@ class TenantUserCustomFieldUpdateDeleteApi(
         tenant_id, field_name = custom_field.tenant_id, custom_field.name
         custom_field.delete()
 
-        # 删除自定义字段，需要执行数据清理，包括数据源字段映射配置 + 用户自定义字段数据
-        remove_dropped_field_in_field_mapping.delay(tenant_id, field_name)
+        # 删除自定义字段，需要执行数据清理，包括数据源字段映射配置 + 租户协同策略字段映射 + 用户自定义字段数据
+        remove_dropped_field_in_data_source_field_mapping.delay(tenant_id, field_name)
+        remove_dropped_field_in_collaboration_strategy_field_mapping.delay(tenant_id, field_name)
         remove_dropped_field_in_user_extras.delay(tenant_id, field_name)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

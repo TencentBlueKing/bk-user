@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -43,10 +43,14 @@ class DataSourceDepartmentSyncer:
         ctx: DataSourceSyncTaskContext,
         data_source: DataSource,
         raw_departments: List[RawDataSourceDepartment],
+        overwrite: bool,
+        incremental: bool,
     ):
         self.ctx = ctx
         self.data_source = data_source
         self.raw_departments = raw_departments
+        self.overwrite = overwrite
+        self.incremental = incremental
 
     def sync(self):
         self.ctx.logger.info(f"receive {len(self.raw_departments)} departments from data source plugin")  # noqa: G004
@@ -67,8 +71,8 @@ class DataSourceDepartmentSyncer:
         raw_dept_codes = {dept.code for dept in self.raw_departments}
 
         waiting_create_dept_codes = raw_dept_codes - dept_codes
-        waiting_delete_dept_codes = dept_codes - raw_dept_codes
-        waiting_update_dept_codes = dept_codes & raw_dept_codes
+        waiting_delete_dept_codes = dept_codes - raw_dept_codes if not self.incremental else set()
+        waiting_update_dept_codes = dept_codes & raw_dept_codes if self.overwrite else set()
 
         if waiting_delete_dept_codes:
             self._delete_departments(waiting_delete_dept_codes)
@@ -135,11 +139,24 @@ class DataSourceDepartmentSyncer:
         dept_code_map = {dept.code: dept for dept in DataSourceDepartment.objects.filter(data_source=self.data_source)}
         # {dept_code: parent_dept_code}
         dept_parent_code_map = {dept.code: dept.parent for dept in self.raw_departments}
+
+        # 如果是增量同步模式，则需要将存量的部门关系捞出来，和新的合并下，再删除重建
+        # Q: 为什么不是增量模式时候，一通对比之后，直接往现有的 MPTT 森林里面塞节点？
+        # A: MPTT 树结构复杂，变更操作可能存在风险，且后台任务对性能要求不高，先用简单的删除重建方案
+        if self.incremental:
+            for relation in DataSourceDepartmentRelation.objects.filter(data_source=self.data_source):
+                # 如果某个部门有新的父部门，则跳过
+                if relation.department.code in dept_parent_code_map:
+                    continue
+
+                dept_parent_code_map[relation.department.code] = (
+                    relation.parent.department.code if relation.parent else None
+                )
+
         # {dept_code: data_source_dept_relation}
         dept_code_rel_map: Dict[str, DataSourceDepartmentRelation] = {}
-
+        mptt_tree_ids: Set[int] = set()
         # 目前采用全部删除，再重建的方式
-        mptt_tree_ids = set()
         with DataSourceDepartmentRelation.objects.disable_mptt_updates():
             DataSourceDepartmentRelation.objects.filter(data_source=self.data_source).delete()
             parent_relations = list(dept_parent_code_map.items())
@@ -385,7 +402,23 @@ class DataSourceUserSyncer:
             )
 
         # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
-        if waiting_delete_user_leader_id_tuples := exists_user_leader_id_tuples - user_leader_id_tuples:
+        # 全量模式，没有覆不覆盖一说，就是覆盖，不需要特殊判断
+        waiting_delete_user_leader_id_tuples = exists_user_leader_id_tuples - user_leader_id_tuples
+        if self.incremental:
+            # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
+            if self.overwrite:
+                # 如果指定 leader 为空，也算是修改了关联边，在覆盖的模式下，需要清理掉旧的数据
+                just_update_relation_user_ids = {user_code_id_map[user.code] for user in self.raw_users}
+                waiting_delete_user_leader_id_tuples = {
+                    (user_id, dept_id)
+                    for user_id, dept_id in waiting_delete_user_leader_id_tuples
+                    if user_id in just_update_relation_user_ids
+                }
+            # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
+            else:
+                waiting_delete_user_leader_id_tuples = set()
+
+        if waiting_delete_user_leader_id_tuples:
             waiting_delete_user_leader_relation_ids = [
                 exists_user_leader_relations_map[t] for t in waiting_delete_user_leader_id_tuples
             ]
@@ -437,7 +470,23 @@ class DataSourceUserSyncer:
             )
 
         # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
-        if waiting_delete_user_dept_id_tuples := exists_user_dept_id_tuples - user_dept_id_tuples:
+        # 全量模式，没有覆不覆盖一说，就是覆盖，不需要特殊判断
+        waiting_delete_user_dept_id_tuples = exists_user_dept_id_tuples - user_dept_id_tuples
+        if self.incremental:
+            # 增量模式，覆盖，则有新边的用户，老边需要被删除，其他用户关系边不变
+            if self.overwrite:
+                # 如果指定部门为空，也算是修改了关联边，在覆盖的模式下，需要清理掉旧的数据
+                just_update_relation_user_ids = {user_code_id_map[user.code] for user in self.raw_users}
+                waiting_delete_user_dept_id_tuples = {
+                    (user_id, dept_id)
+                    for user_id, dept_id in waiting_delete_user_dept_id_tuples
+                    if user_id in just_update_relation_user_ids
+                }
+            # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
+            else:
+                waiting_delete_user_dept_id_tuples = set()
+
+        if waiting_delete_user_dept_id_tuples:
             waiting_delete_user_dept_relation_ids = [
                 exists_user_dept_relations_map[t] for t in waiting_delete_user_dept_id_tuples
             ]
@@ -459,7 +508,7 @@ class TenantDepartmentSyncer:
         self.tenant = tenant
 
     def sync(self):
-        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
+        """TODO (su) 协同支持指定数据范围后，需要考虑限制"""
         exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_departments = DataSourceDepartment.objects.filter(data_source=self.data_source)
 
@@ -506,7 +555,7 @@ class TenantUserSyncer:
         self.user_account_expired_at = self._get_user_account_expired_at()
 
     def sync(self):
-        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
+        """TODO (su) 协同支持指定数据范围后，需要考虑限制"""
         exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_users = DataSourceUser.objects.filter(data_source=self.data_source)
 

@@ -6,16 +6,7 @@
     <DataSourceCard
       v-if="!isSuccess"
       :plugins="currentPlugins"
-      @handleCollapse="handleCollapse">
-      <template #right>
-        <bk-button
-          class="min-w-[64px]"
-          hover-theme="primary"
-          @click="handleReset"
-        >
-          {{ $t('重置') }}
-        </bk-button>
-      </template>
+      @handle-collapse="handleCollapse">
       <template #content v-if="showContent">
         <div class="steps-wrapper">
           <bk-steps
@@ -30,8 +21,8 @@
             :cur-step="curStep"
             :data-source-id="dataSourceId"
             :is-reset="isReset"
-            @updateCurStep="updateCurStep"
-            @updateSuccess="updateSuccess" />
+            @update-cur-step="updateCurStep"
+            @update-success="updateSuccess" />
         </div>
       </template>
     </DataSourceCard>

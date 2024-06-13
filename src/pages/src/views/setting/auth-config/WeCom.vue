@@ -10,7 +10,7 @@
         <bk-form-item :label="$t('名称')" property="name" required>
           <bk-input v-model="formData.name" :placeholder="validate.name.message" @change="handleChange" />
         </bk-form-item>
-        <bk-form-item label="是否启用" required>
+        <bk-form-item :label="$t('是否启用')" required>
           <bk-switcher
             :value="formData.status === 'enabled'"
             size="large"
@@ -27,7 +27,10 @@
           <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
         </bk-form-item>
         <bk-form-item label="Secret" property="plugin_config.secret" required>
-          <bk-input type="password" v-model="formData.plugin_config.secret" @change="handleChange" />
+          <passwordInput
+            v-model="formData.plugin_config.secret"
+            @change="handleChange"
+            @input="inputPassword" />
         </bk-form-item>
       </Row>
       <Row :title="$t('登录模式')">
@@ -91,7 +94,7 @@
       </Row>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit" :disabled="isDisabled">
         {{ $t('提交') }}
       </bk-button>
       <bk-button @click="emit('cancelEdit')">
@@ -103,9 +106,10 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref } from 'vue';
+import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
@@ -150,6 +154,9 @@ const formData = ref({
     },
   ],
 });
+
+let originalData = {};
+const isDisabled = ref(true);
 
 const LoginMethod = ref('a');
 
@@ -210,6 +217,7 @@ onMounted(async () => {
         type: field.type,
       }));
     });
+    originalData = JSON.parse(JSON.stringify(formData));
   } catch (error) {
     console.error(error);
   } finally {
@@ -217,6 +225,9 @@ onMounted(async () => {
   }
 });
 
+watch(formData, () => {
+  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+}, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {
@@ -274,8 +285,15 @@ const {
   builtinFields,
   customFields,
 );
+
+const inputPassword = (val) => {
+  formData.value.plugin_config.secret = val;
+};
 </script>
 
 <style lang="less" scoped>
 @import url('./WeCom.less');
+:deep(.copy-icon) {
+  right: 30px;
+}
 </style>
