@@ -2,9 +2,9 @@
     <div class="organization-table px-[24px] py-[24px]">
         <div class="table-search mb-[16px]">
             <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
-              class="mr-[16px]"
+              class="mr-[16px] button-upload"
               @click="() => importDialogShow = true">
-                <Upload class="mr-[8px] text-[16px]" />{{ $t('导入') }}
+                <Upload class="mr-[8px] text-[16px] icon-upload" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
                 v-if="isShowBtn">
@@ -172,21 +172,9 @@
             form-type="vertical"
         >
             <bk-form-item :label="$t('新密码')" required>
-                <bk-input :style="{width: '80%'}"
-                  v-model="password"
-                  clearable
+              <passwordInput :style="{width: '80%'}"  v-model="password" clearable
                   :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-                  :type="isPassword ? 'password' : 'text'"
-                >
-                <template #suffix v-if="!isPassword">
-                  <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-                </template>
-                </bk-input>
+                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"/>
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -227,7 +215,7 @@
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
   import Empty from '@/components/Empty.vue';
-  import { Upload, Eye} from 'bkui-vue/lib/icon';
+  import { Upload} from 'bkui-vue/lib/icon';
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
   import EditDetails from './edit-detail.vue';
@@ -235,6 +223,7 @@
   import ViewUser from '../details/ViewUser.vue';
   import { randomPasswords } from '@/http';
   import { getFields } from '@/http/settingFiles';
+  import passwordInput from '@/components/passwordInput.vue';
   import {
     getTenantsUserList,
     getFieldsTips,
@@ -253,6 +242,7 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
+
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
@@ -654,7 +644,8 @@
         };
         const res = await getTenantsUserList(isTenant ? id : tenantId, params);
         if (res.data?.count === 0) {
-          keyword.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+          isDataEmpty.value = keyword.value === '';
+          isEmptySearch.value = keyword.value !== '';
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
@@ -790,6 +781,13 @@
     display: flex;
     width: 100%;
 
+    .button-upload:hover {
+      border-color: #3A84ff;
+
+      .icon-upload {
+        color: #3A84ff;
+       }
+    }
     .header-right {
       position: absolute;
       right: 0;
@@ -919,6 +917,11 @@
       cursor: not-allowed;
     }
   }
+}
+</style>
+<style lang="less" scoped>
+:deep .copy-icon {
+  right: 118px;
 }
 </style>
   

@@ -145,7 +145,9 @@
                     <span class="value">{{ currentUserInfo.full_name }}</span>
                   </li>
                   <li>
-                    <span class="key">{{ $t('邮箱') }}：</span>
+                    <span class="key">
+                      <span class="required-icon"> * </span>
+                      {{ $t('邮箱') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditEmail">
                         <bk-radio-group
@@ -184,7 +186,9 @@
                     </div>
                   </li>
                   <li class="mb-[10px]">
-                    <span class="key">{{ $t('手机号') }}：</span>
+                    <span class="key">
+                      <span class="required-icon"> * </span>
+                      {{ $t('手机号') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditPhone">
                         <bk-radio-group
@@ -257,7 +261,9 @@
                   v-for="(item, index) in currentUserInfo.extras"
                   :key="index"
                 >
-                  <bk-overflow-title class="key" type="tips">{{ item.display_name }}：</bk-overflow-title>
+                  <bk-overflow-title class="key" type="tips">
+                    <span v-show="item.required" class="required-icon"> * </span>
+                    {{ item.display_name }}：</bk-overflow-title>
                   <div class="value-edit custom-input">
                     <bk-overflow-title v-if="!item.isEdit" class="value" type="tips">
                       {{ customFieldsMap(item) }}
@@ -1075,5 +1081,12 @@ const hidePasswordModal = () => {
       }
     }
   }
+}
+.required-icon {
+  display: inline-block;
+  margin: 0 3px 0 0px;
+  line-height: 19px;
+  color: #ff5e5e;
+  vertical-align: middle;
 }
 </style>

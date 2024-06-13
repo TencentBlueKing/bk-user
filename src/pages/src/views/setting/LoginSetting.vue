@@ -207,9 +207,7 @@ const handleEditDetails = () => {
 };
 
 const cancelEdit = () => {
-  if (!authDetails.value.idp_id) {
-    detailsConfig.show = false;
-  }
+  detailsConfig.show = false;
   window.changeInput = false;
 };
 

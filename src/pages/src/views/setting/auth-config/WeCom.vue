@@ -27,7 +27,10 @@
           <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
         </bk-form-item>
         <bk-form-item label="Secret" property="plugin_config.secret" required>
-          <bk-input type="password" v-model="formData.plugin_config.secret" @change="handleChange" />
+          <passwordInput
+            v-model="formData.plugin_config.secret"
+            @change="handleChange"
+            @input="inputPassword" />
         </bk-form-item>
       </Row>
       <Row :title="$t('登录模式')">
@@ -106,6 +109,7 @@ import { InfoBox, Message } from 'bkui-vue';
 import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
@@ -281,8 +285,15 @@ const {
   builtinFields,
   customFields,
 );
+
+const inputPassword = (val) => {
+  formData.value.plugin_config.secret = val;
+};
 </script>
 
 <style lang="less" scoped>
 @import url('./WeCom.less');
+:deep(.copy-icon) {
+  right: 30px;
+}
 </style>

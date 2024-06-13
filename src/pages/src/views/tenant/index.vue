@@ -186,18 +186,10 @@
         </bk-form-item>
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
-            <bk-input
-              :type="isPassword ? 'password' : 'text'"
+            <passwordInput
               v-model="adminPasswordData.fixed_password"
-              @change="changePassword">
-              <template #suffix v-if="!isPassword">
-                <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-              </template>
-            </bk-input>
+              @change="changePassword"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -208,7 +200,7 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+          <span class="inline-flex items-center text-sm  pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
             <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -217,7 +209,9 @@
               {{ $t('邮箱') }}
             </span>
           </span>
-          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+          <span
+            class="inline-flex items-center ml-[24px] text-sm  pb-[8px] mb-[8px]"
+            :class="[isClickEmail ? '' : 'active-tab']">
             <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -247,14 +241,15 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import {  Eye } from 'bkui-vue/lib/icon';
+<script setup lang="ts">
+import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
 import {
@@ -280,7 +275,6 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
-const isPassword = ref(false);
 const state = reactive({
   list: [],
   tableLoading: true,
@@ -361,6 +355,10 @@ const handleClick = async (type: string, item?: any) => {
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
+};
+
+const inputPassword = (val) => {
+  adminPasswordData.value.fixed_password = val;
 };
 
 const handleCancelEdit = async () => {
@@ -501,12 +499,12 @@ const handleClickEnter = () => {
 const handleClickDisable = (item) => {
   const isEnabled = item.status === 'enabled';
   const title = isEnabled ? `${t('确定停用租户')}：${item.name}？` : `${t('确定启用租户')}：${item.name}？`;
-
+  const subTitle = isEnabled ? t('停用期间，该租户下的用户将无法登录系统') : t('启用后，该租户下的用户可以重新登录系统');
   const successMessage = isEnabled ? t('租户停用成功') : t('租户启用成功');
   InfoBox({
     width: 400,
     title,
-    subTitle: t('停用后，用户将无法看到该租户信息'),
+    subTitle,
     confirmText: t('确定'),
     onConfirm: async () => {
       await putTenantsStatus(item.id);
@@ -553,7 +551,6 @@ const adminPasswordData = ref({
   phone: '',
   phone_country_code: '86',
 });
-
 const formRef = ref();
 
 const rules = {
@@ -592,6 +589,7 @@ const confirmPassword = async () => {
       changeTelError(true);
     }
     await formRef.value.validate();
+    if (emailValue.value && emailError.value) return;
     if (telError.value) return;
 
     adminPasswordConfig.isLoading = true;
@@ -617,13 +615,13 @@ const closedPassword = () => {
 };
 
 const resetAdminPasswordData = () => {
-  adminPasswordData.value = {
+  Object.assign(adminPasswordData.value, {
     fixed_password: '',
     notification_methods: ['email'],
     email: '',
     phone: '',
     phone_country_code: '86',
-  };
+  });
 };
 
 const {

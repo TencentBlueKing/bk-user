@@ -139,7 +139,8 @@ const initVirtualUsers = async () => {
     };
     const res = await getVirtualUsers(params);
     if (res.data?.count === 0) {
-      searchVal.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+      isDataEmpty.value = searchVal.value === '';
+      isEmptySearch.value = searchVal.value !== '';
     }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
@@ -246,6 +247,7 @@ const handleDelete = (item: any) => {
     onConfirm: async () => {
       await deleteVirtualUsers(item.id);
       initVirtualUsers();
+      Message({ theme: 'success', message: t('删除成功') });
     },
   });
 };

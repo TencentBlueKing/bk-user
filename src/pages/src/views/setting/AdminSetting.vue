@@ -44,7 +44,7 @@
           theme="primary"
           @click="resetPasswordConfig.isShow = true"
         >
-          <i class="user-icon icon-refresh" />
+          <i class="user-icon icon-refresh mr-[6px]" />
           {{ $t('重置密码') }}
         </bk-button>
       </LabelContent>
@@ -114,10 +114,7 @@
         :rules="rules">
         <bk-form-item :label="$t('密码')" property="password" required>
           <div class="flex justify-between">
-            <bk-input
-              type="password"
-              v-model="resetPasswordConfig.password"
-              @change="changePassword" />
+            <passwordInput v-model="resetPasswordConfig.password" @change="changePassword" @input="changePassword" />
             <bk-button
               outline
               theme="primary"
@@ -139,6 +136,7 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import Row from '@/components/layouts/row.vue';
 import MemberSelector from '@/components/MemberSelector.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   deleteRealManagers,
@@ -152,6 +150,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
+
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;

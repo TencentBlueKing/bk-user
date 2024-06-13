@@ -8,7 +8,7 @@
       :rules="rules">
       <Row :title="$t('基本信息')">
         <div class="flex justify-between">
-          <div class="w-[424px]">
+          <div class="w-[424px] mr-[28px]">
             <bk-form-item :label="$t('租户名称')" property="name" required>
               <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
@@ -40,6 +40,7 @@
             :size="2"
             @delete="handleDelete"
             @error="handleError"
+            :tip="$t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB')"
           />
         </div>
       </Row>
@@ -52,18 +53,10 @@
         </bk-form-item>
         <bk-form-item :label="$t('密码')" property="fixed_password" required>
           <div class="flex justify-between">
-            <bk-input
-              :type="isPassword ? 'password' : 'text'"
+            <passwordInput
               v-model="formData.fixed_password"
-              @change="changePassword">
-              <template #suffix v-if="!isPassword">
-                <span
-                  class="inline-flex text-[14px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
-                  @click="isPassword = true">
-                  <eye />
-                </span>
-              </template>
-            </bk-input>
+              @change="changePassword"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -74,7 +67,7 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <span class="inline-flex items-center text-sm" :class="[isClickEmail ? 'active-tab' : '']">
+          <span class="inline-flex items-center text-sm pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
             <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -83,7 +76,9 @@
               {{ $t('邮箱') }}
             </span>
           </span>
-          <span class="inline-flex items-center ml-[24px] text-sm" :class="[isClickEmail ? '' : 'active-tab']">
+          <span
+            class="inline-flex items-center ml-[24px] text-sm pb-[8px] mb-[8px]"
+            :class="[isClickEmail ? '' : 'active-tab']">
             <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
             <span
               class="ml-[6px] cursor-pointer text-[#63656E]"
@@ -124,10 +119,10 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { Eye } from 'bkui-vue/lib/icon';
 import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
@@ -151,7 +146,6 @@ const props = defineProps({
 const emit = defineEmits(['updateTenantsList', 'handleCancelEdit']);
 
 const validate = useValidate();
-const isPassword = ref(false);
 
 const formRef = ref();
 const formData = reactive({
@@ -283,6 +277,10 @@ const {
   changeTelError,
 } = useAdminPassword(formData);
 
+const inputPassword = (val) => {
+  formData.fixed_password = val;
+};
+
 const isClickEmail = ref(true);
 const emailValue = ref(true);
 const smsValue = ref(false);
@@ -384,5 +382,8 @@ const emailBlur = () => {
 }
 .active-tab {
   border-bottom: 2px solid #3A84FF;
+}
+::v-deep .bk-upload__tip {
+  width: 0;
 }
 </style>

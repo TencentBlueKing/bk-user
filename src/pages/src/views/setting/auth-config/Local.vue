@@ -50,6 +50,8 @@
               style="width: 85px;"
               type="number"
               behavior="simplicity"
+              :min="5"
+              :max="10"
               v-model="formData.config.password_rule.not_continuous_count"
             />
             <span>{{ $t('位 出现') }}</span>
@@ -96,10 +98,8 @@
             <bk-radio label="fixed">{{ $t('固定') }}</bk-radio>
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
-            <bk-input
-              class="input-password"
-              v-model="formData.config.password_initial.fixed_password"
-              type="password" />
+            <passwordInput
+              v-model="formData.config.password_initial.fixed_password" />
             <bk-button
               outline
               theme="primary"
@@ -251,6 +251,7 @@ import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDefaultConfig,
@@ -499,5 +500,9 @@ const handleRandomPassword = async () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
+}
+
+:deep(.copy-icon) {
+  right: 485px;
 }
 </style>

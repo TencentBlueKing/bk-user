@@ -251,6 +251,7 @@
       :width="800"
       quick-close
       :before-close="beforeClose"
+      transfer
     >
       <template #header>
         <div class="logs-header">
@@ -465,7 +466,6 @@ const handleLogDetails = async (row) => {
   logsDetails.value = res.data;
 };
 const beforeClose = () => {
-  logsDetails.value = {};
   logConfig.value.isShow = false;
 };
 
