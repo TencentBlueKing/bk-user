@@ -23,6 +23,10 @@ from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
+class GlobalSettingOutputSLZ(serializers.Serializer):
+    bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")
+
+
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
     data_source_ids = serializers.ListField(help_text="指定查询的数据源ID列表", child=serializers.IntegerField())
     username = serializers.CharField(help_text="用户名")

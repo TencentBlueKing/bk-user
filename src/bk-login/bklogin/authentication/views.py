@@ -87,6 +87,14 @@ class LoginView(View):
         return response
 
 
+class GlobalSettingRetrieveApi(View):
+    def get(self, request, *args, **kwargs):
+        """通用全局配置"""
+        gs = bk_user_api.get_global_setting()
+
+        return APISuccessResponse(data=gs.model_dump())
+
+
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
         """

@@ -13,6 +13,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # 通用配置
+    path("global-settings/", views.GlobalSettingListApi.as_view()),
     # 本地用户身份凭据校验
     path(
         "local-user-credentials/authenticate/",

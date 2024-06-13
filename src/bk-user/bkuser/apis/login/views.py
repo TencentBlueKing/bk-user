@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Any, Dict
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics
 from rest_framework.response import Response
@@ -26,6 +27,7 @@ from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
+    GlobalSettingOutputSLZ,
     IdpListOutputSLZ,
     IdpRetrieveOutputSLZ,
     LocalUserCredentialAuthenticateInputSLZ,
@@ -36,6 +38,13 @@ from .serializers import (
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
+
+
+class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
+    pagination_class = None
+
+    def get(self, request, *args, **kwargs):
+        return Response(GlobalSettingOutputSLZ({"bk_user_url": settings.BK_USER_URL.rstrip("/")}).data)
 
 
 class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.CreateAPIView):
