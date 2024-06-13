@@ -27,7 +27,7 @@
         >
             <div class="info-content theme">
                 <i class="user-icon icon-info-i theme-icon" />
-                <p>{{$t('快速将用户录入到当前组织，如需添加到其他组织，请使用')}}
+                <p>{{$t('快速将用户录入到')}}「{{currentOrgName}}」，{{$t('如需添加到其他组织，请使用')}}
                   <label class="text-[#3A84FF] cursor-pointer"
                   @click="() => goToSetting('dataSource')">{{$t('「导入」')}}</label>
                   {{$t(' 功能。')}}
@@ -72,7 +72,7 @@
             v-bkloading="{ loading: isLoading }"
             style="margin-top: 18px"
             :height="290"
-            :columns="columns"
+            :columns="showColumns"
             :data="tableData"
             stripe
         >
@@ -83,7 +83,7 @@
 
 <script setup lang="tsx">
   import { bkTooltips as vBkTooltips } from 'bkui-vue';
-  import { ref, watch } from 'vue';
+  import { ref, watch, computed } from 'vue';
   import { t } from '@/language/index';
   import router from '@/router';
   import useAppStore from '@/store/app';
@@ -98,25 +98,25 @@
   const appStore = useAppStore();
   const tipsInfo = ref('');
   const validate = useValidate();
-  const columns= [
-    {
-        label: t("用户名"),
-        field: "username",
-    },
-    {
-        label: t("姓名"),
-        field: "full_name",
-    },
-    {
-        label: t("邮箱"),
-        field: "email",
-        width: 200
-    },
-    {
-        label: t("手机号"),
-        field: "phone"
-    }
-  ];
+  // const columns = [
+  //   {
+  //       label: t("用户名"),
+  //       field: "username",
+  //   },
+  //   {
+  //       label: t("姓名"),
+  //       field: "full_name",
+  //   },
+  //   {
+  //       label: t("邮箱"),
+  //       field: "email",
+  //       width: 200
+  //   },
+  //   {
+  //       label: t("手机号"),
+  //       field: "phone"
+  //   }
+  // ];
   const rules = {
     val: [validate.required],
   }
@@ -133,6 +133,9 @@
   ]);
   const isLoading = ref(false);
   const currentId = ref(1);
+  const currentOrgName = computed(() => {
+    return appStore.currentOrg?.name
+  });
   watch(() => props.isShow, async (val) => {
     if (val) {
       currentId.value = 1;
@@ -140,8 +143,14 @@
       formRef.value && formRef.value?.clearValidate();
       const res = await getFieldsTips();
       tipsInfo.value = (res.data || []);
+      console.log(tipsInfo.value, 'tipsInfo')
       tableData.value = [];
     }
+  })
+  const showColumns = computed(() => {
+    let columns = [];
+    tipsInfo.value.map(item => columns.push({label: item.display_name, field: item.name}));
+    return columns;
   })
   const handleNext = async () => {
     formRef.value.validate();
