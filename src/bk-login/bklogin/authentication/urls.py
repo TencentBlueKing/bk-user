@@ -20,6 +20,9 @@ urlpatterns = [
     path("plain/", xframe_options_exempt(views.LoginView.as_view())),
     # 前端页面（选择登录的用户）
     path("page/users/", views.PageUserView.as_view(), name="page.users"),
+    # ------------------------------------------ 通用配置 ------------------------------------------
+    # 通用配置
+    path("global-settings/", views.GlobalSettingRetrieveApi.as_view()),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------
     # 租户信息
     path("tenants/", views.TenantListApi.as_view()),

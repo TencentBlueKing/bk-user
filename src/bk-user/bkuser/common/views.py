@@ -187,6 +187,8 @@ class VueTemplateView(TemplateView):
                 # 文档 & 反馈链接
                 "BK_USER_DOC_URL": settings.BK_USER_DOC_URL,
                 "BK_USER_FEEDBACK_URL": settings.BK_USER_FEEDBACK_URL,
+                # 是否启用蓝鲸通知中心功能
+                "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
             }
 
         except Exception:  # pylint: disable=broad-except
