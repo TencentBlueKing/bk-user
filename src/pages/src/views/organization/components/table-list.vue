@@ -149,7 +149,7 @@
                   v-for="item in dataSource"
                   :key="item.id"
                   :disabled="chooseDepartments.includes(item.name)"
-                  v-bk-tooltips="{content: $t('已在当前部门'), disabled: !chooseDepartments.includes(item.name)}"
+                  v-bk-tooltips="{content: $t('已在当前部门'), disabled: !chooseDepartments.includes(item.name), boundary: 'parent'}"
                   :value="item.id"
                   :name="item.name"
                   :label="item.name" />
