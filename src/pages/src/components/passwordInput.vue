@@ -9,7 +9,10 @@
   >
     <template #suffix>
       <span class="copy-icon">
-        <i class="user-icon icon-copy text-[#3A84FF] text-[14px] " @click="copy(inputValue)" />
+        <i
+          class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+          v-bk-tooltips="{ content: $t('复制密码') }"
+          @click="copy(inputValue)" />
       </span>
       <span
         v-show="!isPassword"
@@ -22,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+import { bkTooltips as vBkTooltips  } from 'bkui-vue';
 import { Eye } from 'bkui-vue/lib/icon';
 import { defineEmits, defineProps, ref, watch } from 'vue';
 
