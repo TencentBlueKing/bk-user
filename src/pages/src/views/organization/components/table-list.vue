@@ -343,11 +343,11 @@
   ]);
   const moveOperation = reactive([
     {
-      label: t('追加目标组织'),
+      label: t('移至目标组织'),
       isShow: true,
       confirmFn: batchCreate,
       handle: () => {
-        handleOperations(true, t('追加目标组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
+        handleOperations(true, t('移至目标组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
       }
     }
   ])
@@ -488,7 +488,7 @@
             content: () => (
               <ul class="operate-menu-list">
                 {
-                  list.map((item, ind) => <li
+                  rowOperation.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
                     v-bk-tooltips={{
