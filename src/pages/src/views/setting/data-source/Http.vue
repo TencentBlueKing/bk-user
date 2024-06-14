@@ -122,12 +122,10 @@
             />
           </bk-form-item>
           <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <bk-input
-              type="password"
+            <passwordInput
               v-model="serverConfigData.auth_config.password"
               @focus="handleFocus"
-              @input="handleChange"
-            />
+              @input="inputPassword" />
           </bk-form-item>
         </div>
         <div class="btn">
@@ -211,6 +209,7 @@ import QueryParams from './query-params/QueryParams.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/row.vue';
+import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDataSourceDetails,
@@ -619,6 +618,11 @@ const handleChange = () => {
   connectionStatus.value = null;
 };
 
+const inputPassword = (val) => {
+  serverConfigData.value.auth_config.password = val;
+  handleChange();
+};
+
 const handleFocus = () => {
   window.changeInput = true;
 };
@@ -679,5 +683,8 @@ const handleCancel = () => {
     font-size: 14px;
     color: #2DCB56;
   }
+}
+:deep(.copy-icon) {
+  right: 30px;
 }
 </style>

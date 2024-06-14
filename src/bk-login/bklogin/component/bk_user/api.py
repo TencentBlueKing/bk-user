@@ -18,7 +18,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.component.http import HttpStatusCode, http_get, http_post
 from bklogin.utils.url import urljoin
 
-from .models import IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
+from .models import GlobalSetting, IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,12 @@ def _call_bk_user_api(http_func, url_path: str, allow_error_status_func: Callabl
 def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
     """只允许20x的用户管理接口"""
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
+
+
+def get_global_setting() -> GlobalSetting:
+    """查询全局配置"""
+    data = _call_bk_user_api_20x(http_get, "/api/v1/login/global-settings/")
+    return GlobalSetting(**data)
 
 
 def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
