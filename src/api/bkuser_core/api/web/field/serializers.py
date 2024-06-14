@@ -48,7 +48,7 @@ class DynamicFieldUpdateVisibleInputSLZ(serializers.Serializer):
 class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
     class Meta:
         model = DynamicFieldInfo
-        fields = ["name", "display_name", "builtin", "require", "unique", "options", "type", "default"]
+        fields = ["name", "display_name", "require", "unique", "options", "type", "default"]
 
     def to_internal_value(self, data):
         # 将前端存储转为后端格式
@@ -57,6 +57,9 @@ class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
 
         data["display_name"] = data.pop("name")
         data["name"] = data.pop("key")
+
+        # 通过接口新建的字段都是非内置字段
+        data["builtin"] = False
         return data
 
     def validate(self, attrs):

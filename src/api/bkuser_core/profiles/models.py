@@ -16,6 +16,7 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
+from jsonfield.fields import DEFAULT_DUMP_KWARGS
 
 from .constants import (
     TIME_ZONE_CHOICES,
@@ -129,7 +130,10 @@ class Profile(TimestampedModel):
     # ----------------------- 国际化相关 -----------------------
 
     # ----------------------- 其他 -----------------------
-    extras = jsonfield.JSONField(verbose_name=_("自定义字段"), default={})
+    # DEFAULT_DUMP_KWARGS => ensure_ascii=False 防止中文入库被编码，导致中文模糊查询不可用
+    extras = jsonfield.JSONField(
+        verbose_name=_("自定义字段"), default={}, dump_kwargs=DEFAULT_DUMP_KWARGS.update({"ensure_ascii": False})
+    )
     # 虽然 enabled 将被大量用于过滤，但是依旧不应该添加 index,
     # https://stackoverflow.com/questions/10524651/is-there-any-performance-gain-in-indexing-a-boolean-field
     enabled = models.BooleanField(verbose_name=_("是否启用"), default=True)
