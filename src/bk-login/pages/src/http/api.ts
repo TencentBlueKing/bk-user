@@ -26,3 +26,6 @@ export const getIdpList = (id: string, userId: string) => fetch.get(`${apiPrefix
 // 帐密登录
 export const signInByPassword = (id: string, idpId: string, params: PasswordParams) => fetch
   .post(`${apiPrefix}/tenants/${id}/idps/${idpId}/actions/authenticate/`, params);
+
+// 全局配置
+export const getGlobalSettings = () => fetch.get(`${apiPrefix}/global-settings/`);
