@@ -2,7 +2,7 @@
 import { Message } from 'bkui-vue';
 import en from 'bkui-vue/dist/locale/en.esm';
 import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch  } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HeaderBox from './views/Header.vue';
@@ -19,18 +19,9 @@ const showName = ref(null);
 // 判断是否是重置密码的路由
 watch(() => route.name, (val) => {
   if (val === 'password' || val === 'resetPassword') {
-    showName.value = val;
+    isLoading.value = false;
+    return;
   }
-});
-
-// 加载完用户数据才会展示页面
-const isLoading = ref(false);
-// 获取用户数据
-const user = useUser();
-
-onMounted(() => {
-  if (showName.value) return;
-  isLoading.value = true;
   currentUser()
     .then((res) => {
       user.setUser(res.data);
@@ -42,6 +33,11 @@ onMounted(() => {
       isLoading.value = false;
     });
 });
+
+// 加载完用户数据才会展示页面
+const isLoading = ref(true);
+// 获取用户数据
+const user = useUser();
 
 const currentLang = ref(i18nLocal.value);
 // 多语言注入, 此处引用组件库内置多语言配置
