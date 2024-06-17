@@ -36,6 +36,7 @@ from bkuser.apis.web.password.serializers import (
 )
 from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserResetPasswordTokenManager
 from bkuser.apps.notification.helpers import gen_reset_password_url
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.validators import validate_user_new_password
@@ -59,25 +60,27 @@ class GetFirstTenantUserMixin:
     """
 
     def _get_first_tenant_user_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> TenantUser:
-        # FIXME (su) 补充 status 过滤
         tenant_users = TenantUser.objects.filter_by_phone(tenant_id, phone, phone_country_code).filter(
-            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
+            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL, status=TenantUserStatus.ENABLED
         )
 
         if not tenant_users.exists():
+            logger.warning(
+                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
+            )
             raise error_codes.TENANT_USER_NOT_EXIST.f(
-                _("手机号码 +{} {} 在租户 {} 中匹配到不到用户").format(phone_country_code, phone, tenant_id),
+                _("手机号码 +{} {} 在租户 {} 中匹配不到用户").format(phone_country_code, phone, tenant_id),
             )
 
         return tenant_users.first()
 
     def _get_first_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
-        # FIXME (su) 补充 status 过滤
         tenant_users = TenantUser.objects.filter_by_email(tenant_id, email).filter(
-            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
+            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL, status=TenantUserStatus.ENABLED
         )
 
         if not tenant_users.exists():
+            logger.warning("failed to get tenant user by email %s in tenant %s", email, tenant_id)
             raise error_codes.TENANT_USER_NOT_EXIST.f(_("邮箱 {} 在租户 {} 中匹配不到用户").format(email, tenant_id))
 
         return tenant_users.first()
@@ -102,16 +105,11 @@ class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
         tenant_id, phone, phone_country_code = params["tenant_id"], params["phone"], params["phone_country_code"]
         try:
             tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
+            self._send_verification_code_to_user_phone(tenant_user)
         except Exception:
             if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
                 raise
 
-            logger.warning(
-                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
-            )
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        self._send_verification_code_to_user_phone(tenant_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _send_verification_code_to_user_phone(self, tenant_user: TenantUser):
@@ -149,20 +147,14 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
 
         tenant_id = params["tenant_id"]
         phone, phone_country_code = params["phone"], params["phone_country_code"]
-        # 1. 找到匹配的租户用户
         try:
+            # 1. 找到匹配的租户用户
             tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
+            # 2. 校验验证码是否正确
+            self._validate_verification_code(phone, phone_country_code, params["verification_code"])
         except Exception:
-            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
-                raise
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
 
-            logger.warning(
-                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
-            )
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        # 2. 校验验证码是否正确
-        self._validate_verification_code(phone, phone_country_code, params["verification_code"])
         # 3. 获取重置密码链接
         url = self._gen_reset_password_url(tenant_user)
 
@@ -175,7 +167,7 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
             logger.exception("validate verification code for phone +%s %s failed", phone_country_code, phone)
-            raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("验证码校验失败，请联系管理员处理"))
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码校验失败，请联系管理员处理"))
 
     def _gen_reset_password_url(self, tenant_user: TenantUser) -> str:
         try:
@@ -204,14 +196,11 @@ class SendResetPasswordEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView)
 
         try:
             tenant_user = self._get_first_tenant_user_by_email(params["tenant_id"], params["email"])
+            self._gen_and_send_reset_password_url(tenant_user)
         except Exception:
             if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
                 raise
 
-            logger.warning("failed to get tenant user by email %s in tenant %s", params["email"], params["tenant_id"])
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        self._gen_and_send_reset_password_url(tenant_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _gen_and_send_reset_password_url(self, tenant_user: TenantUser) -> None:
