@@ -142,13 +142,13 @@ class TestResetPasswordByPhoneAfterForget:
         }
         resp = api_client.post(url, data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "验证码错误" in resp.data["message"]
+        assert "手机号码或验证码错误" in resp.data["message"]
 
         # 手机号错误，错误信息应该是一致的
         data["phone"] = data["phone"][:-1] + "5"
         resp = api_client.post(url, data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "验证码错误" in resp.data["message"]
+        assert "手机号码或验证码错误" in resp.data["message"]
 
 
 class TestResetPasswordByEmailAfterForget:

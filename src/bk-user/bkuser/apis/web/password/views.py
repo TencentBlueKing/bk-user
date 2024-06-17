@@ -106,7 +106,9 @@ class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
         try:
             tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
             self._send_verification_code_to_user_phone(tenant_user)
-        except Exception:
+        except Exception as e:
+            logger.warning("failed to send validation code to phone +%s %s: %s", phone_country_code, phone, e)
+
             if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
                 raise
 
@@ -153,7 +155,8 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
             # 2. 校验验证码是否正确
             self._validate_verification_code(phone, phone_country_code, params["verification_code"])
         except Exception:
-            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
+            # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("手机号码或验证码错误"))
 
         # 3. 获取重置密码链接
         url = self._gen_reset_password_url(tenant_user)
@@ -197,7 +200,9 @@ class SendResetPasswordEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView)
         try:
             tenant_user = self._get_first_tenant_user_by_email(params["tenant_id"], params["email"])
             self._gen_and_send_reset_password_url(tenant_user)
-        except Exception:
+        except Exception as e:
+            logger.warning("failed to send reset password url to email %s: %s", params["email"], e)
+
             if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
                 raise
 
