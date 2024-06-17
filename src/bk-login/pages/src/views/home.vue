@@ -162,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { getIdpList, getTenantList } from '@/http/api';
+import { getGlobalSettings, getIdpList, getTenantList } from '@/http/api';
 import { Transfer } from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
@@ -358,6 +358,8 @@ const protocolVisible = ref(false);
 
 const isOnlyOneTenant = ref(false);
 
+const settings = ref({});
+
 watch(
   () => tenantMap.value,
   (val) => {
@@ -377,7 +379,7 @@ watch(
 /**
  * 加载租户列表
  */
-onBeforeMount(() => {
+onBeforeMount(async () => {
   loading.value = true;
   getTenantList({}).then((res) => {
     allTenantList.value = res;
@@ -385,6 +387,7 @@ onBeforeMount(() => {
     .finally(() => {
       loading.value = false;
     });
+  settings.value = await getGlobalSettings();
 });
 
 /**
@@ -406,7 +409,7 @@ const userGroupList = computed(() => {
 
 const handleResetPassword = () => {
   // 确认环境变量后补充路径
-  window.location.href = `/password/?tenantId=${appStore.tenantId}`;
+  window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
 };
 
 /**

@@ -139,7 +139,7 @@ import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
 import '@blueking/notice-component/dist/style.css';
-import '@blueking/release-note/dist/vue3-light.css';
+import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
