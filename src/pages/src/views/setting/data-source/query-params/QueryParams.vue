@@ -6,6 +6,7 @@
     trigger="manual"
     :is-show="isShow"
     @after-hidden="Cancel"
+    z-index="2000"
   >
     <bk-button v-if="count === 0" text theme="primary" @click="handleShow">
       <i class="user-icon icon-canshu mr-[6px]"></i>
@@ -38,6 +39,7 @@
               <bk-input
                 :placeholder="$t('请输入Key')"
                 v-model="item.key"
+                clearable
                 @input="$emit('updateStatus')" />
             </bk-form-item>
             <bk-form-item
@@ -48,6 +50,7 @@
               <bk-input
                 :placeholder="$t('请输入Value')"
                 v-model="item.value"
+                clearable
                 @input="$emit('updateStatus')" />
             </bk-form-item>
             <i class="user-icon icon-plus-fill" @click="addParams" />

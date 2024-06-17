@@ -2,7 +2,7 @@
   <section class="bg-white h-full pl-[6px]" v-bkloading="{ loading: loading }">
     <div class="leading-[36px] px-[6px] text-[#979BA5] text-[12px]">
       <span class="user-icon icon-tongbu pr-[4px]"></span>
-      {{ $t('协同租户') }}
+      {{ $t('其他租户(通过跨租户协同分享)') }}
     </div>
     <div class="h-[calc(100%-36px)] overflow-y-auto">
       <div v-for="collaboration in collaborations" :key="collaboration.id">

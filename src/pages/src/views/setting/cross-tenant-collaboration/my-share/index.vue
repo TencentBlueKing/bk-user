@@ -169,7 +169,8 @@ const handleFilter = ({ checked }) => {
 const searchList = computed(() => tableData.value.filter(item => !search.value || item.name.includes(search.value)));
 
 watch(() => search.value, (val) => {
-  isSearchEmpty.value = val && !searchList.value.length;
+  isSearchEmpty.value = val !== '' && !searchList.value.length;
+  isDataEmpty.value = val === '' && !searchList.value.length;
 });
 
 const handleChange = (row: any) => {

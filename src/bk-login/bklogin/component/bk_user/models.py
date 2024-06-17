@@ -15,6 +15,12 @@ from pydantic import BaseModel
 from .constants import IdpStatus
 
 
+class GlobalSetting(BaseModel):
+    """全局配置信息"""
+
+    bk_user_url: str
+
+
 class CollaborationTenant(BaseModel):
     """协同租户信息"""
 
