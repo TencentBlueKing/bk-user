@@ -42,8 +42,8 @@
       <bk-table-column prop="creator" :label="$t('创建人')" />
       <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
       <bk-table-column
-        prop="source_status" :label="$t('启/停')"
-        :filter="{ list: statusFilters }">
+        prop="source_status" :label="$t('启/停')">
+        <!-- :filter="{ list: statusFilters }"> -->
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
