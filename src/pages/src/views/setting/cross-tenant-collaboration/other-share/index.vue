@@ -40,7 +40,8 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
-      <bk-table-column prop="target_status" :label="$t('启/停')" :filter="{ list: enableFilters }">
+      <bk-table-column prop="target_status" :label="$t('启/停')">
+        <!-- :filter="{ list: enableFilters }"> -->
         <template #default="{ row }">
           <bk-switcher
             theme="primary"

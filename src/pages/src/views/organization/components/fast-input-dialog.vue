@@ -47,7 +47,7 @@
                     </label><label v-if="ind !== tipsInfo.length - 1"> + </label>
                   </label>
                 </label></p>
-                <p>{{$t('信息之间使用逗号区隔，换行可输入多个用户')}}</p>
+                <p>{{$t('信息之间使用逗号区隔，换行可输入多个用户，最多支持输入100个用户')}}</p>
             </div>
             <bk-form
               ref="formRef"
