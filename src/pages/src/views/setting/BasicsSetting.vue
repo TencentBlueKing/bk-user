@@ -28,6 +28,7 @@
                 :size="2"
                 @delete="handleDelete"
                 @error="handleError"
+                :tip="$t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB')"
               />
             </bk-form-item>
           </div>
