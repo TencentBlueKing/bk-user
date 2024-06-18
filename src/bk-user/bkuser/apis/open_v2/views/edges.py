@@ -36,7 +36,7 @@ class DepartmentProfileRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMi
     def get_queryset(self) -> QuerySet[DataSourceDepartmentUserRelation]:
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
-            DataSourceDepartmentUserRelation.objects.filter(data_source__in=self.get_real_user_data_source())
+            DataSourceDepartmentUserRelation.objects.filter(data_source__in=self.get_real_user_data_sources())
             .only("id", "department_id", "user_id")
             .all()
         )
@@ -98,7 +98,7 @@ class ProfileLeaderRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin,
     def get_queryset(self) -> QuerySet[DataSourceUserLeaderRelation]:
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
-            DataSourceUserLeaderRelation.objects.filter(data_source__in=self.get_real_user_data_source())
+            DataSourceUserLeaderRelation.objects.filter(data_source__in=self.get_real_user_data_sources())
             .only("id", "user_id", "leader_id")
             .all()
         )

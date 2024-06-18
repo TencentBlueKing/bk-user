@@ -8,10 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import django.dispatch
-
-# post_sync_data_source has providing_args `data_source` (django db model object)
-post_sync_data_source = django.dispatch.Signal()
-
-# post_sync_tenant has providing_args `tenant` and `data_source` (django db model object)
-post_sync_tenant = django.dispatch.Signal()

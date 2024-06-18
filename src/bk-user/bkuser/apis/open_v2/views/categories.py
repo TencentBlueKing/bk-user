@@ -23,7 +23,7 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
     pagination_class = LegacyOpenApiPagination
 
     def get_queryset(self) -> QuerySet[DataSource]:
-        return self.get_real_user_data_source()
+        return self.get_real_user_data_sources()
 
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)
