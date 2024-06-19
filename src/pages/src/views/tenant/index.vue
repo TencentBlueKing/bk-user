@@ -848,4 +848,14 @@ const emailBlur = () => {
 .active-tab {
   border-bottom: 2px solid #3A84FF;
 }
+.item-name {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  line-height: 42px;
+  .icon-new {
+    width: 26px;
+    margin-left: 8px;
+  }
+}
 </style>
