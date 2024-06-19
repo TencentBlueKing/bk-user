@@ -73,6 +73,7 @@
               :custom-request="customRequest"
               :size="2"
               @error="handleError"
+              v-bk-tooltips="{ content: t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB'), theme: 'light'}"
             >
               <template #trigger>
                 <div class="logo-box" v-if="currentUserInfo.logo">
