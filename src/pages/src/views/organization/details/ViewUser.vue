@@ -48,7 +48,7 @@
         </div>
         <CustomFieldsView :extras="detail.extras" />
       </div>
-      <img v-if="userData.logo" class="user-logo" :src="detail.logo" alt="" />
+      <img v-if="detail.logo" class="user-logo" :src="detail.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
