@@ -143,7 +143,6 @@
       formRef.value && formRef.value?.clearValidate();
       const res = await getFieldsTips();
       tipsInfo.value = (res.data || []);
-      console.log(tipsInfo.value, 'tipsInfo')
       tableData.value = [];
     }
   })
@@ -178,7 +177,7 @@
   };
   const confirm = async () => {
     const param = {
-        user_infos: val.value.split('\n'),
+        user_infos: formData.value.val.split('\n'),
         department_id: appStore.currentOrg.id,
     }
     await operationsCreate(param);
