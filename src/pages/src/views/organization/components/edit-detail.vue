@@ -35,6 +35,7 @@
             :size="2"
             @delete="handleDelete"
             @error="handleError"
+            :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
           />
         </div>
         <bk-form-item :label="$t('姓名')" property="full_name" required>
@@ -283,6 +284,10 @@
     .bk-form-item {
         width: 268px;
     }
+}
+::v-deep .bk-upload__tip {
+  width: 0;
+  color: #999
 }
   </style>
   

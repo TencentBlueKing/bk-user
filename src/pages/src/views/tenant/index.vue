@@ -238,6 +238,53 @@
         </bk-form-item>
       </bk-form>
     </bk-dialog>
+        <!-- 创建租户成功弹窗 -->
+    <bk-dialog
+      v-model:is-show="isShowDialog"
+      quick-close
+      width="560px"
+    >
+      <div>
+        <div class="text-center">
+          <i class="user-icon icon-duihao-2 text-[44px] text-[#2dcb56]"></i>
+          <p class="text-[20px] my-[8px]">{{$t('创建租户成功')}}</p>
+        </div>
+        <div v-if="!dialogData.isShowItem" class="mb-[16px] text-[14px] text-[#63656e] flex justify-center items-center">
+          <div>
+            <div v-if="dialogData.emailNotification">
+              {{$t('登录方式已通过')}}
+              <span class="text-[red]">{{dialogData.emailNotification}}</span>
+              {{$t('发送给')}}
+              <span class="text-[#313238]">{{ dialogData.email}}</span>
+            </div>
+            <div v-if="dialogData.smsNotification">
+              {{$t('登录方式已通过')}}
+              <span class="text-[red]">{{dialogData.smsNotification}}</span>
+              {{$t('发送给')}}
+              <span class="text-[#313238] text-[13px]">{{dialogData.phone}}</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="bg-[#F5F7FA]" ref="dialogRef">
+            <LabelContent :label="$t('租户名称')">{{ dialogData.name }}</LabelContent>
+            <LabelContent :label="$t('租户ID')">{{ dialogData.id }}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('访问地址')">{{dialogData.accessUrl}}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('用户名')">admin-{{ dialogData.name}}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('登录密码')">{{ dialogData.fixed_password }}</LabelContent>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <bk-button
+          theme="primary"
+          class="w-[64px] mr-[8px] center"
+          @click="copyContent"
+        >
+          {{ $t('复制') }}
+        </bk-button>
+      </template>
+    </bk-dialog>
   </div>
 </template>
 
@@ -265,7 +312,8 @@ import {
 import { t } from '@/language/index';
 import router from '@/router';
 import { useMainViewStore, useUser } from '@/store';
-import { LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
+import { LOGO_COLOR, logoConvert, tenantStatus, copy} from '@/utils';
+import LabelContent from '@/components/layouts/LabelContent.vue';
 
 const userStore = useUser();
 const store = useMainViewStore();
@@ -454,17 +502,45 @@ watch(() => search.value, (val) => {
   state.isEmptySearch = val && !tableSearchData.value.length;
 });
 
+const dialogData = ref({});
+const isShowDialog = ref(false);
+
 // 更新租户列表
-const updateTenantsList = (type: string, id: string) => {
+const updateTenantsList = (type: string, formData: any) => {
   detailsConfig.isShow = false;
   window.changeInput = false;
   isCreated.value = type === 'add';
-  newId.value = id;
+  newId.value = formData?.id;
   fetchTenantsList();
-  Message({
+  if(isCreated.value) {
+    Object.assign(dialogData.value, {
+    ...formData,
+    isShowItem: formData.notification_methods?.length === 0,
+    emailNotification: formData.notification_methods?.includes('email') ? t('邮箱') : '',
+    smsNotification: formData.notification_methods?.includes('sms') ? t('短信') : '',
+    accessUrl: `${window.AJAX_BASE_URL}/organization`
+  })
+    isShowDialog.value = true
+  } else {
+    Message({
     theme: 'success',
-    message: isCreated.value ? t('租户创建成功') : t('租户更新成功'),
+    message: t('租户更新成功'),
   });
+}
+};
+
+const dialogRef = ref();
+const getDialogContentText = () => {
+  const text = dialogRef.value.innerText;
+  const lines = text.split('\n');
+  const processedLines = lines.map((line, index) => ((index % 2 === 0) ? line.trim() : `${line.trim()}\n`));
+  return processedLines.join('');
+};
+
+const copyContent = () => {
+  const container = getDialogContentText();
+  copy(container);
+  isShowDialog.value = false
 };
 
 const handleBeforeClose = async () => {
@@ -769,6 +845,7 @@ const emailBlur = () => {
         height: 16px;
         margin-right: 5px;
         vertical-align: middle;
+        color: #999
       }
     }
   }
@@ -857,5 +934,17 @@ const emailBlur = () => {
     width: 26px;
     margin-left: 8px;
   }
+}
+:deep(.bk-dialog-footer) {
+  text-align: center !important;
+  border-top:#fff;
+  background-color: #fff;
+  padding: 0 24px 24px 24px;
+}
+:deep(.bk-dialog-content) {
+  margin-top: 0;
+}
+:deep(.bk-dialog-header) {
+  padding: 0;
 }
 </style>

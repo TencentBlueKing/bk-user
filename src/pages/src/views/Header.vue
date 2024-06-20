@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <NoticeComponent :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
@@ -250,6 +250,7 @@ const feedbackUrl = window.BK_USER_FEEDBACK_URL;
 
 // 消息通知配置信息
 const apiUrl = `${window.AJAX_BASE_URL}/api/v1/web/notices/announcements/`;
+const isNoticeEnabled = Boolean(window.ENABLE_BK_NOTICE === 'true')
 
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
