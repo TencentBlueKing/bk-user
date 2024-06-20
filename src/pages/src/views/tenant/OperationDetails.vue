@@ -40,7 +40,7 @@
             :size="2"
             @delete="handleDelete"
             @error="handleError"
-            :tip="$t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB')"
+            :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
           />
         </div>
       </Row>
@@ -240,7 +240,7 @@ function createTenantsFn() {
   if (emailValue.value) formData.notification_methods.push('email');
   if (smsValue.value) formData.notification_methods.push('sms');
   createTenants(formData).then(() => {
-    emit('updateTenantsList', 'add', formData.id);
+    emit('updateTenantsList', 'add', formData);
   })
     .finally(() => {
       state.isLoading = false;
@@ -385,5 +385,6 @@ const emailBlur = () => {
 }
 ::v-deep .bk-upload__tip {
   width: 0;
+  color: #999
 }
 </style>

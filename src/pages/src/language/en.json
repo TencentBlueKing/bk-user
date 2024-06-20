@@ -514,6 +514,12 @@
   "其他租户(通过跨租户协同分享)": "Other tenants (through cross-tenant co-sharing)",
   "停用期间，该租户下的用户将无法登录系统": "During the shutdown, users under the tenant cannot log in to the system",
   "启用后，该租户下的用户可以重新登录系统": "After this function is enabled, users under the vstore can log in to the system again",
-  "支持jpg、png，尺寸不大于1024px*1024px，不大于256KB": "The value can be jpg or png, with a size no larger than 1024px x 1024px, and no larger than 256KB",
-  "复制密码": "Copy password"
+  "支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB": "The value can be jpg or png, with a size no larger than 1024px x 1024px, and no larger than 256KB",
+  "复制密码": "Copy password",
+  "创建租户成功": "Vstore is created successfully. Procedure",
+  "登录方式已通过": "The login mode has passed",
+  "发送给": "send to",
+  "复制": "Copy",
+  "访问地址": "Access address",
+  "登录密码": "Login password"
 }

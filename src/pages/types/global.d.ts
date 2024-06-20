@@ -9,4 +9,5 @@ declare interface Window {
   BK_DOMAIN: string
   BK_USER_DOC_URL: string
   BK_USER_FEEDBACK_URL: string
+  ENABLE_BK_NOTICE: string
 }
