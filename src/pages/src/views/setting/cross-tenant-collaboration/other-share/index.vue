@@ -202,7 +202,7 @@
         </template>
         <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
         <bk-table-column prop="source_tenant_name" :label="$t('源租户')"></bk-table-column>
-        <bk-table-column :label="$t('更新内容')" width="300">
+        <bk-table-column :label="$t('更新内容')" width="380">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
@@ -452,7 +452,6 @@ const handleBeforeClose = async () => {
 };
 
 const updateList = () => {
-  detailsConfig.isShow = false;
   window.changeInput = false;
   fetchFromStrategies();
 };

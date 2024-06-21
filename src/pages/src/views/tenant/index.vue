@@ -240,6 +240,7 @@
     </bk-dialog>
         <!-- 创建租户成功弹窗 -->
     <bk-dialog
+      class="tenant-success"
       v-model:is-show="isShowDialog"
       quick-close
       width="560px"
@@ -935,7 +936,8 @@ const emailBlur = () => {
     margin-left: 8px;
   }
 }
-:deep(.bk-dialog-footer) {
+.tenant-success {
+  :deep(.bk-dialog-footer) {
   text-align: center !important;
   border-top:#fff;
   background-color: #fff;
@@ -946,5 +948,6 @@ const emailBlur = () => {
 }
 :deep(.bk-dialog-header) {
   padding: 0;
+}
 }
 </style>

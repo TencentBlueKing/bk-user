@@ -47,11 +47,14 @@ const emit = defineEmits(['change', 'focus', 'input', 'update: modelValue']);
 </script>
 
 <style lang="less" scoped>
-:deep(.copy-icon) {
+.bk-input {
+  position: relative;
+  .copy-icon {
   position: absolute;
   top: 50%;
-  right: 126px;
+  right: 30px;
   transform: translate(0,  -50%)
+}
 }
 </style>
 

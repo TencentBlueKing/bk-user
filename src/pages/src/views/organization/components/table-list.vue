@@ -175,7 +175,9 @@
             <bk-form-item :label="$t('新密码')" required>
               <passwordInput :style="{width: '80%'}"  v-model="password" clearable
                   :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"/>
+                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
+                  @input="inputPassword"
+                  />
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -760,6 +762,10 @@
     }, []);
     return values;
   };
+
+  const inputPassword = (val) => {
+  password.value = val;
+};
 </script>
 <style lang="less">
 .operate-popover {
@@ -921,8 +927,5 @@
 }
 </style>
 <style lang="less" scoped>
-:deep .copy-icon {
-  right: 118px;
-}
 </style>
   

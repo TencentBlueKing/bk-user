@@ -99,7 +99,7 @@
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
             <passwordInput
-              v-model="formData.config.password_initial.fixed_password" />
+              v-model="formData.config.password_initial.fixed_password" @input="inputPassword"/>
             <bk-button
               outline
               theme="primary"
@@ -477,6 +477,10 @@ const handleRandomPassword = async () => {
     console.warn(e);
   }
 };
+
+const inputPassword = (val) => {
+  formData.config.password_initial.fixed_password = val;
+};
 </script>
 
 <style lang="less" scoped>
@@ -501,9 +505,5 @@ const handleRandomPassword = async () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
-}
-
-:deep(.copy-icon) {
-  right: 485px;
 }
 </style>
