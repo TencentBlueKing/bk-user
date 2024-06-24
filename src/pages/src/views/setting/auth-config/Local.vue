@@ -469,7 +469,8 @@ const changeAccountPassword = (value) => {
 
 const handleRandomPassword = async () => {
   try {
-    const passwordRes = await randomPasswords({});
+    const params = {password_rule_config: formData.config?.password_rule}
+    const passwordRes = await randomPasswords(params);
     formData.config.password_initial.fixed_password = passwordRes.data.password;
     window.changeInput = true;
   } catch (e) {

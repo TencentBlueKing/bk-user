@@ -22,7 +22,7 @@
             @click="editUsername" />
         </template>
         <template v-else>
-          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" @enter="saveUsername" />
+          <bk-input class="username-input" style="width: 300px" v-model.trim="adminAccount.username" @enter="saveUsername" />
           <bk-button
             text
             theme="primary"
@@ -211,6 +211,7 @@ watch(() => isEditUsername.value, (val) => {
 });
 
 const saveUsername = async () => {
+  if(!adminAccount.value.username) return 
   await patchBuiltinManager({ username: adminAccount.value.username });
   isEditUsername.value = false;
   Message({ theme: 'success', message: t('保存成功') });

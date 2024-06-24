@@ -28,7 +28,7 @@
                 :size="2"
                 @delete="handleDelete"
                 @error="handleError"
-                :tip="$t('支持jpg、png，尺寸不大于1024px*1024px，不大于256KB')"
+                :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
               />
             </bk-form-item>
           </div>
@@ -225,5 +225,8 @@ const cancelEdit = () => {
     border: 1px dashed #C4C6CC;
     border-radius: 2px;
   }
+}
+:deep(.bk-upload__tip) {
+  color: #999
 }
 </style>
