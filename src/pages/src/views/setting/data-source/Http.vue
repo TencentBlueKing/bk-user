@@ -35,7 +35,7 @@
         <div class="api-url-style">
           <bk-form-item
             class="w-[560px] mr-[24px]"
-            :label="$t('部门数据 API 路径')"
+            :label="$t('组织数据 API 路径')"
             property="server_config.department_api_path"
             required>
             <bk-input
@@ -683,8 +683,5 @@ const handleCancel = () => {
     font-size: 14px;
     color: #2DCB56;
   }
-}
-:deep(.copy-icon) {
-  right: 30px;
 }
 </style>

@@ -14,7 +14,7 @@
                 </bk-tag>
               </div>
             </div>
-            <LabelContent :label="$t('部门数据 API 路径')">{{ serverConfig.department_api_path }}</LabelContent>
+            <LabelContent :label="$t('组织数据 API 路径')">{{ serverConfig.department_api_path }}</LabelContent>
             <div class="query-params" v-if="serverConfig.department_api_query_params?.length">
               <span class="key">{{ $t('查询参数') }}：</span>
               <div class="value">

@@ -43,7 +43,7 @@
     </ViewRow>
     <ViewRow :title="$t('密码到期提醒')">
       <LabelContent :label="$t('密码有效期')">{{ passwordExpire?.valid_time }}</LabelContent>
-      <LabelContent :label="$t('提醒时间')">
+      <LabelContent :label="$t('到期提醒时间')">
         {{ noticeTimeMap(passwordExpire?.remind_before_expire) }}
       </LabelContent>
       <LabelContent :label="$t('通知方式')">

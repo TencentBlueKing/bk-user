@@ -351,6 +351,7 @@ const deleteAccount = (id: string) => {
 
 const saveRealUsers = () => {
   showSelectInput.value = false;
+  if (!Object.keys(changeValues.value).length) return;
   selectedValue.value = [];
   postRealManagers({
     ids: changeValues.value,
@@ -387,9 +388,9 @@ const cancelRealUsers = () => {
       }
 
       .bk-tag-close {
-        margin-left: 12px;
+        margin-right: 10px;
         font-size: 16px;
-        color: #C4C6CC;
+        color: #979BA5;
       }
     }
 

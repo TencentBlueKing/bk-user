@@ -119,7 +119,4 @@ const confirm = async () => {
     color: #ea3636;
   }
 }
-:deep(.copy-icon) {
-  right: 30px;
-}
 </style>
