@@ -190,7 +190,7 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item :label="$t('提醒时间')" property="config.password_expire.remind_before_expire" required>
+        <bk-form-item :label="$t('到期提醒时间')" property="config.password_expire.remind_before_expire" required>
           <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"

@@ -46,17 +46,8 @@
                 {{ $t('导入') }}
               </bk-button>
             </div>
-            <div v-else>
-              <bk-button
-                v-if="showContent"
-                class="min-w-[64px]"
-                outline
-                theme="primary"
-                @click="handleEdit"
-              >
-                {{ $t('编辑') }}
-              </bk-button>
-              <div v-else>
+            <div class="flex" v-else>
+              <div>
                 <bk-pop-confirm
                   ref="popConfirmRef"
                   :content="$t('确认同步？')"
@@ -72,6 +63,14 @@
                   </bk-button>
                 </bk-pop-confirm>
               </div>
+              <bk-button
+                class="min-w-[64px] ml-[8px]"
+                outline
+                theme="primary"
+                @click="handleEdit"
+              >
+                {{ $t('编辑') }}
+              </bk-button>
             </div>
           </div>
         </template>

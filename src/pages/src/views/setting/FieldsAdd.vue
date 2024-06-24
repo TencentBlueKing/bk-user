@@ -130,7 +130,7 @@
       <bk-checkbox
         :value="fieldsInfor.manager_editable"
         v-model="fieldsInfor.manager_editable"
-        :disabled="isEdit">
+        :disabled="true">
         <span v-bk-tooltips="{ content: $t('该字段在用户信息里可编辑') }">{{ $t('管理员可编辑') }}</span>
       </bk-checkbox>
     </div>

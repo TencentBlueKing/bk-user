@@ -165,7 +165,7 @@
       :theme="'primary'"
       :size="'normal'"
       :height="200"
-      @closed="() => passwordDialogShow = false"
+      @closed="resetPasswordClose"
       @confirm="resetPasswordConfirm"
     >
         <bk-form
@@ -681,12 +681,17 @@
     try {
         const param = { password: password.value };
         await resetTenantsUserPassword(detailsInfo.value.id, param);
-        passwordDialogShow.value = false;
         handleClear();
+        resetPasswordClose()
         Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
         console.warn(e);
     }
+  }
+  /** 取消重置密码 */
+  const resetPasswordClose = () => {
+    passwordDialogShow.value = false
+    password.value = ''
   }
   /** 点击快速录入按钮 */
   const fastInputHandle = () => {
@@ -927,5 +932,8 @@
 }
 </style>
 <style lang="less" scoped>
+:deep(.copy-icon) {
+  right: 25px !important;
+}
 </style>
   
