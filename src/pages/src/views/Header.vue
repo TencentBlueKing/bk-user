@@ -314,7 +314,7 @@ const openVersionLog = async () => {
         }
 
         .tenant-id {
-          max-width: 150px;
+          max-width: 300px;
           margin: 0 8px 0 4px;
           color: #FFF;
         }

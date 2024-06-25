@@ -293,7 +293,4 @@ const inputPassword = (val) => {
 
 <style lang="less" scoped>
 @import url('./WeCom.less');
-:deep(.copy-icon) {
-  right: 30px;
-}
 </style>

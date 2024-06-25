@@ -103,9 +103,9 @@ export function validTimeMap(value: number) {
 }
 
 export const noticeTime = {
-  1: t('1天'),
-  7: t('7天'),
-  15: t('15天'),
+  1: t('1天前'),
+  7: t('7天前'),
+  15: t('15天前'),
 };
 export function noticeTimeMap(value: any) {
   const list: string[] = value?.map(key => noticeTime[key]).filter(Boolean) || [];
@@ -264,9 +264,9 @@ export const VALID_TIME = [
 
 // 提醒时间
 export const REMIND_DAYS = [
-  { value: 1, label: t('1天') },
-  { value: 7, label: t('7天') },
-  { value: 15, label: t('15天') },
+  { value: 1, label: t('1天前') },
+  { value: 7, label: t('7天前') },
+  { value: 15, label: t('15天前') },
 ];
 
 // 通知方式

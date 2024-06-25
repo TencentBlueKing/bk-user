@@ -253,7 +253,7 @@ const localSuccess = (status: boolean) => {
         style: {
           fontSize: '12px',
         },
-      }, t('账号陆续生效中，请以用户最终收到的邮件为准')),
+      }, t('账号陆续生效中，生效时间请以用户最终收到的邮件为准')),
     ]),
     dialogType: 'confirm',
     footerAlign: 'center',
@@ -282,7 +282,7 @@ const weComSuccess = (url: string) => {
           style: {
             marginBottom: '12px',
           },
-        }, t('请将一下回调地址填写到企业微信配置内：')),
+        }, t('请将以下回调地址填写到企业微信配置内：')),
         h('div', {
           style: {
             background: '#F5F7FA',
@@ -424,8 +424,8 @@ const handleDataSource = () => {
 
             .status-tag {
               position: absolute;
-              top: -2px;
-              right: -6px;
+              top: 0;
+              right: 0;
               background: #2DCB9D;
             }
           }

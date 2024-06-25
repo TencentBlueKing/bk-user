@@ -16,7 +16,7 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item :label="$t('续期提醒时间')" property="remind_before_expire" required>
+        <bk-form-item :label="$t('到期提醒时间')" property="remind_before_expire" required>
           <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"
@@ -89,7 +89,7 @@
             </bk-tag>
             {{ validityPeriod}}
           </LabelContent>
-          <LabelContent :label="$t('续期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
+          <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
           <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
         </div>
         <bk-button

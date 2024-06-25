@@ -165,7 +165,7 @@
       :theme="'primary'"
       :size="'normal'"
       :height="200"
-      @closed="() => passwordDialogShow = false"
+      @closed="resetPasswordClose"
       @confirm="resetPasswordConfirm"
     >
         <bk-form
@@ -175,7 +175,9 @@
             <bk-form-item :label="$t('新密码')" required>
               <passwordInput :style="{width: '80%'}"  v-model="password" clearable
                   :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"/>
+                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
+                  @input="inputPassword"
+                  />
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -679,12 +681,17 @@
     try {
         const param = { password: password.value };
         await resetTenantsUserPassword(detailsInfo.value.id, param);
-        passwordDialogShow.value = false;
         handleClear();
+        resetPasswordClose()
         Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
         console.warn(e);
     }
+  }
+  /** 取消重置密码 */
+  const resetPasswordClose = () => {
+    passwordDialogShow.value = false
+    password.value = ''
   }
   /** 点击快速录入按钮 */
   const fastInputHandle = () => {
@@ -760,6 +767,10 @@
     }, []);
     return values;
   };
+
+  const inputPassword = (val) => {
+  password.value = val;
+};
 </script>
 <style lang="less">
 .operate-popover {
@@ -921,8 +932,8 @@
 }
 </style>
 <style lang="less" scoped>
-:deep .copy-icon {
-  right: 118px;
+:deep(.copy-icon) {
+  right: 25px !important;
 }
 </style>
   
