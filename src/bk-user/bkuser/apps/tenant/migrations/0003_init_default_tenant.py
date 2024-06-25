@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 
 def forwards_func(apps, schema_editor):
     """初始化本地数据源插件"""
-    if os.environ.get("SKIP_INIT_DEFAULT_TENANT").lower() == "true":
+    if os.getenv("SKIP_INIT_DEFAULT_TENANT", "false").lower() == "true":
         logger.info("skip initialize default tenant & data source")
         return
 
-    admin_username = os.environ.get("INITIAL_ADMIN_USERNAME")
-    admin_password = os.environ.get("INITIAL_ADMIN_PASSWORD")
+    admin_username = os.getenv("INITIAL_ADMIN_USERNAME")
+    admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
     if not (admin_username and admin_password):
         raise RuntimeError("INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD must be set in environment variables")
 
