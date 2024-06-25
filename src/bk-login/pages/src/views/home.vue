@@ -6,7 +6,7 @@
 
     <section v-if="!hasStorage && !loading">
 
-      <h1 class="login-header">请选择租户与用户群</h1>
+      <h1 class="login-header">{{ $t('请选择租户与用户来源') }}</h1>
 
       <bk-form-item>
         <bk-select
@@ -14,7 +14,7 @@
           filterable
           input-search
           allow-create
-          placeholder="请选择租户或输入租户ID"
+          :placeholder="$t('请选择租户或输入租户ID')"
           @change="handleTenantChange">
           <bk-option
             v-for="item in allTenantList"
@@ -26,8 +26,8 @@
           </bk-option>
         </bk-select>
         <span v-if="inputTenant !== null">
-          <span v-if="inputTenant?.name">匹配到以下租户: {{ inputTenant?.name }}</span>
-          <span v-else>暂无匹配租户</span>
+          <span v-if="inputTenant?.name">{{ `${$t('匹配到以下租户: ')} ${inputTenant?.name}`}}</span>
+          <span v-else>{{ $t('暂无匹配租户') }}</span>
         </span>
       </bk-form-item>
 
@@ -35,7 +35,7 @@
         <bk-select
           size="large"
           filterable
-          placeholder="请选择用户群"
+          :placeholder="$t('请选择用户来源')"
           v-model="userGroup"
         >
           <bk-option
@@ -43,14 +43,14 @@
             class="tenant-option"
             :id="item.id"
             :key="item.id"
-            :name="item.name">
-            {{ item.name }}
+            :name="item.name + $t('成员')">
+            {{ `${item.name}${$t('成员')}`}}
           </bk-option>
         </bk-select>
       </bk-form-item>
 
       <bk-form-item style="margin: -12px 0 20px;">
-        <bk-checkbox v-model="trust">记住我的选择</bk-checkbox>
+        <bk-checkbox v-model="trust">{{ $t('记住我的选择') }}</bk-checkbox>
       </bk-form-item>
 
       <bk-form-item>
@@ -60,14 +60,14 @@
           style="width: 100%"
           :disabled="!tenant || !userGroup"
           @click="confirmTenant">
-          确认
+          {{ $t('确认') }}
         </bk-button>
       </bk-form-item>
     </section>
 
     <section v-else-if="hasStorage">
       <bk-link v-if="hasBuiltin && hasRealUser" @click.prevent="isAdminShow = true" class="admin-login">
-        管理员登录 >
+        {{ $t('管理员登录') }} >
       </bk-link>
       <div class="tenant-header">
         <img v-if="tenant?.logo" class="logo-img" :src="tenant?.logo" />
@@ -84,7 +84,7 @@
           ext-cls="tenant-popover">
           <div class="tenant-change">
             <Transfer class="bk-icon" />
-            <span>切换</span>
+            <span>{{ $t('切换') }}</span>
           </div>
           <template #content>
             <section class="content-list cursor-pointer">
@@ -95,13 +95,13 @@
                 @click="handleChangeStorageTenant(item)">
                 {{ item.name }} / {{ getUserGroupName(item) }}
               </div>
-              <div class="add" @click="addTenant">其他租户或用户群</div>
+              <div class="add" @click="addTenant">{{ $t('其他租户或用户群') }}</div>
             </section>
           </template>
         </bk-popover>
         <div v-else-if="!isOnlyOneTenant" class="tenant-change" @click="addTenant">
           <Transfer class="bk-icon" />
-          <span>切换</span>
+          <span>{{ $t('切换') }}</span>
         </div>
       </div>
 
@@ -122,7 +122,7 @@
       </section>
 
       <section v-else-if="!hasRealUser && hasBuiltin">
-        <h2 class="h2-title">该租户未完成用户登录的配置，请以管理员模式登录</h2>
+        <h2 class="h2-title">{{ $t('该租户未完成用户登录的配置，请以管理员模式登录') }}</h2>
         <Password
           v-if="activeIdp?.plugin_id === 'local'"
           is-admin
@@ -135,18 +135,18 @@
           <img src="../../static/images/unset.svg" />
         </div>
         <div class="unset-header">
-          {{ userGroupName === '本租户' ? '当前' : '协同' }}租户未完成用户登录配置，无法登录
+          {{ $t(userGroupName === '本租户' ? '当前' : '协同') }}{{ $t('租户未完成用户登录配置，无法登录') }}
         </div>
-        <div v-if="userGroupName !== '本租户'" class="unset-content">协同租户：{{ userGroupName }}</div>
+        <div v-if="userGroupName !== '本租户'" class="unset-content">{{`${$t('协同租户：')}${userGroupName}`}}</div>
       </section>
 
       <div class="tenant-password">
-        <span class="cursor-pointer" @click="protocolVisible = true">用户协议 ></span>
+        <span class="cursor-pointer" @click="protocolVisible = true">{{ $t('用户协议') }} ></span>
         <span
           class="cursor-pointer"
           v-if="hasRealUser && activeIdp?.plugin_id === 'local'"
           @click="handleResetPassword">
-          忘记密码？
+          {{ $t('忘记密码？') }}
         </span>
       </div>
 
@@ -154,9 +154,9 @@
     </section>
   </bk-form>
   <div v-show="isAdminShow" style="margin-top: -28px">
-    <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; 返回上一级</bk-link>
-    <h1 class="admin-title">管理员登录</h1>
-    <span class="admin-desc">可使用内置管理员账号进行登录</span>
+    <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; {{ $t('返回上一级') }}</bk-link>
+    <h1 class="admin-title">{{ $t('管理员登录') }}</h1>
+    <span class="admin-desc">{{ $t('可使用内置管理员账号进行登录') }}</span>
     <Password is-admin :idp-id="appStore.manageIdpId"></Password>
   </div>
 </template>

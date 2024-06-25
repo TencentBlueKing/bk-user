@@ -10,7 +10,7 @@
           size="large"
           class="login-btn"
           @click="handleLogin">
-          立即登录
+          {{ $t('立即登录') }}
         </bk-button>
       </div>
     </bk-form-item>

@@ -15,13 +15,13 @@
     <div id="particles-js"></div>
     <footer class="footer">
       <p>
-        <a href="https://wpa1.qq.com/KziXGWJs?_type=wpa&amp;qidian=true">技术支持</a>
-        | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" class="link">社区论坛</a>
-        | <a href="http://bk.tencent.com/" target="_blank" class="link">产品官网</a>
+        <a href="https://wpa1.qq.com/KziXGWJs?_type=wpa&amp;qidian=true">{{ $t('技术支持') }}</a>
+        | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" class="link">{{ $t('社区论坛') }}</a>
+        | <a href="http://bk.tencent.com/" target="_blank" class="link">{{ $t('产品官网') }}</a>
         |
         <bk-popover theme="light" placement="bottom">
           <a href="" target="_blank" class="link follow-us">
-            关注我们
+            {{ $t('关注我们') }}
           </a>
           <template #content>
             <span class="qr-box"><img class="qr" src="../static/images/qr.png" alt=""></span>
