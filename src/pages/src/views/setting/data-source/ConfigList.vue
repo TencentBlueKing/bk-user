@@ -185,7 +185,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 
 import HttpDetails from './HttpDetails.vue';
 
@@ -198,6 +198,8 @@ import { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
+import { useRoute } from 'vue-router';
+const route = useRoute();
 
 const userStore = useUser();
 
@@ -363,6 +365,13 @@ const updateConfig = reactive({
 const changeLog = () => {
   updateConfig.isShow = true;
 };
+
+onMounted(() => {
+  /** 是否从快速导入跳转过来，是的话则默认打开导入弹框 */
+  if (route.query?.isLink) {
+    handleImport();
+  }
+})
 </script>
 
 <style lang="less" scoped>

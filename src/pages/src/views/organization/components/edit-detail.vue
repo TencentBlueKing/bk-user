@@ -146,17 +146,23 @@
   });
   const originalData = { ...props.detailsInfo,  extras: JSON.parse(JSON.stringify(props.detailsInfo.extras))};
   const isDisabled = ref(true);
-  const rules = {
+  const rules = ref({
     username: [validate.required, validate.userName],
     full_name: [validate.required, validate.name],
     email: [validate.emailNotRequired],
-  };
+  });
   
   const isLoading = ref(false);
 
-  watch(formData, () => { 
-  isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
-}, { deep: true, immediate: true });
+  watch(formData, (val) => {
+    val.extras.map(item => {
+      val[item.name] = item.value;
+      if (item.required) {
+        rules.value[item.name] = [validate.required, item.data_type === 'string' ? validate.checkSpace : {}]
+      }
+    })
+    isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  }, { deep: true, immediate: true });
 
   // 上传头像
   const files = computed(() => {
@@ -232,14 +238,17 @@
   
   const handleSubmit = async () => {
     try {
-      await formRef.value.validate();
-      if (telError.value) return;
-      isLoading.value = true;
-      const { id, status, extras, departments, leaders, ...param} = formData;
-      const extraData = {};
-      extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, {...param, ...{extras: extraData}});
-      emit('updateUsers', t('更新成功'));
+      await formRef.value.validate().then(async res => {
+        if (telError.value) return;
+        isLoading.value = true;
+        const { id, status, extras, departments, leaders, ...param} = formData;
+        const extraData = {};
+        extras.map(item => extraData[item.name] = item.value || item.default);
+        await updateTenantsUserDetail(id, {...param, ...{extras: extraData}});
+        emit('updateUsers', t('更新成功'));
+      }).catch(err => {
+        console.log(err, 'err')
+      })
     } finally {
       isLoading.value = false;
     }

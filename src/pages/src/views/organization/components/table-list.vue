@@ -282,7 +282,6 @@
   const isPassword = ref(false);
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
-    console.log(appStore.currentTenant, appStore.currentTenant?.data_source?.plugin_id === 'local')
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
   });
   const dataSourceId = computed(() => {
@@ -388,7 +387,7 @@
       }
     }, 
   ], ...moveOperation, ...defaultOperation]);
-  const rowOperation = reactive([...[       
+  const rowOperation = ref([...[       
     {
       label: t('停用'),
       key: 'status',
@@ -409,7 +408,8 @@
     },
     {
       label: t('重置密码'),
-      disabled: isEnabledPassword.value,
+      key: 'password',
+      disabled: !isEnabledPassword.value,
       handle: () => {
         passwordDialogShow.value = true;
         passwordRule(detailsInfo.value.id).then(res => {
@@ -488,7 +488,7 @@
             content: () => (
               <ul class="operate-menu-list">
                 {
-                  rowOperation.map((item, ind) => <li
+                  rowOperation.value.map((item, ind) => <li
                     class={["operate-list-item", {disabled: item.disabled}]}
                     key="ind"
                     v-bk-tooltips={{
@@ -515,7 +515,7 @@
         </bk-popover>
       </span>)
     }
-    return rowOperation.slice(0, 1).map(item => <label class="table-operate"
+    return rowOperation.value.slice(0, 1).map(item => <label class="table-operate"
       onClick={() => {
         detailsInfo.value = row;
         item.handle(false, row);
