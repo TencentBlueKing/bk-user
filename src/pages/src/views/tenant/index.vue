@@ -270,7 +270,9 @@
           <div class="bg-[#F5F7FA]" ref="dialogRef">
             <LabelContent :label="$t('租户名称')">{{ dialogData.name }}</LabelContent>
             <LabelContent :label="$t('租户ID')">{{ dialogData.id }}</LabelContent>
-            <LabelContent v-if="dialogData.isShowItem" :label="$t('访问地址')">{{dialogData.accessUrl}}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('访问地址')" class="access-url">
+              <a :href="dialogData.accessUrl" target="_blank">{{dialogData.accessUrl}}</a>
+            </LabelContent>
             <LabelContent v-if="dialogData.isShowItem" :label="$t('用户名')">admin-{{ dialogData.name}}</LabelContent>
             <LabelContent v-if="dialogData.isShowItem" :label="$t('登录密码')">{{ dialogData.fixed_password }}</LabelContent>
           </div>
@@ -519,7 +521,7 @@ const updateTenantsList = (type: string, formData: any) => {
     isShowItem: formData.notification_methods?.length === 0,
     emailNotification: formData.notification_methods?.includes('email') ? t('邮箱') : '',
     smsNotification: formData.notification_methods?.includes('sms') ? t('短信') : '',
-    accessUrl: `${window.AJAX_BASE_URL}/organization`
+    accessUrl: location.origin
   })
     isShowDialog.value = true
   } else {
@@ -948,6 +950,11 @@ const emailBlur = () => {
 }
 :deep(.bk-dialog-header) {
   padding: 0;
+}
+}
+:deep(.access-url) {
+  .label-value {
+  color: #3A84FF !important;
 }
 }
 </style>

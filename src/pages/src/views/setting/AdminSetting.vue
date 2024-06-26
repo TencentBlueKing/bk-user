@@ -1,6 +1,6 @@
 <template>
   <div class="admin-setting-wrapper" v-bkloading="{ loading: isLoading }">
-    <Row class="admin-setting-item" :title="$t('管理员账号')">
+    <Row class="admin-setting-item" :title="$t('内置管理员')">
       <LabelContent :label="$t('状态')">
         <bk-tag :theme="adminAccount.enable_login ? 'success' : ''">
           {{ adminAccount.enable_login ? $t('启用') : $t('未启用') }}
@@ -51,7 +51,7 @@
     </Row>
 
     <div class="mb-[24px]">
-      <Row class="admin-setting-item" :title="$t('实名账号')">
+      <Row class="admin-setting-item" :title="$t('实名管理员')">
         <div class="flex items-center flex-wrap ml-[56px]">
           <bk-tag
             class="tag-style"
@@ -279,7 +279,7 @@ const confirmPassword = async () => {
   }
 };
 
-// 实名账号信息
+// 实名管理员信息
 const selectedValue = ref([]);
 
 const realUsers = ref({
@@ -342,7 +342,7 @@ const scrollChange = () => {
   });
 };
 
-// 删除实名账号
+// 删除实名管理员
 const deleteAccount = (id: string) => {
   deleteRealManagers(id).then(() => {
     initRealManagers();

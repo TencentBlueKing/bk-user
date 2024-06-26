@@ -1,7 +1,7 @@
 <template>
   <div v-bkloading="{ loading }">
-    <div class="cursor-pointer" @click="goBack">&lt; 返回上一级</div>
-    <h2 class="header">请选择你要登录的账号</h2>
+    <div class="cursor-pointer" @click="goBack">&lt; {{ $t('返回上一级') }}</div>
+    <h2 class="header">{{ $t('请选择你要登录的账号') }}</h2>
     <div class="account">
       <div
         class="item"
@@ -20,7 +20,7 @@
         style="width: 100%"
         :disabled="!userId"
         @click="handleLogin">
-        立即登录
+        {{ $t('立即登录') }}
       </bk-button>
     </div>
   </div>

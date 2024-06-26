@@ -4,7 +4,7 @@
       <bk-input
         size="large"
         v-model="formData.username"
-        :placeholder="isAdmin ? '请输入管理员账号' : '请输入用户名'"
+        :placeholder="isAdmin ? $t('请输入管理员账号') : $t('请输入用户名')"
       >
       </bk-input>
     </bk-form-item>
@@ -14,7 +14,7 @@
         size="large"
         v-model="formData.password"
         type="password"
-        placeholder="请输入密码"
+        :placeholder="$t('请输入密码')"
         @enter="handleLogin">
       </bk-input>
     </bk-form-item>
@@ -28,7 +28,7 @@
         class="login-btn"
         :loading="loading"
         @click="handleLogin">
-        立即登录
+        {{ $t('立即登录') }}
       </bk-button>
     </bk-form-item>
   </bk-form>
@@ -39,6 +39,7 @@ import { signInByPassword } from '@/http/api';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import useAppStore from '@/store/app';
+import { t } from '@/language/index';
 
 const appStore = useAppStore();
 
@@ -63,10 +64,10 @@ const formData = ref({
 });
 const rules = ref({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { required: true, message: t('请输入用户名'), trigger: 'blur' },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
+    { required: true, message: t('请输入密码'), trigger: 'blur' },
   ],
 });
 const errorMessage = ref('');
@@ -86,7 +87,7 @@ const handleLogin = () => {
       window.location.href = `${window.SITE_URL}/page/users/`;
     })
       .catch((error) => {
-        errorMessage.value = error?.message || '登录失败';
+        errorMessage.value = error?.message || t('登录失败');
       })
       .finally(() => {
         loading.value = false;
