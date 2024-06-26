@@ -35,7 +35,7 @@ class DefaultTenantMixin:
     def default_tenant(self) -> Tenant:
         return Tenant.objects.filter(is_default=True).first()
 
-    def get_real_user_data_source(self) -> QuerySet[DataSource]:
+    def get_real_user_data_sources(self) -> QuerySet[DataSource]:
         """获取默认租户真实用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
         # 接受方确认过的数据源，就是认为是有数据的
         collaboration_tenant_ids = (
