@@ -55,7 +55,7 @@ const routes = [
     component: Audit,
   },
   {
-    path: `${rootPath}resetPassword`,
+    path: `${rootPath}reset_password`,
     name: 'resetPassword',
     component: ResetPassword,
   },
