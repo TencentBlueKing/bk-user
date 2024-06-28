@@ -294,7 +294,7 @@ let originalData = {};
 const isDisabled = ref(true);
 
 const formData = reactive({
-  name: props.defaultName,
+  name: props?.defaultName,
   status: '',
   config: {},
 });
