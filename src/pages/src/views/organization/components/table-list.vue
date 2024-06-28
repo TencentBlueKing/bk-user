@@ -460,6 +460,9 @@
     {
         label: t("手机号"),
         field: "phone",
+        render: ({ row }) => (
+          <span>{row.phone_country_code ? `(+${row.phone_country_code}) ${row.phone}` : row.phone}</span>
+        )
     },
     {
         label: t("所属组织"),

@@ -126,6 +126,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  defaultName: {
+    type: String,
+    default: '',
+  },
 });
 
 const formRef = ref();
@@ -133,7 +137,7 @@ const isLoading = ref(false);
 const btnLoading = ref(false);
 
 const formData = ref({
-  name: '',
+  name: props?.defaultName,
   status: 'enabled',
   plugin_id: 'wecom',
   plugin_config: {

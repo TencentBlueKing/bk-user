@@ -268,6 +268,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  defaultName: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['cancel', 'success']);
@@ -290,7 +294,7 @@ let originalData = {};
 const isDisabled = ref(true);
 
 const formData = reactive({
-  name: '',
+  name: props.defaultName,
   status: '',
   config: {},
 });

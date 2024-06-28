@@ -92,6 +92,7 @@
           <Local
             v-if="detailsConfig.isEdit"
             :current-id="authDetails?.idp_id"
+            :default-name="authDetails.name"
             @cancel="cancelEdit"
             @success="localSuccess" />
           <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
@@ -101,6 +102,7 @@
             v-if="detailsConfig.isEdit"
             :data-source-id="currentDataSource?.id"
             :current-id="authDetails?.idp_id"
+            :default-name="authDetails.name"
             @success="weComSuccess"
             @cancel-edit="cancelEdit" />
           <WeComView v-else :current-id="authDetails?.idp_id" />
@@ -137,7 +139,7 @@ const idpsPlugins = ref([]);
 const currentDataSource = ref({});
 onMounted(() => {
   getRealDataSource();
-  initIdpsPlugins();
+  initIdpsPlugins(); 
 });
 
 // 获取当前实名数据源
@@ -155,8 +157,7 @@ const initIdpsPlugins = async () => {
       getIdps(''),
     ]);
 
-    idpsPlugins.value = pluginsRes.data;
-
+    idpsPlugins.value = pluginsRes.data; 
     idpsPlugins.value.forEach((plugin) => {
       const idp = idpsRes.data.find(idp => idp.plugin.id === plugin.id);
       if (idp) {
