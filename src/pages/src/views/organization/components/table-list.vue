@@ -291,7 +291,7 @@
     return appStore.currentTenant?.data_source?.id;
   });
   const isEnabledPassword = computed(() => {
-    return appStore.currentTenant?.data_source?.enable_password;
+    return !appStore.currentTenant?.data_source?.enable_password;
   })
 
   const isShowBtn = computed(() => {
