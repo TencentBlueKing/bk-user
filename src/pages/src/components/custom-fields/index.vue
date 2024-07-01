@@ -4,9 +4,10 @@
       v-for="(item, index) in extras"
       :key="index"
       :label="item.display_name"
-      :property="`extras.${index}.default`"
+      :property="item.name"
       :required="item.required"
       :rules="rules.default">
+      <!-- :property="`extras.${index}.default`" -->
       <bk-input
         v-if="item.data_type === 'string'"
         v-model="item.value"

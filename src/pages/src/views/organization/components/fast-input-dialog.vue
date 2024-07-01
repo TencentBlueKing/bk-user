@@ -62,6 +62,7 @@
                 <bk-input
                   v-model="formData.val"
                   type="textarea"
+                  :rows="6"
                   :resize="false"
                   :placeholder="$t('输入案例：zhangsan, 张三, 10000@qq.com, 15709998877')"
                 />
@@ -98,25 +99,6 @@
   const appStore = useAppStore();
   const tipsInfo = ref('');
   const validate = useValidate();
-  // const columns = [
-  //   {
-  //       label: t("用户名"),
-  //       field: "username",
-  //   },
-  //   {
-  //       label: t("姓名"),
-  //       field: "full_name",
-  //   },
-  //   {
-  //       label: t("邮箱"),
-  //       field: "email",
-  //       width: 200
-  //   },
-  //   {
-  //       label: t("手机号"),
-  //       field: "phone"
-  //   }
-  // ];
   const rules = {
     val: [validate.required],
   }
@@ -154,7 +136,6 @@
   const handleNext = async () => {
     formRef.value.validate();
     if (!!formData.value.val && (currentId.value < objectSteps.value.length)) {
-      currentId.value += 1;
       isLoading.value = true;
       const param = {
         user_infos: formData.value.val.split('\n'),
@@ -162,7 +143,8 @@
       }
       try {
         const res = await batchCreatePreview(param);
-        tableData.value = res.data;
+        tableData.value = res.data.map(item => Object.assign(item, item.extras));
+        currentId.value += 1;
       } catch (e) {
         console.warn(e);
       } finally {
@@ -187,7 +169,9 @@
     emit('update:isShow', false)
   }
   const goToSetting = (name) => {
-    router.push({ name });
+    router.push({ name, query: {
+      isLink: true,
+    }});
   }
 </script>
 <style lang="less" scoped>
