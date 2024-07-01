@@ -291,7 +291,7 @@
     return appStore.currentTenant?.data_source?.id;
   });
   const isEnabledPassword = computed(() => {
-    return appStore.currentTenant?.data_source?.enable_password;
+    return !appStore.currentTenant?.data_source?.enable_password;
   })
 
   const isShowBtn = computed(() => {
@@ -460,6 +460,9 @@
     {
         label: t("手机号"),
         field: "phone",
+        render: ({ row }) => (
+          <span>{row.phone_country_code ? `(+${row.phone_country_code}) ${row.phone}` : row.phone}</span>
+        )
     },
     {
         label: t("所属组织"),

@@ -228,6 +228,10 @@
         }
     }
 }
-
+:deep(.bk-dialog-next) {
+  background-color: #3A84FF;
+  color: #fff;
+  float: none;
+}
 </style>
   
