@@ -98,6 +98,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     email = serializers.CharField(help_text="用户邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
+    phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
@@ -367,7 +368,7 @@ class TenantUserInfoSLZ(serializers.Serializer):
 class TenantUserBatchCreateInputSLZ(serializers.Serializer):
     user_infos = serializers.ListField(
         help_text="用户信息列表",
-        child=serializers.CharField(help_text="用户信息（纯字符串，以空格分隔）"),
+        child=serializers.CharField(help_text="用户信息（纯字符串，以空格分隔）", allow_blank=True),
         min_length=1,
         max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
     )
@@ -396,6 +397,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
 
         user_infos: List[Dict[str, Any]] = []
         for idx, raw_info in enumerate(raw_user_infos, start=1):
+            # 跳过空白行
+            if not raw_info.strip():
+                continue
+
             # 注：raw_info 格式是以英文逗号 (,) 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email phone gender region hobbies
             # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, female, StarCoreHunter, hunting/burning

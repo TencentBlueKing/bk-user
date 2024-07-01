@@ -45,6 +45,10 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
         choices=CollaborationStrategyStatus.get_choices(),
     )
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
+    target_status = serializers.ChoiceField(
+        help_text="策略状态（接受方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+    )
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_target_tenant_name(self, obj: CollaborationStrategy) -> str:
