@@ -155,7 +155,7 @@ def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: A
         if not isinstance(value, str):
             raise ValidationError(_("字段 {} 的值 {} 不是字符串类型").format(field.display_name, value))
 
-        return value
+        return value.strip()
 
     raise ValidationError(_("字段类型 {} 不被支持").format(field.data_type))
 

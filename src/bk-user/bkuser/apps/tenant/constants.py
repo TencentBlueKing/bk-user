@@ -143,6 +143,7 @@ class CollaborationStrategyStatus(str, StructuredEnum):
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
+    # 注：未确认只有接受方会有这个状态
     UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
 
 
