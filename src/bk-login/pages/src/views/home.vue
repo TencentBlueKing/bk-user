@@ -95,7 +95,7 @@
                 @click="handleChangeStorageTenant(item)">
                 {{ item.name }} / {{ getUserGroupName(item) }}
               </div>
-              <div class="add" @click="addTenant">{{ $t('其他租户或用户群') }}</div>
+              <div class="add" @click="addTenant">{{ $t('其他租户或用户来源') }}</div>
             </section>
           </template>
         </bk-popover>

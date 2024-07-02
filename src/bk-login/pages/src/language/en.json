@@ -16,7 +16,7 @@
   "确认": "Confirm",
   "管理员登录": "Administrator login",
   "切换": "Switch",
-  "其他租户或用户群": "Other tenants or user groups",
+  "其他租户或用户来源": "Other tenants or user source",
   "该租户未完成用户登录的配置，请以管理员模式登录": "The user login configuration is not complete. Log in to the tenant in administrator mode",
   "租户未完成用户登录配置，无法登录": "tenant cannot log in because the user login configuration is not complete",
   "协同租户：": "Co-tenant：",

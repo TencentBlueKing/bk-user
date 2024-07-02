@@ -158,7 +158,7 @@
     val.extras.map(item => {
       val[item.name] = item.value;
       if (item.required) {
-        rules.value[item.name] = [validate.required, item.data_type === 'string' ? validate.checkSpace : {}]
+        rules.value[item.name] = [validate.required]
       }
     })
     isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
