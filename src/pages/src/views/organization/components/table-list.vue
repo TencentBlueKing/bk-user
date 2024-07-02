@@ -314,6 +314,7 @@
     })
     editDetailsInfo.value = data;
     editDetailsShow.value = true;
+    window.changeInput = false
   }
   const handleEditDetails = (row) => {
     editInfoHandle(row, true)

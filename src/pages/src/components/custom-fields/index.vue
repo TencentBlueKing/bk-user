@@ -10,7 +10,7 @@
       <!-- :property="`extras.${index}.default`" -->
       <bk-input
         v-if="item.data_type === 'string'"
-        v-model="item.value"
+        v-model.trim="item.value"
         :maxlength="64"
         :disabled="!item.manager_editable"
         @focus="handleChange"
@@ -18,7 +18,7 @@
       <bk-input
         v-else-if="item.data_type === 'number'"
         type="number"
-        v-model="item.value"
+        v-model.trim="item.value"
         :disabled="!item.manager_editable"
         :max="4294967296"
         :min="0"

@@ -12,7 +12,7 @@
           <bk-input
             style="width: 600px;"
             v-model="formData.name"
-            :placeholder="validate.name.message"
+            :placeholder="validate.loginName.message"
             @focus="handleChange" />
         </bk-form-item>
         <bk-form-item :label="$t('是否启用')" required>
@@ -300,7 +300,7 @@ const formData = reactive({
 });
 
 const rulesInfo = {
-  name: [validate.required, validate.name],
+  name: [validate.required, validate.loginName],
   min_length: [validate.required],
 };
 

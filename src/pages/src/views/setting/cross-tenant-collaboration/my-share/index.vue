@@ -39,6 +39,12 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
+      <bk-table-column prop="target_status" :label="$t('状态')">
+        <template #default="{ row }">
+          <div class="styled-circle" :class="row.target_status=== 'enabled'? 'enabledColor': 'unconfirmedColor'"></div>
+          <span>{{ row.target_status=== 'enabled'? $t('已接收'): $t('待接收')}}</span>
+      </template>
+    </bk-table-column>
       <bk-table-column prop="creator" :label="$t('创建人')" />
       <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
       <bk-table-column
@@ -328,5 +334,21 @@ const updateList = () => {
     //   border-radius: 4px;
     // }
   }
+}
+/* 圆形样式 */
+.styled-circle {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.enabledColor{
+  background-color: #E5F6EA;
+  border: 1px solid #3FC06D;
+}
+.unconfirmedColor {
+  background-color: #FFE8C3;
+  border: 1px solid #FF9C01;
 }
 </style>

@@ -248,12 +248,9 @@
   "枚举类型字段不允许设置唯一性": "Enumeration type fields cannot be set as unique",
   "修改字段成功": "Field modified successfully",
   "添加字段成功": "Field added successfully",
-  "账号有效期开启": "Account validity period enabled",
   "账号有效期": "Account validity period",
   "到期提醒时间": "Expiration reminder time",
   "更新成功": "Update successful",
-  "确认要关闭账号有效期吗？": "Close the account validity period?",
-  "关闭后，存量账号有效期不变，新账号有效期永久。": "After closing, the validity period for existing accounts remains unchanged, and new accounts will have permanent validity.",
   "已关联账号": "Associated Account",
   "当前登录": "Current login",
   "最近登录时间": "Recent Login Time",
@@ -273,6 +270,7 @@
   "请输入": "Please enter",
   "请填写正确的手机号": "Please enter a valid mobile number",
   "由1-64位字符组成": "Consists of 1-64 characters",
+  "由1-8位字符组成": "Consists of 1-8 characters",
   "由3-32位字母、数字、连接符(-)字符组成，以字母开头": "Consists of 3-32 letters, numbers, and hyphen (-) characters, starting with a letter",
   "由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头": "Consists of 1-32 letters, numbers, underscores (_), dots (.), and hyphens (-), starting with a letter or number",
   "请输入正确的邮箱地址": "Please enter a correct email address",
@@ -521,5 +519,9 @@
   "发送给": "send to",
   "复制": "Copy",
   "访问地址": "Access address",
-  "登录密码": "Login password"
+  "登录密码": "Login password",
+  "确认要修改账号有效期吗？": "Do you want to change the account validity period?",
+  "当前配置将对新账号生效，存量账号的有效期不变。": "The current configuration takes effect for the new account, and the validity period of the existing account remains unchanged.",
+  "已接收": "already accepted",
+  "待接收": "pre-accepted"
 }

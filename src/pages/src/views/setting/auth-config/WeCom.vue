@@ -8,7 +8,7 @@
       :rules="rules">
       <Row :title="$t('基本信息')">
         <bk-form-item :label="$t('名称')" property="name" required>
-          <bk-input v-model="formData.name" :placeholder="validate.name.message" @change="handleChange" />
+          <bk-input v-model="formData.name" :placeholder="validate.loginName.message" @change="handleChange" />
         </bk-form-item>
         <bk-form-item :label="$t('是否启用')" required>
           <bk-switcher
@@ -165,7 +165,7 @@ const isDisabled = ref(true);
 const LoginMethod = ref('a');
 
 const rules = {
-  name: [validate.required, validate.name],
+  name: [validate.required, validate.loginName],
   'plugin_config.corp_id': [validate.required],
   'plugin_config.agent_id': [validate.required],
   'plugin_config.secret': [validate.required],
