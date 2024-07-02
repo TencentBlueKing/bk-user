@@ -42,7 +42,7 @@ from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.exceptions import ProfileEmailEmpty
+from bkuser_core.profiles.exceptions import ProfileEmailEmpty, UsernameWithDomainFormatError
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
@@ -133,7 +133,11 @@ class PasswordModifyApi(generics.CreateAPIView):
         # SaaS 修改密码页面需要登录态, 登录用户即operator
         username = get_operator(request)
         # 注意, 这里的username是带域的
-        username, domain = parse_username_domain(username)
+        try:
+            username, domain = parse_username_domain(username)
+        except Exception:
+            raise error_codes.USERNAME_FORMAT_ERROR
+
         if not domain:
             domain = ProfileCategory.objects.get(default=True).domain
         instance = Profile.objects.get(username=username, domain=domain)
@@ -187,7 +191,11 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         else:
             # 兼容登录态的change_password页面获取目录密码配置
             username = get_operator(request)
-            username, domain = parse_username_domain(username)
+            try:
+                username, domain = parse_username_domain(username)
+            except Exception:
+                raise error_codes.USERNAME_FORMAT_ERROR
+
             if not domain:
                 domain = ProfileCategory.objects.get(default=True).domain
             try:
@@ -215,7 +223,11 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         # 存在着username=telephone的情况
         try:
             # 优先过滤username
-            username, domain = parse_username_domain(input_telephone)
+            try:
+                username, domain = parse_username_domain(input_telephone)
+            except UsernameWithDomainFormatError:
+                raise error_codes.USERNAME_FORMAT_ERROR
+
             if not domain:
                 domain = ProfileCategory.objects.get_default().domain
             # filter过滤，判断是否存在，存在则仅有一个

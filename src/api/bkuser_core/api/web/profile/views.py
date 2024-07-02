@@ -61,8 +61,11 @@ class LoginProfileRetrieveApi(generics.RetrieveAPIView):
 
         data = slz.validated_data
         username = data["username"]
+        try:
+            username, domain = parse_username_domain(username)
+        except Exception:
+            raise error_codes.USERNAME_FORMAT_ERROR
 
-        username, domain = parse_username_domain(username)
         if not domain:
             domain = ProfileCategory.objects.get(default=True).domain
 

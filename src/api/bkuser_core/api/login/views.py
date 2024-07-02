@@ -356,7 +356,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         domain_username_map = defaultdict(list)
 
         for x in username_list:
-            username, domain = parse_username_domain(x)
+            try:
+                username, domain = parse_username_domain(x)
+            except Exception:
+                raise error_codes.USERNAME_FORMAT_ERROR
+
             if not domain:
                 # default domain
                 domain = ProfileCategory.objects.get_default().domain
