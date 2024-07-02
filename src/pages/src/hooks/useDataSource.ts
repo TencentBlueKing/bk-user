@@ -55,11 +55,8 @@ export const useDataSource = () => {
   const syncStatus = ref({});
   const initSyncRecords = async () => {
     const res = await getSyncRecords({ id: currentDataSourceId.value });
-    if (res.data?.count === 0 || ['success', 'failed'].includes(syncStatus.value?.status)) return;
+    if (res.data?.count === 0) return;
     syncStatus.value = res.data?.results[0];
-    setTimeout(() => {
-      initSyncRecords();
-    }, 5000);
   };
 
   // 点击新建数据源
@@ -91,14 +88,23 @@ export const useDataSource = () => {
     id: 'local',
   });
 
-  // 同步数据源
+  const pollingInterval = ref(null);
+
   const handleOperationsSync = async () => {
     postOperationsSync(dataSource.value?.id).then((res) => {
       Message({ theme: res.data.status, message: res.data.summary });
+      if (pollingInterval.value) return;
       initSyncRecords();
+      pollingInterval.value = setInterval(initSyncRecords, 10000); 
     });
   };
 
+  const stopPolling = () => {
+    if (pollingInterval.value) {
+      clearInterval(pollingInterval.value);
+      pollingInterval.value = null;
+    }
+  };
   return {
     dataSourcePlugins,
     dataSource,
@@ -110,5 +116,6 @@ export const useDataSource = () => {
     handleClick,
     importDialog,
     handleOperationsSync,
+    stopPolling
   };
 };

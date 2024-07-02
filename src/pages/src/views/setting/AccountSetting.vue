@@ -1,10 +1,6 @@
 <template>
   <div v-if="isEdit" class="account-setting-wrapper user-scroll-y">
     <bk-form class="account-setting-content" form-type="vertical" :model="formData" ref="formRef">
-      <bk-form-item :label="$t('账号有效期开启')">
-        <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="changeEnabled" />
-      </bk-form-item>
-      <div v-if="formData.enabled">
         <bk-form-item :label="$t('账号有效期')" required>
           <bk-radio-group v-model="formData.validity_period" @change="handleChange">
             <bk-radio-button
@@ -16,7 +12,8 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item :label="$t('到期提醒时间')" property="remind_before_expire" required>
+        <div v-if="isShowItem">
+          <bk-form-item :label="$t('到期提醒时间')" property="remind_before_expire" required>
           <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"
@@ -60,7 +57,7 @@
             </template>
           </NotifyEditorTemplate>
         </bk-form-item>
-      </div>
+        </div>
     </bk-form>
     <div class="account-setting-footer">
       <bk-button
@@ -84,9 +81,6 @@
       <div class="flex items-top justify-between">
         <div>
           <LabelContent :label="$t('账号有效期')">
-            <bk-tag :theme="formData.enabled ? 'success' : ''">
-              {{ formData.enabled ? $t('已开启') : $t('未启用') }}
-            </bk-tag>
             {{ validityPeriod}}
           </LabelContent>
           <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
@@ -129,6 +123,7 @@ const formRef = ref();
 const isEdit = ref(false);
 const isDisabled = ref(true);
 let originalData = {};
+const isChangeValidityPeriod = ref(false)
 
 onMounted(() => {
   getAccountCongif();
@@ -138,11 +133,16 @@ watch(formData, () => {
   isDisabled.value = JSON.stringify(originalData)  === JSON.stringify(formData.value);
 }, { deep: true });
 
+watch(() =>formData.value.validity_period, () => {
+  isChangeValidityPeriod.value = originalData.validity_period  !== formData.value.validity_period});
+
 const validityPeriod = computed(() => VALID_TIME.find(item => item?.days === formData.value.validity_period)?.text);
 
 const remindBeforeBxpire = computed(() => findLabelsByValues(formData.value.remind_before_expire, REMIND_DAYS));
 
 const enabledNotificationMethods = computed(() => findLabelsByValues(formData.value.enabled_notification_methods, NOTIFICATION_METHODS));
+
+const isShowItem = computed(() => formData.value.validity_period !== -1 );
 
 const findLabelsByValues = (values, array) => values?.map((value) => {
   const item = array.find(item => item.value === value);
@@ -191,29 +191,28 @@ const handleChange = () => {
   window.changeInput = true;
 };
 
-const changeApplication = async () => {
+const handleSubmit = async () => {
   try {
     await formRef.value.validate();
     await putTenantUserValidityPeriod(formData.value);
     Message({ theme: 'success', message: t('更新成功') });
-    getAccountCongif();
+    cancelEdit()
     window.changeInput = false;
   } catch (e) {
     console.warn(e);
   }
 };
 
-const changeEnabled = (value) => {
-  if (!value) {
+const changeApplication = () => {
+  if (isChangeValidityPeriod.value) {
     InfoBox({
-      title: t('确认要关闭账号有效期吗？'),
-      subTitle: t('关闭后，存量账号有效期不变，新账号有效期永久。'),
-      onClosed() {
-        formData.value.enabled = !value;
-      },
+      title: t('确认要修改账号有效期吗？'),
+      subTitle: t('当前配置将对新账号生效，存量账号的有效期不变。'),
+      onConfirm: handleSubmit
     });
+  } else {
+    handleSubmit()
   }
-  window.changeInput = true;
 };
 </script>
 

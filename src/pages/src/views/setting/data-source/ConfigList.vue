@@ -184,7 +184,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted,  onBeforeUnmount} from 'vue';
 
 import HttpDetails from './HttpDetails.vue';
 
@@ -212,6 +212,7 @@ const {
   handleClick,
   importDialog,
   handleOperationsSync,
+  stopPolling
 } = useDataSource();
 
 // 重置数据源
@@ -309,6 +310,7 @@ const confirmImportUsers = async () => {
     importDialog.loading = true;
     const formData = new FormData();
     formData.append('file', uploadInfo.file);
+    formData.append('overwrite', uploadInfo.overwrite);
     const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -371,6 +373,10 @@ onMounted(() => {
     handleImport();
   }
 })
+
+onBeforeUnmount(() => {
+  stopPolling();
+});
 </script>
 
 <style lang="less" scoped>

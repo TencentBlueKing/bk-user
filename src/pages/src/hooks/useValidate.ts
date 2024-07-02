@@ -13,6 +13,11 @@ export const useValidate = () => {
     trigger: 'blur',
   };
 
+  const loginName = {
+    validator: (value: string) => /^[\u4e00-\u9fa5a-zA-Z0-9\s\S]{1,8}$/.test(value),
+    message: t('由1-8位字符组成'),
+    trigger: 'blur',
+  };
   const id = {
     validator: (value: string) => /^([a-zA-Z])([a-zA-Z0-9-]){2,31}$/.test(value),
     message: t('由3-32位字母、数字、连接符(-)字符组成，以字母开头'),
@@ -104,6 +109,7 @@ export const useValidate = () => {
   return {
     required,
     name,
+    loginName, 
     id,
     userName,
     email,

@@ -162,6 +162,7 @@
       }
     })
     isDisabled.value = originalData.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+    window.changeInput = !isDisabled.value
   }, { deep: true, immediate: true });
 
   // 上传头像
