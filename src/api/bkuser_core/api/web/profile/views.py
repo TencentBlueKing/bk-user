@@ -38,7 +38,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
+from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from bkuser_core.profiles.utils import (
@@ -61,8 +61,11 @@ class LoginProfileRetrieveApi(generics.RetrieveAPIView):
 
         data = slz.validated_data
         username = data["username"]
+        try:
+            username, domain = parse_username_domain(username)
+        except UsernameWithDomainFormatError:
+            raise error_codes.DOMAIN_UNKNOWN
 
-        username, domain = parse_username_domain(username)
         if not domain:
             domain = ProfileCategory.objects.get(default=True).domain
 

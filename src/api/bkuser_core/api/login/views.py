@@ -39,6 +39,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus, StaffStatus
+from bkuser_core.profiles.exceptions import UsernameWithDomainFormatError
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.utils import align_country_iso_code, make_passwd_reset_url_by_token, parse_username_domain
 from bkuser_core.profiles.validators import validate_username
@@ -356,7 +357,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         domain_username_map = defaultdict(list)
 
         for x in username_list:
-            username, domain = parse_username_domain(x)
+            try:
+                username, domain = parse_username_domain(x)
+            except UsernameWithDomainFormatError:
+                raise error_codes.DOMAIN_UNKNOWN
+
             if not domain:
                 # default domain
                 domain = ProfileCategory.objects.get_default().domain
