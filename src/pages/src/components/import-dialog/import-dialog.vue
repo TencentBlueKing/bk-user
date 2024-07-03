@@ -153,6 +153,7 @@
       importConfig.loading = true;
       const formData = new FormData();
       formData.append('file', uploadInfo.file);
+      formData.append('overwrite', uploadInfo.overwrite);
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',

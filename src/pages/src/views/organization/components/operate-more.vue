@@ -98,6 +98,7 @@ const defaultDropdownList = ref<any[]>([
       dropdownVisible.value = false;
       isAddSubOrg.value = false;
       orgDialogVisible.value = true;
+      deptName.value = props.dept.name
     },
   },
 ]);
