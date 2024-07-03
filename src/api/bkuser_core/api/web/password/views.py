@@ -42,7 +42,7 @@ from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.exceptions import ProfileEmailEmpty, UsernameWithDomainFormatError
+from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
@@ -223,10 +223,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         # 存在着username=telephone的情况
         try:
             # 优先过滤username
-            try:
-                username, domain = parse_username_domain(input_telephone)
-            except UsernameWithDomainFormatError:
-                raise error_codes.USERNAME_FORMAT_ERROR
+            username, domain = parse_username_domain(input_telephone)
 
             if not domain:
                 domain = ProfileCategory.objects.get_default().domain
@@ -259,6 +256,10 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         except Profile.MultipleObjectsReturned:
             logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
             raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
+
+        except Exception:
+            logger.exception("failed to get profile by username<%s> because of username format error", input_telephone)
+            raise error_codes.USERNAME_FORMAT_ERROR
 
         # 生成verification_code_token
         verification_code_token = ResetPasswordVerificationCodeHandler().generate_reset_password_token(profile.id)
