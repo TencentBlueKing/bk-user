@@ -1,8 +1,9 @@
 # 开发指引
 
 ## 文件目录释义
+
 ```text
-bk-user    
+bk-user
 ├── docs  # 文档
 └── src
     ├── bk-login  # 统一登录代码目录
@@ -11,6 +12,7 @@ bk-user
 ```
 
 ## 前置准备
+
 在开始开发前，请确保您使用的 python 版本为 3.10.12（推荐使用 `pyenv` 来管理您本地的 Python 版本）：
 
 
@@ -21,7 +23,7 @@ pyenv install 3.10.12
 准备 Python 虚拟环境（一项目一环境，互相隔离，推荐 `pyenv` 或者 `poetry` 等虚拟环境管理工具）：
 
 ``` bash
-virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-login-venv  
+virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-login-venv
 virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-user-venv
 ```
 
@@ -31,7 +33,7 @@ virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-user-venv
 pip install pre-commit && pre-commit install
 ```
 
-目前我们使用了两个工具: `ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。  
+目前我们使用了两个工具: `ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。
 最后进入项目目录，将 `idp_plugin` 软链接到相应的代码目录：
 
 ``` bash
@@ -42,6 +44,7 @@ ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-user/bkuser
 ## 统一登录
 
 ### 环境配置
+
 进入 `src/bk-login` 并进入虚拟环境
 
 ``` bash
@@ -77,11 +80,13 @@ BK_LOGIN_ADDR=login.example.com:8000
 您可能还需要定义其他的环境变量，详见 `bklogin/settings.py`
 
 ### 数据库迁移
+
 ``` bash
 python manage.py migrate
 ```
 
 ### 启动 Web 服务
+
 ``` bash
 ./bin/start.sh
 ```
@@ -93,6 +98,7 @@ python manage.py runserver login.example.com:8000
 ```
 
 ### 检测服务器连通状态
+
 ``` bash
 curl login.example.com:8000/ping #pong
 ```
@@ -100,6 +106,7 @@ curl login.example.com:8000/ping #pong
 ## 用户管理
 
 ### 环境配置
+
 进入 `src/bk-login` 并进入虚拟环境
 ``` bash
 cd src/bk-user
@@ -117,7 +124,7 @@ poetry install
 BK_APP_CODE=bk_user
 # 通过蓝鲸开发者中心获取
 BK_APP_SECRET="xxx"
-# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥 
+# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 BKKRILL_ENCRYPT_SECRET_KEY="xxx"
 BK_DOMAIN="example.com"
 BK_USER_URL=http://user.example.com:8000
@@ -146,11 +153,13 @@ INITIAL_ADMIN_PASSWORD=admin_pwd
 您可能还需要定义其他的环境变量，详见 `bkuser/settings.py`
 
 ### 数据库迁移
+
 ``` bash
 python manage.py migrate
 ```
 
 ### 启动 Web 服务
+
 ``` bash
 ./bin/start.sh
 ```
@@ -174,6 +183,7 @@ curl user.example.com:8000/ping #pong
 ```
 
 ### 启动 Celery Beat
+
 ``` bash
 ./bin/start_celery_beat.sh
 ```

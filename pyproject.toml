@@ -7,6 +7,7 @@ authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 apigw-manager = "^1.0.3"
+import-linter = "^1.11.1"
 
 [tool.poetry.dev-dependencies]
 # black
