@@ -38,7 +38,7 @@
             {{ appStore.currentOrg?.name }}
           </div>
           <div class="table-main">
-            <TableList />
+            <TableList ref="tableListRef" @clickImport="importHandle"  />
           </div>
         </section>
       </template>
@@ -63,6 +63,8 @@ import useAppStore from '@/store/app';
 const appStore = useAppStore();
 const isShow = ref(null);
 const isLoading = ref(false);
+const tableListRef = ref()
+
 const getList = async () => {
   isLoading.value = true;
   const tenantData = await getCurrentTenant();
@@ -76,6 +78,11 @@ const getList = async () => {
   }
 };
 getList();
+
+const importHandle = async() => {
+  await getList()
+  tableListRef.value.importDialogHandle()
+}
 </script>
 
 <style lang="postcss" scoped>

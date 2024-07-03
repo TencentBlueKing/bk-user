@@ -29,7 +29,7 @@
                 <i class="user-icon icon-info-i theme-icon" />
                 <p>{{$t('快速将用户录入到')}}「{{currentOrgName}}」，{{$t('如需添加到其他组织，请使用')}}
                   <label class="text-[#3A84FF] cursor-pointer"
-                  @click="() => goToSetting('dataSource')">{{$t('「导入」')}}</label>
+                  @click="importClick">{{$t('「导入」')}}</label>
                   {{$t(' 功能。')}}
                 </p>
                 <p>{{$t('录入字段为 ')}}
@@ -108,7 +108,7 @@
   const formData = ref({
     val: ''
   });
-  const emit = defineEmits(['update:isShow', 'success']);
+  const emit = defineEmits(['update:isShow', 'success', 'click-import']);
   const objectSteps = ref([
     { title: t('录入用户'), icon: 1 },
     { title: t('预览确认'), icon: 2 },
@@ -172,6 +172,11 @@
     router.push({ name, query: {
       isLink: true,
     }});
+  }
+
+  const importClick = () => {
+    closed()
+    emit('click-import')
   }
 </script>
 <style lang="less" scoped>
