@@ -54,6 +54,10 @@ def validate_logo(value: str):
     if not value:
         return
 
+    # 限制 Logo 格式为 png 或者 jpg
+    if not re.match(r'^data:image\/(png|jpeg|jpg)', value):
+        raise ValidationError(_("Logo 文件只能为 png 或 jpg 格式"))
+
     # Logo 使用 Base64 编码，编码后长度 ≈ 原始图片字节长度 // 3 * 4
     if len(value) > (settings.MAX_LOGO_SIZE * 1024) // 3 * 4:
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))

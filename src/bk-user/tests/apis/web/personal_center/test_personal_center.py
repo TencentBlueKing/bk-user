@@ -9,9 +9,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.apps.tenant.models import TenantUser
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.tenant.models import TenantUser
 
 pytestmark = pytest.mark.django_db
 
@@ -78,6 +79,33 @@ class TestTenantUserFieldListApi:
         assert len(resp.data["builtin_fields"]) == 5  # noqa: PLR2004
         assert [f["name"] for f in resp.data["custom_fields"]] == ["age", "gender", "sport_hobby"]
         assert [f["name"] for f in resp.data["custom_fields"] if f["editable"]] == ["gender", "sport_hobby"]
+
+
+class TestTenantUserLogoUpdateApi:
+    def test_update_logo_valid_png(self, api_client, tenant_user, tenant_user_custom_fields):
+        logo_data = "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
+            data={"logo": logo_data},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_logo_valid_jpg(self, api_client, tenant_user, tenant_user_custom_fields):
+        logo_data = "data:image/jpg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
+            data={"logo": logo_data},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_logo_invalid_format(self, api_client, tenant_user, tenant_user_custom_fields):
+        logo_data = "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
+            data={"logo": logo_data},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
 
 
 class TestTenantUserFeatureFlagListApi:

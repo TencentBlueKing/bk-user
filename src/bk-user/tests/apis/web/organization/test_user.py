@@ -11,16 +11,16 @@ specific language governing permissions and limitations under the License.
 from typing import Any, Dict, List
 
 import pytest
+from django.urls import reverse
+from django.utils.http import urlencode
+from rest_framework import status
+
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
-from django.urls import reverse
-from django.utils.http import urlencode
-from rest_framework import status
-
 from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
@@ -262,6 +262,34 @@ class TestTenantUserCreateApi:
         resp = api_client.post(url, data=tenant_user_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "提供的自定义字段数据与租户自定义字段不匹配" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_valid_logo_png(self, api_client, random_tenant, tenant_user_data):
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        logo_data = "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        tenant_user_data["logo"] = logo_data
+        resp = api_client.post(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_valid_logo_jpg(self, api_client, random_tenant, tenant_user_data):
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        logo_data = "data:image/jpg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        tenant_user_data["logo"] = logo_data
+        resp = api_client.post(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_invalid_logo_format(self, api_client, random_tenant, tenant_user_data):
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        logo_data = "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+        tenant_user_data["logo"] = logo_data
+        resp = api_client.post(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
 
 
 class TestTenantUserUpdateApi:
