@@ -89,27 +89,37 @@ class TestTenantUserFeatureFlagListApi:
 
 
 class TestTenantUserLogoUpdateApi:
-    def test_update_logo_valid_png(self, api_client, tenant_user, tenant_user_custom_fields):
-        logo_data = "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
+    @pytest.mark.parametrize(
+        ("logo_data", "status_code", "message"),
+        [
+            (
+                "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
+                status.HTTP_204_NO_CONTENT,
+                "",
+            ),
+            (
+                "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
+                status.HTTP_204_NO_CONTENT,
+                "",
+            ),
+            (
+                "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
+                status.HTTP_400_BAD_REQUEST,
+                "Logo 文件只能为 png 或 jpg 格式",
+            ),
+            (
+                "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
+                status.HTTP_400_BAD_REQUEST,
+                "Logo 文件只能为 png 或 jpg 格式",
+            ),
+        ],
+    )
+    def test_update_logo(self, api_client, tenant_user, logo_data, status_code, message):
         resp = api_client.put(
             reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
             data={"logo": logo_data},
         )
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_update_logo_valid_jpg(self, api_client, tenant_user, tenant_user_custom_fields):
-        logo_data = "data:image/jpg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
-        resp = api_client.put(
-            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
-            data={"logo": logo_data},
-        )
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-    def test_update_logo_invalid_format(self, api_client, tenant_user, tenant_user_custom_fields):
-        logo_data = "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"
-        resp = api_client.put(
-            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
-            data={"logo": logo_data},
-        )
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
+        assert resp.status_code == status_code
+        if resp.status_code != status.HTTP_204_NO_CONTENT:
+            assert message in resp.data["message"]
