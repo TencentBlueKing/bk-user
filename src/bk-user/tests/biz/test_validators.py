@@ -13,7 +13,7 @@ import datetime
 import pytest
 from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord, LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.validators import validate_user_new_password
+from bkuser.biz.validators import validate_logo, validate_user_new_password
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.common.passwd import PasswordGenerator
@@ -125,3 +125,39 @@ class TestValidateUserNewPassword:
             # 允许相同的密码列表
             for i in self.deprecated_raw_passwords[count - 1 :]:
                 assert i == validate_user_new_password(i, self.data_source_user_id, self.data_source_config)
+
+
+class TestValidateLogo:
+    @pytest.mark.parametrize(
+        ("logo_data", "is_valid"),
+        [
+            (
+                "",
+                True,
+            ),
+            (
+                "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
+                True,
+            ),
+            (
+                "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
+                True,
+            ),
+            (
+                "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
+                False,
+            ),
+            (
+                "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
+                False,
+            ),
+        ],
+    )
+    def test_invalid_logo_format(self, logo_data, is_valid):
+        if is_valid:
+            assert validate_logo(logo_data) == logo_data
+        else:
+            with pytest.raises(ValidationError) as error:
+                validate_logo(logo_data)
+
+            assert "Logo 文件只能为 png 或 jpg 格式" in str(error.value)
