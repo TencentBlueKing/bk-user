@@ -67,27 +67,17 @@
           </div>
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
-          <span class="inline-flex items-center text-sm pb-[8px] mb-[8px]" :class="[isClickEmail ? 'active-tab' : '']">
-            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail" />
-            <span
-              class="ml-[6px] cursor-pointer text-[#63656E]"
-              @click="emailClick"
-            >
-              {{ $t('邮箱') }}
-            </span>
-          </span>
-          <span
-            class="inline-flex items-center ml-[24px] text-sm pb-[8px] mb-[8px]"
-            :class="[isClickEmail ? '' : 'active-tab']">
-            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms" />
-            <span
-              class="ml-[6px] cursor-pointer text-[#63656E]"
-              @click="phoneClick"
-            >
-              {{ $t('短信') }}
-            </span>
-          </span>
-          <div v-if="isClickEmail">
+          <div class="mb-[18px]">
+            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms">{{ $t('短信') }}</bk-checkbox>
+            <PhoneInput
+            :form-data="formData"
+            :tel-error="telError"
+            :required="smsValue"
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
+          </div>
+          <div>
+            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
@@ -96,13 +86,6 @@
               @input="handleInput" />
             <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
           </div>
-          <PhoneInput
-            v-else
-            :form-data="formData"
-            :tel-error="telError"
-            :required="smsValue"
-            @change-country-code="changeCountryCode"
-            @change-tel-error="changeTelError" />
         </bk-form-item>
       </Row>
     </bk-form>
@@ -314,30 +297,6 @@ const  beforeEmailChange = () => {
   return true;;
 };
 
-const emailClick = () => {
-  if (smsValue.value) {
-    if (formData.phone && !telError.value) {
-      isClickEmail.value = true;
-    } else {
-      changeTelError(true);
-    }
-  } else {
-    isClickEmail.value = true;
-  }
-};
-
-const phoneClick = () => {
-  if (emailValue.value) {
-    if (formData.email && !emailError.value) {
-      isClickEmail.value = false;
-    } else {
-      handleBlur();
-    }
-  } else {
-    isClickEmail.value = false;
-  }
-};
-
 const changeSms = () => {
   telError.value = smsValue.value ? telError.value : false;
 };
@@ -379,9 +338,6 @@ const emailBlur = () => {
 
 ::v-deep .bk-upload-trigger--picture {
   margin: 0 -4px 8px 0;
-}
-.active-tab {
-  border-bottom: 2px solid #3A84FF;
 }
 ::v-deep .bk-upload__tip {
   width: 0;

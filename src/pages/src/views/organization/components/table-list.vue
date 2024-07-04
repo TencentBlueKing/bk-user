@@ -3,7 +3,7 @@
         <div class="table-search mb-[16px]">
             <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
               class="mr-[16px] button-upload"
-              @click="() => importDialogShow = true">
+              @click="importDialogHandle">
                 <Upload class="mr-[8px] text-[16px] icon-upload" />{{ $t('导入') }}
             </bk-button>
             <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
@@ -183,7 +183,7 @@
         </bk-form>
     </bk-dialog>
     <!-- 快速录入弹框 -->
-    <FastInputDialog v-model:isShow="fastInputDialogShow"
+    <FastInputDialog v-model:isShow="fastInputDialogShow" @clickImport="$emit('click-import')"
       @success="fastInputSuccess" />
     <!-- 编辑用户 -->
     <bk-sideslider
@@ -290,7 +290,7 @@
     return appStore.currentTenant?.data_source?.id;
   });
   const isEnabledPassword = computed(() => {
-    return !appStore.currentTenant?.data_source?.enable_password;
+    return appStore.currentTenant?.data_source?.enable_password;
   })
 
   const isShowBtn = computed(() => {
@@ -775,6 +775,14 @@
   const inputPassword = (val) => {
   password.value = val;
 };
+
+const importDialogHandle = () => {
+  importDialogShow.value = true
+}
+
+defineExpose({
+  importDialogHandle
+})
 </script>
 <style lang="less">
 .operate-popover {

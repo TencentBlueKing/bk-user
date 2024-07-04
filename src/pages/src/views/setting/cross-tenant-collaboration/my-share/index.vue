@@ -39,7 +39,7 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
-      <bk-table-column prop="target_status" :label="$t('状态')">
+      <bk-table-column prop="target_status" :label="$t('状态')"  :filter="{ list: targetStatusFilters}">
         <template #default="{ row }">
           <div class="styled-circle" :class="row.target_status=== 'enabled'? 'enabledColor': 'unconfirmedColor'"></div>
           <span>{{ row.target_status=== 'enabled'? $t('已接收'): $t('待接收')}}</span>
@@ -164,6 +164,11 @@ watchEffect(() => {
 const statusFilters = [
   { text: t('启用'), value: 'enabled' },
   { text: t('停用'), value: 'disabled' },
+];
+
+const targetStatusFilters = [
+  { text: t('已接收'), value: 'enabled' },
+  { text: t('待接收'), value: 'unconfirmed' },
 ];
 
 const handleFilter = ({ checked }) => {
