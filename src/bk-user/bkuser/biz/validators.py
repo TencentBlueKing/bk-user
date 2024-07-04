@@ -50,9 +50,9 @@ def validate_tenant_custom_field_name(value: str):
         )
 
 
-def validate_logo(value: str):
+def validate_logo(value: str) -> str:
     if not value:
-        return
+        return ""
 
     # 限制 Logo 格式为 png 或者 jpg
     if not re.match(r"^data:image\/(png|jpeg|jpg)", value):
@@ -61,6 +61,8 @@ def validate_logo(value: str):
     # Logo 使用 Base64 编码，编码后长度 ≈ 原始图片字节长度 // 3 * 4
     if len(value) > (settings.MAX_LOGO_SIZE * 1024) // 3 * 4:
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
+
+    return value
 
 
 def validate_user_new_password(

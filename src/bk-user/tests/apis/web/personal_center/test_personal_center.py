@@ -90,36 +90,36 @@ class TestTenantUserFeatureFlagListApi:
 
 class TestTenantUserLogoUpdateApi:
     @pytest.mark.parametrize(
-        ("logo_data", "status_code", "message"),
+        ("logo_data", "status_code", "is_valid"),
         [
             (
                 "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
                 status.HTTP_204_NO_CONTENT,
-                "",
+                True,
             ),
             (
                 "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
                 status.HTTP_204_NO_CONTENT,
-                "",
+                True,
             ),
             (
                 "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
                 status.HTTP_400_BAD_REQUEST,
-                "Logo 文件只能为 png 或 jpg 格式",
+                False,
             ),
             (
                 "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
                 status.HTTP_400_BAD_REQUEST,
-                "Logo 文件只能为 png 或 jpg 格式",
+                False,
             ),
         ],
     )
-    def test_update_logo(self, api_client, tenant_user, logo_data, status_code, message):
+    def test_update_logo(self, api_client, tenant_user, logo_data, status_code, is_valid):
         resp = api_client.put(
             reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
             data={"logo": logo_data},
         )
 
         assert resp.status_code == status_code
-        if resp.status_code != status.HTTP_204_NO_CONTENT:
-            assert message in resp.data["message"]
+        if not is_valid:
+            assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
