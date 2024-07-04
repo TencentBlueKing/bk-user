@@ -133,7 +133,11 @@ class PasswordModifyApi(generics.CreateAPIView):
         # SaaS 修改密码页面需要登录态, 登录用户即operator
         username = get_operator(request)
         # 注意, 这里的username是带域的
-        username, domain = parse_username_domain(username)
+        try:
+            username, domain = parse_username_domain(username)
+        except Exception:
+            raise error_codes.USERNAME_FORMAT_ERROR
+
         if not domain:
             domain = ProfileCategory.objects.get(default=True).domain
         instance = Profile.objects.get(username=username, domain=domain)
@@ -187,7 +191,11 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         else:
             # 兼容登录态的change_password页面获取目录密码配置
             username = get_operator(request)
-            username, domain = parse_username_domain(username)
+            try:
+                username, domain = parse_username_domain(username)
+            except Exception:
+                raise error_codes.USERNAME_FORMAT_ERROR
+
             if not domain:
                 domain = ProfileCategory.objects.get(default=True).domain
             try:
@@ -216,6 +224,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         try:
             # 优先过滤username
             username, domain = parse_username_domain(input_telephone)
+
             if not domain:
                 domain = ProfileCategory.objects.get_default().domain
             # filter过滤，判断是否存在，存在则仅有一个
@@ -247,6 +256,10 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         except Profile.MultipleObjectsReturned:
             logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
             raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
+
+        except Exception:
+            logger.exception("failed to get profile by username<%s> because of username format error", input_telephone)
+            raise error_codes.USERNAME_FORMAT_ERROR
 
         # 生成verification_code_token
         verification_code_token = ResetPasswordVerificationCodeHandler().generate_reset_password_token(profile.id)
