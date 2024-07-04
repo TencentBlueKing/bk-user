@@ -6,14 +6,14 @@
 bk-user
 ├── docs  # 文档
 └── src
-    ├── bk-login  # 统一登录代码目录
-    ├── bk-user   # 用户管理代码目录
-    └── pages     # 前端代码
+    ├── bk-login  # 统一登录代码目录（包含前端代码）
+    ├── bk-user   # 用户管理后端代码目录
+    └── pages     # 用户管理前端代码目录
 ```
 
 ## 前置准备
 
-在开始开发前，请确保您使用的 python 版本为 3.10.12（推荐使用 `pyenv` 来管理您本地的 Python 版本）：
+在开始开发前，请确保您使用的 python 版本为 3.10（下面文档以3.10.12举例，推荐使用 `pyenv` 来管理您本地的 Python 版本）：
 
 
 ``` bash
@@ -57,7 +57,7 @@ cd src/bk-login
 poetry install
 ```
 
-在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义以下环境变量
+在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下
 
 ``` bash
 MYSQL_HOST=localhost
@@ -68,12 +68,12 @@ MYSQL_NAME=bk_login_db
 
 BK_APP_CODE=bk_login
 # 通过蓝鲸开发者中心获取
-BK_APP_SECRET="xxx"
+BK_APP_SECRET=xxx
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
-BKKRILL_ENCRYPT_SECRET_KEY="xxx"
+BKKRILL_ENCRYPT_SECRET_KEY=xxx
 # 通过蓝鲸开发者中心获取（与用户管理侧配置相同）
-BK_USER_APP_SECRET="xxx"
-BK_DOMAIN="example.com"
+BK_USER_APP_SECRET=xxx
+BK_DOMAIN=example.com
 BK_LOGIN_ADDR=login.example.com:8000
 ```
 
@@ -97,10 +97,10 @@ python manage.py migrate
 python manage.py runserver login.example.com:8000
 ```
 
-### 检测服务器连通状态
+### 检测服务连通状态
 
 ``` bash
-curl login.example.com:8000/ping #pong
+curl login.example.com:8000/ping # pong
 ```
 
 ## 用户管理
@@ -118,17 +118,17 @@ cd src/bk-user
 poetry install
 ```
 
-在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义以下环境变量
+在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下
 
 ``` bash
 BK_APP_CODE=bk_user
 # 通过蓝鲸开发者中心获取
-BK_APP_SECRET="xxx"
+BK_APP_SECRET=xxx
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
-BKKRILL_ENCRYPT_SECRET_KEY="xxx"
-BK_DOMAIN="example.com"
+BKKRILL_ENCRYPT_SECRET_KEY=xxx
+BK_DOMAIN=example.com
 BK_USER_URL=http://user.example.com:8000
-BK_COMPONENT_API_URL=https://bkapi.example.com
+BK_COMPONENT_API_URL=http://bkapi.example.com
 BK_API_URL_TMPL=http://bkapi.example.com/api/{api_name}/
 
 MYSQL_HOST=localhost
@@ -170,10 +170,10 @@ python manage.py migrate
 python manage.py runserver user.example.com:8000
 ```
 
-### 检测服务器连通状态
+### 检测服务连通状态
 
 ``` bash
-curl user.example.com:8000/ping #pong
+curl user.example.com:8000/ping # pong
 ```
 
 ### 启动 Celery Worker
