@@ -16,6 +16,7 @@ from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMi
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.categories import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.models import TenantUserIDGenerateConfig
 from bkuser.apps.tenant.models import Tenant
 
 
@@ -29,18 +30,26 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
         slz = CategoriesListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
+        data_sources = self.get_queryset()
+
+        data_source_domain_map = {
+            cfg.data_source_id: cfg.domain
+            for cfg in TenantUserIDGenerateConfig.objects.filter(data_source__in=data_sources)
+        }
+
         tenant_name_map = dict(Tenant.objects.values_list("id", "name"))
         categories = [
             {
                 "id": ds.id,
                 # 由于新版本中，单个租户只会有一个数据源，因此这里以租户名称作为数据源名称
                 "display_name": tenant_name_map[ds.owner_tenant_id],
-                "domain": ds.domain,
+                # 如果没有特殊指定，有雨 domain 字段是 unique 的，因此应该是 None 而非 ""
+                "domain": data_source_domain_map.get(ds.id),
                 "default": ds.owner_tenant_id == self.default_tenant.id,
                 "status": "normal",
                 "enabled": True,
             }
-            for ds in self.get_queryset()
+            for ds in data_sources
         ]
         if slz.validated_data["no_page"]:
             return Response(CategoriesListOutputSLZ(categories, many=True).data)

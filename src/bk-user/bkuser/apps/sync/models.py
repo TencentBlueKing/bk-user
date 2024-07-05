@@ -13,6 +13,7 @@ from datetime import timedelta
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncOperation, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.tenant.models import Tenant
@@ -80,6 +81,21 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
     department_id = models.CharField("数据源部门 ID", max_length=128)
     department_code = models.CharField("部门唯一标识", max_length=128)
     department_name = models.CharField("部门名称", max_length=255)
+
+
+class TenantUserIDGenerateConfig(TimestampedModel):
+    """租户用户 ID 生成规则（兼容 v2 版本迁移数据）"""
+
+    # 注：每个数据源只能配置一个到某个租户的生成规则，若到某租户的规则不存在，则生成的租户用户 ID 是 uuid
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, unique=True, db_constraint=False)
+    target_tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    rule = models.CharField(
+        "归属租户用户 ID 生成规则",
+        max_length=64,
+        choices=TenantUserIdRuleEnum.get_choices(),
+        default=TenantUserIdRuleEnum.UUID4_HEX.value,
+    )
+    domain = models.CharField("所属租户域名", max_length=128, unique=True, blank=True, null=True)
 
 
 class TenantSyncTask(TimestampedModel):
