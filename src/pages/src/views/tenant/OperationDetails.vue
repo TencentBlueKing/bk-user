@@ -68,7 +68,7 @@
         </bk-form-item>
         <bk-form-item :label="$t('通知方式')">
           <div class="mb-[18px]">
-            <bk-checkbox v-model="smsValue" :before-change="beforeTelChange" @change="changeSms">{{ $t('短信') }}</bk-checkbox>
+            <bk-checkbox v-model="smsValue" @change="changeSms">{{ $t('短信') }}</bk-checkbox>
             <PhoneInput
             :form-data="formData"
             :tel-error="telError"
@@ -77,7 +77,7 @@
             @change-tel-error="changeTelError" />
           </div>
           <div>
-            <bk-checkbox v-model="emailValue" :before-change="beforeEmailChange" @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
+            <bk-checkbox v-model="emailValue"  @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
@@ -200,15 +200,11 @@ const handleError = (file) => {
 
 // 校验表单
 async function handleSubmit() {
-  await formRef.value.validate();
-
   if (props.type === 'add') {
-    if (emailValue.value) {
-      handleBlur();
-    } else if (smsValue.value && formData.phone === '') {
-      changeTelError(true);
-    }
-  }
+    if (emailValue.value) handleBlur();
+    if (smsValue.value && !formData.phone) changeTelError(true);
+}
+  await formRef.value.validate();
 
   if (emailError.value || telError.value) return;
 
@@ -264,38 +260,10 @@ const inputPassword = (val) => {
   formData.fixed_password = val;
 };
 
-const isClickEmail = ref(true);
 const emailValue = ref(true);
 const smsValue = ref(false);
 const isDisabled = ref(true);
 
-// 点击电话之前的校验
-const  beforeTelChange = () => {
-  if (emailValue.value) {
-    if (formData.email && !emailError.value) {
-      isClickEmail.value = false;
-      return true;
-    }
-    handleBlur();
-    return false;
-  }
-  isClickEmail.value = false;
-  return true;;
-};
-
-// 点击邮箱之前的校验
-const  beforeEmailChange = () => {
-  if (smsValue.value) {
-    if (formData.phone && !telError.value) {
-      isClickEmail.value = true;
-      return true;
-    }
-    changeTelError(true);
-    return false;
-  }
-  isClickEmail.value = true;
-  return true;;
-};
 
 const changeSms = () => {
   telError.value = smsValue.value ? telError.value : false;
