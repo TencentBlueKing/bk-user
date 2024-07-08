@@ -124,7 +124,6 @@ SECRET_KEY = BK_APP_SECRET
 # [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
 BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
 
-
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 # 详情查看：https://cryptography.io/en/latest/fernet/
@@ -194,6 +193,12 @@ BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
 BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")
 BK_USER_APP_SECRET = env.str("BK_USER_APP_SECRET")
 BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
+
+# bk apigw url tmpl
+BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
+
+# footer / logo / title 等全局配置存储的共享仓库地址
+BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
@@ -343,3 +348,23 @@ OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
 
 if ENABLE_OTEL_TRACE or SENTRY_DSN:
     INSTALLED_APPS += ("bklogin.monitoring.tracing",)
+
+# ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
+
+# 通知中心的功能可通过配置开启
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+if ENABLE_BK_NOTICE:
+    INSTALLED_APPS += ("bk_notice_sdk",)
+    # 对接通知中心的环境，默认为生产环境
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
+    BK_NOTICE = {
+        "STAGE": BK_NOTICE_ENV,
+        "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
+        "DEFAULT_LANGUAGE": "en",
+        "PLATFORM": BK_APP_CODE,  # 平台注册的 code，用于获取系统通知消息时进行过滤
+        "BK_API_URL_TMPL": BK_API_URL_TMPL,
+        "BK_API_APP_CODE": BK_APP_CODE,  # 用于调用 apigw 认证
+        "BK_API_SECRET_KEY": BK_APP_SECRET,  # 用于调用 apigw 认证
+    }
+
+# ------------------------------------------ 业务逻辑配置 ------------------------------------------

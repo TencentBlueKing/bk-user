@@ -4,7 +4,7 @@
     <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
     <meta charset="utf-8">
-    <title> {{ TITLE }} </title>
+    <title> 用户管理 | 腾讯蓝鲸智云 </title>
   </head>
     <body>
       <div class="app"></div>
@@ -22,6 +22,8 @@
         window.BK_USER_FEEDBACK_URL = '<%= process.env.BK_USER_FEEDBACK_URL %>';
         window.ENABLE_BK_NOTICE = '<%= process.env.BK_ENABLE_BK_NOTICE %>';
         window.BK_BUILD_VERSION = decodeURIComponent('{{ BK_BUILD_VERSION }}');
+        window.BK_SHARED_RES_URL = '<%= process.env.BK_SHARED_RES_URL %>';
+        window.ENABLE_VIRTUAL_USER = '<%= process.env.ENABLE_VIRTUAL_USER %>';
         console.log(
           `%c版本信息%c${ BK_BUILD_VERSION }%c >> ${new Date().toString().slice(0, 16)}<<`,
           'padding: 2px 5px; background: #ea3636; color: #fff; border-radius: 3px 0 0 3px;',

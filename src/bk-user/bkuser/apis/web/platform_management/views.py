@@ -158,7 +158,8 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         """添加内置管理账号"""
         assert data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT
 
-        username = f"admin-{tenant.id}"
+        # 所有租户的内置管理员 Username 默认为 admin
+        username = "admin"
         # 创建数据源用户
         data_source_user = DataSourceUser.objects.create(
             data_source=data_source,
