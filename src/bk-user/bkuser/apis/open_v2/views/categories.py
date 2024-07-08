@@ -16,8 +16,7 @@ from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMi
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.categories import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.models import TenantUserIDGenerateConfig
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.models import Tenant, TenantUserIDGenerateConfig
 
 
 class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
@@ -43,7 +42,7 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
                 "id": ds.id,
                 # 由于新版本中，单个租户只会有一个数据源，因此这里以租户名称作为数据源名称
                 "display_name": tenant_name_map[ds.owner_tenant_id],
-                # 如果没有特殊指定，有雨 domain 字段是 unique 的，因此应该是 None 而非 ""
+                # 如果没有特殊指定，由于 domain 字段是 unique 的，因此应该是 None 而非 ""
                 "domain": data_source_domain_map.get(ds.id),
                 "default": ds.owner_tenant_id == self.default_tenant.id,
                 "status": "normal",

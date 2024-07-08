@@ -12,7 +12,6 @@ from itertools import groupby
 from typing import Dict, List, Set, Tuple
 
 import pytest
-from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -21,14 +20,14 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.sync.models import TenantUserIDGenerateConfig
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentSyncer,
     DataSourceUserSyncer,
     TenantDepartmentSyncer,
     TenantUserSyncer,
 )
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserIDGenerateConfig
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 pytestmark = pytest.mark.django_db

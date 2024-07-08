@@ -25,8 +25,8 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
-from bkuser.apps.sync.utils import gen_tenant_user_id, is_data_source_username_frozen
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.apps.tenant.utils import gen_tenant_user_id, is_username_frozen
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
@@ -231,7 +231,7 @@ class DataSourceUserSyncer:
         self.converter = DataSourceUserConverter(data_source, ctx.logger)
         # 由于在部分老版本迁移过来的数据源中租户用户 ID 会由 username + 规则 拼接生成，
         # 该类数据源同步时候不可更新 username，而全新数据源对应租户 ID 都是 uuid 则不受影响
-        self.enable_update_username = not is_data_source_username_frozen(data_source)
+        self.enable_update_username = not is_username_frozen(data_source)
 
     def sync(self):
         self.ctx.logger.info(f"receive {len(self.raw_users)} users from data source plugin")  # noqa: G004

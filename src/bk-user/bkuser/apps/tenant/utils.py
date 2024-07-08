@@ -10,9 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.sync.models import TenantUserIDGenerateConfig
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
+from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
 from bkuser.utils.uuid import generate_uuid
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def gen_tenant_user_id(target_tenant_id: str, data_source: DataSource, user: Dat
     return generate_uuid()
 
 
-def is_data_source_username_frozen(data_source: DataSource) -> bool:
+def is_username_frozen(data_source: DataSource) -> bool:
     """数据源用户名是否不可变更"""
     return (
         TenantUserIDGenerateConfig.objects.filter(data_source=data_source)

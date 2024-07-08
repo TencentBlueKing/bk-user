@@ -19,6 +19,7 @@ from bkuser.apps.tenant.constants import (
     TIME_ZONE_CHOICES,
     CollaborationStrategyStatus,
     TenantStatus,
+    TenantUserIdRuleEnum,
     TenantUserStatus,
     UserFieldDataType,
 )
@@ -234,3 +235,18 @@ class CollaborationStrategy(AuditedModel):
             ("name", "source_tenant"),
             ("source_tenant", "target_tenant"),
         ]
+
+
+class TenantUserIDGenerateConfig(TimestampedModel):
+    """租户用户 ID 生成规则（兼容 v2 版本迁移数据）"""
+
+    # 注：每个数据源只能配置一个到某个租户的生成规则，若到某租户的规则不存在，则生成的租户用户 ID 是 uuid
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, unique=True, db_constraint=False)
+    target_tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    rule = models.CharField(
+        "租户用户 ID 生成规则",
+        max_length=64,
+        choices=TenantUserIdRuleEnum.get_choices(),
+        default=TenantUserIdRuleEnum.UUID4_HEX.value,
+    )
+    domain = models.CharField("目标租户域名", max_length=128, unique=True, blank=True, null=True)

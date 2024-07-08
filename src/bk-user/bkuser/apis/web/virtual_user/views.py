@@ -19,8 +19,8 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.sync.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.utils import gen_tenant_user_id
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .mixins import CurrentTenantVirtualDataSource

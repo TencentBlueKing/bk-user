@@ -80,11 +80,3 @@ class TenantSyncObjectType(str, StructuredEnum):
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
-
-
-class TenantUserIdRuleEnum(str, StructuredEnum):
-    """租户用户 ID 生成规则"""
-
-    UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
-    USERNAME = EnumField("username", label=_("用户名"))
-    USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))

@@ -56,7 +56,6 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.sync.utils import gen_tenant_user_id, is_data_source_username_frozen
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantUserStatus
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
@@ -65,6 +64,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
+from bkuser.apps.tenant.utils import gen_tenant_user_id, is_username_frozen
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
@@ -470,7 +470,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         data = slz.validated_data
 
         # 特殊逻辑：部分历史数据不允许更新用户名
-        if is_data_source_username_frozen(data_source) and data["username"] != data_source_user.username:
+        if is_username_frozen(data_source) and data["username"] != data_source_user.username:
             raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("当前用户不允许更新用户名"))
 
         # 提前将参数中的租户部门/ Leader 用户 ID 转换成数据源部门/ Leader 用户 ID
