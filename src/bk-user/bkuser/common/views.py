@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import json
 import logging
-import os
 
 from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
@@ -39,7 +38,6 @@ from bkuser.common.error_codes import error_codes
 from bkuser.utils.std_error import APIError
 
 logger = logging.getLogger(__name__)
-BK_BUILD_VERSION = os.getenv("BK_BUILD_VERSION", "unset")
 
 
 def one_line_error(error: ValidationError):
@@ -192,7 +190,7 @@ class VueTemplateView(TemplateView):
                 # 是否启用蓝鲸通知中心功能
                 "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
                 # 前端 console 展示版本信息
-                "BK_BUILD_VERSION": BK_BUILD_VERSION,
+                "BK_BUILD_VERSION": settings.BK_BUILD_VERSION,
             }
 
         except Exception:  # pylint: disable=broad-except
