@@ -160,3 +160,11 @@ class FieldMappingOperation(str, StructuredEnum):
 
     DIRECT = EnumField("direct", label=_("直接"))
     EXPRESSION = EnumField("expression", label=_("表达式"))
+
+
+class TenantUserIdRuleEnum(str, StructuredEnum):
+    """租户用户 ID 生成规则"""
+
+    UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
+    USERNAME = EnumField("username", label=_("用户名"))
+    USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))

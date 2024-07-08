@@ -20,7 +20,6 @@ from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourcePlugin, DataSourceUser
-from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.notification.tasks import send_reset_password_to_user
@@ -36,6 +35,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
+from bkuser.apps.tenant.utils import gen_tenant_user_id
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes

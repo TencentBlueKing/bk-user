@@ -12,7 +12,6 @@ from itertools import groupby
 from typing import Dict, List, Set, Tuple
 
 import pytest
-from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -27,7 +26,8 @@ from bkuser.apps.sync.syncers import (
     TenantDepartmentSyncer,
     TenantUserSyncer,
 )
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserIDGenerateConfig
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 pytestmark = pytest.mark.django_db
@@ -355,9 +355,13 @@ class TestDataSourceUserSyncer:
                 departments=[],
             )
         ]
-        # 修改数据源的特定属性，导致其在同步数据源用户时候无法更新 username
-        full_local_data_source.owner_tenant_user_id_rule = TenantUserIdRuleEnum.USERNAME
-        full_local_data_source.save()
+        # 修改租户用户生成规则表，导致其在同步数据源用户时候无法更新 username
+        TenantUserIDGenerateConfig.objects.create(
+            data_source=full_local_data_source,
+            target_tenant_id=full_local_data_source.owner_tenant_id,
+            rule=TenantUserIdRuleEnum.USERNAME_WITH_DOMAIN,
+            domain=full_local_data_source.owner_tenant_id,
+        )
 
         DataSourceUserSyncer(
             data_source_sync_task_ctx, full_local_data_source, raw_users, overwrite=True, incremental=False
