@@ -220,6 +220,8 @@ BK_DOCS_URL_PREFIX = env.str("BK_DOCS_URL_PREFIX", default="https://bk.tencent.c
 BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce/README.md"
 # 反馈问题链接
 BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
+# 前端展示信息
+BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
