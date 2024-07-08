@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.urls import include, path
 
 urlpatterns = [
@@ -23,3 +24,9 @@ urlpatterns = [
     ),
     path("", include("bklogin.monitoring.urls")),
 ]
+
+# 蓝鲸通知中心
+if settings.ENABLE_BK_NOTICE:
+    urlpatterns += [
+        path("/login/notices/", include(("bk_notice_sdk.urls", "notice"), namespace="notice")),
+    ]

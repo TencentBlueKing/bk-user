@@ -16,7 +16,6 @@ from django.conf import settings
 from django.http.response import Http404, HttpResponseNotFound
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
-from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from drf_yasg.utils import swagger_auto_schema
@@ -166,8 +165,6 @@ class VueTemplateView(TemplateView):
         # Context
         try:
             context = {
-                # TITLE
-                "TITLE": _("用户管理 | 腾讯蓝鲸智云"),
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
                 # BK LOGIN
@@ -191,6 +188,10 @@ class VueTemplateView(TemplateView):
                 "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
                 # 前端 console 展示版本信息
                 "BK_BUILD_VERSION": settings.BK_BUILD_VERSION,
+                # footer / logo / title 等全局配置
+                "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
+                # 是否启用虚拟账号功能
+                "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
             }
 
         except Exception:  # pylint: disable=broad-except

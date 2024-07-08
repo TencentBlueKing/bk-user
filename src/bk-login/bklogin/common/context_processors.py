@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
 
 
 def basic_settings(request):
@@ -17,11 +16,14 @@ def basic_settings(request):
     项目的基础配置，比如SITE_URL/STATIC_URL等
     """
     return {
-        "TITLE": _("蓝鲸登录 | 腾讯蓝鲸智云"),
         "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
         "SITE_URL": settings.SITE_URL.rstrip("/"),
         "BK_STATIC_URL": settings.STATIC_URL.rstrip("/"),
         "BK_DOMAIN": settings.BK_DOMAIN,
         # CSRF TOKEN COOKIE NAME
         "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
+        # 是否启用蓝鲸通知中心功能
+        "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
+        # footer / logo / title 等全局配置
+        "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
     }

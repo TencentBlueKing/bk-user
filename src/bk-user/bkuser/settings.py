@@ -215,13 +215,15 @@ BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
+# 前端 Console 展示构建的版本信息
+BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
 # 文档链接
 BK_DOCS_URL_PREFIX = env.str("BK_DOCS_URL_PREFIX", default="https://bk.tencent.com/docs")
 BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce/README.md"
 # 反馈问题链接
 BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
-# 前端展示信息
-BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
+# footer / logo / title 等全局配置存储的共享仓库地址
+BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
@@ -571,6 +573,8 @@ if ENABLE_BK_NOTICE:
     }
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
+# 是否启用虚拟账号页面功能
+ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 
 # logo文件大小限制，单位为: KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
