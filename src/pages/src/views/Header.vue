@@ -7,7 +7,7 @@
       :hover-width="240"
       navigation-type="top-bottom"
       :need-menu="false"
-      :side-title="$t('蓝鲸用户管理')"
+      :side-title="appName"
       theme-color="#1e2634"
     >
       <template #side-header>
@@ -16,8 +16,8 @@
           class="cursor-pointer"
           @click="onGoBack"
         >
-          <i class="user-icon icon-user-logo-i" />
-          <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
+          <div class="w-[28px]"><img :src="appLogo"/></div>
+          <span class="title-desc">{{ appName}}</span>
         </div>
         <div class="tenant-style" v-if="!isTenant && role !== 'natural_user'">
           <div class="logo">
@@ -144,7 +144,7 @@ import { logout } from '@/common/auth';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
-import { useUser } from '@/store';
+import { useUser, platformConfig} from '@/store';
 import { logoConvert } from '@/utils';
 
 const state = reactive({
@@ -154,14 +154,22 @@ const state = reactive({
 });
 
 const userStore = useUser();
+const  platformConfigData = platformConfig()
 const headerNav = ref([]);
 const role = computed(() => userStore.user.role);
+const appName = computed(() => platformConfigData.i18n.name);
+const appLogo = computed(() => platformConfigData.appLogo);
 const userInfo = computed(() => {
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
     { name: t('虚拟账号'), path: 'virtual-account' },
     { name: t('设置'), path: 'setting' },
   ];
+
+  // 根据变量开启或隐藏虚拟账号页面
+  if (!JSON.parse(window.ENABLE_VIRTUAL_USER)) {
+    baseNav?.splice(1, 1);
+}
   if (role.value === 'super_manager' && !isTenant.value) {
     headerNav.value = baseNav;
   } else if (role.value === 'tenant_manager') {

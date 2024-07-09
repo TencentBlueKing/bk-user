@@ -1,7 +1,7 @@
 <template>
   <div
     v-bkloading="{ loading: state.tableLoading, zIndex: 9 }"
-    :class="['group-details-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
+    :class="['group-details-wrapper user-scroll-y relative', { 'has-alert': userStore.showAlert }]">
     <div class="main-content">
       <div class="content-search">
         <div class="content-search-left">
@@ -273,6 +273,10 @@
         </bk-button>
       </template>
     </bk-dialog>
+    <footer class="footer">
+      <p class="text-[#3A84FF]" v-html="contact"></p>
+      <p class="text-[#63656E]">{{ copyright }}</p>
+    </footer>
   </div>
 </template>
 
@@ -299,12 +303,15 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useMainViewStore, useUser } from '@/store';
+import { useMainViewStore, useUser, platformConfig} from '@/store';
 import { LOGO_COLOR, logoConvert, tenantStatus, copy} from '@/utils';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 
 const userStore = useUser();
 const store = useMainViewStore();
+const  platformConfigData = platformConfig()
+const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
+const copyright = computed(() => platformConfigData.footerCopyrightContent);
 store.customBreadcrumbs = false;
 
 const validate = useValidate();
@@ -881,5 +888,14 @@ const emailBlur = () => {
   .label-value {
   color: #3A84FF !important;
 }
+}
+.footer {
+  width: calc(100% - 288px);
+  line-height: 20px;
+  padding: 2% 0;
+  position: absolute;
+  bottom: 0;
+  font-size: 12px;
+  text-align: center;
 }
 </style>

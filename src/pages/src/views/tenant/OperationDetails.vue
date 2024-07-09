@@ -47,7 +47,7 @@
       <Row v-if="!isEdit" :title="$t('内置管理账号')">
         <bk-form-item :label="$t('用户名')" required>
           <bk-input
-            :model-value="`${userStore.user.username}-${formData.id}`"
+            :model-value="userStore.user.username"
             disabled
           />
         </bk-form-item>

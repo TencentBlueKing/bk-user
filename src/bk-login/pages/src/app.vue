@@ -14,27 +14,26 @@
     </div>
     <div id="particles-js"></div>
     <footer class="footer">
-      <p>
-        <a href="https://wpa1.qq.com/KziXGWJs?_type=wpa&amp;qidian=true">{{ $t('技术支持') }}</a>
-        | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" class="link">{{ $t('社区论坛') }}</a>
-        | <a href="http://bk.tencent.com/" target="_blank" class="link">{{ $t('产品官网') }}</a>
-        |
+      <p >
+        <span v-html="contact"></span>
         <bk-popover theme="light" placement="bottom">
           <a href="" target="_blank" class="link follow-us">
-            {{ $t('关注我们') }}
+          | {{ $t('关注我们') }}
           </a>
           <template #content>
             <span class="qr-box"><img class="qr" src="../static/images/qr.png" alt=""></span>
           </template>
         </bk-popover>
       </p>
-      <p>Copyright © 2012 Tencent BlueKing. All Rights Reserved.</p>
+      <p>{{ copyright }}</p>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, computed} from 'vue';
+import { getPlatformConfig, setShortcutIcon, setDocumentTitle} from '@blueking/platform-config';
+import {platformConfig} from '@/store/platformConfig';
 
 onMounted(() => {
   particlesJS(
@@ -157,6 +156,27 @@ onMounted(() => {
     },
   );
 });
+
+const platformConfigData = platformConfig();
+const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`  // url 远程配置文件地址
+const defaults = {
+    name: '蓝鲸用户管理',
+    nameEn: 'BK USER',
+    brandName: '腾讯蓝鲸智云',
+    brandNameEn: 'BlueKing',
+    favicon: '/static/favicon.ico',
+    version: '3.0',
+  }
+
+const getConfigData = async() => {
+    const config =  await getPlatformConfig(url, defaults)  
+    setShortcutIcon(config.favicon);
+    setDocumentTitle(config.i18n);
+    platformConfigData.update(config);
+  }
+getConfigData()
+const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
+const copyright = computed(() => platformConfigData.footerCopyrightContent);
 </script>
 
 <style lang="postcss" scoped>
@@ -228,10 +248,15 @@ onMounted(() => {
 
 .footer a {
   color: #bfcbd7;
-  margin: 0 5px;
 
   &:hover {
     color: #fff;
   }
+}
+:deep(.link-item ){
+  color: #bfcbd7;
+}
+:deep(.link-item:hover) {
+  color: #fff;
 }
 </style>

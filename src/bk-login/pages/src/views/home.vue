@@ -1,7 +1,7 @@
 <template>
   <bk-form v-show="!isAdminShow" form-type="vertical" v-bkloading="{ loading }">
     <div class="tenant-logo">
-      <img src="../../static/images/blueking.png" />
+      <img :src="appLogo"/>
     </div>
 
     <section v-if="!hasStorage && !loading">
@@ -169,6 +169,10 @@ import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
+import { platformConfig } from '@/store/platformConfig';
+
+const  platformConfigData = platformConfig()
+const appLogo = computed(() => platformConfigData.appLogo);
 
 interface Item {
   id: string;
@@ -520,7 +524,7 @@ const isAdminShow = ref(false);
 .tenant-logo {
   text-align: center;
   img {
-    height: 32px;
+    height: 32px
   }
 }
 
