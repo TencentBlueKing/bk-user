@@ -23,10 +23,12 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserExtrasUpdateInputSLZ,
     TenantUserFeatureFlagOutputSLZ,
     TenantUserFieldOutputSLZ,
+    TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
     TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
+    TenantUserTimeZoneUpdateInputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -173,6 +175,52 @@ class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
             custom_email=data.get("custom_email", ""),
         )
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户更新语言",
+        request_body=TenantUserLanguageUpdateInputSLZ,
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        slz = TenantUserLanguageUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user = self.get_object()
+        tenant_user.language = data["language"]
+        tenant_user.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserTimeZoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户更新时区",
+        request_body=TenantUserTimeZoneUpdateInputSLZ,
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        slz = TenantUserTimeZoneUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user = self.get_object()
+        tenant_user.time_zone = data["time_zone"]
+        tenant_user.save()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -370,6 +370,10 @@ class TestTenantUserRetrieveApi:
         assert {dept["name"] for dept in resp.data["departments"]} == {"中心BA", "小组ABA"}
         assert {ld["username"] for ld in resp.data["leaders"]} == {"wangwu", "maiba"}
 
+        # 语言和时区字段应为默认值
+        assert resp.data["language"] == "zh-CN"
+        assert resp.data["time_zone"] == "Asia/Shanghai"
+
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_collaboration_tenant(
         self,

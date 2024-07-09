@@ -88,6 +88,48 @@ class TestTenantUserFeatureFlagListApi:
         assert resp.data["can_change_password"] is False
 
 
+class TestTenantUserLanguageUpdateApi:
+    @pytest.mark.parametrize(
+        ("language", "status_code", "is_valid"),
+        [
+            ("zh-CN", status.HTTP_204_NO_CONTENT, True),
+            ("en-US", status.HTTP_204_NO_CONTENT, True),
+            ("zh-US", status.HTTP_400_BAD_REQUEST, False),
+            ("", status.HTTP_400_BAD_REQUEST, False),
+        ],
+    )
+    def test_update_lanague(self, api_client, tenant_user, language, status_code, is_valid):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": language},
+        )
+
+        assert resp.status_code == status_code
+        if not is_valid:
+            assert "不是合法选项" in resp.data["message"]
+
+
+class TestTenantUserTimezoneUpdateApi:
+    @pytest.mark.parametrize(
+        ("time_zone", "status_code", "is_valid"),
+        [
+            ("Asia/Shanghai", status.HTTP_204_NO_CONTENT, True),
+            ("UTC", status.HTTP_204_NO_CONTENT, True),
+            ("Asia/Shenzhen", status.HTTP_400_BAD_REQUEST, False),
+            ("", status.HTTP_400_BAD_REQUEST, False),
+        ],
+    )
+    def test_update_timezone(self, api_client, tenant_user, time_zone, status_code, is_valid):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),
+            data={"time_zone": time_zone},
+        )
+
+        assert resp.status_code == status_code
+        if not is_valid:
+            assert "不是合法选项" in resp.data["message"]
+
+
 class TestTenantUserLogoUpdateApi:
     @pytest.mark.parametrize(
         ("logo_data", "status_code", "is_valid"),
