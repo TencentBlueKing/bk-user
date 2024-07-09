@@ -524,7 +524,7 @@ const isAdminShow = ref(false);
 .tenant-logo {
   text-align: center;
   img {
-    height: 32px
+    height: 32px;
   }
 }
 
