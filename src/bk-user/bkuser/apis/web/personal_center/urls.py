@@ -41,6 +41,16 @@ urlpatterns = [
         name="personal_center.tenant_users.email.update",
     ),
     path(
+        "tenant-users/<str:id>/language/",
+        views.TenantUserLanguageUpdateApi.as_view(),
+        name="personal_center.tenant_users.language.update",
+    ),
+    path(
+        "tenant-users/<str:id>/time-zone/",
+        views.TenantUserTimeZoneUpdateApi.as_view(),
+        name="personal_center.tenant_users.time_zone.update",
+    ),
+    path(
         "tenant-users/<str:id>/extras/",
         views.TenantUserExtrasUpdateApi.as_view(),
         name="personal_center.tenant_users.extras.update",

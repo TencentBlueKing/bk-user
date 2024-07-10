@@ -38,6 +38,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
+from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -222,6 +223,8 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
+    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
     departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
     leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")

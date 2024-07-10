@@ -16,14 +16,13 @@ from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import (
-    TIME_ZONE_CHOICES,
     CollaborationStrategyStatus,
     TenantStatus,
     TenantUserIdRuleEnum,
     TenantUserStatus,
     UserFieldDataType,
 )
-from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
+from bkuser.common.constants import PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
 
 

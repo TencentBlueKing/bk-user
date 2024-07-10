@@ -264,44 +264,36 @@ class TestTenantUserCreateApi:
         assert "提供的自定义字段数据与租户自定义字段不匹配" in resp.data["message"]
 
     @pytest.mark.parametrize(
-        ("logo_data", "status_code", "is_valid"),
+        ("logo_data"),
         [
-            (
-                "",
-                status.HTTP_201_CREATED,
-                True,
-            ),
-            (
-                "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_201_CREATED,
-                True,
-            ),
-            (
-                "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_201_CREATED,
-                True,
-            ),
-            (
-                "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_400_BAD_REQUEST,
-                False,
-            ),
-            (
-                "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_400_BAD_REQUEST,
-                False,
-            ),
+            (""),
+            ("data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+            ("data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
         ],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_logo(self, api_client, random_tenant, tenant_user_data, logo_data, status_code, is_valid):
+    def test_legal_logo(self, api_client, random_tenant, tenant_user_data, logo_data):
         url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
 
         tenant_user_data["logo"] = logo_data
         resp = api_client.post(url, data=tenant_user_data)
-        assert resp.status_code == status_code
-        if not is_valid:
-            assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.parametrize(
+        ("logo_data"),
+        [
+            ("data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+            ("data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+        ],
+    )
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_illegal_logo(self, api_client, random_tenant, tenant_user_data, logo_data):
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        tenant_user_data["logo"] = logo_data
+        resp = api_client.post(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
 
 
 class TestTenantUserUpdateApi:
@@ -369,6 +361,10 @@ class TestTenantUserRetrieveApi:
         assert resp.data["username"] == "lushi"
         assert {dept["name"] for dept in resp.data["departments"]} == {"中心BA", "小组ABA"}
         assert {ld["username"] for ld in resp.data["leaders"]} == {"wangwu", "maiba"}
+
+        # 语言和时区字段应为默认值
+        assert resp.data["language"] == "zh-CN"
+        assert resp.data["time_zone"] == "Asia/Shanghai"
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_collaboration_tenant(

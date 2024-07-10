@@ -25,6 +25,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
+from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
@@ -95,6 +96,10 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
+
+    # 语言与时区信息
+    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
     class Meta:
         ref_name = "personal_center.TenantUserRetrieveOutputSLZ"
@@ -184,6 +189,14 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
             raise ValidationError(_("自定义邮箱为必填项"))
 
         return attrs
+
+
+class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+
+
+class TenantUserTimeZoneUpdateInputSLZ(serializers.Serializer):
+    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
