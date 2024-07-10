@@ -129,35 +129,25 @@ class TestValidateUserNewPassword:
 
 class TestValidateLogo:
     @pytest.mark.parametrize(
-        ("logo_data", "is_valid"),
+        ("logo_data"),
         [
-            (
-                "",
-                True,
-            ),
-            (
-                "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
-                True,
-            ),
-            (
-                "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
-                True,
-            ),
-            (
-                "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
-                False,
-            ),
-            (
-                "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU",
-                False,
-            ),
+            (""),
+            ("data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU"),
+            ("data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU"),
         ],
     )
-    def test_invalid_logo_format(self, logo_data, is_valid):
-        if is_valid:
-            assert validate_logo(logo_data) == logo_data
-        else:
-            with pytest.raises(ValidationError) as error:
-                validate_logo(logo_data)
+    def test_legal_logo_format(self, logo_data):
+        assert validate_logo(logo_data) == logo_data
 
-            assert "Logo 文件只能为 png 或 jpg 格式" in str(error.value)
+    @pytest.mark.parametrize(
+        ("logo_data"),
+        [
+            ("data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU"),
+            ("data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYU"),
+        ],
+    )
+    def test_illegal_logo_format(self, logo_data):
+        with pytest.raises(ValidationError) as error:
+            validate_logo(logo_data)
+
+        assert "Logo 文件只能为 png 或 jpg 格式" in str(error.value)

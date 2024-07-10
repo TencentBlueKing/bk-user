@@ -138,36 +138,32 @@ class TestTenantUserTimeZoneUpdateApi:
 
 class TestTenantUserLogoUpdateApi:
     @pytest.mark.parametrize(
-        ("logo_data", "status_code", "is_valid"),
+        ("logo_data"),
         [
-            (
-                "data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_204_NO_CONTENT,
-                True,
-            ),
-            (
-                "data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_204_NO_CONTENT,
-                True,
-            ),
-            (
-                "data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_400_BAD_REQUEST,
-                False,
-            ),
-            (
-                "data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU",
-                status.HTTP_400_BAD_REQUEST,
-                False,
-            ),
+            ("data:image/jpeg;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+            ("data:image/png;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
         ],
     )
-    def test_update_logo(self, api_client, tenant_user, logo_data, status_code, is_valid):
+    def test_update_legal_logo(self, api_client, tenant_user, logo_data):
         resp = api_client.put(
             reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
             data={"logo": logo_data},
         )
 
-        assert resp.status_code == status_code
-        if not is_valid:
-            assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.parametrize(
+        ("logo_data"),
+        [
+            ("data:image/gif;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+            ("data:application/zip;base64,QAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQoMDAsKCwsNDhIQDQ4ERMUFRUVDA8XGBYUGBIU"),
+        ],
+    )
+    def test_update_illegal_logo(self, api_client, tenant_user, logo_data):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.logo.update", kwargs={"id": tenant_user.id}),
+            data={"logo": logo_data},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
