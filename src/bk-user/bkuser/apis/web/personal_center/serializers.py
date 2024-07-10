@@ -22,10 +22,10 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, UserFieldDataType
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
-from bkuser.common.constants import BkLanguageEnum
+from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code

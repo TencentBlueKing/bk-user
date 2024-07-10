@@ -196,7 +196,7 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
 
         tenant_user = self.get_object()
         tenant_user.language = data["language"]
-        tenant_user.save()
+        tenant_user.save(update_fields=["language", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -219,7 +219,7 @@ class TenantUserTimeZoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
 
         tenant_user = self.get_object()
         tenant_user.time_zone = data["time_zone"]
-        tenant_user.save()
+        tenant_user.save(update_fields=["time_zone", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

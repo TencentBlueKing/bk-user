@@ -24,7 +24,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantUserStatus, UserFieldDataType
+from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     TenantDepartment,
@@ -38,7 +38,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
-from bkuser.common.constants import BkLanguageEnum
+from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 

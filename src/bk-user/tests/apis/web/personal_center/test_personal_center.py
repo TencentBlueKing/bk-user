@@ -90,44 +90,50 @@ class TestTenantUserFeatureFlagListApi:
 
 class TestTenantUserLanguageUpdateApi:
     @pytest.mark.parametrize(
-        ("language", "status_code", "is_valid"),
-        [
-            ("zh-CN", status.HTTP_204_NO_CONTENT, True),
-            ("en-US", status.HTTP_204_NO_CONTENT, True),
-            ("zh-US", status.HTTP_400_BAD_REQUEST, False),
-            ("", status.HTTP_400_BAD_REQUEST, False),
-        ],
+        ("language"),
+        [("zh-CN"), ("en-US")],
     )
-    def test_update_lanague(self, api_client, tenant_user, language, status_code, is_valid):
+    def test_update_legal_language(self, api_client, tenant_user, language):
         resp = api_client.put(
             reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
             data={"language": language},
         )
 
-        assert resp.status_code == status_code
-        if not is_valid:
-            assert "不是合法选项" in resp.data["message"]
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-
-class TestTenantUserTimezoneUpdateApi:
     @pytest.mark.parametrize(
-        ("time_zone", "status_code", "is_valid"),
-        [
-            ("Asia/Shanghai", status.HTTP_204_NO_CONTENT, True),
-            ("UTC", status.HTTP_204_NO_CONTENT, True),
-            ("Asia/Shenzhen", status.HTTP_400_BAD_REQUEST, False),
-            ("", status.HTTP_400_BAD_REQUEST, False),
-        ],
+        ("language"),
+        [("zh-US"), ("en-CN"), ""],
     )
-    def test_update_timezone(self, api_client, tenant_user, time_zone, status_code, is_valid):
+    def test_update_illegal_lanague(self, api_client, tenant_user, language):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": language},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不是合法选项" in resp.data["message"]
+
+
+class TestTenantUserTimeZoneUpdateApi:
+    @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("UTC")])
+    def test_update_legal_timezone(self, api_client, tenant_user, time_zone):
         resp = api_client.put(
             reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),
             data={"time_zone": time_zone},
         )
 
-        assert resp.status_code == status_code
-        if not is_valid:
-            assert "不是合法选项" in resp.data["message"]
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.parametrize(("time_zone"), [("Asia/Shenzhen"), ("EST"), ("")])
+    def test_update_illegal_timezone(self, api_client, tenant_user, time_zone):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),
+            data={"time_zone": time_zone},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不是合法选项" in resp.data["message"]
 
 
 class TestTenantUserLogoUpdateApi:
