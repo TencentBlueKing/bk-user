@@ -167,7 +167,7 @@ const userInfo = computed(() => {
   ];
 
   // 根据变量开启或隐藏虚拟账号页面
-  if (!JSON.parse(window.ENABLE_VIRTUAL_USER)) {
+  if (window.ENABLE_VIRTUAL_USER === 'False') { 
     baseNav?.splice(1, 1);
 }
   if (role.value === 'super_manager' && !isTenant.value) {
@@ -258,8 +258,7 @@ const feedbackUrl = window.BK_USER_FEEDBACK_URL;
 
 // 消息通知配置信息
 const apiUrl = `${window.AJAX_BASE_URL}/api/v1/web/notices/announcements/`;
-const isNoticeEnabled = Boolean(window.ENABLE_BK_NOTICE === 'true')
-
+const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
   userStore.setShowAlert(isShow);
