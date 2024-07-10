@@ -23,6 +23,7 @@
     "@blueking/bkui-form": "^1.0.0-beta.3",
     "@blueking/login-modal": "^1.0.1",
     "@blueking/notice-component": "^2.0.4",
+    "@blueking/platform-config": "^1.0.3",
     "@blueking/release-note": "0.0.1-beta.12",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",

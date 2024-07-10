@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@blueking/platform-config": "^1.0.3",
     "art-template": "^4.13.2",
     "bkui-vue": "0.0.2-beta.112",
     "connect-history-api-fallback": "^2.0.0",

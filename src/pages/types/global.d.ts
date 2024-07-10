@@ -10,4 +10,6 @@ declare interface Window {
   BK_USER_DOC_URL: string
   BK_USER_FEEDBACK_URL: string
   ENABLE_BK_NOTICE: string
+  BK_SHARED_RES_URL: string
+  ENABLE_VIRTUAL_USER: string
 }
