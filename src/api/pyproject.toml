@@ -57,6 +57,7 @@ opentelemetry-sdk = "1.8.0"
 opentelemetry-exporter-otlp = "1.8.0"
 opentelemetry-exporter-jaeger = "1.8.0"
 requests = "2.27.1"
+concurrent-log-handler = "^0.9.25"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.15.0"
@@ -85,3 +86,8 @@ types-cachetools = "^4.2.9"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "bkuser_core.config.overlays.dev"
 addopts = "--disable-pytest-warnings --reuse-db"
+
+
+[[tool.poetry.source]]
+name = "default"
+url = "https://mirrors.tencent.com/pypi/simple/"

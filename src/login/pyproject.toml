@@ -38,6 +38,7 @@ opentelemetry-api = "1.8.0"
 opentelemetry-exporter-otlp = "1.8.0"
 opentelemetry-exporter-jaeger = "1.8.0"
 PyJWT = "2.4.0"
+concurrent-log-handler = "^0.9.25"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.15.0"
@@ -55,3 +56,6 @@ pytest-cov = "^2.8.1"
 # mypy
 mypy = "^v0.910"
 
+[[tool.poetry.source]]
+name = "default"
+url = "https://mirrors.tencent.com/pypi/simple/"

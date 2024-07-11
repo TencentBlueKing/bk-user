@@ -40,6 +40,7 @@ opentelemetry-api = "1.8.0"
 opentelemetry-sdk = "1.8.0"
 opentelemetry-exporter-otlp = "1.8.0"
 opentelemetry-exporter-jaeger = "1.8.0"
+concurrent-log-handler = "^0.9.25"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.15.0"
@@ -61,3 +62,8 @@ types-dataclasses = "^0.1.5"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "bkuser_shell.config.overlays.dev"
+
+
+[[tool.poetry.source]]
+name = "default"
+url = "https://mirrors.tencent.com/pypi/simple/"
