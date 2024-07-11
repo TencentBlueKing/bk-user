@@ -6,7 +6,7 @@ authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 
 [tool.poetry.dependencies]
 python = "3.6.14"
-urllib3 = "^1.25.7"
+urllib3 = "1.26.18"
 djangorestframework = "3.12.4"
 PyMySQL = "1.0.2"
 six = "1.11.0"
