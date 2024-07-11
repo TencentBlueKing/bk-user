@@ -481,6 +481,10 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source=data_source, id__in=data["leader_ids"]
         ).values_list("data_source_user_id", flat=True)
 
+        # 更新租户用户过期时间
+        tenant_user.account_expired_at = data["account_expired_at"]
+        tenant_user.save(update_fields=["account_expired_at", "updated_at"])
+
         with transaction.atomic():
             data_source_user.username = data["username"]
             data_source_user.full_name = data["full_name"]

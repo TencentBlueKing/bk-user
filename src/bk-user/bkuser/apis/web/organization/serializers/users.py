@@ -9,11 +9,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import collections
+from datetime import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
 from django.conf import settings
 from django.db.models import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
@@ -277,6 +279,8 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
+
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(
             self.context["data_source_id"], username, self.context["data_source_user_id"]
@@ -302,6 +306,15 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
             raise ValidationError(_("不能设置自己为自己的直接上级"))
 
         return super().validate_leader_ids(leader_ids)
+
+    def validate_account_expired_at(self, expire_at: datetime) -> datetime:
+        now = timezone.now()
+
+        # 确保过期日期不在过去
+        if expire_at < now:
+            raise serializers.ValidationError("账号过期时间不能早于当前时间")
+
+        return expire_at
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
