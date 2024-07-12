@@ -307,14 +307,12 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
         return super().validate_leader_ids(leader_ids)
 
-    def validate_account_expired_at(self, expire_at: datetime) -> datetime:
-        now = timezone.now()
-
+    def validate_account_expired_at(self, expired_at: datetime) -> datetime:
         # 确保过期日期不在过去
-        if expire_at < now:
+        if expired_at < timezone.now():
             raise serializers.ValidationError("账号过期时间不能早于当前时间")
 
-        return expire_at
+        return expired_at
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):

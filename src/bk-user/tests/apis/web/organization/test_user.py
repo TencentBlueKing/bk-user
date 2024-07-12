@@ -354,7 +354,7 @@ class TestTenantUserUpdateApi:
 
     @pytest.mark.parametrize(
         ("time_diff"),
-        [(timedelta(minutes=10)), (timedelta(days=365))],
+        [(None), (timedelta(minutes=10)), (timedelta(days=365))],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_update_valid_expiration_date(self, api_client, random_tenant, time_diff):
@@ -372,8 +372,10 @@ class TestTenantUserUpdateApi:
             },
             "department_ids": [],
             "leader_ids": [],
-            "account_expired_at": timezone.now() + time_diff,
         }
+
+        if time_diff:
+            tenant_user_data["account_expired_at"] = timezone.now() + time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
