@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 import time
 from urllib.parse import urlparse
@@ -71,8 +72,7 @@ def _http_request(method, url, **kwargs):
 
             return False, {
                 "error": (
-                    f"status_code is {resp.status_code}, not 20x! "
-                    f"{method} {urlparse(url).path}, resp.body={content}"
+                    f"status_code is {resp.status_code}, not 20x! {method} {urlparse(url).path}, resp.body={content}"  # type: ignore
                 )
             }
 
