@@ -46,6 +46,10 @@ class DataSourceDepartmentSyncer:
         overwrite: bool,
         incremental: bool,
     ):
+        # 增量模式下才可以选择覆不覆盖，全量模式下只有覆盖
+        if not (incremental or overwrite):
+            raise ValueError("incremental or overwrite must be True")
+
         self.ctx = ctx
         self.data_source = data_source
         self.raw_departments = raw_departments
@@ -223,6 +227,10 @@ class DataSourceUserSyncer:
         overwrite: bool = False,
         incremental: bool = False,
     ):
+        # 增量模式下才可以选择覆不覆盖，全量模式下只有覆盖
+        if not (incremental or overwrite):
+            raise ValueError("incremental or overwrite must be True")
+
         self.ctx = ctx
         self.data_source = data_source
         self.raw_users = raw_users
@@ -387,7 +395,18 @@ class DataSourceUserSyncer:
         exists_user_leader_id_tuples = set(exists_user_leader_relations_map.keys())
 
         # 集合做差，再转换 ID，生成需要创建的 Relations
-        if waiting_create_user_leader_id_tuples := user_leader_id_tuples - exists_user_leader_id_tuples:
+        waiting_create_user_leader_id_tuples = user_leader_id_tuples - exists_user_leader_id_tuples
+
+        # 如果不覆盖的场景，则存量的用户，不需要追加关联边
+        if not self.overwrite:
+            exists_user_ids = {u.id for u in exists_users}
+            waiting_create_user_leader_id_tuples = {
+                (user_id, leader_id)
+                for (user_id, leader_id) in waiting_create_user_leader_id_tuples
+                if user_id not in exists_user_ids
+            }
+
+        if waiting_create_user_leader_id_tuples:
             waiting_create_user_leader_relations = [
                 # NOTE 外键对象也可以直接指定 id 进行初始化
                 DataSourceUserLeaderRelation(user_id=user_id, leader_id=leader_id, data_source=self.data_source)
@@ -410,8 +429,8 @@ class DataSourceUserSyncer:
                 # 如果指定 leader 为空，也算是修改了关联边，在覆盖的模式下，需要清理掉旧的数据
                 just_update_relation_user_ids = {user_code_id_map[user.code] for user in self.raw_users}
                 waiting_delete_user_leader_id_tuples = {
-                    (user_id, dept_id)
-                    for user_id, dept_id in waiting_delete_user_leader_id_tuples
+                    (user_id, leader_id)
+                    for user_id, leader_id in waiting_delete_user_leader_id_tuples
                     if user_id in just_update_relation_user_ids
                 }
             # 增量模式，不覆盖，则直接追加即可，不要删除任何关系边
@@ -455,7 +474,17 @@ class DataSourceUserSyncer:
         exists_user_dept_id_tuples = set(exists_user_dept_relations_map.keys())
 
         # 集合做差，再转换 ID，生成需要创建的 Relations
-        if waiting_create_user_dept_id_tuples := user_dept_id_tuples - exists_user_dept_id_tuples:
+        waiting_create_user_dept_id_tuples = user_dept_id_tuples - exists_user_dept_id_tuples
+        # 如果不覆盖的场景，则存量的用户，不需要追加关联边
+        if not self.overwrite:
+            exists_user_ids = {u.id for u in exists_users}
+            waiting_create_user_dept_id_tuples = {
+                (user_id, dept_id)
+                for (user_id, dept_id) in waiting_create_user_dept_id_tuples
+                if user_id not in exists_user_ids
+            }
+
+        if waiting_create_user_dept_id_tuples:
             waiting_create_user_dept_relations = [
                 # NOTE 外键对象也可以直接指定 id 进行初始化
                 DataSourceDepartmentUserRelation(user_id=user_id, department_id=dept_id, data_source=self.data_source)

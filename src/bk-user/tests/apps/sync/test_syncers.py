@@ -97,6 +97,14 @@ class TestDataSourceDepartmentSyncer:
             dept_relation_cnt_before_sync + 1
         )
 
+    def test_update_without_incremental_and_overwrite(
+        self, data_source_sync_task_ctx, full_local_data_source, raw_departments
+    ):
+        with pytest.raises(ValueError, match="incremental or overwrite must be True"):
+            DataSourceDepartmentSyncer(
+                data_source_sync_task_ctx, full_local_data_source, raw_departments, overwrite=False, incremental=False
+            ).sync()
+
     def test_destroy(self, data_source_sync_task_ctx, full_local_data_source):
         raw_departments: List[RawDataSourceDepartment] = []
         DataSourceDepartmentSyncer(
@@ -172,7 +180,10 @@ class TestDataSourceUserSyncer:
         raw_users[0].properties["phone"] = "13512345655"
         raw_users[0].properties["phone_country_code"] = "63"
         raw_users[0].properties["age"] = "30"
-        # 2. 修改用户的 code，会导致用户被重建
+        # 2. 修改用户 - leader，用户 - 部门关联边
+        raw_users[0].leaders = ["linshiyi", "baishier"]
+        raw_users[0].departments = ["center_aa", "center_ab"]
+        # 3. 修改用户的 code，会导致用户被重建
         lisi_old_code, lisi_new_code = "lisi", "lisi-1"
         raw_users[1].code = lisi_new_code
         # 需要更新其他用户的信息，避免 leader 还是用旧的 Code
@@ -180,7 +191,7 @@ class TestDataSourceUserSyncer:
             if lisi_old_code in u.leaders:
                 u.leaders.remove(lisi_old_code)
                 u.leaders.append(lisi_new_code)
-        # 3. 再添加一个随机用户
+        # 4. 再添加一个随机用户
         raw_users.append(random_raw_user)
 
         # NOTE: full_local_data_source 中的数据，extras 都是空的，raw_users 中的都非空
@@ -214,6 +225,14 @@ class TestDataSourceUserSyncer:
         assert zhangsan.phone_country_code == "63"
         assert zhangsan.extras.get("age") == 30  # noqa: PLR2004
 
+        # 覆盖模式下，会追加关联边
+        assert set(
+            DataSourceUserLeaderRelation.objects.filter(user=zhangsan).values_list("leader__code", flat=True)
+        ) == {"linshiyi", "baishier"}
+        assert set(
+            DataSourceDepartmentUserRelation.objects.filter(user=zhangsan).values_list("department__code", flat=True)
+        ) == {"center_aa", "center_ab"}
+
         # 验证用户被重建的情况
         lisi = users.filter(username="lisi").first()
         assert lisi.full_name == "李四"
@@ -233,6 +252,9 @@ class TestDataSourceUserSyncer:
         raw_users[0].properties["username"] = "zhangsan_rename"
         raw_users[0].properties["full_name"] = "张三的另一个名字"
         raw_users[0].properties["email"] = "zhangsan_rename@m.com"
+        # 用户 - leader，用户 - 部门关联边
+        raw_users[0].leaders = ["linshiyi", "baishier"]
+        raw_users[0].departments = ["center_aa", "center_ab"]
 
         raw_users.append(random_raw_user)
 
@@ -241,7 +263,7 @@ class TestDataSourceUserSyncer:
             full_local_data_source,
             raw_users,
             overwrite=False,
-            incremental=False,
+            incremental=True,
         ).sync()
 
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
@@ -265,6 +287,12 @@ class TestDataSourceUserSyncer:
         assert zhangsan.phone == "13512345671"
         assert zhangsan.phone_country_code == "86"
         assert zhangsan.extras == {}
+
+        # 不是覆盖模式，不会追加关联边
+        assert DataSourceUserLeaderRelation.objects.filter(user=zhangsan).count() == 0
+        assert set(
+            DataSourceDepartmentUserRelation.objects.filter(user=zhangsan).values_list("department__code", flat=True)
+        ) == {"company"}
 
     def test_update_with_incremental(self, data_source_sync_task_ctx, full_local_data_source, random_raw_user):
         dept_user_relation_cnt_before_sync = DataSourceDepartmentUserRelation.objects.filter(
@@ -296,7 +324,13 @@ class TestDataSourceUserSyncer:
             user_leader_relation_cnt_before_sync + 1
         )
 
-    # FIXME (su) 增量 x 覆盖的几种模式需要全面补全一下单元测试
+    def test_update_without_incremental_and_overwrite(
+        self, data_source_sync_task_ctx, full_local_data_source, raw_users
+    ):
+        with pytest.raises(ValueError, match="incremental or overwrite must be True"):
+            DataSourceUserSyncer(
+                data_source_sync_task_ctx, full_local_data_source, raw_users, overwrite=False, incremental=False
+            ).sync()
 
     def test_update_with_invalid_leader(self, data_source_sync_task_ctx, full_local_data_source, random_raw_user):
         """全量同步模式，要求用户的 leader 必须也在数据中，否则会有警告"""
