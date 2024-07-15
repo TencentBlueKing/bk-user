@@ -14,4 +14,6 @@ from . import views
 
 urlpatterns = [
     path("current-user/", views.CurrentUserRetrieveApi.as_view(), name="basic.current_user.retrieve"),
+    path("time-zones/", views.TimeZonesListApi.as_view(), name="basic.time_zones.list"),
+    path("languages/", views.LanguagesListApi.as_view(), name="basic.languages.list"),
 ]
