@@ -20,9 +20,6 @@ class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称")
 
 
-class TimeZonesListOutputSLZ(serializers.Serializer):
-    time_zones = serializers.DictField(help_text="时区信息", child=serializers.CharField())
-
-
-class LanguagesListOutputSLZ(serializers.Serializer):
-    languages = serializers.DictField(help_text="语言信息", child=serializers.CharField())
+class LanguagesTimeZoneListOutputSLZ(serializers.Serializer):
+    key = serializers.CharField(help_text="语言时区展示信息")
+    value = serializers.CharField(help_text="语言时区存储信息")

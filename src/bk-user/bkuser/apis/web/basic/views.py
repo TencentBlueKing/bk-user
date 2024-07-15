@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from bkuser.apps.permission.permissions import get_user_role
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 
-from .serializers import CurrentUserRetrieveOutputSLZ, LanguagesListOutputSLZ, TimeZonesListOutputSLZ
+from .serializers import CurrentUserRetrieveOutputSLZ, LanguagesTimeZoneListOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
@@ -39,27 +39,29 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
 
 
-class TimeZonesListApi(generics.GenericAPIView):
-    pagination_class = None
-
-    @swagger_auto_schema(
-        operation_description="所有时区信息",
-        responses={status.HTTP_200_OK: TimeZonesListOutputSLZ()},
-        tags=["basic"],
-    )
-    def get(self, request, *args, **kwargs):
-        timezones = dict(TIME_ZONE_CHOICES)
-        return Response(TimeZonesListOutputSLZ(instance={"time_zones": timezones}).data)
-
-
 class LanguagesListApi(generics.ListAPIView):
     pagination_class = None
 
     @swagger_auto_schema(
         operation_description="所有语言信息",
-        responses={status.HTTP_200_OK: LanguagesListOutputSLZ()},
+        responses={status.HTTP_200_OK: LanguagesTimeZoneListOutputSLZ()},
         tags=["basic"],
     )
     def get(self, request, *args, **kwargs):
         languages = {"中文": BkLanguageEnum.ZH_CN.value, "English": BkLanguageEnum.EN.value}
-        return Response(LanguagesListOutputSLZ(instance={"languages": languages}).data)
+        languages_list = [{"key": key, "value": value} for key, value in languages.items()]
+        return Response(LanguagesTimeZoneListOutputSLZ(languages_list, many=True).data)
+
+
+class TimeZonesListApi(generics.GenericAPIView):
+    pagination_class = None
+
+    @swagger_auto_schema(
+        operation_description="所有时区信息",
+        responses={status.HTTP_200_OK: LanguagesTimeZoneListOutputSLZ()},
+        tags=["basic"],
+    )
+    def get(self, request, *args, **kwargs):
+        timezones = dict(TIME_ZONE_CHOICES)
+        time_zones_list = [{"key": key, "value": value} for key, value in timezones.items()]
+        return Response(LanguagesTimeZoneListOutputSLZ(time_zones_list, many=True).data)
