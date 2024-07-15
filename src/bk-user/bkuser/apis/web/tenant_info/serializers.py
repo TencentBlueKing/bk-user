@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List
 
 from django.conf import settings
@@ -91,7 +92,10 @@ class TenantRealManagerCreateInputSLZ(serializers.Serializer):
 
         # 过滤出本租户、实名类型的 ID
         valid_ids = TenantUser.objects.filter(
-            tenant_id=self.context["tenant_id"], data_source__type=DataSourceTypeEnum.REAL, id__in=ids
+            tenant_id=self.context["tenant_id"],
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source__owner_tenant_id=self.context["tenant_id"],
+            id__in=ids,
         ).values_list("id", flat=True)
 
         # 非法 ID

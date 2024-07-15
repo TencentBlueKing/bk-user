@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -269,9 +270,11 @@ class TenantRealUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         data = slz.validated_data
         tenant_id = self.get_current_tenant_id()
 
-        # 只过滤本租户且为实名的用户
+        # 只过滤本租户且为实名的用户，协同租户不支持
         queryset = TenantUser.objects.filter(
-            tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+            tenant_id=tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source__owner_tenant_id=tenant_id,
         ).select_related("data_source_user")
 
         # 排除已经是管理员的实名用户

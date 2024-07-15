@@ -51,17 +51,17 @@ repos:
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/ip.sh $@; fi"
   - repo: local
     hooks:
-      - id: format
+      - id: ruff-format
         name: ruff-formatter
         language: python
         types: [python]
         entry: ruff format --config=src/bk-user/pyproject.toml --no-cache
         files: src/bk-user/
-      - id: ruff
-        name: ruff
+      - id: ruff-check
+        name: ruff-checker
         language: python
         types: [python]
-        entry: ruff --config=src/bk-user/pyproject.toml --fix --no-cache
+        entry: ruff check --config=src/bk-user/pyproject.toml --fix --no-cache
         files: src/bk-user/
       - id: mypy
         name: mypy

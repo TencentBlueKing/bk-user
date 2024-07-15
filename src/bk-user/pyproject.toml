@@ -53,8 +53,8 @@ opentelemetry-instrumentation-celery = "0.45b0"
 opentelemetry-instrumentation-logging = "0.45b0"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.1.4"
-mypy = "^1.4.1"
+ruff = "^0.5.2"
+mypy = "^1.10.1"
 types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"
@@ -76,30 +76,6 @@ module = [
 ignore_errors = true
 
 [tool.ruff]
-# Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
-# All Rule: https://beta.ruff.rs/docs/rules/
-# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
-ignore = [
-    # Consider moving this statement to an else block
-    "TRY300",
-    # Use raise from to specify exception cause
-    "TRY200",
-    # Avoid specifying long messages outside the exception class
-    "TRY003",
-    # Use contextlib.suppress({exception}) instead of try-except-pass
-    "SIM105",
-    # Use ternary operator {contents} instead of if-else-block
-    "SIM108",
-    # Avoid too many arguments
-    "PLR0913",
-    # Avoid too many return statements
-    "PLR0911",
-    # Exception should be named with `Error` suffix
-    "N818",
-    # raise-without-from-inside-except
-    "B904"
-]
 # Same as Black.
 line-length = 119
 # show an enumeration of all autofixed lint violations
@@ -132,11 +108,37 @@ exclude = [
 ]
 force-exclude = true
 
-[tool.ruff.mccabe]
+[tool.ruff.lint]
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
+# All Rule: https://beta.ruff.rs/docs/rules/
+# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
+ignore = [
+    # Consider moving this statement to an else block
+    "TRY300",
+    # Use raise from to specify exception cause
+    "TRY200",
+    # Avoid specifying long messages outside the exception class
+    "TRY003",
+    # Use contextlib.suppress({exception}) instead of try-except-pass
+    "SIM105",
+    # Use ternary operator {contents} instead of if-else-block
+    "SIM108",
+    # Avoid too many arguments
+    "PLR0913",
+    # Avoid too many return statements
+    "PLR0911",
+    # Exception should be named with `Error` suffix
+    "N818",
+    # raise-without-from-inside-except
+    "B904"
+]
+
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 relative-imports-order = "closest-to-furthest"
 
 [tool.importlinter]
