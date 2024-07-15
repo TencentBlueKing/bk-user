@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from functools import cached_property
 from typing import Dict, Tuple
 
@@ -19,7 +20,7 @@ from bkuser.apis.open_v2.renderers import BkLegacyApiJSONRenderer
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserIDGenerateConfig
 
 
 class LegacyOpenApiCommonMixin:
@@ -60,3 +61,16 @@ class DefaultTenantMixin:
             for strategy in strategies
             for mp in strategy.target_config["field_mapping"]
         }
+
+
+class DataSourceDomainMixin:
+    """数据源 Domain Mixin"""
+
+    @cached_property
+    def data_source_to_domain_map(self) -> Dict[Tuple[int, str], str]:
+        return {
+            (cfg.data_source_id, cfg.target_tenant.id): cfg.domain for cfg in TenantUserIDGenerateConfig.objects.all()
+        }
+
+    def get_domain(self, data_source_id: int, target_tenant_id: str) -> str:
+        return self.data_source_to_domain_map.get((data_source_id, target_tenant_id), "")

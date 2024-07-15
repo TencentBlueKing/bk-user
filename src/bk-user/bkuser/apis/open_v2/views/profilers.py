@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 import operator
 from collections import defaultdict
@@ -21,7 +22,7 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import DefaultTenantMixin, LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.mixins import DataSourceDomainMixin, DefaultTenantMixin, LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.profilers import (
     DepartmentProfileListInputSLZ,
@@ -69,7 +70,7 @@ def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
     return ""
 
 
-class TenantUserListToUserInfosMixin(DefaultTenantMixin):
+class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     """将 TenantUser 列表转换 对外的用户信息"""
 
     def build_user_infos(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
@@ -119,7 +120,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin):
                 "time_zone": tenant_user.time_zone,
                 "language": tenant_user.language,
                 "wx_userid": tenant_user.wx_userid,
-                "domain": tenant_user.data_source.domain,
+                "domain": self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
                 "category_id": tenant_user.data_source_id,
                 "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
                 "enabled": True,
@@ -274,7 +275,12 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         queryset = (
             TenantUser.objects.select_related("data_source_user", "data_source")
-            .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
+            .filter(
+                Q(tenant=self.default_tenant),
+                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
+                Q(data_source__type=DataSourceTypeEnum.REAL)
+                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+            )
             .distinct()
         )
         # 过滤查询的字段
@@ -289,35 +295,53 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 构造过滤条件的 Django Queryset Filter
         is_exact = bool(params.get("exact_lookups"))
-        if lookup_field == "staff_status":
-            # 员工状态, 3.x 所有用户数据都是 IN 状态，无 OUT 状态
-            return TenantUser.objects.none() if "IN" not in lookup_values else queryset
 
-        target_lookups = []
-        if lookup_field in ["email", "telephone"]:
-            # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤
-            target_lookups = [
-                self._convert_optional_inherited_lookup_to_query(lookup_field, value, is_exact=is_exact)
-                for value in lookup_values
-            ]
-        elif lookup_field == "create_time":
-            # 模糊查询 create_time 比较特殊，只针对 IAM 提供，特殊条件处理
-            target_lookups = [self._convert_create_time_lookup_to_query(lookup_values, is_exact=is_exact)]
-        elif lookup_field == "status":
-            status_query = self._convert_status_lookup_to_query(lookup_values, is_exact)
-            if status_query is None:
-                return TenantUser.objects.none()
-            target_lookups = [status_query]
-        else:
-            # 通用转换处理
-            target_lookups = [
-                Q(**{self._convert_lookup_field(lookup_field, is_exact=is_exact): x}) for x in lookup_values
-            ]
+        target_lookups = self._gen_target_lookups(lookup_field, lookup_values, is_exact)
+        if target_lookups is None:
+            return TenantUser.objects.none()
 
         if target_lookups:
             return queryset.filter(reduce(operator.or_, target_lookups))
 
         return queryset
+
+    def _gen_target_lookups(self, lookup_field: str, lookup_values: List[str], is_exact: bool) -> List[Q] | None:
+        """
+        根据 lookup_field 和 lookup_values 构造对应的 Django Queryset Filter
+
+        :param lookup_field: 字段名
+        :param lookup_values: 字段值列表
+        :param is_exact: 是否精确匹配
+
+        :return: 生成的 Django Queryset Filter, None 值表示一定过滤不到， 空列表表示无需过滤
+        """
+        if lookup_field == "staff_status":
+            # 员工状态, 3.x 所有用户数据都是 IN 状态，无 OUT 状态
+            return None if "IN" not in lookup_values else []
+
+        # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤
+        if lookup_field in ["email", "telephone"]:
+            return [
+                self._convert_optional_inherited_lookup_to_query(lookup_field, value, is_exact=is_exact)
+                for value in lookup_values
+            ]
+
+        # 模糊查询 create_time 比较特殊，只针对 IAM 提供，特殊条件处理
+        if lookup_field == "create_time":
+            return [self._convert_create_time_lookup_to_query(lookup_values, is_exact=is_exact)]
+
+        # 状态转换
+        if lookup_field == "status":
+            status_query = self._convert_status_lookup_to_query(lookup_values, is_exact)
+            return None if status_query is None else [status_query]
+
+        # Domain 转 数据源 ID
+        if lookup_field == "domain":
+            domain_query = self._convert_domain_lookup_to_query(lookup_values, is_exact)
+            return None if domain_query is None else [domain_query]
+
+        # 通用转换处理
+        return [Q(**{self._convert_lookup_field(lookup_field, is_exact=is_exact): x}) for x in lookup_values]
 
     @staticmethod
     def _convert_lookup_field(lookup_field: str, is_exact: bool = True) -> str:
@@ -325,7 +349,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         Note：部分 Lookup Filed 不支持模糊匹配
         """
         # 支持精确匹配字段
-        allowed_exact_lookup_fields = ["id", "username", "display_name", "wx_userid", "domain", "category_id"]
+        allowed_exact_lookup_fields = ["id", "username", "display_name", "wx_userid", "category_id"]
         if is_exact and lookup_field not in allowed_exact_lookup_fields:
             raise error_codes.VALIDATION_ERROR.f(f"unsupported exact lookup field: {lookup_field}")
 
@@ -342,7 +366,6 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
             #    后续支持 DisplayName 以 v3 API 为准，v2 兼容接口不支持
             "display_name": "data_source_user__full_name",
             "wx_userid": "wx_userid",
-            "domain": "data_source__domain",
             "category_id": "data_source_id",
         }
 
@@ -369,6 +392,28 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
             return None
 
         return Q(status=lookup_values[0]) if len(lookup_values) == 1 else Q(status__in=lookup_values)
+
+    def _convert_domain_lookup_to_query(self, values: List[str], is_exact: bool) -> Q | None:
+        """对于 Domain 字段的转换查询"""
+        # 不支持模糊查询
+        if not is_exact:
+            raise error_codes.VALIDATION_ERROR.f("unsupported fuzzy lookup field: domain")
+
+        # 目标租户为默认租户的所有数据源 domain 映射
+        domain_to_data_source_map = {
+            domain: ds_id
+            for (ds_id, tenant_id), domain in self.data_source_to_domain_map.items()
+            if tenant_id == self.default_tenant.id
+        }
+
+        # 将 domain 查询转换为 数据源 ID 查询
+        lookup_values = [domain_to_data_source_map[v] for v in values if v in domain_to_data_source_map]
+
+        # 不存在，则说明查询不到任何用户
+        if not lookup_values:
+            return None
+
+        return Q(data_source_id=lookup_values[0]) if len(lookup_values) == 1 else Q(data_source_id__in=lookup_values)
 
     @staticmethod
     def _convert_create_time_lookup_to_query(values: List[str], is_exact: bool) -> Q:
@@ -421,7 +466,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         )
 
 
-class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.RetrieveAPIView):
+class ProfileRetrieveApi(
+    LegacyOpenApiCommonMixin, DefaultTenantMixin, DataSourceDomainMixin, generics.RetrieveAPIView
+):
     """查询单个用户"""
 
     def get(self, request, *args, **kwargs):
@@ -432,18 +479,25 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
         # 路径参数
         lookup_value = kwargs["lookup_value"]
 
-        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        filters = {
-            "tenant_id": self.default_tenant.id,
-            "data_source__type": DataSourceTypeEnum.REAL,
-        }
+        lookup_filter = {}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
-            filters["id"] = lookup_value
+            lookup_filter["id"] = lookup_value
         else:
-            filters["data_source_user__id"] = lookup_value
+            lookup_filter["data_source_user__id"] = lookup_value
 
-        tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
+        # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
+        tenant_user = (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(
+                Q(**lookup_filter),
+                Q(tenant_id=self.default_tenant.id),
+                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
+                Q(data_source__type=DataSourceTypeEnum.REAL)
+                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+            )
+            .first()
+        )
         if not tenant_user:
             raise Http404(f"user {params['lookup_field']}:{kwargs['lookup_value']} not found")
 
@@ -549,7 +603,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.
             "language": tenant_user.language,
             "wx_userid": tenant_user.wx_userid,
             "wx_openid": tenant_user.wx_openid,
-            "domain": tenant_user.data_source.domain,
+            "domain": self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
             "category_id": tenant_user.data_source_id,
             "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
             "enabled": True,
@@ -629,6 +683,7 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
         )
 
         # 租户用户
+        # Note: 由于虚拟账号不存在部门关系，所以这里不需要查询虚拟账号情况
         return TenantUser.objects.filter(
             tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
         ).select_related("data_source_user", "data_source")
@@ -643,6 +698,7 @@ class ProfileLanguageUpdateApi(
         slz = ProfileLanguageUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
+        # Note: 由于虚拟账号并不支持登录，所以不存在设置语言的场景
         tenant_user = TenantUser.objects.filter(
             id=kwargs["username"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
         ).first()
