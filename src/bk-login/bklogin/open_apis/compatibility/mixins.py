@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Dict
 
 from django.conf import settings
@@ -28,10 +29,7 @@ class CompatibilityApiMixin:
         """
         x_app_token = request.META.get("HTTP_X_APP_TOKEN")
         x_app_code = request.META.get("HTTP_X_APP_CODE")
-        if x_app_code == "esb" and x_app_token == settings.BK_PAAS_APP_SECRET:
-            return True
-
-        return False
+        return bool(x_app_code == "esb" and x_app_token == settings.BK_PAAS_APP_SECRET)
 
     def fail_response(self, error_code: CompatibilityApiErrorCodeEnum, message: str) -> JsonResponse:
         code = CompatibilityApiErrorCodeMap[self.api_version][error_code]  # type: ignore

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 import logging
 from typing import Dict, List, Tuple
@@ -95,7 +96,7 @@ class LocalDataSourceIdentityInfoInitializer:
             return True
 
         # 是本地数据源，但是没开启密码功能的，不需要初始化
-        if not self.plugin_cfg.enable_password:  # type: ignore
+        if not self.plugin_cfg.enable_password:  # type: ignore  # noqa: SIM103
             return True
 
         return False
