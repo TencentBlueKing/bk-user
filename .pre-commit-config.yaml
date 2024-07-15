@@ -86,7 +86,7 @@ repos:
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/bk-login/pyproject.toml --unsafe-fixes --fix --no-cache
+        entry: ruff check --config=src/bk-login/pyproject.toml --unsafe-fixes --fix --no-cache
         files: src/bk-login/
       - id: mypy
         name: mypy
