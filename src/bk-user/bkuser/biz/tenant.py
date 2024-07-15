@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Dict, List, Optional
 
@@ -77,7 +78,6 @@ class TenantUserHandler:
 
         # 3. 前两种方式都失效，那就给啥 user_id 就返回啥，避免调用的地方还需要处理
         if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
-            for user_id in not_exists_user_ids:
-                display_name_map[user_id] = user_id
+            display_name_map.update({user_id: user_id for user_id in not_exists_user_ids})
 
         return display_name_map

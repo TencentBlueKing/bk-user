@@ -108,6 +108,12 @@ exclude = [
 ]
 force-exclude = true
 
+[tool.ruff.format]
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
 [tool.ruff.lint]
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
@@ -116,8 +122,6 @@ select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", 
 ignore = [
     # Consider moving this statement to an else block
     "TRY300",
-    # Use raise from to specify exception cause
-    "TRY200",
     # Avoid specifying long messages outside the exception class
     "TRY003",
     # Use contextlib.suppress({exception}) instead of try-except-pass

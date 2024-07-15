@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from collections import Counter
 from typing import List
 
@@ -233,15 +234,11 @@ class LocalDataSourceDataParser:
 
             departments, leaders = [], []
             if organizations := properties.pop("organizations"):
-                for org in organizations.split(","):
-                    if org := org.strip():
-                        departments.append(gen_dept_code(org))
+                departments = [gen_dept_code(org.strip()) for org in organizations.split(",") if org.strip()]
 
             if leader_names := properties.pop("leaders"):
-                for ld in leader_names.split(","):
-                    if ld := ld.strip():
-                        # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
-                        leaders.append(ld)
+                # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
+                leaders = [ld.strip() for ld in leader_names.split(",") if ld.strip()]
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的

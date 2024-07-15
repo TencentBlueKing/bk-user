@@ -16,6 +16,7 @@ limitations under the License.
 We undertake not to change the open source license (MIT license) applicable
 to the current version of the project delivered to anyone in the future.
 """
+
 import logging
 
 from rest_framework.permissions import BasePermission
@@ -41,7 +42,7 @@ def perm_class(action: PermAction):  # noqa: C901
                 return is_super_manager(cur_tenant_id, username)
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(cur_tenant_id, username)
-            if action == PermAction.USE_PLATFORM:
+            if action == PermAction.USE_PLATFORM:  # noqa: SIM103
                 # 平台使用的情况，需要用具体的 object 来判断权限
                 return True
 
