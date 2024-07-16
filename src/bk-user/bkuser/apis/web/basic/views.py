@@ -13,16 +13,15 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apps.permission.permissions import get_user_role
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 
-from .serializers import CurrentUserRetrieveOutputSLZ, LanguagesTimeZoneListOutputSLZ
+from .serializers import CurrentUserRetrieveOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         operation_description="当前用户信息",
         responses={status.HTTP_200_OK: CurrentUserRetrieveOutputSLZ()},
-        tags=["basic"],
+        tags=["basic.current_user"],
     )
     def get(self, request, *args, **kwargs):
         # FIXME: 待新版登录后重构，return更多信息
@@ -37,31 +36,3 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
-
-
-class LanguagesListApi(generics.ListAPIView):
-    pagination_class = None
-
-    @swagger_auto_schema(
-        operation_description="所有语言信息",
-        responses={status.HTTP_200_OK: LanguagesTimeZoneListOutputSLZ()},
-        tags=["basic"],
-    )
-    def get(self, request, *args, **kwargs):
-        languages = {"中文": BkLanguageEnum.ZH_CN.value, "English": BkLanguageEnum.EN.value}
-        languages_list = [{"key": key, "value": value} for key, value in languages.items()]
-        return Response(LanguagesTimeZoneListOutputSLZ(languages_list, many=True).data)
-
-
-class TimeZonesListApi(generics.GenericAPIView):
-    pagination_class = None
-
-    @swagger_auto_schema(
-        operation_description="所有时区信息",
-        responses={status.HTTP_200_OK: LanguagesTimeZoneListOutputSLZ()},
-        tags=["basic"],
-    )
-    def get(self, request, *args, **kwargs):
-        timezones = dict(TIME_ZONE_CHOICES)
-        time_zones_list = [{"key": key, "value": value} for key, value in timezones.items()]
-        return Response(LanguagesTimeZoneListOutputSLZ(time_zones_list, many=True).data)

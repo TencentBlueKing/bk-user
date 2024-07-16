@@ -125,7 +125,7 @@ class TestTenantUserTimeZoneUpdateApi:
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    @pytest.mark.parametrize(("time_zone"), [("Asia/Shenzhen"), ("EST"), ("")])
+    @pytest.mark.parametrize(("time_zone"), [("Asia/Shenzhen"), ("ESC"), ("")])
     def test_update_illegal_timezone(self, api_client, tenant_user, time_zone):
         resp = api_client.put(
             reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),
