@@ -15,6 +15,10 @@
       display-tag
       v-model="tags"
       ext-popover-cls="scrollview"
+      enable-scroll-load
+      :loading="showLeaderLoading"
+      :remote-method="handleRemoteMethod"
+      @scroll-end="handleScrollToBottom"
       :scroll-height="188">
       <bk-option
         v-for="option in userList"
@@ -48,7 +52,9 @@ export default {
         count: 1,
         limit: 10,
       },
+      showLeaderLoading: false,
       copyList: [],
+      remoteMethodTimeOuter: null,
     };
   },
   watch: {
@@ -63,7 +69,23 @@ export default {
     this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
-    async initRtxList(searchValue, curPage) {
+    handleRemoteMethod(val) {
+      if (this.remoteMethodTimeOuter) {
+        clearTimeout(this.remoteMethodTimeOuter);
+      }
+      this.remoteMethodTimeOuter = setTimeout(() => {
+        this.paginationConfig.current = 1;
+        this.initRtxList(val);
+        clearTimeout(this.remoteMethodTimeOuter);
+      }, 300);
+    },
+    handleScrollToBottom() {
+      if (!this.showLeaderLoading && this.paginationConfig.count > (this.paginationConfig.current * 10)) {
+        this.paginationConfig.current += 1;
+        this.initRtxList(this.searchValue, this.paginationConfig.current);
+      }
+    },
+    async initRtxList(searchValue, curPage = 1) {
       try {
         const params = {
           id: this.id,
@@ -73,12 +95,16 @@ export default {
         };
         this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
+        if (curPage === 1) {
+          this.copyList = [];
+        }
         this.paginationConfig.count = res.data.count;
         this.copyList.push(...res.data.results);
         this.userList = this.copyList.filter(item => item.username);
       } catch (e) {
         console.warn(e);
       } finally {
+        this.showLeaderLoading = false;
         this.basicLoading = false;
       }
     },
