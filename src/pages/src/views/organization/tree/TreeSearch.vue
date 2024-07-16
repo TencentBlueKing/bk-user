@@ -225,7 +225,7 @@ export default {
         this.searchLoading = true;
         const searchId = this.searchId;
         const res = await this.$store.dispatch('organization/getSearchResult', {
-          searchKey,
+          searchKey: encodeURIComponent(searchKey),
           searchLength: this.searchLength,
         });
         if (searchId !== this.searchId || !this.searchKey.length) {
