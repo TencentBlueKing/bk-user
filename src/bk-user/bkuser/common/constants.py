@@ -36,4 +36,4 @@ PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, 
 # 敏感信息掩码（7 位 * 是故意的，避免遇到用户输入 6/8 位 * 的情况）
 SENSITIVE_MASK = "*******"
 
-TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
+TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.all_timezones)]
