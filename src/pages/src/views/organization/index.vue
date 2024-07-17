@@ -717,8 +717,8 @@ export default {
     },
 
     // 分页查询
-    changeCurrentPage() {
-      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.getTableData();
+    changeCurrentPage(current) {
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey, current) : this.getTableData();
     },
     changeLimitPage(limit) {
       this.paginationConfig.current = 1;
@@ -740,13 +740,13 @@ export default {
       this.getTableData();
     },
     // 搜索table
-    handleTableSearch(list) {
+    handleTableSearch(list, current = 1) {
       this.isTableDataEmpty = false;
+      this.paginationConfig.current = current;
       if (!list.length) return this.handleClickEmpty();
       if (!this.searchFilterList.length) return;
-      this.paginationConfig.current = 1;
       this.basicLoading = true;
-      const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
+      const valueList = [`category_id=${this.currentCategoryId}&page=${current}&page_size=${this.paginationConfig.limit}`];
 
       list.forEach((item) => {
         if (!Array.isArray(item.values)) {
