@@ -156,7 +156,7 @@
   <div v-show="isAdminShow" style="margin-top: -28px">
     <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; {{ $t('返回上一级') }}</bk-link>
     <h1 class="admin-title">{{ $t('管理员登录') }}</h1>
-    <span class="admin-desc">{{ $t('可使用内置管理员账号进行登录') }}</span>
+    <span class="admin-desc"> {{ tenant?.name }} / {{ userGroupName }} </span>
     <Password is-admin :idp-id="appStore.manageIdpId"></Password>
   </div>
 </template>
@@ -665,6 +665,8 @@ const isAdminShow = ref(false);
 }
 .admin-desc {
   display: inline-block;
+  height: 22px;
+  line-height: 22px;
   font-size: 14px;
   color: #63656E;
   margin-bottom: 24px;

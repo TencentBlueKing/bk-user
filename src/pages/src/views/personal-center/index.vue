@@ -326,6 +326,40 @@
             </li>
           </ul>
         </div>
+        <div class="personal-center-details">
+          <ul class="details-info">
+            <li class="details-info-item">
+              <div class="item-header">
+                <p class="item-title">{{ $t('语言和时区') }}</p>
+              </div>
+              <bk-form
+                ref="formRef"
+                class="item-content"
+                :model="currentUserInfo">    
+                <div class="item-div" v-for="(item, key) in LanguageAndTimeZone" :key="key">
+                  <li>
+                    <span class="key">{{ $t(item.label) }}：</span>
+                    <div class="value-content">
+                      <div class="value-edit" v-if="item.isEdit">
+                        <bk-form-item>
+                          <bk-select v-model="currentUserInfo[item.model]" clearable :input-search="item.model==='language'">
+                            <bk-option v-for="option in item.options" :key="option.value" :id="option.value" :name="option.label"></bk-option>
+                          </bk-select>
+                        </bk-form-item>
+                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="item.submitChange(item)">{{ $t('确定') }}</bk-button>
+                        <bk-button text theme="primary" @click="item.cancel(item)">{{ $t('取消') }}</bk-button>
+                      </div>
+                      <div v-else>
+                        <span class="value">{{ item.model==='language' ?showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}</span>
+                        <i class="user-icon icon-edit" @click="item.isEdit = true" />
+                      </div>
+                    </div>
+                  </li>
+                </div>
+              </bk-form>
+            </li>
+          </ul>
+        </div>
       </div>
       <!-- 修改密码 -->
       <ChangePassword
@@ -351,10 +385,12 @@ import {
   patchUsersEmail,
   patchUsersPhone,
   putPersonalCenterUserExtrasFields,
+  putUserLanguage,
+  putUserTimeZone
 } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
+import { customFieldsMap, formatConvert, getBase64, TIME_ZONES, LANGUAGE_OPTIONS} from '@/utils';
 
 const user = useUser();
 const userInfo = ref(user.user);
@@ -374,6 +410,7 @@ const isInheritedPhone = ref(true);
 const customEmail = ref('');
 const customPhone = ref('');
 const customPhoneCode = ref('');
+const originalValue = ref({})
 const rules = {
   custom_email: [validate.required, validate.email],
 };
@@ -418,7 +455,6 @@ const getCurrentUser = async (id) => {
       ...userRes.data,
       extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
     };
-
     canChangePassword.value = featureRes.data.can_change_password;
     extrasList.value = [...currentUserInfo.value.extras];
     customEmail.value = userRes.data.custom_email;
@@ -426,6 +462,10 @@ const getCurrentUser = async (id) => {
     customPhoneCode.value = userRes.data.custom_phone_country_code;
     isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+    originalValue.value = {
+      language: currentUserInfo.value.language,
+      time_zone: currentUserInfo.value.time_zone
+    }
   } catch (error) {
     console.warn(error);
   } finally {
@@ -487,6 +527,57 @@ const changeCustomFields = async (item) => {
     console.warn(error);
   }
 };
+
+const showLanguage = computed(() =>{
+  return (targetValue) => {
+    const foundItem = LANGUAGE_OPTIONS?.find(item => item.value === targetValue)
+    return foundItem ? foundItem.label : null;
+  }
+})
+
+const submitChange  = async (item) => {
+  const { model} = item
+  try {
+    if (!currentUserInfo.value[model]) return;
+    const apiCall = model === 'language'? putUserLanguage : putUserTimeZone
+    await apiCall({
+      id: currentUserInfo.value.id,
+      [model]: currentUserInfo.value[model]
+    });
+    item.isEdit = false
+    Message({ theme: 'success', message: t('保存成功') });
+    originalValue.value[model] = currentUserInfo.value[model]
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+const cancelChange = (item) => {
+  item.isEdit = false
+  currentUserInfo.value[item.model] = originalValue.value[item.model]
+}
+
+const LanguageAndTimeZone = ref(
+  {
+    language: {
+      label: t('语言'),
+      isEdit: false,
+      model: 'language',
+      options: LANGUAGE_OPTIONS,
+      submitChange: submitChange,
+      cancel: cancelChange
+    },
+    timeZone: {
+      label: t('时区'),
+      isEdit: false,
+      model: 'time_zone',
+      options: TIME_ZONES,
+      submitChange: submitChange,
+      cancel: cancelChange
+    }
+  }
+)
+
 // 取消自定义字段修改
 const cancelCustomFields = (item, index) => {
   item.value = extrasList.value[index]?.value;
@@ -920,7 +1011,7 @@ const hidePasswordModal = () => {
     }
 
     .personal-center-details {
-      height: calc(100vh - 196px);
+      // height: calc(100vh - 196px);
       margin-top: 24px;
 
       .details-info {
