@@ -16,11 +16,13 @@ import requests
 from django.utils.translation import gettext_lazy as _
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import JSONDecodeError
+from rest_framework import status
 
 from bkuser.plugins.general.constants import (
     DEFAULT_PAGE,
     MAX_TOTAL_COUNT,
     PAGE_SIZE_FOR_FETCH_FIRST,
+    STATUS_CODE_REASON_MAP,
     AuthMethod,
     PageSize,
 )
@@ -54,25 +56,13 @@ def stringify_params(params: Dict[str, Any]) -> str:
 
 
 def get_reason_from_status_code(status_code: int) -> str:
-    status_code_reason_map = {
-        400: "请求参数有误，服务器无法理解请求中的语法与参数",
-        401: "未授权请求或身份验证失败",
-        403: "请求被拒绝或没有权限访问",
-        404: "请求的资源未找到",
-        405: "请求方法不被允许",
-        429: "请求过于频繁",
-        500: "服务器内部遇到未知错误",
-        501: "服务器不支持请求的功能，无法完成请求",
-        502: "服务器作为网关或代理从上游服务器接收到无效响应",
-        503: "服务器暂时过载或维护，当前无法处理请求",
-        504: "服务器作为网关或代理，未能及时从上游服务器收到响应",
-    }
+    """根据状态码获取错误原因"""
 
     # 如果是其他状态码，则根据状态码类型抛出通用错误信息
-    if 400 <= status_code < 500:  # noqa: PLR2004
-        reason = status_code_reason_map.get(status_code, "客户端请求错误，请检查请求参数和语法")
+    if status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+        reason = STATUS_CODE_REASON_MAP.get(status_code, _("服务器错误，请稍后重试或联系支持"))
     else:
-        reason = status_code_reason_map.get(status_code, "服务器错误，请稍后重试或联系支持")
+        reason = STATUS_CODE_REASON_MAP.get(status_code, _("客户端请求错误，请检查请求参数和语法"))
 
     return reason
 
@@ -113,7 +103,7 @@ def fetch_all_data(
                 reason = get_reason_from_status_code(resp.status_code)
 
                 raise RequestApiError(
-                    _("请求数据源 API {} 参数 {} 异常，状态码 {}，可能原因是{}，响应内容 {}").format(
+                    _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
                         url, stringify_params(params), resp.status_code, reason, resp.content
                     )  # noqa: E501
                 )
@@ -168,7 +158,7 @@ def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], 
         reason = get_reason_from_status_code(resp.status_code)
 
         raise RequestApiError(
-            _("请求数据源 API {} 参数 {} 异常，状态码 {}，可能原因是{}，响应内容 {}").format(
+            _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
                 url, stringify_params(params), resp.status_code, reason, resp.content
             )  # noqa: E501
         )

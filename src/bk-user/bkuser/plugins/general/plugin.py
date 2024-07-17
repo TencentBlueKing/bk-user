@@ -86,7 +86,9 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             err_msg = str(e)
         except Exception as e:
             logger.exception("general data source plugin test connection error")
-            err_msg = f"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。响应内容：{str(e)}"
+            err_msg = _("连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。响应内容：{}").format(
+                str(e)
+            )
 
         # 请求 API 有异常，直接返回
         if err_msg:
