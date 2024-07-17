@@ -59,11 +59,9 @@ def get_reason_from_status_code(status_code: int) -> str:
     """根据状态码获取错误原因"""
     # 如果状态码不在映射中，则根据类型抛出通用错误信息
     if status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
-        reason = STATUS_CODE_REASON_MAP.get(status_code, _("服务器错误，请稍后重试或联系支持"))
-    else:
-        reason = STATUS_CODE_REASON_MAP.get(status_code, _("客户端请求错误，请检查请求参数和语法"))
+        return STATUS_CODE_REASON_MAP.get(status_code, _("服务器错误，请稍后重试或联系支持"))
 
-    return reason
+    return STATUS_CODE_REASON_MAP.get(status_code, _("客户端请求错误，请检查请求参数和语法"))
 
 
 def fetch_all_data(
