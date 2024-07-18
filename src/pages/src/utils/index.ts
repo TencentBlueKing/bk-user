@@ -1,5 +1,6 @@
 import { Message } from 'bkui-vue';
 import moment from 'moment';
+import momentTimeZone from 'moment-timezone';
 import { ref } from 'vue';
 
 import abnormalImg from '@/images/abnormal.svg';
@@ -59,6 +60,18 @@ export function dateConvert(value: string) {
       return value;
   }
 }
+
+// 时区获取
+export const TIME_ZONES = momentTimeZone.tz.names()?.map(item => ({
+  value: item,
+  label: item
+}))
+
+// 语言
+export const LANGUAGE_OPTIONS = [
+  {value: 'zh-CN', label: '简体中文'},
+  {value: 'en-US', label: 'English'}
+]
 
 // logo转换
 export function logoConvert(value: string) {

@@ -1,6 +1,5 @@
 {
   "获取用户信息失败，请检查后再试": "Failed to obtain user information. Please check and try again",
-  "蓝鲸用户管理": "BlueKing User Management",
   "个人中心": "Individual center",
   "退出登录": "Sign out",
   "组织架构": "Organization",
@@ -136,7 +135,6 @@
   "编辑通知模板": "Edit notification template",
   "通知方式不能为空": "Notification method cannot be empty",
   "密码到期提醒": "Password Expiration Reminder",
-  "提醒时间": "Reminder time",
   "确认要关闭账密登录吗？": "Turn off account-password login?",
   "1.关闭后该数据的用户将无法通过账密登录": "1. After closing, users of this data will not be able to log in via account-password",
   "2.关闭后，再次开启时，账密规则信息会重置": "2. After closing, account-password rule information will be reset when enabled again",
@@ -202,7 +200,6 @@
   "创建时间": "Creation time",
   "租户详情": "Tenant Details",
   "编辑租户": "Edit Tenant",
-  "租户创建成功": "Tenant created successfully",
   "租户更新成功": "Tenant updated successfully",
   "添加字段": "Add field",
   "字段名称": "Field name",
@@ -523,5 +520,8 @@
   "确认要修改账号有效期吗？": "Do you want to change the account validity period?",
   "当前配置将对新账号生效，存量账号的有效期不变。": "The current configuration takes effect for the new account, and the validity period of the existing account remains unchanged.",
   "已接收": "already accepted",
-  "待接收": "pre-accepted"
+  "待接收": "pre-accepted",
+  "语言和时区": "Language and Time Zone",
+  "语言": "Language",
+  "时区": "Time Zone"
 }

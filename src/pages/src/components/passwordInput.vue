@@ -16,7 +16,7 @@
       </span>
       <span
         v-show="!isPassword"
-        class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#c4c6cc] hover:text-[#313238]"
+        class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#979BA5]"
         @click="isPassword = true">
         <eye />
       </span>
@@ -54,7 +54,13 @@ const emit = defineEmits(['change', 'focus', 'input', 'update: modelValue']);
   top: 50%;
   right: 30px;
   transform: translate(0,  -50%)
+  }
 }
+:deep(.bk-input--suffix-icon) {
+  color:#979BA5;
+  &:hover {
+    color:#979BA5;
+  }
 }
 </style>
 

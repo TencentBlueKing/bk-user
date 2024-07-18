@@ -42,6 +42,16 @@ export const getPersonalCenterUserVisibleFields = (id: string) => http.get(`/api
 export const putPersonalCenterUserExtrasFields = (params: any) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/extras/`, params);
 
 /**
+ * 租户用户更新语言
+ */
+export const putUserLanguage = (params: any) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/language/`, params);
+
+/**
+ * 租户用户更新时区
+ */
+export const putUserTimeZone = (params: any) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/time-zone/`, params);
+
+/**
  * 个人中心修改密码
  */
 export const putPersonalCenterUserPassword = (params: PutUserPasswordParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/password/`, params);
