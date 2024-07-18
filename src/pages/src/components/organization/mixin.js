@@ -101,17 +101,7 @@ export default {
         this.$emit('handleClickTreeNode', this.importNode);
         this.messageSuccess(this.$t('同步成功'));
       } catch (e) {
-        const char = '失败详情';
-        const index = e.message.indexOf(char);
-        const errorMessage = index !== -1 ? e.message.substring(0, index) : e.message;
-        const details = index !== -1 ? e.message.substring(index + char.length) : e.message;
-        const err = {
-          code: '',
-          overview: '',
-          suggestion: errorMessage,
-          details: details,
-        };
-        this.messageError(err);
+        this.messageError(e);
       }
     },
     // 切换启停状态
