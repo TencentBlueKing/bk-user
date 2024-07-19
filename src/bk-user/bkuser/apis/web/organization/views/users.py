@@ -464,6 +464,7 @@ class TenantUserRetrieveUpdateDestroyApi(
                 "tenant_user_id": tenant_user.id,
                 "data_source_id": data_source.id,
                 "data_source_user_id": data_source_user.id,
+                "current_expired_at": tenant_user.account_expired_at,
             },
         )
         slz.is_valid(raise_exception=True)
@@ -481,8 +482,6 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source=data_source, id__in=data["leader_ids"]
         ).values_list("data_source_user_id", flat=True)
 
-        account_expired_at = data.get("account_expired_at")
-
         with transaction.atomic():
             data_source_user.username = data["username"]
             data_source_user.full_name = data["full_name"]
@@ -496,8 +495,10 @@ class TenantUserRetrieveUpdateDestroyApi(
             self._update_user_department_relations(data_source_user, data_source_dept_ids)
             self._update_user_leader_relations(data_source_user, data_source_leader_ids)
 
-            # 更新租户用户过期时间，只有在存在并修改了该字段时才更新字段
-            if account_expired_at and account_expired_at != tenant_user.account_expired_at:
+            account_expired_at = data.get("account_expired_at")
+
+            # 更新租户用户过期时间，只有存在并修改了该字段时才更新
+            if account_expired_at:
                 tenant_user.account_expired_at = account_expired_at
                 tenant_user.updater = request.user.username
 

@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
+import pytz
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -279,7 +280,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
-    account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
+    account_expired_at = serializers.FloatField(help_text="账号过期秒级时间戳", required=False)
 
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(
@@ -307,12 +308,19 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
         return super().validate_leader_ids(leader_ids)
 
-    def validate_account_expired_at(self, expired_at: datetime) -> datetime:
-        # 确保过期日期不在过去
-        if expired_at < timezone.now():
-            raise serializers.ValidationError("账号过期时间不能早于当前时间")
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 确保过期日期修改后不在过去，同时将时间戳转换为 datetime 格式
+        expired_at_ts = attrs.get("account_expired_at")
 
-        return expired_at
+        if expired_at_ts:
+            expired_at_dt = datetime.fromtimestamp(expired_at_ts, tz=pytz.UTC)
+
+            attrs["account_expired_at"] = expired_at_dt
+
+            if expired_at_dt < timezone.now() and expired_at_dt != self.context["current_expired_at"]:
+                raise serializers.ValidationError("账号过期时间不能早于当前时间")
+
+        return attrs
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
