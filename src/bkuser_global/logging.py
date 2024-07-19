@@ -149,7 +149,7 @@ def get_stdout_logging(log_level: str, package_name: str, formatter: str = "json
 
 def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_name: str, formatter: str = "json"):
     """获取文件日志配置"""
-    log_class = "logging.handlers.RotatingFileHandler"
+    log_class = "concurrent_log_handler.ConcurrentRotatingFileHandler"
 
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)

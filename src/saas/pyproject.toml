@@ -40,6 +40,7 @@ opentelemetry-instrumentation-celery = "0.26b1"
 opentelemetry-instrumentation-logging = "0.26b1"
 opentelemetry-exporter-jaeger = "1.7.1"
 cffi = "1.15.1"
+concurrent-log-handler = "^0.9.25"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.15.0"
