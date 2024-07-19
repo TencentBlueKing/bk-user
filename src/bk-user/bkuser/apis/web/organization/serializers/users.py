@@ -315,9 +315,14 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         if expired_at_ts:
             expired_at_dt = datetime.fromtimestamp(expired_at_ts, tz=pytz.UTC)
 
+            # 如果过期日期没有修改，则不进行任何处理
+            if expired_at_dt == self.context["current_expired_at"]:
+                attrs.pop("account_expired_at")
+                return attrs
+
             attrs["account_expired_at"] = expired_at_dt
 
-            if expired_at_dt < timezone.now() and expired_at_dt != self.context["current_expired_at"]:
+            if expired_at_dt < timezone.now():
                 raise serializers.ValidationError("账号过期时间不能早于当前时间")
 
         return attrs
