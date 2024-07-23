@@ -16,11 +16,13 @@ import requests
 from django.utils.translation import gettext_lazy as _
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import JSONDecodeError
+from rest_framework import status
 
 from bkuser.plugins.general.constants import (
     DEFAULT_PAGE,
     MAX_TOTAL_COUNT,
     PAGE_SIZE_FOR_FETCH_FIRST,
+    STATUS_CODE_REASON_MAP,
     AuthMethod,
     PageSize,
 )
@@ -51,6 +53,19 @@ def gen_headers(cfg: AuthConfig) -> Dict[str, str]:
 def stringify_params(params: Dict[str, Any]) -> str:
     """字符串化查询参数，仅用于错误信息提示"""
     return "&".join([f"{k}={v}" for k, v in params.items()])
+
+
+def get_reason_from_status_code(status_code: int) -> str:
+    """根据状态码获取错误原因"""
+    # 如果状态码不在映射中，则根据类型抛出通用错误信息
+    if status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+        return STATUS_CODE_REASON_MAP.get(
+            status_code, _("实现的 API 服务异常，请检查实现的 API 服务是否正常或通过日志排查问题原因")
+        )
+
+    return STATUS_CODE_REASON_MAP.get(
+        status_code, _("请求异常，请检查 API 路径和查询参数是否正确，并确保符合 API 文档的要求")
+    )
 
 
 def fetch_all_data(
@@ -87,19 +102,23 @@ def fetch_all_data(
             resp = session.get(url, headers=headers, params=params, timeout=timeout)
             if not resp.ok:
                 raise RequestApiError(
-                    _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(
-                        url, stringify_params(params), resp.status_code, resp.content
+                    _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
+                        url,
+                        stringify_params(params),
+                        resp.status_code,
+                        get_reason_from_status_code(resp.status_code),
+                        resp.content,
                     )  # noqa: E501
                 )
 
             try:
                 resp_data = resp.json()
-            except JSONDecodeError:  # noqa: PERF203
+            except JSONDecodeError as e:  # noqa: PERF203
                 raise RespDataFormatError(
                     _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
                         url, stringify_params(params), resp.content
                     )  # noqa: E501
-                )
+                ) from e
 
             total_cnt = resp_data.get("count", 0)
             cur_req_results = resp_data.get("results", [])
@@ -140,19 +159,23 @@ def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], 
     resp = requests.get(url, headers=headers, params=params, timeout=timeout)
     if not resp.ok:
         raise RequestApiError(
-            _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(
-                url, stringify_params(params), resp.status_code, resp.content
+            _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
+                url,
+                stringify_params(params),
+                resp.status_code,
+                get_reason_from_status_code(resp.status_code),
+                resp.content,
             )  # noqa: E501
         )
 
     try:
         resp_data = resp.json()
-    except JSONDecodeError:  # noqa: PERF203
+    except JSONDecodeError as e:  # noqa: PERF203
         raise RespDataFormatError(
             _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
                 url, stringify_params(params), resp.content
             )  # noqa: E501
-        )
+        ) from e
 
     results = resp_data.get("results", [])
     if not results:
