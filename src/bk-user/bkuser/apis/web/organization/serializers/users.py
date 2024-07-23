@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import collections
+from datetime import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
@@ -39,7 +40,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -230,10 +231,6 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
     leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
 
-    default_validity_period = serializers.IntegerField(
-        help_text="默认有效期(单位：天)", source="tenant.tenantuservalidityperiodconfig.validity_period"
-    )
-
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
 
@@ -310,14 +307,15 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
         return super().validate_leader_ids(leader_ids)
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 确保过期日期修改后不在过去
-        expired_at = attrs.get("account_expired_at")
+    def validate_account_expired_at(self, expired_at: datetime) -> datetime:
+        if expired_at.strftime("%Y-%m-%d %H:%M:%S") == PERMANENT_TIME.strftime("%Y-%m-%d %H:%M:%S"):
+            return PERMANENT_TIME
 
+        # 确保过期日期修改后不在过去
         if expired_at and expired_at < timezone.now() and expired_at != self.context["current_expired_at"]:
             raise serializers.ValidationError("账号过期时间不能早于当前过期时间")
 
-        return attrs
+        return expired_at
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
