@@ -495,14 +495,13 @@ class TenantUserRetrieveUpdateDestroyApi(
             self._update_user_department_relations(data_source_user, data_source_dept_ids)
             self._update_user_leader_relations(data_source_user, data_source_leader_ids)
 
-            account_expired_at = data.get("account_expired_at")
-
             # 更新租户用户过期时间，只有存在并修改了该字段时才更新
+            account_expired_at = data.get("account_expired_at")
             if account_expired_at and account_expired_at != tenant_user.account_expired_at:
                 tenant_user.account_expired_at = account_expired_at
                 tenant_user.updater = request.user.username
 
-                # 根据租户用户当前状态判断，如果是过期状态则转为正常，如果是正常或停用则不变
+                # 根据租户用户当前状态判断，如果是过期状态则转为正常，如果是正常或停用则保持不变
                 if tenant_user.status == TenantUserStatus.EXPIRED:
                     tenant_user.status = TenantUserStatus.ENABLED
 

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import collections
-from datetime import datetime
+import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
@@ -307,13 +307,21 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
         return super().validate_leader_ids(leader_ids)
 
-    def validate_account_expired_at(self, expired_at: datetime) -> datetime:
-        if expired_at.strftime("%Y-%m-%d %H:%M:%S") == PERMANENT_TIME.strftime("%Y-%m-%d %H:%M:%S"):
+    def validate_account_expired_at(self, expired_at: datetime.datetime) -> datetime.datetime:
+        # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时， 将时间字符串 "2024-01-01 00:00:00" 直接附加
+        #       当前用户的时区（不会进行时区转换），所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC
+        #       时区）对比即可
+        if expired_at.replace(tzinfo=datetime.timezone.utc) == PERMANENT_TIME:
             return PERMANENT_TIME
 
-        # 确保过期日期修改后不在过去
-        if expired_at and expired_at < timezone.now() and expired_at != self.context["current_expired_at"]:
-            raise serializers.ValidationError("账号过期时间不能早于当前过期时间")
+        # 未修改，与当前用户数据的时间一致，无论是否过期都保持原样输出
+        # Note: 之前输出时默认会转换当前用户时区输出，现重新附加当前用户的时区，时区不会出现偏差
+        if expired_at == self.context["current_expired_at"]:
+            return expired_at
+
+        # 修改情况下，需要保证时间不是过期的
+        if expired_at < timezone.now():
+            raise serializers.ValidationError("账号有效期时间不能早于当前时间")
 
         return expired_at
 

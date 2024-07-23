@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from datetime import timedelta
+import datetime
 from typing import Any, Dict, List
 
 import pytest
@@ -19,7 +19,6 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework import status
 
@@ -377,7 +376,7 @@ class TestTenantUserUpdateApi:
 
     @pytest.mark.parametrize(
         ("time_diff"),
-        [(None), (timedelta(minutes=10)), (timedelta(days=365))],
+        [(None), (datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_update_valid_expired_date(self, api_client, random_tenant, time_diff):
@@ -398,7 +397,7 @@ class TestTenantUserUpdateApi:
         }
 
         if time_diff:
-            tenant_user_data["account_expired_at"] = timezone.now() + time_diff
+            tenant_user_data["account_expired_at"] = datetime.datetime.now() + time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
@@ -407,7 +406,7 @@ class TestTenantUserUpdateApi:
 
     @pytest.mark.parametrize(
         ("time_diff"),
-        [(timedelta(minutes=10)), (timedelta(days=365))],
+        [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_update_invalid_expired_date(self, api_client, random_tenant, time_diff):
@@ -427,7 +426,7 @@ class TestTenantUserUpdateApi:
             "leader_ids": [],
         }
 
-        tenant_user_data["account_expired_at"] = timezone.now() - time_diff
+        tenant_user_data["account_expired_at"] = datetime.datetime.now() - time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
