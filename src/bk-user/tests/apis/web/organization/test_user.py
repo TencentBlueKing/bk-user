@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 from typing import Any, Dict, List
 
 import pytest
@@ -348,6 +349,89 @@ class TestTenantUserUpdateApi:
         resp = api_client.put(url, data=tenant_user_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不能设置自己为自己的直接上级" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_current_expired_date(self, api_client, random_tenant):
+        tenant_user_data: Dict[str, Any] = {
+            "username": "wangwu-pro-max",
+            "full_name": "这里放一个姓名",
+            "email": "wangwu@example.com",
+            "phone": "12345678901",
+            "phone_country_code": "86",
+            "extras": {
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+                f"{random_tenant.id}_region": "shenzhen",
+                f"{random_tenant.id}_hobbies": ["reading", "shopping"],
+            },
+            "department_ids": [],
+            "leader_ids": [],
+        }
+
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
+        tenant_user_data["account_expired_at"] = wangwu.account_expired_at
+        url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
+        resp = api_client.put(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.parametrize(
+        ("time_diff"),
+        [(None), (datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
+    )
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_valid_expired_date(self, api_client, random_tenant, time_diff):
+        tenant_user_data: Dict[str, Any] = {
+            "username": "wangwu-pro-max",
+            "full_name": "这里放一个姓名",
+            "email": "wangwu@example.com",
+            "phone": "12345678901",
+            "phone_country_code": "86",
+            "extras": {
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+                f"{random_tenant.id}_region": "shenzhen",
+                f"{random_tenant.id}_hobbies": ["reading", "shopping"],
+            },
+            "department_ids": [],
+            "leader_ids": [],
+        }
+
+        if time_diff:
+            tenant_user_data["account_expired_at"] = datetime.datetime.now() + time_diff
+
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
+        url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
+        resp = api_client.put(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.parametrize(
+        ("time_diff"),
+        [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
+    )
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_invalid_expired_date(self, api_client, random_tenant, time_diff):
+        tenant_user_data: Dict[str, Any] = {
+            "username": "wangwu-pro-max",
+            "full_name": "这里放一个姓名",
+            "email": "wangwu@example.com",
+            "phone": "12345678901",
+            "phone_country_code": "86",
+            "extras": {
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+                f"{random_tenant.id}_region": "shenzhen",
+                f"{random_tenant.id}_hobbies": ["reading", "shopping"],
+            },
+            "department_ids": [],
+            "leader_ids": [],
+        }
+
+        tenant_user_data["account_expired_at"] = datetime.datetime.now() - time_diff
+
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
+        url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
+        resp = api_client.put(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestTenantUserRetrieveApi:

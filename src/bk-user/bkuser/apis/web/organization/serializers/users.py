@@ -9,11 +9,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import collections
+import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
 from django.conf import settings
 from django.db.models import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
@@ -38,7 +40,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -277,6 +279,8 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
+
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(
             self.context["data_source_id"], username, self.context["data_source_user_id"]
@@ -302,6 +306,24 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
             raise ValidationError(_("不能设置自己为自己的直接上级"))
 
         return super().validate_leader_ids(leader_ids)
+
+    def validate_account_expired_at(self, expired_at: datetime.datetime) -> datetime.datetime:
+        # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时， 将时间字符串 "2024-01-01 00:00:00" 直接附加
+        #       当前用户的时区（不会进行时区转换），所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC
+        #       时区）对比即可
+        if expired_at.replace(tzinfo=datetime.timezone.utc) == PERMANENT_TIME:
+            return PERMANENT_TIME
+
+        # 未修改，与当前用户数据的时间一致，无论是否过期都保持原样输出
+        # Note: 之前输出时默认会转换当前用户时区输出，现重新附加当前用户的时区，时区不会出现偏差
+        if expired_at == self.context["current_expired_at"]:
+            return expired_at
+
+        # 修改情况下，需要保证时间不是过期的
+        if expired_at < timezone.now():
+            raise serializers.ValidationError("账号有效期时间不能早于当前时间")
+
+        return expired_at
 
 
 class TenantUserPasswordRuleRetrieveOutputSLZ(serializers.Serializer):
