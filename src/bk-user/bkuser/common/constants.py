@@ -37,3 +37,6 @@ PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, 
 SENSITIVE_MASK = "*******"
 
 TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.all_timezones)]
+
+# 允许的最大时间差：120 秒
+ALLOWED_TIME_DIFFERENCE = 120
