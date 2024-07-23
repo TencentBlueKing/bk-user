@@ -59,9 +59,13 @@ def get_reason_from_status_code(status_code: int) -> str:
     """根据状态码获取错误原因"""
     # 如果状态码不在映射中，则根据类型抛出通用错误信息
     if status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
-        return STATUS_CODE_REASON_MAP.get(status_code, _("服务器错误，请通过服务日志排查原因并稍后重试"))
+        return STATUS_CODE_REASON_MAP.get(
+            status_code, _("实现的 API 服务异常，请检查实现的 API 服务是否正常或通过日志排查问题原因")
+        )
 
-    return STATUS_CODE_REASON_MAP.get(status_code, _("客户端请求错误，请检查请求参数和语法，并确保您拥有相关的权限"))
+    return STATUS_CODE_REASON_MAP.get(
+        status_code, _("请求异常，请检查 API 路径和查询参数是否正确，并确保符合 API 文档的要求")
+    )
 
 
 def fetch_all_data(
@@ -97,11 +101,13 @@ def fetch_all_data(
             params.update({"page": cur_page, "page_size": page_size})
             resp = session.get(url, headers=headers, params=params, timeout=timeout)
             if not resp.ok:
-                reason = get_reason_from_status_code(resp.status_code)
-
                 raise RequestApiError(
                     _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
-                        url, stringify_params(params), resp.status_code, reason, resp.content
+                        url,
+                        stringify_params(params),
+                        resp.status_code,
+                        get_reason_from_status_code(resp.status_code),
+                        resp.content,
                     )  # noqa: E501
                 )
 
@@ -152,11 +158,13 @@ def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], 
     params.update({"page": DEFAULT_PAGE, "page_size": PAGE_SIZE_FOR_FETCH_FIRST})
     resp = requests.get(url, headers=headers, params=params, timeout=timeout)
     if not resp.ok:
-        reason = get_reason_from_status_code(resp.status_code)
-
         raise RequestApiError(
             _("请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}").format(
-                url, stringify_params(params), resp.status_code, reason, resp.content
+                url,
+                stringify_params(params),
+                resp.status_code,
+                get_reason_from_status_code(resp.status_code),
+                resp.content,
             )  # noqa: E501
         )
 
