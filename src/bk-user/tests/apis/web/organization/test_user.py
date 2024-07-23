@@ -370,7 +370,7 @@ class TestTenantUserUpdateApi:
         }
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
-        tenant_user_data["account_expired_at"] = wangwu.account_expired_at.timestamp()
+        tenant_user_data["account_expired_at"] = wangwu.account_expired_at
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
         resp = api_client.put(url, data=tenant_user_data)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -398,8 +398,7 @@ class TestTenantUserUpdateApi:
         }
 
         if time_diff:
-            new_expired_at = timezone.now() + time_diff
-            tenant_user_data["account_expired_at"] = new_expired_at.timestamp()
+            tenant_user_data["account_expired_at"] = timezone.now() + time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})
@@ -428,9 +427,7 @@ class TestTenantUserUpdateApi:
             "leader_ids": [],
         }
 
-        if time_diff:
-            new_expired_at = timezone.now() - time_diff
-            tenant_user_data["account_expired_at"] = new_expired_at.timestamp()
+        tenant_user_data["account_expired_at"] = timezone.now() - time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         url = reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": wangwu.id})

@@ -393,7 +393,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         return TenantUser.objects.filter(
             tenant_id=self.get_current_tenant_id(),
             data_source__type=DataSourceTypeEnum.REAL,
-        ).select_related("data_source", "data_source_user")
+        ).select_related("data_source", "data_source_user", "tenant__tenantuservalidityperiodconfig")
 
     @swagger_auto_schema(
         tags=["organization.user"],
@@ -498,8 +498,12 @@ class TenantUserRetrieveUpdateDestroyApi(
             account_expired_at = data.get("account_expired_at")
 
             # 更新租户用户过期时间，只有存在并修改了该字段时才更新
-            if account_expired_at:
-                tenant_user.account_expired_at = account_expired_at
+            if account_expired_at and account_expired_at != tenant_user.account_expired_at:
+                if account_expired_at.strftime("%Y-%m-%d %H:%M:%S") == PERMANENT_TIME.strftime("%Y-%m-%d %H:%M:%S"):
+                    tenant_user.account_expired_at = PERMANENT_TIME
+                else:
+                    tenant_user.account_expired_at = account_expired_at
+
                 tenant_user.updater = request.user.username
 
                 # 根据租户用户当前状态判断，如果是过期状态则转为正常，如果是正常或停用则不变

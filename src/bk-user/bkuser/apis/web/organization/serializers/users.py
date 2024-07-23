@@ -9,11 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import collections
-from datetime import datetime
 from typing import Any, Dict, List
 
 import phonenumbers
-import pytz
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -232,6 +230,10 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
     leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
 
+    default_validity_period = serializers.IntegerField(
+        help_text="默认有效期(单位：天)", source="tenant.tenantuservalidityperiodconfig.validity_period"
+    )
+
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
 
@@ -280,7 +282,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
-    account_expired_at = serializers.FloatField(help_text="账号过期秒级时间戳", required=False)
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
 
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(
@@ -309,21 +311,11 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         return super().validate_leader_ids(leader_ids)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 确保过期日期修改后不在过去，同时将时间戳转换为 datetime 格式
-        expired_at_ts = attrs.get("account_expired_at")
+        # 确保过期日期修改后不在过去
+        expired_at = attrs.get("account_expired_at")
 
-        if expired_at_ts:
-            expired_at_dt = datetime.fromtimestamp(expired_at_ts, tz=pytz.UTC)
-
-            # 如果过期日期没有修改，则不进行任何处理
-            if expired_at_dt == self.context["current_expired_at"]:
-                attrs.pop("account_expired_at")
-                return attrs
-
-            attrs["account_expired_at"] = expired_at_dt
-
-            if expired_at_dt < timezone.now():
-                raise serializers.ValidationError("账号过期时间不能早于当前时间")
+        if expired_at and expired_at < timezone.now() and expired_at != self.context["current_expired_at"]:
+            raise serializers.ValidationError("账号过期时间不能早于当前过期时间")
 
         return attrs
 
