@@ -40,7 +40,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
-from bkuser.common.constants import ALLOWED_TIME_DIFFERENCE, PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import ALLOWED_DATETIME_MAX_OFFSET, PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -318,7 +318,7 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         # Note: 之前输出时默认会转换当前用户时区输出，现重新附加当前用户的时区，时区不会出现偏差；输出时间字符串格式只
         #  精确到秒，但数据库中时间精确到毫秒，为避免输入输出转换丢失精度问题，在误差允许范围内，均认为是相同时间，即
         #  未修改
-        if abs((expired_at - self.context["current_expired_at"]).total_seconds()) <= ALLOWED_TIME_DIFFERENCE:
+        if abs((expired_at - self.context["current_expired_at"]).total_seconds()) <= ALLOWED_DATETIME_MAX_OFFSET:
             return self.context["current_expired_at"]
 
         # 修改情况下，需要保证时间不是过期的

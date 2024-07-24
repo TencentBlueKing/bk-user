@@ -39,4 +39,4 @@ SENSITIVE_MASK = "*******"
 TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.all_timezones)]
 
 # datetime 对比时允许最大偏移的秒数内认为是相等的，默认 2 分钟
-ALLOWED_TIME_DIFFERENCE = 120
+ALLOWED_DATETIME_MAX_OFFSET  = 120
