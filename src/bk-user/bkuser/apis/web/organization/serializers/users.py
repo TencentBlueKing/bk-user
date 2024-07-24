@@ -40,7 +40,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
-from bkuser.common.constants import PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import ALLOWED_DATETIME_MAX_OFFSET, PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -308,16 +308,18 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         return super().validate_leader_ids(leader_ids)
 
     def validate_account_expired_at(self, expired_at: datetime.datetime) -> datetime.datetime:
-        # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时， 将时间字符串 "2024-01-01 00:00:00" 直接附加
-        #       当前用户的时区（不会进行时区转换），所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC
-        #       时区）对比即可
+        # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时，
+        #  将时间字符串 "2024-01-01 00:00:00" 直接附加当前用户的时区（不会进行时区转换），
+        #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC时区）对比即可
         if expired_at.replace(tzinfo=datetime.timezone.utc) == PERMANENT_TIME:
             return PERMANENT_TIME
 
         # 未修改，与当前用户数据的时间一致，无论是否过期都保持原样输出
-        # Note: 之前输出时默认会转换当前用户时区输出，现重新附加当前用户的时区，时区不会出现偏差
-        if expired_at == self.context["current_expired_at"]:
-            return expired_at
+        # Note: 之前输出时默认会转换当前用户时区输出，现重新附加当前用户的时区，时区不会出现偏差；
+        #  输出时间字符串格式只精确到秒，但数据库中时间精确到毫秒，
+        #  为避免输入输出转换丢失精度问题，在误差允许范围内，均认为是相同时间，即未修改
+        if abs((expired_at - self.context["current_expired_at"]).total_seconds()) <= ALLOWED_DATETIME_MAX_OFFSET:
+            return self.context["current_expired_at"]
 
         # 修改情况下，需要保证时间不是过期的
         if expired_at < timezone.now():
