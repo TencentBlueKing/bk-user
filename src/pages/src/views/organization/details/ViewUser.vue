@@ -44,7 +44,8 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('账号过期时间') }}：</span>
-          <span class="details-content-value">{{ detail.account_expired_at }}</span>
+          <span class="details-content-value">{{ `${detail.account_expired_at} (${remainingDays(detail.account_expired_at)})` }}</span>
+          <button class="text-[#3A84FF] ml-[16px] text-[14px]" @click="renewalClick">{{ $t('续期') }}</button>
         </div>
         <CustomFieldsView :extras="detail.extras" />
       </div>
@@ -52,15 +53,30 @@
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
+  <bk-dialog :is-show="isShowRenewal" :title="$t('账号续期')" quick-close @confirm="handleConfirm" @closed="handleClosed">
+    <div class="mb-[21px]">{{ $t('过期时间：') }}{{ detail.account_expired_at?.split(' ')[0] }}</div>
+    <bk-form class="example" ref="formRef" form-type="vertical"  :model="formData">
+    <bk-form-item :label="$t('续期时长')" property="dateTime" required>
+    <bk-select  v-model="formData.dateTime" inputSearch @change="dateChange" >
+      <bk-option v-for="(option, i) in dateOptions" :key="i" :id="option.id" :name="option.name"></bk-option>
+      </bk-select>
+    </bk-form-item>
+    <bk-form-item v-if="showExpirationTime" :label="$t('账号过期时间')" property="custom" required>
+      <bk-date-picker v-model="formData.custom" :disabled-date="disabledDate" :placeholder="$t('自定义')" type="datetime" format="yyyy-MM-dd HH:mm:ss" append-to-body></bk-date-picker>
+    </bk-form-item>
+  </bk-form>
+  </bk-dialog>
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
-
+import { defineProps, ref, computed, defineEmits} from 'vue';
 import CustomFieldsView from '@/components/custom-fields/view.vue';
 import { dateConvert, formatConvert } from '@/utils';
+import { updateAccountExpiredAt, getTenantUserValidityPeriod} from '@/http';
+import dayjs from "dayjs";
+import { t } from '@/language/index';
 
-defineProps({
+const props = defineProps({
   userData: {
     type: Object,
     default: () => ({}),
@@ -70,6 +86,85 @@ defineProps({
     default: () => ({})
   }
 });
+
+const emit = defineEmits(['updateUsers']);
+const isShowRenewal = ref(false) //续期
+const disabledDate = (date) => date.valueOf() < Date.now()
+const showExpirationTime = ref(false)
+const formRef = ref()
+const formData = ref({
+  dateTime: '',
+  custom: ''
+})
+const expirationTime = ref(props.detail.account_expired_at?.split(' ')[0]) // 过期时间
+const expirationTimes = [
+  { num: 1, unit: 'month', label: t('一个月') },
+  { num: 3, unit: 'month', label: t('三个月') },
+  { num: 6, unit: 'month', label: t('六个月') },
+  { num: 1, unit: 'year', label: t('一年　') }
+];
+
+const defineDateTime = (num, unit) => dayjs(expirationTime.value).add(num, unit).format('YYYY-MM-DD');
+const dateOptions = expirationTimes.map(({ num, unit, label }) => {
+  const date = defineDateTime(num, unit);
+  return { id: `${date} 00:00:00`, name: `${label} (至${date})` };
+});
+
+dateOptions.push(
+  { id: '2100-1-1T00:00:00', name: t('永久') },
+  { id: '-2', name: t('自定义') }
+);
+
+const handleConfirm = async() => {
+  await formRef.value.validate()
+  const extras = Object.fromEntries(props.detail.extras.map(item => [item.name, item.value]));
+  const  params = {
+  ...props.detail,
+  extras, 
+  account_expired_at: formData.value.dateTime === '-2' ? formData.value.custom : formData.value.dateTime
+}
+  updateAccountExpiredAt(props.detail.id, params).then(() => {
+    handleClosed()
+    emit('updateUsers', t('更新成功'))
+  })
+}
+const handleClosed = () => {
+  formRef.value.clearValidate();
+  isShowRenewal.value = false
+}
+// 续期
+const renewalClick = async() => {
+  isShowRenewal.value = true
+  const res = await getTenantUserValidityPeriod()
+  const { validity_period } = res.data;
+  let dateTime;
+  if (res.data.validity_period === -1) {
+    dateTime = '2100-1-1T00:00:00'
+  } else {
+    const unit = validity_period === 365 ? 'year' : 'month';
+    const num = validity_period === 365 ? 1 : validity_period / 30;
+    dateTime = `${defineDateTime(num, unit)} 00:00:00`;
+  }
+  formData.value.dateTime = dateTime;
+}
+
+// 日期改变
+const dateChange = (val) => {
+  // 续期时长选择自定义时， 弹出过期时间选择框
+  showExpirationTime.value = val === '-2'
+}
+
+// 剩余天数
+const remainingDays = computed(() => {
+  return (params) => {
+    const now = new Date();
+    const targetDate = new Date(params);
+    const diffInMilliseconds = targetDate - now;
+    const millisecondsInOneDay = 24 * 60 * 60 * 1000;
+    const diffInDays = Math.ceil(diffInMilliseconds / millisecondsInOneDay);
+    return diffInDays > 0 ?  t('剩余x天', {diffInDays}): t('已过期')
+  }
+  })
 </script>
 
 <style lang="less" scoped>

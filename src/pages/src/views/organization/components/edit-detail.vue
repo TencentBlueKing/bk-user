@@ -99,6 +99,11 @@
             </bk-select>
           </bk-form-item>
         </div>
+        <div class="form-item-flex">
+          <bk-form-item  :label="$t('账号过期时间')">
+            <bk-date-picker v-model="formData.account_expired_at" :placeholder="$t('选择日期时间')" type="datetime" format="yyyy-MM-dd HH:mm:ss" :disabled-date="disabledDate"></bk-date-picker>
+          </bk-form-item>
+        </div>
         <CustomFields :extras="formData.extras" :rules="rules" />
       </bk-form>
       <div class="footer">
@@ -153,6 +158,7 @@
   });
   
   const isLoading = ref(false);
+  const disabledDate = (date) => date.valueOf() < Date.now()
 
   watch(formData, (val) => {
     val.extras.map(item => {
