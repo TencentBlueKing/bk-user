@@ -31,7 +31,7 @@ ENV BK_BUILD_VERSION=${BK_BUILD_VERSION}
 
 COPY src/bk-user/pyproject.toml /app
 COPY src/bk-user/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --only main
+RUN poetry config virtualenvs.create false && poetry install --no-cache --only main
 
 COPY src/bk-user/bkuser /app/bkuser
 COPY src/bk-user/bin /app/bin
