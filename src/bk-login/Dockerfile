@@ -27,7 +27,7 @@ RUN pip install poetry==1.5.1
 WORKDIR /app
 COPY src/bk-login/pyproject.toml /app
 COPY src/bk-login/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --only main
+RUN poetry config virtualenvs.create false && poetry install --no-cache --only main
 
 COPY src/bk-login/bklogin /app/bklogin
 COPY src/bk-login/bin /app/bin
