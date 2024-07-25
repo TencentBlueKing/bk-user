@@ -88,6 +88,11 @@ export const getTenantsUserList = (id: string, params: any) => http.get(`${prefi
 export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
 
 /**
+ * 租户用户续期
+ */
+export const updateAccountExpiredAt = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/`, params);
+
+/**
  * 更新租户用户
  */
 export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/`, params);

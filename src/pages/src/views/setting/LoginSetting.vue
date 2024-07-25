@@ -101,8 +101,16 @@
           <WeCom
             v-if="detailsConfig.isEdit"
             :data-source-id="currentDataSource?.id"
-            :current-id="authDetails?.idp_id"
-            :default-name="authDetails?.name"
+            :authDetails = "authDetails"
+            @success="weComSuccess"
+            @cancel-edit="cancelEdit" />
+          <WeComView v-else :current-id="authDetails?.idp_id" />
+        </template>
+        <template v-if="authDetails?.id === 'custom_wecom'">
+          <WeCom
+            v-if="detailsConfig.isEdit"
+            :data-source-id="currentDataSource?.id"
+            :authDetails = "authDetails"
             @success="weComSuccess"
             @cancel-edit="cancelEdit" />
           <WeComView v-else :current-id="authDetails?.idp_id" />
@@ -284,7 +292,7 @@ const weComSuccess = (url: string) => {
           style: {
             marginBottom: '12px',
           },
-        }, t('请将以下回调地址填写到企业微信配置内：')),
+        }, t('回调地址为：')),
         h('div', {
           style: {
             background: '#F5F7FA',

@@ -63,6 +63,9 @@
           {{ $t('确认') }}
         </bk-button>
       </bk-form-item>
+      <div class="tenant-password">
+        <span class="cursor-pointer" @click="protocolVisible = true">{{ $t('用户协议') }} ></span>
+      </div>
     </section>
 
     <section v-else-if="hasStorage">
@@ -150,8 +153,8 @@
         </span>
       </div>
 
-      <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
     </section>
+    <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
   </bk-form>
   <div v-show="isAdminShow" style="margin-top: -28px">
     <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; {{ $t('返回上一级') }}</bk-link>
