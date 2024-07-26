@@ -204,7 +204,7 @@
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" @updateUsers="updateUsers" v-else />
+      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" @updateUsers="updateUsers" :isShowBtn="!isCollaborativeUsers && isLocalDataSource" v-else />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog

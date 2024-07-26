@@ -113,7 +113,7 @@
             @handle-update="fetchUpdateRecord"
           />
         </template>
-        <bk-table-column type="expand" width="60"></bk-table-column>
+        <bk-table-column type="expand" min-width="60"></bk-table-column>
         <template #expandRow="row">
           <div class="expand-wrapper">
             <div
@@ -201,8 +201,8 @@
           </div>
         </template>
         <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
-        <bk-table-column prop="source_tenant_name" :label="$t('源租户')"></bk-table-column>
-        <bk-table-column :label="$t('更新内容')" width="380">
+        <bk-table-column prop="source_tenant_name" :label="$t('源租户')" width="120"></bk-table-column>
+        <bk-table-column :label="$t('更新内容')" width="350">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
@@ -220,13 +220,13 @@
             </bk-tag>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '100px' }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '100px' }" min-width="105">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')">
+        <bk-table-column :label="$t('操作')" min-width="105">
           <template #default="{ row }">
             <bk-button
               text

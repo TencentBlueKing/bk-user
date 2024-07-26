@@ -98,7 +98,7 @@ const defaultDropdownList = ref<any[]>([
       dropdownVisible.value = false;
       isAddSubOrg.value = false;
       orgDialogVisible.value = true;
-      deptName.value = props.dept.name
+      deptName.value = props.dept.name;
     },
   },
 ]);
@@ -134,6 +134,7 @@ const handleDelete = () => {
   dropdownVisible.value = false;
   InfoBox({
     title: t('确认删除该组织？'),
+    confirmText: t('确定'),
     subTitle: h(
       'div',
       {},
@@ -147,7 +148,7 @@ const handleDelete = () => {
             },
           },
           `${t('组织')}: ${props.dept.name}`,
-        )
+        ),
       ],
     ),
     onConfirm: () => {
