@@ -54,7 +54,7 @@ opentelemetry-instrumentation-logging = "0.45b0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.2"
-mypy = "^1.10.1"
+mypy = "1.10.1"
 types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"

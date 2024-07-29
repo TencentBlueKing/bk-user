@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 import time
 from typing import Dict, Tuple
@@ -127,12 +128,15 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
             resp.status_code,
             content,
         )
-        return INVALID_JSON_STATUS_CODE, {
-            "error": (
-                f"http response body not json, http status code is {resp.status_code}! "
-                f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
-            )
-        }
+        return (
+            INVALID_JSON_STATUS_CODE,
+            {
+                "error": (
+                    f"http response body not json, http status code is {resp.status_code}! "  # type: ignore
+                    f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
+                )
+            },
+        )
 
 
 def _http_request_only_20x(method: str, url: str, **kwargs) -> Tuple[bool, Dict]:
