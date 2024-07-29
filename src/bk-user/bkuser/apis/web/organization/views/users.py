@@ -26,6 +26,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchCreatePreviewInputSLZ,
     TenantUserBatchCreatePreviewOutputSLZ,
@@ -505,7 +506,7 @@ class TenantUserRetrieveUpdateDestroyApi(
                 if tenant_user.status == TenantUserStatus.EXPIRED:
                     tenant_user.status = TenantUserStatus.ENABLED
 
-                tenant_user.save(update_fields=["account_expired_at", "updater", "status", "updated_at"])
+                tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -528,6 +529,44 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(user=data_source_user).delete()
             DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """修改租户用户账号有效期"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="修改租户用户账号有效期",
+        request_body=TenantUserAccountExpiredAtUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+
+        slz = TenantUserAccountExpiredAtUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user.account_expired_at = data["account_expired_at"]
+        tenant_user.updater = request.user.username
+
+        # 根据租户用户当前状态判断，如果是过期状态则转为正常，如果是正常或停用则保持不变
+        if tenant_user.status == TenantUserStatus.EXPIRED:
+            tenant_user.status = TenantUserStatus.ENABLED
+
+        tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

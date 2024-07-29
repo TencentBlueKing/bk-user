@@ -34,6 +34,7 @@ from .tenants import (
 from .users import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchCreatePreviewInputSLZ,
     TenantUserBatchCreatePreviewOutputSLZ,
@@ -86,6 +87,7 @@ __all__ = [
     "TenantUserBatchCreatePreviewInputSLZ",
     "TenantUserBatchCreatePreviewOutputSLZ",
     "TenantUserBatchDeleteInputSLZ",
+    "TenantUserAccountExpiredAtUpdateInputSLZ",
     # 租户部门 - 用户关系
     "TenantDeptUserRelationBatchCreateInputSLZ",
     "TenantDeptUserRelationBatchUpdateInputSLZ",
