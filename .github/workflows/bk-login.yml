@@ -76,4 +76,4 @@ jobs:
           export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
           export DJANGO_SETTINGS_MODULE=bklogin.settings
-          poetry run pytest ./tests
+          pytest ./tests
