@@ -136,7 +136,7 @@ repos:
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/idp-plugins/pyproject.toml --fix --no-cache
+        entry: ruff check --config=src/idp-plugins/pyproject.toml --fix --no-cache
         files: src/idp-plugins/
       - id: mypy
         name: mypy
