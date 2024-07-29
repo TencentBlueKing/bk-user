@@ -79,6 +79,12 @@ urlpatterns = [
         views.TenantUserRetrieveUpdateDestroyApi.as_view(),
         name="organization.tenant_user.retrieve_update_destroy",
     ),
+    # 更新租户用户账号有效期
+    path(
+        "tenants/users/<str:id>/account-expired-at/",
+        views.TenantUserExpiryDateUpdateApi.as_view(),
+        name="organization.tenant_user.update_expiry_date",
+    ),
     # 获取租户用户密码规则提示
     path(
         "tenants/users/<str:id>/password-rule/",

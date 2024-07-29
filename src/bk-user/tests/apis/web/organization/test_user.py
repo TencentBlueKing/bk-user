@@ -434,6 +434,38 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
+class TestTenantUserUpdateExpiryDateApi:
+    @pytest.mark.parametrize(
+        ("time_diff"),
+        [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
+    )
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_valid_expired_date_only(self, api_client, random_tenant, time_diff):
+        tenant_user_data: Dict[str, Any] = {"account_expired_at": datetime.datetime.now() + time_diff}
+
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
+        url = reverse("organization.tenant_user.update_expiry_date", kwargs={"id": wangwu.id})
+        resp = api_client.put(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.parametrize(
+        ("time_diff"),
+        [(None), (datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
+    )
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_invalid_expired_date_only(self, api_client, random_tenant, time_diff):
+        tenant_user_data: Dict[str, Any] = {}
+
+        # 仅更新过期日期时字段不能为空
+        if time_diff:
+            tenant_user_data["account_expired_at"] = datetime.datetime.now() - time_diff
+
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
+        url = reverse("organization.tenant_user.update_expiry_date", kwargs={"id": wangwu.id})
+        resp = api_client.put(url, data=tenant_user_data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
 class TestTenantUserRetrieveApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_standard(self, api_client, random_tenant):

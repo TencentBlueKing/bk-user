@@ -311,7 +311,8 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时，
         #  将时间字符串 "2024-01-01 00:00:00" 直接附加当前用户的时区（不会进行时区转换），
         #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC时区）对比即可
-        if expired_at.replace(tzinfo=datetime.timezone.utc) == PERMANENT_TIME:
+        #  永久时间应为账号过期时间的最大值，所以对于大于永久的时间，则直接替换为永久时间
+        if expired_at.replace(tzinfo=datetime.timezone.utc) >= PERMANENT_TIME:
             return PERMANENT_TIME
 
         # 未修改，与当前用户数据的时间一致，无论是否过期都保持原样输出
@@ -320,6 +321,24 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         #  为避免输入输出转换丢失精度问题，在误差允许范围内，均认为是相同时间，即未修改
         if abs((expired_at - self.context["current_expired_at"]).total_seconds()) <= ALLOWED_DATETIME_MAX_OFFSET:
             return self.context["current_expired_at"]
+
+        # 修改情况下，需要保证时间不是过期的
+        if expired_at < timezone.now():
+            raise serializers.ValidationError("账号有效期时间不能早于当前时间")
+
+        return expired_at
+
+
+class TenantUserExpiryDateUpdateInputSLZ(serializers.Serializer):
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
+
+    def validate_account_expired_at(self, expired_at: datetime.datetime) -> datetime.datetime:
+        # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时，
+        #  将时间字符串 "2024-01-01 00:00:00" 直接附加当前用户的时区（不会进行时区转换），
+        #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC时区）对比即可。
+        #  永久时间应为账号过期时间的最大值，所以对于大于永久的时间，则直接替换为永久时间
+        if expired_at.replace(tzinfo=datetime.timezone.utc) >= PERMANENT_TIME:
+            return PERMANENT_TIME
 
         # 修改情况下，需要保证时间不是过期的
         if expired_at < timezone.now():
