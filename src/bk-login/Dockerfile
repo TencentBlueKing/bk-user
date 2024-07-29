@@ -22,12 +22,10 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
 RUN pip install --upgrade pip setuptools
-RUN pip install poetry==1.5.1
 
 WORKDIR /app
-COPY src/bk-login/pyproject.toml /app
-COPY src/bk-login/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --no-cache --only main
+COPY src/bk-login/requirements.txt /app
+RUN pip install -r requirements.txt
 
 COPY src/bk-login/bklogin /app/bklogin
 COPY src/bk-login/bin /app/bin
