@@ -434,7 +434,7 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantUserUpdateExpiryDateApi:
+class TestTenantUserAccountExpiredAtUpdateApii:
     @pytest.mark.parametrize(
         ("time_diff"),
         [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
@@ -444,7 +444,7 @@ class TestTenantUserUpdateExpiryDateApi:
         tenant_user_data: Dict[str, Any] = {"account_expired_at": datetime.datetime.now() + time_diff}
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
-        url = reverse("organization.tenant_user.update_expiry_date", kwargs={"id": wangwu.id})
+        url = reverse("organization.tenant_user.update_account_expired_at", kwargs={"id": wangwu.id})
         resp = api_client.put(url, data=tenant_user_data)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -461,7 +461,7 @@ class TestTenantUserUpdateExpiryDateApi:
             tenant_user_data["account_expired_at"] = datetime.datetime.now() - time_diff
 
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
-        url = reverse("organization.tenant_user.update_expiry_date", kwargs={"id": wangwu.id})
+        url = reverse("organization.tenant_user.update_account_expired_at", kwargs={"id": wangwu.id})
         resp = api_client.put(url, data=tenant_user_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 

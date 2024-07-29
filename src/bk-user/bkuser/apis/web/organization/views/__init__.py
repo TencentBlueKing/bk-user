@@ -27,10 +27,10 @@ from .tenants import (
 )
 from .users import (
     OptionalTenantUserListApi,
+    TenantUserAccountExpiredAtUpdateApi,
     TenantUserBatchCreateApi,
     TenantUserBatchCreatePreviewApi,
     TenantUserBatchDeleteApi,
-    TenantUserExpiryDateUpdateApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
     TenantUserPasswordResetApi,
@@ -62,7 +62,7 @@ __all__ = [
     "TenantUserBatchCreateApi",
     "TenantUserBatchCreatePreviewApi",
     "TenantUserBatchDeleteApi",
-    "TenantUserExpiryDateUpdateApi",
+    "TenantUserAccountExpiredAtUpdateApi",
     # 租户部门 - 用户关系
     "TenantDeptUserRelationBatchCreateApi",
     "TenantDeptUserRelationBatchUpdateApi",

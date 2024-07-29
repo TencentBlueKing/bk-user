@@ -26,13 +26,13 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchCreatePreviewInputSLZ,
     TenantUserBatchCreatePreviewOutputSLZ,
     TenantUserBatchDeleteInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
-    TenantUserExpiryDateUpdateInputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
@@ -506,7 +506,7 @@ class TenantUserRetrieveUpdateDestroyApi(
                 if tenant_user.status == TenantUserStatus.EXPIRED:
                     tenant_user.status = TenantUserStatus.ENABLED
 
-                tenant_user.save(update_fields=["account_expired_at", "updater", "status", "updated_at"])
+                tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -533,7 +533,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserExpiryDateUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     """修改租户用户账号有效期"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -549,13 +549,13 @@ class TenantUserExpiryDateUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewM
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="修改租户用户账号有效期",
-        request_body=TenantUserExpiryDateUpdateInputSLZ(),
+        request_body=TenantUserAccountExpiredAtUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
 
-        slz = TenantUserExpiryDateUpdateInputSLZ(data=request.data)
+        slz = TenantUserAccountExpiredAtUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -566,7 +566,7 @@ class TenantUserExpiryDateUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewM
         if tenant_user.status == TenantUserStatus.EXPIRED:
             tenant_user.status = TenantUserStatus.ENABLED
 
-        tenant_user.save(update_fields=["account_expired_at", "updater", "status", "updated_at"])
+        tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
