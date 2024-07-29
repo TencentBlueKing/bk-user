@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.utils.timezone import now
 from rest_framework import generics, status
@@ -23,7 +24,6 @@ from bkuser_core.api.web.password.serializers import (
     PasswordResetByTokenInputSLZ,
     PasswordResetSendEmailInputSLZ,
     PasswordResetSendSMSInputSLZ,
-    PasswordResetSendSMSOutputSLZ,
     PasswordVerifyVerificationCodeInputSLZ,
     PasswordVerifyVerificationCodeOutputSLZ,
 )
@@ -93,7 +93,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
                 profile.username,
             )
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PasswordResetByTokenApi(generics.CreateAPIView):
@@ -224,58 +224,70 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         try:
             # 优先过滤username
             username, domain = parse_username_domain(input_telephone)
-
-            if not domain:
-                domain = ProfileCategory.objects.get_default().domain
-            # filter过滤，判断是否存在，存在则仅有一个
-            profile = get_profile_by_username(username, domain)
-
-            # 不存在则才是telephone
-            # FIXME: get_profile_by_telephone 和 get_profile_by_username 理论上行为应该一致, 目前不一致, 需要重构
-            if not profile:
-                profile = get_profile_by_telephone(input_telephone)
-
-            # 用户状态校验
-            if not profile.is_normal:
-                error_msg = (
-                    "failed to send password via sms. "
-                    "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
-                )
-
-                logger.error(
-                    error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
-                )
-                raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
-
-        except Profile.DoesNotExist:
-            logger.exception(
-                "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
-            )
-            raise error_codes.USER_DOES_NOT_EXIST
-
-        except Profile.MultipleObjectsReturned:
-            logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
-            raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
-
         except Exception:
             logger.exception("failed to get profile by username<%s> because of username format error", input_telephone)
             raise error_codes.USERNAME_FORMAT_ERROR
 
-        # 生成verification_code_token
-        verification_code_token = ResetPasswordVerificationCodeHandler().generate_reset_password_token(profile.id)
-        raw_telephone = profile.telephone
+        if not domain:
+            domain = ProfileCategory.objects.get_default().domain
+
+        # filter过滤，判断是否存在，存在则仅有一个
+        profile = get_profile_by_username(username, domain)
+        # 不存在则才是telephone
+        # FIXME: get_profile_by_telephone 和 get_profile_by_username 理论上行为应该一致, 目前不一致, 需要重构
+        if not profile:
+            try:
+                profile = get_profile_by_telephone(input_telephone)
+            except Profile.MultipleObjectsReturned:
+                logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
+                # 返回200，避免username/telephone爆破
+                if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    return Response()
+                raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
+
+            except Profile.DoesNotExist:
+                logger.exception(
+                    "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+                )
+                # 返回200，避免username/telephone爆破
+                if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    return Response()
+                raise error_codes.USER_DOES_NOT_EXIST
+
+            except Exception:
+                logger.exception(
+                    "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+                )
+                # 返回200，避免username/telephone爆破
+                if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    return Response()
+                raise error_codes.USERNAME_FORMAT_ERROR
 
         # 用户未绑定手机号，即使用户名就是手机号码
+        raw_telephone = profile.telephone
         if not raw_telephone:
+            logger.error(f"profile<{profile.id}-{profile.username}> had not bound the telephone")
+            # 返回200，避免username/telephone爆破
+            if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                return Response()
             raise error_codes.TELEPHONE_NOT_PROVIDED
 
-        response_data = {
-            "verification_code_token": verification_code_token,
-            # 加密返回手机号
-            "telephone": raw_telephone.replace(raw_telephone[3:7], '****'),
-        }
+        # 用户状态校验
+        if not profile.is_normal:
+            error_msg = (
+                "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
+            )
+            logger.error(
+                error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
+            )
+            # 返回200，避免username/telephone爆破
+            if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                return Response()
+            raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
 
-        return Response(PasswordResetSendSMSOutputSLZ(response_data).data)
+        # 生成verification_code_token
+        ResetPasswordVerificationCodeHandler().generate_reset_password_verification_code(profile.id)
+        return Response()
 
 
 class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
@@ -284,13 +296,58 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
+        input_telephone = data["telephone"]
+
+        # 根据交互设计，和登录一样：只能猜测这里传输的username, 还是telephone, 存在着username=telephone的情况
+        username, domain = parse_username_domain(input_telephone)
+        if not domain:
+            domain = ProfileCategory.objects.get_default().domain
+
+        # filter过滤，判断是否存在，存在则仅有一个
+        profile = get_profile_by_username(username, domain)
+        # 不存在则才是telephone
+        # FIXME: get_profile_by_telephone 和 get_profile_by_username 理论上行为应该一致, 目前不一致, 需要重构
+        if not profile:
+            try:
+                profile = get_profile_by_telephone(input_telephone)
+
+            except Profile.DoesNotExist:
+                logger.exception(
+                    "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+                )
+                if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    raise error_codes.USER_DOES_NOT_EXIST
+                raise error_codes.VERIFICATION_CODE_WRONG
+
+            except Profile.MultipleObjectsReturned:
+                logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
+                if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
+                raise error_codes.VERIFICATION_CODE_WRONG
+
+            except Exception:
+                logger.exception(
+                    "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+                )
+                if not settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                    return Response()
+                raise error_codes.USERNAME_FORMAT_ERROR
 
         verification_code_handler = ResetPasswordVerificationCodeHandler()
+        profile_id = verification_code_handler.verify_verification_code(profile.id, data["verification_code"])
 
-        profile_id = verification_code_handler.verify_verification_code(
-            data["verification_code_token"], data["verification_code"]
-        )
-        profile_token = verification_code_handler.generate_profile_token(profile_id)
+        # 用户状态校验
+        if not profile.is_normal:
+            error_msg = (
+                "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
+            )
+
+            logger.error(
+                error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
+            )
+            raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
+
         # 前端拿到token，作为query_params，拼接重置页面路由
+        profile_token = verification_code_handler.generate_profile_token(profile_id)
         response_data = {"token": profile_token.token}
         return Response(PasswordVerifyVerificationCodeOutputSLZ(response_data).data)

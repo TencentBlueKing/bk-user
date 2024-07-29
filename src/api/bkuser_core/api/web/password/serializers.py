@@ -23,13 +23,8 @@ class PasswordResetSendSMSInputSLZ(serializers.Serializer):
     telephone = serializers.CharField(required=True, max_length=32)
 
 
-class PasswordResetSendSMSOutputSLZ(serializers.Serializer):
-    verification_code_token = serializers.CharField(required=True, max_length=254)
-    telephone = serializers.CharField(required=True, max_length=16)
-
-
 class PasswordVerifyVerificationCodeInputSLZ(serializers.Serializer):
-    verification_code_token = serializers.CharField(required=True, max_length=254)
+    telephone = serializers.CharField(required=True, max_length=254)
     verification_code = serializers.CharField(required=True)
 
 

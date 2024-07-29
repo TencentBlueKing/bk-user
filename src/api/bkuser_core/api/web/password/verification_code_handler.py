@@ -80,15 +80,18 @@ class ResetPasswordVerificationCodeHandler:
         if send_count > limit_send_count:
             raise error_codes.VERIFICATION_CODE_SEND_REACH_LIMIT
 
-    def generate_reset_password_token(self, profile_id) -> str:
+    def _generate_token(self):
+        hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
+        md = hashlib.md5()
+        md.update(hashed_value.encode("utf-8"))
+        return md.hexdigest()
+
+    def generate_reset_password_verification_code(self, profile_id) -> str:
         self.profile = Profile.objects.get(id=profile_id)
         self.config_loader = ConfigProvider(category_id=self.profile.category_id)
 
         # token 生成
-        hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
-        md = hashlib.md5()
-        md.update(hashed_value.encode("utf-8"))
-        token = md.hexdigest()
+        token = self._generate_token()
 
         # 是否已经发送，是否超过当日发送次数
         self._check_repeat_send_require(token)
@@ -136,7 +139,11 @@ class ResetPasswordVerificationCodeHandler:
 
         return token
 
-    def verify_verification_code(self, verification_code_token: str, verification_code: str) -> int:
+    def verify_verification_code(self, profile_id: int, verification_code: str) -> int:
+        self.profile = Profile.objects.get(id=profile_id)
+        self.config_loader = ConfigProvider(category_id=self.profile.category_id)
+
+        verification_code_token = self._generate_token()
         verification_code_data_bytes = self._get_from_cache(verification_code_token, prefix="reset_password")
 
         # token 校验
