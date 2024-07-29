@@ -266,7 +266,7 @@ const changeStatus = (value: boolean) => {
 //  提交企业微信认证源配置信息
 const handleSubmit = async () => {
   try {
-    await schemaFormRef.value.element.validate();
+    isCustomWecom && await schemaFormRef.value.element.validate();
     await formRef.value.validate();
     btnLoading.value = true;
     const data = formData.value;
