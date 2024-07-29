@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-29 17:54+0800\n"
+"POT-Creation-Date: 2024-07-29 20:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1240,7 +1240,7 @@ msgstr "密码最小长度不得大于最大长度"
 
 #: bkuser/common/passwd/models.py:71
 msgid "至少应该选择小写字母，大写字母，数字，特殊符号中的一个字符集"
-msgstr "至少应该选择小写字母、大写字母、数字、特殊符号中的一个字符集"
+msgstr "至少应该选择小写字母，大写字母，数字，特殊符号中的一个字符集"
 
 #: bkuser/common/passwd/models.py:88
 msgid "当设置不允许连续 N 位出现的规则时，该值不可小于 {}"
