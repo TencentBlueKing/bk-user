@@ -90,7 +90,7 @@ export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/
 /**
  * 租户用户续期
  */
-export const updateAccountExpiredAt = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/`, params);
+export const updateAccountExpiredAt = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/account-expired-at/`, params);
 
 /**
  * 更新租户用户
@@ -123,12 +123,12 @@ export const resetTenantsUserPassword = (id: string, params: any) => http.put(`$
 /**
  * 批量删除用户
  */
-export const batchDeleteUser = (user_ids: any) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, {user_ids});
+export const batchDeleteUser = (user_ids: any) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, { user_ids });
 
 /**
  * 移出当前组织
  */
-export const batchDelete= (params: any) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
+export const batchDelete = (params: any) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
 
 /**
  * 移至目标组织
@@ -193,4 +193,4 @@ export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`
 /**
  * 密码规则
  */
-export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/`)
+export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/`);

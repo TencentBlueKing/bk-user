@@ -504,7 +504,7 @@
   "其他租户(通过跨租户协同分享)": "Other tenants (through cross-tenant co-sharing)",
   "停用期间，该租户下的用户将无法登录系统": "During the shutdown, users under the tenant cannot log in to the system",
   "启用后，该租户下的用户可以重新登录系统": "After this function is enabled, users under the vstore can log in to the system again",
-  "支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB": "Supports jpg and png, max dimensions 1024px × 1024px, max size 256KB",
+  "支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB": "The value can be jpg or png, with a size no larger than 1024px x 1024px, and no larger than 256KB",
   "复制密码": "Copy password",
   "创建租户成功": "Vstore is created successfully. Procedure",
   "登录方式已通过": "The login mode has passed",
@@ -533,5 +533,8 @@
   "一年　": "year　　",
   "剩余x天": "Remaining {diffInDays} days",
   "已过期": "have expired",
-  "回调地址为：": "The callback address is: "
+  "回调地址为：": "The callback address is: ",
+  "确认要关闭企业微信登录吗？": "Are you sure you want to disable WeChat Work login?",
+  "关闭后用户将无法通过企业微信登录": "After deactivation, users will not be able to log in via WeChat Work",
+  "请将以下回调地址填写到企业微信配置内：": "Please enter the following callback address in the enterprise wechat configuration:"
 }

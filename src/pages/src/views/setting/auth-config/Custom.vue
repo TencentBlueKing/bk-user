@@ -20,18 +20,11 @@
         </bk-form-item>
       </Row>
       <Row :title="$t('基础配置')" v-if="formData.plugin_config">
-        <bk-form-item :label="$t('企业 ID')" property="plugin_config.corp_id" required>
-          <bk-input v-model="formData.plugin_config.corp_id" @change="handleChange" />
-        </bk-form-item>
-        <bk-form-item label="Agent ID" property="plugin_config.agent_id" required>
-          <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
-        </bk-form-item>
-        <bk-form-item label="Secret" property="plugin_config.secret" required>
-          <passwordInput
-            v-model="formData.plugin_config.secret"
-            @change="handleChange"
-            @input="inputPassword" />
-        </bk-form-item>
+        <SchemaForm
+          ref="schemaFormRef"
+          :form-data="formData"
+          :plugins-config="jsonSchema"
+          @change-plugin-config="changePluginConfig" />
       </Row>
       <Row :title="$t('登录模式')">
         <bk-form-item>
@@ -109,9 +102,9 @@ import { InfoBox, Message } from 'bkui-vue';
 import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
-import passwordInput from '@/components/passwordInput.vue';
+import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
-import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
+import { getDataSourceList, getFields, getIdpsDetails, getIdpsPluginsConfig, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
 
 const props = defineProps({
@@ -119,13 +112,8 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  currentId: {
-    type: String,
-    default: '',
-  },
-  defaultName: {
-    type: String,
-    default: '',
+  authDetails: {
+    type: Object,
   },
 });
 
@@ -134,17 +122,14 @@ const emit = defineEmits(['cancelEdit', 'success']);
 const validate = useValidate();
 
 const formRef = ref();
+const schemaFormRef = ref();
 const isLoading = ref(false);
 const btnLoading = ref(false);
 const formData = ref({
-  name: props?.defaultName,
+  name: props?.authDetails?.name,
   status: 'enabled',
-  plugin_id: 'wecom',
-  plugin_config: {
-    corp_id: '',
-    agent_id: '',
-    secret: '',
-  },
+  plugin_id: props?.authDetails?.id,
+  plugin_config: {},
   data_source_match_rules: [
     {
       data_source_id: props?.dataSourceId,
@@ -166,9 +151,6 @@ const LoginMethod = ref('a');
 
 const rules = {
   name: [validate.required, validate.loginName],
-  'plugin_config.corp_id': [validate.required],
-  'plugin_config.agent_id': [validate.required],
-  'plugin_config.secret': [validate.required],
 };
 
 const rulesData = {
@@ -188,9 +170,10 @@ onMounted(async () => {
       getDataSourceList({ type: 'real' }),
       getFields(),
     ]);
-    if (props?.currentId) {
+    getJsonSchema(); // 获取自定义配置
+    if (props?.authDetails?.idp_id) {
       // 获取已配置详情
-      const authRes = await getIdpsDetails(props.currentId);
+      const authRes = await getIdpsDetails(props.authDetails.idp_id);
       if (authRes.data?.id) {
         formData.value = authRes.data;
         formData.value.data_source_match_rules[0].data_source_id = props?.dataSourceId;
@@ -229,15 +212,23 @@ onMounted(async () => {
   }
 });
 
+const jsonSchema = ref({});
+const getJsonSchema = () => {
+  //
+  getIdpsPluginsConfig(props?.authDetails?.id).then((res) => {
+    jsonSchema.value = res.data?.json_schema;
+  });
+};
 watch(formData, () => {
-  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  isDisabled.value = props?.authDetails?.idp_id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
 }, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {
+    const plugName = props.authDetails.name;
     InfoBox({
-      title: t('确认要关闭企业微信登录吗？'),
-      subTitle: t('关闭后用户将无法通过企业微信登录'),
+      title: t('确认要关闭x登录吗？', { name: plugName }),
+      subTitle: t('关闭后用户将无法通过x登录', { name: plugName }),
       onConfirm() {
         formData.value.status = 'disabled';
       },
@@ -252,9 +243,10 @@ const changeStatus = (value: boolean) => {
   window.changeInput = true;
 };
 
-//  提交企业微信认证源配置信息
+//  提交企自定义认证源配置信息
 const handleSubmit = async () => {
   try {
+    await schemaFormRef.value.element.validate();
     await formRef.value.validate();
     btnLoading.value = true;
     const data = formData.value;
@@ -290,8 +282,8 @@ const {
   customFields,
 );
 
-const inputPassword = (val) => {
-  formData.value.plugin_config.secret = val;
+const changePluginConfig = (value: any) => {
+  formData.value.plugin_config = value;
 };
 </script>
 

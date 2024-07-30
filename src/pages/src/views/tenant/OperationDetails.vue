@@ -40,7 +40,7 @@
             :size="2"
             @delete="handleDelete"
             @error="handleError"
-            :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
+            v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
           />
         </div>
       </Row>
@@ -70,14 +70,14 @@
           <div class="mb-[18px]">
             <bk-checkbox v-model="smsValue" @change="changeSms">{{ $t('短信') }}</bk-checkbox>
             <PhoneInput
-            :form-data="formData"
-            :tel-error="telError"
-            :required="smsValue"
-            @change-country-code="changeCountryCode"
-            @change-tel-error="changeTelError" />
+              :form-data="formData"
+              :tel-error="telError"
+              :required="smsValue"
+              @change-country-code="changeCountryCode"
+              @change-tel-error="changeTelError" />
           </div>
           <div>
-            <bk-checkbox v-model="emailValue"  @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
+            <bk-checkbox v-model="emailValue" @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
             <bk-input
               :class="{ 'input-error': emailError }"
               v-model="formData.email"
@@ -113,8 +113,6 @@ import { t } from '@/language/index';
 import { useUser } from '@/store';
 import { getBase64 } from '@/utils';
 
-const userStore = useUser();
-
 const props = defineProps({
   tenantsData: {
     type: Object,
@@ -127,6 +125,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['updateTenantsList', 'handleCancelEdit']);
+
+const userStore = useUser();
 
 const validate = useValidate();
 
@@ -203,7 +203,7 @@ async function handleSubmit() {
   if (props.type === 'add') {
     if (emailValue.value) handleBlur();
     if (smsValue.value && !formData.phone) changeTelError(true);
-}
+  }
   await formRef.value.validate();
 
   if (emailError.value || telError.value) return;

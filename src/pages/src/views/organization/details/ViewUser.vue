@@ -46,7 +46,7 @@
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('账号过期时间') }}：</span>
           <span class="details-content-value">
-            {{ `${detail.account_expired_at} (${remainingDays(detail.account_expired_at)})` }}
+            {{ remainingDays(detail.account_expired_at) }}
           </span>
           <button v-if="isShowBtn" class="text-[#3A84FF] ml-[16px] text-[14px]" @click="renewalClick">
             {{ $t('续期') }}
@@ -134,10 +134,7 @@ dateOptions.push(
 
 const handleConfirm = async () => {
   await formRef.value.validate();
-  const extras = Object.fromEntries(props.detail.extras.map(item => [item.name, item.value]));
   const  params = {
-    ...props.detail,
-    extras,
     account_expired_at: formData.value.dateTime === '-2' ? formData.value.custom : formData.value.dateTime,
   };
   updateAccountExpiredAt(props.detail.id, params).then(() => {
@@ -171,14 +168,13 @@ const dateChange = (val) => {
   showExpirationTime.value = val === '-2';
 };
 
-// 剩余天数
+// 处理续期的展示
 const remainingDays = computed(() => (params) => {
-  const now = new Date();
-  const targetDate = new Date(params);
-  const diffInMilliseconds = targetDate - now;
-  const millisecondsInOneDay = 24 * 60 * 60 * 1000;
-  const diffInDays = Math.ceil(diffInMilliseconds / millisecondsInOneDay);
-  return diffInDays > 0 ?  t('剩余x天', { diffInDays }) : t('已过期');
+  const futureDate = Date.UTC(2100, 0, 1);
+  const specifiedTimestamp = new Date(params).getTime();
+  if (specifiedTimestamp === futureDate) return t('永久');
+  const diffInDays = Math.ceil((new Date(params) - new Date()) / (24 * 60 * 60 * 1000));
+  return diffInDays > 0 ? `${params} (${t('剩余x天', { diffInDays })})` : `${params} (${t('已过期')})`;
 });
 </script>
 
