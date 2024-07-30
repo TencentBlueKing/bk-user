@@ -36,16 +36,16 @@
             <bk-radio-group
               v-model="formData.visible"
             >
-              <bk-radio-button class="min-w-[100px]" :label="true">显示</bk-radio-button>
-              <bk-radio-button class="min-w-[100px]" :label="false">隐藏</bk-radio-button>
+              <bk-radio-button class="min-w-[100px]" :label="true">{{ $t('显示') }}</bk-radio-button>
+              <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
             </bk-radio-group>
           </bk-form-item>
           <bk-form-item :label="$t('用户数量')" required>
             <bk-radio-group
               v-model="formData.user_number_visible"
             >
-              <bk-radio-button class="min-w-[100px]" :label="true">显示</bk-radio-button>
-              <bk-radio-button class="min-w-[100px]" :label="false">隐藏</bk-radio-button>
+              <bk-radio-button class="min-w-[100px]" :label="true">{{ $t('显示') }}</bk-radio-button>
+              <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
             </bk-radio-group>
           </bk-form-item>
         </Row>

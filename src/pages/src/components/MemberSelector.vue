@@ -4,7 +4,7 @@
       class="member-selector"
       :clearable="false"
       :collapse-tags="false"
-      placeholder="请输入"
+      :placeholder="$t('请输入')"
       filterable
       multiple
       show-on-init

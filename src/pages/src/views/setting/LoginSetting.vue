@@ -101,19 +101,20 @@
           <WeCom
             v-if="detailsConfig.isEdit"
             :data-source-id="currentDataSource?.id"
-            :authDetails = "authDetails"
+            :current-id="authDetails?.idp_id"
+            :default-name="authDetails?.name"
             @success="weComSuccess"
             @cancel-edit="cancelEdit" />
           <WeComView v-else :current-id="authDetails?.idp_id" />
         </template>
-        <template v-if="authDetails?.id === 'custom_wecom'">
-          <WeCom
+        <template v-else>
+          <Custom
             v-if="detailsConfig.isEdit"
             :data-source-id="currentDataSource?.id"
-            :authDetails = "authDetails"
-            @success="weComSuccess"
+            :auth-details="authDetails"
+            @success="customSuccess"
             @cancel-edit="cancelEdit" />
-          <WeComView v-else :current-id="authDetails?.idp_id" />
+          <CustomView v-else :current-id="authDetails?.idp_id" :auth-details-id="authDetails?.id" />
         </template>
       </template>
     </bk-sideslider>
@@ -123,6 +124,8 @@
 <script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
 import { h, inject, onMounted, reactive, ref } from 'vue';
 
+import Custom from './auth-config/Custom.vue';
+import CustomView from './auth-config/CustomView.vue';
 import Local from './auth-config/Local.vue';
 import LocalView from './auth-config/LocalView.vue';
 import WeCom from './auth-config/WeCom.vue';
@@ -166,7 +169,7 @@ const initIdpsPlugins = async () => {
     ]);
 
     idpsPlugins.value = pluginsRes.data;
-    
+
     idpsPlugins.value.forEach((plugin) => {
       const idp = idpsRes.data.find(idp => idp.plugin.id === plugin.id);
       if (idp) {
@@ -244,11 +247,11 @@ const localSuccess = (status: boolean) => {
   InfoBox({
     title: t('配置成功'),
     infoType: 'success',
+    confirmText: t('确定'),
     subTitle: h('div', {
       style: {
-        height: '44px',
         background: '#F5F7FA',
-        lineHeight: '44px',
+        padding: '13px 0',
         display: status ? 'flex' : 'none',
         alignItems: 'center',
       },
@@ -265,7 +268,6 @@ const localSuccess = (status: boolean) => {
         },
       }, t('账号陆续生效中，生效时间请以用户最终收到的邮件为准')),
     ]),
-    dialogType: 'confirm',
     footerAlign: 'center',
     closeIcon: false,
     quickClose: false,
@@ -277,6 +279,64 @@ const localSuccess = (status: boolean) => {
 
 // 企业微信认证源配置成功
 const weComSuccess = (url: string) => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  if (url) {
+    InfoBox({
+      title: t('配置成功'),
+      subTitle: h('div', {
+        style: {
+          display: url ? 'block' : 'none',
+          textAlign: 'left',
+        },
+      }, [
+        h('p', {
+          style: {
+            marginBottom: '12px',
+          },
+        }, t('请将以下回调地址填写到企业微信配置内：')),
+        h('div', {
+          style: {
+            background: '#F5F7FA',
+            padding: '8px 12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          },
+        }, [
+          h('p', {
+            style: {
+              width: '230px',
+              wordBreak: 'break-all',
+              wordWrap: 'break-word',
+            },
+          }, url),
+          h('i', {
+            class: 'user-icon icon-copy',
+            style: {
+              color: '#3A84FF',
+              fontSize: '14px',
+              cursor: 'pointer',
+            },
+            onClick: () => copy(url),
+          }),
+        ]),
+      ]),
+      confirmText: t('确定'),
+      infoType: 'success',
+      quickClose: false,
+      closeIcon: false,
+      onConfirm() {
+        initIdpsPlugins();
+      },
+    });
+  } else {
+    initIdpsPlugins();
+  }
+};
+
+// 自定义认证源配置成功
+const customSuccess = (url: string) => {
   window.changeInput = false;
   detailsConfig.show = false;
   if (url) {
@@ -320,7 +380,6 @@ const weComSuccess = (url: string) => {
           }),
         ]),
       ]),
-      dialogType: 'confirm',
       confirmText: t('确定'),
       infoType: 'success',
       quickClose: false,
@@ -333,7 +392,6 @@ const weComSuccess = (url: string) => {
     initIdpsPlugins();
   }
 };
-
 const handleDataSource = () => {
   router.push({ name: 'dataSource' });
 };
