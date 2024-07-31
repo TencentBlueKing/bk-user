@@ -51,6 +51,7 @@ opentelemetry-instrumentation-redis = "0.45b0"
 opentelemetry-instrumentation-requests = "0.45b0"
 opentelemetry-instrumentation-celery = "0.45b0"
 opentelemetry-instrumentation-logging = "0.45b0"
+django-modeltranslation = "0.18.12"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.2"
