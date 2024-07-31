@@ -100,7 +100,7 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Internationalization
-LANGUAGE_CODE = "zh-cn"
+LANGUAGE_CODE = "zh-hans"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
