@@ -116,7 +116,7 @@ AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
 AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
-LANGUAGE_CODE = "zh-hans"
+LANGUAGE_CODE = "zh-cn"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
