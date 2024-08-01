@@ -38,6 +38,7 @@ repos:
             .*/\.env|
             .*/poetry\.lock|
             .*/pyproject\.toml|
+            .*/requirements_dev\.txt|
             \.github/workflows/bk-user.yml|
             \.github/workflows/bk-login.yml|
             \.github/workflows/idp-plugins.yml|
@@ -74,6 +75,18 @@ repos:
         require_serial: true
         language: system
         entry: bash -c "cd src/bk-user && lint-imports"
+      - id: requirements-export
+        name: requirements-export
+        language: system
+        entry: bash -c "cd src/bk-user && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/bk-user/poetry.lock$
+      - id: requirements-dev-export
+        name: requirements-dev-export
+        language: system
+        entry: bash -c "cd src/bk-user && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/bk-user/poetry.lock$
   - repo: local
     hooks:
       - id: format
@@ -99,6 +112,18 @@ repos:
         require_serial: true
         language: system
         entry: bash -c "cd src/bk-login && lint-imports"
+      - id: requirements-export
+        name: requirements-export
+        language: system
+        entry: bash -c "cd src/bk-login && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/bk-login/poetry.lock$
+      - id: requirements-dev-export
+        name: requirements-dev-export
+        language: system
+        entry: bash -c "cd src/bk-login && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/bk-login/poetry.lock$
   - repo: local
     hooks:
       - id: format
@@ -111,7 +136,7 @@ repos:
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/idp-plugins/pyproject.toml --fix --no-cache
+        entry: ruff check --config=src/idp-plugins/pyproject.toml --fix --no-cache
         files: src/idp-plugins/
       - id: mypy
         name: mypy
@@ -119,3 +144,15 @@ repos:
         types: [python]
         entry: mypy --config-file=src/idp-plugins/pyproject.toml
         files: src/idp-plugins/
+      - id: requirements-export
+        name: requirements-export
+        language: system
+        entry: bash -c "cd src/idp-plugins && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/idp-plugins/poetry.lock$
+      - id: requirements-dev-export
+        name: requirements-dev-export
+        language: system
+        entry: bash -c "cd src/idp-plugins && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        pass_filenames: false
+        files: ^src/idp-plugins/poetry.lock$
