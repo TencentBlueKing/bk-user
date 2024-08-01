@@ -22,12 +22,15 @@ def forwards_func(apps, schema_editor):
     IdpPlugin = apps.get_model("idp", "IdpPlugin")
 
     # 本地账密认证源插件
-    # TODO 插件名称，描述国际化
     IdpPlugin.objects.get_or_create(
         id=BuiltinIdpPluginEnum.LOCAL,
         defaults={
             "name": BuiltinIdpPluginEnum.get_choice_label(BuiltinIdpPluginEnum.LOCAL),
+            "name_zh_cn": "本地账密",
+            "name_en_us": "Local Account Password",
             "description": "使用本地DB数据源提供的用户名和密码进行认证",
+            "description_zh_cn": "使用本地DB数据源提供的用户名和密码进行认证",
+            "description_en_us": "Authenticate using username and password provided by the local DB data source",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/idp_plugins/local/logo.png"),
         },
     )
@@ -38,7 +41,11 @@ def forwards_func(apps, schema_editor):
         id=BuiltinIdpPluginEnum.WECOM,
         defaults={
             "name": BuiltinIdpPluginEnum.get_choice_label(BuiltinIdpPluginEnum.WECOM),
+            "name_zh_cn": "企业微信",
+            "name_en_us": "Wecom",
             "description": "使用腾讯企业微信进行企业身份认证",
+            "description_zh_cn": "使用腾讯企业微信进行企业身份认证",
+            "description_en_us": "Authenticate using Tencent WeCom for corporate identity authentication",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/idp_plugins/wecom/logo.png"),
         },
     )
