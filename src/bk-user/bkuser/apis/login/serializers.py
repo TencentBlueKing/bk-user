@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import re
 from typing import Any, Dict, List
 
@@ -23,8 +24,15 @@ from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
+class UniqueEnabledTenantIdpOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源 ID")
+    plugin_id = serializers.CharField(help_text="认证源插件 ID")
+    owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
+
+
 class GlobalSettingOutputSLZ(serializers.Serializer):
     bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")
+    unique_enabled_tenant_idp = UniqueEnabledTenantIdpOutputSLZ(help_text="唯一认证源", required=False, default=None)
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
@@ -74,7 +82,7 @@ class TenantListOutputSLZ(serializers.Serializer):
 class IdpListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源 ID")
     name = serializers.CharField(help_text="认证源名称")
-    plugin_id = serializers.CharField(help_text="认证源 ID")
+    plugin_id = serializers.CharField(help_text="认证源插件 ID")
     data_source_type = serializers.SerializerMethodField(help_text="数据源类型")
 
     class Meta:

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict, List
 
 from pydantic import BaseModel
@@ -15,10 +16,19 @@ from pydantic import BaseModel
 from .constants import IdpStatus
 
 
+class UniqueEnabledTenantIdp(BaseModel):
+    """唯一可用的租户认证源"""
+
+    id: str
+    plugin_id: str
+    owner_tenant_id: str
+
+
 class GlobalSetting(BaseModel):
     """全局配置信息"""
 
     bk_user_url: str
+    unique_enabled_tenant_idp: UniqueEnabledTenantIdp | None
 
 
 class CollaborationTenant(BaseModel):

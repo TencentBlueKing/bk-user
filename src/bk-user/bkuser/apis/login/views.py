@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from collections import defaultdict
 from typing import Any, Dict
 
@@ -43,8 +44,52 @@ from .serializers import (
 class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     pagination_class = None
 
+    @staticmethod
+    def _get_unique_enabled_tenant_idp() -> Dict | None:
+        """
+        查询唯一启用的租户认证源，当且仅当存在唯一 IDP 时才返回 IDP 信息，否则返回 None
+        用途：辅助判断是否唯一启用租户，且唯一启用的第三方认证源
+        """
+        # 查询启用的租户列表
+        tenant_ids = list(Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True))
+        if not tenant_ids:
+            return None
+
+        # 启用的认证源
+        idps = Idp.objects.filter(status=IdpStatus.ENABLED, owner_tenant_id__in=tenant_ids).values(
+            "id", "owner_tenant_id", "plugin_id", "data_source_id"
+        )
+        if len(idps) != 1:
+            return None
+
+        idp = idps[0]
+        # 协同情况处理
+        # 非实名数据源不可被协同
+        if not DataSource.objects.filter(id=idp["data_source_id"], type=DataSourceTypeEnum.REAL).exists():
+            return None
+
+        target_tenant_ids = list(
+            CollaborationStrategy.objects.filter(
+                source_status=CollaborationStrategyStatus.ENABLED,
+                target_status=CollaborationStrategyStatus.ENABLED,
+                source_tenant_id=idp["owner_tenant_id"],
+            ).values_list("target_tenant_id", flat=True)
+        )
+        # 有协同，且协同租户启用了，那就不是唯一认证源了
+        if target_tenant_ids and len(set(target_tenant_ids) & set(tenant_ids)) > 0:
+            return None
+
+        return idp
+
     def get(self, request, *args, **kwargs):
-        return Response(GlobalSettingOutputSLZ({"bk_user_url": settings.BK_USER_URL.rstrip("/")}).data)
+        return Response(
+            GlobalSettingOutputSLZ(
+                {
+                    "bk_user_url": settings.BK_USER_URL.rstrip("/"),
+                    "unique_enabled_tenant_idp": self._get_unique_enabled_tenant_idp(),
+                }
+            ).data
+        )
 
 
 class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.CreateAPIView):
