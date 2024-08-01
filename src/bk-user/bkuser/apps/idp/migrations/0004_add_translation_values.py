@@ -23,7 +23,7 @@ def forwards_func(apps, schema_editor):
         name_zh_cn=BuiltinIdpPluginEnum.get_choice_label(BuiltinIdpPluginEnum.WECOM),
         description_zh_cn="使用腾讯企业微信进行企业身份认证",
         name_en_us="WeCom Identity Provider",
-        description_en_us="Authenticate using Tencent WeCom for corporate identity verification",
+        description_en_us="Authenticate using Tencent WeCom for corporate identity authentication",
     )
 
 class Migration(migrations.Migration):

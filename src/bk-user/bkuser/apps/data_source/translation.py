@@ -9,16 +9,11 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from modeltranslation.translator import TranslationOptions, translator
+from modeltranslation.translator import TranslationOptions, register
 
 from .models import DataSourcePlugin
 
 
+@register(DataSourcePlugin)
 class DataSourcePluginTranslationOptions(TranslationOptions):
-    fields = (
-        "name",
-        "description",
-    )
-
-
-translator.register(DataSourcePlugin, DataSourcePluginTranslationOptions)
+    fields = ("name", "description")

@@ -119,16 +119,18 @@ AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
 LANGUAGE_CODE = "zh-cn"
-LANGUAGES = (
-    ("zh-cn", "中文"),
-    ("en-us", "English"),
-)
+LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
+
+# Django-modeltranslation 模型翻译配置
+MODELTRANSLATION_DEFAULT_LANGUAGE = "zh-cn"
+MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
+MODELTRANSLATION_AUTO_POPULATE = True
 
 # SITE
 SITE_URL = "/"
