@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict, List
 
 import pytest
@@ -164,7 +165,7 @@ class TestIdpCreateApi:
         }
         resp = api_client.post(reverse("idp.list_create"), data=request_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert " data_source_match_rules: 列表不能为空" in resp.data["message"]
+        assert " data_source_match_rules: 列表字段不能为空值" in resp.data["message"]
 
 
 class TestIdpListApi:

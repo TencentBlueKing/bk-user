@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import hashlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -36,6 +37,7 @@ ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
+    "modeltranslation",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -116,13 +118,19 @@ AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
 AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
-LANGUAGE_CODE = "zh-hans"
+LANGUAGE_CODE = "zh-cn"
+LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
+
+# DB 数据国际化翻译配置
+MODELTRANSLATION_DEFAULT_LANGUAGE = "zh-cn"
+MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
+MODELTRANSLATION_AUTO_POPULATE = True
 
 # SITE
 SITE_URL = "/"
