@@ -16,7 +16,7 @@ RUN rm /etc/apt/sources.list && \
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
-RUN apt-get update && apt-get install -y default-libmysqlclient-dev build-essential pkg-config
+RUN apt-get update && apt-get install -y default-libmysqlclient-dev build-essential pkg-config gettext
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
