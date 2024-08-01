@@ -1114,7 +1114,7 @@ msgstr "Concurrency conflict (read/modify/write conflict)"
 
 #: bkuser/common/error_codes.py:36
 msgid "超过频率限制"
-msgstr "Rate limit exceeded"
+msgstr "Rate Limit Exceeded"
 
 #: bkuser/common/error_codes.py:37
 msgid "资源配额不足"

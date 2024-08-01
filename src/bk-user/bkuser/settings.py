@@ -127,7 +127,7 @@ USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
 
-# Django-modeltranslation 模型翻译配置
+# DB 数据国际化翻译配置
 MODELTRANSLATION_DEFAULT_LANGUAGE = "zh-cn"
 MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
 MODELTRANSLATION_AUTO_POPULATE = True
