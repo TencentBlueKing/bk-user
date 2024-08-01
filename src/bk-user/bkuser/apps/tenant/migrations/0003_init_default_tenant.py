@@ -43,7 +43,6 @@ def forwards_func(apps, schema_editor):
         admin_username,
     )
 
-    # TODO: 国际化时需要考虑如何实现
     Tenant = apps.get_model("tenant", "Tenant")
     TenantUser = apps.get_model("tenant", "TenantUser")
     TenantManager = apps.get_model("tenant", "TenantManager")
@@ -53,7 +52,7 @@ def forwards_func(apps, schema_editor):
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
     Idp = apps.get_model("idp", "Idp")
 
-    default_tenant = Tenant.objects.create(id="default", name="默认租户", is_default=True)
+    default_tenant = Tenant.objects.create(id="default", name="Default", is_default=True)
     # 租户配置
     TenantUserValidityPeriodConfig.objects.create(tenant=default_tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
 
@@ -87,7 +86,7 @@ def forwards_func(apps, schema_editor):
     TenantManager.objects.create(tenant=default_tenant, tenant_user=tenant_user)
 
     Idp.objects.create(
-        name="管理员账密登录",
+        name="=Administrator",
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         owner_tenant_id=default_tenant.id,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]).model_dump(),
