@@ -64,9 +64,9 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
 
         idp = idps[0]
         # 协同情况处理
-        # 非实名数据源不可被协同
+        # 非实名数据源不可被协同, 则说明是唯一认证源了
         if not DataSource.objects.filter(id=idp["data_source_id"], type=DataSourceTypeEnum.REAL).exists():
-            return None
+            return idp
 
         target_tenant_ids = list(
             CollaborationStrategy.objects.filter(
