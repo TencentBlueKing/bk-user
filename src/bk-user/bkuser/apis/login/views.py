@@ -64,7 +64,8 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
 
         idp = idps[0]
         # 协同情况处理
-        # 非实名数据源不可被协同, 则说明是唯一认证源了
+        # 如果唯一 IDP 关联的数据源是非实名的，则说明该 IDP 只会被用于本租户，不会有其他租户协同的使用
+        # 协同限制：非实名数据源不可被协同
         if not DataSource.objects.filter(id=idp["data_source_id"], type=DataSourceTypeEnum.REAL).exists():
             return idp
 
