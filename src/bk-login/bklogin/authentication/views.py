@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Any, Callable, Dict, List
 
@@ -25,8 +26,8 @@ from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
 from bklogin.component.bk_user.constants import IdpStatus
-from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
-from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
+from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls, get_plugin_type
+from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum, PluginTypeEnum
 from bklogin.idp_plugins.exceptions import (
     InvalidParamError,
     ParseRequestBodyError,
@@ -75,6 +76,15 @@ class LoginView(View):
 
         # 返回登录页面
         response = render(request, self.template_name)
+
+        # 查询全局配置，判断是否唯一的第三方登录
+        # TODO: 考虑是否 Cache 唯一第三方登录的判断
+        idp = bk_user_api.get_global_setting().unique_enabled_tenant_idp
+        if idp and get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
+            # 直接重定向到第三方登录
+            response = HttpResponseRedirect(
+                redirect_to=f"{settings.SITE_URL}tenants/{idp.owner_tenant_id}/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
+            )
 
         # [兼容 2.x] 注销当前登录态
         # TODO: 支持 SSO，非 is_from_logout 时，登录态有效，则直接重定向回业务系统
@@ -309,7 +319,7 @@ class IdpPluginDispatchView(View):
 
     def _get_complete_action_url(self, idp_id: str, action: str) -> str:
         """获取完整"""
-        return urljoin(settings.BK_LOGIN_URL, f"{settings.SITE_URL}auth/idps/{idp_id}/actions/{action}/")
+        return urljoin(settings.BK_LOGIN_URL, f"/auth/idps/{idp_id}/actions/{action}/")
 
     def _auth_backend(
         self, request, sign_in_tenant_id: str, idp_id: str, user_infos: Dict[str, Any] | List[Dict[str, Any]]
