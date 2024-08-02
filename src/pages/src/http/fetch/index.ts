@@ -5,6 +5,7 @@ import qs from 'query-string';
 
 import { showLoginModal } from '@blueking/login-modal';
 
+import '../../css/index.css';
 import { getLoginUrl } from '@/common/auth';
 
 type Methods = 'delete' | 'get' | 'head' | 'options' | 'post' | 'put' | 'patch';
@@ -85,7 +86,7 @@ const handleResponse = <T>({
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { status } = error.response;
-  const { message, data } = error.response.data.error;
+  const { message, data, code, details } = error.response.data.error;
 
   if (status === 401) {
     if (error.config.url === '/api/v1/web/basic/current-user/') {
@@ -104,7 +105,16 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
 
   // 全局捕获错误给出提示
   if (config.globalError) {
-    Message({ theme: 'error', message, delay: 10000 });
+    details[0].message = JSON.parse(details[0].message);
+    const config = {
+      overview: '',
+      code,
+      suggestion: message,
+      details: details[0],
+      assistant: 'wxwork://message/?username=BK助手',
+
+    };
+    Message({ theme: 'error', message: config, delay: 10000,  extCls: 'message-fix-fixed' });
   }
 
   return Promise.reject(error);

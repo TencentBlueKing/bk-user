@@ -80,3 +80,7 @@
   }
   
 }
+
+.message-fix-fixed .overview .tools .tool.fix {
+  position: static;
+}

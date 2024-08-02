@@ -29,5 +29,6 @@
   "请输入密码": "Please enter your password",
   "登录失败": "login failure",
   "当前": "current ",
-  "协同": "co-"
+  "协同": "co-",
+  "隐藏租户": "Hidden tenant"
 }

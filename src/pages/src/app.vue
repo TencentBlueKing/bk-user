@@ -5,14 +5,15 @@ import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
 import { computed, ref, watch  } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
+
 import HeaderBox from './views/Header.vue';
 
 import { currentUser } from '@/http';
 import { locale as i18nLocal, t } from '@/language/index';
-import { useUser, platformConfig} from '@/store';
+import { platformConfig, useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
 import ResetPassword from '@/views/reset-password/newPassword.vue';
-import { getPlatformConfig, setShortcutIcon, setDocumentTitle} from '@blueking/platform-config';
 
 const route = useRoute();
 
@@ -50,24 +51,24 @@ const localeData = {
 const locale = computed(() => localeData[currentLang.value]);
 
 const platformConfigData = platformConfig();
-const url = `${window.BK_SHARED_RES_URL}/bk_user/base.js`  // url 远程配置文件地址
+const url = `${window.BK_SHARED_RES_URL}/bk_user/base.js`;  // url 远程配置文件地址
 const defaults = {
-    name: '蓝鲸用户管理',
-    nameEn: 'BK USER',
-    brandName: '腾讯蓝鲸智云',
-    brandNameEn: 'BlueKing',
-    appLogo: '/static/images/logo.png',
-    favicon: '/static/favicon.ico',
-    version: '3.0',
-  }
+  name: '蓝鲸用户管理',
+  nameEn: 'BK USER',
+  brandName: '腾讯蓝鲸智云',
+  brandNameEn: 'BlueKing',
+  appLogo: 'defaultsAppLogo',
+  favicon: '/static/favicon.ico',
+  version: '3.0',
+};
 
-const getConfigData = async() => {
-    const config =  await getPlatformConfig(url, defaults)
-    setShortcutIcon(config.favicon); // 设置favicon
-    setDocumentTitle(config.i18n); // 设置document.title
-    platformConfigData.update(config);
-  }
- getConfigData()
+const getConfigData = async () => {
+  const config =  await getPlatformConfig(url, defaults);
+  setShortcutIcon(config.favicon); // 设置favicon
+  setDocumentTitle(config.i18n); // 设置document.title
+  platformConfigData.update(config);
+};
+getConfigData();
 </script>
 
 <template>

@@ -10,6 +10,7 @@
 
       <bk-form-item>
         <bk-select
+          ref="selectRef"
           size="large"
           filterable
           input-search
@@ -17,18 +18,18 @@
           :placeholder="$t('请选择租户或输入租户ID')"
           @change="handleTenantChange">
           <bk-option
-            v-for="item in allTenantList"
+            v-for="item in showOptions"
             class="tenant-option"
             :id="item.id"
             :key="item.id"
-            :name="item.name">
-            {{ item.name }}
+            :name="`${item.name} (${item.id})`">
+              <div class="options-show">
+                <span>{{ `${item.name} (${item.id})` }}</span>
+                <bk-tag v-if="inputTenant?.name" size="small">{{ $t('隐藏租户') }}</bk-tag>
+              </div>
           </bk-option>
         </bk-select>
-        <span v-if="inputTenant !== null">
-          <span v-if="inputTenant?.name">{{ `${$t('匹配到以下租户: ')} ${inputTenant?.name}`}}</span>
-          <span v-else>{{ $t('暂无匹配租户') }}</span>
-        </span>
+        <span v-if="inputTenant !== null && !inputTenant?.name">{{ $t('暂无匹配租户') }}</span>
       </bk-form-item>
 
       <bk-form-item>
@@ -96,7 +97,8 @@
                 v-for="item in storageTenantList"
                 :key="item.id"
                 @click="handleChangeStorageTenant(item)">
-                {{ item.name }} / {{ getUserGroupName(item) }}
+                <span class="item-name">{{ item.name }} / {{ getUserGroupName(item) }}</span>
+                <close class="delete-icon" @click.stop="deleteStorageTenant(item)"/>
               </div>
               <div class="add" @click="addTenant">{{ $t('其他租户或用户来源') }}</div>
             </section>
@@ -166,7 +168,7 @@
 
 <script setup lang="ts">
 import { getGlobalSettings, getIdpList, getTenantList } from '@/http/api';
-import { Transfer } from 'bkui-vue/lib/icon';
+import { Transfer, Close} from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
@@ -218,7 +220,7 @@ const inputTenant = ref(null);
  * @param id 租户ID
  */
 const handleTenantChange = async (id: string) => {
-  // 清空时清空输入租户名称
+  // 清空时清空输入租户名称 
   if (!id) {
     inputTenant.value = null;
     return;
@@ -449,6 +451,26 @@ const getUserGroupName = (tenant: Tenant) => {
  */
 const isAdminShow = ref(false);
 
+/**
+ * 删除快捷切换项
+ */
+const deleteStorageTenant = (item: any) => {
+  const obj = storageTenantList.value.find(i => i.id === item.id);
+  tenantMap.value = Object.fromEntries(Object.entries(tenantMap.value).filter(([key]) => key !== obj.id));
+  localStorage.setItem('tenantMap', JSON.stringify(tenantMap.value));
+}
+
+const selectRef = ref()
+
+/**
+ * 下拉框中的值展示
+ */
+
+const showOptions = computed(() => {
+  const options = inputTenant.value?.name ? [inputTenant.value]:allTenantList.value
+  inputTenant.value?.name && selectRef.value?.showPopover()
+  return options
+})
 </script>
 
 <style lang="postcss" scoped>
@@ -605,6 +627,7 @@ const isAdminShow = ref(false);
   min-width: 120px;
 
   .item {
+    position: relative;
     line-height: 36px;
     cursor: pointer;
     margin: 0 -14px;
@@ -613,6 +636,19 @@ const isAdminShow = ref(false);
     &:hover {
       color: #3A84FF;
       background: #F5F6F9;
+      .delete-icon {
+        display: inline-block !important;
+      }
+    }
+    .item-name {
+      margin-right: 10px;
+    }
+    .delete-icon {
+      color: #d9dadf;
+      display: none !important;
+      cursor: pointer;
+      position: absolute;
+      right: 5px;
     }
   }
 
@@ -673,5 +709,11 @@ const isAdminShow = ref(false);
   font-size: 14px;
   color: #63656E;
   margin-bottom: 24px;
+}
+.options-show {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 </style>

@@ -21,7 +21,9 @@
                 }"
                 @click="handleClickActive(item)">
                 <img :src="item.logo" class="logo-style" />
-                <span>{{ item.name }}</span>
+                <span>
+                  <bk-overflow-title> {{ item.name }}</bk-overflow-title>
+                </span>
                 <bk-tag
                   v-if="item.id === 'local'"
                   class="tag-info"
@@ -452,6 +454,7 @@ const handleDataSource = () => {
             .box {
               display: flex;
               align-items: center;
+              height: 100%;
 
               .logo-style {
                 width: 24px;
@@ -463,6 +466,10 @@ const handleDataSource = () => {
                 margin: 0 6px 0 12px;
                 font-size: 14px;
                 color: #313238;
+                display: block;
+                height: 22px;
+                line-height: 22px;
+                max-width: 80px;
               }
 
               .tag-info {
