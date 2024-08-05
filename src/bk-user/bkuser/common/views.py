@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import json
 import logging
 
@@ -192,6 +193,8 @@ class VueTemplateView(TemplateView):
                 "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
                 # 是否启用虚拟账号功能
                 "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
+                # 是否启用新建租户功能
+                "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
             }
 
         except Exception:  # pylint: disable=broad-except

@@ -584,6 +584,9 @@ if ENABLE_BK_NOTICE:
 # 是否启用虚拟账号页面功能
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 
+# 是否启用新建租户页面功能
+ENABLE_CREATE_TENANT = env.bool("ENABLE_CREATE_TENANT", default=False)
+
 # logo文件大小限制，单位为: KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
 

@@ -24,6 +24,7 @@
         window.BK_BUILD_VERSION = decodeURIComponent('{{ BK_BUILD_VERSION }}');
         window.BK_SHARED_RES_URL = '<%= process.env.BK_SHARED_RES_URL %>';
         window.ENABLE_VIRTUAL_USER = '<%= process.env.BK_ENABLE_VIRTUAL_USER %>';
+        window.ENABLE_CREATE_TENANT = '<%= process.env.ENABLE_CREATE_TENANT %>';
         console.log(
           `%c版本信息%c${ BK_BUILD_VERSION }%c >> ${new Date().toString().slice(0, 16)}<<`,
           'padding: 2px 5px; background: #ea3636; color: #fff; border-radius: 3px 0 0 3px;',
