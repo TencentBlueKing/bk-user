@@ -746,7 +746,7 @@ export default {
       if (!list.length) return this.handleClickEmpty();
       if (!this.searchFilterList.length) return;
       this.basicLoading = true;
-      const valueList = [`category_id=${this.currentCategoryId}&page=${current}&page_size=${this.paginationConfig.limit}`];
+      const valueList = [`category_id=${this.currentCategoryId}&page=${current}&page_size=${this.paginationConfig.limit}&departments=${this.departmentsId}`];
 
       list.forEach((item) => {
         if (!Array.isArray(item.values)) {
