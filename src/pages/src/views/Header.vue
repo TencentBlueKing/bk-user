@@ -16,7 +16,7 @@
           class="cursor-pointer"
           @click="onGoBack"
         >
-          <div class="w-[28px]"><img :src="appLogo"/></div>
+          <div class="w-[28px]"><img :src="appLogo" /></div>
           <span class="title-desc">{{ appName}}</span>
         </div>
         <div class="tenant-style" v-if="!isTenant && role !== 'natural_user'">
@@ -138,13 +138,15 @@ import { useRoute } from 'vue-router';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
+import logo from '../../static/images/logo.png';
+
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
-import { useUser, platformConfig} from '@/store';
+import { platformConfig, useUser } from '@/store';
 import { logoConvert } from '@/utils';
 
 const state = reactive({
@@ -154,11 +156,11 @@ const state = reactive({
 });
 
 const userStore = useUser();
-const  platformConfigData = platformConfig()
+const  platformConfigData = platformConfig();
 const headerNav = ref([]);
 const role = computed(() => userStore.user.role);
 const appName = computed(() => platformConfigData.i18n.name);
-const appLogo = computed(() => platformConfigData.appLogo);
+const appLogo = computed(() => (platformConfigData.appLogo === 'defaultsAppLogo' ? logo : platformConfigData.appLogo));
 const userInfo = computed(() => {
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
@@ -167,9 +169,9 @@ const userInfo = computed(() => {
   ];
 
   // 根据变量开启或隐藏虚拟账号页面
-  if (window.ENABLE_VIRTUAL_USER === 'False') { 
+  if (window.ENABLE_VIRTUAL_USER === 'False') {
     baseNav?.splice(1, 1);
-}
+  }
   if (role.value === 'super_manager' && !isTenant.value) {
     headerNav.value = baseNav;
   } else if (role.value === 'tenant_manager') {
