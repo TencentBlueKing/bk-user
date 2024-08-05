@@ -8,8 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Dict
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -220,6 +222,8 @@ class TenantUserTimeZoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         tenant_user = self.get_object()
         tenant_user.time_zone = data["time_zone"]
         tenant_user.save(update_fields=["time_zone", "updated_at"])
+
+        request.session[settings.TIME_ZONE_SESSION_KEY] = data["time_zone"]
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
