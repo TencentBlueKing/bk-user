@@ -5,7 +5,7 @@
     <div class="main-content">
       <div class="content-search">
         <div class="content-search-left">
-          <bk-button class="mr-[24px]" theme="primary" @click="handleClick('add')">
+          <bk-button v-if="isCreateTenant" class="mr-[24px]" theme="primary" @click="handleClick('add')">
             <i class="user-icon icon-add-2 mr8" />
             {{ $t('新建租户') }}
           </bk-button>
@@ -203,27 +203,27 @@
           <div class="mb-[18px]">
             <bk-checkbox v-model="smsValue" @change="changeSms">{{ $t('短信') }}</bk-checkbox>
             <PhoneInput
-            :form-data="adminPasswordData"
-            :tel-error="telError"
-            :required="smsValue"
-            @change-country-code="changeCountryCode"
-            @change-tel-error="changeTelError" />
+              :form-data="adminPasswordData"
+              :tel-error="telError"
+              :required="smsValue"
+              @change-country-code="changeCountryCode"
+              @change-tel-error="changeTelError" />
           </div>
           <div>
             <bk-checkbox v-model="emailValue" @change="changeEmail">{{ $t('邮箱') }}</bk-checkbox>
             <div>
-            <bk-input
-              :class="{ 'input-error': emailError }"
-              v-model="adminPasswordData.email"
-              @blur="emailBlur"
-              @input="handleInput" />
-            <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
-          </div>
+              <bk-input
+                :class="{ 'input-error': emailError }"
+                v-model="adminPasswordData.email"
+                @blur="emailBlur"
+                @input="handleInput" />
+              <p class="error" v-show="emailError">{{ $t('请输入正确的邮箱地址') }}</p>
+            </div>
           </div>
         </bk-form-item>
       </bk-form>
     </bk-dialog>
-        <!-- 创建租户成功弹窗 -->
+    <!-- 创建租户成功弹窗 -->
     <bk-dialog
       class="tenant-success"
       v-model:is-show="isShowDialog"
@@ -288,6 +288,7 @@ import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import LabelContent from '@/components/layouts/LabelContent.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
@@ -303,16 +304,16 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useMainViewStore, useUser, platformConfig} from '@/store';
-import { LOGO_COLOR, logoConvert, tenantStatus, copy} from '@/utils';
-import LabelContent from '@/components/layouts/LabelContent.vue';
+import { platformConfig, useMainViewStore, useUser } from '@/store';
+import { copy, LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
 
 const userStore = useUser();
 const store = useMainViewStore();
-const  platformConfigData = platformConfig()
+const  platformConfigData = platformConfig();
 const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
 const copyright = computed(() => platformConfigData.footerCopyrightContent);
 store.customBreadcrumbs = false;
+const isCreateTenant = window.ENABLE_CREATE_TENANT !== 'False';
 
 const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
@@ -507,21 +508,21 @@ const updateTenantsList = (type: string, formData: any) => {
   isCreated.value = type === 'add';
   newId.value = formData?.id;
   fetchTenantsList();
-  if(isCreated.value) {
+  if (isCreated.value) {
     Object.assign(dialogData.value, {
-    ...formData,
-    isShowItem: formData.notification_methods?.length === 0,
-    emailNotification: formData.notification_methods?.includes('email') ? t('邮箱') : '',
-    smsNotification: formData.notification_methods?.includes('sms') ? t('短信') : '',
-    accessUrl: location.origin
-  })
-    isShowDialog.value = true
+      ...formData,
+      isShowItem: formData.notification_methods?.length === 0,
+      emailNotification: formData.notification_methods?.includes('email') ? t('邮箱') : '',
+      smsNotification: formData.notification_methods?.includes('sms') ? t('短信') : '',
+      accessUrl: location.origin,
+    });
+    isShowDialog.value = true;
   } else {
     Message({
-    theme: 'success',
-    message: t('租户更新成功'),
-  });
-}
+      theme: 'success',
+      message: t('租户更新成功'),
+    });
+  }
 };
 
 const dialogRef = ref();
@@ -535,7 +536,7 @@ const getDialogContentText = () => {
 const copyContent = () => {
   const container = getDialogContentText();
   copy(container);
-  isShowDialog.value = false
+  isShowDialog.value = false;
 };
 
 const handleBeforeClose = async () => {

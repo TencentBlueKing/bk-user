@@ -127,7 +127,7 @@ const dateOptions = computed(() => {
   ];
   const options = expirationTimes.map(({ num, unit, label }) => {
     const date = defineDateTime(num, unit);
-    return { id: `${date} 00:00:00`, name: `${label} (至${date})` };
+    return { id: `${date} 00:00:00`, name: `${label} (${t('至')}${date})` };
   });
   options.push(
     { id: '2100-1-1T00:00:00', name: t('永久') },

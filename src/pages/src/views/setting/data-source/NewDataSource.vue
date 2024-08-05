@@ -117,7 +117,7 @@ const handleCollapse = () => {
 const successText = ref('新建企业微信数据源成功');
 const isSuccess = ref(false);
 const updateSuccess = (value: string) => {
-  successText.value = `${value}${currentPlugins.value[0].name}成功`;
+  successText.value = `${value}${currentPlugins.value[0].name}${t('成功 ')}`;
   isSuccess.value = true;
 };
 

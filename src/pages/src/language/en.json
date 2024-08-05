@@ -536,5 +536,7 @@
   "回调地址为：": "The callback address is: ",
   "确认要关闭企业微信登录吗？": "Are you sure you want to disable WeChat Work login?",
   "关闭后用户将无法通过企业微信登录": "After deactivation, users will not be able to log in via WeChat Work",
-  "请将以下回调地址填写到企业微信配置内：": "Please enter the following callback address in the enterprise wechat configuration:"
+  "请将以下回调地址填写到企业微信配置内：": "Please enter the following callback address in the enterprise wechat configuration:",
+  "至": "to ",
+  "成功 ": " Success"
 }
