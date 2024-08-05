@@ -149,7 +149,7 @@ export default {
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
-          domPropsInnerHTML={node.display_name || node.name}
+          domPropsInnerHTML={(node.display_name || node.name).replace(/</g, '&lt;').replace(/>/g, '&gt;')}
           onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
         <div class="option">
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
