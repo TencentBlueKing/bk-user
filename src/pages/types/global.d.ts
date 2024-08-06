@@ -12,4 +12,5 @@ declare interface Window {
   ENABLE_BK_NOTICE: string
   BK_SHARED_RES_URL: string
   ENABLE_VIRTUAL_USER: string
+  ENABLE_CREATE_TENANT:string
 }

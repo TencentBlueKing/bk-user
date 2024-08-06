@@ -86,7 +86,7 @@ const handleResponse = <T>({
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { status } = error.response;
-  const { message, data, code, details } = error.response.data.error;
+  const { message = '', data = {}, code = '', details = [] } = error.response.data.error;
 
   if (status === 401) {
     if (error.config.url === '/api/v1/web/basic/current-user/') {
