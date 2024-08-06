@@ -74,8 +74,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
     "bkuser.apps.timezone.middleware.TimezoneMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 ROOT_URLCONF = "bkuser.urls"
