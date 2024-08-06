@@ -225,7 +225,7 @@ const handleTenantChange = async (id: string) => {
     inputTenant.value = null;
     return;
   }
-  let selected = allTenantList.value.find(item => item.id === id);
+  let selected = allTenantList.value.find(item => item.id === id) || inputTenant.value?.find(item => item.id === id);
   if (!selected) {
     const res = await getTenantList({
       tenant_ids: id,
@@ -441,9 +441,7 @@ const getUserGroupName = (tenant: Tenant) => {
   if (userGroupId === tenant.id) {
     return '本租户';
   }
-  const list = tenant.collaboration_tenants || [];
-  const current = list.find(item => item.id === userGroup.value);
-  return current?.name || '';
+  return userGroupId
 };
 
 /**
