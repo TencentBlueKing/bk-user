@@ -22,10 +22,10 @@ def set_timezone(sender, request, user, **kwargs):
 
     # 如果当前会话没有时区信息，则尝试从租户用户模型中获取
     if not request.session[settings.TIME_ZONE_SESSION_KEY]:
-        tenantuser = TenantUser.objects.filter(id=user.username).first()
+        tenant_user = TenantUser.objects.filter(id=user.username).first()
         time_zone = settings.TIME_ZONE
 
-        if tenantuser:
-            time_zone = tenantuser.time_zone
+        if tenant_user:
+            time_zone = tenant_user.time_zone
 
         request.session[settings.TIME_ZONE_SESSION_KEY] = time_zone

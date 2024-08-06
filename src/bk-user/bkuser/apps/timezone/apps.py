@@ -16,4 +16,4 @@ class BkI18nAppConfig(AppConfig):
     name = "bkuser.apps.timezone"
 
     def ready(self):
-        import bkuser.apps.timezone.set_timezone  # noqa
+        from . import handlers  # noqa
