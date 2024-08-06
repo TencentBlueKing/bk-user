@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import base64
 import logging
 
@@ -59,6 +60,7 @@ class ESBAuthentication(BaseAuthentication):
 
     def verify_credentials(self, credentials):
         public_key = self._get_jwt_public_key(credentials["from"])
+        # Note: 不从 jwt header 里取 kid 判断是网关还是 ESB 签发的，在不同环境可能不准确
         jwt_payload = self._decode_jwt(credentials["jwt"], public_key)
         if not jwt_payload:
             return False, None
@@ -67,7 +69,9 @@ class ESBAuthentication(BaseAuthentication):
 
     def _decode_jwt(self, content, public_key):
         try:
-            return jwt.decode(content, public_key, options={"verify_iss": False})
+            jwt_header = jwt.get_unverified_header(content)
+            algorithm = jwt_header.get("alg") or "RS512"
+            return jwt.decode(content, public_key, algorithms=[algorithm], options={"verify_iss": False})
         except Exception:  # pylint: disable=broad-except
             logger.exception("decode jwt fail, jwt: %s", content)
             return None

@@ -424,11 +424,14 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         if is_exact:
             raise error_codes.VALIDATION_ERROR.f("unsupported extra lookup field: create_time")
 
-        # 时间转换异常，说明非预期内 IAM 特殊查询数据
+        # 时间转换异常，说明非预期内 IAM 特殊查询数据（从大到小）
         try:
             datetime_values = [datetime.datetime.strptime(v, "%Y-%m-%d %H:%M") for v in values]
         except Exception as error:
             raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy create_time values: {values}, error={error}")
+
+        # 从小到大
+        datetime_values.reverse()
 
         # 判断是否满足间隔一分钟
         start_time = datetime_values[0]
