@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List, Tuple
 
 from django.db import transaction
@@ -131,8 +132,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 启用密码功能
         plugin_config.enable_password = True
-        # 内置管理员账号，不需要首次登录强制修改密码，可以登录后自行修改密码
-        plugin_config.login_limit.force_change_at_first_login = False
         # 密码有效期为永久，不会有过期续期的功能
         plugin_config.password_expire.valid_time = NEVER_EXPIRE_TIME
 
