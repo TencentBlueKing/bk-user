@@ -69,8 +69,8 @@ export const TIME_ZONES = momentTimeZone.tz.names()?.map(item => ({
 
 // 语言
 export const LANGUAGE_OPTIONS = [
-  {value: 'zh-CN', label: '简体中文'},
-  {value: 'en-US', label: 'English'}
+  {value: 'zh-cn', label: '简体中文'},
+  {value: 'en', label: 'English'}
 ]
 
 // logo转换

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import os
 from typing import Dict, List
 
@@ -30,7 +31,6 @@ def _read_file_content(file_path: str) -> str:
 
 def _get_change_log_file_name() -> str:
     """获取日志文件名称"""
-    # FIXME (nan): 国际化时调整，应该调整为使用 Django Language 枚举，而不是 BK Language 枚举
     if translation.get_language() == BkLanguageEnum.EN.value:
         return FILE_NAME_EN
     return FILE_NAME
