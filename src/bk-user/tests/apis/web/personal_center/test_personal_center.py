@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import pytest
 from bkuser.apps.tenant.models import TenantUser
 from django.urls import reverse
@@ -91,7 +92,7 @@ class TestTenantUserFeatureFlagListApi:
 class TestTenantUserLanguageUpdateApi:
     @pytest.mark.parametrize(
         ("language"),
-        [("zh-CN"), ("en-US")],
+        [("zh-cn"), ("en-us")],
     )
     def test_update_legal_language(self, api_client, tenant_user, language):
         resp = api_client.put(

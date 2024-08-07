@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 from typing import Any, Dict, List
 
@@ -479,7 +480,7 @@ class TestTenantUserRetrieveApi:
         assert {ld["username"] for ld in resp.data["leaders"]} == {"wangwu", "maiba"}
 
         # 语言和时区字段应为默认值
-        assert resp.data["language"] == "zh-CN"
+        assert resp.data["language"] == "zh-cn"
         assert resp.data["time_zone"] == "Asia/Shanghai"
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
