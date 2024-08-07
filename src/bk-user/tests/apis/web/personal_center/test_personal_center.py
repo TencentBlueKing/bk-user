@@ -92,7 +92,7 @@ class TestTenantUserFeatureFlagListApi:
 class TestTenantUserLanguageUpdateApi:
     @pytest.mark.parametrize(
         ("language"),
-        [("zh-cn"), ("en-us")],
+        [("zh-cn"), ("en")],
     )
     def test_update_legal_language(self, api_client, tenant_user, language):
         resp = api_client.put(
