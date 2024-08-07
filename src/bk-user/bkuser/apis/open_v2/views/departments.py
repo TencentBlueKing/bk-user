@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import operator
 from functools import reduce
 from typing import Any, Dict, List
@@ -81,6 +82,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
                     (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
                 ),
                 "level": dept.data_source_department.department_relation.level,
+                "order": 0,
                 "enabled": True,
             }
             # 特殊指定 fields 的情况下仅返回指定的字段
@@ -197,6 +199,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generi
             "extras": tenant_dept.data_source_department.extras,
             "category_id": tenant_dept.data_source_department.data_source_id,
             "enabled": True,
+            "order": 0,
         }
 
         # 当前部门对应的 MPTT 树节点
