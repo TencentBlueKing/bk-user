@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     "bkuser.apps.natural_user",
     "bkuser.apps.permission",
     "bkuser.apps.notification",
-    "bkuser.apps.timezone",
 ]
 
 MIDDLEWARE = [
@@ -74,7 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
-    "bkuser.apps.timezone.middleware.TimezoneMiddleware",
+    "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -128,7 +127,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
-TIME_ZONE_SESSION_KEY = "blueking_timezone"
 
 # DB 数据国际化翻译配置
 MODELTRANSLATION_DEFAULT_LANGUAGE = "zh-cn"
