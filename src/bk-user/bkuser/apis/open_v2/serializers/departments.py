@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict, List
 
 from rest_framework import serializers
@@ -22,8 +23,8 @@ class DepartmentFieldsSLZ(serializers.Serializer):
     fields = StringArrayField(help_text="需要返回的部门字段", required=False)
 
     def validate_fields(self, fields: List[str]) -> List[str]:
-        # 不再支持提供 code、order、lft、rght、tree_id 等字段，并且丢弃用户指定的无效字段
-        allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level"}
+        # 不再支持提供 code、lft、rght、tree_id 等字段，并且丢弃用户指定的无效字段
+        allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level", "order"}
         return list(set(fields) & allowed_fields)
 
 
