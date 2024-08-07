@@ -99,7 +99,7 @@
             @success="localSuccess" />
           <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
         </template>
-        <template v-if="authDetails?.id === 'wecom'">
+        <template v-else-if="authDetails?.id === 'wecom'">
           <WeCom
             v-if="detailsConfig.isEdit"
             :data-source-id="currentDataSource?.id"

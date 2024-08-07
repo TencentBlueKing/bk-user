@@ -73,7 +73,7 @@
               :custom-request="customRequest"
               :size="2"
               @error="handleError"
-              v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light'}"
+              v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
             >
               <template #trigger>
                 <div class="logo-box" v-if="currentUserInfo.logo">
@@ -335,14 +335,14 @@
               <bk-form
                 ref="formRef"
                 class="item-content"
-                :model="currentUserInfo">    
+                :model="currentUserInfo">
                 <div class="item-div" v-for="(item, key) in LanguageAndTimeZone" :key="key">
                   <li>
                     <span class="key">{{ $t(item.label) }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="item.isEdit">
                         <bk-form-item>
-                          <bk-select v-model="currentUserInfo[item.model]" clearable :input-search="item.model==='language'">
+                          <bk-select v-model="currentUserInfo[item.model]" clearable :input-search="item.model === 'language'">
                             <bk-option v-for="option in item.options" :key="option.value" :id="option.value" :name="option.label"></bk-option>
                           </bk-select>
                         </bk-form-item>
@@ -350,7 +350,7 @@
                         <bk-button text theme="primary" @click="item.cancel(item)">{{ $t('取消') }}</bk-button>
                       </div>
                       <div v-else>
-                        <span class="value">{{ item.model==='language' ?showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}</span>
+                        <span class="value">{{ item.model === 'language' ? showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}</span>
                         <i class="user-icon icon-edit" @click="item.isEdit = true" />
                       </div>
                     </div>
@@ -386,11 +386,11 @@ import {
   patchUsersPhone,
   putPersonalCenterUserExtrasFields,
   putUserLanguage,
-  putUserTimeZone
+  putUserTimeZone,
 } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, getBase64, TIME_ZONES, LANGUAGE_OPTIONS} from '@/utils';
+import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
 
 const user = useUser();
 const userInfo = ref(user.user);
@@ -410,7 +410,7 @@ const isInheritedPhone = ref(true);
 const customEmail = ref('');
 const customPhone = ref('');
 const customPhoneCode = ref('');
-const originalValue = ref({})
+const originalValue = ref({});
 const rules = {
   custom_email: [validate.required, validate.email],
 };
@@ -464,8 +464,8 @@ const getCurrentUser = async (id) => {
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
     originalValue.value = {
       language: currentUserInfo.value.language,
-      time_zone: currentUserInfo.value.time_zone
-    }
+      time_zone: currentUserInfo.value.time_zone,
+    };
   } catch (error) {
     console.warn(error);
   } finally {
@@ -528,55 +528,55 @@ const changeCustomFields = async (item) => {
   }
 };
 
-const showLanguage = computed(() =>{
-  return (targetValue) => {
-    const foundItem = LANGUAGE_OPTIONS?.find(item => item.value === targetValue)
-    return foundItem ? foundItem.label : null;
-  }
-})
+const showLanguage = computed(() => (targetValue) => {
+  const foundItem = LANGUAGE_OPTIONS?.find(item => item.value === targetValue);
+  return foundItem ? foundItem.label : null;
+});
 
 const submitChange  = async (item) => {
-  const { model} = item
+  const { model } = item;
   try {
     if (!currentUserInfo.value[model]) return;
-    const apiCall = model === 'language'? putUserLanguage : putUserTimeZone
+    const apiCall = model === 'language' ? putUserLanguage : putUserTimeZone;
     await apiCall({
       id: currentUserInfo.value.id,
-      [model]: currentUserInfo.value[model]
+      [model]: currentUserInfo.value[model],
     });
-    item.isEdit = false
+
+    item.isEdit = false;
     Message({ theme: 'success', message: t('保存成功') });
-    originalValue.value[model] = currentUserInfo.value[model]
+    if (model === 'language') {
+      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language), 100);
+    }
+    originalValue.value[model] = currentUserInfo.value[model];
   } catch (error) {
     console.warn(error);
   }
-}
+};
 
 const cancelChange = (item) => {
-  item.isEdit = false
-  currentUserInfo.value[item.model] = originalValue.value[item.model]
-}
+  item.isEdit = false;
+  currentUserInfo.value[item.model] = originalValue.value[item.model];
+};
 
-const LanguageAndTimeZone = ref(
-  {
-    language: {
-      label: t('语言'),
-      isEdit: false,
-      model: 'language',
-      options: LANGUAGE_OPTIONS,
-      submitChange: submitChange,
-      cancel: cancelChange
-    },
-    timeZone: {
-      label: t('时区'),
-      isEdit: false,
-      model: 'time_zone',
-      options: TIME_ZONES,
-      submitChange: submitChange,
-      cancel: cancelChange
-    }
-  }
-)
+const LanguageAndTimeZone = ref({
+  language: {
+    label: t('语言'),
+    isEdit: false,
+    model: 'language',
+    options: LANGUAGE_OPTIONS,
+    submitChange,
+    cancel: cancelChange,
+  },
+  timeZone: {
+    label: t('时区'),
+    isEdit: false,
+    model: 'time_zone',
+    options: TIME_ZONES,
+    submitChange,
+    cancel: cancelChange,
+  },
+});
 
 // 取消自定义字段修改
 const cancelCustomFields = (item, index) => {

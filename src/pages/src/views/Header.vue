@@ -147,7 +147,7 @@ import { getTenantInfo, getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
-import { logoConvert } from '@/utils';
+import { handleSwitchLocale, logoConvert  } from '@/utils';
 
 const state = reactive({
   logoutDropdown: false,
@@ -203,29 +203,6 @@ const toIndividualCenter = () => {
   router.push({
     name: 'personalCenter',
   });
-};
-
-const handleSwitchLocale = (locale: string) => {
-  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  const scriptId = 'jsonp-script';
-  const prevJsonpScript = document.getElementById(scriptId);
-  if (prevJsonpScript) {
-    document.body.removeChild(prevJsonpScript);
-  }
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = `${api}?language=${locale}`;
-  script.id = scriptId;
-  document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale as any;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  window.location.reload();
 };
 
 const toTenant = () => {
