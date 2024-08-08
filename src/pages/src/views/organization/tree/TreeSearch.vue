@@ -136,6 +136,7 @@ export default {
       // 实际返回的数据条数
       resultLength: 0,
       searchLoading: false,
+      searchInputIng: false,
       // 本次搜索的 id，过时的搜索不会触发行为
       searchId: 0,
       // debounce 变量
@@ -208,6 +209,7 @@ export default {
     },
     // 搜索 debounce
     debounceSearch() {
+      this.searchInputIng = true;
       clearTimeout(this.timer);
       if (!this.searchKey.trim().length) {
         this.closeSearch();
@@ -224,6 +226,7 @@ export default {
         const searchKey = this.searchKey.trim();
         this.searchLoading = true;
         const searchId = this.searchId;
+        this.searchInputIng = false;
         const res = await this.$store.dispatch('organization/getSearchResult', {
           searchKey: encodeURIComponent(searchKey),
           searchLength: this.searchLength,
@@ -366,7 +369,7 @@ export default {
       this.calculateScroll('end');
     },
     selectEnter() {
-      if (this.searchList.length === 0) return;
+      if (this.searchList.length === 0 || this.searchInputIng || this.searchLoading) return;
       let itemInfo = {};
       // 根据 groupType 和 activeIndex 找到搜索项
       for (let i = 0; i < this.searchList.length; i++) {
