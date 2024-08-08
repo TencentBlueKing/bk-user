@@ -31,7 +31,9 @@ def _read_file_content(file_path: str) -> str:
 
 def _get_change_log_file_name() -> str:
     """获取日志文件名称"""
-    if translation.get_language() == BkLanguageEnum.EN.value:
+
+    # 检查语言名前缀是否与 BkLanguageEnum.EN 匹配，如 en-us 则视为与 en 匹配
+    if translation.get_language().startswith(BkLanguageEnum.EN):
         return FILE_NAME_EN
     return FILE_NAME
 
