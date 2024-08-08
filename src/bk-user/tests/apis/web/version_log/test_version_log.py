@@ -19,7 +19,7 @@ class TestVersionLog:
         ("language"),
         [
             ("en"),
-            ("en-US"),
+            ("en-us"),
         ],
     )
     def test_valid_language_code_en(self, language):
