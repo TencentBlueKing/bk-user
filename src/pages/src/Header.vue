@@ -59,7 +59,7 @@
               :class="[{ 'active-item': $i18n.locale === 'zh-cn' }]"
               @click="handleSwitchLocale('zh-cn')">
               <i class="bk-sq-icon icon-yuyanqiehuanzhongwen" style="font-size: 14px;" />
-              {{ $t('中文') }}
+              中文
             </a>
             <a
               href="javascript:;"
