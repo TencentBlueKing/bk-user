@@ -426,7 +426,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 时间转换异常，说明非预期内 IAM 特殊查询数据（从大到小）
         try:
-            datetime_values = [datetime.datetime.strptime(v, "%Y-%m-%d %H:%M") for v in values]
+            datetime_values = [
+                datetime.datetime.strptime(v, "%Y-%m-%d %H:%M").replace(tzinfo=datetime.timezone.utc) for v in values
+            ]
         except Exception as error:
             raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy create_time values: {values}, error={error}")
 
