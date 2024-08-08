@@ -31,7 +31,7 @@ class TestVersionLog:
         [
             ("zh"),
             ("fr"),
-            ("zh-CN"),
+            ("zh-cn"),
         ],
     )
     def test_valid_language_code_zh(self, language):
