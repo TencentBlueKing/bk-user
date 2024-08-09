@@ -8,14 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
@@ -81,3 +84,33 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
         extras={"async_run": True, "overwrite": True},
     )
     return [success_task, failed_task, other_tenant_task]
+
+
+@pytest.fixture()
+def data_source_idp(random_tenant, local_ds_plugin_cfg) -> DataSource:
+    # FIXME (su) 使用 data_source 这个 fixture 其实可以不用 random_tenant，因为使用了 get_or_create
+    # 在移除默认租户的初始化 migration 中创建的 real 类型的数据源后，可以批量删除 random_tenant 逻辑
+    ds, _ = DataSource.objects.get_or_create(
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.REAL,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+        defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
+    )
+    Idp.objects.get_or_create(
+        name="local",
+        data_source_id=ds.id,
+        owner_tenant_id=random_tenant.id,
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+    )
+    idp_wecom, _ = Idp.objects.get_or_create(
+        name="wecom",
+        data_source_id=ds.id,
+        owner_tenant_id=random_tenant.id,
+        plugin_id=BuiltinIdpPluginEnum.WECOM,
+    )
+    IdpSensitiveInfo.objects.create(
+        idp=idp_wecom,
+        key="username",
+        value="password",
+    )
+    return ds

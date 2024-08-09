@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 
 import openpyxl
@@ -51,7 +52,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
 )
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -253,14 +254,20 @@ class DataSourceRetrieveUpdateDestroyApi(
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
             Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
-            # 其他认证源则禁用
-            Idp.objects.filter(**idp_filters).update(
-                status=IdpStatus.DISABLED,
-                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
-                updated_at=timezone.now(),
-                updater=request.user.username,
-            )
-
+            reset_idp_config = request.GET.get("reset_Idp_config")
+            if reset_idp_config == "True":
+                # 若选择同时清除登陆源，则同时删除SensitiveInfo中的数据，并删除其他登陆源
+                idp_instance = Idp.objects.filter(**idp_filters)
+                IdpSensitiveInfo.objects.filter(idp__in=idp_instance).delete()
+                idp_instance.delete()
+            else:
+                # 若不选择同时清除登陆源，则禁用其他登陆源
+                Idp.objects.filter(**idp_filters).update(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    updated_at=timezone.now(),
+                    updater=request.user.username,
+                )
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 

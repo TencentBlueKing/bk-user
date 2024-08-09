@@ -8,9 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from django.urls import reverse
@@ -343,6 +347,50 @@ class TestDataSourceDestroyApi:
         assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+
+    def test_destroy_with_config(self, api_client, data_source_idp):
+        data_source = data_source_idp
+        idp = Idp.objects.filter(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id)
+        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
+        resp = api_client.delete(f"{url}?reset_Idp_config=True")
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+        assert not Idp.objects.filter(
+            data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
+        ).exists()
+        assert not IdpSensitiveInfo.objects.filter(idp__in=idp).exists()
+
+    def test_destroy_with_not_config(self, api_client, data_source_idp):
+        data_source = data_source_idp
+        idp = Idp.objects.filter(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id).exclude(
+            plugin_id=BuiltinIdpPluginEnum.LOCAL
+        )
+        idp_sensitive_count = IdpSensitiveInfo.objects.filter(idp__in=idp).count()
+
+        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
+
+        resp = api_client.delete(f"{url}?reset_Idp_config=False")
+        idp = Idp.objects.filter(
+            data_source_id=INVALID_REAL_DATA_SOURCE_ID, owner_tenant_id=data_source.owner_tenant_id
+        ).exclude(plugin_id=BuiltinIdpPluginEnum.LOCAL)
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+        assert not Idp.objects.filter(
+            data_source_id=data_source.id,
+            owner_tenant_id=data_source.owner_tenant_id,
+            plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        ).exists()
+        assert idp.exists()
+        assert idp_sensitive_count == IdpSensitiveInfo.objects.filter(idp__in=idp).count()
 
 
 class TestDataSourceRelatedResourceStatsApi:
