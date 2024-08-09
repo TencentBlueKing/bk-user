@@ -554,7 +554,7 @@ export default {
   可还原: 'Reducible',
   '由 admin 在 [回收策略设置] 中统一配置': 'This parameter is centrally configured by admin in Recycle Policy Settings',
   暂不支持该操作: 'This operation is not supported',
-  回收策略: 'Recycle Strategy',
+  回收策略: 'Recycle Policy',
   回收策略设置: 'Recycle Policy Setting',
   回收站数据保留天数: 'Number of days to retain data in the recycle bin',
   重置: 'Reset',
