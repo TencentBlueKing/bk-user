@@ -1,6 +1,7 @@
 apigateway:
   description: "蓝鲸用户管理 API"
-  is_public: true
+  description_en: "User Management API"
+  is_public: false
   maintainers:
     - "admin"
 

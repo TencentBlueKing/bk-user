@@ -329,7 +329,7 @@ msgid "重新登录"
 msgstr ""
 
 #: bklogin/templates/login.html:11
-msgid "登录 | 腾讯蓝鲸智云"
+msgid "登录 | 蓝鲸智云"
 msgstr ""
 
 #: bklogin/templates/login.html:41

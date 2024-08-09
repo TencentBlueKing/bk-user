@@ -60,8 +60,8 @@ msgid "users"
 msgstr "users"
 
 #: bkuser_shell/common/context_processors.py:27
-msgid "用户管理 | 腾讯蓝鲸智云"
-msgstr "用户管理 | 腾讯蓝鲸智云"
+msgid "用户管理 | 蓝鲸智云"
+msgstr "用户管理 | 蓝鲸智云"
 
 #: bkuser_shell/common/error_codes.py:135
 msgid "无法找到页面模版"
