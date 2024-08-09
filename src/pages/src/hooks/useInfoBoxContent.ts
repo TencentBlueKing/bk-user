@@ -1,9 +1,15 @@
-import { h } from 'vue';
+import { Checkbox } from 'bkui-vue';
+import { h, ref } from 'vue';
 
 import { t } from '@/language/index';
 
 // 重置数据源、删除租户前的确认信息
 export const useInfoBoxContent = (data: any, type: string) => {
+  const resetIdpConfig = ref(false);
+
+  function updateMessage(data) {
+    resetIdpConfig.value = data;
+  }
   const subContent = h('div', {
     style: {
       textAlign: 'left',
@@ -71,7 +77,14 @@ export const useInfoBoxContent = (data: any, type: string) => {
         h('span', t('个用户。')),
       ]),
     ]),
+    type === 'tenant' ? null : h(Checkbox, {
+      style: {
+        marginTop: '14px',
+      },
+      value: resetIdpConfig.value,
+      onChange: updateMessage,
+    }, t('同时清除登录配置')),
   ]);
 
-  return { subContent };
+  return { subContent, resetIdpConfig };
 };
