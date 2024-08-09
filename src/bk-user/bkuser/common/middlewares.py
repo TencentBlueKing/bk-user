@@ -8,6 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+import pytz
+from django.utils import timezone
+
 from .local import local
 
 
@@ -29,3 +33,17 @@ class RequestProvider:
         local.release()
 
         return response
+
+
+class TimeZoneMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # 如果时区非空，则激活当前时区。如果时区为空，则使用默认时区
+        if request.user and request.user.is_authenticated and (tzname := request.user.get_property("time_zone")):
+            timezone.activate(pytz.timezone(tzname))
+        else:
+            timezone.deactivate()
+
+        return self.get_response(request)

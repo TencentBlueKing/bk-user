@@ -73,6 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
+    "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
