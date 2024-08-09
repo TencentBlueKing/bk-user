@@ -703,8 +703,8 @@ msgid "重新登录"
 msgstr "Login again"
 
 #: bklogin/templates/login.html:11
-msgid "登录 | 腾讯蓝鲸智云"
-msgstr "Login|BlueKing"
+msgid "登录 | 蓝鲸智云"
+msgstr "Login | Tencent BlueKing"
 
 #: bklogin/templates/login.html:41
 msgid "img/logo/logo_ch.png"
