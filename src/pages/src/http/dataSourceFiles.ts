@@ -121,7 +121,7 @@ export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/
 /**
  * 重置数据源
  */
-export const deleteDataSources = (id: string) => http.delete(`/api/v1/web/data-sources/${id}/`);
+export const deleteDataSources = (id: string, param: any) => http.delete(`/api/v1/web/data-sources/${id}/`, param);
 
 /**
  * 数据源关联资源信息

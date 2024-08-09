@@ -68,6 +68,7 @@ const tableListRef = ref()
 const getList = async () => {
   isLoading.value = true;
   const tenantData = await getCurrentTenant();
+  appStore.currentTenant = tenantData?.data;
   const collaborationData = await getCollaboration();
   const deptData = await getDepartmentsList(0, tenantData?.data?.id);
   isLoading.value = false;

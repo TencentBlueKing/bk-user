@@ -154,7 +154,16 @@
           {{ $t('忘记密码？') }}
         </span>
       </div>
-
+      <div class="language-switcher">
+        <div class="language-select" style="display: flex">
+          <p class="language-item" :class="{ active: activeTab === 'zh-cn' }"  @click="handleSwitchLocale('zh-cn')"> 
+            <span id="ch" class="text-active ">中文</span>
+          </p>
+          <p class="language-item " :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
+            <span id="en" class="text-active">English</span>
+          </p>
+        </div>
+      </div>
     </section>
     <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
   </bk-form>
@@ -175,9 +184,13 @@ import Protocol from './components/protocol.vue';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
+import I18n, { t } from '@/language/index';
+import Cookies from 'js-cookie';
 
 const  platformConfigData = platformConfig()
 const appLogo = computed(() => platformConfigData.appLogo);
+const activeTab = ref(I18n.global.locale.value)
+
 
 interface Item {
   id: string;
@@ -469,6 +482,31 @@ const showOptions = computed(() => {
   inputTenant.value?.name && selectRef.value?.showPopover()
   return options
 })
+
+// 语言切换
+const handleSwitchLocale = (locale: string) => {
+  activeTab.value = locale
+  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  const scriptId = 'jsonp-script';
+  const prevJsonpScript = document.getElementById(scriptId);
+  if (prevJsonpScript) {
+    document.body.removeChild(prevJsonpScript);
+  }
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = `${api}?language=${locale}`;
+  script.id = scriptId;
+  document.body.appendChild(script);
+
+  Cookies.set('blueking_language', locale, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  I18n.global.locale.value = locale as any;
+  document.querySelector('html')?.setAttribute('lang', locale);
+  // window.location.reload();
+};
 </script>
 
 <style lang="postcss" scoped>
@@ -713,5 +751,38 @@ const showOptions = computed(() => {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+}
+
+.language-item {
+  width: 70px;
+  text-align: center;
+  background: #f5f7fa;
+  transform: skew(-15deg, 0deg);
+  display: inline-block;
+  height: 24px;
+  cursor: pointer;
+  .text-active {
+    display: block;
+    width: 70px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    transform: skew(15deg, 0deg);
+}
+}
+.language-switcher {
+  display: flex;
+  border-radius: 2px;
+  height: 24px;
+  line-height: 24px;
+  justify-content: end;
+  text-align: right;
+  margin-top: 23px;
+}
+.active {
+  background: #e1ecff;
+  .text-active {
+    color: #3a84ff;
+  }
 }
 </style>

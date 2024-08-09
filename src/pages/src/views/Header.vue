@@ -131,7 +131,6 @@
 
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
-import Cookies from 'js-cookie';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -144,7 +143,7 @@ import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { getTenantInfo, getVersionLogs } from '@/http';
-import I18n, { t } from '@/language/index';
+import { t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
