@@ -8,14 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
@@ -31,6 +34,23 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         type=DataSourceTypeEnum.REAL,
         plugin_id=DataSourcePluginEnum.LOCAL,
         defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
+    )
+    Idp.objects.get_or_create(
+        name="local",
+        data_source_id=ds.id,
+        owner_tenant_id=ds.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+    )
+    wecom_idp, _ = Idp.objects.get_or_create(
+        name="wecom",
+        data_source_id=ds.id,
+        owner_tenant_id=ds.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.WECOM,
+    )
+    IdpSensitiveInfo.objects.create(
+        idp=wecom_idp,
+        key="username",
+        value="password",
     )
     return ds
 
