@@ -9,14 +9,17 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from urllib.parse import urlencode
+
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
+from django.db.models import Q
 from django.urls import reverse
 from rest_framework import status
 
@@ -340,43 +343,17 @@ class TestDataSourceRetrieveApi:
 
 class TestDataSourceDestroyApi:
     def test_destroy(self, api_client, data_source):
-        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
-
-    def test_destroy_with_config(self, api_client, data_source_idp):
-        data_source = data_source_idp
-        idp = Idp.objects.filter(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id)
-        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
-        resp = api_client.delete(f"{url}?reset_Idp_config=True")
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
-        assert not Idp.objects.filter(
+        # 判断删除前后，本地认证源是否被删除；对于非本地认证源在表中的数据数量是否发生变化，若有变化，则说明删除失败
+        wecom_idps = Idp.objects.filter(
             data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
-        ).exists()
-        assert not IdpSensitiveInfo.objects.filter(idp__in=idp).exists()
-
-    def test_destroy_with_not_config(self, api_client, data_source_idp):
-        data_source = data_source_idp
-        idp = Idp.objects.filter(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id).exclude(
-            plugin_id=BuiltinIdpPluginEnum.LOCAL
-        )
-        idp_sensitive_count = IdpSensitiveInfo.objects.filter(idp__in=idp).count()
-
-        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
-
-        resp = api_client.delete(f"{url}?reset_Idp_config=False")
-        idp = Idp.objects.filter(
-            data_source_id=INVALID_REAL_DATA_SOURCE_ID, owner_tenant_id=data_source.owner_tenant_id
         ).exclude(plugin_id=BuiltinIdpPluginEnum.LOCAL)
+        wecom_idps_count = wecom_idps.count()
+        idp_sensitive_count = IdpSensitiveInfo.objects.filter(idp__in=wecom_idps).count()
+
+        resp = api_client.delete(
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
+            QUERY_STRING=urlencode({"reset_idp_config": False}, doseq=True),
+        )
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -389,8 +366,46 @@ class TestDataSourceDestroyApi:
             owner_tenant_id=data_source.owner_tenant_id,
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
         ).exists()
-        assert idp.exists()
-        assert idp_sensitive_count == IdpSensitiveInfo.objects.filter(idp__in=idp).count()
+        assert (
+            Idp.objects.filter(
+                status=IdpStatus.DISABLED,
+                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                owner_tenant_id=data_source.owner_tenant_id,
+            ).count()
+            == wecom_idps_count
+        )
+        assert (
+            IdpSensitiveInfo.objects.filter(
+                idp__in=Idp.objects.filter(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    owner_tenant_id=data_source.owner_tenant_id,
+                )
+            ).count()
+            == idp_sensitive_count
+        )
+
+    def test_destroy_with_reset_idp_config(self, api_client, data_source):
+        # 反过来计算不应该被删除的 Idp 数据的数量，若删除后的 IdpSensitiveInfo 数据总数与此数量不一致，则说明删除失败
+        idps = Idp.objects.exclude(
+            Q(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id)
+            | Q(plugin_id=BuiltinIdpPluginEnum.LOCAL)
+        )
+        idps_count = idps.count()
+        resp = api_client.delete(
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
+            QUERY_STRING=urlencode({"reset_idp_config": True}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+        assert not Idp.objects.filter(
+            data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
+        ).exists()
+        assert IdpSensitiveInfo.objects.all().count() == idps_count
 
 
 class TestDataSourceRelatedResourceStatsApi:

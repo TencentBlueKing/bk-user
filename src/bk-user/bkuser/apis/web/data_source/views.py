@@ -254,14 +254,14 @@ class DataSourceRetrieveUpdateDestroyApi(
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
             Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
-            reset_idp_config = request.GET.get("reset_Idp_config")
+            reset_idp_config = request.query_params.get("reset_idp_config")
             if reset_idp_config == "True":
-                # 若选择同时清除登陆源，则同时删除SensitiveInfo中的数据，并删除其他登陆源
-                idp_instance = Idp.objects.filter(**idp_filters)
-                IdpSensitiveInfo.objects.filter(idp__in=idp_instance).delete()
-                idp_instance.delete()
+                # 若选择同时清除认证源，则同时删除 SensitiveInfo 中的数据，并删除其他认证源
+                waiting_delete_idps = Idp.objects.filter(**idp_filters)
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                waiting_delete_idps.delete()
             else:
-                # 若不选择同时清除登陆源，则禁用其他登陆源
+                # 若不选择同时清除认证源，则禁用其他认证源
                 Idp.objects.filter(**idp_filters).update(
                     status=IdpStatus.DISABLED,
                     data_source_id=INVALID_REAL_DATA_SOURCE_ID,
