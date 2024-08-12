@@ -14,19 +14,23 @@
     </div>
     <bk-tree
       :data="treeData"
-      :expand-all="true"
       label="name"
       node-key="id"
       children="children"
       :prefix-icon="getPrefixIcon"
+      :async="{
+        callback: getRemoteData,
+        cache: true,
+      }"
     >
     </bk-tree>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
+import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
 
 const appStore = useAppStore();
@@ -34,7 +38,7 @@ const appStore = useAppStore();
 /**
  * 根据organization_path转化为树结构
  */
-const treeData = computed(() => {
+const getData =  (isChildren) => {
   const orgs = appStore.currentOrg.organization_path || '';
   let root = null;
   let currentParent = null;
@@ -43,6 +47,8 @@ const treeData = computed(() => {
       id: appStore.currentOrg.name === item ? appStore.currentOrg.id : item,
       name: item,
       children: [],
+      async: isChildren,
+      isOpen: appStore.currentOrg.name !== item,
     };
     if (!root) {
       root = node;
@@ -52,7 +58,21 @@ const treeData = computed(() => {
     currentParent = node;
   });
   return [root];
+};
+
+const treeData = ref([]);
+
+watch(() => appStore.currentOrg.organization_path, async () => {
+  const { data = [] } = await getDepartmentsList(appStore.currentOrg.id, appStore.currentOrg.tenant_id);
+  treeData.value = getData(Boolean(data?.length));
 });
+
+const formatTreeData = (data = []) => data.map(item => ({ ...item, async: item.has_children }));
+
+const getRemoteData = async (item: IOrg) => {
+  const res = await getDepartmentsList(item.id, appStore.currentTenant.id);
+  return formatTreeData(res?.data);
+};
 
 const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
   if (renderType === 'node_action') {
