@@ -184,7 +184,8 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { reactive, ref, onMounted,  onBeforeUnmount} from 'vue';
+import { onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import HttpDetails from './HttpDetails.vue';
 
@@ -197,7 +198,6 @@ import { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
-import { useRoute } from 'vue-router';
 const route = useRoute();
 
 const userStore = useUser();
@@ -212,14 +212,16 @@ const {
   handleClick,
   importDialog,
   handleOperationsSync,
-  stopPolling
+  stopPolling,
 } = useDataSource();
 
 // 重置数据源
 const handleReset = async () => {
   try {
     const res = await getRelatedResource(dataSource.value?.id);
-    const { subContent } = useInfoBoxContent(res.data, '');
+    const { subContent, resetIdpConfig } = useInfoBoxContent(res.data, '');
+
+
     InfoBox({
       width: 600,
       infoType: 'warning',
@@ -228,8 +230,9 @@ const handleReset = async () => {
       confirmText: t('重置'),
       theme: 'danger',
       onConfirm: () => {
+        const resetConfig = resetIdpConfig.value ? 'True' : 'False';
         if (dataSource.value?.id) {
-          deleteDataSources(dataSource.value.id).then(() => {
+          deleteDataSources(dataSource.value.id, { reset_idp_config: resetConfig }).then(() => {
             Message({ theme: 'success', message: t('数据源重置成功') });
             initDataSourceList();
           });
@@ -372,7 +375,7 @@ onMounted(() => {
   if (route.query?.isLink) {
     handleImport();
   }
-})
+});
 
 onBeforeUnmount(() => {
   stopPolling();
