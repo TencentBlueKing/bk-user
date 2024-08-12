@@ -44,7 +44,7 @@ class TenantUserSyncer:
         waiting_delete_tenant_users = exists_tenant_users.exclude(data_source_user__in=data_source_users)
 
         # 记录删除日志，变更记录
-        self.ctx.logger.info(f"delete {len(waiting_delete_tenant_users)} tenant users")  # noqa: G004
+        self.ctx.logger.info(f"delete {len(waiting_delete_tenant_users)} tenant users")
         self.ctx.recorder.add(SyncOperation.DELETE, TenantSyncObjectType.USER, waiting_delete_tenant_users)
 
         # 数据源中存在，但是租户中不存在的，需要创建
@@ -68,7 +68,7 @@ class TenantUserSyncer:
             TenantUser.objects.bulk_create(waiting_create_tenant_users, batch_size=self.batch_size)
 
         # 记录创建日志，变更记录
-        self.ctx.logger.info(f"create {len(waiting_create_tenant_users)} tenant users")  # noqa: G004
+        self.ctx.logger.info(f"create {len(waiting_create_tenant_users)} tenant users")
         self.ctx.recorder.add(SyncOperation.CREATE, TenantSyncObjectType.USER, waiting_create_tenant_users)
 
     def _get_user_account_expired_at(self) -> datetime.datetime:

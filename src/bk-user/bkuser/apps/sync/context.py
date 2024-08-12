@@ -8,6 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G003, G004
 import io
 import logging
 import traceback
@@ -107,7 +110,7 @@ class DataSourceSyncTaskContext:
             self.task.id,
             self.task.data_source_id,
         )
-        self.logger.info(f"sync task started, task_id is {self.task.id}...")  # noqa: G004
+        self.logger.info(f"sync task started, task_id is {self.task.id}...")
         self._update_task(SyncTaskStatus.RUNNING)
         return self
 
@@ -121,8 +124,8 @@ class DataSourceSyncTaskContext:
 
         # 同步过程中出现异常，需要记录日志，并抛出 DataSourceSyncError
         self.logger.error(
-            "sync task failed! All data modifications in this sync will be rollback.\n\n"  # noqa: G004
-            f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
+            "sync task failed! All data modifications in this sync will be rollback.\n\n"
+            + f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
         self._update_task(SyncTaskStatus.FAILED)
         self._store_logs_into_db()
@@ -240,7 +243,7 @@ class TenantSyncTaskContext:
             self.task.data_source_id,
             self.task.tenant_id,
         )
-        self.logger.info(f"sync task started, task_id is {self.task.id}...")  # noqa: G004
+        self.logger.info(f"sync task started, task_id is {self.task.id}...")
         self._update_task(SyncTaskStatus.RUNNING)
         return self
 
@@ -254,8 +257,8 @@ class TenantSyncTaskContext:
 
         # 同步过程中出现异常，需要记录日志，并抛出 TenantSyncError
         self.logger.error(
-            "sync task failed! All data modifications in this sync will be rollback.\n\n"  # noqa: G004
-            f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
+            "sync task failed! All data modifications in this sync will be rollback.\n\n"
+            + f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
         self._update_task(SyncTaskStatus.FAILED)
         self._store_logs_into_db()

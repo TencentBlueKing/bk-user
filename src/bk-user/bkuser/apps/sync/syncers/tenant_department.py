@@ -59,10 +59,10 @@ class TenantDepartmentSyncer:
 
         # 记录删除日志，变更记录
         waiting_delete_cnt = len(waiting_delete_tenant_departments)
-        self.ctx.logger.info(f"delete {waiting_delete_cnt} tenant departments")  # noqa: G004
+        self.ctx.logger.info(f"delete {waiting_delete_cnt} tenant departments")
         self.ctx.recorder.add(SyncOperation.DELETE, TenantSyncObjectType.DEPARTMENT, waiting_delete_tenant_departments)
 
         # 记录创建日志，变更记录
         waiting_create_cnt = len(waiting_create_tenant_departments)
-        self.ctx.logger.info(f"create {waiting_create_cnt} tenant departments")  # noqa: G004
+        self.ctx.logger.info(f"create {waiting_create_cnt} tenant departments")
         self.ctx.recorder.add(SyncOperation.CREATE, TenantSyncObjectType.DEPARTMENT, waiting_create_tenant_departments)
