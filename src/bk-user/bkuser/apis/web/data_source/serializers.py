@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Any, Dict, List
 
@@ -358,3 +359,7 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
+
+
+class DataSourceDestroyInputSLZ(serializers.Serializer):
+    is_delete_idp = serializers.BooleanField(help_text="是否同时删除 Idp 相关数据")

@@ -19,7 +19,6 @@ from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
-from django.db.models import Q
 from django.urls import reverse
 from rest_framework import status
 
@@ -342,17 +341,10 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    def test_destroy(self, api_client, data_source):
-        # 判断删除前后，本地认证源是否被删除；对于非本地认证源在表中的数据数量是否发生变化，若有变化，则说明删除失败
-        wecom_idps = Idp.objects.filter(
-            data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
-        ).exclude(plugin_id=BuiltinIdpPluginEnum.LOCAL)
-        wecom_idps_count = wecom_idps.count()
-        idp_sensitive_count = IdpSensitiveInfo.objects.filter(idp__in=wecom_idps).count()
-
+    def test_destroy(self, api_client, data_source, idps, idp_sensitive_info):
         resp = api_client.delete(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            QUERY_STRING=urlencode({"reset_idp_config": False}, doseq=True),
+            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
         )
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -366,14 +358,11 @@ class TestDataSourceDestroyApi:
             owner_tenant_id=data_source.owner_tenant_id,
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
         ).exists()
-        assert (
-            Idp.objects.filter(
-                status=IdpStatus.DISABLED,
-                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
-                owner_tenant_id=data_source.owner_tenant_id,
-            ).count()
-            == wecom_idps_count
-        )
+        assert Idp.objects.filter(
+            status=IdpStatus.DISABLED,
+            data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+            owner_tenant_id=data_source.owner_tenant_id,
+        ).exists()
         assert (
             IdpSensitiveInfo.objects.filter(
                 idp__in=Idp.objects.filter(
@@ -382,19 +371,13 @@ class TestDataSourceDestroyApi:
                     owner_tenant_id=data_source.owner_tenant_id,
                 )
             ).count()
-            == idp_sensitive_count
+            == 2  # noqa: PLR2004
         )
 
-    def test_destroy_with_reset_idp_config(self, api_client, data_source):
-        # 反过来计算不应该被删除的 Idp 数据的数量，若删除后的 IdpSensitiveInfo 数据总数与此数量不一致，则说明删除失败
-        idps = Idp.objects.exclude(
-            Q(data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id)
-            | Q(plugin_id=BuiltinIdpPluginEnum.LOCAL)
-        )
-        idps_count = idps.count()
+    def test_destroy_with_reset_idp_config(self, api_client, data_source, idps, idp_sensitive_info):
         resp = api_client.delete(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            QUERY_STRING=urlencode({"reset_idp_config": True}, doseq=True),
+            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -405,7 +388,7 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(
             data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
         ).exists()
-        assert IdpSensitiveInfo.objects.all().count() == idps_count
+        assert not IdpSensitiveInfo.objects.filter(idp_id=idps[1].id).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:

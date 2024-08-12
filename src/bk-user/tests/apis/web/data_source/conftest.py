@@ -35,24 +35,40 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         plugin_id=DataSourcePluginEnum.LOCAL,
         defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
     )
-    Idp.objects.get_or_create(
+    return ds
+
+
+@pytest.fixture()
+def idps(data_source) -> List[Idp]:
+    local_idp, _ = Idp.objects.get_or_create(
         name="local",
-        data_source_id=ds.id,
-        owner_tenant_id=ds.owner_tenant_id,
+        data_source_id=data_source.id,
+        owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
     )
     wecom_idp, _ = Idp.objects.get_or_create(
         name="wecom",
-        data_source_id=ds.id,
-        owner_tenant_id=ds.owner_tenant_id,
+        data_source_id=data_source.id,
+        owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
     )
-    IdpSensitiveInfo.objects.create(
-        idp=wecom_idp,
-        key="username",
-        value="password",
-    )
-    return ds
+    return [local_idp, wecom_idp]
+
+
+@pytest.fixture()
+def idp_sensitive_info(idps) -> List[IdpSensitiveInfo]:
+    return [
+        IdpSensitiveInfo.objects.create(
+            idp=idps[1],
+            key="username1",
+            value="password1",
+        ),
+        IdpSensitiveInfo.objects.create(
+            idp=idps[1],
+            key="username2",
+            value="password2",
+        ),
+    ]
 
 
 @pytest.fixture()

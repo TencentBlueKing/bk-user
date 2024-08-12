@@ -25,6 +25,7 @@ from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
+    DataSourceDestroyInputSLZ,
     DataSourceImportOrSyncOutputSLZ,
     DataSourceListInputSLZ,
     DataSourceListOutputSLZ,
@@ -253,15 +254,18 @@ class DataSourceRetrieveUpdateDestroyApi(
         with transaction.atomic():
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
-            Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
-            reset_idp_config = request.query_params.get("reset_idp_config")
-            if reset_idp_config == "True":
+            slz = DataSourceDestroyInputSLZ(data=request.query_params)
+            slz.is_valid(raise_exception=True)
+            is_delete_idp = slz.validated_data["is_delete_idp"]
+            if is_delete_idp:
                 # 若选择同时清除认证源，则同时删除 SensitiveInfo 中的数据，并删除其他认证源
                 waiting_delete_idps = Idp.objects.filter(**idp_filters)
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
                 waiting_delete_idps.delete()
             else:
                 # 若不选择同时清除认证源，则禁用其他认证源
+                Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL).delete()
+                DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
                 Idp.objects.filter(**idp_filters).update(
                     status=IdpStatus.DISABLED,
                     data_source_id=INVALID_REAL_DATA_SOURCE_ID,
