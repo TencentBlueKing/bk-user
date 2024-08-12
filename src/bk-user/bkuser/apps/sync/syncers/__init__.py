@@ -9,7 +9,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from .data_source_department import DataSourceDepartmentSyncer
+from .data_source_department import (
+    DataSourceDepartmentRelationSyncer,
+    DataSourceDepartmentSyncer,
+)
 from .data_source_user import (
     DataSourceUserDeptRelationSyncer,
     DataSourceUserLeaderRelationSyncer,
@@ -20,6 +23,7 @@ from .tenant_user import TenantUserSyncer
 
 __all__ = [
     "DataSourceDepartmentSyncer",
+    "DataSourceDepartmentRelationSyncer",
     "DataSourceUserSyncer",
     "DataSourceUserLeaderRelationSyncer",
     "DataSourceUserDeptRelationSyncer",

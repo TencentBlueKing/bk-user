@@ -19,11 +19,12 @@ from bkuser.apps.sync.context import DataSourceSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.signals import post_sync_data_source
 from bkuser.apps.sync.syncers import (
+    DataSourceDepartmentRelationSyncer,
     DataSourceDepartmentSyncer,
+    DataSourceUserDeptRelationSyncer,
     DataSourceUserLeaderRelationSyncer,
     DataSourceUserSyncer,
 )
-from bkuser.apps.sync.syncers.data_source_department import DataSourceDepartmentRelationSyncer
 from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
@@ -102,7 +103,7 @@ class DataSourceSyncTaskRunner:
         }
         DataSourceUserSyncer(**kwargs).sync()  # type: ignore
         DataSourceUserLeaderRelationSyncer(**kwargs).sync()  # type: ignore
-        DataSourceDepartmentRelationSyncer(**kwargs).sync()  # type: ignore
+        DataSourceUserDeptRelationSyncer(**kwargs).sync()  # type: ignore
 
         ctx.logger.info("succeed to sync users and their leader & dept relations from data source plugin")
 
