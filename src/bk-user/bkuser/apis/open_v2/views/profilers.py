@@ -372,7 +372,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         if lookup_field not in lookup_field_map:
             raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
-        return lookup_field_map[lookup_field]
+        return lookup_field_map[lookup_field] if is_exact else f"{lookup_field_map[lookup_field]}__icontains"
 
     @staticmethod
     def _convert_status_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
