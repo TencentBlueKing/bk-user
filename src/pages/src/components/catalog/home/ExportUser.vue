@@ -306,28 +306,32 @@ export default {
         this.clearSearchKey();
         return;
       }
-      try {
-        this.basicLoading = true;
-        const res = await this.$store.dispatch('organization/searchDataByCategory', {
-          id: this.id,
-          keyword,
-          withAncestors: true,
-          searchLength: this.searchLength,
-        });
-        const originList = res.data.results;
-        if (!originList.length) {
-          this.messageWarn(this.$t('没有找到相关的结果'));
-          return;
+      // 在使用原生输入法，且输入中文，点击回车时，拼音之间的会有'符号隔开，如q'w，故使用定时器才能获取到准确的qw
+      const timeOuter = setTimeout(async () => {
+        try {
+          this.basicLoading = true;
+          const res = await this.$store.dispatch('organization/searchDataByCategory', {
+            id: this.id,
+            keyword: this.searchKey.trim(),
+            withAncestors: true,
+            searchLength: this.searchLength,
+          });
+          const originList = res.data.results;
+          if (!originList.length) {
+            this.messageWarn(this.$t('没有找到相关的结果'));
+            return;
+          }
+          originList.forEach(item => this.filterSearch(item));
+          this.searchList = originList;
+        } catch (e) {
+          console.warn(e);
+        } finally {
+          this.searchStatus = true;
+          this.basicLoading = false;
+          this.selectedIndex = null;
         }
-        originList.forEach(item => this.filterSearch(item));
-        this.searchList = originList;
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        this.searchStatus = true;
-        this.basicLoading = false;
-        this.selectedIndex = null;
-      }
+        clearTimeout(timeOuter);
+      }, 100);
     },
     filterSearch(item) {
       item.isChecked = false;

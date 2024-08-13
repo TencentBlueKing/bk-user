@@ -1199,6 +1199,7 @@ export default {
                 theme: 'success',
               });
             }
+            this.paginationConfig.current = 1;
             this.getTableData();
           } catch (e) {
             console.warn(e);
@@ -1237,6 +1238,7 @@ export default {
               this.basicLoading = false;
               this.$refs.searchChild.closeSearch();
             } else {
+              this.paginationConfig.current = 1;
               this.getTableData();
             }
           })
