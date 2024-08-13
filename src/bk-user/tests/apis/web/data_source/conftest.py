@@ -54,7 +54,7 @@ def local_idp(data_source) -> Idp:
 
 
 @pytest.fixture()
-def wecom_idp(data_source, wecom_plugin_cfg) -> Idp:
+def wecom_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="wecom",
         data_source_id=data_source.id,
