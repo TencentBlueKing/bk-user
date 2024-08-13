@@ -16,7 +16,6 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOp
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
-from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from django.urls import reverse
@@ -341,40 +340,45 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    def test_destroy(self, api_client, data_source, idps, idp_sensitive_info):
+    def test_destroy(self, api_client, data_source, local_idp, wecom_idp, idp_sensitive_info):
         resp = api_client.delete(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
         )
-
+        updated_wecom_idp = Idp.objects.get(id=wecom_idp.id)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         assert not DataSource.objects.filter(id=data_source.id).exists()
         assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
-        assert not Idp.objects.filter(
-            data_source_id=data_source.id,
-            owner_tenant_id=data_source.owner_tenant_id,
-            plugin_id=BuiltinIdpPluginEnum.LOCAL,
-        ).exists()
-        assert Idp.objects.filter(
-            status=IdpStatus.DISABLED,
-            data_source_id=INVALID_REAL_DATA_SOURCE_ID,
-            owner_tenant_id=data_source.owner_tenant_id,
-        ).exists()
-        assert (
-            IdpSensitiveInfo.objects.filter(
-                idp__in=Idp.objects.filter(
-                    status=IdpStatus.DISABLED,
-                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
-                    owner_tenant_id=data_source.owner_tenant_id,
-                )
-            ).count()
-            == 2  # noqa: PLR2004
-        )
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        assert updated_wecom_idp.status == IdpStatus.DISABLED
+        assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
+        assert IdpSensitiveInfo.objects.filter(id=idp_sensitive_info.id).exists()
 
-    def test_destroy_with_reset_idp_config(self, api_client, data_source, idps, idp_sensitive_info):
+        # assert not Idp.objects.filter(
+        #     data_source_id=data_source.id,
+        #     owner_tenant_id=data_source.owner_tenant_id,
+        #     plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        # ).exists()
+        # assert Idp.objects.filter(
+        #     status=IdpStatus.DISABLED,
+        #     data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+        #     owner_tenant_id=data_source.owner_tenant_id,
+        # ).exists()
+        # assert (
+        #     IdpSensitiveInfo.objects.filter(
+        #         idp__in=Idp.objects.filter(
+        #             status=IdpStatus.DISABLED,
+        #             data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+        #             owner_tenant_id=data_source.owner_tenant_id,
+        #         )
+        #     ).count()
+        #     == 2  # noqa: PLR2004
+        # )
+
+    def test_destroy_with_reset_idp_config(self, api_client, data_source, local_idp, wecom_idp, idp_sensitive_info):
         resp = api_client.delete(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
@@ -385,10 +389,9 @@ class TestDataSourceDestroyApi:
         assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
-        assert not Idp.objects.filter(
-            data_source_id=data_source.id, owner_tenant_id=data_source.owner_tenant_id
-        ).exists()
-        assert not IdpSensitiveInfo.objects.filter(idp_id=idps[1].id).exists()
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        assert not Idp.objects.filter(id=wecom_idp.id).exists()
+        assert not IdpSensitiveInfo.objects.filter(id=idp_sensitive_info.id).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:

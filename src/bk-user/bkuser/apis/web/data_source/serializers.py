@@ -362,4 +362,4 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):
-    is_delete_idp = serializers.BooleanField(help_text="是否同时删除 Idp 相关数据")
+    is_delete_idp = serializers.BooleanField(help_text="重置数据源时是否同时删除 Idp 相关配置", default=False)
