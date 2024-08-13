@@ -258,14 +258,13 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         with transaction.atomic():
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
-            # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
             if is_delete_idp:
-                # 若选择同时清除认证源，则同时删除 SensitiveInfo 中的数据，并删除其他认证源
+                # 若选择同时删除认证源，则同时删除 IdpSensitiveInfo 中的数据
                 waiting_delete_idps = Idp.objects.filter(**idp_filters)
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
                 waiting_delete_idps.delete()
             else:
-                # 若不选择同时清除认证源，则禁用其他认证源
+                # 若不选择同时删除认证源，则禁用其他认证源。对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
                 waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
                 waiting_delete_idps.delete()
