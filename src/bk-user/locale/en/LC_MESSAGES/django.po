@@ -387,10 +387,8 @@ msgid "不能在批量操作中修改设置了唯一性的字段 {}"
 msgstr "Cannot modify field {} that is set to be unique in batch operations"
 
 #: bkuser/apis/web/organization/serializers/users.py:697
-#, fuzzy
-#| msgid "不能在批量操作中修改设置了唯一性的字段 {}"
 msgid "不能在批量操作中修改管理员不可编辑的字段 {}"
-msgstr "Cannot modify field {} that is set to be unique in batch operations"
+msgstr "Cannot modify field {} that is set to be uneditable in batch operations"
 
 #: bkuser/apis/web/organization/views/departments.py:161
 msgid "仅可创建属于当前租户的部门"
