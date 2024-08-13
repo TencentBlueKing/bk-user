@@ -70,7 +70,9 @@ def wecom_idp(data_source, wecom_plugin_cfg) -> Idp:
         data_source_id=data_source.id,
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
-        plugin_config=WecomIdpPluginConfig(**wecom_plugin_cfg),
+        plugin_config=WecomIdpPluginConfig(
+            corp_id=generate_random_string(), agent_id=generate_random_string(), secret=generate_random_string()
+        ),
     )
 
 
