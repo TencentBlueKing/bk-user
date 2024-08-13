@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 
 import openpyxl
@@ -24,6 +25,7 @@ from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
+    DataSourceDestroyInputSLZ,
     DataSourceImportOrSyncOutputSLZ,
     DataSourceListInputSLZ,
     DataSourceListOutputSLZ,
@@ -51,7 +53,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
 )
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -238,6 +240,7 @@ class DataSourceRetrieveUpdateDestroyApi(
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="重置数据源",
+        query_serializer=DataSourceDestroyInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
@@ -246,21 +249,33 @@ class DataSourceRetrieveUpdateDestroyApi(
         if not data_source.is_real_type:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅可重置实体类型数据源"))
 
+        slz = DataSourceDestroyInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        is_delete_idp = slz.validated_data["is_delete_idp"]
+
         # TODO (su) 支持操作审计后可删除该日志
         logger.warning("user %s delete data source %s", request.user.username, data_source.id)
 
         with transaction.atomic():
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
-            # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
-            Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
-            # 其他认证源则禁用
-            Idp.objects.filter(**idp_filters).update(
-                status=IdpStatus.DISABLED,
-                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
-                updated_at=timezone.now(),
-                updater=request.user.username,
-            )
+            if is_delete_idp:
+                # 删除本地以及其他认证源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(**idp_filters)
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                waiting_delete_idps.delete()
+            else:
+                # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                waiting_delete_idps.delete()
 
+                # 禁用其他认证源
+                Idp.objects.filter(**idp_filters).update(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    updated_at=timezone.now(),
+                    updater=request.user.username,
+                )
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 

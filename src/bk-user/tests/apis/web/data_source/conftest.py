@@ -8,16 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
+from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+
+from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
 
@@ -33,6 +40,30 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
     )
     return ds
+
+
+@pytest.fixture()
+def local_idp(data_source) -> Idp:
+    return Idp.objects.create(
+        name="local",
+        data_source_id=data_source.id,
+        owner_tenant_id=data_source.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
+    )
+
+
+@pytest.fixture()
+def wecom_idp(data_source) -> Idp:
+    return Idp.objects.create(
+        name="wecom",
+        data_source_id=data_source.id,
+        owner_tenant_id=data_source.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.WECOM,
+        plugin_config=WecomIdpPluginConfig(
+            corp_id=generate_random_string(), agent_id=generate_random_string(), secret=generate_random_string()
+        ),
+    )
 
 
 @pytest.fixture()
