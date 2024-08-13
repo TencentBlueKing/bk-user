@@ -9,6 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G004
 from collections import defaultdict
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
@@ -29,15 +31,13 @@ class DataSourceUserExtrasUniqueValidator:
             tenant_id=self.data_source.owner_tenant_id, unique=True
         )
         if not unique_custom_fields.exists():
-            self.logger.info(
-                f"no unique custom fields found in tenant {self.data_source.owner_tenant_id}, skip..."  # noqa: G004
-            )
+            self.logger.info(f"no unique custom fields found in tenant {self.data_source.owner_tenant_id}, skip...")
 
         user_extras_map = dict(
             DataSourceUser.objects.filter(data_source=self.data_source).values_list("username", "extras")
         )
         for f in unique_custom_fields:
-            self.logger.info(f"checking unique custom field {f.display_name}({f.name})...")  # noqa: G004
+            self.logger.info(f"checking unique custom field {f.display_name}({f.name})...")
             counter = defaultdict(list)
             for username, extras in user_extras_map.items():
                 # 空值是可以被允许的（非必填字段）
@@ -50,7 +50,7 @@ class DataSourceUserExtrasUniqueValidator:
 
                 self.has_duplicate_unique_value = True
                 self.logger.error(
-                    f"custom field {f.display_name}({f.name}) has duplicate unique value {val}, usernames: {usernames}"  # noqa: G004, E501
+                    f"custom field {f.display_name}({f.name}) has duplicate unique value {val}, usernames: {usernames}"
                 )
 
         if self.has_duplicate_unique_value:

@@ -9,6 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G004
 from collections import Counter
 from typing import List
 
@@ -123,7 +125,7 @@ class LocalDataSourceDataParser:
         self.custom_col_names = sheet_col_names[builtin_col_length:]
         self.all_col_names = self.builtin_col_names + self.custom_col_names
         self.valid_col_length = len(self.all_col_names)
-        self.logger.info(f"all column names parsed from workbook: {self.all_col_names}")  # noqa: G004
+        self.logger.info(f"all column names parsed from workbook: {self.all_col_names}")
 
         # 2. 检查自定义字段是否符合格式，格式：display_name/field_name
         for col_name in self.custom_col_names:
@@ -136,7 +138,7 @@ class LocalDataSourceDataParser:
 
         # 获取所有的字段名
         self.all_field_names = [n.split("/")[-1] for n in self.all_col_names]
-        self.logger.info(f"all field names parsed from workbook: {self.all_field_names}")  # noqa: G004
+        self.logger.info(f"all field names parsed from workbook: {self.all_field_names}")
 
         # 3. 检查是否有重复列
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
@@ -149,7 +151,7 @@ class LocalDataSourceDataParser:
             start=self.user_data_min_row_idx,
         ):
             if not any(cell_values):
-                self.logger.warning(f"empty row found at line {idx} in sheet, skip...")  # noqa: G004
+                self.logger.warning(f"empty row found at line {idx} in sheet, skip...")
                 continue
 
             info = dict(zip(self.all_field_names, cell_values, strict=True))
@@ -191,7 +193,7 @@ class LocalDataSourceDataParser:
 
             username, user_orgs = cell_values[self.username_idx_in_row], cell_values[self.organization_idx_in_row]
             if not user_orgs:
-                self.logger.info(f"username {username} not provide organization, skip...")  # noqa: G004
+                self.logger.info(f"username {username} not provide organization, skip...")
                 continue
 
             for org in user_orgs.split(","):
