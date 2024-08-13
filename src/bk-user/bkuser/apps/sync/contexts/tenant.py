@@ -73,7 +73,7 @@ class TenantSyncTaskContext:
             return
 
         self.logger.error(
-            "sync task failed! All data modifications in this sync will be rollback.\n\n"
+            "tenant sync task failed! Data modifications in this sync step will be rollback.\n\n"
             f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
         self._update_task(SyncTaskStatus.FAILED)

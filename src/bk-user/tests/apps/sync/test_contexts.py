@@ -32,8 +32,8 @@ class TestDataSourceSyncTaskContext:
         assert data_source_sync_task.status == SyncTaskStatus.FAILED
 
         logs = data_source_sync_task.logs
-        assert "INFO sync task started" in logs
-        assert "ERROR sync task failed! All data modifications in this sync will be rollback." in logs
+        assert "INFO data source sync task started" in logs
+        assert "ERROR data source sync task failed! Data modifications in this sync step will be rollback." in logs
 
     def test_success_task_without_warning(self, data_source_sync_task):
         with DataSourceSyncTaskContext(data_source_sync_task) as ctx:
@@ -43,9 +43,9 @@ class TestDataSourceSyncTaskContext:
         assert not data_source_sync_task.has_warning
 
         logs = data_source_sync_task.logs
-        assert "INFO sync task started" in logs
+        assert "INFO data source sync task started" in logs
         assert "INFO this is info log" in logs
-        assert "INFO sync task success!" in logs
+        assert "INFO data source sync task success!" in logs
 
     def test_success_task_has_warning(self, data_source_sync_task):
         with DataSourceSyncTaskContext(data_source_sync_task) as ctx:
@@ -110,7 +110,7 @@ class TestTenantSyncTaskContext:
 
         logs = tenant_sync_task.logs
         assert "tenant task config error!" in logs
-        assert "ERROR sync task failed! All data modifications in this sync will be rollback." in logs
+        assert "ERROR tenant sync task failed! Data modifications in this sync step will be rollback." in logs
 
     def test_success_task_without_warning(self, tenant_sync_task):
         with TenantSyncTaskContext(tenant_sync_task) as ctx:
@@ -120,9 +120,9 @@ class TestTenantSyncTaskContext:
         assert not tenant_sync_task.has_warning
 
         logs = tenant_sync_task.logs
-        assert "INFO sync task started" in logs
+        assert "INFO tenant sync task started" in logs
         assert "INFO this is info log" in logs
-        assert "INFO sync task success!" in logs
+        assert "INFO tenant sync task success!" in logs
 
     def test_success_task_has_warning(self, tenant_sync_task):
         with TenantSyncTaskContext(tenant_sync_task) as ctx:

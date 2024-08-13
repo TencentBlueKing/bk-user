@@ -78,7 +78,7 @@ class DataSourceSyncTaskContext:
 
         # 同步过程中出现异常，需要记录日志，并抛出 DataSourceSyncError
         self.logger.error(
-            "sync task failed! data modifications in this sync step will be rollback.\n\n"
+            "data source sync task failed! Data modifications in this sync step will be rollback.\n\n"
             + f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
         self._update_task(SyncTaskStatus.FAILED)
