@@ -30,16 +30,6 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def wecom_plugin_cfg() -> Dict[str, Any]:
-    """企业微信插件配置"""
-    return {
-        "corp_id": generate_random_string(),
-        "agent_id": generate_random_string(),
-        "secret": generate_random_string(),
-    }
-
-
-@pytest.fixture()
 def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
     # FIXME (su) 使用 data_source 这个 fixture 其实可以不用 random_tenant，因为使用了 get_or_create
     # 在移除默认租户的初始化 migration 中创建的 real 类型的数据源后，可以批量删除 random_tenant 逻辑
