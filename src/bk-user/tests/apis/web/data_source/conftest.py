@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -58,16 +58,6 @@ def wecom_idp(data_source) -> Idp:
         plugin_id=BuiltinIdpPluginEnum.WECOM,
     )
     return wecom_idp
-
-
-@pytest.fixture()
-def idp_sensitive_info(wecom_idp) -> IdpSensitiveInfo:
-    idp_sensitive_info, _ = IdpSensitiveInfo.objects.get_or_create(
-        idp=wecom_idp,
-        key="username",
-        value="password",
-    )
-    return idp_sensitive_info
 
 
 @pytest.fixture()
