@@ -14,11 +14,9 @@ from typing import List
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.handlers import set_data_source_sync_periodic_task
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from django.db.models.signals import post_save
 
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
@@ -155,11 +153,3 @@ def _init_collaboration_users_depts(
     )
     init_data_source_users_depts_and_relations(data_source)
     sync_users_depts_to_tenant(random_tenant, data_source)
-
-
-@pytest.fixture(autouse=True)
-def _skip_set_data_source_sync_periodic_task_by_signal():
-    """跳过设置数据源同步周期的任务"""
-    post_save.disconnect(set_data_source_sync_periodic_task, sender=DataSource)
-    yield
-    post_save.connect(set_data_source_sync_periodic_task, sender=DataSource)

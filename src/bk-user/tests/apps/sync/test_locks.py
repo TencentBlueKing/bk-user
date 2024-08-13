@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 
 class TestDataSourceSyncTaskLock:
     def test_standard(self):
-        lock = DataSourceSyncTaskLock(1, 10)
+        lock = DataSourceSyncTaskLock(data_source_id=1, timeout=10)
         assert lock.acquire() is True
         assert lock.acquire() is False
         lock.release()
@@ -28,7 +28,7 @@ class TestDataSourceSyncTaskLock:
 
 class TestTenantSyncTaskLock:
     def test_standard(self):
-        lock = TenantSyncTaskLock("default", 1)
+        lock = TenantSyncTaskLock(tenant_id="default", data_source_id=1)
         assert lock.acquire() is True
         assert lock.acquire() is False
         lock.release()
