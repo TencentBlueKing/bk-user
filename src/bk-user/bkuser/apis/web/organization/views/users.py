@@ -1020,15 +1020,15 @@ class TenantUserBatchLeaderUpdateApi(CurrentUserTenantDataSourceMixin, generics.
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        leader_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["leader_ids"]).values_list(
-            "data_source_user_id", flat=True
-        )
-
-        data_source_user_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values_list(
-            "data_source_user_id", flat=True
-        )
-
         with transaction.atomic():
+            leader_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["leader_ids"]).values_list(
+                "data_source_user_id", flat=True
+            )
+
+            data_source_user_ids = TenantUser.objects.filter(
+                tenant_id=cur_tenant_id, id__in=data["user_ids"]
+            ).values_list("data_source_user_id", flat=True)
+
             # 先删除现有的用户 - 上级关系
             DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).delete()
 
@@ -1082,23 +1082,23 @@ class TenantUserBatchPasswordResetApi(CurrentUserTenantDataSourceMixin, generics
         data = slz.validated_data
         raw_password = data["password"]
 
-        data_source_user_list = [
-            tenant_user.data_source_user
-            for tenant_user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
-                tenant_id=cur_tenant_id,
-            )
-        ]
-
         with transaction.atomic():
-            for data_source_user in data_source_user_list:
-                DataSourceUserHandler.update_password(
-                    data_source_user=data_source_user,
-                    password=raw_password,
-                    valid_days=plugin_config.password_expire.valid_time,
-                    operator=request.user.username,
+            data_source_user_list = [
+                tenant_user.data_source_user
+                for tenant_user in TenantUser.objects.filter(
+                    id__in=data["user_ids"],
+                    tenant_id=cur_tenant_id,
                 )
+            ]
 
+            DataSourceUserHandler.batch_update_password(
+                data_source_users=data_source_user_list,
+                password=raw_password,
+                valid_days=plugin_config.password_expire.valid_time,
+                operator=request.user.username,
+            )
+
+            for data_source_user in data_source_user_list:
                 send_reset_password_to_user.delay(data_source_user.id, raw_password)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1125,19 +1125,20 @@ class TenantUserBatchFieldUpdateApi(CurrentUserTenantDataSourceMixin, generics.U
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_source_users = [
-            tenant_user.data_source_user
-            for tenant_user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
-                tenant_id=cur_tenant_id,
-            )
-        ]
-
-        name = list(data["extras"].keys())[0]
-
         with transaction.atomic():
+            name = list(data["extras"].keys())[0]
+            data_source_users = [
+                tenant_user.data_source_user
+                for tenant_user in TenantUser.objects.filter(
+                    id__in=data["user_ids"],
+                    tenant_id=cur_tenant_id,
+                )
+            ]
+
             for data_source_user in data_source_users:
                 data_source_user.extras[name] = data["extras"][name]
-                data_source_user.save(update_fields=["extras", "updated_at"])
+                data_source_user.updated_at = timezone.now()
+
+            DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)

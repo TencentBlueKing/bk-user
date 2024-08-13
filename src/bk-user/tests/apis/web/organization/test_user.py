@@ -855,6 +855,31 @@ class TestTenantUserBatchFieldUpdateApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_multiple_enum_field_update(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "extras": {
+                f"{random_tenant.id}_hobbies": ["gaming", "shopping"],
+            },
+        }
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.batch_field_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            tenant_user.data_source_user.extras[f"{random_tenant.id}_hobbies"] == ["gaming", "shopping"]
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids)
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_batch_field_update_with_unique_extras(self, api_client, random_tenant):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
         user_ids = TenantUser.objects.filter(

@@ -8,7 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
+from typing import List
 
 from django.db import transaction
 from django.utils import timezone
@@ -49,4 +51,46 @@ class DataSourceUserHandler:
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user, password=deprecated_password, operator=operator
+            )
+
+    @staticmethod
+    def batch_update_password(
+        data_source_users: List[DataSourceUser],
+        password: str,
+        valid_days: int,
+        operator: str,
+    ):
+        """
+        批量更新用户的密码
+        """
+        with transaction.atomic():
+            identity_info_dict = {
+                data_source_user.id: LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+                for data_source_user in data_source_users
+            }
+
+            # 批量创建 DataSourceUserDeprecatedPasswordRecord 对象
+            DataSourceUserDeprecatedPasswordRecord.objects.bulk_create(
+                [
+                    DataSourceUserDeprecatedPasswordRecord(
+                        user=data_source_user,
+                        password=identity_info_dict[data_source_user.id].password,
+                        operator=operator,
+                    )
+                    for data_source_user in data_source_users
+                ]
+            )
+
+            identify_infos = list(identity_info_dict.values())
+            for identify_info in identify_infos:
+                identify_info.password = make_password(password)
+                identify_info.password_updated_at = timezone.now()
+                # 注意：更新密码会重置有效期
+                if valid_days < 0:
+                    identify_info.password_expired_at = PERMANENT_TIME
+                else:
+                    identify_info.password_expired_at = timezone.now() + datetime.timedelta(days=valid_days)
+
+            LocalDataSourceIdentityInfo.objects.bulk_update(
+                identify_infos, fields=["password", "password_updated_at", "updated_at"]
             )
