@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 from typing import Dict, List, Set
 
@@ -23,7 +24,7 @@ from bkuser.apps.data_source.models import (
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, TenantSyncObjectType
-from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.apps.tenant.utils import gen_tenant_user_id, is_username_frozen

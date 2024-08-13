@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import itertools
 
 from django.db import transaction
@@ -156,7 +157,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
+class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.DestroyAPIView):
     """批量删除指定部门 & 用户的部门 - 用户关系"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]

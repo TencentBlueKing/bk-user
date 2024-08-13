@@ -8,11 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List
 
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
-from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from django.utils import timezone

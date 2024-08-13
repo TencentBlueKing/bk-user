@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Optional
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
@@ -21,6 +22,8 @@ class LockType(str, StructuredEnum):
     """锁类型"""
 
     GLOBAL = EnumField("global", label=_("全局锁"))
+    DATA_SOURCE_SYNC = EnumField("data_source_sync", label=_("数据源同步锁"))
+    TENANT_SYNC = EnumField("tenant_sync", label=_("租户同步锁"))
 
 
 class RedisLock:

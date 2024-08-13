@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 
 import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.sync.context import TaskLogger
+from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField

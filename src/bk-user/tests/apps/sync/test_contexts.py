@@ -8,10 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import pytest
 from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, SyncTaskStatus
-from bkuser.apps.sync.context import ChangeLogRecorder, DataSourceSyncTaskContext, TaskLogger, TenantSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import (
     DataSourceDepartmentChangeLog,
     DataSourceUserChangeLog,
@@ -21,45 +22,6 @@ from bkuser.apps.sync.models import (
 from bkuser.apps.sync.syncers import TenantDepartmentSyncer, TenantUserSyncer
 
 pytestmark = pytest.mark.django_db
-
-
-class TestTaskLogger:
-    def test_logs(self):
-        logger = TaskLogger()
-        logger.info("start test logger")
-        logger.info("this is info log")
-        logger.warning("this is warning log")
-        logger.error("this is error log")
-
-        assert logger.logs == (
-            "INFO start test logger\n\n"
-            "INFO this is info log\n\n"
-            "WARNING this is warning log\n\n"
-            "ERROR this is error log\n\n"
-        )
-
-    def test_has_warning(self):
-        logger = TaskLogger()
-        logger.info("this is info log")
-        assert not logger.has_warning
-
-        logger.warning("this is warning log")
-        assert logger.has_warning
-
-
-class TestChangeLogRecorder:
-    def test_standard(self, full_general_data_source):
-        users = list(DataSourceUser.objects.filter(data_source=full_general_data_source))
-        departments = list(DataSourceDepartment.objects.filter(data_source=full_general_data_source))
-
-        recorder = ChangeLogRecorder()
-        recorder.add(operation=SyncOperation.CREATE, type=DataSourceSyncObjectType.USER, items=users)
-        recorder.add(operation=SyncOperation.CREATE, type=DataSourceSyncObjectType.USER, items=users)
-
-        recorder.add(operation=SyncOperation.CREATE, type=DataSourceSyncObjectType.DEPARTMENT, items=departments)
-
-        assert len(recorder.get(operation=SyncOperation.CREATE, type=DataSourceSyncObjectType.USER)) == len(users) * 2
-        assert recorder.get(operation=SyncOperation.CREATE, type=DataSourceSyncObjectType.DEPARTMENT) == departments
 
 
 class TestDataSourceSyncTaskContext:

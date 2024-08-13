@@ -8,10 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from collections import defaultdict
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.sync.context import TaskLogger
+from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.models import TenantUserCustomField
 
 
