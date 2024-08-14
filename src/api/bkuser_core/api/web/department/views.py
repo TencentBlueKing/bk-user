@@ -175,9 +175,6 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     lookup_field = "id"
 
     def get_recursive_queryset(self, department):
-        slz = ProfileSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
         # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
         department_ids = department.get_descendants(include_self=True).values_list("id", flat=True)
         ids = DepartmentThroughModel.objects.filter(department_id__in=department_ids).values_list(
@@ -185,7 +182,13 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         )
 
         # 当后端 DB 不支持 microseconds 时 create_time 会无法准确排序
-        queryset = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+        return Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+
+    def get_no_recursive_queryset(self, department):
+        slz = ProfileSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        queryset = department.profiles.exclude(status=ProfileStatus.DELETED.value)
         if data.get("username"):
             queryset = queryset.filter(username__icontains=data["username"])
         if data.get("display_name"):
@@ -199,9 +202,6 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         if data.get("staff_status"):
             queryset = queryset.filter(staff_status=data["staff_status"])
         return queryset
-
-    def get_no_recursive_queryset(self, department):
-        return department.profiles.exclude(status=ProfileStatus.DELETED.value)
 
     # def get_queryset(self):
     def list(self, request, *args, **kwargs):
