@@ -111,8 +111,6 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
       code,
       suggestion: message,
       details: details[0],
-      assistant: 'wxwork://message/?username=BK助手',
-
     };
     Message({ theme: 'error', message: config, delay: 10000,  extCls: 'message-fix-fixed' });
   }

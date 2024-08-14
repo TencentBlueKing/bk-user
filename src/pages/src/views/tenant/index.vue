@@ -235,7 +235,9 @@
           <i class="user-icon icon-duihao-2 text-[44px] text-[#2dcb56]"></i>
           <p class="text-[20px] my-[8px]">{{$t('创建租户成功')}}</p>
         </div>
-        <div v-if="!dialogData.isShowItem" class="mb-[16px] text-[14px] text-[#63656e] flex justify-center items-center">
+        <div
+          v-if="!dialogData.isShowItem"
+          class="mb-[16px] text-[14px] text-[#63656e] flex justify-center items-center">
           <div>
             <div v-if="dialogData.emailNotification">
               {{$t('登录方式已通过')}}
@@ -259,7 +261,9 @@
               <a :href="dialogData.accessUrl" target="_blank">{{dialogData.accessUrl}}</a>
             </LabelContent>
             <LabelContent v-if="dialogData.isShowItem" :label="$t('用户名')">admin-{{ dialogData.name}}</LabelContent>
-            <LabelContent v-if="dialogData.isShowItem" :label="$t('登录密码')">{{ dialogData.fixed_password }}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('登录密码')">
+              {{ dialogData.fixed_password }}
+            </LabelContent>
           </div>
         </div>
       </div>
@@ -274,7 +278,7 @@
       </template>
     </bk-dialog>
     <footer class="footer">
-      <p class="text-[#3A84FF]" v-html="contact"></p>
+      <p class="text-[#3A84FF]" v-dompurify-html="contact"></p>
       <p class="text-[#63656E]">{{ copyright }}</p>
     </footer>
   </div>
@@ -287,10 +291,10 @@ import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
-import Empty from '@/components/Empty.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
 import {
   currentUser,
@@ -578,10 +582,14 @@ const handleClickDisable = (item) => {
     title,
     subTitle,
     confirmText: t('确定'),
-    onConfirm: async () => {
-      await putTenantsStatus(item.id);
-      Message({ theme: 'success', message: successMessage });
-      fetchTenantsList();
+    onConfirm: () => {
+      putTenantsStatus(item.id).then(() => {
+        Message({ theme: 'success', message: successMessage });
+        fetchTenantsList();
+      })
+        .catch((error) => {
+          console.warn(error);
+        });
     },
   });
 };
@@ -596,10 +604,14 @@ const handleClickDelete = async (item) => {
       width: 600,
       title: t('确定删除当前租户？'),
       subTitle: subContent,
-      onConfirm: async () => {
-        await deleteTenants(item.id);
-        Message({ theme: 'success', message: t('租户删除成功') });
-        fetchTenantsList();
+      onConfirm: () => {
+        deleteTenants(item.id).then(() => {
+          Message({ theme: 'success', message: t('租户删除成功') });
+          fetchTenantsList();
+        })
+          .catch((error) => {
+            console.error(error);
+          });
       },
     });
   } catch (e) {
@@ -783,8 +795,8 @@ const emailBlur = () => {
         width: 16px;
         height: 16px;
         margin-right: 5px;
-        vertical-align: middle;
-        color: #999
+        color: #999;
+        vertical-align: middle
       }
     }
   }
@@ -866,37 +878,43 @@ const emailBlur = () => {
   align-items: center;
   height: 42px;
   line-height: 42px;
+
   .icon-new {
     width: 26px;
     margin-left: 8px;
   }
 }
+
 .tenant-success {
   :deep(.bk-dialog-footer) {
-  text-align: center !important;
-  border-top:#fff;
-  background-color: #fff;
-  padding: 0 24px 24px 24px;
+    padding: 0 24px 24px;
+    text-align: center !important;
+    background-color: #fff;
+    border-top:#fff;
+  }
+
+  :deep(.bk-dialog-content) {
+    margin-top: 0;
+  }
+
+  :deep(.bk-dialog-header) {
+    padding: 0;
+  }
 }
-:deep(.bk-dialog-content) {
-  margin-top: 0;
-}
-:deep(.bk-dialog-header) {
-  padding: 0;
-}
-}
+
 :deep(.access-url) {
   .label-value {
-  color: #3A84FF !important;
+    color: #3A84FF !important;
+  }
 }
-}
+
 .footer {
-  width: calc(100% - 288px);
-  line-height: 20px;
-  padding: 2% 0;
   position: absolute;
   bottom: 0;
+  width: calc(100% - 288px);
+  padding: 2% 0;
   font-size: 12px;
+  line-height: 20px;
   text-align: center;
 }
 </style>

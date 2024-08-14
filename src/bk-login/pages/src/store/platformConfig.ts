@@ -32,7 +32,7 @@ export const platformConfig = defineStore('platformConfig', {
   }),
   actions: {
     update(value: any) {
-        this.$patch(value);  
-      },
+      this.$patch(value);
+    },
   },
 });

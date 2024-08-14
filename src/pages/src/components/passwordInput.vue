@@ -35,6 +35,8 @@ const props = defineProps({
   modelValue: {
     type: String,
   } });
+defineEmits(['change', 'focus', 'input', 'update: modelValue']);
+
 const inputValue = ref('');
 
 watch(() => props.modelValue, (val) => {
@@ -43,21 +45,23 @@ watch(() => props.modelValue, (val) => {
 
 const isPassword  = ref(false);
 
-const emit = defineEmits(['change', 'focus', 'input', 'update: modelValue']);
 </script>
 
 <style lang="less" scoped>
 .bk-input {
   position: relative;
+
   .copy-icon {
-  position: absolute;
-  top: 50%;
-  right: 30px;
-  transform: translate(0,  -50%)
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    transform: translate(0,  -50%)
   }
 }
+
 :deep(.bk-input--suffix-icon) {
   color:#979BA5;
+
   &:hover {
     color:#979BA5;
   }

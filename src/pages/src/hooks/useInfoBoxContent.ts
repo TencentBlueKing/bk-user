@@ -2,7 +2,7 @@ import { Checkbox } from 'bkui-vue';
 import { h, ref } from 'vue';
 
 import { t } from '@/language/index';
-
+const resetIdpConfig = ref(false);
 // 重置数据源、删除租户前的确认信息
 export const useInfoBoxContent = (data: any, type: string) => {
   const resetIdpConfig = ref(false);
@@ -81,8 +81,10 @@ export const useInfoBoxContent = (data: any, type: string) => {
       style: {
         marginTop: '14px',
       },
-      value: resetIdpConfig.value,
-      onChange: updateMessage,
+      modelValue: resetIdpConfig.value,
+      'onUpdate:modelValue': (newValue) => {
+        resetIdpConfig.value = newValue;
+        }
     }, t('同时清除登录配置')),
   ]);
 

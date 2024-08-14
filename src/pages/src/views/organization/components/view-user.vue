@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 
-import CustomFieldsView from '@/components/custom-fields/view.vue';
+import CustomFieldsView from '@/components/custom-fields/ViewFields.vue';
 import { dateConvert, formatConvert } from '@/utils';
 
 defineProps({

@@ -122,12 +122,10 @@
 import { Message } from 'bkui-vue';
 import { defineEmits, defineProps, onBeforeMount, onMounted, reactive, ref  } from 'vue';
 
-// import Empty from '@/components/Empty.vue';
+// import Empty from '@/components/SearchEmpty.vue';
 import { useValidate } from '@/hooks';
 import { getTenantList, postToStrategies, putToStrategies } from '@/http';
 import { t } from '@/language';
-
-const emit = defineEmits(['handleCancelEdit', 'updateList']);
 
 const props = defineProps({
   config: {
@@ -135,6 +133,8 @@ const props = defineProps({
     default: {},
   },
 });
+
+const emit = defineEmits(['handleCancelEdit', 'updateList']);
 
 const validate = useValidate();
 const basicRef = ref();

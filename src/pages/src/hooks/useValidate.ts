@@ -109,7 +109,7 @@ export const useValidate = () => {
   return {
     required,
     name,
-    loginName, 
+    loginName,
     id,
     userName,
     email,

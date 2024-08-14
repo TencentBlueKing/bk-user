@@ -78,7 +78,7 @@ import { defineEmits, defineProps, inject, reactive, ref } from 'vue';
 
 import ViewUser from './ViewUser.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { useCustomFields } from '@/hooks';
 import {
   getFields,

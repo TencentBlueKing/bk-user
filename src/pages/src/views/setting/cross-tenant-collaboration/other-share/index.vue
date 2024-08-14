@@ -40,8 +40,7 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
-      <bk-table-column prop="target_status" :label="$t('启/停')">
-        <!-- :filter="{ list: enableFilters }"> -->
+      <bk-table-column prop="target_status" :label="$t('启/停')" :filter="{ list: enableFilters }">
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
@@ -220,7 +219,11 @@
             </bk-tag>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '100px' }" min-width="105">
+        <bk-table-column
+          prop="status"
+          :label="$t('状态')"
+          :filter="{ list: updateStatusFilters, height: '100px' }"
+          min-width="105">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
@@ -280,7 +283,7 @@ import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getCollaborationSyncRecords, getCollaborationSyncRecordsLogs, getFromStrategies, putFromStrategiesStatus } from '@/http';
@@ -641,6 +644,7 @@ const durationText = (value) => {
 
   .update-record-table {
     padding : 28px 30px;
+
     :deep(.bk-table-footer) {
       padding: 0 15px;
       background: #fff;
@@ -682,6 +686,7 @@ const durationText = (value) => {
       .expand-item-content {
         width: 100%;
         box-sizing: border-box;
+
         i {
           margin: 0 16px 0 8px;
           font-size: 16px;

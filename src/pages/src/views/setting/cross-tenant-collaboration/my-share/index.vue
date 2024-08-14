@@ -39,17 +39,17 @@
         </template>
       </bk-table-column>
       <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
-      <bk-table-column prop="target_status" :label="$t('状态')"  :filter="{ list: targetStatusFilters}">
+      <bk-table-column prop="target_status" :label="$t('状态')" :filter="{ list: targetStatusFilters }">
         <template #default="{ row }">
-          <div class="styled-circle" :class="row.target_status=== 'enabled'? 'enabledColor': 'unconfirmedColor'"></div>
-          <span>{{ row.target_status=== 'enabled'? $t('已接收'): $t('待接收')}}</span>
-      </template>
-    </bk-table-column>
+          <div class="styled-circle" :class="row.target_status === 'enabled' ? 'enabledColor' : 'unconfirmedColor'">
+          </div>
+          <span>{{ row.target_status === 'enabled' ? $t('已接收') : $t('待接收')}}</span>
+        </template>
+      </bk-table-column>
       <bk-table-column prop="creator" :label="$t('创建人')" />
       <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
       <bk-table-column
-        prop="source_status" :label="$t('启/停')">
-        <!-- :filter="{ list: statusFilters }"> -->
+        prop="source_status" :label="$t('启/停')" :filter="{ list: statusFilters }">
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
@@ -111,7 +111,7 @@ import { computed, defineProps, inject, reactive, ref, watch, watchEffect } from
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { deleteToStrategies, getToStrategies, putToStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
@@ -195,10 +195,14 @@ const handleDelete = (id: number) => {
   InfoBox({
     title: t('是否删除当前协同？'),
     subTitle: t('删除后，目标租户的用户数据也会同步删除'),
-    onConfirm: async () => {
-      await deleteToStrategies(id);
-      Message({ theme: 'success', message: t('删除成功') });
-      fetchToStrategies();
+    onConfirm: () => {
+      deleteToStrategies(id).then(() => {
+        Message({ theme: 'success', message: t('删除成功') });
+        fetchToStrategies();
+      })
+        .catch((error) => {
+          console.warn(error);
+        });
     },
   });
 };
@@ -340,18 +344,21 @@ const updateList = () => {
     // }
   }
 }
+
 /* 圆形样式 */
 .styled-circle {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
   margin-right: 6px;
+  border-radius: 50%;
 }
+
 .enabledColor{
   background-color: #E5F6EA;
   border: 1px solid #3FC06D;
 }
+
 .unconfirmedColor {
   background-color: #FFE8C3;
   border: 1px solid #FF9C01;

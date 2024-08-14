@@ -20,7 +20,10 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('手机号') }}：</span>
-          <span class="details-content-value">{{ userData.phone_country_code ? `(+${userData.phone_country_code}) ${userData.phone}` : userData.phone || '--' }}</span>
+          <span class="details-content-value">
+            {{ userData.phone_country_code ?
+              `(+${userData.phone_country_code}) ${userData.phone}` : userData.phone || '--' }}
+          </span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('所属组织') }}：</span>
@@ -63,7 +66,13 @@
     <bk-form class="example" ref="formRef" form-type="vertical" :model="formData">
       <bk-form-item :label="$t('续期时长')" property="dateTime" required>
         <bk-select v-model="formData.dateTime" input-search @change="dateChange">
-          <bk-option v-for="(option, i) in dateOptions" :key="i" :id="option.id" :name="option.name" :disabled="isDisabled(option.id)"></bk-option>
+          <bk-option
+            v-for="(option, i) in dateOptions"
+            :key="i"
+            :id="option.id"
+            :name="option.name"
+            :disabled="isDisabled(option.id)">
+          </bk-option>
         </bk-select>
       </bk-form-item>
       <bk-form-item v-if="showExpirationTime" :label="$t('账号过期时间')" property="custom" required>
@@ -84,7 +93,7 @@
 import dayjs from 'dayjs';
 import { computed, defineEmits, defineProps, ref } from 'vue';
 
-import CustomFieldsView from '@/components/custom-fields/view.vue';
+import CustomFieldsView from '@/components/custom-fields/ViewFields.vue';
 import { getTenantUserValidityPeriod, updateAccountExpiredAt } from '@/http';
 import { t } from '@/language/index';
 import { formatConvert } from '@/utils';
@@ -176,10 +185,9 @@ const renewalClick = async () => {
     showExpirationTime.value = true;
   } else {
     const res = await getTenantUserValidityPeriod();
-    const { validity_period } = res.data;
-    const dateTime = validity_period === -1 ? '2100-1-1T00:00:00' : `${defineDateTime(validity_period === 365 ? 1 : validity_period / 30, validity_period === 365 ? 'year' : 'month')} 00:00:00`;
+    const { validity_period: validityPeriod } = res.data;
+    const dateTime = validityPeriod === -1 ? '2100-1-1T00:00:00' : `${defineDateTime(validityPeriod === 365 ? 1 : validityPeriod / 30, validityPeriod === 365 ? 'year' : 'month')} 00:00:00`;
     formData.value.dateTime = dateTime;
-    console.log('formData.value.dateTime', formData.value.dateTime);
   }
 };
 

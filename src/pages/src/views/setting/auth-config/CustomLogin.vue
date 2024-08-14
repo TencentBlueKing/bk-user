@@ -101,7 +101,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
-import Row from '@/components/layouts/row.vue';
+import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails, getIdpsPluginsConfig, postIdps, putIdps } from '@/http';

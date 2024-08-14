@@ -104,11 +104,11 @@ const {
 
 <style lang="less" scoped>
 .node-overflow{
-  text-align: left;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   min-width: auto;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-radius: 4px;
 }
 </style>

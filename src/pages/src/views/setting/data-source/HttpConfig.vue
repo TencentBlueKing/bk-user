@@ -208,7 +208,7 @@ import { inject, onMounted, ref, watch } from 'vue';
 import QueryParams from './query-params/QueryParams.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
-import Row from '@/components/layouts/row.vue';
+import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
@@ -221,8 +221,6 @@ import {
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { SYNC_CONFIG_LIST } from '@/utils';
-
-const validate = useValidate();
 
 const props = defineProps({
   curStep: {
@@ -238,6 +236,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+
+const validate = useValidate();
 
 const isLoading = ref(false);
 const formRef1 = ref();

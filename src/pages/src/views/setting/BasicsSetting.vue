@@ -96,8 +96,8 @@
 import { Message } from 'bkui-vue';
 import { computed, onMounted, ref, watch } from 'vue';
 
+import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import Row from '@/components/layouts/row.vue';
 import { useValidate } from '@/hooks';
 import { getTenantInfo, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
@@ -226,6 +226,7 @@ const cancelEdit = () => {
     border-radius: 2px;
   }
 }
+
 :deep(.bk-upload__tip) {
   color: #999
 }
