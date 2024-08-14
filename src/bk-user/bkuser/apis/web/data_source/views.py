@@ -14,6 +14,7 @@ import logging
 import openpyxl
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
@@ -259,8 +260,10 @@ class DataSourceRetrieveUpdateDestroyApi(
         with transaction.atomic():
             idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             if is_delete_idp:
-                # 删除本地以及其他认证源，并清除对应的敏感信息
-                waiting_delete_idps = Idp.objects.filter(**idp_filters)
+                # 删除本地以及其他认证源，包括已禁用的认证源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(
+                    Q(**idp_filters) | Q(status=IdpStatus.DISABLED, data_source_id=INVALID_REAL_DATA_SOURCE_ID)
+                )
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
                 waiting_delete_idps.delete()
             else:

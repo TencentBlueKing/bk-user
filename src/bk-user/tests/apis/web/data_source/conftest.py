@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -50,6 +51,20 @@ def local_idp(data_source) -> Idp:
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
+    )
+
+
+@pytest.fixture()
+def invalid_idp(data_source) -> Idp:
+    return Idp.objects.create(
+        name="invalid_wecom",
+        data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+        owner_tenant_id=data_source.owner_tenant_id,
+        status=IdpStatus.DISABLED,
+        plugin_id=BuiltinIdpPluginEnum.WECOM,
+        plugin_config=WecomIdpPluginConfig(
+            corp_id=generate_random_string(), agent_id=generate_random_string(), secret=generate_random_string()
+        ),
     )
 
 
