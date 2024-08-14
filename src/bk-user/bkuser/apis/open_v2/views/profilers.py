@@ -481,15 +481,12 @@ class ProfileRetrieveApi(
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # 路径参数
-        lookup_value = kwargs["lookup_value"]
-
         lookup_filter = {}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
-            lookup_filter["id"] = lookup_value
+            lookup_filter["id"] = kwargs["lookup_value"]
         else:
-            lookup_filter["data_source_user__id"] = lookup_value
+            lookup_filter["data_source_user__id"] = kwargs["lookup_value"]
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         tenant_user = (
@@ -703,9 +700,11 @@ class ProfileLanguageUpdateApi(
         slz = ProfileLanguageUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        # Note: 由于虚拟账号并不支持登录，所以不存在设置语言的场景
         tenant_user = TenantUser.objects.filter(
-            id=kwargs["username"], tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL
+            Q(id=kwargs["username"]),
+            Q(tenant=self.default_tenant),
+            Q(data_source__type=DataSourceTypeEnum.REAL)
+            | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
         ).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")

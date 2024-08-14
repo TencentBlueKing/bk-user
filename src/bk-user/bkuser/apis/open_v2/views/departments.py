@@ -360,18 +360,25 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, gen
         params = slz.validated_data
 
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        filters = {
-            "tenant_id": self.default_tenant.id,
-            "data_source__type": DataSourceTypeEnum.REAL,
-        }
+        lookup_filter = {}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
-            filters["id"] = kwargs["lookup_value"]
+            lookup_filter["id"] = kwargs["lookup_value"]
         else:
             # 用户 ID 即为数据源用户 ID
-            filters["data_source_user__id"] = kwargs["lookup_value"]
+            lookup_filter["data_source_user__id"] = kwargs["lookup_value"]
 
-        tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
+        tenant_user = (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(
+                Q(**lookup_filter),
+                Q(tenant_id=self.default_tenant.id),
+                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
+                Q(data_source__type=DataSourceTypeEnum.REAL)
+                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+            )
+            .first()
+        )
         if not tenant_user:
             raise Http404(f"user {params['lookup_field']}:{kwargs['lookup_value']} not found")
 

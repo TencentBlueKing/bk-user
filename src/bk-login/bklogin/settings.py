@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import hashlib
 import os
 from pathlib import Path
@@ -149,6 +150,7 @@ BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
 #  (4) 精确域名&端口匹配，比如 example.com:9000 只可匹配 example.com:9000
 # 默认蓝鲸体系域名都可以匹配
 ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[BK_COOKIE_DOMAIN])
+REDIRECT_URL_REQUIRE_HTTPS = env.bool("BK_LOGIN_REDIRECT_URL_REQUIRE_HTTPS", default=bool(BK_DOMAIN_SCHEME == "https"))
 # 语言Cookie（蓝鲸体系共享）
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
 
