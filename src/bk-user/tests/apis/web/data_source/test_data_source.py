@@ -357,7 +357,7 @@ class TestDataSourceDestroyApi:
         assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
         assert IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
 
-    def test_destroy_with_reset_idp_config(self, api_client, data_source, local_idp, wecom_idp, invalid_idp):
+    def test_destroy_with_reset_idp_config(self, api_client, data_source, local_idp, wecom_idp, disabled_idp):
         resp = api_client.delete(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
@@ -370,9 +370,9 @@ class TestDataSourceDestroyApi:
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=wecom_idp.id).exists()
-        assert not Idp.objects.filter(id=invalid_idp.id).exists()
+        assert not Idp.objects.filter(id=disabled_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
-        assert not IdpSensitiveInfo.objects.filter(idp_id=invalid_idp.id).exists()
+        assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:

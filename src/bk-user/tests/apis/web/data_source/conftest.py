@@ -55,7 +55,7 @@ def local_idp(data_source) -> Idp:
 
 
 @pytest.fixture()
-def invalid_idp(data_source) -> Idp:
+def disabled_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="invalid_wecom",
         data_source_id=INVALID_REAL_DATA_SOURCE_ID,
