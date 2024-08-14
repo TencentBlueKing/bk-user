@@ -112,7 +112,7 @@ export default {
       auditList: [],
       shortcuts: [
         {
-          text: this.$t('昨天'),
+          text: this.$t('最近一天'),
           value() {
             const start = new Date();
             start.setTime(start.getTime() - 86400000);
