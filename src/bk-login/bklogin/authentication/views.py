@@ -63,7 +63,7 @@ class LoginView(View):
         url_is_safe = url_has_allowed_host_and_scheme(
             url=redirect_to,
             allowed_hosts={*settings.ALLOWED_REDIRECT_HOSTS},
-            require_https=settings.BK_DOMAIN_SCHEME == "https",
+            require_https=settings.REDIRECT_URL_REQUIRE_HTTPS,
         )
         return redirect_to if url_is_safe else self.default_redirect_to
 
