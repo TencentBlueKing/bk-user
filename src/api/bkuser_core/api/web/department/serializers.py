@@ -105,7 +105,12 @@ class DepartmentProfileListInputSLZ(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, default=10)
     recursive = serializers.BooleanField(default=True)
     keyword = serializers.CharField(required=False)
-
+    username = serializers.CharField(required=False, help_text="用户名")
+    display_name = serializers.CharField(required=False, help_text="中文名")
+    email = serializers.CharField(required=False, help_text="邮箱")
+    telephone = serializers.CharField(required=False, help_text="电话")
+    status = serializers.CharField(required=False, help_text="账户状态")
+    staff_status = serializers.CharField(required=False, help_text="在职状态")
 
 class DepartmentProfilesCreateInputSLZ(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())

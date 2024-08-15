@@ -126,7 +126,6 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
 
 class DepartmentSearchApi(generics.ListAPIView):
-
     serializer_class = DepartmentSearchOutputSLZ
     pagination_class = CustomPagination
 
@@ -187,7 +186,6 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     def get_no_recursive_queryset(self, department):
         return department.profiles.exclude(status=ProfileStatus.DELETED.value)
 
-    # def get_queryset(self):
     def list(self, request, *args, **kwargs):
         slz = DepartmentProfileListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -210,11 +208,23 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         else:
             queryset = self.get_recursive_queryset(department)
             current_count = self.get_no_recursive_queryset(department).count()
+        if data.get("username"):
+            queryset = queryset.filter(username__icontains=data["username"])
+        if data.get("display_name"):
+            queryset = queryset.filter(display_name__icontains=data["display_name"])
+        if data.get("email"):
+            queryset = queryset.filter(email__icontains=data["email"])
+        if data.get("telephone"):
+            queryset = queryset.filter(telephone__icontains=data["telephone"])
+        if data.get("status"):
+            queryset = queryset.filter(status=data["status"])
+        if data.get("staff_status"):
+            queryset = queryset.filter(staff_status=data["staff_status"])
 
         # filter by keyword
-        keyword = data.get("keyword")
-        if keyword:
-            queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+        # keyword = data.get("keyword")
+        # if keyword:
+        #     queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
 
         queryset = queryset.prefetch_related("departments", "leader")
 
