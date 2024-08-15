@@ -126,14 +126,13 @@ def _validate_duplicate_data_source_username(
     return username
 
 
-def _validate_leader_ids(leader_ids: List[str], data_source_id: str) -> List[str]:
+def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
     """校验直属上级是否存在于指定数据源中"""
-    invalid_leader_ids = set(leader_ids) - set(
-        TenantUser.objects.filter(
-            id__in=leader_ids,
-            data_source_id=data_source_id,
-        ).values_list("id", flat=True)
-    )
+    exists_tenant_users = TenantUser.objects.filter(
+        id__in=leader_ids, tenant_id=tenant_id, data_source_id=data_source_id
+    ).values_list("id", flat=True)
+
+    invalid_leader_ids = set(leader_ids) - set(exists_tenant_users)
     if invalid_leader_ids:
         raise ValidationError(_("指定的直属上级 {} 不存在").format(",".join(invalid_leader_ids)))
 
@@ -183,7 +182,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
         return department_ids
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["data_source_id"])
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
@@ -583,7 +582,19 @@ class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段")
 
 
-class TenantUserBatchSelectInputSLZ(serializers.Serializer):
+def _validate_user_ids_exist_in_tenant(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
+    exists_tenant_users = TenantUser.objects.filter(
+        id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
+    )
+    if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
+        raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
+
+    return user_ids
+
+
+class TenantUserIDBatchSLZ(serializers.Serializer):
+    """批量操作时校验用户信息用，确保用户 ID 存在于当前租户中"""
+
     user_ids = serializers.ListField(
         help_text="用户 ID 列表",
         child=serializers.CharField(help_text="租户用户 ID"),
@@ -592,13 +603,7 @@ class TenantUserBatchSelectInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        exists_tenant_users = TenantUser.objects.filter(
-            id__in=user_ids, tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"]
-        )
-        if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
-            raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
-
-        return user_ids
+        return _validate_user_ids_exist_in_tenant(user_ids, self.context["tenant_id"], self.context["data_source_id"])
 
 
 class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
@@ -607,16 +612,10 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        exists_tenant_users = TenantUser.objects.filter(
-            id__in=user_ids, tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"]
-        )
-        if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
-            raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
-
-        return user_ids
+        return _validate_user_ids_exist_in_tenant(user_ids, self.context["tenant_id"], self.context["data_source_id"])
 
 
-class TenantUserBatchPasswordResetInputSLZ(serializers.Serializer):
+class TenantUserBatchResetPasswordInputSLZ(TenantUserIDBatchSLZ):
     user_ids = serializers.ListField(
         help_text="用户 ID 列表",
         child=serializers.CharField(help_text="租户用户 ID"),
@@ -645,15 +644,16 @@ class TenantUserBatchPasswordResetInputSLZ(serializers.Serializer):
         return attrs
 
 
-class TenantUserBatchAccountExpiredAtUpdateInputSLZ(
-    TenantUserBatchSelectInputSLZ, TenantUserAccountExpiredAtUpdateInputSLZ
+class TenantUserBatchUpdateAccountExpiredAtInputSLZ(
+    TenantUserIDBatchSLZ, TenantUserAccountExpiredAtUpdateInputSLZ
 ): ...
 
 
-class TenantUserBatchDisableInputSLZ(TenantUserBatchDeleteInputSLZ): ...
+class TenantUserStatusBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
+    enable = serializers.BooleanField(help_text="是否批量启用租户用户", default=False)
 
 
-class TenantUserBatchLeaderUpdateInputSLZ(TenantUserBatchSelectInputSLZ):
+class TenantUserBatchUpdateLeaderInputSLZ(TenantUserIDBatchSLZ):
     leader_ids = serializers.ListField(
         help_text="租户上级 ID 列表",
         child=serializers.CharField(),
@@ -661,44 +661,38 @@ class TenantUserBatchLeaderUpdateInputSLZ(TenantUserBatchSelectInputSLZ):
     )
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["data_source_id"])
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验是否自己设置为自己的上级
-        if set(attrs["user_ids"]) & set(attrs["leader_ids"]):
-            raise ValidationError(_("不能设置自己为自己的直接上级"))
+        if overlapping_ids := set(attrs["user_ids"]) & set(attrs["leader_ids"]):
+            raise ValidationError(_("用户 {} 不能设置为自己的直属上级").format(", ".join(overlapping_ids)))
 
         return attrs
 
 
-class TenantUserBatchFieldUpdateInputSLZ(TenantUserBatchSelectInputSLZ):
+class TenantUserBatchUpdateCustomFieldInputSLZ(TenantUserIDBatchSLZ):
     extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         if len(extras) != 1:
-            raise ValidationError(_("一次只能批量更新一个字段"))
+            raise ValidationError(_("一次只能批量更新一个自定义字段"))
 
         # 确保 extras 的长度为 1 后，第一个值即为自定义字段的名称
         name = list(extras.keys())[0]
-        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
 
-        if not custom_fields.exists():
-            raise ValidationError(_("当前用户无可编辑的租户自定义字段"))
+        # 加入 manager_editable 到筛选条件，对于管理员不可编辑的字段，不允许在批量操作中修改（前端也需要禁用）
+        field = TenantUserCustomField.objects.filter(
+            name=name, tenant_id=self.context["tenant_id"], manager_editable=True
+        ).first()
 
-        if name not in {field.name for field in custom_fields}:
-            raise ValidationError(_("提供的自定义字段数据与租户自定义字段不匹配"))
+        if not field:
+            raise ValidationError(_("当前租户不存在管理员可编辑的自定义字段 {}".format(name)))
 
         # 唯一性检查，对于设置了唯一性的字段，不允许在批量操作中修改（前端也需要禁用）
-        if unique_field := custom_fields.filter(unique=True, name=name).first():
-            raise ValidationError(_("不能在批量操作中修改设置了唯一性的字段 {}".format(unique_field.display_name)))
+        if field.unique:
+            raise ValidationError(_("不能在批量操作中修改设置了唯一性的自定义字段 {}".format(field.display_name)))
 
-        # 对于管理员不可编辑的字段，不允许在批量操作中修改（前端也需要禁用）
-        if manager_uneditable_field := custom_fields.filter(manager_editable=False, name=name).first():
-            raise ValidationError(
-                _("不能在批量操作中修改管理员不可编辑的字段 {}".format(manager_uneditable_field.display_name))
-            )
-
-        field = TenantUserCustomField.objects.get(name=name, tenant_id=self.context["tenant_id"])
         extras[name] = validate_type_and_convert_field_data(field, extras[name])
 
         return extras

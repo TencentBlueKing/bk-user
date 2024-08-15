@@ -29,15 +29,14 @@ from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
     TenantUserAccountExpiredAtUpdateInputSLZ,
-    TenantUserBatchAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchCreatePreviewInputSLZ,
     TenantUserBatchCreatePreviewOutputSLZ,
     TenantUserBatchDeleteInputSLZ,
-    TenantUserBatchDisableInputSLZ,
-    TenantUserBatchFieldUpdateInputSLZ,
-    TenantUserBatchLeaderUpdateInputSLZ,
-    TenantUserBatchPasswordResetInputSLZ,
+    TenantUserBatchResetPasswordInputSLZ,
+    TenantUserBatchUpdateAccountExpiredAtInputSLZ,
+    TenantUserBatchUpdateCustomFieldInputSLZ,
+    TenantUserBatchUpdateLeaderInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -48,6 +47,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
+    TenantUserStatusBatchUpdateInputSLZ,
     TenantUserStatusUpdateOutputSLZ,
     TenantUserUpdateInputSLZ,
 )
@@ -930,7 +930,9 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserBatchAccountExpiredAtUpdateApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
+class TenantUserAccountExpiredAtBatchUpdateApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+):
     """批量修改租户用户账号过期时间"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -938,14 +940,14 @@ class TenantUserBatchAccountExpiredAtUpdateApi(CurrentUserTenantDataSourceMixin,
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量修改账号过期时间",
-        request_body=TenantUserBatchAccountExpiredAtUpdateInputSLZ(),
+        request_body=TenantUserBatchUpdateAccountExpiredAtInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchAccountExpiredAtUpdateInputSLZ(
+        slz = TenantUserBatchUpdateAccountExpiredAtInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
@@ -955,9 +957,7 @@ class TenantUserBatchAccountExpiredAtUpdateApi(CurrentUserTenantDataSourceMixin,
             # 根据租户用户当前状态判断，如果是过期状态则转为正常
             TenantUser.objects.filter(
                 id__in=data["user_ids"], tenant_id=cur_tenant_id, status=TenantUserStatus.EXPIRED
-            ).update(
-                status=TenantUserStatus.ENABLED,
-            )
+            ).update(status=TenantUserStatus.ENABLED)
 
             TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
                 account_expired_at=data["account_expired_at"],
@@ -968,30 +968,37 @@ class TenantUserBatchAccountExpiredAtUpdateApi(CurrentUserTenantDataSourceMixin,
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserBatchDisableApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
-    """批量停用租户用户"""
+class TenantUserStatusBatchUpdateApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+):
+    """批量更新租户用户状态"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["organization.user"],
-        operation_description="租户用户 - 批量停用",
-        query_serializer=TenantUserBatchDisableInputSLZ(),
+        operation_description="租户用户 - 批量更新状态",
+        request_body=TenantUserStatusBatchUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchDisableInputSLZ(
-            data=request.query_params, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+        slz = TenantUserStatusBatchUpdateInputSLZ(
+            data=request.data,
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
-        params = slz.validated_data
+        data = slz.validated_data
+
+        new_status = TenantUserStatus.DISABLED
+        if data["enable"]:
+            new_status = TenantUserStatus.ENABLED
 
         with transaction.atomic():
-            TenantUser.objects.filter(id__in=params["user_ids"], tenant_id=cur_tenant_id).update(
-                status=TenantUserStatus.DISABLED,
+            TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
+                status=new_status,
                 updater=request.user.username,
                 updated_at=timezone.now(),
             )
@@ -999,7 +1006,9 @@ class TenantUserBatchDisableApi(CurrentUserTenantDataSourceMixin, generics.Updat
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserBatchLeaderUpdateApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
+class TenantUserLeaderBatchUpdateApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+):
     """批量修改租户用户上级关系"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -1007,14 +1016,14 @@ class TenantUserBatchLeaderUpdateApi(CurrentUserTenantDataSourceMixin, generics.
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量修改上级关系",
-        request_body=TenantUserBatchLeaderUpdateInputSLZ(),
+        request_body=TenantUserBatchUpdateLeaderInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchLeaderUpdateInputSLZ(
+        slz = TenantUserBatchUpdateLeaderInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
@@ -1042,7 +1051,9 @@ class TenantUserBatchLeaderUpdateApi(CurrentUserTenantDataSourceMixin, generics.
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserBatchPasswordResetApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
+class TenantUserPasswordBatchResetApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+):
     """批量重置租户用户密码"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -1050,7 +1061,7 @@ class TenantUserBatchPasswordResetApi(CurrentUserTenantDataSourceMixin, generics
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量重置密码",
-        request_body=TenantUserBatchPasswordResetInputSLZ(),
+        request_body=TenantUserBatchResetPasswordInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -1064,13 +1075,9 @@ class TenantUserBatchPasswordResetApi(CurrentUserTenantDataSourceMixin, generics
 
         # 确保当前数据源已启用密码功能
         if not plugin_config.enable_password:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _(
-                    "当前数据源未启用密码功能",
-                )
-            )
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("当前数据源未启用密码功能"))
 
-        slz = TenantUserBatchPasswordResetInputSLZ(
+        slz = TenantUserBatchResetPasswordInputSLZ(
             data=request.data,
             context={
                 "tenant_id": cur_tenant_id,
@@ -1082,44 +1089,45 @@ class TenantUserBatchPasswordResetApi(CurrentUserTenantDataSourceMixin, generics
         data = slz.validated_data
         raw_password = data["password"]
 
-        with transaction.atomic():
-            data_source_user_list = [
-                tenant_user.data_source_user
-                for tenant_user in TenantUser.objects.filter(
-                    id__in=data["user_ids"],
-                    tenant_id=cur_tenant_id,
-                )
-            ]
+        data_source_users = [
+            tenant_user.data_source_user
+            for tenant_user in TenantUser.objects.filter(
+                id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
+            ).select_related("data_source_user")
+        ]
 
-            DataSourceUserHandler.batch_update_password(
-                data_source_users=data_source_user_list,
-                password=raw_password,
-                valid_days=plugin_config.password_expire.valid_time,
-                operator=request.user.username,
-            )
+        DataSourceUserHandler.batch_update_password(
+            data_source_users=data_source_users,
+            password=raw_password,
+            valid_days=plugin_config.password_expire.valid_time,
+            operator=request.user.username,
+        )
 
-            for data_source_user in data_source_user_list:
-                send_reset_password_to_user.delay(data_source_user.id, raw_password)
+        for data_source_user in data_source_users:
+            send_reset_password_to_user.delay(data_source_user.id, raw_password)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserBatchFieldUpdateApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
-    """批量更新租户用户自定义字段"""
+class TenantUserCustomFieldBatchUpdateApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+):
+    """批量更新租户用户自定义字段，一次只允许更新单个字段"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量更新自定义字段",
-        request_body=TenantUserBatchFieldUpdateInputSLZ(),
+        request_body=TenantUserBatchUpdateCustomFieldInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchFieldUpdateInputSLZ(
+        slz = TenantUserBatchUpdateCustomFieldInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
@@ -1132,12 +1140,13 @@ class TenantUserBatchFieldUpdateApi(CurrentUserTenantDataSourceMixin, generics.U
                 for tenant_user in TenantUser.objects.filter(
                     id__in=data["user_ids"],
                     tenant_id=cur_tenant_id,
-                )
+                ).select_related("data_source_user")
             ]
 
+            now = timezone.now()
             for data_source_user in data_source_users:
                 data_source_user.extras[name] = data["extras"][name]
-                data_source_user.updated_at = timezone.now()
+                data_source_user.updated_at = now
 
             DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
 

@@ -110,12 +110,6 @@ urlpatterns = [
         views.TenantUserStatusUpdateApi.as_view(),
         name="organization.tenant_user.status.update",
     ),
-    # 批量修改租户用户账号有效期
-    path(
-        "tenants/users/operations/batch_account_expired_at_update",
-        views.TenantUserBatchAccountExpiredAtUpdateApi.as_view(),
-        name="organization.tenant_user.batch_account_expired_at_update",
-    ),
     # 租户用户 - 快速录入
     path(
         "tenants/users/operations/batch_create/",
@@ -134,29 +128,35 @@ urlpatterns = [
         views.TenantUserBatchDeleteApi.as_view(),
         name="organization.tenant_user.batch_delete",
     ),
-    # 租户用户 - 批量停用
+    # 租户用户 - 批量更新状态
     path(
-        "tenants/users/operations/batch_disable/",
-        views.TenantUserBatchDisableApi.as_view(),
-        name="organization.tenant_user.batch_disable",
+        "tenants/users/status/operations/batch_update/",
+        views.TenantUserStatusBatchUpdateApi.as_view(),
+        name="organization.tenant_user.status.batch_update",
     ),
-    # 租户用户 - 批量更新字段信息
+    # 批量修改租户用户账号有效期
     path(
-        "tenants/users/operations/batch_field_update/",
-        views.TenantUserBatchFieldUpdateApi.as_view(),
-        name="organization.tenant_user.batch_field_update",
+        "tenants/users/account-expired-at/operations/batch_update/",
+        views.TenantUserAccountExpiredAtBatchUpdateApi.as_view(),
+        name="organization.tenant_user.account_expired_at.batch_update",
+    ),
+    # 租户用户 - 批量更新自定义字段信息
+    path(
+        "tenants/users/custom-field/operations/batch_update/",
+        views.TenantUserCustomFieldBatchUpdateApi.as_view(),
+        name="organization.tenant_user.custom_field.batch_update",
     ),
     # 租户用户 - 批量修改租户用户上级关系
     path(
-        "tenants/users/operations/batch_leader_update/",
-        views.TenantUserBatchLeaderUpdateApi.as_view(),
-        name="organization.tenant_user.batch_leader_update",
+        "tenants/users/leader/operations/batch_update/",
+        views.TenantUserLeaderBatchUpdateApi.as_view(),
+        name="organization.tenant_user.leader.batch_update",
     ),
     # 租户用户 - 批量重置密码
     path(
-        "tenants/users/operations/batch_password_reset/",
-        views.TenantUserBatchPasswordResetApi.as_view(),
-        name="organization.tenant_user.batch_password_reset",
+        "tenants/users/password/operations/batch_reset/",
+        views.TenantUserPasswordBatchResetApi.as_view(),
+        name="organization.tenant_user.password.batch_reset",
     ),
     # 租户用户 - 从其他组织拉取 / 添加到其他组织
     path(

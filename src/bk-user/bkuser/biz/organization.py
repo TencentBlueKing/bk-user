@@ -60,37 +60,38 @@ class DataSourceUserHandler:
         valid_days: int,
         operator: str,
     ):
-        """
-        批量更新用户的密码
-        """
-        with transaction.atomic():
-            identity_info_dict = {
-                data_source_user.id: LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-                for data_source_user in data_source_users
-            }
+        """批量更新用户的密码"""
 
-            # 批量创建 DataSourceUserDeprecatedPasswordRecord 对象
-            DataSourceUserDeprecatedPasswordRecord.objects.bulk_create(
-                [
-                    DataSourceUserDeprecatedPasswordRecord(
-                        user=data_source_user,
-                        password=identity_info_dict[data_source_user.id].password,
-                        operator=operator,
-                    )
-                    for data_source_user in data_source_users
-                ]
+        identify_infos = LocalDataSourceIdentityInfo.objects.filter(user__in=data_source_users)
+        user_cur_password_dict = {info.user_id: info.password for info in identify_infos}
+
+        # 记录历史使用密码
+        deprecated_password_records = [
+            DataSourceUserDeprecatedPasswordRecord(
+                user=user,
+                password=user_cur_password_dict.get(user.id, ""),
+                operator=operator,
             )
+            for user in data_source_users
+        ]
 
-            identify_infos = list(identity_info_dict.values())
-            for identify_info in identify_infos:
-                identify_info.password = make_password(password)
-                identify_info.password_updated_at = timezone.now()
-                # 注意：更新密码会重置有效期
-                if valid_days < 0:
-                    identify_info.password_expired_at = PERMANENT_TIME
-                else:
-                    identify_info.password_expired_at = timezone.now() + datetime.timedelta(days=valid_days)
+        now = timezone.now()
+        new_password_expired_at = PERMANENT_TIME
+        if valid_days < 0:
+            new_password_expired_at = now + datetime.timedelta(days=valid_days)
+
+        # 设置新密码 & 有效期
+        for info in identify_infos:
+            info.password = make_password(password)
+            info.password_updated_at = now
+            info.password_expired_at = new_password_expired_at
+
+        with transaction.atomic():
+            # 批量创建用户的历史使用密码记录
+            DataSourceUserDeprecatedPasswordRecord.objects.bulk_create(deprecated_password_records, batch_size=250)
 
             LocalDataSourceIdentityInfo.objects.bulk_update(
-                identify_infos, fields=["password", "password_updated_at", "updated_at"]
+                identify_infos,
+                fields=["password", "password_updated_at", "updated_at"],
+                batch_size=250,
             )
