@@ -96,7 +96,7 @@ import { inject, onMounted, reactive, ref } from 'vue';
 
 import FieldsAdd from './FieldsAdd.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { deleteCustomFields, getFields } from '@/http';
 import { t } from '@/language/index';

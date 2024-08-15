@@ -94,11 +94,11 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 
 import EditDetails from './EditDetails.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
@@ -244,10 +244,15 @@ const handleDelete = (item: any) => {
     width: 400,
     title: `${t('确认删除')} ${item.username} ${t('用户')}？`,
     confirmText: t('删除'),
-    onConfirm: async () => {
-      await deleteVirtualUsers(item.id);
-      initVirtualUsers();
-      Message({ theme: 'success', message: t('删除成功') });
+    onConfirm: () => {
+      deleteVirtualUsers(item.id)
+        .then(() => {
+          initVirtualUsers();
+          Message({ theme: 'success', message: t('删除成功') });
+        })
+        .catch((error) => {
+          console.warn(error);
+        });
     },
   });
 };

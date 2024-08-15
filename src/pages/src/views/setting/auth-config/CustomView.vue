@@ -17,7 +17,9 @@
     <ViewRow :title="$t('认证源信息')" class="mt-[24px]">
       <LabelContent :label="$t('名称')">{{ authSourceData.name }}</LabelContent>
       <LabelContent :label="$t('是否启用')">{{ authSourceData.status === 'enabled' ? $t('是') : $t('否') }}</LabelContent>
-      <LabelContent v-for="(item, key) in jsonSchemaProperties" :label="item.title">{{ authSourceData.plugin_config[key]}}</LabelContent>
+      <LabelContent v-for="(item, key) in jsonSchemaProperties" :label="item.title" :key="key">
+        {{ authSourceData.plugin_config[key]}}
+      </LabelContent>
       <LabelContent :label="$t('登录模式')">{{ $t('仅用于登录') }}</LabelContent>
       <LabelContent :label="$t('登录认证匹配')">
         <div class="content-matching">

@@ -69,8 +69,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import Row from '@/components/layouts/row.vue';
 import { getDataSourceDetails, getFields } from '@/http';
 import router from '@/router';
 import { SYNC_CONFIG_LIST } from '@/utils';

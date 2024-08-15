@@ -2,6 +2,7 @@ import http from './fetch';
 import type {
   DataSourceUsersParams,
   DataSourceUsersResult,
+  DeleteDataSourcesParams,
   DepartmentsParams,
   GeneratePasswordParams,
   LeadersParams,
@@ -121,7 +122,7 @@ export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/
 /**
  * 重置数据源
  */
-export const deleteDataSources = (id: string, param: any) => http.delete(`/api/v1/web/data-sources/${id}/`, param);
+export const deleteDataSources = (params: DeleteDataSourcesParams) => http.delete(`/api/v1/web/data-sources/${params.id}/`, params);
 
 /**
  * 数据源关联资源信息

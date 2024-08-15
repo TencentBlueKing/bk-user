@@ -22,7 +22,8 @@
             @click="editUsername" />
         </template>
         <template v-else>
-          <bk-input class="username-input" style="width: 300px" v-model.trim="adminAccount.username" @enter="saveUsername" />
+          <bk-input
+            class="username-input" style="width: 300px" v-model.trim="adminAccount.username" @enter="saveUsername" />
           <bk-button
             text
             theme="primary"
@@ -133,8 +134,8 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import Row from '@/components/layouts/row.vue';
 import MemberSelector from '@/components/MemberSelector.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
@@ -192,11 +193,15 @@ const changeStatus = () => {
       : t('启用后，可使用管理员账号进行登录'),
     confirmText: adminAccount.value.enable_login ? t('停用') : t('启用'),
     theme: adminAccount.value.enable_login ? 'danger' : undefined,
-    onConfirm: async () => {
-      await patchBuiltinManager({ enable_login: !adminAccount.value.enable_login });
-      initBuiltinManager();
-      const message = adminAccount.value.enable_login ? t('停用成功') : t('启用成功');
-      Message({ theme: 'success', message });
+    onConfirm: () => {
+      patchBuiltinManager({ enable_login: !adminAccount.value.enable_login }).then(() => {
+        initBuiltinManager();
+        const message = adminAccount.value.enable_login ? t('停用成功') : t('启用成功');
+        Message({ theme: 'success', message });
+      })
+        .catch((error) => {
+          console.warn(error);
+        });
     },
   });
 };
@@ -211,7 +216,7 @@ watch(() => isEditUsername.value, (val) => {
 });
 
 const saveUsername = async () => {
-  if(!adminAccount.value.username) return 
+  if (!adminAccount.value.username) return;
   await patchBuiltinManager({ username: adminAccount.value.username });
   isEditUsername.value = false;
   Message({ theme: 'success', message: t('保存成功') });

@@ -232,7 +232,7 @@ const handleReset = async () => {
       onConfirm: () => {
         const resetConfig = resetIdpConfig.value ? 'True' : 'False';
         if (dataSource.value?.id) {
-          deleteDataSources(dataSource.value.id, { reset_idp_config: resetConfig }).then(() => {
+          deleteDataSources({ id: dataSource.value.id, is_delete_idp: resetConfig }).then(() => {
             Message({ theme: 'success', message: t('数据源重置成功') });
             initDataSourceList();
           });

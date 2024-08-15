@@ -58,24 +58,26 @@ const list = [
 <style lang="less" scoped>
 .table-box {
   display: flex;
+  width: 100%;
+  height: 100%;
   flex-direction: column;
   flex: 1;
-  height: 100%;
-  width: 100%;
 
   .content {
     display: flex;
     justify-content: center;
     width: 100%;
     margin-top: 269px;
+
     .content-item {
       display: flex;
       justify-content: center;
       align-items: center;
+
       .content-item_top {
+        display: flex;
         width: 338px;
         height: 296px;
-        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -84,51 +86,56 @@ const list = [
           width: 204.32px;
           height: 176.84px;
         }
+
         .content-item_title {
           height: 24px;
-          font-family: MicrosoftYaHei-Bold;
-          font-weight: 700;
-          font-size: 16px;
-          color: #63656e;
-          letter-spacing: 0;
-          line-height: 24px;
           margin-top: 31.16px;
+          font-family: MicrosoftYaHei-Bold;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 24px;
+          letter-spacing: 0;
+          color: #63656e;
         }
+
         .content-item_number {
           display: inline-block;
-          font-family: Impact;
-          vertical-align: middle;
-          color: #a3c5fd;
           margin-right: 10px;
+          font-family: Impact;
+          color: #a3c5fd;
+          vertical-align: middle;
         }
       }
+
       .content-item_detail {
         width: 338px;
         height: 44px;
+        margin-top: 20px;
         font-family: MicrosoftYaHei;
         font-size: 14px;
-        color: #63656e;
-        letter-spacing: 0;
-        text-align: justify;
         line-height: 22px;
-        margin-top: 20px;
+        letter-spacing: 0;
+        color: #63656e;
+        text-align: justify;
       }
+
       .content-item_icon {
-        margin-left: 30.25px;
-        padding-top: 91.13px;
+        float: right;
         width: 20px;
         height: 100%;
-        float: right;
+        padding-top: 91.13px;
+        margin-left: 30.25px;
       }
     }
   }
+
   .bottom {
     height: 32px;
-    background: #3a84ff;
-    border-radius: 2px;
     margin: 0 auto;
     margin-top: 52px;
     font-size: 14px;
+    background: #3a84ff;
+    border-radius: 2px;
   }
 }
 </style>

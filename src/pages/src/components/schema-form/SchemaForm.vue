@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, defineExpose} from 'vue';
+import { computed, defineExpose, ref, watch } from 'vue';
 
 import createForm from '@blueking/bkui-form';
 
@@ -28,24 +28,22 @@ const props = defineProps({
   },
 });
 
-const data = ref(
-  props.formData.plugin_config,
-);
+const data = ref(props.formData.plugin_config);
 
-const propsValue = computed(()=>props.formData)
+const propsValue = computed(() => props.formData);
 
 watch(propsValue, (value) => {
-  data.value = value.plugin_config
-}, { deep: true});
+  data.value = value.plugin_config;
+}, { deep: true });
 
-const BkSchemaFormRef = ref()
+const BkSchemaFormRef = ref();
 
 const handleChange = async (data: any) => {
   emit('changePluginConfig', data);
 };
 defineExpose({
-  element: BkSchemaFormRef
-})
+  element: BkSchemaFormRef,
+});
 </script>
 
 <style>

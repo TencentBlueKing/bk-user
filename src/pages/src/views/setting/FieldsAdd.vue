@@ -405,9 +405,13 @@ const changeEnumValue = async () => {
     enumDialog.value.isShow = false;
 
     const findIndexById = id => fieldsInfor.options.findIndex(item => item.id === id);
-    fieldsInfor.default = fieldsInfor.data_type === 'enum' ? findIndexById(fieldsInfor.default)
-      : fieldsInfor.data_type === 'multi_enum' ? fieldsInfor.default?.map(findIndexById)
-        : fieldsInfor.default;
+    if (fieldsInfor.data_type === 'enum') {
+      fieldsInfor.default = findIndexById(fieldsInfor.default);
+    } else if (fieldsInfor.data_type === 'multi_enum') {
+      fieldsInfor.default = fieldsInfor.default?.map(findIndexById);
+    } else {
+      fieldsInfor.default = fieldsInfor.default;
+    }
   } catch (error) {
     console.warn(error);
   } finally {

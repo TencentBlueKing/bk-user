@@ -104,8 +104,8 @@ import { InfoBox, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { computed, onMounted, ref, watch } from 'vue';
 
+import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import Row from '@/components/layouts/row.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { getTenantUserValidityPeriod, putTenantUserValidityPeriod } from '@/http';
 import { t } from '@/language/index';
@@ -141,7 +141,10 @@ const validityPeriod = computed(() => VALID_TIME.find(item => item?.days === for
 
 const remindBeforeBxpire = computed(() => findLabelsByValues(formData.value.remind_before_expire, REMIND_DAYS));
 
-const enabledNotificationMethods = computed(() => findLabelsByValues(formData.value.enabled_notification_methods, NOTIFICATION_METHODS));
+const enabledNotificationMethods = computed(() => findLabelsByValues(
+  formData.value.enabled_notification_methods,
+  NOTIFICATION_METHODS,
+));
 
 const isShowItem = computed(() => formData.value.validity_period !== -1);
 
@@ -192,16 +195,18 @@ const handleChange = () => {
   window.changeInput = true;
 };
 
-const handleSubmit = async () => {
-  try {
-    await formRef.value.validate();
-    await putTenantUserValidityPeriod(formData.value);
-    Message({ theme: 'success', message: t('更新成功') });
-    cancelEdit();
-    window.changeInput = false;
-  } catch (e) {
-    console.warn(e);
-  }
+const handleSubmit = () => {
+  (async () => {
+    try {
+      await formRef.value.validate();
+      await putTenantUserValidityPeriod(formData.value);
+      Message({ theme: 'success', message: t('更新成功') });
+      cancelEdit();
+      window.changeInput = false;
+    } catch (e) {
+      console.warn(e);
+    }
+  })();
 };
 
 const changeApplication = () => {

@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { defineProps, onMounted, ref, watch } from 'vue';
 
-import Tree from './Tree.vue';
+import Tree from './DeptTree.vue';
 
 const props = defineProps({
   currentCategoryId: {

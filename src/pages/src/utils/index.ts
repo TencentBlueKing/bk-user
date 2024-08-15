@@ -292,28 +292,46 @@ export const NOTIFICATION_METHODS = [
 // 自定义字段转换
 export function customFieldsMap(item: any) {
   const fields = ref('');
-  fields.value = item.value === '' ? '--'
-    : item.data_type === 'enum' ? item.options?.find(option => option.id === item.value)?.value
-      : item.data_type === 'multi_enum' ? item.value?.map(key => item.options?.find(option => option.id === key)?.value)
-        .filter(Boolean)
-        .join(', ')
-        : item.value;
+
+  if (item.value === '') {
+    fields.value = '--';
+  } else if (item.data_type === 'enum') {
+    fields.value = item.options?.find(option => option.id === item.value)?.value || '';
+  } else if (item.data_type === 'multi_enum') {
+    fields.value = item.value
+      ?.map(key => item.options?.find(option => option.id === key)?.value)
+      .filter(Boolean)
+      .join(', ') || '';
+  } else {
+    fields.value = item.value;
+  }
+
   return fields.value;
-};
+}
 
 // 用户表格数据转换
 export function getTableValue(row: any, item: any) {
   let val = '';
+
   if (Object.keys(row).length !== 0) {
-    val = row[item.field] === '' ? '--'
-      : item.data_type === 'enum' ? item.options?.find(option => option.id === row[item.field])?.value
-        : item.data_type === 'multi_enum' ? row[item.field]?.map(key => item.options?.find(a => a.id === key)?.value)
-          .filter(Boolean)
-          .join(', ')
-          : row[item.field];
+    const fieldValue = row[item.field];
+
+    if (fieldValue === '') {
+      val = '--';
+    } else if (item.data_type === 'enum') {
+      val = item.options?.find(option => option.id === fieldValue)?.value || '';
+    } else if (item.data_type === 'multi_enum') {
+      val = fieldValue
+        ?.map(key => item.options?.find(option => option.id === key)?.value)
+        .filter(Boolean)
+        .join(', ') || '';
+    } else {
+      val = fieldValue;
+    }
   }
+
   return val;
-};
+}
 
 // 数据源启用状态
 export const tenantStatus = {

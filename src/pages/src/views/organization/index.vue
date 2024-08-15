@@ -38,7 +38,7 @@
             {{ appStore.currentOrg?.name }}
           </div>
           <div class="table-main">
-            <TableList ref="tableListRef" @clickImport="importHandle"  />
+            <TableList ref="tableListRef" @click-import="importHandle" />
           </div>
         </section>
       </template>
@@ -53,7 +53,7 @@ import { ref } from 'vue';
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
 import BlankPage from './components/blank-page.vue';
-import Search from './components/search.vue';
+import Search from './components/search-org.vue';
 import SearchResultTree from './components/search-result-tree.vue';
 import TableList from './components/table-list.vue';
 
@@ -63,7 +63,7 @@ import useAppStore from '@/store/app';
 const appStore = useAppStore();
 const isShow = ref(null);
 const isLoading = ref(false);
-const tableListRef = ref()
+const tableListRef = ref();
 
 const getList = async () => {
   isLoading.value = true;
@@ -80,10 +80,10 @@ const getList = async () => {
 };
 getList();
 
-const importHandle = async() => {
-  await getList()
-  tableListRef.value.importDialogHandle()
-}
+const importHandle = async () => {
+  await getList();
+  tableListRef.value.importDialogHandle();
+};
 </script>
 
 <style lang="postcss" scoped>

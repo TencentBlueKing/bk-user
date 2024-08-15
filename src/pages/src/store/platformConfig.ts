@@ -7,6 +7,8 @@ export const platformConfig = defineStore('platformConfig', {
     nameEn: '', // 站点的名称-英文
     appLogo: '', // 站点logo
     favicon: '', // 站点favicon
+    productName: '', // 产品名称
+    productNameEn: '', // 产品名称-英文
     helperText: '',
     helperTextEn: '',
     helperLink: '',
@@ -32,7 +34,7 @@ export const platformConfig = defineStore('platformConfig', {
   }),
   actions: {
     update(value: any) {
-        this.$patch(value);  
-      },
+      this.$patch(value);
+    },
   },
 });

@@ -110,15 +110,16 @@ import {
 } from '@/http';
 import { t } from '@/language';
 
-const validate = useValidate();
-
-const emit = defineEmits(['updateList']);
 const props = defineProps({
   config: {
     type: Object,
     default: () => ({}),
   },
 });
+
+const emit = defineEmits(['updateList', 'cancel']);
+
+const validate = useValidate();
 
 const formData = reactive(props.config.data);
 

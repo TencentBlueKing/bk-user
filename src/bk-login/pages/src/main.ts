@@ -4,6 +4,7 @@ import router from './router';
 import App from './app.vue';
 import './css/index.css';
 import i18n from './language/index';
+import VueDOMPurifyHTML from 'vue-dompurify-html';
 
 // 全量引入 bkui-vue
 import bkui from 'bkui-vue';
@@ -15,4 +16,5 @@ createApp(App)
   .use(createPinia())
   .use(bkui)
   .use(i18n)
+  .use(VueDOMPurifyHTML)
   .mount('.app');

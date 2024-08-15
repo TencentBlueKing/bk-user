@@ -217,7 +217,7 @@
 <script setup lang="tsx">
   import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
   import { InfoBox, Message } from 'bkui-vue';
-  import Empty from '@/components/Empty.vue';
+  import Empty from '@/components/SearchEmpty.vue';
   import { Upload} from 'bkui-vue/lib/icon';
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
@@ -810,8 +810,9 @@ defineExpose({
 
       .icon-upload {
         color: #3A84ff;
-       }
+      }
     }
+
     .header-right {
       position: absolute;
       right: 0;
@@ -886,35 +887,39 @@ defineExpose({
           background: #979BA5;
         }
       }
-  }
-  .user-select-main {
+    }
+
+    .user-select-main {
     
-  }
-  .operate-menu-list {
-    .operate-list-item {
-        color: #63656E;
+    }
+
+    .operate-menu-list {
+      .operate-list-item {
         height: 32px;
-        line-height: 32px;
         padding: 0 12px;
+        line-height: 32px;
+        color: #63656E;
         cursor: pointer;
+
         &:hover {
-            background: #F5F7FA;
+          background: #F5F7FA;
         }
+
         &.disabled {
           color: #c4c6cc;
           cursor: not-allowed;
         }
 
-    &.expired {
-      background: #ff9c0129;
+        &.expired {
+          background: #ff9c0129;
 
-      &::before {
-        background: #FF9C01;
+          &::before {
+            background: #FF9C01;
+          }
+        }
       }
     }
   }
-  }
-}
 }
 
 .user-info-option {

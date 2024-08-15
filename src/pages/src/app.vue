@@ -7,7 +7,7 @@ import { useRoute } from 'vue-router';
 
 import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
 
-import HeaderBox from './views/Header.vue';
+import HeaderBox from './views/MainHeader.vue';
 
 import { currentUser } from '@/http';
 import { locale as i18nLocal, t } from '@/language/index';
@@ -53,12 +53,12 @@ const locale = computed(() => localeData[currentLang.value]);
 const platformConfigData = platformConfig();
 const url = `${window.BK_SHARED_RES_URL}/bk_user/base.js`;  // url 远程配置文件地址
 const defaults = {
-  name: '蓝鲸用户管理',
-  nameEn: 'BK USER',
-  brandName: '腾讯蓝鲸智云',
-  brandNameEn: 'BlueKing',
-  appLogo: 'defaultsAppLogo',
-  favicon: '/static/favicon.ico',
+  name: '用户管理',
+  nameEn: 'User Management',
+  productName: '蓝鲸用户管理',
+  productNameEn: 'BK User Management',
+  brandName: '蓝鲸智云',
+  brandNameEn: 'Tencent BlueKing',
   version: '3.0',
 };
 

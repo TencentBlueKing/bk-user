@@ -74,11 +74,10 @@ import { computed, defineEmits, defineProps, reactive, watch } from 'vue';
 
 import EditInfo from './EditDetailsInfo.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
 
-const userStore = useUser();
 const props = defineProps({
   userData: {
     type: Object,
@@ -89,9 +88,8 @@ const props = defineProps({
     default: false,
   },
 });
-
 const emit = defineEmits(['updateTenantsList', 'handleCancel', 'changeEdit']);
-
+const userStore = useUser();
 const state = reactive({
   ...props?.userData,
   isDataEmpty: false,

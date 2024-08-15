@@ -2,8 +2,8 @@
   <div
     ref="rootRef"
     class="sql-execute-editor"
-     :class="{'full':isFullscreen}"
-    >
+    :class="{ 'full': isFullscreen }"
+  >
     <div class="editor-layout-header">
       <span>{{ title }}</span>
       <div class="editro-action-box">
@@ -58,7 +58,6 @@ const emits = defineEmits(['update:modelValue', 'change']);
 const rootRef = ref();
 const editorRef = ref();
 const isFullscreen = ref(false);
-const isFull = ref();
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 
@@ -98,7 +97,7 @@ const handleDownload = () => {
 };
 
 const handleFullScreen = () => {
-  const bodyNode = document.querySelector('body')
+  const bodyNode = document.querySelector('body');
   screenfull.toggle(bodyNode);
 };
 
@@ -207,16 +206,14 @@ onBeforeUnmount(() => {
     background: #212121;
   }
 }
+
 .full{
-    position:fixed !important;
-    z-index:200;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin:0;
-    padding:0;
-    width: 100vw !important;
-    height: 100vh !important;
+  position:fixed !important;
+  inset: 0;
+  z-index:200;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding:0;
+  margin:0;
 }
 </style>

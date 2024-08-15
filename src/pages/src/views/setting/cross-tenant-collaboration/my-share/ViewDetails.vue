@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 
-// import Empty from '@/components/Empty.vue';
+// import Empty from '@/components/SearchEmpty.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 
 defineProps({
