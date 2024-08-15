@@ -746,8 +746,17 @@ export default {
       if (!list.length) return this.handleClickEmpty();
       if (!this.searchFilterList.length) return;
       this.basicLoading = true;
-      const valueList = [`category_id=${this.currentCategoryId}&page=${current}&page_size=${this.paginationConfig.limit}`];
-
+      let id = '';
+      if (this.treeSearchResult && this.treeSearchResult.groupType === 'department') {
+        id = this.treeSearchResult.id;
+      }
+      const params = {
+        id: id || this.currentParam.item.id,
+        page: current,
+        pageSize: this.paginationConfig.limit,
+        recursive: true,
+      };
+      const values = [];
       list.forEach((item) => {
         if (!Array.isArray(item.values)) {
           const { id, name } = item;
@@ -765,16 +774,16 @@ export default {
         item.values.forEach((v) => {
           value.push(v.id);
         });
-        valueList.push(`${key}=${value}`);
+        values.push(`${key}=${value}`);
       });
-
-      const params = valueList.join('&');
-      this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
+      params.values = values.join('&');
+      this.$store.dispatch('organization/getProfiles', params).then((res) => {
         if (res.result) {
           this.basicLoading = false;
           this.isEmptySearch = res.data.count === 0;
+          this.handleTabData.currentNumber = res.data.current_count;
           this.paginationConfig.count = res.data.count;
-          this.filterUserData(res.data.results);
+          this.filterUserData(res.data.data);
         }
       })
         .catch((e) => {
