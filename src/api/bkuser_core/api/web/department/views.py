@@ -15,7 +15,6 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from ..profile.serializers import ProfileSearchInputSLZ
 from .serializers import (
     DepartmentCreatedOutputSLZ,
     DepartmentCreateInputSLZ,
@@ -185,25 +184,8 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         return Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
 
     def get_no_recursive_queryset(self, department):
-        slz = ProfileSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-        queryset = department.profiles.exclude(status=ProfileStatus.DELETED.value)
-        if data.get("username"):
-            queryset = queryset.filter(username__icontains=data["username"])
-        if data.get("display_name"):
-            queryset = queryset.filter(display_name__icontains=data["display_name"])
-        if data.get("email"):
-            queryset = queryset.filter(email__icontains=data["email"])
-        if data.get("telephone"):
-            queryset = queryset.filter(telephone__icontains=data["telephone"])
-        if data.get("status"):
-            queryset = queryset.filter(status=data["status"])
-        if data.get("staff_status"):
-            queryset = queryset.filter(staff_status=data["staff_status"])
-        return queryset
+        return department.profiles.exclude(status=ProfileStatus.DELETED.value)
 
-    # def get_queryset(self):
     def list(self, request, *args, **kwargs):
         slz = DepartmentProfileListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -226,11 +208,23 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         else:
             queryset = self.get_recursive_queryset(department)
             current_count = self.get_no_recursive_queryset(department).count()
+        if data.get("username"):
+            queryset = queryset.filter(username__icontains=data["username"])
+        if data.get("display_name"):
+            queryset = queryset.filter(display_name__icontains=data["display_name"])
+        if data.get("email"):
+            queryset = queryset.filter(email__icontains=data["email"])
+        if data.get("telephone"):
+            queryset = queryset.filter(telephone__icontains=data["telephone"])
+        if data.get("status"):
+            queryset = queryset.filter(status=data["status"])
+        if data.get("staff_status"):
+            queryset = queryset.filter(staff_status=data["staff_status"])
 
         # filter by keyword
-        keyword = data.get("keyword")
-        if keyword:
-            queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+        # keyword = data.get("keyword")
+        # if keyword:
+        #     queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
 
         queryset = queryset.prefetch_related("departments", "leader")
 
