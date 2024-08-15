@@ -53,12 +53,16 @@ export const useDataSource = () => {
 
   // 获取同步数据源状态
   const syncStatus = ref({});
-  const initSyncRecords = async () => {
-    const res = await getSyncRecords({ id: currentDataSourceId.value });
-    if (res.data?.count === 0) return;
-    syncStatus.value = res.data?.results[0];
+  const initSyncRecords = () => {
+    getSyncRecords({ id: currentDataSourceId.value })
+      .then((res) => {
+        if (res.data?.count === 0) return;
+        syncStatus.value = res.data?.results[0];
+      })
+      .catch((error) => {
+        console.warn(error);
+      });
   };
-
   // 点击新建数据源
   const handleClick = async (id: string) => {
     if (!currentDataSourceId.value) {
@@ -95,7 +99,7 @@ export const useDataSource = () => {
       Message({ theme: res.data.status, message: res.data.summary });
       if (pollingInterval.value) return;
       initSyncRecords();
-      pollingInterval.value = setInterval(initSyncRecords, 10000); 
+      pollingInterval.value = setInterval(initSyncRecords, 10000);
     });
   };
 
@@ -116,6 +120,6 @@ export const useDataSource = () => {
     handleClick,
     importDialog,
     handleOperationsSync,
-    stopPolling
+    stopPolling,
   };
 };

@@ -33,8 +33,8 @@
 <script setup lang="ts"> import { onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import Http from './Http.vue';
-import Success from './Success.vue';
+import Http from './HttpConfig.vue';
+import Success from './ConfigSuccess.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import {
@@ -122,10 +122,6 @@ const updateSuccess = (value: string) => {
 };
 
 const isReset = ref(false);
-const handleReset = (e) => {
-  e.cancelBubble = true;
-  isReset.value = !isReset.value;
-};
 </script>
 
 <style lang="less" scoped>

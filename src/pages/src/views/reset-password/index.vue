@@ -31,9 +31,9 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import Email from './email.vue';
+import Email from './emailForm.vue';
 import EmailSent from './emailSent.vue';
-import Phone from './phone.vue';
+import Phone from './phoneForm.vue';
 
 import { t } from '@/language/index';
 

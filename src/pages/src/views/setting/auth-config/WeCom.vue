@@ -108,7 +108,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 
-import Row from '@/components/layouts/row.vue';
+import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';

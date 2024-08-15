@@ -1,7 +1,7 @@
 <template>
   <bk-form v-show="!isAdminShow" form-type="vertical" v-bkloading="{ loading }">
     <div class="tenant-logo">
-      <img :src="appLogo"/>
+      <img :src="appLogo" />
     </div>
 
     <section v-if="!hasStorage && !loading">
@@ -23,10 +23,10 @@
             :id="item.id"
             :key="item.id"
             :name="`${item.name} (${item.id})`">
-              <div class="options-show">
-                <span>{{ `${item.name} (${item.id})` }}</span>
-                <bk-tag v-if="inputTenant?.name" size="small">{{ $t('隐藏租户') }}</bk-tag>
-              </div>
+            <div class="options-show">
+              <span>{{ `${item.name} (${item.id})` }}</span>
+              <bk-tag v-if="inputTenant?.name" size="small">{{ $t('隐藏租户') }}</bk-tag>
+            </div>
           </bk-option>
         </bk-select>
         <span v-if="inputTenant !== null && !inputTenant?.name">{{ $t('暂无匹配租户') }}</span>
@@ -98,7 +98,7 @@
                 :key="item.id"
                 @click="handleChangeStorageTenant(item)">
                 <span class="item-name">{{ item.name }} / {{ getUserGroupName(item) }}</span>
-                <close class="delete-icon" @click.stop="deleteStorageTenant(item)"/>
+                <close class="delete-icon" @click.stop="deleteStorageTenant(item)" />
               </div>
               <div class="add" @click="addTenant">{{ $t('其他租户或用户来源') }}</div>
             </section>
@@ -156,7 +156,7 @@
       </div>
       <div class="language-switcher">
         <div class="language-select" style="display: flex">
-          <p class="language-item" :class="{ active: activeTab === 'zh-cn' }"  @click="handleSwitchLocale('zh-cn')"> 
+          <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
             <span id="ch" class="text-active ">中文</span>
           </p>
           <p class="language-item " :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
@@ -177,7 +177,7 @@
 
 <script setup lang="ts">
 import { getGlobalSettings, getIdpList, getTenantList } from '@/http/api';
-import { Transfer, Close} from 'bkui-vue/lib/icon';
+import { Transfer, Close } from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
@@ -186,10 +186,11 @@ import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
 import I18n, { t } from '@/language/index';
 import Cookies from 'js-cookie';
+import logoPng from '../../static/images/blueking.png'
 
-const  platformConfigData = platformConfig()
-const appLogo = computed(() => platformConfigData.appLogo);
-const activeTab = ref(I18n.global.locale.value)
+const  platformConfigData = platformConfig();
+const appLogo = computed(() => platformConfigData.appLogo ? platformConfigData.appLogo : logoPng);
+const activeTab = ref(I18n.global.locale.value);
 
 
 interface Item {
@@ -233,7 +234,7 @@ const inputTenant = ref(null);
  * @param id 租户ID
  */
 const handleTenantChange = async (id: string) => {
-  // 清空时清空输入租户名称 
+  // 清空时清空输入租户名称
   if (!id) {
     inputTenant.value = null;
     return;
@@ -454,7 +455,7 @@ const getUserGroupName = (tenant: Tenant) => {
   if (userGroupId === tenant.id) {
     return '本租户';
   }
-  return userGroupId
+  return userGroupId;
 };
 
 /**
@@ -469,23 +470,23 @@ const deleteStorageTenant = (item: any) => {
   const obj = storageTenantList.value.find(i => i.id === item.id);
   tenantMap.value = Object.fromEntries(Object.entries(tenantMap.value).filter(([key]) => key !== obj.id));
   localStorage.setItem('tenantMap', JSON.stringify(tenantMap.value));
-}
+};
 
-const selectRef = ref()
+const selectRef = ref();
 
 /**
  * 下拉框中的值展示
  */
 
 const showOptions = computed(() => {
-  const options = inputTenant.value?.name ? [inputTenant.value]:allTenantList.value
-  inputTenant.value?.name && selectRef.value?.showPopover()
-  return options
-})
+  const options = inputTenant.value?.name ? [inputTenant.value] : allTenantList.value;
+  inputTenant.value?.name && selectRef.value?.showPopover();
+  return options;
+});
 
 // 语言切换
 const handleSwitchLocale = (locale: string) => {
-  activeTab.value = locale
+  activeTab.value = locale;
   const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
   const scriptId = 'jsonp-script';
   const prevJsonpScript = document.getElementById(scriptId);
@@ -505,7 +506,7 @@ const handleSwitchLocale = (locale: string) => {
   });
   I18n.global.locale.value = locale as any;
   document.querySelector('html')?.setAttribute('lang', locale);
-  // window.location.reload();
+  window.location.reload();
 };
 </script>
 

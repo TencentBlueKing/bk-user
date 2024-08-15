@@ -158,8 +158,8 @@ const userStore = useUser();
 const  platformConfigData = platformConfig();
 const headerNav = ref([]);
 const role = computed(() => userStore.user.role);
-const appName = computed(() => platformConfigData.i18n.name);
-const appLogo = computed(() => (platformConfigData.appLogo === 'defaultsAppLogo' ? logo : platformConfigData.appLogo));
+const appName = computed(() => platformConfigData.i18n.productName);
+const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
 const userInfo = computed(() => {
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },

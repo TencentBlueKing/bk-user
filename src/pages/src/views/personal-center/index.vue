@@ -342,15 +342,28 @@
                     <div class="value-content">
                       <div class="value-edit" v-if="item.isEdit">
                         <bk-form-item>
-                          <bk-select v-model="currentUserInfo[item.model]" clearable :input-search="item.model === 'language'">
-                            <bk-option v-for="option in item.options" :key="option.value" :id="option.value" :name="option.label"></bk-option>
+                          <bk-select
+                            v-model="currentUserInfo[item.model]"
+                            clearable
+                            :input-search="item.model === 'language'">
+                            <bk-option
+                              v-for="option in item.options"
+                              :key="option.value"
+                              :id="option.value"
+                              :name="option.label">
+                            </bk-option>
                           </bk-select>
                         </bk-form-item>
-                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="item.submitChange(item)">{{ $t('确定') }}</bk-button>
+                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="item.submitChange(item)">
+                          {{ $t('确定') }}
+                        </bk-button>
                         <bk-button text theme="primary" @click="item.cancel(item)">{{ $t('取消') }}</bk-button>
                       </div>
                       <div v-else>
-                        <span class="value">{{ item.model === 'language' ? showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}</span>
+                        <span class="value">
+                          {{ item.model === 'language' ?
+                            showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}
+                        </span>
                         <i class="user-icon icon-edit" @click="item.isEdit = true" />
                       </div>
                     </div>
@@ -1174,9 +1187,10 @@ const hidePasswordModal = () => {
     }
   }
 }
+
 .required-icon {
   display: inline-block;
-  margin: 0 3px 0 0px;
+  margin: 0 3px 0 0;
   line-height: 19px;
   color: #ff5e5e;
   vertical-align: middle;

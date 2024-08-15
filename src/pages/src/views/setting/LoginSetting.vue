@@ -126,9 +126,9 @@
 <script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
 import { h, inject, onMounted, reactive, ref } from 'vue';
 
-import Custom from './auth-config/Custom.vue';
+import Custom from './auth-config/CustomLogin.vue';
 import CustomView from './auth-config/CustomView.vue';
-import Local from './auth-config/Local.vue';
+import Local from './auth-config/LocalAccount.vue';
 import LocalView from './auth-config/LocalView.vue';
 import WeCom from './auth-config/WeCom.vue';
 import WeComView from './auth-config/WeComView.vue';
@@ -463,13 +463,13 @@ const handleDataSource = () => {
               }
 
               span {
-                margin: 0 6px 0 12px;
-                font-size: 14px;
-                color: #313238;
                 display: block;
                 height: 22px;
-                line-height: 22px;
                 max-width: 80px;
+                margin: 0 6px 0 12px;
+                font-size: 14px;
+                line-height: 22px;
+                color: #313238;
               }
 
               .tag-info {

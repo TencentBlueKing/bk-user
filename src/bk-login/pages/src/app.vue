@@ -14,11 +14,11 @@
     </div>
     <div id="particles-js"></div>
     <footer class="footer">
-      <p >
-        <span v-html="contact"></span>
+      <p>
+        <span v-dompurify-html="contact"></span>
         <bk-popover theme="light" placement="bottom">
           <a href="" target="_blank" class="link follow-us">
-          | {{ $t('关注我们') }}
+            | {{ $t('关注我们') }}
           </a>
           <template #content>
             <span class="qr-box"><img class="qr" src="../static/images/qr.png" alt=""></span>
@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed} from 'vue';
-import { getPlatformConfig, setShortcutIcon, setDocumentTitle} from '@blueking/platform-config';
-import {platformConfig} from '@/store/platformConfig';
+import { onMounted, computed } from 'vue';
+import { getPlatformConfig, setShortcutIcon, setDocumentTitle } from '@blueking/platform-config';
+import { platformConfig } from '@/store/platformConfig';
 
 onMounted(() => {
   particlesJS(
@@ -158,23 +158,23 @@ onMounted(() => {
 });
 
 const platformConfigData = platformConfig();
-const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`  // url 远程配置文件地址
+const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`;  // url 远程配置文件地址
 const defaults = {
-    name: '蓝鲸用户管理',
-    nameEn: 'BK USER',
-    brandName: '腾讯蓝鲸智云',
-    brandNameEn: 'BlueKing',
-    favicon: '/static/favicon.ico',
-    version: '3.0',
-  }
+  name: '登录',
+  nameEn: 'Login',
+  brandName: '蓝鲸智云',
+  brandNameEn: 'BlueKing',
+  version: '3.0',
+};
 
-const getConfigData = async() => {
-    const config =  await getPlatformConfig(url, defaults)  
-    setShortcutIcon(config.favicon);
-    setDocumentTitle(config.i18n);
-    platformConfigData.update(config);
-  }
-getConfigData()
+const getConfigData = async () => {
+  const config =  await getPlatformConfig(url, defaults);
+  
+  setShortcutIcon(config.favicon);
+  setDocumentTitle(config.i18n);
+  platformConfigData.update(config);
+};
+getConfigData();
 const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
 const copyright = computed(() => platformConfigData.footerCopyrightContent);
 </script>

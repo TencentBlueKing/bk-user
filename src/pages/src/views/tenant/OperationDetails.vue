@@ -104,7 +104,7 @@
 import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
-import Row from '@/components/layouts/row.vue';
+import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
@@ -249,7 +249,6 @@ const {
   handleRandomPassword,
   emailError,
   telError,
-  isEmail,
   handleBlur,
   handleInput,
   changeCountryCode,
@@ -307,6 +306,7 @@ const emailBlur = () => {
 ::v-deep .bk-upload-trigger--picture {
   margin: 0 -4px 8px 0;
 }
+
 ::v-deep .bk-upload__tip {
   width: 0;
   color: #999

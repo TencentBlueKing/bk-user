@@ -126,3 +126,11 @@ export interface ResetPasswordParams {
   id: string,
   password: string,
 }
+
+/**
+ * 数据源重置参数
+ */
+export interface DeleteDataSourcesParams {
+  id: string,
+  is_delete_idp: string,
+}

@@ -99,7 +99,7 @@
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
             <passwordInput
-              v-model="formData.config.password_initial.fixed_password" @input="inputPassword"/>
+              v-model="formData.config.password_initial.fixed_password" @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -249,7 +249,7 @@ import { InfoBox } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
-import Row from '@/components/layouts/row.vue';
+import Row from '@/components/layouts/ItemRow.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
@@ -473,7 +473,7 @@ const changeAccountPassword = (value) => {
 
 const handleRandomPassword = async () => {
   try {
-    const params = {password_rule_config: formData.config?.password_rule}
+    const params = { password_rule_config: formData.config?.password_rule };
     const passwordRes = await randomPasswords(params);
     formData.config.password_initial.fixed_password = passwordRes.data.password;
     window.changeInput = true;

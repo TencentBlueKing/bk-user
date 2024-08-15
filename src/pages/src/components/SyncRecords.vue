@@ -93,13 +93,11 @@ import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http';
 import { t } from '@/language/index';
 import { dataRecordStatus } from '@/utils';
-
-const route = useRoute();
 
 const props = defineProps({
   dataSource: {
@@ -107,6 +105,8 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
+const route = useRoute();
 
 const dataRecordConfig = reactive({
   loading: false,
