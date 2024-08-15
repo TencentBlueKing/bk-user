@@ -77,10 +77,15 @@ export default {
 
     // 用户列表，分页查询接口
     getProfiles(context, params, config = {}) {
-      const { id, pageSize, page, keyword, recursive } = params;
-      return keyword
-        ? http.get(`api/v1/web/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}&keyword=${keyword}`)
-        : http.get(`api/v1/web/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}`);
+      const { id, pageSize, page, keyword, recursive, values } = params;
+      let url = `api/v1/web/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}`;
+      if (keyword) {
+        url += `&keyword=${keyword}`;
+      }
+      if (values) {
+        url += `&${values}`;
+      }
+      return http.get(url);
     },
     // 新增用户
     postProfile(context, params, config = {}) {
