@@ -641,16 +641,17 @@ export default {
         if (this.treeSearchResult && this.treeSearchResult.groupType === 'department') {
           id = this.treeSearchResult.id;
         }
+        const recursive = !this.isSearchCurrentDepartment;
         const params = {
           id: id || this.currentParam.item.id,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          recursive: !this.isSearchCurrentDepartment,
+          recursive,
         };
         const res = await this.$store.dispatch('organization/getProfiles', params);
         this.handleTabData.totalNumber = res.data.count;
-        this.handleTabData.currentNumber = res.data.count;
+        this.handleTabData.currentNumber = recursive ? res.data.current_count : res.data.count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         this.isTableDataError = false;
