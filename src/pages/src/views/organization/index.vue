@@ -656,7 +656,6 @@ export default {
         this.isEmptySearch = false;
         this.isTableDataError = false;
 
-        if (!!this.tableSearchKey.length) return;
         this.$set(this.currentParam.item, 'profile_count', res.data.count);
         this.filterUserData(res.data.data);
         this.paginationConfig.count = res.data.count;
