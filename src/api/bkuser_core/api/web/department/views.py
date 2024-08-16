@@ -198,28 +198,43 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         # 原来的代码: 递归current_count, 不递归查total_count(I don't know why)
         # https://github.com/TencentBlueking/bk-user/blob/99178a35b96511c0cd4dc7c1944bc80ce2d082dd/src/saas/bkuser_shell/organization/views/departments.py#L84-L88
         # FIXME: 跟前端确认逻辑, 抹掉差异和自定义 => total_count/current_count有没有用, 没用去掉
-        current_count = total_count = 0
 
         # NOTE: duplicated with departments.models.Department.get_profiles
         recursive = data.get("recursive")
         if not recursive:
             queryset = self.get_no_recursive_queryset(department)
-            total_count = self.get_recursive_queryset(department).count()
+            queryset_recursive = self.get_recursive_queryset(department)
         else:
             queryset = self.get_recursive_queryset(department)
-            current_count = self.get_no_recursive_queryset(department).count()
+            queryset_recursive = self.get_no_recursive_queryset(department)
         if data.get("username"):
             queryset = queryset.filter(username__icontains=data["username"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(username__icontains=data["username"])
         if data.get("display_name"):
             queryset = queryset.filter(display_name__icontains=data["display_name"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(display_name__icontains=data["display_name"])
         if data.get("email"):
             queryset = queryset.filter(email__icontains=data["email"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(email__icontains=data["email"])
         if data.get("telephone"):
             queryset = queryset.filter(telephone__icontains=data["telephone"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(telephone__icontains=data["telephone"])
         if data.get("status"):
             queryset = queryset.filter(status=data["status"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(status=data["status"])
         if data.get("staff_status"):
             queryset = queryset.filter(staff_status=data["staff_status"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(staff_status=data["staff_status"])
+        if recursive:
+            current_count = queryset_recursive.count()
+        else:
+            current_count = queryset.count()
 
         # filter by keyword
         # keyword = data.get("keyword")
@@ -238,7 +253,6 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
                     "count": count,
                     "data": serializer.data,
                     "current_count": current_count,
-                    "total_count": total_count,
                 }
             )
 
