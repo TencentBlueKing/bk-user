@@ -641,16 +641,17 @@ export default {
         if (this.treeSearchResult && this.treeSearchResult.groupType === 'department') {
           id = this.treeSearchResult.id;
         }
+        const recursive = !this.isSearchCurrentDepartment;
         const params = {
           id: id || this.currentParam.item.id,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
-          keyword: this.checkSearchKey,
-          recursive: !this.isSearchCurrentDepartment,
+          values: this.getQueryParams(),
+          recursive,
         };
         const res = await this.$store.dispatch('organization/getProfiles', params);
         this.handleTabData.totalNumber = res.data.count;
-        this.handleTabData.currentNumber = res.data.count;
+        this.handleTabData.currentNumber = res.data.current_count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         this.isTableDataError = false;
@@ -739,16 +740,10 @@ export default {
       this.checkSearchKey = '';
       this.getTableData();
     },
-    // 搜索table
-    handleTableSearch(list, current = 1) {
-      this.isTableDataEmpty = false;
-      this.paginationConfig.current = current;
-      if (!list.length) return this.handleClickEmpty();
-      if (!this.searchFilterList.length) return;
-      this.basicLoading = true;
-      const valueList = [`category_id=${this.currentCategoryId}&page=${current}&page_size=${this.paginationConfig.limit}`];
-
-      list.forEach((item) => {
+    // 获取搜索框的参数
+    getQueryParams() {
+      const values = [];
+      this.tableSearchKey.forEach((item) => {
         if (!Array.isArray(item.values)) {
           const { id, name } = item;
           Object.assign(item, { values: [{ id, name }] });
@@ -765,16 +760,35 @@ export default {
         item.values.forEach((v) => {
           value.push(v.id);
         });
-        valueList.push(`${key}=${value}`);
+        values.push(`${key}=${value}`);
       });
-
-      const params = valueList.join('&');
-      this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
+      return values.join('&');
+    },
+    // 搜索table
+    handleTableSearch(list, current = 1) {
+      this.isTableDataEmpty = false;
+      this.paginationConfig.current = current;
+      if (!list.length) return this.handleClickEmpty();
+      if (!this.searchFilterList.length) return;
+      this.basicLoading = true;
+      let id = '';
+      if (this.treeSearchResult && this.treeSearchResult.groupType === 'department') {
+        id = this.treeSearchResult.id;
+      }
+      const params = {
+        id: id || this.currentParam.item.id,
+        page: current,
+        pageSize: this.paginationConfig.limit,
+        recursive: true,
+      };
+      params.values = this.getQueryParams();
+      this.$store.dispatch('organization/getProfiles', params).then((res) => {
         if (res.result) {
           this.basicLoading = false;
           this.isEmptySearch = res.data.count === 0;
+          this.handleTabData.currentNumber = res.data.current_count;
           this.paginationConfig.count = res.data.count;
-          this.filterUserData(res.data.results);
+          this.filterUserData(res.data.data);
         }
       })
         .catch((e) => {
@@ -1199,6 +1213,7 @@ export default {
                 theme: 'success',
               });
             }
+            this.paginationConfig.current = 1;
             this.getTableData();
           } catch (e) {
             console.warn(e);
@@ -1237,6 +1252,7 @@ export default {
               this.basicLoading = false;
               this.$refs.searchChild.closeSearch();
             } else {
+              this.paginationConfig.current = 1;
               this.getTableData();
             }
           })
