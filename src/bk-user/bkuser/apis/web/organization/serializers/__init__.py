@@ -16,6 +16,7 @@ from .departments import (
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentMoveInputSLZ,
     TenantDepartmentSearchInputSLZ,
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
@@ -66,6 +67,7 @@ __all__ = [
     "TenantDepartmentUpdateInputSLZ",
     "TenantDepartmentSearchInputSLZ",
     "TenantDepartmentSearchOutputSLZ",
+    "TenantDepartmentMoveInputSLZ",
     "OptionalTenantDepartmentListInputSLZ",
     "OptionalTenantDepartmentListOutputSLZ",
     # 租户用户

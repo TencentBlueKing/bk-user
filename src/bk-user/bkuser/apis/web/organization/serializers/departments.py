@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict
 
 from django.utils.translation import gettext_lazy as _
@@ -19,26 +20,50 @@ from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepar
 from bkuser.apps.tenant.models import TenantDepartment
 
 
+def _validate_exists_parent_department_id(parent_dept_id: int, tenant_id: str) -> int:
+    if (
+        parent_dept_id
+        and not TenantDepartment.objects.filter(
+            id=parent_dept_id,
+            tenant_id=tenant_id,
+        ).exists()
+    ):
+        raise ValidationError(_("指定的父部门在当前租户中不存在"))
+
+    return parent_dept_id
+
+
 class TenantDepartmentListInputSLZ(serializers.Serializer):
     parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示获取根部门）", default=0)
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
-        if (
-            parent_dept_id
-            and not TenantDepartment.objects.filter(
-                id=parent_dept_id,
-                tenant_id=self.context["tenant_id"],
-            ).exists()
-        ):
-            raise ValidationError(_("指定的父部门在当前租户中不存在"))
-
-        return parent_dept_id
+        return _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
 
 
 class TenantDepartmentListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     has_children = serializers.BooleanField(help_text="是否有子部门")
+
+
+def _validate_duplicate_dept_name_in_brothers(
+    parent_relation: DataSourceDepartmentRelation | None,
+    name: str,
+    data_source_department: DataSourceDepartment,
+) -> None:
+    # 获取兄弟部门的数据源部门 ID，排除自己
+    # Q: 为什么不使用 parent_dept_relation.get_children
+    # A: 如果是根部门，parent_dept_relation 为 None，会报错 :)
+    brother_data_source_dept_ids = (
+        DataSourceDepartmentRelation.objects.filter(
+            parent=parent_relation, data_source=data_source_department.data_source
+        )
+        .exclude(department=data_source_department)
+        .values_list("department_id", flat=True)
+    )
+
+    if DataSourceDepartment.objects.filter(id__in=brother_data_source_dept_ids, name=name).exists():
+        raise ValidationError(_("指定的父部门下已存在同名部门：{}").format(name))
 
 
 def _validate_duplicate_dept_name_in_ancestors(
@@ -58,16 +83,7 @@ class TenantDepartmentCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称")
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
-        if (
-            parent_dept_id
-            and not TenantDepartment.objects.filter(
-                id=parent_dept_id,
-                tenant_id=self.context["tenant_id"],
-            ).exists()
-        ):
-            raise ValidationError(_("指定的父部门在当前租户中不存在"))
-
-        return parent_dept_id
+        return _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         dept_name = attrs["name"]
@@ -116,17 +132,8 @@ class TenantDepartmentUpdateInputSLZ(serializers.Serializer):
             department=data_source_dept, data_source=tenant_dept.data_source
         ).parent
 
-        # Q: 为什么不使用 parent_dept_relation.get_children
-        # A: 如果是根部门，parent_dept_relation 为 None，会报错 :)
-        brother_data_source_dept_ids = (
-            DataSourceDepartmentRelation.objects.filter(
-                parent=parent_dept_relation, data_source=tenant_dept.data_source
-            )
-            .exclude(department=data_source_dept)
-            .values_list("department_id", flat=True)
-        )
-        if DataSourceDepartment.objects.filter(id__in=brother_data_source_dept_ids, name=name).exists():
-            raise ValidationError(_("父部门下已存在同名部门：{}").format(name))
+        # 在兄弟部门中检查是否有同名的
+        _validate_duplicate_dept_name_in_brothers(parent_dept_relation, name, data_source_dept)
 
         # 在祖先部门中检查是否有同名的
         _validate_duplicate_dept_name_in_ancestors(parent_dept_relation, name)
@@ -166,3 +173,42 @@ class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
+
+
+class TenantDepartmentMoveInputSLZ(serializers.Serializer):
+    parent_department_id = serializers.IntegerField(help_text="移动至父部门 ID（为 0 表示获取根部门）")
+
+    def validate_parent_department_id(self, parent_dept_id: int) -> int:
+        parent_dept_id = _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
+
+        if parent_dept_id == self.context["tenant_dept_id"]:
+            raise ValidationError(_("自己不能成为自己的子部门"))
+
+        data_source_dept = self.context["data_source_dept"]
+
+        parent_dept_relation = None
+        ancestor_dept_ids = []
+        if parent_tenant_dept_id := parent_dept_id:
+            # 租户部门 ID -> 数据源部门
+            parent_data_source_dept = TenantDepartment.objects.get(
+                id=parent_tenant_dept_id, tenant_id=self.context["tenant_id"]
+            ).data_source_department
+            # 数据源部门 -> 父部门关系表节点
+            parent_dept_relation = DataSourceDepartmentRelation.objects.get(
+                department=parent_data_source_dept, data_source=data_source_dept.data_source
+            )
+            # 获取目标部门的所有祖先部门 ID
+            ancestor_dept_ids = parent_dept_relation.get_ancestors(include_self=False).values_list(
+                "department_id", flat=True
+            )
+
+        if ancestor_dept_ids and data_source_dept.id in ancestor_dept_ids:
+            raise ValidationError(_("不能移动至自己的子部门下"))
+
+        # 在兄弟部门中检查是否有同名的
+        _validate_duplicate_dept_name_in_brothers(parent_dept_relation, data_source_dept.name, data_source_dept)
+
+        # 在祖先部门中检查是否有同名的
+        _validate_duplicate_dept_name_in_ancestors(parent_dept_relation, data_source_dept.name)
+
+        return parent_dept_id

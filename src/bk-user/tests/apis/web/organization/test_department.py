@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import pytest
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
@@ -308,3 +309,49 @@ class TestOptionalTenantDepartmentListApi:
             "公司/部门A/中心AA/小组AAA",
             "公司/部门B/中心BA/小组BAA",
         }
+
+
+class TestTenantDepartmentMoveApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_move_dept(self, api_client, random_tenant):
+        # 将小组 BAA 移动至中心 AB 下
+        group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
+        center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB", tenant=random_tenant)
+
+        url = reverse("organization.tenant_department.move", kwargs={"id": group_baa.id})
+        resp = api_client.put(url, data={"parent_department_id": center_ab.id})
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_move_dept_to_root(self, api_client, random_tenant):
+        # 将小组 BAA 移动至中心 AB 下
+        group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
+
+        url = reverse("organization.tenant_department.move", kwargs={"id": group_baa.id})
+        resp = api_client.put(url, data={"parent_department_id": 0})
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_move_dept_to_itself(self, api_client, random_tenant):
+        # 将小组 BAA 移动至自己下面
+        group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
+
+        url = reverse("organization.tenant_department.move", kwargs={"id": group_baa.id})
+        resp = api_client.put(url, data={"parent_department_id": group_baa.id})
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "自己不能成为自己的子部门" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_move_dept_to_descendant(self, api_client, random_tenant):
+        # 将部门 A 移动至自己的子部门小组 ABA 下
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A", tenant=random_tenant)
+        group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA", tenant=random_tenant)
+
+        url = reverse("organization.tenant_department.move", kwargs={"id": dept_a.id})
+        resp = api_client.put(url, data={"parent_department_id": group_aaa.id})
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不能移动至自己的子部门下" in resp.data["message"]
