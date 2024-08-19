@@ -822,7 +822,7 @@ class TestTenantUserStatusBatchUpdateApi:
 
         resp = api_client.put(
             reverse("organization.tenant_user.status.batch_update"),
-            data={"user_ids": user_ids, "enable": True},
+            data={"user_ids": user_ids, "status": TenantUserStatus.ENABLED},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
         assert all(
@@ -840,7 +840,7 @@ class TestTenantUserStatusBatchUpdateApi:
 
         resp = api_client.put(
             reverse("organization.tenant_user.status.batch_update"),
-            data={"user_ids": user_ids, "enable": False},
+            data={"user_ids": user_ids, "status": TenantUserStatus.DISABLED},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
         assert all(

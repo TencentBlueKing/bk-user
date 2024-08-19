@@ -63,28 +63,28 @@ class DataSourceUserHandler:
         """批量更新用户的密码"""
 
         identify_infos = LocalDataSourceIdentityInfo.objects.filter(user__in=data_source_users)
-        user_cur_password_dict = {info.user_id: info.password for info in identify_infos}
+        user_id_to_cur_password_map = {info.user_id: info.password for info in identify_infos}
 
         # 记录历史使用密码
         deprecated_password_records = [
             DataSourceUserDeprecatedPasswordRecord(
                 user=user,
-                password=user_cur_password_dict.get(user.id, ""),
+                password=user_id_to_cur_password_map.get(user.id, ""),
                 operator=operator,
             )
             for user in data_source_users
         ]
 
         now = timezone.now()
-        new_password_expired_at = PERMANENT_TIME
-        if valid_days < 0:
-            new_password_expired_at = now + datetime.timedelta(days=valid_days)
+        password_expired_at = now + datetime.timedelta(days=valid_days) if valid_days >= 0 else PERMANENT_TIME
 
-        # 设置新密码 & 有效期
+        # Note：虽然原始密码相同，但是 make_password 中进行了加盐操作，所以每个用户的密码都必须单独 make_password，
+        #  这样才能保证 DB 存储的加密串不一样。
+        #  make_password 是一个耗时操作；根据测试，处理 100 个密码的平均耗时为 4.8382 秒
         for info in identify_infos:
             info.password = make_password(password)
             info.password_updated_at = now
-            info.password_expired_at = new_password_expired_at
+            info.password_expired_at = password_expired_at
 
         with transaction.atomic():
             # 批量创建用户的历史使用密码记录

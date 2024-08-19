@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-15 18:03+0800\n"
+"POT-Creation-Date: 2024-08-19 14:39+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -280,7 +280,6 @@ msgstr "父部门下已存在同名部门：{}"
 
 #: bkuser/apis/web/organization/serializers/relations.py:28
 #: bkuser/apis/web/organization/serializers/users.py:590
-#: bkuser/apis/web/organization/serializers/users.py:635
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "用户 ID {} 在当前租户中不存在"
 
@@ -293,62 +292,66 @@ msgid "部门不存在"
 msgstr "部门不存在"
 
 #: bkuser/apis/web/organization/serializers/users.py:124
-#: bkuser/apis/web/organization/serializers/users.py:559
+#: bkuser/apis/web/organization/serializers/users.py:558
 #: bkuser/apis/web/virtual_user/serializers.py:45
 msgid "用户名 {} 已存在"
 msgstr "用户名 {} 已存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:137
+#: bkuser/apis/web/organization/serializers/users.py:136
 msgid "指定的直属上级 {} 不存在"
 msgstr "指定的直属上级 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:180
+#: bkuser/apis/web/organization/serializers/users.py:179
 msgid "指定的部门 {} 不存在"
 msgstr "指定的部门 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:330
+#: bkuser/apis/web/organization/serializers/users.py:329
 msgid "不能设置自己为自己的直接上级"
 msgstr "不能设置自己为自己的直接上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:345
-#: bkuser/apis/web/organization/serializers/users.py:360
+#: bkuser/apis/web/organization/serializers/users.py:344
+#: bkuser/apis/web/organization/serializers/users.py:359
 msgid "账号有效期时间不能早于当前时间"
 msgstr "账号有效期时间不能早于当前时间"
 
-#: bkuser/apis/web/organization/serializers/users.py:472
+#: bkuser/apis/web/organization/serializers/users.py:471
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:485
+#: bkuser/apis/web/organization/serializers/users.py:484
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "第 {} 行，手机号 {} 格式不正确"
 
-#: bkuser/apis/web/organization/serializers/users.py:520
+#: bkuser/apis/web/organization/serializers/users.py:519
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 
-#: bkuser/apis/web/organization/serializers/users.py:528
-#: bkuser/apis/web/organization/serializers/users.py:539
+#: bkuser/apis/web/organization/serializers/users.py:527
+#: bkuser/apis/web/organization/serializers/users.py:538
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 
-#: bkuser/apis/web/organization/serializers/users.py:554
+#: bkuser/apis/web/organization/serializers/users.py:553
 msgid "用户名 {} 重复"
 msgstr "用户名 {} 重复"
 
-#: bkuser/apis/web/organization/serializers/users.py:669
+#: bkuser/apis/web/organization/serializers/users.py:658
+msgid "无法启用过期租户用户 {}"
+msgstr "无法启用过期租户用户 {}"
+
+#: bkuser/apis/web/organization/serializers/users.py:676
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "用户 {} 不能设置为自己的直属上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:679
+#: bkuser/apis/web/organization/serializers/users.py:686
 msgid "一次只能批量更新一个自定义字段"
 msgstr "一次只能批量更新一个自定义字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:690
+#: bkuser/apis/web/organization/serializers/users.py:697
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:694
+#: bkuser/apis/web/organization/serializers/users.py:701
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
@@ -437,7 +440,7 @@ msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户�
 msgid "指定的租户部门不存在"
 msgstr "指定的租户部门不存在"
 
-#: bkuser/apis/web/organization/views/users.py:1078
+#: bkuser/apis/web/organization/views/users.py:1076
 msgid "当前数据源未启用密码功能"
 msgstr "当前数据源未启用密码功能"
 

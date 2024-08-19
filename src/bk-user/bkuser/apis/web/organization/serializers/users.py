@@ -132,8 +132,7 @@ def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: 
         id__in=leader_ids, tenant_id=tenant_id, data_source_id=data_source_id
     ).values_list("id", flat=True)
 
-    invalid_leader_ids = set(leader_ids) - set(exists_tenant_users)
-    if invalid_leader_ids:
+    if invalid_leader_ids := set(leader_ids) - set(exists_tenant_users):
         raise ValidationError(_("指定的直属上级 {} 不存在").format(",".join(invalid_leader_ids)))
 
     return leader_ids
@@ -585,8 +584,9 @@ class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
 def _validate_user_ids_exist_in_tenant(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
     exists_tenant_users = TenantUser.objects.filter(
         id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
-    )
-    if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
+    ).values_list("id", flat=True)
+
+    if invalid_user_ids := set(user_ids) - set(exists_tenant_users):
         raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
 
     return user_ids
@@ -615,13 +615,7 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
         return _validate_user_ids_exist_in_tenant(user_ids, self.context["tenant_id"], self.context["data_source_id"])
 
 
-class TenantUserBatchResetPasswordInputSLZ(TenantUserIDBatchSLZ):
-    user_ids = serializers.ListField(
-        help_text="用户 ID 列表",
-        child=serializers.CharField(help_text="租户用户 ID"),
-        min_length=1,
-        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
-    )
+class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):
     password = serializers.CharField(help_text="用户重置的新密码")
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
@@ -631,8 +625,6 @@ class TenantUserBatchResetPasswordInputSLZ(TenantUserIDBatchSLZ):
             tenant_id=self.context["tenant_id"],
             data_source_id=self.context["data_source_id"],
         )
-        if invalid_user_ids := set(attrs["user_ids"]) - set(exists_tenant_users.values_list("id", flat=True)):
-            raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
 
         # 校验密码是否符合每一位用户的密码策略
         for tenant_user in exists_tenant_users:
@@ -644,16 +636,31 @@ class TenantUserBatchResetPasswordInputSLZ(TenantUserIDBatchSLZ):
         return attrs
 
 
-class TenantUserBatchUpdateAccountExpiredAtInputSLZ(
+class TenantUserAccountExpiredAtBatchUpdateInputSLZ(
     TenantUserIDBatchSLZ, TenantUserAccountExpiredAtUpdateInputSLZ
 ): ...
 
 
 class TenantUserStatusBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
-    enable = serializers.BooleanField(help_text="是否批量启用租户用户", default=False)
+    # 变更后状态，只允许启用或禁用
+    status = serializers.ChoiceField(
+        help_text="是否批量启用租户用户",
+        choices=[(status.value, status.value) for status in [TenantUserStatus.ENABLED, TenantUserStatus.DISABLED]],
+    )
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        expired_tenant_users_ids = TenantUser.objects.filter(
+            id__in=attrs["user_ids"], status=TenantUserStatus.EXPIRED
+        ).values_list("id", flat=True)
+
+        # 如果存在过期租户用户，则不允许启用
+        if attrs["status"] == TenantUserStatus.ENABLED and expired_tenant_users_ids:
+            raise ValidationError(_("无法启用过期租户用户 {}").format(", ".join(expired_tenant_users_ids)))
+
+        return attrs
 
 
-class TenantUserBatchUpdateLeaderInputSLZ(TenantUserIDBatchSLZ):
+class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     leader_ids = serializers.ListField(
         help_text="租户上级 ID 列表",
         child=serializers.CharField(),
@@ -671,7 +678,7 @@ class TenantUserBatchUpdateLeaderInputSLZ(TenantUserIDBatchSLZ):
         return attrs
 
 
-class TenantUserBatchUpdateCustomFieldInputSLZ(TenantUserIDBatchSLZ):
+class TenantUserCustomFieldBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:

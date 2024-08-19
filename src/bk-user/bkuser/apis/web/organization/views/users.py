@@ -28,20 +28,20 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserAccountExpiredAtBatchUpdateInputSLZ,
     TenantUserAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchCreatePreviewInputSLZ,
     TenantUserBatchCreatePreviewOutputSLZ,
     TenantUserBatchDeleteInputSLZ,
-    TenantUserBatchResetPasswordInputSLZ,
-    TenantUserBatchUpdateAccountExpiredAtInputSLZ,
-    TenantUserBatchUpdateCustomFieldInputSLZ,
-    TenantUserBatchUpdateLeaderInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
+    TenantUserCustomFieldBatchUpdateInputSLZ,
+    TenantUserLeaderBatchUpdateInputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
+    TenantUserPasswordBatchResetInputSLZ,
     TenantUserPasswordResetInputSLZ,
     TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserRetrieveOutputSLZ,
@@ -940,14 +940,14 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量修改账号过期时间",
-        request_body=TenantUserBatchUpdateAccountExpiredAtInputSLZ(),
+        request_body=TenantUserAccountExpiredAtBatchUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchUpdateAccountExpiredAtInputSLZ(
+        slz = TenantUserAccountExpiredAtBatchUpdateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
@@ -992,16 +992,12 @@ class TenantUserStatusBatchUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        new_status = TenantUserStatus.DISABLED
-        if data["enable"]:
-            new_status = TenantUserStatus.ENABLED
-
-        with transaction.atomic():
-            TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
-                status=new_status,
-                updater=request.user.username,
-                updated_at=timezone.now(),
-            )
+        # 无论原有状态是什么，都统一更新为输入状态
+        TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
+            status=data["status"],
+            updater=request.user.username,
+            updated_at=timezone.now(),
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1016,36 +1012,38 @@ class TenantUserLeaderBatchUpdateApi(
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量修改上级关系",
-        request_body=TenantUserBatchUpdateLeaderInputSLZ(),
+        request_body=TenantUserLeaderBatchUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchUpdateLeaderInputSLZ(
+        slz = TenantUserLeaderBatchUpdateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        leader_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["leader_ids"]).values_list(
+            "data_source_user_id", flat=True
+        )
+
+        data_source_user_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values_list(
+            "data_source_user_id", flat=True
+        )
+
+        # 新的用户 - 上级关系
+        relations = [
+            DataSourceUserLeaderRelation(user_id=user_id, leader_id=leader_id, data_source=data_source)
+            for leader_id, user_id in itertools.product(leader_ids, data_source_user_ids)
+        ]
+
         with transaction.atomic():
-            leader_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["leader_ids"]).values_list(
-                "data_source_user_id", flat=True
-            )
-
-            data_source_user_ids = TenantUser.objects.filter(
-                tenant_id=cur_tenant_id, id__in=data["user_ids"]
-            ).values_list("data_source_user_id", flat=True)
-
             # 先删除现有的用户 - 上级关系
             DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).delete()
 
             # 再添加新的用户 - 上级关系
-            relations = [
-                DataSourceUserLeaderRelation(user_id=user_id, leader_id=leader_id, data_source=data_source)
-                for leader_id, user_id in itertools.product(leader_ids, data_source_user_ids)
-            ]
             DataSourceUserLeaderRelation.objects.bulk_create(relations)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1061,7 +1059,7 @@ class TenantUserPasswordBatchResetApi(
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量重置密码",
-        request_body=TenantUserBatchResetPasswordInputSLZ(),
+        request_body=TenantUserPasswordBatchResetInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -1077,7 +1075,7 @@ class TenantUserPasswordBatchResetApi(
         if not plugin_config.enable_password:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("当前数据源未启用密码功能"))
 
-        slz = TenantUserBatchResetPasswordInputSLZ(
+        slz = TenantUserPasswordBatchResetInputSLZ(
             data=request.data,
             context={
                 "tenant_id": cur_tenant_id,
@@ -1120,34 +1118,33 @@ class TenantUserCustomFieldBatchUpdateApi(
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 批量更新自定义字段",
-        request_body=TenantUserBatchUpdateCustomFieldInputSLZ(),
+        request_body=TenantUserCustomFieldBatchUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchUpdateCustomFieldInputSLZ(
+        slz = TenantUserCustomFieldBatchUpdateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        with transaction.atomic():
-            name = list(data["extras"].keys())[0]
-            data_source_users = [
-                tenant_user.data_source_user
-                for tenant_user in TenantUser.objects.filter(
-                    id__in=data["user_ids"],
-                    tenant_id=cur_tenant_id,
-                ).select_related("data_source_user")
-            ]
+        name = list(data["extras"].keys())[0]
+        data_source_users = [
+            tenant_user.data_source_user
+            for tenant_user in TenantUser.objects.filter(
+                id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
+            ).select_related("data_source_user")
+        ]
 
-            now = timezone.now()
-            for data_source_user in data_source_users:
-                data_source_user.extras[name] = data["extras"][name]
-                data_source_user.updated_at = now
+        now = timezone.now()
+        for data_source_user in data_source_users:
+            data_source_user.extras[name] = data["extras"][name]
+            data_source_user.updated_at = now
 
-            DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
+        DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
