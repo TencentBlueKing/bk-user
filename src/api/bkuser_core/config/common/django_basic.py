@@ -163,3 +163,8 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser_core.apis.swagger.AutoModelTagSchema",
 }
+
+# 是否允许在通过短信验证码重置密码时候，提示真正的异常信息
+ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool(
+    "ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", default=False
+)
