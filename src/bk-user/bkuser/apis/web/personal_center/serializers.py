@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict, List
 
 from django.conf import settings
@@ -261,3 +262,54 @@ class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
         )
 
         return attrs
+
+
+class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
+    custom_phone = serializers.CharField(help_text="用户手机号", required=True)
+    custom_phone_country_code = serializers.CharField(
+        help_text="用户手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
+
+    def validate(self, attrs):
+        if "+" in attrs["custom_phone_country_code"]:
+            raise ValidationError(_("区号设置无需携带标识:'+'"))
+
+        try:
+            validate_phone_with_country_code(
+                phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
+            )
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        return attrs
+
+
+class TenantUserPhoneVerificationCodeValidateInputSLZ(serializers.Serializer):
+    verification_code = serializers.CharField(help_text="验证码", max_length=32, required=True)
+    custom_phone = serializers.CharField(help_text="用户手机号", required=True)
+    custom_phone_country_code = serializers.CharField(
+        help_text="用户手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
+
+    def validate(self, attrs):
+        if len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
+            raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
+        return attrs
+
+
+class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
+    custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=True)
+
+
+class TenantUserEmailVerificationCodeValidateInputSLZ(serializers.Serializer):
+    verification_code = serializers.CharField(help_text="验证码", max_length=32, required=True)
+    custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=True)
+
+    def validate(self, attrs):
+        if len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
+            raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
+        return attrs
+
+
+class TenantUserPhoneModifiableStatusRetrieveOutputSLZ(serializers.Serializer):
+    is_modifiable = serializers.BooleanField(help_text="是否可修改手机号")

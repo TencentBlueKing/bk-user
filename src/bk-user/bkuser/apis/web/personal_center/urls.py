@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.urls import path
 
 from . import views
@@ -69,5 +70,30 @@ urlpatterns = [
         "tenant-users/<str:id>/password/",
         views.TenantUserPasswordUpdateApi.as_view(),
         name="personal_center.tenant_users.password.update",
+    ),
+    path(
+        "tenant-users/<str:id>/phone-verification-code-send/",
+        views.TenantUserPhoneVerificationCodeSendApi.as_view(),
+        name="personal_center.tenant_users.phone.verification_code.send",
+    ),
+    path(
+        "tenant-users/<str:id>/phone-verification-code-validate/",
+        views.TenantUserPhoneVerificationCodeValidateApi.as_view(),
+        name="personal_center.tenant_users.phone.verification_code.validate",
+    ),
+    path(
+        "tenant-users/<str:id>/email-verification-code-send/",
+        views.TenantUserEmailVerificationCodeSendApi.as_view(),
+        name="personal_center.tenant_users.email.verification_code.send",
+    ),
+    path(
+        "tenant-users/<str:id>/email-verification-code-validate/",
+        views.TenantUserEmailVerificationCodeValidateApi.as_view(),
+        name="personal_center.tenant_users.email.verification_code.validate",
+    ),
+    path(
+        "tenant-users/<str:id>/phone-modifiable/",
+        views.TenantUserPhoneModifiableStatusRetrieveApi.as_view(),
+        name="personal_center.tenant_users.phone_modifiable.retrieve",
     ),
 ]

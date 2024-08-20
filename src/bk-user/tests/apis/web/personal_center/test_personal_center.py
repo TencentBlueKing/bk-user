@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 
 import pytest
 from bkuser.apps.tenant.models import TenantUser
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -168,3 +169,35 @@ class TestTenantUserLogoUpdateApi:
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
+
+
+class TestTenantUserPhoneModifiableStatusRetrieveApi:
+    def test_tenant_user_phone_modifiable_status(self, api_client, tenant_user):
+        settings.TENANTS_ALLOW_PHONE_MODIFICATION = [tenant_user.tenant_id]
+        resp = api_client.get(
+            reverse("personal_center.tenant_users.phone_modifiable.retrieve", kwargs={"id": tenant_user.id})
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["is_modifiable"] is True
+
+    def test_tenant_user_phone_not_modifiable_status(self, api_client, tenant_user):
+        settings.TENANTS_ALLOW_PHONE_MODIFICATION = []
+        resp = api_client.get(
+            reverse("personal_center.tenant_users.phone_modifiable.retrieve", kwargs={"id": tenant_user.id})
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["is_modifiable"] is False
+
+
+class TestTenantUserPhoneVerificationCodeSendApi:
+    def test_send_verification_code(self, api_client, tenant_user):
+        data = {"custom_phone": "12345678901", "custom_phone_country_code": "86"}
+
+        resp = api_client.post(
+            reverse("personal_center.tenant_users.phone.verification_code.send", kwargs={"id": tenant_user.id}),
+            data=data,
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT

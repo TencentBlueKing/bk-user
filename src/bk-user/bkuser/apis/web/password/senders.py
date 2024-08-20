@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
@@ -43,6 +44,36 @@ class PhoneVerificationCodeSender:
     def _can_send(self, tenant_user: TenantUser) -> bool:
         phone, phone_country_code = tenant_user.phone_info
         send_cnt_cache_key = f"{self.scene.value}:{phone_country_code}:{phone}:send_cnt"
+
+        send_cnt = self.cache.get(send_cnt_cache_key, 0)
+
+        if send_cnt >= settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:
+            return False
+
+        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=calc_remaining_seconds_today())
+        return True
+
+
+class EmailVerificationCodeSender:
+    """发送用户邮箱验证码（含次数检查）"""
+
+    def __init__(self, scene: VerificationCodeScene):
+        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
+        self.scene = scene
+
+    def send(self, tenant_user: TenantUser, code: str):
+        """发送验证码到用户邮箱"""
+        if not self._can_send(tenant_user):
+            raise ExceedSendRateLimit(_("今日发送验证码次数超过上限"))
+
+        TenantUserNotifier(
+            NotificationScene.SEND_VERIFICATION_CODE,
+            method=NotificationMethod.EMAIL,
+        ).send(tenant_user, verification_code=code)
+
+    def _can_send(self, tenant_user: TenantUser) -> bool:
+        email = tenant_user.email
+        send_cnt_cache_key = f"{self.scene.value}:{email}:send_cnt"
 
         send_cnt = self.cache.get(send_cnt_cache_key, 0)
         if send_cnt >= settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:

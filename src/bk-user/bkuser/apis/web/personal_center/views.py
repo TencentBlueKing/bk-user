@@ -9,25 +9,37 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import logging
 from typing import Dict
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from bkuser.apis.web.password.senders import (
+    EmailVerificationCodeSender,
+    ExceedSendRateLimit,
+    PhoneVerificationCodeSender,
+)
 from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag
 from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
+    TenantUserEmailVerificationCodeSendInputSLZ,
+    TenantUserEmailVerificationCodeValidateInputSLZ,
     TenantUserExtrasUpdateInputSLZ,
     TenantUserFeatureFlagOutputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
     TenantUserPasswordUpdateInputSLZ,
+    TenantUserPhoneModifiableStatusRetrieveOutputSLZ,
     TenantUserPhoneUpdateInputSLZ,
+    TenantUserPhoneVerificationCodeSendInputSLZ,
+    TenantUserPhoneVerificationCodeValidateInputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
 )
@@ -38,8 +50,18 @@ from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBui
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.error_codes import error_codes
+from bkuser.common.verification_code import (
+    GenerateCodeTooFrequently,
+    InvalidVerificationCode,
+    VerificationCodeManager,
+    VerificationCodeManagerByEmail,
+    VerificationCodeScene,
+)
 from bkuser.common.views import ExcludePatchAPIViewMixin
+
+logger = logging.getLogger(__name__)
 
 
 class NaturalUserTenantUserListApi(generics.ListAPIView):
@@ -134,6 +156,7 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.AUTO)
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -142,6 +165,10 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
+        session_key = request.session.session_key
+        if self.cache.get(f"{session_key}_phone_verification_step") != "code_verified":
+            return Response({"error": "请重新验证"}, status=status.HTTP_400_BAD_REQUEST)
+
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -152,21 +179,140 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
             custom_phone_country_code=data["custom_phone_country_code"],
         )
         TenantUserHandler.update_tenant_user_phone(self.get_object(), phone_info)
+        self.cache.delete(f"{session_key}_phone_verification_step")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserPhoneModifiableStatusRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="租户用户更新手机号",
+        operation_description="查询用户是否可以修改手机号",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_id = self.get_object().tenant_id
+        is_modifiable = self.can_modify_phone(tenant_id)
+
+        slz = TenantUserPhoneModifiableStatusRetrieveOutputSLZ({"is_modifiable": is_modifiable})
+
+        return Response(data=slz.data)
+
+    def can_modify_phone(self, tenant_id):
+        return tenant_id in settings.TENANTS_ALLOW_PHONE_MODIFICATION
+
+
+class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户修改手机号时发送短信验证码",
+        request_body=TenantUserPhoneVerificationCodeSendInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = TenantUserPhoneVerificationCodeSendInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        phone, phone_country_code = slz.validated_data["custom_phone"], slz.validated_data["custom_phone_country_code"]
+        try:
+            tenant_user = self.get_object()
+            tenant_user.custom_phone = phone
+            tenant_user.custom_phone_country_code = phone_country_code
+            self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
+        except Exception as e:
+            logger.warning("failed to send validation code to phone +%s %s: %s", phone, phone_country_code, e)
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL:
+                raise
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _send_verification_code_to_user_phone(self, tenant_user: TenantUser, scene: VerificationCodeScene):
+        """发送短信验证码到指定的租户用户"""
+        phone, phone_country_code = tenant_user.phone_info
+
+        try:
+            code = VerificationCodeManager(phone, phone_country_code, scene).gen_code()
+            logger.info("verification code for phone +%s %s is %s", phone_country_code, phone, code)
+        except GenerateCodeTooFrequently:
+            raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
+
+        try:
+            PhoneVerificationCodeSender(scene).send(tenant_user, code)
+        except ExceedSendRateLimit:
+            raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
+        except Exception:
+            logger.exception("failed to send verification code to user %s", tenant_user.id)
+            raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
+
+
+class TenantUserPhoneVerificationCodeValidateApi(generics.CreateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.AUTO)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户修改手机号时验证短信验证码",
+        request_body=TenantUserPhoneVerificationCodeValidateInputSLZ(),
+        responses={status.HTTP_200_OK: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = TenantUserPhoneVerificationCodeValidateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        phone, phone_country_code, code = (
+            slz.validated_data["custom_phone"],
+            slz.validated_data["custom_phone_country_code"],
+            slz.validated_data["verification_code"],
+        )
+
+        try:
+            self._validate_verification_code(phone, phone_country_code, code, VerificationCodeScene.UPDATE_PHONE)
+
+            session_key = request.session.session_key
+            self.cache.set(f"{session_key}_phone_verification_step", "code_verified", timeout=300)
+
+        except Exception:
+            # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("手机号码或验证码错误"))
+        return Response(status=status.HTTP_200_OK)
+
+    def _validate_verification_code(
+        self, phone: str, phone_country_code: str, code: str, scene: VerificationCodeScene
+    ):
+        try:
+            VerificationCodeManager(phone, phone_country_code, scene).validate(code)
+        except InvalidVerificationCode:
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
+        except Exception:
+            logger.exception("validate verification code for phone +%s %s failed", phone_country_code, phone)
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码校验失败，请联系管理员处理"))
+
+
+class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.AUTO)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户更新邮箱",
         request_body=TenantUserEmailUpdateInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
+        session_key = request.session.session_key
+        if self.cache.get(f"{session_key}_email_verification_step") != "code_verified":
+            return Response({"error": "请重新验证"}, status=status.HTTP_400_BAD_REQUEST)
         slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -176,7 +322,91 @@ class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
             custom_email=data.get("custom_email", ""),
         )
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
+        self.cache.delete(f"{session_key}_email_verification_step")
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户修改邮箱号时发送邮箱验证码",
+        request_body=TenantUserEmailVerificationCodeSendInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = TenantUserEmailVerificationCodeSendInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        email = slz.validated_data["custom_email"]
+
+        try:
+            tenant_user = self.get_object()
+            tenant_user.custom_email = email
+            self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
+        except Exception as e:
+            logger.warning("failed to send reset password url to email %s: %s", email, e)
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL:
+                raise
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _send_verification_code_to_user_email(self, tenant_user: TenantUser, scene: VerificationCodeScene):
+        """发送邮箱验证码到指定的租户用户"""
+        email = tenant_user.email
+        try:
+            code = VerificationCodeManagerByEmail(email, scene).gen_code()
+            logger.info("verification code for email %s is %s", email, code)
+        except GenerateCodeTooFrequently:
+            raise error_codes.TOO_FREQUENTLY.f(_("发送邮箱验证码过于频繁，请稍后再试"))
+
+        try:
+            EmailVerificationCodeSender(scene).send(tenant_user, code)
+        except ExceedSendRateLimit:
+            raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
+        except Exception:
+            logger.exception("failed to send verification code to user %s", tenant_user.id)
+            raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
+
+
+class TenantUserEmailVerificationCodeValidateApi(generics.CreateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.AUTO)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户修改邮箱时验证邮箱验证码",
+        request_body=TenantUserEmailVerificationCodeValidateInputSLZ(),
+        responses={status.HTTP_200_OK: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = TenantUserEmailVerificationCodeValidateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        email, code = slz.validated_data["custom_email"], slz.validated_data["verification_code"]
+
+        try:
+            self._validate_verification_code(email, code, VerificationCodeScene.UPDATE_EMAIL)
+            session_key = request.session.session_key
+            self.cache.set(f"{session_key}_email_verification_step", "code_verified", timeout=300)
+        except Exception:
+            # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("邮箱号或验证码错误"))
+        return Response(status=status.HTTP_200_OK)
+
+    def _validate_verification_code(self, email: str, code: str, scene: VerificationCodeScene):
+        try:
+            VerificationCodeManagerByEmail(email, scene).validate(code)
+        except InvalidVerificationCode:
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
+        except Exception:
+            logger.exception("validate verification code for email %s failed", email)
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码校验失败，请联系管理员处理"))
 
 
 class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):

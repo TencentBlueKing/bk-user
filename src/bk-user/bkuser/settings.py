@@ -612,9 +612,13 @@ GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RET
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 
-# 在重置密码是是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
+# 在重置密码时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
 # TODO 评估接入 Captcha 验证码
 ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
+# 在修改电话号或邮箱时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
+ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL = env.bool(
+    "ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL", False
+)
 # 短信验证码有效期，默认 5 min
 VERIFICATION_CODE_VALID_TIME = env.int("VERIFICATION_CODE_VALID_TIME", 60 * 5)
 # 验证码长度，默认 8 位，最长不超过 32 位
@@ -630,6 +634,8 @@ RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 
 RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
 # 重置密码 Token 每天最大发送次数
 RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
+# 允许重置手机号的租户列表
+TENANTS_ALLOW_PHONE_MODIFICATION = env.list("ALLOW_PHONE_MODIFICATION", default=["default"])
 
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB
