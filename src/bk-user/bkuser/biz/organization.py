@@ -8,7 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
+from typing import List
 
 from django.db import transaction
 from django.utils import timezone
@@ -49,4 +51,47 @@ class DataSourceUserHandler:
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user, password=deprecated_password, operator=operator
+            )
+
+    @staticmethod
+    def batch_update_password(
+        data_source_users: List[DataSourceUser],
+        password: str,
+        valid_days: int,
+        operator: str,
+    ):
+        """批量更新用户的密码"""
+
+        identify_infos = LocalDataSourceIdentityInfo.objects.filter(user__in=data_source_users)
+        user_id_to_cur_password_map = {info.user_id: info.password for info in identify_infos}
+
+        # 记录历史使用密码
+        deprecated_password_records = [
+            DataSourceUserDeprecatedPasswordRecord(
+                user=user,
+                password=user_id_to_cur_password_map.get(user.id, ""),
+                operator=operator,
+            )
+            for user in data_source_users
+        ]
+
+        now = timezone.now()
+        password_expired_at = now + datetime.timedelta(days=valid_days) if valid_days >= 0 else PERMANENT_TIME
+
+        # Note：虽然原始密码相同，但是 make_password 中进行了加盐操作，所以每个用户的密码都必须单独 make_password，
+        #  这样才能保证 DB 存储的加密串不一样。
+        #  make_password 是一个耗时操作；根据测试，处理 100 个密码的平均耗时为 4.8382 秒
+        for info in identify_infos:
+            info.password = make_password(password)
+            info.password_updated_at = now
+            info.password_expired_at = password_expired_at
+
+        with transaction.atomic():
+            # 批量创建用户的历史使用密码记录
+            DataSourceUserDeprecatedPasswordRecord.objects.bulk_create(deprecated_password_records, batch_size=250)
+
+            LocalDataSourceIdentityInfo.objects.bulk_update(
+                identify_infos,
+                fields=["password", "password_updated_at", "updated_at"],
+                batch_size=250,
             )

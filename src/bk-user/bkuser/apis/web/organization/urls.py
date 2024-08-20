@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.urls import path
 
 from . import views
@@ -126,6 +127,36 @@ urlpatterns = [
         "tenants/users/operations/batch_delete/",
         views.TenantUserBatchDeleteApi.as_view(),
         name="organization.tenant_user.batch_delete",
+    ),
+    # 租户用户 - 批量更新状态
+    path(
+        "tenants/users/status/operations/batch_update/",
+        views.TenantUserStatusBatchUpdateApi.as_view(),
+        name="organization.tenant_user.status.batch_update",
+    ),
+    # 批量修改租户用户账号有效期
+    path(
+        "tenants/users/account-expired-at/operations/batch_update/",
+        views.TenantUserAccountExpiredAtBatchUpdateApi.as_view(),
+        name="organization.tenant_user.account_expired_at.batch_update",
+    ),
+    # 租户用户 - 批量更新自定义字段信息
+    path(
+        "tenants/users/custom-field/operations/batch_update/",
+        views.TenantUserCustomFieldBatchUpdateApi.as_view(),
+        name="organization.tenant_user.custom_field.batch_update",
+    ),
+    # 租户用户 - 批量修改租户用户上级关系
+    path(
+        "tenants/users/leader/operations/batch_update/",
+        views.TenantUserLeaderBatchUpdateApi.as_view(),
+        name="organization.tenant_user.leader.batch_update",
+    ),
+    # 租户用户 - 批量重置密码
+    path(
+        "tenants/users/password/operations/batch_reset/",
+        views.TenantUserPasswordBatchResetApi.as_view(),
+        name="organization.tenant_user.password.batch_reset",
     ),
     # 租户用户 - 从其他组织拉取 / 添加到其他组织
     path(

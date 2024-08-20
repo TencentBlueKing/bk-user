@@ -10,15 +10,19 @@ specific language governing permissions and limitations under the License.
 """
 
 import datetime
+import itertools
 from typing import Any, Dict, List
 
 import pytest
+import pytz
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
+from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
 from rest_framework import status
@@ -757,3 +761,284 @@ class TestTenantUserBatchDeleteApi:
         assert not DataSourceDepartmentUserRelation.objects.filter(user__code__in=user_codes).exists()
         assert not DataSourceUserLeaderRelation.objects.filter(user__code__in=user_codes).exists()
         assert not DataSourceUserLeaderRelation.objects.filter(leader__code__in=user_codes).exists()
+
+
+class TestTenantUserBatchUpdateAccountExpiredAtApi:
+    """测试批量修改租户用户账号过期时间"""
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_valid_expired_at(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        # 将账号续期至一年后
+        account_expired_at = datetime.datetime.now() + datetime.timedelta(days=365)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": user_ids, "account_expired_at": account_expired_at},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        # 数据库里的时间是带有时区信息的，所以这里需要加上默认时区信息后再进行比对
+        account_expired_at_with_tz = pytz.timezone(settings.TIME_ZONE).localize(account_expired_at)
+        assert all(
+            tenant_user.account_expired_at == account_expired_at_with_tz
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids)
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_invalid_expired_at(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        # 将账号续期至一年前
+        new_account_expired_at = datetime.datetime.now() - datetime.timedelta(days=365)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": user_ids, "account_expired_at": new_account_expired_at},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "账号有效期时间不能早于当前时间" in resp.data["message"]
+
+
+class TestTenantUserStatusBatchUpdateApi:
+    """测试批量更新租户用户状态"""
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_enable(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.status.batch_update"),
+            data={"user_ids": user_ids, "status": TenantUserStatus.ENABLED},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            tenant_user.status == TenantUserStatus.ENABLED
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids)
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_disable(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.status.batch_update"),
+            data={"user_ids": user_ids, "status": TenantUserStatus.DISABLED},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            tenant_user.status == TenantUserStatus.DISABLED
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids)
+        )
+
+
+class TestTenantUserBatchUpdateCustomFieldApi:
+    """测试批量更新租户用户指定字段"""
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_custom_field(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        new_age = 18
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
+                f"{random_tenant.id}_age": new_age,
+            },
+        }
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            tenant_user.data_source_user.extras[f"{random_tenant.id}_age"] == new_age
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids).select_related("data_source_user")
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_custom_field_multiple_enum(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "field_name": f"{random_tenant.id}_hobbies",
+            "value": {
+                f"{random_tenant.id}_hobbies": ["gaming", "shopping"],
+            },
+        }
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            tenant_user.data_source_user.extras[f"{random_tenant.id}_hobbies"] == ["gaming", "shopping"]
+            for tenant_user in TenantUser.objects.filter(id__in=user_ids).select_related("data_source_user")
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_unique_custom_field(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
+                f"{random_tenant.id}_age": 18,
+            },
+        }
+
+        TenantUserCustomField.objects.filter(
+            tenant=random_tenant,
+            name=f"{random_tenant.id}_age",
+        ).update(unique=True)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不能在批量操作中修改设置了唯一性的自定义字段" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_uneditable_custom_field(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
+                f"{random_tenant.id}_age": 18,
+            },
+        }
+
+        TenantUserCustomField.objects.filter(
+            tenant=random_tenant,
+            name=f"{random_tenant.id}_age",
+        ).update(manager_editable=False)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "当前租户不存在管理员可编辑的自定义字段" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_multiple_custom_fields(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
+                f"{random_tenant.id}_age": 18,
+                f"{random_tenant.id}_gender": "male",
+            },
+        }
+
+        TenantUserCustomField.objects.filter(
+            tenant=random_tenant,
+            name=f"{random_tenant.id}_age",
+        ).update(manager_editable=False)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "一次只能批量更新一个自定义字段" in resp.data["message"]
+
+
+class TestTenantUserBatchUpdateLeaderApi:
+    """测试批量更新租户用户 - 上级关系"""
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_valid_leader(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
+
+        tenant_users = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        )
+        user_ids = tenant_users.values_list("id", flat=True)
+        data_source_user_ids = tenant_users.values_list("data_source_user_id", flat=True)
+
+        # 用户列表中前两个作为上级，其余作为下属
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids[2:],
+            "leader_ids": user_ids[:2],
+        }
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.leader.batch_update"),
+            data=tenant_user_data,
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert all(
+            DataSourceUserLeaderRelation.objects.filter(user_id=user_id, leader_id=leader_id).exists()
+            for leader_id, user_id in itertools.product(data_source_user_ids[:2], data_source_user_ids[2:])
+        )
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_batch_update_invalid_leader(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        # 将用户列表中的前两个作为上级
+        tenant_user_data: Dict[str, Any] = {
+            "user_ids": user_ids,
+            "leader_ids": user_ids[:2],
+        }
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.leader.batch_update"),
+            data=tenant_user_data,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不能设置为自己的直属上级" in resp.data["message"]
