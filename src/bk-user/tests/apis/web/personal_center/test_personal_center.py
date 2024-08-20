@@ -201,3 +201,15 @@ class TestTenantUserPhoneVerificationCodeSendApi:
         )
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+class TestTenantUserEmailVerificationCodeSendApi:
+    def test_send_verification_code(self, api_client, tenant_user):
+        data = {"custom_email": "12345678901@qq.com"}
+
+        resp = api_client.post(
+            reverse("personal_center.tenant_users.email.verification_code.send", kwargs={"id": tenant_user.id}),
+            data=data,
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
