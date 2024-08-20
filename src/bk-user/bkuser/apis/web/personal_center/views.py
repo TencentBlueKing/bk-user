@@ -395,7 +395,7 @@ class TenantUserEmailVerificationCodeValidateApi(generics.CreateAPIView):
             session_key = request.session.session_key
             self.cache.set(f"{session_key}_email_verification_step", "code_verified", timeout=300)
         except Exception:
-            # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
+            # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历邮箱号问题
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("邮箱号或验证码错误"))
         return Response(status=status.HTTP_200_OK)
 
