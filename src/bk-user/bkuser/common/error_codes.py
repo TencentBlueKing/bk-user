@@ -106,7 +106,7 @@ class ErrorCodes:
     TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))
     TENANT_DEPARTMENT_UPDATE_FAILED = ErrorCode(_("租户部门更新失败"))
     TENANT_DEPARTMENT_DELETE_FAILED = ErrorCode(_("租户部门删除失败"))
-    TENANT_DEPARTMENT_MOVE_FAILED = ErrorCode(_("租户部门移动失败"))
+
     # 租户用户
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     TENANT_USER_CREATE_FAILED = ErrorCode(_("租户用户创建失败"))

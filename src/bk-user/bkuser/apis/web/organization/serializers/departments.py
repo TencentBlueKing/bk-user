@@ -20,7 +20,7 @@ from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepar
 from bkuser.apps.tenant.models import TenantDepartment
 
 
-def _validate_exists_parent_department_id(parent_dept_id: int, tenant_id: str) -> int:
+def _validate_parent_dept_id(parent_dept_id: int, tenant_id: str) -> int:
     if (
         parent_dept_id
         and not TenantDepartment.objects.filter(
@@ -37,7 +37,7 @@ class TenantDepartmentListInputSLZ(serializers.Serializer):
     parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示获取根部门）", default=0)
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
-        return _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
+        return _validate_parent_dept_id(parent_dept_id, self.context["tenant_id"])
 
 
 class TenantDepartmentListOutputSLZ(serializers.Serializer):
@@ -83,7 +83,7 @@ class TenantDepartmentCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称")
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
-        return _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
+        return _validate_parent_dept_id(parent_dept_id, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         dept_name = attrs["name"]
@@ -175,11 +175,11 @@ class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):
         return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
 
 
-class TenantDepartmentMoveInputSLZ(serializers.Serializer):
-    parent_department_id = serializers.IntegerField(help_text="移动至父部门 ID（为 0 表示获取根部门）")
+class TenantDepartmentParentUpdateInputSLZ(serializers.Serializer):
+    parent_department_id = serializers.IntegerField(help_text="目标父部门 ID（为 0 表示获取根部门）")
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
-        parent_dept_id = _validate_exists_parent_department_id(parent_dept_id, self.context["tenant_id"])
+        parent_dept_id = _validate_parent_dept_id(parent_dept_id, self.context["tenant_id"])
 
         if parent_dept_id == self.context["tenant_dept_id"]:
             raise ValidationError(_("自己不能成为自己的子部门"))
@@ -188,10 +188,10 @@ class TenantDepartmentMoveInputSLZ(serializers.Serializer):
 
         parent_dept_relation = None
         ancestor_dept_ids = []
-        if parent_tenant_dept_id := parent_dept_id:
+        if parent_dept_id:
             # 租户部门 ID -> 数据源部门
             parent_data_source_dept = TenantDepartment.objects.get(
-                id=parent_tenant_dept_id, tenant_id=self.context["tenant_id"]
+                id=parent_dept_id, tenant_id=self.context["tenant_id"]
             ).data_source_department
             # 数据源部门 -> 父部门关系表节点
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(

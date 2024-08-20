@@ -29,7 +29,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
-    TenantDepartmentMoveInputSLZ,
+    TenantDepartmentParentUpdateInputSLZ,
     TenantDepartmentSearchInputSLZ,
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
@@ -388,8 +388,8 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class TenantDepartmentMoveApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
-    """租户部门移动"""
+class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """更新租户部门父部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -403,8 +403,8 @@ class TenantDepartmentMoveApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
 
     @swagger_auto_schema(
         tags=["organization.department"],
-        operation_description="部门移动",
-        request_body=TenantDepartmentMoveInputSLZ(),
+        operation_description="更新租户部门父部门",
+        request_body=TenantDepartmentParentUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -414,27 +414,29 @@ class TenantDepartmentMoveApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         data_source = tenant_dept.data_source
 
         if not (data_source.is_local and data_source.is_real_type):
-            raise error_codes.TENANT_DEPARTMENT_MOVE_FAILED.f(_("仅本地数据源支持移动部门"))
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅本地数据源支持移动部门"))
         if data_source.owner_tenant_id != current_tenant_id:
-            raise error_codes.TENANT_DEPARTMENT_MOVE_FAILED.f(_("仅可移动属于当前租户的部门"))
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅可移动属于当前租户的部门"))
 
         context = {
             "tenant_id": current_tenant_id,
             "tenant_dept_id": tenant_dept.id,
             "data_source_dept": data_source_dept,
         }
-        slz = TenantDepartmentMoveInputSLZ(data=self.request.data, context=context)
+        slz = TenantDepartmentParentUpdateInputSLZ(data=self.request.data, context=context)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        parent_tenant_dept_id = data["parent_department_id"]
 
         # 获取当前节点部门关系
         cur_dept_relation = DataSourceDepartmentRelation.objects.get(
             department=data_source_dept, data_source=tenant_dept.data_source
         )
 
-        # 获取父节点部门关系
+        # 获取目标父部门关系
         parent_dept_relation = None
-        if parent_tenant_dept_id := data["parent_department_id"]:
+        if parent_tenant_dept_id:
             # 从租户部门 ID 找数据源部门
             parent_data_source_dept = TenantDepartment.objects.get(
                 tenant_id=current_tenant_id, id=parent_tenant_dept_id
@@ -443,7 +445,6 @@ class TenantDepartmentMoveApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
                 department=parent_data_source_dept, data_source=tenant_dept.data_source
             )
 
-        cur_dept_relation.parent = parent_dept_relation
-        cur_dept_relation.save()
+        cur_dept_relation.move_to(parent_dept_relation)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
