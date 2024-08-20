@@ -863,7 +863,8 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         new_age = 18
         tenant_user_data: Dict[str, Any] = {
             "user_ids": user_ids,
-            "extras": {
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
                 f"{random_tenant.id}_age": new_age,
             },
         }
@@ -888,7 +889,8 @@ class TestTenantUserBatchUpdateCustomFieldApi:
 
         tenant_user_data: Dict[str, Any] = {
             "user_ids": user_ids,
-            "extras": {
+            "field_name": f"{random_tenant.id}_hobbies",
+            "value": {
                 f"{random_tenant.id}_hobbies": ["gaming", "shopping"],
             },
         }
@@ -913,7 +915,8 @@ class TestTenantUserBatchUpdateCustomFieldApi:
 
         tenant_user_data: Dict[str, Any] = {
             "user_ids": user_ids,
-            "extras": {
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
                 f"{random_tenant.id}_age": 18,
             },
         }
@@ -940,7 +943,8 @@ class TestTenantUserBatchUpdateCustomFieldApi:
 
         tenant_user_data: Dict[str, Any] = {
             "user_ids": user_ids,
-            "extras": {
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
                 f"{random_tenant.id}_age": 18,
             },
         }
@@ -967,7 +971,8 @@ class TestTenantUserBatchUpdateCustomFieldApi:
 
         tenant_user_data: Dict[str, Any] = {
             "user_ids": user_ids,
-            "extras": {
+            "field_name": f"{random_tenant.id}_age",
+            "value": {
                 f"{random_tenant.id}_age": 18,
                 f"{random_tenant.id}_gender": "male",
             },

@@ -992,12 +992,31 @@ class TenantUserStatusBatchUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 无论原有状态是什么，都统一更新为输入状态
-        TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
-            status=data["status"],
-            updater=request.user.username,
-            updated_at=timezone.now(),
-        )
+        now = timezone.now()
+        tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id)
+
+        # 停用的时候，正常 / 过期的租户用户都直接停用
+        if data["status"] == TenantUserStatus.DISABLED:
+            tenant_users.update(
+                status=TenantUserStatus.DISABLED,
+                updater=request.user.username,
+                updated_at=now,
+            )
+
+        # 启用的时候需要根据租户有效期判断，对于过期的用户则转换为过期，否则转换为正常
+        else:
+            with transaction.atomic():
+                tenant_users.filter(account_expired_at__lte=now).update(
+                    status=TenantUserStatus.EXPIRED,
+                    updater=request.user.username,
+                    updated_at=now,
+                )
+
+                tenant_users.filter(account_expired_at__gt=now).update(
+                    status=TenantUserStatus.ENABLED,
+                    updater=request.user.username,
+                    updated_at=now,
+                )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1131,7 +1150,7 @@ class TenantUserCustomFieldBatchUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        name = list(data["extras"].keys())[0]
+        field_name = data["field_name"]
         data_source_users = [
             tenant_user.data_source_user
             for tenant_user in TenantUser.objects.filter(
@@ -1142,7 +1161,7 @@ class TenantUserCustomFieldBatchUpdateApi(
 
         now = timezone.now()
         for data_source_user in data_source_users:
-            data_source_user.extras[name] = data["extras"][name]
+            data_source_user.extras[field_name] = data["value"][field_name]
             data_source_user.updated_at = now
 
         DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])

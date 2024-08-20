@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-19 14:39+0800\n"
+"POT-Creation-Date: 2024-08-20 12:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -335,23 +335,23 @@ msgstr "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgid "用户名 {} 重复"
 msgstr "用户名 {} 重复"
 
-#: bkuser/apis/web/organization/serializers/users.py:658
-msgid "无法启用过期租户用户 {}"
-msgstr "无法启用过期租户用户 {}"
-
-#: bkuser/apis/web/organization/serializers/users.py:676
+#: bkuser/apis/web/organization/serializers/users.py:665
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "用户 {} 不能设置为自己的直属上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:686
+#: bkuser/apis/web/organization/serializers/users.py:676
 msgid "一次只能批量更新一个自定义字段"
 msgstr "一次只能批量更新一个自定义字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:697
+#: bkuser/apis/web/organization/serializers/users.py:685
+msgid "请提供自定义字段 {} 的值"
+msgstr "请提供自定义字段 {} 的值"
+
+#: bkuser/apis/web/organization/serializers/users.py:693
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:701
+#: bkuser/apis/web/organization/serializers/users.py:697
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
@@ -440,7 +440,7 @@ msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户�
 msgid "指定的租户部门不存在"
 msgstr "指定的租户部门不存在"
 
-#: bkuser/apis/web/organization/views/users.py:1076
+#: bkuser/apis/web/organization/views/users.py:1095
 msgid "当前数据源未启用密码功能"
 msgstr "当前数据源未启用密码功能"
 

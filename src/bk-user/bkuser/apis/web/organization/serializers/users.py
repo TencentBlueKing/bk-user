@@ -645,19 +645,8 @@ class TenantUserStatusBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     # 变更后状态，只允许启用或禁用
     status = serializers.ChoiceField(
         help_text="是否批量启用租户用户",
-        choices=[(status.value, status.value) for status in [TenantUserStatus.ENABLED, TenantUserStatus.DISABLED]],
+        choices=[TenantUserStatus.ENABLED.value, TenantUserStatus.DISABLED.value],
     )
-
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        expired_tenant_users_ids = TenantUser.objects.filter(
-            id__in=attrs["user_ids"], status=TenantUserStatus.EXPIRED
-        ).values_list("id", flat=True)
-
-        # 如果存在过期租户用户，则不允许启用
-        if attrs["status"] == TenantUserStatus.ENABLED and expired_tenant_users_ids:
-            raise ValidationError(_("无法启用过期租户用户 {}").format(", ".join(expired_tenant_users_ids)))
-
-        return attrs
 
 
 class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
@@ -679,27 +668,33 @@ class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
 
 
 class TenantUserCustomFieldBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
-    extras = serializers.JSONField(help_text="自定义字段", default=dict)
+    field_name = serializers.CharField(help_text="自定义字段名")
+    value = serializers.JSONField(help_text="自定义字段值", default=dict)
 
-    def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        if len(extras) != 1:
+    def validate_value(self, value: Dict[str, Any]) -> Dict[str, Any]:
+        if len(value) != 1:
             raise ValidationError(_("一次只能批量更新一个自定义字段"))
 
-        # 确保 extras 的长度为 1 后，第一个值即为自定义字段的名称
-        name = list(extras.keys())[0]
+        return value
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        field_name = attrs["field_name"]
+
+        if field_name not in attrs["value"]:
+            raise ValidationError(_("请提供自定义字段 {} 的值").format(attrs["field_name"]))
 
         # 加入 manager_editable 到筛选条件，对于管理员不可编辑的字段，不允许在批量操作中修改（前端也需要禁用）
         field = TenantUserCustomField.objects.filter(
-            name=name, tenant_id=self.context["tenant_id"], manager_editable=True
+            name=field_name, tenant_id=self.context["tenant_id"], manager_editable=True
         ).first()
 
         if not field:
-            raise ValidationError(_("当前租户不存在管理员可编辑的自定义字段 {}".format(name)))
+            raise ValidationError(_("当前租户不存在管理员可编辑的自定义字段 {}".format(field_name)))
 
         # 唯一性检查，对于设置了唯一性的字段，不允许在批量操作中修改（前端也需要禁用）
         if field.unique:
             raise ValidationError(_("不能在批量操作中修改设置了唯一性的自定义字段 {}".format(field.display_name)))
 
-        extras[name] = validate_type_and_convert_field_data(field, extras[name])
+        attrs["value"][field_name] = validate_type_and_convert_field_data(field, attrs["value"][field_name])
 
-        return extras
+        return attrs

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-19 14:38+0800\n"
+"POT-Creation-Date: 2024-08-20 12:12+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -365,23 +365,23 @@ msgstr "Username: {} custom field {} value {} is not in the options {}"
 msgid "用户名 {} 重复"
 msgstr "Username {} is duplicated"
 
-#: bkuser/apis/web/organization/serializers/users.py:658
-msgid "无法启用过期租户用户 {}"
-msgstr "Cannot enable expired tenant user {}"
-
-#: bkuser/apis/web/organization/serializers/users.py:676
+#: bkuser/apis/web/organization/serializers/users.py:665
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "Unable to set user {} as their direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:686
+#: bkuser/apis/web/organization/serializers/users.py:676
 msgid "一次只能批量更新一个自定义字段"
 msgstr "Only one custom field can be updated in a batch update"
 
-#: bkuser/apis/web/organization/serializers/users.py:697
+#: bkuser/apis/web/organization/serializers/users.py:685
+msgid "请提供自定义字段 {} 的值"
+msgstr "Please provide the value of the custom field {}"
+
+#: bkuser/apis/web/organization/serializers/users.py:693
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "The current tenant has no admin editable custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:701
+#: bkuser/apis/web/organization/serializers/users.py:697
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr ""
 "Cannot modify custom field {} that is set to be unique in batch operations"
@@ -475,7 +475,7 @@ msgstr ""
 msgid "指定的租户部门不存在"
 msgstr "The specified tenant department does not exist"
 
-#: bkuser/apis/web/organization/views/users.py:1076
+#: bkuser/apis/web/organization/views/users.py:1095
 msgid "当前数据源未启用密码功能"
 msgstr "Current data source has not enabled password functionality"
 
