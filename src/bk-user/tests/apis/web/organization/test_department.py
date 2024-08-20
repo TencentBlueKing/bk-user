@@ -314,7 +314,8 @@ class TestOptionalTenantDepartmentListApi:
 class TestTenantDepartmentParentUpdateApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_dept_parent_update(self, api_client, random_tenant):
-        # 将小组 BAA 移动至中心 AB 下
+        """将小组 BAA 移动至中心 AB 下"""
+
         group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
         center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB", tenant=random_tenant)
 
@@ -323,9 +324,14 @@ class TestTenantDepartmentParentUpdateApi:
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
+        group_baa_dept_relation = DataSourceDepartmentRelation.objects.get(department=group_baa.data_source_department)
+        center_ab_dept_relation = DataSourceDepartmentRelation.objects.get(department=center_ab.data_source_department)
+        assert group_baa_dept_relation.parent == center_ab_dept_relation
+
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_dept_parent_update_to_root(self, api_client, random_tenant):
-        # 将小组 BAA 移动至根部门
+        """将小组 BAA 移动至根部门"""
+
         group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
 
         url = reverse("organization.tenant_department.parent.update", kwargs={"id": group_baa.id})
@@ -333,9 +339,13 @@ class TestTenantDepartmentParentUpdateApi:
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
+        group_baa_dept_relation = DataSourceDepartmentRelation.objects.get(department=group_baa.data_source_department)
+        assert group_baa_dept_relation.parent is None
+
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_dept_parent_update_to_itself(self, api_client, random_tenant):
-        # 将小组 BAA 移动至自己下面
+        """将小组 BAA 移动至自己下面"""
+
         group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
 
         url = reverse("organization.tenant_department.parent.update", kwargs={"id": group_baa.id})
@@ -346,7 +356,8 @@ class TestTenantDepartmentParentUpdateApi:
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_dept_parent_update_to_descendant(self, api_client, random_tenant):
-        # 将部门 A 移动至自己的子部门小组 ABA 下
+        """将部门 A 移动至自己的子部门小组 ABA 下"""
+
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A", tenant=random_tenant)
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA", tenant=random_tenant)
 
