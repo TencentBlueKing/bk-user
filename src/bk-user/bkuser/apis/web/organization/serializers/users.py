@@ -581,7 +581,7 @@ class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段")
 
 
-def _validate_user_ids_exist_in_tenant(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
+def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
     exists_tenant_users = TenantUser.objects.filter(
         id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
     ).values_list("id", flat=True)
@@ -603,7 +603,7 @@ class TenantUserIDBatchSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        return _validate_user_ids_exist_in_tenant(user_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
 
 
 class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
@@ -612,7 +612,7 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        return _validate_user_ids_exist_in_tenant(user_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
 
 
 class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):

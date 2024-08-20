@@ -992,29 +992,30 @@ class TenantUserStatusBatchUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        now = timezone.now()
         tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id)
+        now = timezone.now()
+        updater = request.user.username
 
         # 停用的时候，正常 / 过期的租户用户都直接停用
         if data["status"] == TenantUserStatus.DISABLED:
             tenant_users.update(
                 status=TenantUserStatus.DISABLED,
-                updater=request.user.username,
+                updater=updater,
                 updated_at=now,
             )
 
         # 启用的时候需要根据租户有效期判断，对于过期的用户则转换为过期，否则转换为正常
-        else:
+        elif data["status"] == TenantUserStatus.ENABLED:
             with transaction.atomic():
                 tenant_users.filter(account_expired_at__lte=now).update(
                     status=TenantUserStatus.EXPIRED,
-                    updater=request.user.username,
+                    updater=updater,
                     updated_at=now,
                 )
 
                 tenant_users.filter(account_expired_at__gt=now).update(
                     status=TenantUserStatus.ENABLED,
-                    updater=request.user.username,
+                    updater=updater,
                     updated_at=now,
                 )
 
