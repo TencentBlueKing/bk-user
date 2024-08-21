@@ -634,8 +634,16 @@ RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 
 RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
 # 重置密码 Token 每天最大发送次数
 RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
-# 允许重置手机号的租户列表
-TENANTS_ALLOW_PHONE_MODIFICATION = env.list("ALLOW_PHONE_MODIFICATION", default=["default"])
+# 重置手机号的租户列表
+TENANTS_PERMISSIONS_PHONE_MODIFICATION = env.dict(
+    "TENANTS_PERMISSIONS_PHONE_MODIFICATION",
+    default={"is_editable": [], "need_verify": [], "not_editable": ["default"]},
+)
+
+TENANTS_PERMISSIONS_EMAIL_MODIFICATION = env.dict(
+    "TENANTS_PERMISSIONS_EMAIL_MODIFICATION",
+    default={"is_editable": [], "need_verify": [], "not_editable": ["default"]},
+)
 
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB

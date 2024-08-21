@@ -77,23 +77,8 @@ urlpatterns = [
         name="personal_center.tenant_users.phone.verification_code.send",
     ),
     path(
-        "tenant-users/<str:id>/phone-verification-code-validate/",
-        views.TenantUserPhoneVerificationCodeValidateApi.as_view(),
-        name="personal_center.tenant_users.phone.verification_code.validate",
-    ),
-    path(
         "tenant-users/<str:id>/email-verification-code-send/",
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.email.verification_code.send",
-    ),
-    path(
-        "tenant-users/<str:id>/email-verification-code-validate/",
-        views.TenantUserEmailVerificationCodeValidateApi.as_view(),
-        name="personal_center.tenant_users.email.verification_code.validate",
-    ),
-    path(
-        "tenant-users/<str:id>/phone-modifiable/",
-        views.TenantUserPhoneModifiableStatusRetrieveApi.as_view(),
-        name="personal_center.tenant_users.phone_modifiable.retrieve",
     ),
 ]

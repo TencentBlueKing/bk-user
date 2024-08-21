@@ -17,5 +17,5 @@ class VerificationCodeScene(str, StructuredEnum):
     """验证码使用场景"""
 
     RESET_PASSWORD = EnumField("reset_passwd", label=_("忘记密码后申请重置"))
-    UPDATE_PHONE = EnumField("update_passwd", label=_("个人中心修改手机号"))
+    UPDATE_PHONE = EnumField("update_phone", label=_("个人中心修改手机号"))
     UPDATE_EMAIL = EnumField("update_email", label=_("个人中心修改邮箱号"))

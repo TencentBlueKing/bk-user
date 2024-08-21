@@ -17,6 +17,7 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.personal_center.constants import PersonalCenterUpdateFieldPermission
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
@@ -159,6 +160,10 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
     custom_phone_country_code = serializers.CharField(
         help_text="自定义用户手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
+    verification_code = serializers.CharField(help_text="手机号验证码", required=False, allow_blank=True)
+    update_permission = serializers.ChoiceField(
+        help_text="修改手机号权限", required=True, choices=PersonalCenterUpdateFieldPermission.get_choices()
+    )
 
     def validate(self, attrs):
         # custom_phone_country_code 具有默认值
@@ -177,17 +182,38 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
             except ValueError as e:
                 raise ValidationError(str(e))
 
+            if attrs["update_permission"] == PersonalCenterUpdateFieldPermission.NEED_VERIFY and not attrs.get(
+                "verification_code"
+            ):
+                raise ValidationError(_("验证码为必填项"))
+
+            if attrs.get("verification_code") and len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
+                raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
+
         return attrs
 
 
 class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     is_inherited_email = serializers.BooleanField(help_text="是否继承数据源邮箱", required=True)
     custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=False, allow_blank=True)
+    verification_code = serializers.CharField(help_text="邮箱验证码", required=False, allow_blank=True)
+    update_permission = serializers.ChoiceField(
+        help_text="修改邮箱权限", required=True, choices=PersonalCenterUpdateFieldPermission.get_choices()
+    )
 
     def validate(self, attrs):
         # 不通过继承，custom_email 必须存在
-        if not attrs["is_inherited_email"] and not attrs.get("custom_email"):
-            raise ValidationError(_("自定义邮箱为必填项"))
+        if not attrs["is_inherited_email"]:
+            if not attrs.get("custom_email"):
+                raise ValidationError(_("自定义邮箱为必填项"))
+
+            if attrs["update_permission"] == PersonalCenterUpdateFieldPermission.NEED_VERIFY and not attrs.get(
+                "verification_code"
+            ):
+                raise ValidationError(_("验证码为必填项"))
+
+            if attrs.get("verification_code") and len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
+                raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
 
         return attrs
 
@@ -242,6 +268,8 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 class TenantUserFeatureFlagOutputSLZ(serializers.Serializer):
     can_change_password = serializers.BooleanField(help_text="修改密码")
+    update_phone_permission = serializers.CharField(help_text="修改手机号权限")
+    update_email_permission = serializers.CharField(help_text="修改邮箱权限")
 
 
 class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
@@ -284,32 +312,5 @@ class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
         return attrs
 
 
-class TenantUserPhoneVerificationCodeValidateInputSLZ(serializers.Serializer):
-    verification_code = serializers.CharField(help_text="验证码", max_length=32, required=True)
-    custom_phone = serializers.CharField(help_text="用户手机号", required=True)
-    custom_phone_country_code = serializers.CharField(
-        help_text="用户手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
-    )
-
-    def validate(self, attrs):
-        if len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
-            raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
-        return attrs
-
-
 class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
     custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=True)
-
-
-class TenantUserEmailVerificationCodeValidateInputSLZ(serializers.Serializer):
-    verification_code = serializers.CharField(help_text="验证码", max_length=32, required=True)
-    custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=True)
-
-    def validate(self, attrs):
-        if len(attrs["verification_code"]) != settings.VERIFICATION_CODE_LENGTH:
-            raise ValidationError("验证码长度必须为{}".format(settings.VERIFICATION_CODE_LENGTH))
-        return attrs
-
-
-class TenantUserPhoneModifiableStatusRetrieveOutputSLZ(serializers.Serializer):
-    is_modifiable = serializers.BooleanField(help_text="是否可修改手机号")

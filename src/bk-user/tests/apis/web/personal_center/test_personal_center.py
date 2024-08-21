@@ -10,8 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
+from bkuser.apis.web.personal_center.constants import PersonalCenterUpdateFieldPermission
 from bkuser.apps.tenant.models import TenantUser
-from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -88,6 +88,8 @@ class TestTenantUserFeatureFlagListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["can_change_password"] is False
+        assert resp.data["update_phone_permission"] == "not_editable"
+        assert resp.data["update_email_permission"] == "not_editable"
 
 
 class TestTenantUserLanguageUpdateApi:
@@ -171,26 +173,6 @@ class TestTenantUserLogoUpdateApi:
         assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
 
 
-class TestTenantUserPhoneModifiableStatusRetrieveApi:
-    def test_tenant_user_phone_modifiable_status(self, api_client, tenant_user):
-        settings.TENANTS_ALLOW_PHONE_MODIFICATION = [tenant_user.tenant_id]
-        resp = api_client.get(
-            reverse("personal_center.tenant_users.phone_modifiable.retrieve", kwargs={"id": tenant_user.id})
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["is_modifiable"] is True
-
-    def test_tenant_user_phone_not_modifiable_status(self, api_client, tenant_user):
-        settings.TENANTS_ALLOW_PHONE_MODIFICATION = []
-        resp = api_client.get(
-            reverse("personal_center.tenant_users.phone_modifiable.retrieve", kwargs={"id": tenant_user.id})
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["is_modifiable"] is False
-
-
 class TestTenantUserPhoneVerificationCodeSendApi:
     def test_send_verification_code(self, api_client, tenant_user):
         data = {"custom_phone": "12345678901", "custom_phone_country_code": "86"}
@@ -213,3 +195,74 @@ class TestTenantUserEmailVerificationCodeSendApi:
         )
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+class TestTenantUserPhoneUpdateApi:
+    def test_update_phone_success(self, api_client, tenant_user):
+        data = {
+            "is_inherited_phone": "False",
+            "custom_phone": "12345678901",
+            "custom_phone_country_code": "86",
+            "update_permission": PersonalCenterUpdateFieldPermission.IS_EDITABLE,
+        }
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert TenantUser.objects.get(id=tenant_user.id).custom_phone == "12345678901"
+        assert TenantUser.objects.get(id=tenant_user.id).custom_phone_country_code == "86"
+        assert not TenantUser.objects.get(id=tenant_user.id).is_inherited_phone
+
+    def test_update_phone_not_editable(self, api_client, tenant_user):
+        data = {
+            "is_inherited_phone": "False",
+            "custom_phone": "12345678901",
+            "custom_phone_country_code": "86",
+            "update_permission": PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
+        }
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert TenantUser.objects.get(id=tenant_user.id).custom_phone == tenant_user.custom_phone
+        assert (
+            TenantUser.objects.get(id=tenant_user.id).custom_phone_country_code
+            == tenant_user.custom_phone_country_code
+        )
+        assert TenantUser.objects.get(id=tenant_user.id).is_inherited_phone == tenant_user.is_inherited_phone
+
+
+class TestTenantUserEmailUpdateApi:
+    def test_update_email_success(self, api_client, tenant_user):
+        data = {
+            "is_inherited_email": "False",
+            "custom_email": "123456@qq.com",
+            "update_permission": PersonalCenterUpdateFieldPermission.IS_EDITABLE,
+        }
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert TenantUser.objects.get(id=tenant_user.id).custom_email == "123456@qq.com"
+        assert not TenantUser.objects.get(id=tenant_user.id).is_inherited_email
+
+    def test_update_email_not_editable(self, api_client, tenant_user):
+        data = {
+            "is_inherited_email": "False",
+            "custom_email": "123456@qq.com",
+            "update_permission": PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
+        }
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert TenantUser.objects.get(id=tenant_user.id).custom_email == tenant_user.custom_email
+        assert TenantUser.objects.get(id=tenant_user.id).is_inherited_email == tenant_user.is_inherited_email
