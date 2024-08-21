@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 import re
 from typing import Any, Dict
@@ -118,7 +119,7 @@ def validate_duplicate_tenant_name(name: str, tenant_id: str = "") -> str:
     return name
 
 
-def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: Any) -> Any:  # noqa: C901
+def validate_type_and_convert_field_data(field: TenantUserCustomField, value: Any) -> Any:  # noqa: C901
     """对自定义字段的值进行类型检查 & 做必要的类型转换"""
     if value is None:
         # 必填性在后续进行检查，这里直接跳过即可
@@ -201,7 +202,7 @@ def validate_user_extras(
         raise ValidationError(_("提供的自定义字段数据与租户自定义字段不匹配"))
 
     for field in custom_fields:
-        value = _validate_type_and_convert_field_data(field, extras[field.name])
+        value = validate_type_and_convert_field_data(field, extras[field.name])
         value = _validate_unique_and_required(field, data_source_id, data_source_user_id, value)
         extras[field.name] = value
 
