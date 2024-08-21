@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from .departments import (
     OptionalTenantDepartmentListApi,
     TenantDepartmentListCreateApi,
+    TenantDepartmentParentUpdateApi,
     TenantDepartmentSearchApi,
     TenantDepartmentUpdateDestroyApi,
 )
@@ -55,6 +56,7 @@ __all__ = [
     "TenantDepartmentUpdateDestroyApi",
     "TenantDepartmentSearchApi",
     "OptionalTenantDepartmentListApi",
+    "TenantDepartmentParentUpdateApi",
     # 租户用户
     "OptionalTenantUserListApi",
     "TenantUserSearchApi",

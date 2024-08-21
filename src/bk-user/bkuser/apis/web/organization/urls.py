@@ -56,6 +56,12 @@ urlpatterns = [
         views.OptionalTenantDepartmentListApi.as_view(),
         name="organization.optional_department.list",
     ),
+    # 更新租户部门父部门
+    path(
+        "tenants/departments/<str:id>/parent/",
+        views.TenantDepartmentParentUpdateApi.as_view(),
+        name="organization.tenant_department.parent.update",
+    ),
     # 可选租户用户上级列表（下拉框数据用）
     path(
         "tenants/optional-leaders/",

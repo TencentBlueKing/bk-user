@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from http import HTTPStatus
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
@@ -105,6 +106,7 @@ class ErrorCodes:
     TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))
     TENANT_DEPARTMENT_UPDATE_FAILED = ErrorCode(_("租户部门更新失败"))
     TENANT_DEPARTMENT_DELETE_FAILED = ErrorCode(_("租户部门删除失败"))
+
     # 租户用户
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     TENANT_USER_CREATE_FAILED = ErrorCode(_("租户用户创建失败"))
