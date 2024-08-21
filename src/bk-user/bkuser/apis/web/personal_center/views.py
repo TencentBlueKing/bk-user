@@ -225,7 +225,7 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
             self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
         except Exception as e:
             logger.warning("failed to send validation code to phone +%s %s: %s", phone_country_code, phone, e)
-            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL:
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATE_PHONE_OR_EMAIL:
                 raise
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -317,7 +317,7 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
             self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
         except Exception as e:
             logger.warning("failed to send reset password url to email %s: %s", email, e)
-            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL:
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATE_PHONE_OR_EMAIL:
                 raise
 
         return Response(status=status.HTTP_204_NO_CONTENT)
