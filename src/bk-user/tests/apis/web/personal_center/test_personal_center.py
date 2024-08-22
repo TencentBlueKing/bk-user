@@ -85,12 +85,12 @@ class TestTenantUserFieldListApi:
 
 class TestTenantUserFeatureFlagListApi:
     def test_list(self, api_client, tenant_user):
-        resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
         settings.TENANT_PHONE_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
         settings.TENANT_EMAIL_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY}
+        resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["can_change_password"] is False
-        assert resp.data["phone_update_restriction"] == "need_verify"
+        assert resp.data["phone_update_restriction"] == "editable_directly"
         assert resp.data["email_update_restriction"] == "need_verify"
 
 
