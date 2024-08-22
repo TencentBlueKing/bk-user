@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from collections import defaultdict
 from typing import Dict
 
@@ -28,6 +29,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentParentUpdateInputSLZ,
     TenantDepartmentSearchInputSLZ,
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
@@ -384,3 +386,65 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
         context = {"org_path_map": self._get_dept_organization_path_map(tenant_depts)}
         resp_data = OptionalTenantDepartmentListOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
+
+
+class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """更新租户部门父部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
+
+    @swagger_auto_schema(
+        tags=["organization.department"],
+        operation_description="更新租户部门父部门",
+        request_body=TenantDepartmentParentUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        current_tenant_id = self.get_current_tenant_id()
+        tenant_dept = self.get_object()
+        data_source_dept = tenant_dept.data_source_department
+        data_source = tenant_dept.data_source
+
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅本地数据源支持移动部门"))
+        if data_source.owner_tenant_id != current_tenant_id:
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅可移动属于当前租户的部门"))
+
+        context = {
+            "tenant_id": current_tenant_id,
+            "tenant_dept_id": tenant_dept.id,
+            "data_source_dept": data_source_dept,
+        }
+        slz = TenantDepartmentParentUpdateInputSLZ(data=self.request.data, context=context)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        parent_tenant_dept_id = data["parent_department_id"]
+
+        # 获取当前节点部门关系
+        cur_dept_relation = DataSourceDepartmentRelation.objects.get(
+            department=data_source_dept, data_source=tenant_dept.data_source
+        )
+
+        # 获取目标父部门关系
+        parent_dept_relation = None
+        if parent_tenant_dept_id:
+            # 从租户部门 ID 找数据源部门
+            parent_data_source_dept = TenantDepartment.objects.get(
+                tenant_id=current_tenant_id, id=parent_tenant_dept_id
+            ).data_source_department
+            parent_dept_relation = DataSourceDepartmentRelation.objects.get(
+                department=parent_data_source_dept, data_source=tenant_dept.data_source
+            )
+
+        cur_dept_relation.move_to(parent_dept_relation)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
