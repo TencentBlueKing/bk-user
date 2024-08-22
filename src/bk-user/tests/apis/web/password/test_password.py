@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import string
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
@@ -18,7 +19,7 @@ from bkuser.apis.web.password.tokens import UserResetPasswordTokenManager
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.hashers import check_password
-from bkuser.common.verification_code import VerificationCodeManager, VerificationCodeScene
+from bkuser.common.verification_code import PhoneVerificationCodeManager, VerificationCodeScene
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -62,7 +63,7 @@ class TestResetPasswordByPhoneAfterForget:
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         # 2. 从缓存中获取验证码用于认证，认证后获取到密码重置链接
-        mgr = VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD)
+        mgr = PhoneVerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD)
         code = mgr.cache.get(mgr.code_cache_key)
         resp = api_client.post(
             reverse("password.get_passwd_reset_url_by_verification_code"),

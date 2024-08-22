@@ -72,12 +72,12 @@ urlpatterns = [
         name="personal_center.tenant_users.password.update",
     ),
     path(
-        "tenant-users/<str:id>/phone-verification-code-send/",
+        "tenant-users/<str:id>/phone-verification-code/",
         views.TenantUserPhoneVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.phone.verification_code.send",
     ),
     path(
-        "tenant-users/<str:id>/email-verification-code-send/",
+        "tenant-users/<str:id>/email-verification-code/",
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.email.verification_code.send",
     ),

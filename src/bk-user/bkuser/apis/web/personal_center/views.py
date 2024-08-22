@@ -19,12 +19,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from bkuser.apis.web.password.senders import (
-    EmailVerificationCodeSender,
-    ExceedSendRateLimit,
-    PhoneVerificationCodeSender,
-)
-from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag, PersonalCenterUpdateFieldPermission
+from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag, PhoneOrEmailUpdateRestrictionEnum
 from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
@@ -46,13 +41,18 @@ from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.senders import (
+    EmailVerificationCodeSender,
+    ExceedSendRateLimit,
+    PhoneVerificationCodeSender,
+)
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
+    EmailVerificationCodeManager,
     GenerateCodeTooFrequently,
     InvalidVerificationCode,
-    VerificationCodeManager,
-    VerificationCodeManagerByEmail,
+    PhoneVerificationCodeManager,
     VerificationCodeScene,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -163,15 +163,16 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-
-        if data["update_permission"] == PersonalCenterUpdateFieldPermission.NOT_EDITABLE:
+        tenant_user = self.get_object()
+        phone_update_restriction = query_phone_update_restriction(tenant_user)
+        if phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
             raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("手机号码不可编辑"))
 
         is_inherited_phone = data["is_inherited_phone"]
         custom_phone = data.get("custom_phone", "")
         custom_phone_country_code = data["custom_phone_country_code"]
 
-        if not is_inherited_phone and data["update_permission"] == PersonalCenterUpdateFieldPermission.NEED_VERIFY:
+        if not is_inherited_phone and phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY:
             try:
                 self._validate_verification_code(
                     custom_phone,
@@ -179,9 +180,9 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
                     data["verification_code"],
                     VerificationCodeScene.UPDATE_PHONE,
                 )
-            except Exception:
-                # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
-                raise error_codes.INVALID_VERIFICATION_CODE.f(_("手机号码或验证码错误"))
+            except Exception as e:
+                raise error_codes.TENANT_USER_UPDATE_FAILED.f(str(e))
+
         phone_info = TenantUserPhoneInfo(
             is_inherited_phone=is_inherited_phone,
             custom_phone=custom_phone,
@@ -194,7 +195,7 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         self, phone: str, phone_country_code: str, code: str, scene: VerificationCodeScene
     ):
         try:
-            VerificationCodeManager(phone, phone_country_code, scene).validate(code)
+            PhoneVerificationCodeManager(phone, phone_country_code, scene).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
@@ -217,7 +218,7 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
         slz = TenantUserPhoneVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        phone, phone_country_code = slz.validated_data["custom_phone"], slz.validated_data["custom_phone_country_code"]
+        phone, phone_country_code = slz.validated_data["phone"], slz.validated_data["phone_country_code"]
         try:
             tenant_user = self.get_object()
             tenant_user.custom_phone = phone
@@ -225,8 +226,7 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
             self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
         except Exception as e:
             logger.warning("failed to send validation code to phone +%s %s: %s", phone_country_code, phone, e)
-            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATE_PHONE_OR_EMAIL:
-                raise
+            raise
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -235,7 +235,7 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
         phone, phone_country_code = tenant_user.custom_phone, tenant_user.custom_phone_country_code
 
         try:
-            code = VerificationCodeManager(phone, phone_country_code, scene).gen_code()
+            code = PhoneVerificationCodeManager(phone, phone_country_code, scene).gen_code()
             logger.info("verification code for phone +%s %s is %s", phone_country_code, phone, code)
         except GenerateCodeTooFrequently:
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
@@ -265,20 +265,23 @@ class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        if data["update_permission"] == PersonalCenterUpdateFieldPermission.NOT_EDITABLE:
-            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("邮箱号码不可编辑"))
+        tenant_user = self.get_object()
+
+        email_update_restriction = query_email_update_restriction(tenant_user)
+
+        if email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("邮箱不可编辑"))
 
         is_inherited_email = data["is_inherited_email"]
         custom_email = data.get("custom_email", "")
 
-        if not is_inherited_email and data["update_permission"] == PersonalCenterUpdateFieldPermission.NEED_VERIFY:
+        if not is_inherited_email and email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY:
             try:
                 self._validate_verification_code(
                     custom_email, data["verification_code"], VerificationCodeScene.UPDATE_EMAIL
                 )
-            except Exception:
-                # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历邮箱号问题
-                raise error_codes.INVALID_VERIFICATION_CODE.f(_("邮箱号或验证码错误"))
+            except Exception as e:
+                raise error_codes.TENANT_USER_UPDATE_FAILED.f(str(e))
 
         email_info = TenantUserEmailInfo(is_inherited_email=is_inherited_email, custom_email=custom_email)
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
@@ -286,7 +289,7 @@ class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
 
     def _validate_verification_code(self, email: str, code: str, scene: VerificationCodeScene):
         try:
-            VerificationCodeManagerByEmail(email, scene).validate(code)
+            EmailVerificationCodeManager(email, scene).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
@@ -301,7 +304,7 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="租户修改邮箱号时发送邮箱验证码",
+        operation_description="租户修改邮箱时发送邮箱验证码",
         request_body=TenantUserEmailVerificationCodeSendInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
@@ -309,7 +312,7 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
         slz = TenantUserEmailVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        email = slz.validated_data["custom_email"]
+        email = slz.validated_data["email"]
 
         try:
             tenant_user = self.get_object()
@@ -317,8 +320,7 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
             self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
         except Exception as e:
             logger.warning("failed to send reset password url to email %s: %s", email, e)
-            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATE_PHONE_OR_EMAIL:
-                raise
+            raise
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -326,7 +328,7 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
         """发送邮箱验证码到指定的租户用户"""
         email = tenant_user.custom_email
         try:
-            code = VerificationCodeManagerByEmail(email, scene).gen_code()
+            code = EmailVerificationCodeManager(email, scene).gen_code()
             logger.info("verification code for email %s is %s", email, code)
         except GenerateCodeTooFrequently:
             raise error_codes.TOO_FREQUENTLY.f(_("发送邮箱验证码过于频繁，请稍后再试"))
@@ -468,14 +470,8 @@ class TenantUserFeatureFlagListApi(generics.ListAPIView):
             PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: bool(
                 data_source.is_local and data_source.plugin_config.get("enable_password", False)
             ),
-            PersonalCenterFeatureFlag.UPDATE_PHONE_PERMISSION: next(
-                (k for k, v in settings.TENANTS_PERMISSIONS_PHONE_MODIFICATION.items() if tenant_user.tenant_id in v),
-                PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
-            ),
-            PersonalCenterFeatureFlag.UPDATE_EMAIL_PERMISSION: next(
-                (k for k, v in settings.TENANTS_PERMISSIONS_EMAIL_MODIFICATION.items() if tenant_user.tenant_id in v),
-                PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
-            ),
+            PersonalCenterFeatureFlag.PHONE_UPDATE_RESTRICTION: query_phone_update_restriction(tenant_user),
+            PersonalCenterFeatureFlag.EMAIL_UPDATE_RESTRICTION: query_email_update_restriction(tenant_user),
         }
         return Response(TenantUserFeatureFlagOutputSLZ(feature_flags).data)
 
@@ -521,3 +517,15 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def query_phone_update_restriction(tenant_user: TenantUser):
+    if tenant_user.tenant_id in settings.TENANT_PHONE_UPDATE_RESTRICTIONS:
+        return settings.TENANT_PHONE_UPDATE_RESTRICTIONS[tenant_user.tenant_id]
+    return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+
+
+def query_email_update_restriction(tenant_user: TenantUser):
+    if tenant_user.tenant_id in settings.TENANT_EMAIL_UPDATE_RESTRICTIONS:
+        return settings.TENANT_EMAIL_UPDATE_RESTRICTIONS[tenant_user.tenant_id]
+    return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY

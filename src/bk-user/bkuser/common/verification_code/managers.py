@@ -21,12 +21,19 @@ from bkuser.common.verification_code.exceptions import GenerateCodeTooFrequently
 
 
 class BaseVerificationCodeManager:
-    """验证码管理基类"""
+    """
+    验证码管理基类
 
-    lock_timeout = 60  # 验证码生成锁定时间
+    :param lock_timeout: 验证码生成锁定时间（以秒为单位）
+    """
+
+    lock_timeout = 60
 
     def __init__(self, identifier, scene: VerificationCodeScene):
-        self.identifier = identifier  # 这里可以是手机号或邮箱
+        """
+        :param identifier: 手机号或邮箱
+        """
+        self.identifier = identifier
         self.scene = scene
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.retries_cache_key = self._gen_cache_key("retries")
@@ -77,7 +84,7 @@ class BaseVerificationCodeManager:
         return f"{self.scene.value}:{self.identifier}:{key_type}"
 
 
-class VerificationCodeManager(BaseVerificationCodeManager):
+class PhoneVerificationCodeManager(BaseVerificationCodeManager):
     """手机短信验证码管理"""
 
     def __init__(self, phone: str, phone_country_code: str, scene: VerificationCodeScene):
@@ -85,7 +92,7 @@ class VerificationCodeManager(BaseVerificationCodeManager):
         super().__init__(identifier, scene)
 
 
-class VerificationCodeManagerByEmail(BaseVerificationCodeManager):
+class EmailVerificationCodeManager(BaseVerificationCodeManager):
     """邮箱验证码管理"""
 
     def __init__(self, email: str, scene: VerificationCodeScene):

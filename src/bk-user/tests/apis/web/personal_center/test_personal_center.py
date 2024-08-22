@@ -10,8 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
-from bkuser.apis.web.personal_center.constants import PersonalCenterUpdateFieldPermission
+from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
 from bkuser.apps.tenant.models import TenantUser
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -85,11 +86,12 @@ class TestTenantUserFieldListApi:
 class TestTenantUserFeatureFlagListApi:
     def test_list(self, api_client, tenant_user):
         resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
-
+        settings.TENANT_PHONE_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
+        settings.TENANT_EMAIL_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY}
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["can_change_password"] is False
-        assert resp.data["update_phone_permission"] == "not_editable"
-        assert resp.data["update_email_permission"] == "not_editable"
+        assert resp.data["phone_update_restriction"] == "editable_directly"
+        assert resp.data["email_update_restriction"] == "need_verify"
 
 
 class TestTenantUserLanguageUpdateApi:
@@ -173,39 +175,14 @@ class TestTenantUserLogoUpdateApi:
         assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
 
 
-class TestTenantUserPhoneVerificationCodeSendApi:
-    def test_send_verification_code(self, api_client, tenant_user):
-        data = {"custom_phone": "12345678901", "custom_phone_country_code": "86"}
-
-        resp = api_client.post(
-            reverse("personal_center.tenant_users.phone.verification_code.send", kwargs={"id": tenant_user.id}),
-            data=data,
-        )
-
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-
-class TestTenantUserEmailVerificationCodeSendApi:
-    def test_send_verification_code(self, api_client, tenant_user):
-        data = {"custom_email": "12345678901@qq.com"}
-
-        resp = api_client.post(
-            reverse("personal_center.tenant_users.email.verification_code.send", kwargs={"id": tenant_user.id}),
-            data=data,
-        )
-
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-
 class TestTenantUserPhoneUpdateApi:
     def test_update_phone_success(self, api_client, tenant_user):
         data = {
             "is_inherited_phone": "False",
             "custom_phone": "12345678901",
             "custom_phone_country_code": "86",
-            "update_permission": PersonalCenterUpdateFieldPermission.IS_EDITABLE,
         }
-
+        settings.TENANT_PHONE_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
         resp = api_client.put(
             reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
         )
@@ -220,9 +197,8 @@ class TestTenantUserPhoneUpdateApi:
             "is_inherited_phone": "False",
             "custom_phone": "12345678901",
             "custom_phone_country_code": "86",
-            "update_permission": PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
         }
-
+        settings.TENANT_PHONE_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE}
         resp = api_client.put(
             reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
         )
@@ -241,8 +217,9 @@ class TestTenantUserEmailUpdateApi:
         data = {
             "is_inherited_email": "False",
             "custom_email": "123456@qq.com",
-            "update_permission": PersonalCenterUpdateFieldPermission.IS_EDITABLE,
         }
+
+        settings.TENANT_EMAIL_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
 
         resp = api_client.put(
             reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
@@ -256,8 +233,9 @@ class TestTenantUserEmailUpdateApi:
         data = {
             "is_inherited_email": "False",
             "custom_email": "123456@qq.com",
-            "update_permission": PersonalCenterUpdateFieldPermission.NOT_EDITABLE,
         }
+
+        settings.TENANT_EMAIL_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE}
 
         resp = api_client.put(
             reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data

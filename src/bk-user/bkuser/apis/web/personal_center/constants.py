@@ -14,12 +14,16 @@ from django.utils.translation import gettext_lazy as _
 
 
 class PersonalCenterFeatureFlag(str, StructuredEnum):
+    """
+    TODO：技术债，不使用 FeatureFlag 命名，需要统一 Review 调整
+    """
+
     CAN_CHANGE_PASSWORD = EnumField("can_change_password", label=_("修改密码"))
-    UPDATE_PHONE_PERMISSION = EnumField("update_phone_permission", label=_("修改手机号权限"))
-    UPDATE_EMAIL_PERMISSION = EnumField("update_email_permission", label=_("修改邮箱权限"))
+    PHONE_UPDATE_RESTRICTION = EnumField("phone_update_restriction", label=_("手机号更新限制"))
+    EMAIL_UPDATE_RESTRICTION = EnumField("email_update_restriction", label=_("邮箱更新限制"))
 
 
-class PersonalCenterUpdateFieldPermission(str, StructuredEnum):
-    IS_EDITABLE = EnumField("is_editable", label=_("可直接修改"))
+class PhoneOrEmailUpdateRestrictionEnum(str, StructuredEnum):
+    EDITABLE_DIRECTLY = EnumField("editable_directly", label=_("可直接修改"))
     NEED_VERIFY = EnumField("need_verify", label=_("验证后修改"))
     NOT_EDITABLE = EnumField("not_editable", label=_("不可修改"))

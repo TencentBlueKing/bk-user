@@ -615,10 +615,7 @@ MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 # 在重置密码时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
 # TODO 评估接入 Captcha 验证码
 ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
-# 在修改电话号或邮箱时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
-ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATE_PHONE_OR_EMAIL = env.bool(
-    "ALLOW_RAISE_ERROR_TO_USER_WHEN_UPDATR_PHONE_OR_EMAIL", False
-)
+
 # 短信验证码有效期，默认 5 min
 VERIFICATION_CODE_VALID_TIME = env.int("VERIFICATION_CODE_VALID_TIME", 60 * 5)
 # 验证码长度，默认 8 位，最长不超过 32 位
@@ -634,16 +631,14 @@ RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 
 RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
 # 重置密码 Token 每天最大发送次数
 RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
-# 重置手机号的租户列表
-TENANTS_PERMISSIONS_PHONE_MODIFICATION = env.dict(
-    "TENANTS_PERMISSIONS_PHONE_MODIFICATION",
-    default={"is_editable": [], "need_verify": [], "not_editable": ["default"]},
-)
-
-TENANTS_PERMISSIONS_EMAIL_MODIFICATION = env.dict(
-    "TENANTS_PERMISSIONS_EMAIL_MODIFICATION",
-    default={"is_editable": [], "need_verify": [], "not_editable": ["default"]},
-)
+# 每个租户对个人中心手机号的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_PHONE_UPDATE_RESTRICTIONS = env.dict("TENANT_PHONE_UPDATE_RESTRICTIONS", default={})
+# 每个租户对个人中心邮箱的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_EMAIL_UPDATE_RESTRICTIONS = env.dict("TENANT_EMAIL_UPDATE_RESTRICTIONS", default={})
 
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB

@@ -11,12 +11,12 @@ specific language governing permissions and limitations under the License.
 
 from .constants import VerificationCodeScene
 from .exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
-from .managers import VerificationCodeManager, VerificationCodeManagerByEmail
+from .managers import EmailVerificationCodeManager, PhoneVerificationCodeManager
 
 __all__ = [
     # 验证码管理器
-    "VerificationCodeManager",
-    "VerificationCodeManagerByEmail",
+    "PhoneVerificationCodeManager",
+    "EmailVerificationCodeManager",
     # 验证码使用场景
     "VerificationCodeScene",
     # 验证码错误异常

@@ -18,4 +18,4 @@ class VerificationCodeScene(str, StructuredEnum):
 
     RESET_PASSWORD = EnumField("reset_passwd", label=_("忘记密码后申请重置"))
     UPDATE_PHONE = EnumField("update_phone", label=_("个人中心修改手机号"))
-    UPDATE_EMAIL = EnumField("update_email", label=_("个人中心修改邮箱号"))
+    UPDATE_EMAIL = EnumField("update_email", label=_("个人中心修改邮箱"))
