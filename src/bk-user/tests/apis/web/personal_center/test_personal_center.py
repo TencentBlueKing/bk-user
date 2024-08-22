@@ -90,7 +90,7 @@ class TestTenantUserFeatureFlagListApi:
         settings.TENANT_EMAIL_UPDATE_RESTRICTIONS = {"default": PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY}
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["can_change_password"] is False
-        assert resp.data["phone_update_restriction"] == "editable_directly"
+        assert resp.data["phone_update_restriction"] == "need_verify"
         assert resp.data["email_update_restriction"] == "need_verify"
 
 
