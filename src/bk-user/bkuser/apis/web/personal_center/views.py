@@ -12,7 +12,6 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Dict
 
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -56,6 +55,8 @@ from bkuser.common.verification_code import (
     VerificationCodeScene,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
+
+from .mixins import CurrentTenantPhoneOrEmailUpdateRestrictionMixin
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +149,9 @@ class TenantUserLogoUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserPhoneUpdateApi(
+    ExcludePatchAPIViewMixin, CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.UpdateAPIView
+):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -163,25 +166,23 @@ class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        tenant_user = self.get_object()
-        phone_update_restriction = query_phone_update_restriction(tenant_user)
-        if phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
-            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("手机号码不可编辑"))
 
         is_inherited_phone = data["is_inherited_phone"]
         custom_phone = data.get("custom_phone", "")
         custom_phone_country_code = data["custom_phone_country_code"]
 
-        if not is_inherited_phone and phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY:
-            try:
-                self._validate_verification_code(
-                    custom_phone,
-                    custom_phone_country_code,
-                    data["verification_code"],
-                    VerificationCodeScene.UPDATE_PHONE,
-                )
-            except Exception as e:
-                raise error_codes.TENANT_USER_UPDATE_FAILED.f(str(e))
+        tenant_user = self.get_object()
+        phone_update_restriction = self.get_phone_update_restriction(tenant_user.tenant_id)
+        if phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("手机号码不可编辑"))
+
+        if phone_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY and not is_inherited_phone:
+            self._validate_verification_code(
+                custom_phone,
+                custom_phone_country_code,
+                data["verification_code"],
+                VerificationCodeScene.UPDATE_PHONE,
+            )
 
         phone_info = TenantUserPhoneInfo(
             is_inherited_phone=is_inherited_phone,
@@ -217,16 +218,12 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         slz = TenantUserPhoneVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-
         phone, phone_country_code = slz.validated_data["phone"], slz.validated_data["phone_country_code"]
-        try:
-            tenant_user = self.get_object()
-            tenant_user.custom_phone = phone
-            tenant_user.custom_phone_country_code = phone_country_code
-            self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
-        except Exception as e:
-            logger.warning("failed to send validation code to phone +%s %s: %s", phone_country_code, phone, e)
-            raise
+
+        tenant_user = self.get_object()
+        tenant_user.custom_phone = phone
+        tenant_user.custom_phone_country_code = phone_country_code
+        self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -249,7 +246,9 @@ class TenantUserPhoneVerificationCodeSendApi(generics.CreateAPIView):
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
-class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserEmailUpdateApi(
+    ExcludePatchAPIViewMixin, CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.UpdateAPIView
+):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -264,24 +263,18 @@ class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView)
         slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-
-        tenant_user = self.get_object()
-
-        email_update_restriction = query_email_update_restriction(tenant_user)
-
-        if email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
-            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("邮箱不可编辑"))
-
         is_inherited_email = data["is_inherited_email"]
         custom_email = data.get("custom_email", "")
 
-        if not is_inherited_email and email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY:
-            try:
-                self._validate_verification_code(
-                    custom_email, data["verification_code"], VerificationCodeScene.UPDATE_EMAIL
-                )
-            except Exception as e:
-                raise error_codes.TENANT_USER_UPDATE_FAILED.f(str(e))
+        tenant_user = self.get_object()
+        email_update_restriction = self.get_email_update_restriction(tenant_user.tenant_id)
+        if email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE:
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("邮箱不可编辑"))
+
+        if email_update_restriction == PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY and not is_inherited_email:
+            self._validate_verification_code(
+                custom_email, data["verification_code"], VerificationCodeScene.UPDATE_EMAIL
+            )
 
         email_info = TenantUserEmailInfo(is_inherited_email=is_inherited_email, custom_email=custom_email)
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
@@ -311,22 +304,18 @@ class TenantUserEmailVerificationCodeSendApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         slz = TenantUserEmailVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-
         email = slz.validated_data["email"]
 
-        try:
-            tenant_user = self.get_object()
-            tenant_user.custom_email = email
-            self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
-        except Exception as e:
-            logger.warning("failed to send reset password url to email %s: %s", email, e)
-            raise
+        tenant_user = self.get_object()
+        tenant_user.custom_email = email
+        self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _send_verification_code_to_user_email(self, tenant_user: TenantUser, scene: VerificationCodeScene):
         """发送邮箱验证码到指定的租户用户"""
         email = tenant_user.custom_email
+
         try:
             code = EmailVerificationCodeManager(email, scene).gen_code()
             logger.info("verification code for email %s is %s", email, code)
@@ -451,7 +440,7 @@ class TenantUserFieldListApi(generics.ListAPIView):
         return Response(slz.data)
 
 
-class TenantUserFeatureFlagListApi(generics.ListAPIView):
+class TenantUserFeatureFlagListApi(CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     pagination_class = None
@@ -470,8 +459,12 @@ class TenantUserFeatureFlagListApi(generics.ListAPIView):
             PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: bool(
                 data_source.is_local and data_source.plugin_config.get("enable_password", False)
             ),
-            PersonalCenterFeatureFlag.PHONE_UPDATE_RESTRICTION: query_phone_update_restriction(tenant_user),
-            PersonalCenterFeatureFlag.EMAIL_UPDATE_RESTRICTION: query_email_update_restriction(tenant_user),
+            PersonalCenterFeatureFlag.PHONE_UPDATE_RESTRICTION: self.get_phone_update_restriction(
+                tenant_user.tenant_id
+            ),
+            PersonalCenterFeatureFlag.EMAIL_UPDATE_RESTRICTION: self.get_email_update_restriction(
+                tenant_user.tenant_id
+            ),
         }
         return Response(TenantUserFeatureFlagOutputSLZ(feature_flags).data)
 
@@ -517,15 +510,3 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-def query_phone_update_restriction(tenant_user: TenantUser):
-    if tenant_user.tenant_id in settings.TENANT_PHONE_UPDATE_RESTRICTIONS:
-        return settings.TENANT_PHONE_UPDATE_RESTRICTIONS[tenant_user.tenant_id]
-    return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
-
-
-def query_email_update_restriction(tenant_user: TenantUser):
-    if tenant_user.tenant_id in settings.TENANT_EMAIL_UPDATE_RESTRICTIONS:
-        return settings.TENANT_EMAIL_UPDATE_RESTRICTIONS[tenant_user.tenant_id]
-    return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY

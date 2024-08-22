@@ -615,7 +615,6 @@ MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 # 在重置密码时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
 # TODO 评估接入 Captcha 验证码
 ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
-
 # 短信验证码有效期，默认 5 min
 VERIFICATION_CODE_VALID_TIME = env.int("VERIFICATION_CODE_VALID_TIME", 60 * 5)
 # 验证码长度，默认 8 位，最长不超过 32 位

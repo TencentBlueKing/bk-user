@@ -24,6 +24,6 @@ class PersonalCenterFeatureFlag(str, StructuredEnum):
 
 
 class PhoneOrEmailUpdateRestrictionEnum(str, StructuredEnum):
-    EDITABLE_DIRECTLY = EnumField("editable_directly", label=_("可直接修改"))
     NEED_VERIFY = EnumField("need_verify", label=_("验证后修改"))
+    EDITABLE_DIRECTLY = EnumField("editable_directly", label=_("可直接修改"))
     NOT_EDITABLE = EnumField("not_editable", label=_("不可修改"))
