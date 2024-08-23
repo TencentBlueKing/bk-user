@@ -40,7 +40,8 @@ class ESBAuthentication(BaseAuthentication):
         username = self._get_username_from_jwt_payload(payload)
         app_code = self._get_app_code_from_jwt_payload(payload)
 
-        request.bk_app_code = app_code  # 获取到调用 app_code
+        # 获取到调用 app_code
+        request.bk_app_code = app_code
 
         return self._get_or_create_user(username), None
 
