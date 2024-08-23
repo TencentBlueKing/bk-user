@@ -29,6 +29,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceImportOrSyncOutputSLZ,
     DataSourceListInputSLZ,
     DataSourceListOutputSLZ,
+    DataSourcePluginConfigMetaRetrieveOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
@@ -71,6 +72,8 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+
+from .schema import get_data_source_plugin_cfg_json_schema
 
 logger = logging.getLogger(__name__)
 
@@ -588,3 +591,27 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
     )
     def get(self, request, *args, **kwargs):
         return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+
+
+class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = DataSourcePlugin.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源插件配置的JsonSchema",
+        responses={status.HTTP_200_OK: DataSourcePluginConfigMetaRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        try:
+            json_schema = get_data_source_plugin_cfg_json_schema(instance.id)
+        except NotImplementedError:
+            raise error_codes.DATA_SOURCE_PLUGIN_NOT_LOAD
+
+        return Response(
+            DataSourcePluginConfigMetaRetrieveOutputSLZ(instance={"id": instance.id, "json_schema": json_schema}).data
+        )

@@ -82,6 +82,7 @@ class ErrorCodes:
     DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG = ErrorCode(_("当前数据源插件未提供默认配置"))
 
     # 数据源
+    DATA_SOURCE_PLUGIN_NOT_LOAD = ErrorCode(_("数据源插件未加载"))
     DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源不支持该操作"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))

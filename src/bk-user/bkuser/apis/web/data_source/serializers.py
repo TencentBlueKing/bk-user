@@ -363,3 +363,8 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):
     is_delete_idp = serializers.BooleanField(help_text="重置数据源时是否同时删除 Idp 相关配置", default=False)
+
+
+class DataSourcePluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源插件唯一标识")
+    json_schema = serializers.JSONField(help_text="配置的JSON Schema")
