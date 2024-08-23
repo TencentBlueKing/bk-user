@@ -601,7 +601,7 @@ class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
 
     @swagger_auto_schema(
         tags=["data_source"],
-        operation_description="数据源插件配置的JsonSchema",
+        operation_description="数据源插件配置元数据",
         responses={status.HTTP_200_OK: DataSourcePluginConfigMetaRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):

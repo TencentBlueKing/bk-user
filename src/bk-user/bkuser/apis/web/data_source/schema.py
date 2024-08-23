@@ -18,7 +18,7 @@ from bkuser.plugins.base import get_plugin_cfg_cls
 
 
 def get_data_source_plugin_cfg_json_schema(plugin_id: str) -> Dict[str, Any]:
-    """获取数据源插件配置类的 JsonSchema"""
+    """获取数据源插件配置类的 JsonSchema, without any jsonRef"""
     json_schema = get_plugin_cfg_cls(plugin_id).model_json_schema()
-
+    # replace json refs
     return jsonref.loads((json.dumps(json_schema)))
