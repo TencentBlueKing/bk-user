@@ -63,7 +63,7 @@ class BkUserAPIClient:
         """
         resp_data = self._call(
             http_post,
-            "/api/v1/login/local-user-credentials/authenticate/",
+            "/api/v3/login/local-user-credentials/authenticate/",
             json={"data_source_ids": data_source_ids, "username": username, "password": password},
         )
 

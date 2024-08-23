@@ -10,25 +10,25 @@ import type {
  */
 export const getVirtualUsers = (params: VirtualUsersParams) => {
   const { keyword, page, pageSize } = params;
-  return http.get(`/api/v1/web/virtual-users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+  return http.get(`/api/v3/web/virtual-users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };
 
 /**
  * 新建虚拟用户
  */
-export const newVirtualUsers = (params: NewVirtualUsersParams) => http.post('/api/v1/web/virtual-users/', params);
+export const newVirtualUsers = (params: NewVirtualUsersParams) => http.post('/api/v3/web/virtual-users/', params);
 
 /**
  * 虚拟用户详情
  */
-export const getVirtualUsersDetail = (id: string) => http.get(`/api/v1/web/virtual-users/${id}/`);
+export const getVirtualUsersDetail = (id: string) => http.get(`/api/v3/web/virtual-users/${id}/`);
 
 /**
  * 更新虚拟用户
  */
-export const putVirtualUsers = (id: string, params: PutVirtualUsersParams) => http.put(`/api/v1/web/virtual-users/${id}/`, params);
+export const putVirtualUsers = (id: string, params: PutVirtualUsersParams) => http.put(`/api/v3/web/virtual-users/${id}/`, params);
 
 /**
  * 删除虚拟用户
  */
-export const deleteVirtualUsers = (id: string) => http.delete(`/api/v1/web/virtual-users/${id}/`);
+export const deleteVirtualUsers = (id: string) => http.delete(`/api/v3/web/virtual-users/${id}/`);

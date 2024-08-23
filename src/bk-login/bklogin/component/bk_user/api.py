@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Any, Callable, Dict, List
 
@@ -56,7 +57,7 @@ def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
 
 def get_global_setting() -> GlobalSetting:
     """查询全局配置"""
-    data = _call_bk_user_api_20x(http_get, "/api/v1/login/global-settings/")
+    data = _call_bk_user_api_20x(http_get, "/api/v3/login/global-settings/")
     return GlobalSetting(**data)
 
 
@@ -66,21 +67,21 @@ def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
     if tenant_ids:
         params["tenant_ids"] = ",".join(tenant_ids)
 
-    data = _call_bk_user_api_20x(http_get, "/api/v1/login/tenants/", params=params)
+    data = _call_bk_user_api_20x(http_get, "/api/v3/login/tenants/", params=params)
     return [TenantInfo(**i) for i in data]
 
 
 def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
     """获取租户关联的认证源"""
     data = _call_bk_user_api_20x(
-        http_get, f"/api/v1/login/tenants/{tenant_id}/idp-owner-tenants/{idp_owner_tenant_id}/idps/"
+        http_get, f"/api/v3/login/tenants/{tenant_id}/idp-owner-tenants/{idp_owner_tenant_id}/idps/"
     )
     return [IdpInfo(**i) for i in data]
 
 
 def get_idp(idp_id: str) -> IdpDetail:
     """获取IDP信息"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/idps/{idp_id}/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v3/login/idps/{idp_id}/")
     return IdpDetail(**data)
 
 
@@ -88,7 +89,7 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
     """根据IDP用户查询匹配的租户用户"""
     data = _call_bk_user_api_20x(
         http_post,
-        f"/api/v1/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
+        f"/api/v3/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
         json={"idp_users": idp_users},
     )
     return [TenantUserInfo(**i) for i in data]
@@ -96,5 +97,5 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
 
 def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
     """通过租户用户ID获取租户用户信息"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenant-users/{tenant_user_id}/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v3/login/tenant-users/{tenant_user_id}/")
     return TenantUserDetailInfo(**data)

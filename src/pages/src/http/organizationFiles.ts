@@ -5,30 +5,30 @@ import type {
   UpdateTenantParams,
 } from './types/organizationFiles';
 
-const prefix = 'api/v1/web/organization';
+const prefix = 'api/v3/web/organization';
 
 /**
  * 组织架构-租户列表
  */
-export const getTenantOrganizationList = () => http.get('/api/v1/web/tenant-organization/tenants/');
+export const getTenantOrganizationList = () => http.get('/api/v3/web/tenant-organization/tenants/');
 
 /**
  * 单个租户详情
  */
-export const getTenantOrganizationDetails = (id: string) => http.get(`/api/v1/web/tenant-organization/tenants/${id}/`);
+export const getTenantOrganizationDetails = (id: string) => http.get(`/api/v3/web/tenant-organization/tenants/${id}/`);
 
 /**
  * 更新租户
  */
 export const putTenantOrganizationDetails = (id: string, params: UpdateTenantParams) => {
-  const url = http.put(`/api/v1/web/tenant-organization/tenants/${id}/`, params);
+  const url = http.put(`/api/v3/web/tenant-organization/tenants/${id}/`, params);
   return url;
 };
 
 /**
  * 租户下的二级子部门列表
  */
-export const getTenantDepartments = (id: string) => http.get(`/api/v1/web/tenant-organization/departments/${id}/children/`);
+export const getTenantDepartments = (id: string) => http.get(`/api/v3/web/tenant-organization/departments/${id}/children/`);
 
 
 /**
@@ -36,7 +36,7 @@ export const getTenantDepartments = (id: string) => http.get(`/api/v1/web/tenant
  */
 export const getTenantDepartmentsList = (params: DepartmentsListParams) => {
   const { id, keyword, page, pageSize, recursive  } = params;
-  return http.get(`/api/v1/web/tenant-organization/departments/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}&recursive=${recursive}`);
+  return http.get(`/api/v3/web/tenant-organization/departments/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}&recursive=${recursive}`);
 };
 
 /**
@@ -44,7 +44,7 @@ export const getTenantDepartmentsList = (params: DepartmentsListParams) => {
  */
 export const getTenantOrganizationUsersList = (params: TenantListParams) => {
   const { id, keyword, page, pageSize } = params;
-  return http.get(`/api/v1/web/tenant-organization/tenants/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+  return http.get(`/api/v3/web/tenant-organization/tenants/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };
 
 /**
