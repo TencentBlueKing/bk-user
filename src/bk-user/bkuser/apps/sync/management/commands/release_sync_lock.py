@@ -10,9 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from bkuser.apps.sync.constants import DATA_SOURCE_SYNC_DEFAULT_TIMEOUT
 from bkuser.apps.sync.locks import DataSourceSyncTaskLock, TenantSyncTaskLock
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
         if not task:
             raise RuntimeError(f"data source sync task {task_id} not found!")
 
-        DataSourceSyncTaskLock(task.data_source_id, DATA_SOURCE_SYNC_DEFAULT_TIMEOUT).release()
+        DataSourceSyncTaskLock(task.data_source_id, settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT).release()
 
     def _release_tenant_sync_lock(self, task_id: int):
         """释放租户同步锁"""

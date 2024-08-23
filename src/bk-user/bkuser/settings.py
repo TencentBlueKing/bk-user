@@ -274,6 +274,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
         "schedule": crontab(minute="30", hour="10"),
     },
+    "mark_running_sync_task_as_failed_if_exceed_one_day": {
+        "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
+        "schedule": crontab(minute="0", hour="9"),
+    },
 }
 # Celery 消息队列配置
 CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
@@ -638,6 +642,11 @@ MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
 EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 # 成员，组织信息导出模板
 EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
+
+# 数据源同步默认超时时间（秒）
+DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = env.int("DATA_SOURCE_SYNC_DEFAULT_TIMEOUT", 30 * 60)
+# 租户同步默认超时时间（秒）
+TENANT_SYNC_DEFAULT_TIMEOUT = env.int("TENANT_SYNC_DEFAULT_TIMEOUT", 10 * 60)
 
 # 限制组织架构页面用户/部门搜索 API 返回的最大条数
 # 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件

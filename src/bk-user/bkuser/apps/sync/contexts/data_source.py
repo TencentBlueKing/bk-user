@@ -15,15 +15,11 @@ import logging
 import traceback
 from typing import List
 
+from django.conf import settings
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
-from bkuser.apps.sync.constants import (
-    DATA_SOURCE_SYNC_DEFAULT_TIMEOUT,
-    DataSourceSyncObjectType,
-    SyncOperation,
-    SyncTaskStatus,
-)
+from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, SyncTaskStatus
 from bkuser.apps.sync.exceptions import DataSourceSyncInterrupted
 from bkuser.apps.sync.locks import DataSourceSyncTaskLock
 from bkuser.apps.sync.loggers import TaskLogger
@@ -43,7 +39,7 @@ class DataSourceSyncTaskContext:
         self.logger = TaskLogger()
         self.recorder = ChangeLogRecorder()
 
-        timeout = task.extras.get("timeout", DATA_SOURCE_SYNC_DEFAULT_TIMEOUT)
+        timeout = task.extras.get("timeout", settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT)
         self.lock = DataSourceSyncTaskLock(task.data_source_id, timeout=timeout)
 
     def __enter__(self):

@@ -11,9 +11,9 @@ specific language governing permissions and limitations under the License.
 
 import logging
 
+from django.conf import settings
 from redis.exceptions import LockError
 
-from bkuser.apps.sync.constants import TENANT_SYNC_DEFAULT_TIMEOUT
 from bkuser.common.locks import LockType, RedisLock
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class DataSourceSyncTaskLock:
         try:
             return self._lock.release()
         except LockError:
-            pass
+            logger.exception("failed to release data source sync lock")
 
 
 class TenantSyncTaskLock:
@@ -56,7 +56,7 @@ class TenantSyncTaskLock:
         self._lock = RedisLock(
             LockType.TENANT_SYNC,
             suffix=f"tenant:{tenant_id}:data_source:{data_source_id}",
-            timeout=TENANT_SYNC_DEFAULT_TIMEOUT,
+            timeout=settings.TENANT_SYNC_DEFAULT_TIMEOUT,
             # 抢不到锁就失败，不阻塞
             blocking=False,
         )
@@ -68,4 +68,4 @@ class TenantSyncTaskLock:
         try:
             return self._lock.release()
         except LockError:
-            pass
+            logger.exception("failed to release data source sync lock")

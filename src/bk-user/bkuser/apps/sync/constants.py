@@ -18,11 +18,6 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 
 EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
 
-# 数据源同步默认超时时间（秒）
-DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = 30 * 60
-# 租户同步默认超时时间（秒）
-TENANT_SYNC_DEFAULT_TIMEOUT = 10 * 60
-
 
 class DataSourceSyncPeriod(int, StructuredEnum):
     """数据源自动同步周期"""

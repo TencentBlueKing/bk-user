@@ -8,12 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
+from datetime import timedelta
+
+from django.db.models import F, Value
+from django.db.models.functions import Concat
+from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.constants import SyncTaskTrigger
+from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
+from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
 
@@ -40,3 +47,34 @@ def build_and_run_data_source_sync_task(data_source_id: int):
         trigger=SyncTaskTrigger.CRONTAB,
     )
     DataSourceSyncManager(data_source, sync_opts).execute()
+
+    logger.info("[celery-beat] build and run data source %s sync task end", data_source_id)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def mark_running_sync_task_as_failed_if_exceed_one_day():
+    """设置长时间运行的同步任务为失败"""
+    logger.info("[celery-beat] start mark running sync task as failed if exceed one day")
+
+    time_now = timezone.now()
+    error_msg = "\n\nERROR sync task runs more than one day, consider it as failed."
+
+    DataSourceSyncTask.objects.filter(
+        status=SyncTaskStatus.RUNNING,
+        start_at__lt=time_now - timedelta(days=1),
+    ).update(
+        status=SyncTaskStatus.FAILED,
+        logs=Concat(F("logs"), Value(error_msg)),
+        updated_at=time_now,
+    )
+
+    TenantSyncTask.objects.filter(
+        status=SyncTaskStatus.RUNNING,
+        start_at__lt=time_now - timedelta(days=1),
+    ).update(
+        status=SyncTaskStatus.FAILED,
+        logs=Concat(F("logs"), Value(error_msg)),
+        updated_at=time_now,
+    )
+
+    logger.info("[celery-beat] mark running sync task as failed if exceed one day end")
