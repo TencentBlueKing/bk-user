@@ -26,10 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 class ESBAuthentication(BaseAuthentication):
-    www_authenticate_realm = "api"
-
     def authenticate(self, request):
+        """
+        认证凭证信息，返回认证后的 Django User，同时设置 request.bk_app_code 便于后续鉴权判断请求来源
+        """
         credentials = self.get_credentials(request)
+
         if not credentials:
             return None
 
@@ -45,10 +47,8 @@ class ESBAuthentication(BaseAuthentication):
 
         return self._get_or_create_user(username), None
 
-    def authenticate_header(self, request):
-        return '{0} realm="{1}"'.format("Bearer", self.www_authenticate_realm)
-
     def get_credentials(self, request):
+        """从 Header 头获取接口认证的凭证信息"""
         credentials = {
             "jwt": request.META.get("HTTP_X_BKAPI_JWT"),
             "from": request.META.get("HTTP_X_BKAPI_FROM", "esb"),
@@ -60,6 +60,7 @@ class ESBAuthentication(BaseAuthentication):
         return None
 
     def verify_credentials(self, credentials):
+        """JWT 校验并解析出调用方信息"""
         public_key = self._get_jwt_public_key(credentials["from"])
         # Note: 不从 jwt header 里取 kid 判断是网关还是 ESB 签发的，在不同环境可能不准确
         jwt_payload = self._decode_jwt(credentials["jwt"], public_key)
@@ -69,6 +70,7 @@ class ESBAuthentication(BaseAuthentication):
         return True, jwt_payload
 
     def _decode_jwt(self, content, public_key):
+        """解析 JWT"""
         try:
             jwt_header = jwt.get_unverified_header(content)
             algorithm = jwt_header.get("alg") or "RS512"
@@ -111,6 +113,7 @@ class ESBAuthentication(BaseAuthentication):
         return app_code
 
     def _get_or_create_user(self, username):
+        """获取或创建标准  Django User，用于通过认证"""
         user_model = get_user_model()
         user, _ = user_model.objects.get_or_create(
             username=username, defaults={"is_active": True, "is_staff": False, "is_superuser": False}
@@ -137,6 +140,7 @@ class ESBAuthentication(BaseAuthentication):
 
     @cachedmethod(timeout=None)  # 缓存不过期，除非重新部署服务
     def _get_jwt_public_key(self, request_from):
+        """根据来源，获取 Jwt Public Key"""
         # TODO 理论上 open_v2 只接 ESB，open_v3 只接 APIGW，后续新增 open_v3 后可以分离该 Auth 类逻辑
         if request_from == "apigw":
             return self._get_apigw_public_key()
