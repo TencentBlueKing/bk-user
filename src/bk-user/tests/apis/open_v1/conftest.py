@@ -32,7 +32,7 @@ def open_v1_api_client() -> APIClient:
         return_value={"jwt": "jwt", "from": "esb"},
     ), mock.patch(
         "bkuser.apis.open_v1.authentications.ESBAuthentication.verify_credentials",
-        return_value=(True, {"user": {"verify": False}, "app": {"verified": True, "bk_app_code": "bk_paas"}}),
+        return_value={"user": {"verify": False}, "app": {"verified": True, "bk_app_code": "bk_paas"}},
     ):
         yield client
 
