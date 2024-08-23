@@ -68,4 +68,4 @@ class TenantSyncTaskLock:
         try:
             return self._lock.release()
         except LockError:
-            logger.exception("failed to release data source sync lock")
+            logger.exception("failed to release tenant sync lock")
