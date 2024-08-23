@@ -29,11 +29,11 @@ class BaseVerificationCodeManager:
 
     lock_timeout = 60
 
-    def __init__(self, verification_mode: str, scene: VerificationCodeScene):
+    def __init__(self, contact_info_key: str, scene: VerificationCodeScene):
         """
-        :param verification_mode: 验证方式，带国家地区的手机号或邮箱
+        :param contact_info_key: 联系方式，带国家地区的手机号或邮箱作为缓存key的前缀
         """
-        self.verification_mode = verification_mode
+        self.contact_info_key = contact_info_key
         self.scene = scene
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.retries_cache_key = self._gen_cache_key("retries")
@@ -81,7 +81,7 @@ class BaseVerificationCodeManager:
 
     def _gen_cache_key(self, key_type: str) -> str:
         """生成验证码缓存 key"""
-        return f"{self.scene.value}:{self.verification_mode}:{key_type}"
+        return f"{self.scene.value}:{self.contact_info_key}:{key_type}"
 
 
 class PhoneVerificationCodeManager(BaseVerificationCodeManager):

@@ -154,13 +154,22 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         return desensitize_phone(obj.custom_phone)
 
 
+def _validate_phone_with_country_code(phone, country_code):
+    try:
+        validate_phone_with_country_code(phone, country_code)
+    except ValueError as e:
+        raise ValidationError(str(e))
+
+
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
     is_inherited_phone = serializers.BooleanField(help_text="是否继承数据源手机号")
     custom_phone = serializers.CharField(help_text="自定义用户手机号", required=False, allow_blank=True)
     custom_phone_country_code = serializers.CharField(
         help_text="自定义用户手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
-    verification_code = serializers.CharField(help_text="手机号验证码", required=False, allow_blank=True)
+    verification_code = serializers.CharField(
+        help_text="手机号验证码", required=False, allow_blank=True, max_length=32
+    )
 
     def validate(self, attrs):
         # custom_phone_country_code 具有默认值
@@ -168,19 +177,15 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
         if not attrs["is_inherited_phone"]:
             if not attrs.get("custom_phone"):
                 raise ValidationError(_("自定义手机号码为必填项"))
-            try:
-                validate_phone_with_country_code(
-                    phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
-                )
-            except ValueError as e:
-                raise ValidationError(str(e))
+            _validate_phone_with_country_code(attrs["custom_phone"], attrs["custom_phone_country_code"])
+
         return attrs
 
 
 class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     is_inherited_email = serializers.BooleanField(help_text="是否继承数据源邮箱")
     custom_email = serializers.EmailField(help_text="自定义用户邮箱", required=False, allow_blank=True)
-    verification_code = serializers.CharField(help_text="邮箱验证码", required=False, allow_blank=True)
+    verification_code = serializers.CharField(help_text="邮箱验证码", required=False, allow_blank=True, max_length=32)
 
     def validate(self, attrs):
         # 不通过继承，custom_email 必须存在
@@ -275,10 +280,7 @@ class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        try:
-            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-        except ValueError as e:
-            raise ValidationError(str(e))
+        _validate_phone_with_country_code(attrs["phone"], attrs["phone_country_code"])
 
         return attrs
 

@@ -17,12 +17,24 @@ from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrict
 class CurrentTenantPhoneOrEmailUpdateRestrictionMixin:
     """获取当前租户更新手机号或邮箱的限制"""
 
-    def get_phone_update_restriction(self, tenant_id):
-        if tenant_id in settings.TENANT_PHONE_UPDATE_RESTRICTIONS:
-            return settings.TENANT_PHONE_UPDATE_RESTRICTIONS[tenant_id]
-        return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+    def get_phone_update_restriction(self, tenant_id: str) -> PhoneOrEmailUpdateRestrictionEnum:
+        restriction = settings.TENANT_PHONE_UPDATE_RESTRICTIONS.get(tenant_id)
 
-    def get_email_update_restriction(self, tenant_id):
-        if tenant_id in settings.TENANT_EMAIL_UPDATE_RESTRICTIONS:
-            return settings.TENANT_EMAIL_UPDATE_RESTRICTIONS[tenant_id]
-        return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+        if restriction is None:
+            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+
+        if restriction not in [item.value for item in PhoneOrEmailUpdateRestrictionEnum]:
+            raise ValueError("Invalid restriction: %s" % restriction)
+
+        return restriction
+
+    def get_email_update_restriction(self, tenant_id: str) -> PhoneOrEmailUpdateRestrictionEnum:
+        restriction = settings.TENANT_EMAIL_UPDATE_RESTRICTIONS.get(tenant_id)
+
+        if restriction is None:
+            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+
+        if restriction not in [item.value for item in PhoneOrEmailUpdateRestrictionEnum]:
+            raise ValueError("Invalid restriction: %s" % restriction)
+
+        return restriction
