@@ -20,21 +20,19 @@ class CurrentTenantPhoneOrEmailUpdateRestrictionMixin:
     def get_phone_update_restriction(self, tenant_id: str) -> PhoneOrEmailUpdateRestrictionEnum:
         restriction = settings.TENANT_PHONE_UPDATE_RESTRICTIONS.get(tenant_id)
 
-        if restriction is None:
-            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+        valid_restrictions = [item.value for item in PhoneOrEmailUpdateRestrictionEnum]
 
-        if restriction not in [item.value for item in PhoneOrEmailUpdateRestrictionEnum]:
-            raise ValueError("Invalid restriction: %s" % restriction)
+        if restriction is None or restriction not in valid_restrictions:
+            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
 
         return restriction
 
     def get_email_update_restriction(self, tenant_id: str) -> PhoneOrEmailUpdateRestrictionEnum:
         restriction = settings.TENANT_EMAIL_UPDATE_RESTRICTIONS.get(tenant_id)
 
-        if restriction is None:
-            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
+        valid_restrictions = [item.value for item in PhoneOrEmailUpdateRestrictionEnum]
 
-        if restriction not in [item.value for item in PhoneOrEmailUpdateRestrictionEnum]:
-            raise ValueError("Invalid restriction: %s" % restriction)
+        if restriction is None or restriction not in valid_restrictions:
+            return PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY
 
         return restriction

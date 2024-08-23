@@ -74,11 +74,11 @@ urlpatterns = [
     path(
         "tenant-users/<str:id>/phone-verification-code/",
         views.TenantUserPhoneVerificationCodeSendApi.as_view(),
-        name="personal_center.tenant_users.phone.verification_code.send",
+        name="personal_center.tenant_users.phone_verification_code.send",
     ),
     path(
         "tenant-users/<str:id>/email-verification-code/",
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
-        name="personal_center.tenant_users.email.verification_code.send",
+        name="personal_center.tenant_users.email_verification_code.send",
     ),
 ]

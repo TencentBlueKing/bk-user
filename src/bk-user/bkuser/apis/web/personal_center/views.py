@@ -227,10 +227,10 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
 
         slz = TenantUserPhoneVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-        phone, phone_country_code = slz.validated_data["phone"], slz.validated_data["phone_country_code"]
+        data = slz.validated_data
 
-        tenant_user.custom_phone = phone
-        tenant_user.custom_phone_country_code = phone_country_code
+        tenant_user.custom_phone = data["phone"]
+        tenant_user.custom_phone_country_code = data["phone_country_code"]
         self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -168,9 +168,9 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
 
     def _validate_verification_code(self, phone: str, phone_country_code: str, code: str):
         try:
-            PhoneVerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).validate(
-                code
-            )
+            PhoneVerificationCodeManager(
+                phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD
+            ).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:

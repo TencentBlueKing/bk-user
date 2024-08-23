@@ -21,17 +21,19 @@ from bkuser.common.verification_code.exceptions import GenerateCodeTooFrequently
 
 
 class BaseVerificationCodeManager:
-    """
-    验证码管理基类
+    """验证码管理基类"""
 
-    :param lock_timeout: 验证码生成锁定时间（以秒为单位）
-    """
-
+    # 验证码重复生成锁定时间（单位：秒）
     lock_timeout = 60
 
     def __init__(self, contact_info_key: str, scene: VerificationCodeScene):
         """
         :param contact_info_key: 联系方式，带国家地区的手机号或邮箱作为缓存key的前缀
+        :param scene: 验证码场景
+        :param cache: 缓存实例
+        :param retries_cache_key: 验证码重试次数缓存key
+        :param code_cache_key: 验证码内容缓存key
+        :param lock_cache_key: 验证码频率限制缓存key
         """
         self.contact_info_key = contact_info_key
         self.scene = scene
