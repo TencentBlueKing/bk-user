@@ -10,9 +10,28 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
-from bkuser.apps.sync.loggers import TaskLogger
+from bkuser.apps.sync.locks import DataSourceSyncTaskLock, TenantSyncTaskLock
+
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
-def logger() -> TaskLogger:
-    return TaskLogger()
+class TestDataSourceSyncTaskLock:
+    def test_standard(self):
+        lock = DataSourceSyncTaskLock(data_source_id=1, timeout=10)
+        assert lock.acquire() is True
+        assert lock.acquire() is False
+        lock.release()
+
+        assert lock.acquire() is True
+        lock.release()
+
+
+class TestTenantSyncTaskLock:
+    def test_standard(self):
+        lock = TenantSyncTaskLock(tenant_id="default", data_source_id=1)
+        assert lock.acquire() is True
+        assert lock.acquire() is False
+        lock.release()
+
+        assert lock.acquire() is True
+        lock.release()

@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 import pytest
-from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 from tests.test_utils.helpers import generate_random_string

@@ -61,6 +61,7 @@ pytest = "^7.4.0"
 pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
 import-linter = "^1.11.1"
+types-redis = "^4.6.0.20240806"
 
 [tool.mypy]
 ignore_missing_imports = true

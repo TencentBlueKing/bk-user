@@ -24,7 +24,7 @@ from bkuser.apps.data_source.models import (
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
-from bkuser.apps.sync.context import DataSourceSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.plugins.models import RawDataSourceDepartment
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
 

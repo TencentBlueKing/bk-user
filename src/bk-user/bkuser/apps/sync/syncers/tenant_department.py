@@ -15,7 +15,7 @@ from django.db import transaction
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment
 from bkuser.apps.sync.constants import SyncOperation, TenantSyncObjectType
-from bkuser.apps.sync.context import TenantSyncTaskContext
+from bkuser.apps.sync.contexts import TenantSyncTaskContext
 from bkuser.apps.tenant.models import Tenant, TenantDepartment
 
 

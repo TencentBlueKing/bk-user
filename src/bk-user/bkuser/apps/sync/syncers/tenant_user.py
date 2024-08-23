@@ -18,7 +18,7 @@ from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import SyncOperation, TenantSyncObjectType
-from bkuser.apps.sync.context import TenantSyncTaskContext
+from bkuser.apps.sync.contexts import TenantSyncTaskContext
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.apps.tenant.utils import gen_tenant_user_id
 from bkuser.common.constants import PERMANENT_TIME

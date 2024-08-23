@@ -21,7 +21,7 @@ from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
-from bkuser.apps.sync.context import TaskLogger
+from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.validators import validate_phone_with_country_code

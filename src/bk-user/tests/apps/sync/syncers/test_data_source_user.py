@@ -19,14 +19,14 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.sync.context import DataSourceSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.syncers import (
+    DataSourceDepartmentRelationSyncer,
     DataSourceDepartmentSyncer,
     DataSourceUserDeptRelationSyncer,
     DataSourceUserLeaderRelationSyncer,
     DataSourceUserSyncer,
 )
-from bkuser.apps.sync.syncers.data_source_department import DataSourceDepartmentRelationSyncer
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser

@@ -12,7 +12,28 @@ specific language governing permissions and limitations under the License.
 import pytest
 from bkuser.apps.sync.loggers import TaskLogger
 
+pytestmark = pytest.mark.django_db
 
-@pytest.fixture()
-def logger() -> TaskLogger:
-    return TaskLogger()
+
+class TestTaskLogger:
+    def test_logs(self):
+        logger = TaskLogger()
+        logger.info("start test logger")
+        logger.info("this is info log")
+        logger.warning("this is warning log")
+        logger.error("this is error log")
+
+        assert logger.logs == (
+            "INFO start test logger\n\n"
+            "INFO this is info log\n\n"
+            "WARNING this is warning log\n\n"
+            "ERROR this is error log\n\n"
+        )
+
+    def test_has_warning(self):
+        logger = TaskLogger()
+        logger.info("this is info log")
+        assert not logger.has_warning
+
+        logger.warning("this is warning log")
+        assert logger.has_warning

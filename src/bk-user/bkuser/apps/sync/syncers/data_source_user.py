@@ -25,7 +25,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
-from bkuser.apps.sync.context import DataSourceSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.tenant.utils import is_username_frozen
 from bkuser.plugins.models import RawDataSourceUser

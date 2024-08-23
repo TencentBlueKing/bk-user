@@ -9,10 +9,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import pytest
-from bkuser.apps.sync.loggers import TaskLogger
+
+class DataSourceSyncInterrupted(Exception):
+    """数据源同步被中断（如无法获取同步锁）"""
 
 
-@pytest.fixture()
-def logger() -> TaskLogger:
-    return TaskLogger()
+class TenantSyncInterrupted(Exception):
+    """租户同步被中断（如无法获取同步锁）"""

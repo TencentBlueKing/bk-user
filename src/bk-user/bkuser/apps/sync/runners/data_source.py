@@ -15,7 +15,7 @@ import logging
 from typing import Any, Dict
 
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.context import DataSourceSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.signals import post_sync_data_source
 from bkuser.apps.sync.syncers import (

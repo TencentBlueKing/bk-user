@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.context import TenantSyncTaskContext
+from bkuser.apps.sync.contexts import TenantSyncTaskContext
 from bkuser.apps.sync.models import TenantSyncTask
 from bkuser.apps.sync.signals import post_sync_tenant
 from bkuser.apps.sync.syncers import TenantDepartmentSyncer, TenantUserSyncer

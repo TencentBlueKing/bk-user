@@ -17,7 +17,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
 )
-from bkuser.apps.sync.context import DataSourceSyncTaskContext
+from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.syncers import DataSourceDepartmentSyncer
 from bkuser.apps.sync.syncers.data_source_department import DataSourceDepartmentRelationSyncer
 from bkuser.plugins.models import RawDataSourceDepartment
