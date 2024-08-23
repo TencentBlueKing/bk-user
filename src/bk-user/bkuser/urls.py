@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.conf import settings
 from django.conf.urls import re_path
 from django.urls import include, path
@@ -28,6 +29,7 @@ urlpatterns = [
     # A: 为了保证 ESB 调用的兼容，只需修改 ESB 配置 bk_user host，不需要依赖 ESB 的版本发布
     path("api/v2/", include("bkuser.apis.open_v2.urls")),
     # 用于监控相关的，比如ping/healthz/sentry/metrics/otel等等
+    path("api/v1/", include("bkuser.apis.open_v1.urls")),
     path("", include("bkuser.monitoring.urls")),
 ]
 
