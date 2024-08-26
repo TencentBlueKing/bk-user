@@ -28,12 +28,8 @@ class BaseVerificationCodeManager:
 
     def __init__(self, contact_info_key: str, scene: VerificationCodeScene):
         """
-        :param contact_info_key: 联系方式，带国家地区的手机号或邮箱作为缓存key的前缀
-        :param scene: 验证码场景
-        :param cache: 缓存实例
-        :param retries_cache_key: 验证码重试次数缓存key
-        :param code_cache_key: 验证码内容缓存key
-        :param lock_cache_key: 验证码频率限制缓存key
+        :param contact_info_key: 联系方式，带国家地区的手机号或邮箱作为缓存 key 的前缀
+        :param scene: 验证码使用场景
         """
         self.contact_info_key = contact_info_key
         self.scene = scene
