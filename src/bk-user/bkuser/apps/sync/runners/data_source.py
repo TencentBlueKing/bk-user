@@ -14,7 +14,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict
 
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.signals import post_sync_data_source
@@ -101,9 +101,11 @@ class DataSourceSyncTaskRunner:
             "overwrite": bool(self.task.extras.get("overwrite", False)),
             "incremental": bool(self.task.extras.get("incremental", False)),
         }
+        # 同步前存量的用户 ID 集合
+        exists_user_ids = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("id", flat=True))
         DataSourceUserSyncer(**kwargs).sync()  # type: ignore
-        DataSourceUserLeaderRelationSyncer(**kwargs).sync()  # type: ignore
-        DataSourceUserDeptRelationSyncer(**kwargs).sync()  # type: ignore
+        DataSourceUserLeaderRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
+        DataSourceUserDeptRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
 
         ctx.logger.info("succeed to sync users and their leader & dept relations from data source plugin")
 

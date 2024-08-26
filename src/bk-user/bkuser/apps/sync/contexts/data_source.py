@@ -170,6 +170,6 @@ class DataSourceSyncTaskContext:
 
     def _store_logs_into_db(self):
         """将步骤日志存入数据库"""
-        sync_task_logs = self.logger.logs
+        sync_task_logs = self.logger.logs.strip()
         self.task.logs = sync_task_logs
         self.task.save(update_fields=["logs", "updated_at"])
