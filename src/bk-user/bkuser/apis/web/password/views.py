@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import List
 
@@ -20,11 +21,6 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
 from bkuser.apis.web.password.constants import TokenRelatedObjType
-from bkuser.apis.web.password.senders import (
-    EmailResetPasswdTokenSender,
-    ExceedSendRateLimit,
-    PhoneVerificationCodeSender,
-)
 from bkuser.apis.web.password.serializers import (
     GenResetPasswordUrlByVerificationCodeInputSLZ,
     GenResetPasswordUrlByVerificationCodeOutputSLZ,
@@ -39,12 +35,17 @@ from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.senders import (
+    EmailResetPasswdTokenSender,
+    ExceedSendRateLimit,
+    PhoneVerificationCodeSender,
+)
 from bkuser.biz.validators import validate_user_new_password
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     GenerateCodeTooFrequently,
     InvalidVerificationCode,
-    VerificationCodeManager,
+    PhoneVerificationCodeManager,
     VerificationCodeScene,
 )
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -118,7 +119,9 @@ class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
         """发送短信验证码到指定的租户用户"""
         phone, phone_country_code = tenant_user.phone_info
         try:
-            code = VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).gen_code()
+            code = PhoneVerificationCodeManager(
+                phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD
+            ).gen_code()
         except GenerateCodeTooFrequently:
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
 
@@ -165,7 +168,9 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
 
     def _validate_verification_code(self, phone: str, phone_country_code: str, code: str):
         try:
-            VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).validate(code)
+            PhoneVerificationCodeManager(
+                phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD
+            ).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:

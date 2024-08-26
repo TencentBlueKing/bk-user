@@ -10,7 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
+from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
 from bkuser.apps.tenant.models import TenantUser
+from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -83,10 +85,17 @@ class TestTenantUserFieldListApi:
 
 class TestTenantUserFeatureFlagListApi:
     def test_list(self, api_client, tenant_user):
-        resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["can_change_password"] is False
+        with override_settings(
+            TENANT_PHONE_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY},
+            TENANT_EMAIL_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.NEED_VERIFY},
+        ):
+            resp = api_client.get(
+                reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id})
+            )
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data["can_change_password"] is False
+            assert resp.data["phone_update_restriction"] == "editable_directly"
+            assert resp.data["email_update_restriction"] == "need_verify"
 
 
 class TestTenantUserLanguageUpdateApi:
@@ -168,3 +177,71 @@ class TestTenantUserLogoUpdateApi:
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "Logo 文件只能为 png 或 jpg 格式" in resp.data["message"]
+
+
+class TestTenantUserPhoneUpdateApi:
+    def test_update_phone_success(self, api_client, tenant_user):
+        data = {
+            "is_inherited_phone": "False",
+            "custom_phone": "12345678901",
+            "custom_phone_country_code": "86",
+        }
+
+        with override_settings(
+            TENANT_PHONE_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            tenant_user.refresh_from_db()
+            assert resp.status_code == status.HTTP_204_NO_CONTENT
+            assert tenant_user.custom_phone == "12345678901"
+            assert tenant_user.custom_phone_country_code == "86"
+            assert not tenant_user.is_inherited_phone
+
+    def test_update_phone_not_editable(self, api_client, tenant_user):
+        data = {
+            "is_inherited_phone": "False",
+            "custom_phone": "12345678901",
+            "custom_phone_country_code": "86",
+        }
+
+        with override_settings(
+            TENANT_PHONE_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestTenantUserEmailUpdateApi:
+    def test_update_email_success(self, api_client, tenant_user):
+        data = {
+            "is_inherited_email": "False",
+            "custom_email": "123456@qq.com",
+        }
+
+        with override_settings(
+            TENANT_EMAIL_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            tenant_user.refresh_from_db()
+            assert resp.status_code == status.HTTP_204_NO_CONTENT
+            assert tenant_user.custom_email == "123456@qq.com"
+            assert not tenant_user.is_inherited_email
+
+    def test_update_email_not_editable(self, api_client, tenant_user):
+        data = {
+            "is_inherited_email": "False",
+            "custom_email": "123456@qq.com",
+        }
+        with override_settings(
+            TENANT_EMAIL_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.NOT_EDITABLE}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST

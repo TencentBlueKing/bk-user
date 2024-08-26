@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import secrets
 import string
 
@@ -19,14 +20,18 @@ from bkuser.common.verification_code.constants import VerificationCodeScene
 from bkuser.common.verification_code.exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
 
 
-class VerificationCodeManager:
-    """手机短信验证码"""
+class BaseVerificationCodeManager:
+    """验证码管理基类"""
 
+    # 验证码重复生成锁定时间（单位：秒）
     lock_timeout = 60
 
-    def __init__(self, phone: str, phone_country_code: str, scene: VerificationCodeScene):
-        self.phone = phone
-        self.phone_country_code = phone_country_code
+    def __init__(self, contact_info_key: str, scene: VerificationCodeScene):
+        """
+        :param contact_info_key: 联系方式，带国家地区的手机号或邮箱作为缓存 key 的前缀
+        :param scene: 验证码使用场景
+        """
+        self.contact_info_key = contact_info_key
         self.scene = scene
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.retries_cache_key = self._gen_cache_key("retries")
@@ -56,7 +61,7 @@ class VerificationCodeManager:
         return False
 
     def gen_code(self) -> str:
-        # 生成验证码有频率限制，不能短时间内频繁生成
+        """生成验证码，带有频率限制"""
         if self.cache.get(self.lock_cache_key):
             raise GenerateCodeTooFrequently(_("生成验证码过于频繁，请稍后再试"))
 
@@ -65,6 +70,7 @@ class VerificationCodeManager:
         # 验证码字符集：数字，大小写字母
         charset = string.ascii_letters + string.digits
         code = "".join(secrets.choice(charset) for _ in range(settings.VERIFICATION_CODE_LENGTH))
+
         # 刷新缓存中的验证码
         self.cache.set(self.code_cache_key, code, timeout=settings.VERIFICATION_CODE_VALID_TIME)
         # 重置试错次数
@@ -73,4 +79,19 @@ class VerificationCodeManager:
 
     def _gen_cache_key(self, key_type: str) -> str:
         """生成验证码缓存 key"""
-        return f"{self.scene.value}:{self.phone_country_code}:{self.phone}:{key_type}"
+        return f"{self.scene.value}:{self.contact_info_key}:{key_type}"
+
+
+class PhoneVerificationCodeManager(BaseVerificationCodeManager):
+    """手机短信验证码管理"""
+
+    def __init__(self, phone: str, phone_country_code: str, scene: VerificationCodeScene):
+        phone_with_country_code = f"{phone_country_code}:{phone}"
+        super().__init__(phone_with_country_code, scene)
+
+
+class EmailVerificationCodeManager(BaseVerificationCodeManager):
+    """邮箱验证码管理"""
+
+    def __init__(self, email: str, scene: VerificationCodeScene):
+        super().__init__(email, scene)
