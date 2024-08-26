@@ -137,7 +137,7 @@ const handleUploadRemove = (file) => {
 };
   // 数据源导出模板
 const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.currentDataSourceId}/operations/download_template/`;
+  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${props.currentDataSourceId}/operations/download_template/`;
   window.open(url);
 };
   // 导入用户
@@ -162,7 +162,7 @@ const confirmImportUsers = async () => {
       },
       withCredentials: true,
     };
-    const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.currentDataSourceId}/operations/import/`;
+    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${props.currentDataSourceId}/operations/import/`;
     const res = await axios.post(url, formData, config);
     if (res.data.data.status === 'success') {
       emit('update:isShow', false);

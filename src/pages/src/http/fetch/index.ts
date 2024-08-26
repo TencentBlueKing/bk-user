@@ -89,7 +89,7 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { message = '', data = {}, code = '', details = [] } = error.response.data.error;
 
   if (status === 401) {
-    if (error.config.url === '/api/v1/web/basic/current-user/') {
+    if (error.config.url === '/api/v3/web/basic/current-user/') {
       return window.location.href = getLoginUrl(false);
     }
     // 登录弹窗

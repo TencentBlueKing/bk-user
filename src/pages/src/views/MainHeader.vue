@@ -235,7 +235,7 @@ const docUrl = window.BK_USER_DOC_URL;
 const feedbackUrl = window.BK_USER_FEEDBACK_URL;
 
 // 消息通知配置信息
-const apiUrl = `${window.AJAX_BASE_URL}/api/v1/web/notices/announcements/`;
+const apiUrl = `${window.AJAX_BASE_URL}/api/v3/web/notices/announcements/`;
 const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
