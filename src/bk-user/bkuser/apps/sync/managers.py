@@ -8,8 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict, Optional
 
+from django.conf import settings
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource
@@ -23,9 +25,13 @@ from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
 class DataSourceSyncManager:
     """数据源同步管理器"""
 
+    # 超时后等待 N 秒强杀进程
+    force_kill_after_timeout_seconds = 60
+
     def __init__(self, data_source: DataSource, sync_options: DataSourceSyncOptions):
         self.data_source = data_source
         self.sync_options = sync_options
+        self.sync_timeout = data_source.sync_timeout
 
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
@@ -41,12 +47,18 @@ class DataSourceSyncManager:
                 "incremental": self.sync_options.incremental,
                 "overwrite": self.sync_options.overwrite,
                 "async_run": self.sync_options.async_run,
+                "sync_timeout": self.sync_timeout,
             },
         )
 
         if self.sync_options.async_run:
             self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
-            sync_data_source.delay(task.id, plugin_init_extra_kwargs)
+            sync_data_source.apply_async(
+                task.id,
+                plugin_init_extra_kwargs,
+                soft_time_limit=self.sync_timeout,
+                time_limit=self.sync_timeout + self.force_kill_after_timeout_seconds,
+            )
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
@@ -69,10 +81,15 @@ class DataSourceSyncManager:
 class TenantSyncManager:
     """租户同步管理器"""
 
+    # 超时后等待 N 秒强杀进程
+    force_kill_after_timeout_seconds = 60
+
     def __init__(self, data_source: DataSource, tenant_id: str, sync_options: TenantSyncOptions):
         self.data_source = data_source
         self.tenant_id = tenant_id
         self.sync_options = sync_options
+        # 注：租户同步是 DB 内表数据变更，耗时一般很短
+        self.sync_timeout = settings.TENANT_SYNC_DEFAULT_TIMEOUT
 
     def execute(self) -> TenantSyncTask:
         """同步数据源用户，部门信息到租户，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
@@ -91,11 +108,18 @@ class TenantSyncManager:
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
             start_at=timezone.now(),
-            extras={"async_run": self.sync_options.async_run},
+            extras={
+                "async_run": self.sync_options.async_run,
+                "sync_timeout": self.sync_timeout,
+            },
         )
 
         if self.sync_options.async_run:
-            sync_tenant.delay(task.id)
+            sync_tenant.apply_async(
+                task.id,
+                soft_time_limit=self.sync_timeout,
+                time_limit=self.sync_timeout + self.force_kill_after_timeout_seconds,
+            )
         else:
             TenantSyncTaskRunner(task).run()
 

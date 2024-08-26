@@ -85,6 +85,13 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     """数据源同步配置"""
 
     sync_period = serializers.ChoiceField(help_text="同步周期", choices=DataSourceSyncPeriod.get_choices())
+    sync_timeout = serializers.IntegerField(
+        help_text="同步超时时间（单位：秒，范围：5m-12h）",
+        required=False,
+        default=settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT,
+        min_value=5 * 60,
+        max_value=12 * 60 * 60,
+    )
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
