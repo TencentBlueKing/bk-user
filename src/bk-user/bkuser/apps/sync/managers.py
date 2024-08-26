@@ -25,9 +25,6 @@ from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
 class DataSourceSyncManager:
     """数据源同步管理器"""
 
-    # 超时后等待 N 秒强杀进程
-    force_kill_after_timeout_seconds = 60
-
     def __init__(self, data_source: DataSource, sync_options: DataSourceSyncOptions):
         self.data_source = data_source
         self.sync_options = sync_options
@@ -53,12 +50,7 @@ class DataSourceSyncManager:
 
         if self.sync_options.async_run:
             self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
-            sync_data_source.apply_async(
-                task.id,
-                plugin_init_extra_kwargs,
-                soft_time_limit=self.sync_timeout,
-                time_limit=self.sync_timeout + self.force_kill_after_timeout_seconds,
-            )
+            sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
@@ -80,9 +72,6 @@ class DataSourceSyncManager:
 
 class TenantSyncManager:
     """租户同步管理器"""
-
-    # 超时后等待 N 秒强杀进程
-    force_kill_after_timeout_seconds = 60
 
     def __init__(self, data_source: DataSource, tenant_id: str, sync_options: TenantSyncOptions):
         self.data_source = data_source
@@ -115,11 +104,7 @@ class TenantSyncManager:
         )
 
         if self.sync_options.async_run:
-            sync_tenant.apply_async(
-                task.id,
-                soft_time_limit=self.sync_timeout,
-                time_limit=self.sync_timeout + self.force_kill_after_timeout_seconds,
-            )
+            sync_tenant.apply_async(args=[task.id], soft_time_limit=self.sync_timeout)
         else:
             TenantSyncTaskRunner(task).run()
 

@@ -15,6 +15,7 @@ import logging
 import traceback
 from typing import List
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.utils import timezone
 
@@ -71,6 +72,10 @@ class DataSourceSyncTaskContext:
             self._store_records_into_db()
             self._store_logs_into_db()
             return
+
+        # 任务超时添加特殊提示
+        if exc_type is SoftTimeLimitExceeded:
+            self.logger.error(f"sync task timeout, max duration is {self.task.extras.get('sync_timeout')}s")
 
         # 同步过程中出现异常，需要记录日志，并抛出 DataSourceSyncError
         self.logger.error(
