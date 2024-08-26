@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
@@ -75,15 +76,15 @@ class IdpPluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: IdpPluginConfigMetaRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        instance = self.get_object()
+        plugin = self.get_object()
 
         try:
-            json_schema = get_idp_plugin_cfg_json_schema(instance.id)
+            json_schema = get_idp_plugin_cfg_json_schema(plugin.id)
         except NotImplementedError:
             raise error_codes.IDP_PLUGIN_NOT_LOAD
 
         return Response(
-            IdpPluginConfigMetaRetrieveOutputSLZ(instance={"id": instance.id, "json_schema": json_schema}).data
+            IdpPluginConfigMetaRetrieveOutputSLZ(instance={"id": plugin.id, "json_schema": json_schema}).data
         )
 
 

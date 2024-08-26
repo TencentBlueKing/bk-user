@@ -605,13 +605,13 @@ class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: DataSourcePluginConfigMetaRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        instance = self.get_object()
+        plugin = self.get_object()
 
         try:
-            json_schema = get_data_source_plugin_cfg_json_schema(instance.id)
+            json_schema = get_data_source_plugin_cfg_json_schema(plugin.id)
         except NotImplementedError:
             raise error_codes.DATA_SOURCE_PLUGIN_NOT_LOAD
 
         return Response(
-            DataSourcePluginConfigMetaRetrieveOutputSLZ(instance={"id": instance.id, "json_schema": json_schema}).data
+            DataSourcePluginConfigMetaRetrieveOutputSLZ(instance={"id": plugin.id, "json_schema": json_schema}).data
         )
