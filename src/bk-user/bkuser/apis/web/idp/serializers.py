@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import re
 from typing import Any, Dict
 
@@ -39,7 +40,7 @@ class IdpPluginOutputSLZ(serializers.Serializer):
 
 class IdpPluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件唯一标识")
-    json_schema = serializers.JSONField(help_text="配置的JSON Schema")
+    json_schema = serializers.JSONField(help_text="配置的 JSON Schema")
 
 
 class IdpListOutputSLZ(serializers.Serializer):
