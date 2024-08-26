@@ -96,6 +96,6 @@ urlpatterns = [
     path(
         "plugins/<str:id>/config-meta/",
         views.DataSourcePluginConfigMetaRetrieveApi.as_view(),
-        name="data_source_plugin_config_meta.retrieve",
+        name="data_source_plugin.config_meta.retrieve",
     ),
 ]

@@ -367,4 +367,4 @@ class DataSourceDestroyInputSLZ(serializers.Serializer):
 
 class DataSourcePluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="数据源插件唯一标识")
-    json_schema = serializers.JSONField(help_text="配置的JSON Schema")
+    json_schema = serializers.JSONField(help_text="配置的 JSON Schema")
