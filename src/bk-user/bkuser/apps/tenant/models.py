@@ -262,9 +262,9 @@ class TenantUserUUIDRecord(TimestampedModel):
     """
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
-    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, unique=True, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     code = models.CharField("用户在数据源中的唯一标识", max_length=128)
     uuid = models.CharField("UUID", max_length=128)
 
     class Meta:
-        unique_together = [("tenant_id", "data_source_id", "code")]
+        unique_together = [("tenant", "data_source", "code")]
