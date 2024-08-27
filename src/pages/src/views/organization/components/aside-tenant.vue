@@ -43,7 +43,8 @@
               :tenant="currentTenant"
               @add-node="addNode"
               @delete-node="deleteNode"
-              @update-node="updateNode">
+              @update-node="updateNode"
+              @move-node="getTreeData">
             </operate-more>
           </div>
         </template>
@@ -67,6 +68,7 @@ const appStore = useAppStore();
 const currentTenant = ref();
 const loading = ref(false);
 
+
 const formatTreeData = (data = []) => {
   data.forEach((item) => {
     if (item.has_children) {
@@ -83,11 +85,14 @@ onBeforeMount(async () => {
   currentTenant.value = tenantData?.data;
   appStore.currentTenant = tenantData?.data;
   appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
-  const deptData = await getDepartmentsList(0, currentTenant.value?.id);
-  treeData.value = formatTreeData(deptData?.data);
+  getTreeData();
   loading.value = false;
 });
 
+const getTreeData = async () => {
+  const deptData = await getDepartmentsList(0, currentTenant.value?.id);
+  treeData.value = formatTreeData(deptData?.data);
+};
 const organizationAsideHooks = useOrganizationAside(currentTenant);
 const {
   treeRef,
@@ -99,7 +104,6 @@ const {
   updateNode,
   getPrefixIcon,
 } = organizationAsideHooks;
-
 </script>
 
 <style lang="less" scoped>

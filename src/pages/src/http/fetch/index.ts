@@ -112,7 +112,17 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
       suggestion: message,
       details: details[0],
     };
-    Message({ theme: 'error', message: config, delay: 10000,  extCls: 'message-fix-fixed' });
+    Message({
+      theme: 'error',
+      message: config,
+      delay: 10000,
+      extCls: 'message-fix-fixed',
+      actions: [
+        {
+          id: 'assistant',
+          disabled: true,
+        },
+      ] });
   }
 
   return Promise.reject(error);

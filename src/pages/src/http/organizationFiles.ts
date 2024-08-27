@@ -146,6 +146,32 @@ export const batchCreate = (params: any) => http.post(`${prefix}/tenants/departm
 export const batchDelUpdate = (params: any) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
+ * 批量停用/启用
+ */
+export const batchUpdateStatus = (params: any) => http.put(`${prefix}/tenants/users/status/operations/batch_update/`, params);
+
+/**
+ * 批量重置密码
+ */
+export const batchResetPassword = (params: any) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
+
+/**
+ * 批量续期
+ */
+export const batchAccountExpired = (params: any) => http.put(`${prefix}/tenants/users/account-expired-at/operations/batch_update/`, params);
+
+/**
+ * 批量修改上级
+ */
+export const batchLeader = (params: any) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
+
+/**
+ * 批量修改自定义字段
+ */
+export const batchCustomField = (params: any) => http.put(`${prefix}/tenants/users/custom-field/operations/batch_update/`, params);
+
+
+/**
  * 快速录入
  */
 export const operationsCreate = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
@@ -194,3 +220,8 @@ export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`
  * 密码规则
  */
 export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/`);
+
+/**
+ * 组织树拖拽功能
+ */
+export const dragOrg = (id: string, params: any) => http.put(`${prefix}/tenants/departments/${id}/parent/`, params);
