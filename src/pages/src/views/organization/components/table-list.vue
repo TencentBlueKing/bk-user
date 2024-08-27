@@ -29,19 +29,19 @@
             />
         </div>
         <bk-table
-            max-height="100%"
-            class="organization-table-main"
-            :border="['outer']"
-            :data="tableData"
-            :pagination="pagination"
-            v-bkloading="{ loading: isLoading }"
-            row-hover="auto"
-            remote-pagination
-            :columns="tableColumns"
-            @select="handleSelectTable"
-            @select-all="handleSelectAll"
-            @page-limit-change="pageLimitChange"
-            @page-value-change="pageCurrentChange"
+          max-height="100%"
+          class="organization-table-main"
+          :border="['outer']"
+          :data="tableData"
+          :pagination="pagination"
+          v-bkloading="{ loading: isLoading }"
+          row-hover="auto"
+          remote-pagination
+          :columns="tableColumns"
+          @select="handleSelectTable"
+          @select-all="handleSelectAll"
+          @page-limit-change="pageLimitChange"
+          @page-value-change="pageCurrentChange"
         >
           <template #empty>
             <Empty
