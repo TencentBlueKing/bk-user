@@ -29,7 +29,7 @@
             />
         </div>
         <bk-table
-            height="100%"
+            max-height="100%"
             class="organization-table-main"
             :border="['outer']"
             :data="tableData"
