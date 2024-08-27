@@ -38,6 +38,7 @@ class DataSourceSyncTaskContext:
         self.task = task
         self.logger = TaskLogger()
         self.recorder = ChangeLogRecorder()
+        self.synced_obj_types: set[DataSourceSyncObjectType] = set()
 
         timeout = task.extras.get("timeout", settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT)
         self.lock = DataSourceSyncTaskLock(task.data_source_id, timeout=timeout)
