@@ -8,9 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import pytest
+from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.handlers import (
+    set_data_source_sync_periodic_task,
+    sync_identity_infos_and_notify_after_modify_data_source,
+)
 from bkuser.apps.tenant.models import Tenant
 from bkuser.auth.models import User
+from django.db.models.signals import post_save
 
 from tests.fixtures.data_source import (  # noqa: F401
     bare_general_data_source,
@@ -26,6 +33,10 @@ from tests.fixtures.tenant import tenant_user_custom_fields  # noqa: F401
 from tests.test_utils.auth import create_user
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant
+
+# 在单元测试中屏蔽掉 post_save 信号的触发
+post_save.disconnect(set_data_source_sync_periodic_task, sender=DataSource)
+post_save.disconnect(sync_identity_infos_and_notify_after_modify_data_source, sender=DataSource)
 
 
 @pytest.fixture()

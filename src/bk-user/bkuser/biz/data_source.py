@@ -19,7 +19,12 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     DepartmentRelationMPTTTree,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import (
+    TenantDepartment,
+    TenantUser,
+    TenantUserIDGenerateConfig,
+    TenantUserUUIDRecord,
+)
 
 
 class DataSourceHandler:
@@ -32,6 +37,10 @@ class DataSourceHandler:
         TenantDepartment.objects.filter(data_source=data_source).delete()
         # 2. 删除租户用户数据
         TenantUser.objects.filter(data_source=data_source).delete()
+        # 3. 删除相关的 ID 生成配置
+        TenantUserIDGenerateConfig.objects.filter(data_source=data_source).delete()
+        # 4. 删除租户用户 UUID 映射记录
+        TenantUserUUIDRecord.objects.filter(data_source=data_source).delete()
 
         # ======== 删除数据源相关模型数据 ========
         # 1. 删除部门 - 用户关系
