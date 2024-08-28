@@ -10,15 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
-from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
-from bkuser.apps.sync.handlers import set_data_source_sync_periodic_task
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
-from django.db.models.signals import post_save
 from django.utils import timezone
-
-# 在单元测试中屏蔽掉这个信号的触发
-post_save.disconnect(set_data_source_sync_periodic_task, sender=DataSource)
 
 
 @pytest.fixture()

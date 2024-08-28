@@ -101,7 +101,14 @@ class DataSourceSyncTaskRunner:
             "overwrite": bool(self.task.extras.get("overwrite", False)),
             "incremental": bool(self.task.extras.get("incremental", False)),
         }
-        # 同步前存量的用户 ID 集合
+
+        # Q: 为什么不能在使用的地方现查？直接 DB 查询获取 “同步前存量” 的用户 ID 集合？
+        # A: 这份数据主要是给不覆盖（overwrite=False）的场景使用的，
+        #    目的是避免修改到同步前已存在用户的关联边（不删除 / 追加）
+        #    如果在使用的地方再查询，会因为这时用户主体已经完成同步，
+        #    导致出现所有用户都是已存在的用户，因而不为刚同步的用户添加关联边的问题
+        #
+        # ref: https://github.com/TencentBlueKing/bk-user/pull/1904/files
         exists_user_ids = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("id", flat=True))
         DataSourceUserSyncer(**kwargs).sync()  # type: ignore
         DataSourceUserLeaderRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
