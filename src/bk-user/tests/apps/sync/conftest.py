@@ -24,17 +24,17 @@ def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
         start_at=timezone.now(),
-        extras={"overwrite": True, "async_run": False},
+        extras={"overwrite": True, "incremental": False, "async_run": False},
     )
 
 
 @pytest.fixture()
-def tenant_sync_task(bare_local_data_source, default_tenant, data_source_sync_task) -> TenantSyncTask:
+def tenant_sync_task(full_local_data_source, default_tenant, data_source_sync_task) -> TenantSyncTask:
     """租户数据同步任务"""
     return TenantSyncTask.objects.create(
         tenant=default_tenant,
-        data_source=bare_local_data_source,
-        data_source_owner_tenant_id=bare_local_data_source.owner_tenant_id,
+        data_source=full_local_data_source,
+        data_source_owner_tenant_id=full_local_data_source.owner_tenant_id,
         data_source_sync_task_id=data_source_sync_task.id,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,

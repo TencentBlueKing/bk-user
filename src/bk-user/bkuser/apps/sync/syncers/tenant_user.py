@@ -20,7 +20,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.contexts import TenantSyncTaskContext
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
-from bkuser.apps.tenant.utils import gen_tenant_user_id
+from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.common.constants import PERMANENT_TIME
 
 
@@ -47,9 +47,10 @@ class TenantUserSyncer:
         waiting_sync_data_source_users = data_source_users.exclude(
             id__in=[u.data_source_user_id for u in exists_tenant_users]
         )
+        generator = TenantUserIDGenerator(self.tenant.id, self.data_source, prepare_batch=True)
         waiting_create_tenant_users = [
             TenantUser(
-                id=gen_tenant_user_id(self.tenant.id, self.data_source, user),
+                id=generator.gen(user),
                 tenant=self.tenant,
                 data_source_user=user,
                 data_source=self.data_source,

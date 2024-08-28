@@ -8,13 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-import pytest
-from django.conf import settings
-from openpyxl.reader.excel import load_workbook
-from openpyxl.workbook import Workbook
-
-
-@pytest.fixture()
-def user_workbook() -> Workbook:
-    return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")

@@ -13,10 +13,6 @@ import { computed, defineExpose, ref, watch } from 'vue';
 
 import createForm from '@blueking/bkui-form';
 
-const BkSchemaForm = createForm();
-
-const emit = defineEmits(['changePluginConfig']);
-
 const props = defineProps({
   pluginsConfig: {
     type: Object,
@@ -27,6 +23,10 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
+const emit = defineEmits(['changePluginConfig']);
+
+const BkSchemaForm = createForm();
 
 const data = ref(props.formData.plugin_config);
 
@@ -45,7 +45,3 @@ defineExpose({
   element: BkSchemaFormRef,
 });
 </script>
-
-<style>
-
-</style>

@@ -60,7 +60,7 @@ def mark_running_sync_task_as_failed_if_exceed_one_day():
     error_msg = "\n\nERROR sync task runs more than one day, consider it as failed."
 
     DataSourceSyncTask.objects.filter(
-        status=SyncTaskStatus.RUNNING,
+        status__in=[SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING],
         start_at__lt=time_now - timedelta(days=1),
     ).update(
         status=SyncTaskStatus.FAILED,
@@ -69,7 +69,7 @@ def mark_running_sync_task_as_failed_if_exceed_one_day():
     )
 
     TenantSyncTask.objects.filter(
-        status=SyncTaskStatus.RUNNING,
+        status__in=[SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING],
         start_at__lt=time_now - timedelta(days=1),
     ).update(
         status=SyncTaskStatus.FAILED,

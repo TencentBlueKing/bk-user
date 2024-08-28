@@ -539,5 +539,17 @@
   "请将以下回调地址填写到企业微信配置内：": "Please enter the following callback address in the enterprise wechat configuration:",
   "至": "to ",
   "成功 ": " Success",
-  "同时清除登录配置": "Clear the login configuration"
+  "同时清除登录配置": "Clear the login configuration",
+  "新建成功": "Create ",
+  "批量操作": "Batch Operation",
+  "请再次输入密码": "Please enter your password again",
+  "批量修改用户信息": "Modify user information in batches",
+  "新增批量修改字段": "Added the batch Modify field",
+  "选择日期": "Option Date",
+  "移动至组织": "Move to organization",
+  "修改用户信息": "Modifying User Information",
+  "确认批量启用所选用户 ？": "Are you sure to batch enable selected users?",
+  "确认批量停用所选用户 ？": "Are you sure to batch deactivate selected users?",
+  "从当前组织移出": "Move out of the current organization",
+  "并追加到以下组织": "And added to the following organizations"
 }

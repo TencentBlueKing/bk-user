@@ -14,7 +14,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict
 
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DataSourceSyncObjectType
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -105,14 +105,23 @@ class DataSourceSyncTaskRunner:
             "overwrite": bool(self.task.extras.get("overwrite", False)),
             "incremental": bool(self.task.extras.get("incremental", False)),
         }
+
+        # Q: 为什么不能在使用的地方现查？直接 DB 查询获取 “同步前存量” 的用户 ID 集合？
+        # A: 这份数据主要是给不覆盖（overwrite=False）的场景使用的，
+        #    目的是避免修改到同步前已存在用户的关联边（不删除 / 追加）
+        #    如果在使用的地方再查询，会因为这时用户主体已经完成同步，
+        #    导致出现所有用户都是已存在的用户，因而不为刚同步的用户添加关联边的问题
+        #
+        # ref: https://github.com/TencentBlueKing/bk-user/pull/1904/files
+        exists_user_ids = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("id", flat=True))
         # 用户主体
         DataSourceUserSyncer(**kwargs).sync()  # type: ignore
         ctx.synced_obj_types.add(DataSourceSyncObjectType.USER)
         # 用户 Leader 关系
-        DataSourceUserLeaderRelationSyncer(**kwargs).sync()  # type: ignore
+        DataSourceUserLeaderRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
         ctx.synced_obj_types.add(DataSourceSyncObjectType.USER_LEADER_RELATION)
         # 用户部门关系
-        DataSourceUserDeptRelationSyncer(**kwargs).sync()  # type: ignore
+        DataSourceUserDeptRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
         ctx.synced_obj_types.add(DataSourceSyncObjectType.USER_DEPARTMENT_RELATION)
 
         ctx.logger.info("succeed to sync users and their leader & dept relations from data source plugin")

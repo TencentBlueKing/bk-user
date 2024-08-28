@@ -41,7 +41,7 @@
       <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
       <bk-table-column prop="target_status" :label="$t('状态')" :filter="{ list: targetStatusFilters }">
         <template #default="{ row }">
-          <div class="styled-circle" :class="row.target_status === 'enabled' ? 'enabledColor' : 'unconfirmedColor'">
+          <div class="styled-circle" :class="row.target_status === 'enabled' ? 'enabled-color' : 'unconfirmed-color'">
           </div>
           <span>{{ row.target_status === 'enabled' ? $t('已接收') : $t('待接收')}}</span>
         </template>
@@ -354,12 +354,12 @@ const updateList = () => {
   border-radius: 50%;
 }
 
-.enabledColor{
+.enabled-color{
   background-color: #E5F6EA;
   border: 1px solid #3FC06D;
 }
 
-.unconfirmedColor {
+.unconfirmed-color {
   background-color: #FFE8C3;
   border: 1px solid #FF9C01;
 }
