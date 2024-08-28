@@ -17,8 +17,13 @@
           <bk-dropdown-item
             v-for="item in dropdownList"
             :key="item"
+            :class="{ 'disabled': item.disabled }"
+            v-bk-tooltips="{
+              content: $t('当前租户未启用账密登录，无法修改密码'),
+              disabled: !item.disabled
+            }"
             @click.prevent="() => {
-              dropdownVisible = false
+              if (item.disabled) return
               item.handle(item)
             }">
             {{ item.label}}
@@ -153,13 +158,8 @@ const props = defineProps({
   selectList: {
     type: Array,
   },
-  tenant: {
-    type: Object,
-    default: () => ({}),
-  },
-  isCollaboration: {
+  isEnabledPassword: {
     type: Boolean,
-    default: false,
   },
 });
 
@@ -201,6 +201,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('重置密码'),
     key: 'password',
+    disabled: !props.isEnabledPassword,
     handle: () => {
       const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
@@ -432,5 +433,10 @@ const confirmBatchAction = (actionType) => {
 }
 .icon-check-line {
   font-size: 14px
+}
+
+.disabled {
+  color: #c4c6cc;
+  cursor: not-allowed;
 }
 </style>

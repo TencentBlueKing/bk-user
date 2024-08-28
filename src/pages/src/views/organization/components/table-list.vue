@@ -13,7 +13,7 @@
             </bk-button>
             <bk-button class="mr-[16px]" v-if="isShowBtn"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <batchOperation @moveOrg="batchMoveOrg" :select-list="selectList" @reloadList="reloadList"/>
+            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="reloadList"/>
             <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
