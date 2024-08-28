@@ -326,9 +326,11 @@ class TestSyncDataSourceUser:
             "overwrite": overwrite,
             "incremental": incremental,
         }
+        # 同步前存量的用户 ID 集合
+        exists_user_ids = set(DataSourceUser.objects.filter(data_source=data_source).values_list("id", flat=True))
         DataSourceUserSyncer(**kwargs).sync()  # type: ignore
-        DataSourceUserLeaderRelationSyncer(**kwargs).sync()  # type: ignore
-        DataSourceUserDeptRelationSyncer(**kwargs).sync()  # type: ignore
+        DataSourceUserLeaderRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
+        DataSourceUserDeptRelationSyncer(exists_user_ids_before_sync=exists_user_ids, **kwargs).sync()  # type: ignore
 
     @staticmethod
     def _gen_user_leaders_from_raw_users(raw_users: List[RawDataSourceUser]) -> Dict[str, Set[str]]:

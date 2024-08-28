@@ -156,6 +156,7 @@ class DataSourceUserLeaderRelationSyncer:
         ctx: DataSourceSyncTaskContext,
         data_source: DataSource,
         raw_users: List[RawDataSourceUser],
+        exists_user_ids_before_sync: Set[int],
         overwrite: bool,
         incremental: bool,
     ):
@@ -166,6 +167,7 @@ class DataSourceUserLeaderRelationSyncer:
         self.ctx = ctx
         self.data_source = data_source
         self.raw_users = raw_users
+        self.exists_user_ids_before_sync = exists_user_ids_before_sync
         self.overwrite = overwrite
         self.incremental = incremental
 
@@ -201,9 +203,10 @@ class DataSourceUserLeaderRelationSyncer:
 
     def _sync_relations(self):
         """同步用户 - 直接上级关系"""
-        exists_users = DataSourceUser.objects.filter(data_source=self.data_source)
         # 此时已经完成了用户数据的同步，可以认为 DB 中 DataSourceUser 的数据是最新的，准确的
-        user_code_id_map = {u.code: u.id for u in exists_users}
+        user_code_id_map: Dict[str, int] = dict(
+            DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", "id")
+        )
         # 最终需要的 [(user_code, leader_code)] 集合
         user_leader_code_tuples = {(u.code, leader_code) for u in self.raw_users for leader_code in u.leaders}
         # 最终需要的 [(user_id, leader_id)] 集合，需要注意的是：
@@ -223,7 +226,7 @@ class DataSourceUserLeaderRelationSyncer:
 
         # 计算待变更的关联边
         waiting_create_user_leader_relations = self._get_waiting_create_user_leader_relations(
-            exists_users, user_leader_id_tuples, exists_user_leader_id_tuples
+            user_leader_id_tuples, exists_user_leader_id_tuples
         )
         waiting_delete_user_leader_relation_ids = self._get_waiting_delete_user_leader_relation_ids(
             user_code_id_map, exists_user_leader_relation_map, user_leader_id_tuples, exists_user_leader_id_tuples
@@ -244,20 +247,18 @@ class DataSourceUserLeaderRelationSyncer:
 
     def _get_waiting_create_user_leader_relations(
         self,
-        exists_users: QuerySet[DataSourceUser],
         user_leader_id_tuples: Set[Tuple[int, int]],
         exists_user_leader_id_tuples: Set[Tuple[int, int]],
     ) -> List[DataSourceUserLeaderRelation]:
         # 集合做差，再转换 ID，生成需要创建的 Relations
         waiting_create_user_leader_id_tuples = user_leader_id_tuples - exists_user_leader_id_tuples
 
-        # 如果不覆盖的场景，则存量的用户，不需要追加关联边
+        # 如果是不覆盖的场景，则同步前存量的用户，不需要追加关联边
         if not self.overwrite:
-            exists_user_ids = {u.id for u in exists_users}
             waiting_create_user_leader_id_tuples = {
                 (user_id, leader_id)
                 for (user_id, leader_id) in waiting_create_user_leader_id_tuples
-                if user_id not in exists_user_ids
+                if user_id not in self.exists_user_ids_before_sync
             }
 
         return [
@@ -304,6 +305,7 @@ class DataSourceUserDeptRelationSyncer:
         ctx: DataSourceSyncTaskContext,
         data_source: DataSource,
         raw_users: List[RawDataSourceUser],
+        exists_user_ids_before_sync: Set[int],
         overwrite: bool,
         incremental: bool,
     ):
@@ -314,6 +316,7 @@ class DataSourceUserDeptRelationSyncer:
         self.ctx = ctx
         self.data_source = data_source
         self.raw_users = raw_users
+        self.exists_user_ids_before_sync = exists_user_ids_before_sync
         self.overwrite = overwrite
         self.incremental = incremental
 
@@ -344,9 +347,10 @@ class DataSourceUserDeptRelationSyncer:
 
     def _sync_relations(self):
         """同步用户 - 部门关系"""
-        exists_users = DataSourceUser.objects.filter(data_source=self.data_source)
         # 此时已经完成了用户，部门数据的同步，可以认为 DB 中 DataSourceUser & Department 的数据是最新的，准确的
-        user_code_id_map = {u.code: u.id for u in exists_users}
+        user_code_id_map: Dict[str, int] = dict(
+            DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", "id")
+        )
         department_code_id_map = {
             d.code: d.id for d in DataSourceDepartment.objects.filter(data_source=self.data_source)
         }
@@ -370,7 +374,7 @@ class DataSourceUserDeptRelationSyncer:
 
         # 计算待变更的关联边
         waiting_create_user_dept_relations = self._get_waiting_create_user_dept_relations(
-            exists_users, user_dept_id_tuples, exists_user_dept_id_tuples
+            user_dept_id_tuples, exists_user_dept_id_tuples
         )
         waiting_delete_user_dept_relation_ids = self._get_waiting_delete_user_dept_relation_ids(
             user_code_id_map, exists_user_dept_relations_map, user_dept_id_tuples, exists_user_dept_id_tuples
@@ -392,19 +396,17 @@ class DataSourceUserDeptRelationSyncer:
 
     def _get_waiting_create_user_dept_relations(
         self,
-        exists_users: QuerySet[DataSourceUser],
         user_dept_id_tuples: Set[Tuple[int, int]],
         exists_user_dept_id_tuples: Set[Tuple[int, int]],
     ) -> List[DataSourceDepartmentUserRelation]:
         # 集合做差，再转换 ID，生成需要创建的 Relations
         waiting_create_user_dept_id_tuples = user_dept_id_tuples - exists_user_dept_id_tuples
-        # 如果不覆盖的场景，则存量的用户，不需要追加关联边
+        # 如果是不覆盖的场景，则同步前存量的用户，不需要追加关联边
         if not self.overwrite:
-            exists_user_ids = {u.id for u in exists_users}
             waiting_create_user_dept_id_tuples = {
                 (user_id, dept_id)
                 for (user_id, dept_id) in waiting_create_user_dept_id_tuples
-                if user_id not in exists_user_ids
+                if user_id not in self.exists_user_ids_before_sync
             }
 
         return [
