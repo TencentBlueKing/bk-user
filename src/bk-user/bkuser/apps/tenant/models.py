@@ -252,9 +252,9 @@ class TenantUserIDGenerateConfig(TimestampedModel):
     domain = models.CharField("目标租户域名", max_length=128, unique=True, blank=True, null=True)
 
 
-class TenantUserUUIDRecord(TimestampedModel):
+class TenantUserIDRecord(TimestampedModel):
     """
-    租户用户 UUID 记录
+    租户用户 ID 记录
 
     Q：为什么需要有这个表？
     A：为了解决这么一个场景：数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，需要尽可能使用一致的 UUID
@@ -264,7 +264,7 @@ class TenantUserUUIDRecord(TimestampedModel):
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     code = models.CharField("用户在数据源中的唯一标识", max_length=128)
-    uuid = models.CharField("UUID", max_length=128)
+    tenant_user_id = models.CharField("租户用户 ID", max_length=128)
 
     class Meta:
         unique_together = [("tenant", "data_source", "code")]

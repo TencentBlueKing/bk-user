@@ -14,7 +14,7 @@ from typing import Dict, Tuple
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
-from bkuser.apps.tenant.models import TenantUserIDGenerateConfig, TenantUserUUIDRecord
+from bkuser.apps.tenant.models import TenantUserIDGenerateConfig, TenantUserIDRecord
 from bkuser.utils.uuid import generate_uuid
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class TenantUserIDGenerator:
         """
         :param target_tenant_id: 目标租户 ID
         :param data_source: 数据源
-        :param prepare_batch: 是否为批量生成做准备（预先生成 uuid 映射表）
+        :param prepare_batch: 是否为批量生成做准备（预先生成租户用户 ID 映射表）
         """
         self.target_tenant_id = target_tenant_id
         self.data_source = data_source
@@ -45,12 +45,12 @@ class TenantUserIDGenerator:
         ).first()
 
         self.prepare_batch = prepare_batch
-        # UUID 映射表：{(tenant_id, data_source_id, code): uuid}
-        self.uuid_map: Dict[Tuple[str, int, int], str] = {}
+        # 租户用户 ID 映射表：{(tenant_id, data_source_id, code): tenant_user_id}
+        self.tenant_user_id_map: Dict[Tuple[str, int, int], str] = {}
         if prepare_batch:
-            self.uuid_map = {
-                (target_tenant_id, data_source.id, record.code): record.uuid
-                for record in TenantUserUUIDRecord.objects.filter(tenant_id=target_tenant_id, data_source=data_source)
+            self.tenant_user_id_map = {
+                (target_tenant_id, data_source.id, record.code): record.tenant_user_id
+                for record in TenantUserIDRecord.objects.filter(tenant_id=target_tenant_id, data_source=data_source)
             }
 
     def gen(self, user: DataSourceUser) -> str:
@@ -69,18 +69,18 @@ class TenantUserIDGenerator:
     def _reuse_or_generate_uuid(self, user: DataSourceUser) -> str:
         if self.prepare_batch:
             # 有准备的，直接从映射表里面查询
-            if uuid := self.uuid_map.get((self.target_tenant_id, self.data_source.id, user.code)):
-                return uuid
+            if user_id := self.tenant_user_id_map.get((self.target_tenant_id, self.data_source.id, user.code)):
+                return user_id
         else:
             # 没有准备的需现查 DB，没有的话就创建并生成
-            record = TenantUserUUIDRecord.objects.filter(
+            record = TenantUserIDRecord.objects.filter(
                 tenant_id=self.target_tenant_id, data_source=self.data_source, code=user.code
             ).first()
-            if record and record.uuid:
-                return record.uuid
+            if record and record.tenant_user_id:
+                return record.tenant_user_id
 
         uuid = generate_uuid()
-        TenantUserUUIDRecord.objects.create(
-            tenant_id=self.target_tenant_id, data_source_id=self.data_source.id, code=user.code, uuid=uuid
+        TenantUserIDRecord.objects.create(
+            tenant_id=self.target_tenant_id, data_source_id=self.data_source.id, code=user.code, tenant_user_id=uuid
         )
         return uuid
