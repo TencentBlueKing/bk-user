@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
 from django.db import models, transaction
@@ -86,6 +87,11 @@ class DataSource(AuditedModel):
     def is_real_type(self) -> bool:
         """检查数据源类型是否为实体"""
         return self.type == DataSourceTypeEnum.REAL
+
+    @property
+    def sync_timeout(self) -> int:
+        """同步超时时间（单位：秒）"""
+        return self.sync_config.get("sync_timeout", settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT)
 
     def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置
