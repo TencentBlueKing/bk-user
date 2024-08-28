@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.db import transaction
 from django.db.models import Q, QuerySet
 from drf_yasg.utils import swagger_auto_schema
@@ -20,7 +21,7 @@ from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.apps.tenant.utils import gen_tenant_user_id
+from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .mixins import CurrentTenantVirtualDataSource
@@ -91,7 +92,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             # 虚拟用户只会同步到数据源所属租户下
             tenant_id = data_source.owner_tenant_id
             tenant_user = TenantUser.objects.create(
-                id=gen_tenant_user_id(tenant_id, data_source, user),
+                id=TenantUserIDGenerator(tenant_id, data_source).gen(user),
                 data_source_user=user,
                 tenant_id=tenant_id,
                 data_source=data_source,
