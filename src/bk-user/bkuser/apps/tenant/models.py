@@ -257,8 +257,8 @@ class TenantUserIDRecord(TimestampedModel):
     租户用户 ID 记录
 
     Q：为什么需要有这个表？
-    A：为了解决这么一个场景：数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，需要尽可能使用一致的 UUID
-       由于在同一个数据源中，code 是唯一的，因此这里选择存储 (tenant_id, data_source_id, code) -> UUID 映射关系
+    A：为了解决这么一个场景：数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，需要使用一致的租户用户 ID
+       由于在同一个数据源中，code 是唯一的，因此这里选择存储 (tenant_id, data_source_id, code) -> 租户用户 ID 映射关系
     """
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)

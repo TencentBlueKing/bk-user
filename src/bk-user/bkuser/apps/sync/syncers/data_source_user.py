@@ -77,15 +77,15 @@ class DataSourceUserSyncer:
         waiting_create_users = self._get_waiting_create_users(self.raw_users, waiting_create_user_codes)
 
         with transaction.atomic():
-            # 1. 删除
+            # Q: 为什么这里的顺序应该是 1. 删除 2. 更新 3. 创建
+            # A: 同步操作原则是数据库尽可能 “干净” 以避免冲突，因此删除是最优先的，可以让数据更少，
+            #  而更新放在第二步的原因是 “挪窝”，可以避免一些已有的数据和待创建的数据冲突导致同步失败
             waiting_delete_users.delete()
-            # 2. 更新
             DataSourceUser.objects.bulk_update(
                 waiting_update_users,
                 fields=["username", "full_name", "email", "phone", "phone_country_code", "extras", "updated_at"],
                 batch_size=self.batch_size,
             )
-            # 3. 创建
             DataSourceUser.objects.bulk_create(waiting_create_users, batch_size=self.batch_size)
 
         self.ctx.logger.info(f"delete {len(waiting_delete_users)} users")
