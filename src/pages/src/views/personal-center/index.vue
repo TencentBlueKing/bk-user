@@ -164,13 +164,16 @@
                           @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.email)">
                         </i>
 
-                        <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
-                        <bk-button
-                          text
-                          theme="primary"
-                          @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.email)">
-                          验证
-                        </bk-button>
+                        <tempalte v-if="true">
+                          <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
+                          <bk-button
+                            text
+                            theme="primary"
+                            @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.email)">
+                            {{ t('验证') }}
+                          </bk-button>
+                        </tempalte>
+                        <bk-tag v-else theme="success">{{ t('已验证') }}</bk-tag>
                       </div>
                     </div>
                   </li>
@@ -193,13 +196,16 @@
                           @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.phone)">
                         </i>
 
-                        <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
-                        <bk-button
-                          text
-                          theme="primary"
-                          @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.phone)">
-                          验证
-                        </bk-button>
+                        <template v-if="false">
+                          <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
+                          <bk-button
+                            text
+                            theme="primary"
+                            @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.phone)">
+                            {{ t('验证') }}
+                          </bk-button>
+                        </template>
+                        <bk-tag v-else theme="success">{{ t('已验证') }}</bk-tag>
                       </div>
                     </div>
                   </li>
@@ -351,36 +357,40 @@
         :header-tips="unSupportEidtEmail ? t('继承数据源邮箱不支持编辑，已为您切换为自定义模式进行编辑') : ''"
         v-model:active="currentVerifyConfig.active">
         <template #[OpenDialogActive.inherit]>
-          <bk-form :model="editForm" ref="eidtFormRef">
+          <bk-form :model="inheritForm">
             <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
               <img :src="emailImg" class="verify-icon" />
               <span>
-                {{ `${t('请输入')} ${'132465798@qq.com'} ${'收到的邮箱验证码'}` }}
+                {{ `${t('请输入')} ${curEmail} ${'收到的邮箱验证码'}` }}
               </span>
             </div>
 
             <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
               <img :src="phoneImg" class="verify-icon" />
               <span>
-                {{ `${t('请输入')} ${'132465798'} ${'收到的手机验证码'}` }}
+                {{ `${t('请输入')} ${curPhone} ${'收到的手机验证码'}` }}
               </span>
             </div>
 
             <div class="flex justify-center m-[10px]">
               <bk-input
                 :placeholder="t('请输入验证码')"
-                v-model="editForm.captcha"
+                v-model="inheritForm.captcha"
+                property="captcha"
                 :disabled="unSupportEidtEmail" />
-              <bk-button outline theme="primary" class="ml-[10px]" :disabled="unSupportEidtEmail">
-                {{ t('获取验证码') }}
+              <bk-button
+                outline theme="primary" class="ml-[10px] w-[120px]"
+                :disabled="unSupportEidtEmail || inheritFormCaptchaBtn.disabled"
+                @click="handleSendCaptcha(OpenDialogActive.inherit)">
+                {{ inheritFormCaptchaBtn.disabled ? `${inheritFormCaptchaBtn.times}s` : t('获取验证码') }}
               </bk-button>
             </div>
           </bk-form>
         </template>
         <template #[OpenDialogActive.custom]>
-          <bk-form :model="verifyForm" ref="verifyFormRef">
+          <bk-form :model="customForm">
             <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
-              <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
+              <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="customForm.email">
                 <template #prefix>
                   <span class="input-icon flex items-center">
                     <img :src="emailImg" class="verify-icon ml-[5px]" />
@@ -390,7 +400,7 @@
             </div>
 
             <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
-              <bk-input :placeholder="t('请输入手机号以接收短信验证码')" v-model="verifyForm.phone">
+              <bk-input :placeholder="t('请输入手机号以接收短信验证码')" v-model="customForm.phone">
                 <template #prefix>
                   <span class="input-icon flex items-center">
                     <img :src="phoneImg" class="verify-icon ml-[5px]" />
@@ -400,16 +410,23 @@
             </div>
 
             <div class="flex justify-center m-[10px]">
-              <bk-input :placeholder="t('请输入验证码')" v-model="verifyForm.captcha"></bk-input>
-              <bk-button outline theme="primary" class="ml-[10px]">{{ t('获取验证码') }}</bk-button>
+              <bk-input :placeholder="t('请输入验证码')" v-model="customForm.captcha"></bk-input>
+              <bk-button
+                outline theme="primary" class="ml-[10px] w-[120px]"
+                :disabled="customFormCaptchaBtn.disabled"
+                width="120"
+                @click="handleSendCaptcha(OpenDialogActive.custom)">
+                {{ customFormCaptchaBtn.disabled ? `${customFormCaptchaBtn.times}s` : t('获取验证码') }}
+              </bk-button>
             </div>
           </bk-form>
         </template>
         <template #footer>
           <div class="pb-[20px] m-[10px] mb-[0px]">
-            <bk-button class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
-                       :disabled="unSupportEidtEmail && currentVerifyConfig.active === OpenDialogActive.inherit"
-                       @click="handleSubmitVerifyForm">
+            <bk-button
+              class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
+              :disabled="unSupportEidtEmail && currentVerifyConfig.active === OpenDialogActive.inherit"
+              @click="handleSubmitVerifyForm">
               {{ t('确定') }}
             </bk-button>
             <bk-button class="w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
@@ -421,10 +438,11 @@
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, unref, watch } from 'vue';
 
-import { OpenDialogActive, OpenDialogMode, OpenDialogType } from './openDialogType';
+import { OpenDialogActive, OpenDialogMode, openDialogResult, OpenDialogType } from './openDialogType';
 import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
@@ -444,6 +462,7 @@ import phoneImg from '@/images/phone.svg';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
+import { useCountDown } from '@/hooks/useCountDown';
 
 const user = useUser();
 const userInfo = ref(user.user);
@@ -665,38 +684,95 @@ const currentVerifyConfig = reactive({
   active: null,
 });
 
-interface EidtForm {
+interface InheritForm {
   captcha: string,
 }
-const editForm = reactive<EidtForm>({
+const inheritForm = reactive<InheritForm>({
   captcha: '',
 });
-const resetEditForm = () => {
-  editForm.captcha = '';
+const resetInheritForm = () => {
+  inheritForm.captcha = '';
 };
 
-const eidtFormRef = ref(null);
-
-interface VerifyForm {
+interface CustomForm {
   email: string,
   phone: string,
   captcha: string,
 }
-const verifyForm = reactive<VerifyForm>({
-  email: '',
-  phone: '',
-  captcha: ''
+
+const inheritFormCaptchaBtn = reactive({
+  disabled: false,
+  times: 0,
 });
-const resetVerifyForm = () => {
-  verifyForm.email = '';
-  verifyForm.phone = '';
-  verifyForm.captcha = '';
+
+const customFormCaptchaBtn = reactive({
+  disabled: false,
+  times: 0,
+});
+
+const handleSendCaptcha = (active: OpenDialogActive) => {
+  const captchaCoolingTime = 10;
+  const shutDownPointTime = 0;
+  if (active === OpenDialogActive.inherit) {
+    const { closeTimePolling } = useCountDown({
+      beforeStart: () => {
+        inheritFormCaptchaBtn.times = captchaCoolingTime;
+        inheritFormCaptchaBtn.disabled = true;
+      },
+      intervalFn: () => inheritFormCaptchaBtn.times -= 1,
+      beforeClose: () => inheritFormCaptchaBtn.disabled = false,
+    });
+
+    watch([() => inheritFormCaptchaBtn.times, showVerifyDialog], ([curBtnTimes, curShow]) => {
+      curBtnTimes === shutDownPointTime && closeTimePolling();
+      !curShow && closeTimePolling();
+    });
+    return;
+  }
+  if (active === OpenDialogActive.custom) {
+    const { closeTimePolling } = useCountDown({
+      beforeStart: () => {
+        customFormCaptchaBtn.times = captchaCoolingTime;
+        customFormCaptchaBtn.disabled = true;
+      },
+      intervalFn: () => customFormCaptchaBtn.times -= 1,
+      beforeClose: () => inheritFormCaptchaBtn.disabled = false,
+    });
+
+    watch([() => customFormCaptchaBtn.times, showVerifyDialog], ([curBtnTimes, curShow]) => {
+      curBtnTimes === shutDownPointTime && closeTimePolling();
+      !curShow && closeTimePolling();
+    });
+    return;
+  }
 };
 
-const verifyFormRef = ref(null);
+const curEmail = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_email
+    ? currentUserInfo.value.email
+    : currentUserInfo.value.custom_email;
+  return result === '--' ? '15918855681' : result;
+});
 
-const unSupportEidtEmail = computed(() =>
-currentVerifyConfig.type === OpenDialogType.email
+const curPhone = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_phone
+    ? currentUserInfo.value.phone
+    : currentUserInfo.value.custom_phone;
+  return result === '--' ? '' : result;
+});
+
+const customForm = reactive<CustomForm>({
+  email: '',
+  phone: '',
+  captcha: '',
+});
+const resetCustomForm = () => {
+  customForm.email = '';
+  customForm.phone = '';
+  customForm.captcha = '';
+};
+
+const unSupportEidtEmail = computed(() => currentVerifyConfig.type === OpenDialogType.email
 && currentVerifyConfig.mode === OpenDialogMode.Edit);
 
 // 验证身份信息下的邮箱或手机号
@@ -720,14 +796,31 @@ const verifyIdentityInfo = (mode: OpenDialogMode, type: OpenDialogType) => {
 
 const handleCloseVerifyDialog = () => {
   showVerifyDialog.value = false;
-  resetEditForm();
-  resetVerifyForm();
+  resetInheritForm();
+  resetCustomForm();
 };
 
-const handleSubmitVerifyForm = () => {
-  console.log(verifyForm);
-  console.log(editForm);
-  handleCloseVerifyDialog();
+const handleSubmitVerifyForm = async () => {
+  const { type, mode, active } = currentVerifyConfig;
+  const { email, phone } = OpenDialogType;
+  const { success, fail } = openDialogResult;
+  const { inherit, custom } = OpenDialogActive;
+
+  const infoBoxConfig: Partial<BkInfoBoxConfig> = {
+    type: success,
+    title: '',
+    closeIcon: false,
+  };
+
+  // console.log(type, mode, active);
+
+  if (type === email && infoBoxConfig.type === success) infoBoxConfig.title = t('邮箱验证成功');
+  if (type === email && infoBoxConfig.type === fail) infoBoxConfig.title = t('邮箱验证失败');
+  if (type === phone && infoBoxConfig.type === success) infoBoxConfig.title = t('手机号验证成功');
+  if (type === phone && infoBoxConfig.type === fail) infoBoxConfig.title = t('手机号验证失败');
+
+  // handleCloseVerifyDialog();
+  // InfoBox(infoBoxConfig);
 };
 
 // 切换关联账号

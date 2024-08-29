@@ -12,3 +12,8 @@ export enum OpenDialogActive {
   inherit,
   custom
 };
+
+export enum openDialogResult {
+  success = 'success',
+  fail = 'danger'
+};
