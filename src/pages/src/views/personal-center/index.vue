@@ -150,30 +150,7 @@
                       <span class="required-icon"> * </span>
                       {{ $t('邮箱') }}：</span>
                     <div class="value-content">
-                      <div class="value-edit" v-if="isEditEmail">
-                        <bk-radio-group
-                          class="mr8"
-                          v-model="currentUserInfo.is_inherited_email"
-                          @change="toggleEmail"
-                        >
-                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
-                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
-                        </bk-radio-group>
-                        <bk-input
-                          v-if="currentUserInfo.is_inherited_email"
-                          v-model="currentUserInfo.email"
-                          :disabled="currentUserInfo.is_inherited_email" />
-                        <bk-form-item v-else class="email-input" property="custom_email">
-                          <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
-                        </bk-form-item>
-                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeEmail">
-                          {{ $t('确定') }}
-                        </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditEmail">
-                          {{ $t('取消') }}
-                        </bk-button>
-                      </div>
-                      <div v-else>
+                      <div>
                         <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_email)">
                           {{ tagText(currentUserInfo.is_inherited_email) }}
                         </bk-tag>
@@ -182,7 +159,18 @@
                             ? currentUserInfo.email
                             : currentUserInfo.custom_email }}
                         </span>
-                        <i class="user-icon icon-edit" @click="isEditEmail = true" />
+                        <i
+                          class="user-icon icon-edit"
+                          @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.email)">
+                        </i>
+
+                        <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
+                        <bk-button
+                          text
+                          theme="primary"
+                          @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.email)">
+                          验证
+                        </bk-button>
                       </div>
                     </div>
                   </li>
@@ -191,41 +179,7 @@
                       <span class="required-icon"> * </span>
                       {{ $t('手机号') }}：</span>
                     <div class="value-content">
-                      <div class="value-edit" v-if="isEditPhone">
-                        <bk-radio-group
-                          class="mr8"
-                          v-model="currentUserInfo.is_inherited_phone"
-                          @change="togglePhone"
-                        >
-                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
-                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
-                        </bk-radio-group>
-                        <bk-form-item
-                          v-if="currentUserInfo.is_inherited_phone"
-                          class="phone-input">
-                          <phoneInput
-                            :form-data="currentUserInfo"
-                            :disabled="currentUserInfo.is_inherited_phone"
-                            autofocus="autofocus"
-                          />
-                        </bk-form-item>
-                        <bk-form-item v-else class="phone-input">
-                          <phoneInput
-                            :form-data="currentUserInfo"
-                            :tel-error="telError"
-                            :custom="true"
-                            @change-country-code="changeCountryCode"
-                            @change-tel-error="changeTelError"
-                            @keydown.enter="changePhone" />
-                        </bk-form-item>
-                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
-                          {{ $t('确定') }}
-                        </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditPhone">
-                          {{ $t('取消') }}
-                        </bk-button>
-                      </div>
-                      <div v-else>
+                      <div>
                         <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_phone)">
                           {{ tagText(currentUserInfo.is_inherited_phone) }}
                         </bk-tag>
@@ -234,7 +188,18 @@
                             ? currentUserInfo.phone
                             : currentUserInfo.custom_phone }}
                         </span>
-                        <i class="user-icon icon-edit" @click="isEditPhone = true" />
+                        <i
+                          class="user-icon icon-edit"
+                          @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.phone)">
+                        </i>
+
+                        <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
+                        <bk-button
+                          text
+                          theme="primary"
+                          @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.phone)">
+                          验证
+                        </bk-button>
                       </div>
                     </div>
                   </li>
@@ -378,16 +343,91 @@
       <ChangePassword
         :config="passwordModalConfig"
         @closed="hidePasswordModal" />
+      <!-- 邮箱、手机号编辑验证 -->
+      <verifyIdentityInfoDialog
+        v-model:is-show="showVerifyDialog"
+        :mode="currentVerifyConfig.mode"
+        :type="currentVerifyConfig.type"
+        :header-tips="unSupportEidtEmail ? t('继承数据源邮箱不支持编辑，已为您切换为自定义模式进行编辑') : ''"
+        v-model:active="currentVerifyConfig.active">
+        <template #[OpenDialogActive.inherit]>
+          <bk-form :model="editForm" ref="eidtFormRef">
+            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
+              <img :src="emailImg" class="verify-icon" />
+              <span>
+                {{ `${t('请输入')} ${'132465798@qq.com'} ${'收到的邮箱验证码'}` }}
+              </span>
+            </div>
+
+            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
+              <img :src="phoneImg" class="verify-icon" />
+              <span>
+                {{ `${t('请输入')} ${'132465798'} ${'收到的手机验证码'}` }}
+              </span>
+            </div>
+
+            <div class="flex justify-center m-[10px]">
+              <bk-input
+                :placeholder="t('请输入验证码')"
+                v-model="editForm.captcha"
+                :disabled="unSupportEidtEmail" />
+              <bk-button outline theme="primary" class="ml-[10px]" :disabled="unSupportEidtEmail">
+                {{ t('获取验证码') }}
+              </bk-button>
+            </div>
+          </bk-form>
+        </template>
+        <template #[OpenDialogActive.custom]>
+          <bk-form :model="verifyForm" ref="verifyFormRef">
+            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
+              <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
+                <template #prefix>
+                  <span class="input-icon flex items-center">
+                    <img :src="emailImg" class="verify-icon ml-[5px]" />
+                  </span>
+                </template>
+              </bk-input>
+            </div>
+
+            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
+              <bk-input :placeholder="t('请输入手机号以接收短信验证码')" v-model="verifyForm.phone">
+                <template #prefix>
+                  <span class="input-icon flex items-center">
+                    <img :src="phoneImg" class="verify-icon ml-[5px]" />
+                  </span>
+                </template>
+              </bk-input>
+            </div>
+
+            <div class="flex justify-center m-[10px]">
+              <bk-input :placeholder="t('请输入验证码')" v-model="verifyForm.captcha"></bk-input>
+              <bk-button outline theme="primary" class="ml-[10px]">{{ t('获取验证码') }}</bk-button>
+            </div>
+          </bk-form>
+        </template>
+        <template #footer>
+          <div class="pb-[20px] m-[10px] mb-[0px]">
+            <bk-button class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
+                       :disabled="unSupportEidtEmail && currentVerifyConfig.active === OpenDialogActive.inherit"
+                       @click="handleSubmitVerifyForm">
+              {{ t('确定') }}
+            </bk-button>
+            <bk-button class="w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
+          </div>
+        </template>
+      </verifyIdentityInfoDialog>
     </template>
   </bk-resize-layout>
 </template>
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+
+import { OpenDialogActive, OpenDialogMode, OpenDialogType } from './openDialogType';
+import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
-import phoneInput from '@/components/phoneInput.vue';
 import { useCustomFields, useValidate } from '@/hooks';
 import {
   getCurrentNaturalUser,
@@ -395,12 +435,12 @@ import {
   getPersonalCenterUsers,
   getPersonalCenterUserVisibleFields,
   patchTenantUsersLogo,
-  patchUsersEmail,
-  patchUsersPhone,
   putPersonalCenterUserExtrasFields,
   putUserLanguage,
   putUserTimeZone,
 } from '@/http';
+import emailImg from '@/images/email.svg';
+import phoneImg from '@/images/phone.svg';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
@@ -450,8 +490,6 @@ const getNaturalUser = () => {
 const getCurrentUser = async (id) => {
   try {
     infoLoading.value = true;
-    isEditEmail.value = false;
-    isEditPhone.value = false;
     currentNaturalUser.value?.tenant_users.forEach((item) => {
       if (item.id === id) {
         currentTenantInfo.value = item;
@@ -610,48 +648,7 @@ watch(() => currentUserInfo.value?.extras, (val) => {
 const tagTheme = value => (value ? 'info' : 'warning');
 const tagText = value => (value ? t('继承数据源') : t('自定义'));
 
-const isEditEmail = ref(false);
-
-watch(() => isEditEmail.value, (val) => {
-  if (val) {
-    window.changeInput = true;
-  }
-});
-
 const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === currentTenantInfo.value.full_name);
-
-// 切换邮箱
-const toggleEmail = (value) => {
-  nextTick(() => {
-    if (!value) {
-      currentUserInfo.value.custom_email = customEmail.value;
-      const emailInput = document.querySelectorAll('.email-input input');
-      emailInput[0].focus();
-    }
-  });
-};
-// 修改邮箱
-const changeEmail = async () => {
-  await formRef.value.validate();
-  isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-  customEmail.value = currentUserInfo.value.custom_email;
-  patchUsersEmail({
-    id: currentUserInfo.value.id,
-    is_inherited_email: currentUserInfo.value.is_inherited_email,
-    custom_email: currentUserInfo.value.custom_email,
-  }).then(() => {
-    isEditEmail.value = false;
-    isEditing();
-    Message({ theme: 'success', message: t('保存成功') });
-  });
-};
-// 取消编辑邮箱
-const cancelEditEmail = () => {
-  currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
-  currentUserInfo.value.custom_email = customEmail.value;
-  isEditEmail.value = false;
-  isEditing();
-};
 
 const isEditPhone = ref(false);
 
@@ -661,42 +658,80 @@ watch(() => isEditPhone.value, (val) => {
   }
 });
 
-// 切换手机号
-const togglePhone = (value) => {
-  nextTick(() => {
-    if (value) return telError.value = false;
-    currentUserInfo.value.custom_phone = customPhone.value;
-    const phoneInput = document.querySelectorAll('.phone-input input');
-    phoneInput[0].focus();
-  });
+const showVerifyDialog = ref(false);
+const currentVerifyConfig = reactive({
+  mode: OpenDialogMode.Verify,
+  type: OpenDialogType.email,
+  active: null,
+});
+
+interface EidtForm {
+  captcha: string,
+}
+const editForm = reactive<EidtForm>({
+  captcha: '',
+});
+const resetEditForm = () => {
+  editForm.captcha = '';
 };
-// 修改手机号
-const changePhone = () => {
-  if (telError.value) return;
-  isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-  customEmail.value = currentUserInfo.value.custom_phone;
-  patchUsersPhone({
-    id: currentUserInfo.value.id,
-    is_inherited_phone: currentUserInfo.value.is_inherited_phone,
-    custom_phone: currentUserInfo.value.custom_phone,
-    custom_phone_country_code: currentUserInfo.value.custom_phone_country_code,
-  }).then(() => {
-    isEditPhone.value = false;
-    isEditing();
-    Message({ theme: 'success', message: t('保存成功') });
-  });
+
+const eidtFormRef = ref(null);
+
+interface VerifyForm {
+  email: string,
+  phone: string,
+  captcha: string,
+}
+const verifyForm = reactive<VerifyForm>({
+  email: '',
+  phone: '',
+  captcha: ''
+});
+const resetVerifyForm = () => {
+  verifyForm.email = '';
+  verifyForm.phone = '';
+  verifyForm.captcha = '';
 };
-// 取消编辑手机号
-const cancelEditPhone = () => {
-  currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
-  currentUserInfo.value.custom_phone = customPhone.value;
-  currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
-  isEditPhone.value = false;
-  telError.value = false;
-  isEditing();
+
+const verifyFormRef = ref(null);
+
+const unSupportEidtEmail = computed(() =>
+currentVerifyConfig.type === OpenDialogType.email
+&& currentVerifyConfig.mode === OpenDialogMode.Edit);
+
+// 验证身份信息下的邮箱或手机号
+const verifyIdentityInfo = (mode: OpenDialogMode, type: OpenDialogType) => {
+  currentVerifyConfig.mode = mode;
+  currentVerifyConfig.type = type;
+  const { inherit, custom } = OpenDialogActive;
+  // 根据当前tag来决定打开dialog面板的active
+  if (type === OpenDialogType.email && mode === OpenDialogMode.Verify) {
+    currentVerifyConfig.active = currentUserInfo.value.is_inherited_email ? inherit : custom;
+  }
+  // 邮箱不支持继承 只能自定义
+  if (type === OpenDialogType.email && mode === OpenDialogMode.Edit) {
+    currentVerifyConfig.active = custom;
+  }
+  if (type === OpenDialogType.phone) {
+    currentVerifyConfig.active = currentUserInfo.value.is_inherited_phone ? inherit : custom;
+  }
+  showVerifyDialog.value = true;
 };
+
+const handleCloseVerifyDialog = () => {
+  showVerifyDialog.value = false;
+  resetEditForm();
+  resetVerifyForm();
+};
+
+const handleSubmitVerifyForm = () => {
+  console.log(verifyForm);
+  console.log(editForm);
+  handleCloseVerifyDialog();
+};
+
 // 切换关联账号
-const handleClickItem = async (item) => {
+const handleClickItem = async (item: any) => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
@@ -705,17 +740,6 @@ const handleClickItem = async (item) => {
     return Promise.resolve(enableLeave);
   }
   getCurrentUser(item.id);
-};
-
-const telError = ref(false);
-
-const changeTelError = (value: boolean, phone: string) => {
-  telError.value = value;
-  currentUserInfo.value.custom_phone = phone;
-};
-
-const changeCountryCode = (code: string) => {
-  currentUserInfo.value.custom_phone_country_code = code;
 };
 
 const handleRes = (response: any) => {
@@ -742,12 +766,6 @@ const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
     Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
   }
-};
-
-// 是否是编辑状态
-const isEditing = () => {
-  const allFalse = currentUserInfo.value?.extras.every(item => !item.isEdit);
-  window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
 };
 
 // 修改密码
@@ -1193,6 +1211,14 @@ const hidePasswordModal = () => {
   margin: 0 3px 0 0;
   line-height: 19px;
   color: #ff5e5e;
+  vertical-align: middle;
+}
+
+.verify-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
   vertical-align: middle;
 }
 </style>
