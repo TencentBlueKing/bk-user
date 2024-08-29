@@ -169,7 +169,7 @@
   "表达式": "表达式",
   "配置查询参数": "配置查询参数",
   "已配置x项查询参数": "已配置 {count} 项查询参数",
-  "查询参数(Query Parameters)：如/staffs？name=value: 出现在？后面，由&分隔。": "查询参数(Query Parameters)：如/staffs？name=value: 出现在？后面，由&分隔。",
+  "查询参数（Query Parameters）：如 /users?key=value，出现在 ? 后面，由 & 分隔": "查询参数（Query Parameters）：如 /users?key=value，出现在 ? 后面，由 & 分隔",
   "请输入Key": "请输入Key",
   "请输入Value": "请输入Value",
   "字段设置": "字段设置",

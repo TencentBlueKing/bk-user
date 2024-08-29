@@ -9,18 +9,18 @@
     z-index="2000"
   >
     <bk-button v-if="count === 0" text theme="primary" @click="handleShow">
-      <i class="user-icon icon-canshu mr-[6px]"></i>
+      <i class="mr-[6px] icon-canshu user-icon"></i>
       {{ $t('配置查询参数') }}
     </bk-button>
     <bk-button v-else text theme="primary" @click="handleShow">
-      <i class="user-icon icon-canshu"></i>
+      <i class="icon-canshu user-icon"></i>
       {{ $t('已配置x项查询参数', { count }) }}
     </bk-button>
     <template #content>
       <div class="config-params">
         <p class="title">
-          <i class="user-icon icon-info-i"></i>
-          {{ $t('查询参数(Query Parameters)：如/staffs？name=value: 出现在？后面，由&分隔。') }}
+          <i class="icon-info-i user-icon"></i>
+          {{ $t('查询参数（Query Parameters）：如 /users?key=value，出现在 ? 后面，由 & 分隔') }}
         </p>
         <bk-form
           class="config-form user-scroll-y"
@@ -32,7 +32,7 @@
             v-for="(item, index) in dataList"
             :key="index">
             <bk-form-item
-              class="w-[200px] mr-[8px]"
+              class="mr-[8px] w-[200px]"
               error-display-type="tooltips"
               :property="`${index}.key`"
               :rules="rules.key">
@@ -43,7 +43,7 @@
                 @input="$emit('updateStatus')" />
             </bk-form-item>
             <bk-form-item
-              class="w-[200px] mr-[10px]"
+              class="mr-[10px] w-[200px]"
               error-display-type="tooltips"
               :property="`${index}.value`"
               :rules="rules.value">
@@ -53,7 +53,7 @@
                 clearable
                 @input="$emit('updateStatus')" />
             </bk-form-item>
-            <i class="user-icon icon-plus-fill" @click="addParams" />
+            <i class="icon-plus-fill user-icon" @click="addParams" />
             <bk-button
               text
               :disabled="dataList.length === 1"

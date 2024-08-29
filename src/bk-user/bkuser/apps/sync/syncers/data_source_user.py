@@ -73,29 +73,29 @@ class DataSourceUserSyncer:
         waiting_update_user_codes = user_codes & raw_user_codes if self.overwrite else set()
 
         waiting_delete_users = self._get_waiting_delete_users(waiting_delete_user_codes)
-        waiting_create_users = self._get_waiting_create_users(self.raw_users, waiting_create_user_codes)
         waiting_update_users = self._get_waiting_update_users(self.raw_users, waiting_update_user_codes)
+        waiting_create_users = self._get_waiting_create_users(self.raw_users, waiting_create_user_codes)
 
         with transaction.atomic():
             # 1. 删除
             waiting_delete_users.delete()
-            # 2. 创建
-            DataSourceUser.objects.bulk_create(waiting_create_users, batch_size=self.batch_size)
-            # 3. 更新
+            # 2. 更新
             DataSourceUser.objects.bulk_update(
                 waiting_update_users,
                 fields=["username", "full_name", "email", "phone", "phone_country_code", "extras", "updated_at"],
                 batch_size=self.batch_size,
             )
+            # 3. 创建
+            DataSourceUser.objects.bulk_create(waiting_create_users, batch_size=self.batch_size)
 
         self.ctx.logger.info(f"delete {len(waiting_delete_users)} users")
         self.ctx.recorder.add(SyncOperation.DELETE, DataSourceSyncObjectType.USER, waiting_delete_users)
 
-        self.ctx.logger.info(f"create {len(waiting_create_users)} users")
-        self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.USER, waiting_create_users)
-
         self.ctx.logger.info(f"update {len(waiting_update_users)} users")
         self.ctx.recorder.add(SyncOperation.UPDATE, DataSourceSyncObjectType.USER, waiting_update_users)
+
+        self.ctx.logger.info(f"create {len(waiting_create_users)} users")
+        self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.USER, waiting_create_users)
 
     def _get_waiting_delete_users(self, user_codes: Set[str]) -> QuerySet[DataSourceUser]:
         return DataSourceUser.objects.filter(data_source=self.data_source, code__in=user_codes)

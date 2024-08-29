@@ -169,7 +169,7 @@
   "表达式": "Expression",
   "配置查询参数": "Configure Query Parameters",
   "已配置x项查询参数": "Configured {count} Query Parameters",
-  "查询参数(Query Parameters)：如/staffs？name=value: 出现在？后面，由&分隔。": "Query Parameters: such as /staffs?name=value, appear after ?, separated by &.",
+  "查询参数（Query Parameters）：如 /users?key=value，出现在 ? 后面，由 & 分隔": "Query Parameters: such as /users?key=value, appear after ?, separated by &.",
   "请输入Key": "Enter key",
   "请输入Value": "Enter value",
   "字段设置": "Field Settings",
