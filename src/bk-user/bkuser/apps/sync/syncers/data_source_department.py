@@ -70,28 +70,28 @@ class DataSourceDepartmentSyncer:
         waiting_update_dept_codes = dept_codes & raw_dept_codes if self.overwrite else set()
 
         waiting_delete_depts = self._get_waiting_delete_departments(waiting_delete_dept_codes)
-        waiting_create_depts = self._get_waiting_create_departments(self.raw_departments, waiting_create_dept_codes)
         waiting_update_depts = self._get_waiting_update_departments(self.raw_departments, waiting_update_dept_codes)
+        waiting_create_depts = self._get_waiting_create_departments(self.raw_departments, waiting_create_dept_codes)
 
         with transaction.atomic():
-            # 1. 删除
+            # Q: 为什么这里的顺序应该是 1. 删除 2. 更新 3. 创建
+            # A: 同步操作原则是数据库尽可能 “干净” 以避免冲突，因此删除是最优先的，可以让数据更少，
+            #  而更新放在第二步的原因是 “挪窝”，可以避免一些已有的数据和待创建的数据冲突导致同步失败
             waiting_delete_depts.delete()
-            # 2. 创建
-            DataSourceDepartment.objects.bulk_create(waiting_create_depts, batch_size=self.batch_size)
-            # 3. 更新
             DataSourceDepartment.objects.bulk_update(
                 waiting_update_depts, fields=["name", "extras", "updated_at"], batch_size=self.batch_size
             )
+            DataSourceDepartment.objects.bulk_create(waiting_create_depts, batch_size=self.batch_size)
 
         # 数据源部门同步相关日志
         self.ctx.logger.info(f"delete {len(waiting_delete_depts)} departments")
         self.ctx.recorder.add(SyncOperation.DELETE, DataSourceSyncObjectType.DEPARTMENT, waiting_delete_depts)
 
-        self.ctx.logger.info(f"create {len(waiting_create_depts)} departments")
-        self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.DEPARTMENT, waiting_create_depts)
-
         self.ctx.logger.info(f"update {len(waiting_update_depts)} departments")
         self.ctx.recorder.add(SyncOperation.UPDATE, DataSourceSyncObjectType.DEPARTMENT, waiting_update_depts)
+
+        self.ctx.logger.info(f"create {len(waiting_create_depts)} departments")
+        self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.DEPARTMENT, waiting_create_depts)
 
     def _get_waiting_delete_departments(self, dept_codes: Set[str]) -> QuerySet[DataSourceDepartment]:
         return DataSourceDepartment.objects.filter(data_source=self.data_source, code__in=dept_codes)
