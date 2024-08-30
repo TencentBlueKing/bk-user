@@ -334,6 +334,7 @@
         v-model:is-show="showVerifyDialog"
         :cur-email-text="curEmail"
         :cur-phone-text="curPhone"
+        :user-id="currentUserInfo?.id"
         :current-verify-config="currentVerifyConfig">
       </verifyIdentityInfoDialog>
     </template>

@@ -260,6 +260,8 @@
   "已验证": "Verified",
   "手机号验证成功": "Mobile number verification successful",
   "邮箱验证成功": "Email verification successful",
+  "手机号不允许为空": "Mobile number cannot be empty",
+  "邮箱不允许为空": "Email cannot be empty",
   "编辑邮箱": "Edit email",
   "继承数据源邮箱不支持编辑，已为您切换为自定义模式进行编辑": "Inheriting data source email does not support editing. We have switched to custom mode for editing",
   "编辑手机号": "Edit phone number",
