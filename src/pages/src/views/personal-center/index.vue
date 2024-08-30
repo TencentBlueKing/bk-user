@@ -160,8 +160,9 @@
                             : currentUserInfo.custom_email }}
                         </span>
                         <i
+                          v-if="emailUpdateRestriction !== emailEidtable.No"
                           class="user-icon icon-edit"
-                          @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.email)">
+                          @click="verifyIdentityInfo(curEmailDialogType, OpenDialogType.email)">
                         </i>
                       </div>
                     </div>
@@ -181,8 +182,9 @@
                             : currentUserInfo.custom_phone }}
                         </span>
                         <i
+                          v-if="phoneUpdateRestriction !== phoneEidtable.No"
                           class="user-icon icon-edit"
-                          @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.phone)">
+                          @click="verifyIdentityInfo(curEmailDialogType, OpenDialogType.phone)">
                         </i>
                       </div>
                     </div>
@@ -330,102 +332,23 @@
       <!-- 邮箱、手机号编辑验证 -->
       <verifyIdentityInfoDialog
         v-model:is-show="showVerifyDialog"
-        :mode="currentVerifyConfig.mode"
-        :type="currentVerifyConfig.type"
-        :header-tips="unSupportEidtEmail ? t('继承数据源邮箱不支持编辑，已为您切换为自定义模式进行编辑') : ''"
-        v-model:active="currentVerifyConfig.active">
-        <template #[OpenDialogActive.inherit]>
-          <bk-form :model="inheritForm">
-            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
-              <img :src="emailImg" class="verify-icon" />
-              <span>
-                {{ `${t('请输入')} ${curEmail} ${'收到的邮箱验证码'}` }}
-              </span>
-            </div>
-
-            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
-              <img :src="phoneImg" class="verify-icon" />
-              <span>
-                {{ `${t('请输入')} ${curPhone} ${'收到的手机验证码'}` }}
-              </span>
-            </div>
-
-            <div class="flex justify-center m-[10px]">
-              <bk-input
-                :placeholder="t('请输入验证码')"
-                v-model="inheritForm.captcha"
-                property="captcha"
-                :disabled="unSupportEidtEmail" />
-              <bk-button
-                outline theme="primary" class="ml-[10px] w-[120px]"
-                :disabled="unSupportEidtEmail || inheritFormCaptchaBtn.disabled"
-                @click="handleSendCaptcha(OpenDialogActive.inherit)">
-                {{ inheritFormCaptchaBtn.disabled ? `${inheritFormCaptchaBtn.times}s` : t('获取验证码') }}
-              </bk-button>
-            </div>
-          </bk-form>
-        </template>
-        <template #[OpenDialogActive.custom]>
-          <bk-form :model="customForm">
-            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.email">
-              <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="customForm.email">
-                <template #prefix>
-                  <span class="input-icon flex items-center">
-                    <img :src="emailImg" class="verify-icon ml-[5px]" />
-                  </span>
-                </template>
-              </bk-input>
-            </div>
-
-            <div class="m-[10px] mt-[20px] h-[40px]" v-if="currentVerifyConfig.type === OpenDialogType.phone">
-              <bk-input :placeholder="t('请输入手机号以接收短信验证码')" v-model="customForm.phone">
-                <template #prefix>
-                  <span class="input-icon flex items-center">
-                    <img :src="phoneImg" class="verify-icon ml-[5px]" />
-                  </span>
-                </template>
-              </bk-input>
-            </div>
-
-            <div class="flex justify-center m-[10px]">
-              <bk-input :placeholder="t('请输入验证码')" v-model="customForm.captcha"></bk-input>
-              <bk-button
-                outline theme="primary" class="ml-[10px] w-[120px]"
-                :disabled="customFormCaptchaBtn.disabled"
-                width="120"
-                @click="handleSendCaptcha(OpenDialogActive.custom)">
-                {{ customFormCaptchaBtn.disabled ? `${customFormCaptchaBtn.times}s` : t('获取验证码') }}
-              </bk-button>
-            </div>
-          </bk-form>
-        </template>
-        <template #footer>
-          <div class="pb-[20px] m-[10px] mb-[0px]">
-            <bk-button
-              class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
-              :disabled="unSupportEidtEmail && currentVerifyConfig.active === OpenDialogActive.inherit"
-              @click="handleSubmitVerifyForm">
-              {{ t('确定') }}
-            </bk-button>
-            <bk-button class="w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
-          </div>
-        </template>
+        :cur-email-text="curEmail"
+        :cur-phone-text="curPhone"
+        :current-verify-config="currentVerifyConfig">
       </verifyIdentityInfoDialog>
     </template>
   </bk-resize-layout>
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
-import { OpenDialogActive, OpenDialogMode, openDialogResult, OpenDialogType } from './openDialogType';
+import { emailEidtable, OpenDialogActive, OpenDialogMode, OpenDialogType, phoneEidtable } from './openDialogType';
 import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import { useCustomFields, useValidate } from '@/hooks';
-import { useCountDown } from '@/hooks/useCountDown';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUserFeature,
@@ -436,8 +359,6 @@ import {
   putUserLanguage,
   putUserTimeZone,
 } from '@/http';
-import emailImg from '@/images/email.svg';
-import phoneImg from '@/images/phone.svg';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
@@ -448,6 +369,7 @@ const userInfo = ref(user.user);
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
 const currentNaturalUser = ref({});
+
 // 当前用户信息
 const currentUserInfo = ref({});
 // 当前租户信息
@@ -469,6 +391,11 @@ const formRef = ref();
 const extrasList = ref([]);
 // 是否可以修改密码
 const canChangePassword = ref(false);
+// 是否可以修改邮箱
+const emailUpdateRestriction = ref<emailEidtable>(emailEidtable.Verify);
+// 是否可以修改手机
+const phoneUpdateRestriction = ref<phoneEidtable>(phoneEidtable.Verify);
+
 
 onMounted(() => {
   getNaturalUser();
@@ -504,6 +431,8 @@ const getCurrentUser = async (id) => {
       extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
     };
     canChangePassword.value = featureRes.data.can_change_password;
+    emailUpdateRestriction.value = featureRes.data.email_update_restriction;
+    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
     extrasList.value = [...currentUserInfo.value.extras];
     customEmail.value = userRes.data.custom_email;
     customPhone.value = userRes.data.custom_phone;
@@ -519,6 +448,7 @@ const getCurrentUser = async (id) => {
   } finally {
     infoLoading.value = false;
   }
+  console.log(currentUserInfo);
 };
 
 // 获取当前编辑框焦点
@@ -655,152 +585,6 @@ watch(() => isEditPhone.value, (val) => {
   }
 });
 
-const showVerifyDialog = ref(false);
-const currentVerifyConfig = reactive({
-  mode: OpenDialogMode.Verify,
-  type: OpenDialogType.email,
-  active: null,
-});
-
-interface InheritForm {
-  captcha: string,
-}
-const inheritForm = reactive<InheritForm>({
-  captcha: '',
-});
-const resetInheritForm = () => {
-  inheritForm.captcha = '';
-};
-
-interface CustomForm {
-  email: string,
-  phone: string,
-  captcha: string,
-}
-
-const inheritFormCaptchaBtn = reactive({
-  disabled: false,
-  times: 0,
-});
-
-const customFormCaptchaBtn = reactive({
-  disabled: false,
-  times: 0,
-});
-
-const handleSendCaptcha = (active: OpenDialogActive) => {
-  const captchaCoolingTime = 10;
-  const shutDownPointTime = 0;
-  if (active === OpenDialogActive.inherit) {
-    const { closeTimePolling } = useCountDown({
-      beforeStart: () => {
-        inheritFormCaptchaBtn.times = captchaCoolingTime;
-        inheritFormCaptchaBtn.disabled = true;
-      },
-      intervalFn: () => inheritFormCaptchaBtn.times -= 1,
-      beforeClose: () => inheritFormCaptchaBtn.disabled = false,
-    });
-
-    watch([() => inheritFormCaptchaBtn.times, showVerifyDialog], ([curBtnTimes, curShow]) => {
-      curBtnTimes === shutDownPointTime && closeTimePolling();
-      !curShow && closeTimePolling();
-    });
-    return;
-  }
-  if (active === OpenDialogActive.custom) {
-    const { closeTimePolling } = useCountDown({
-      beforeStart: () => {
-        customFormCaptchaBtn.times = captchaCoolingTime;
-        customFormCaptchaBtn.disabled = true;
-      },
-      intervalFn: () => customFormCaptchaBtn.times -= 1,
-      beforeClose: () => inheritFormCaptchaBtn.disabled = false,
-    });
-
-    watch([() => customFormCaptchaBtn.times, showVerifyDialog], ([curBtnTimes, curShow]) => {
-      curBtnTimes === shutDownPointTime && closeTimePolling();
-      !curShow && closeTimePolling();
-    });
-    return;
-  }
-};
-
-const curEmail = computed<string>(() => {
-  const result: string = currentUserInfo.value.is_inherited_email
-    ? currentUserInfo.value.email
-    : currentUserInfo.value.custom_email;
-  return result === '--' ? '15918855681' : result;
-});
-
-const curPhone = computed<string>(() => {
-  const result: string = currentUserInfo.value.is_inherited_phone
-    ? currentUserInfo.value.phone
-    : currentUserInfo.value.custom_phone;
-  return result === '--' ? '' : result;
-});
-
-const customForm = reactive<CustomForm>({
-  email: '',
-  phone: '',
-  captcha: '',
-});
-const resetCustomForm = () => {
-  customForm.email = '';
-  customForm.phone = '';
-  customForm.captcha = '';
-};
-
-const unSupportEidtEmail = computed(() => currentVerifyConfig.type === OpenDialogType.email
-&& currentVerifyConfig.mode === OpenDialogMode.Edit);
-
-// 验证身份信息下的邮箱或手机号
-const verifyIdentityInfo = (mode: OpenDialogMode, type: OpenDialogType) => {
-  currentVerifyConfig.mode = mode;
-  currentVerifyConfig.type = type;
-  const { inherit, custom } = OpenDialogActive;
-  // 根据当前tag来决定打开dialog面板的active
-  if (type === OpenDialogType.email && mode === OpenDialogMode.Verify) {
-    currentVerifyConfig.active = currentUserInfo.value.is_inherited_email ? inherit : custom;
-  }
-  // 邮箱不支持继承 只能自定义
-  if (type === OpenDialogType.email && mode === OpenDialogMode.Edit) {
-    currentVerifyConfig.active = custom;
-  }
-  if (type === OpenDialogType.phone) {
-    currentVerifyConfig.active = currentUserInfo.value.is_inherited_phone ? inherit : custom;
-  }
-  showVerifyDialog.value = true;
-};
-
-const handleCloseVerifyDialog = () => {
-  showVerifyDialog.value = false;
-  resetInheritForm();
-  resetCustomForm();
-};
-
-const handleSubmitVerifyForm = async () => {
-  const { type, mode, active } = currentVerifyConfig;
-  const { email, phone } = OpenDialogType;
-  const { success, fail } = openDialogResult;
-  const { inherit, custom } = OpenDialogActive;
-
-  const infoBoxConfig: Partial<BkInfoBoxConfig> = {
-    type: success,
-    title: '',
-    closeIcon: false,
-  };
-
-  // console.log(type, mode, active);
-
-  if (type === email && infoBoxConfig.type === success) infoBoxConfig.title = t('邮箱验证成功');
-  if (type === email && infoBoxConfig.type === fail) infoBoxConfig.title = t('邮箱验证失败');
-  if (type === phone && infoBoxConfig.type === success) infoBoxConfig.title = t('手机号验证成功');
-  if (type === phone && infoBoxConfig.type === fail) infoBoxConfig.title = t('手机号验证失败');
-
-  // handleCloseVerifyDialog();
-  // InfoBox(infoBoxConfig);
-};
-
 // 切换关联账号
 const handleClickItem = async (item: any) => {
   let enableLeave = true;
@@ -819,6 +603,49 @@ const handleRes = (response: any) => {
   }
   return false;
 };
+
+const showVerifyDialog = ref(false);
+const currentVerifyConfig = reactive({
+  mode: OpenDialogMode.Verify,
+  type: OpenDialogType.email,
+  active: null,
+});
+// 验证身份信息下的邮箱或手机号
+const verifyIdentityInfo = (mode: OpenDialogMode, type: OpenDialogType) => {
+  currentVerifyConfig.mode = mode;
+  currentVerifyConfig.type = type;
+  const { inherit, custom } = OpenDialogActive;
+  // 根据当前tag来决定打开dialog面板的active
+  if (type === OpenDialogType.email && mode === OpenDialogMode.Verify) {
+    currentVerifyConfig.active = currentUserInfo.value.is_inherited_email ? inherit : custom;
+  }
+  // 邮箱不支持继承 只能自定义
+  if (type === OpenDialogType.email && mode === OpenDialogMode.Edit) {
+    currentVerifyConfig.active = custom;
+  }
+  if (type === OpenDialogType.phone) {
+    currentVerifyConfig.active = currentUserInfo.value.is_inherited_phone ? inherit : custom;
+  }
+  showVerifyDialog.value = true;
+};
+const curEmail = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_email
+    ? currentUserInfo.value.email
+    : currentUserInfo.value.custom_email;
+  return result === '--' ? '' : result;
+});
+const curPhone = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_phone
+    ? currentUserInfo.value.phone
+    : currentUserInfo.value.custom_phone;
+  return result === '--' ? '' : result;
+});
+// 根据emailUpdateRestriction，返回对应的OpenDialogMode
+// eslint-disable-next-line no-nested-ternary
+const curEmailDialogType = computed(() => (emailUpdateRestriction.value === emailEidtable.Verify
+  ? OpenDialogMode.Verify
+  : emailUpdateRestriction.value === emailEidtable.YES
+    ? OpenDialogMode.Edit : null));
 
 const customRequest = (event) => {
   getBase64(event.file).then((res) => {
@@ -1282,14 +1109,6 @@ const hidePasswordModal = () => {
   margin: 0 3px 0 0;
   line-height: 19px;
   color: #ff5e5e;
-  vertical-align: middle;
-}
-
-.verify-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 5px;
   vertical-align: middle;
 }
 </style>
