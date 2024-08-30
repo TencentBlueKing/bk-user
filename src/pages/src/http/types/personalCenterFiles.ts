@@ -33,3 +33,19 @@ export interface PutUserPasswordParams {
   old_password: string,
   new_password: string,
 }
+
+/**
+ * 租户修改手机号时，发送验证码
+ */
+export interface postPersonalCenterUserPhoneCaptchaParams {
+  phone: string,
+  phone_country_code?: string,
+}
+
+/**
+ * 租户修改邮箱时，发送验证码
+ */
+export interface postPersonalCenterUserEmailCaptchaParams {
+  email: string,
+}
+

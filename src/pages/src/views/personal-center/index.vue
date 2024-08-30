@@ -440,13 +440,14 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, unref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import { OpenDialogActive, OpenDialogMode, openDialogResult, OpenDialogType } from './openDialogType';
 import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import { useCustomFields, useValidate } from '@/hooks';
+import { useCountDown } from '@/hooks/useCountDown';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUserFeature,
@@ -462,7 +463,6 @@ import phoneImg from '@/images/phone.svg';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
-import { useCountDown } from '@/hooks/useCountDown';
 
 const user = useUser();
 const userInfo = ref(user.user);
