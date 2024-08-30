@@ -163,17 +163,6 @@
                           class="user-icon icon-edit"
                           @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.email)">
                         </i>
-
-                        <tempalte v-if="true">
-                          <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
-                          <bk-button
-                            text
-                            theme="primary"
-                            @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.email)">
-                            {{ t('验证') }}
-                          </bk-button>
-                        </tempalte>
-                        <bk-tag v-else theme="success">{{ t('已验证') }}</bk-tag>
                       </div>
                     </div>
                   </li>
@@ -195,17 +184,6 @@
                           class="user-icon icon-edit"
                           @click="verifyIdentityInfo(OpenDialogMode.Edit, OpenDialogType.phone)">
                         </i>
-
-                        <template v-if="false">
-                          <i class="ml-[10px] user-icon icon-remind-fill text-[#FF9C01]"></i>
-                          <bk-button
-                            text
-                            theme="primary"
-                            @click="verifyIdentityInfo(OpenDialogMode.Verify, OpenDialogType.phone)">
-                            {{ t('验证') }}
-                          </bk-button>
-                        </template>
-                        <bk-tag v-else theme="success">{{ t('已验证') }}</bk-tag>
                       </div>
                     </div>
                   </li>
