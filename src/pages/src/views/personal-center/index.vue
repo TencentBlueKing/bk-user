@@ -183,7 +183,11 @@
                             ? currentUserInfo.email
                             : currentUserInfo.custom_email }}
                         </span>
-                        <i class="user-icon icon-edit" @click="isEditEmail = true" />
+                        <i
+                          v-if="emailUpdateRestriction !== emailEidtable.No"
+                          class="user-icon icon-edit"
+                          @click="verifyIdentityInfo(OpenDialogType.email)">
+                        </i>
                       </div>
                     </div>
                   </li>
@@ -236,7 +240,11 @@
                             ? currentUserInfo.phone
                             : currentUserInfo.custom_phone }}
                         </span>
-                        <i class="user-icon icon-edit" @click="isEditPhone = true" />
+                        <i
+                          v-if="phoneUpdateRestriction !== phoneEidtable.No"
+                          class="user-icon icon-edit"
+                          @click="verifyIdentityInfo( OpenDialogType.phone)">
+                        </i>
                       </div>
                     </div>
                   </li>
@@ -379,13 +387,23 @@
       <ChangePassword
         :config="passwordModalConfig"
         @closed="hidePasswordModal" />
+      <!-- 邮箱、手机号编辑验证 -->
+      <verifyIdentityInfoDialog
+        v-model:is-show="showVerifyDialog"
+        :cur-email-text="curEmail"
+        :cur-phone-text="curPhone"
+        :current-verify-config="currentVerifyConfig">
+      </verifyIdentityInfoDialog>
     </template>
   </bk-resize-layout>
 </template>
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+
+import { emailEidtable, OpenDialogSelect, OpenDialogType, phoneEidtable  } from './openDialogType';
+import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import phoneInput from '@/components/phoneInput.vue';
@@ -405,7 +423,7 @@ import {
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
-import { OpenDialogSelect } from './openDialogType';
+
 
 const user = useUser();
 const userInfo = ref(user.user);
@@ -413,6 +431,7 @@ const userInfo = ref(user.user);
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
 const currentNaturalUser = ref({});
+
 // 当前用户信息
 const currentUserInfo = ref({});
 // 当前租户信息
@@ -434,6 +453,11 @@ const formRef = ref();
 const extrasList = ref([]);
 // 是否可以修改密码
 const canChangePassword = ref(false);
+// 是否可以修改邮箱
+const emailUpdateRestriction = ref<emailEidtable>(emailEidtable.Verify);
+// 是否可以修改手机
+const phoneUpdateRestriction = ref<phoneEidtable>(phoneEidtable.Verify);
+
 
 onMounted(() => {
   getNaturalUser();
@@ -471,6 +495,8 @@ const getCurrentUser = async (id) => {
       extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
     };
     canChangePassword.value = featureRes.data.can_change_password;
+    emailUpdateRestriction.value = featureRes.data.email_update_restriction;
+    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
     extrasList.value = [...currentUserInfo.value.extras];
     customEmail.value = userRes.data.custom_email;
     customPhone.value = userRes.data.custom_phone;
@@ -667,14 +693,12 @@ watch(() => isEditPhone.value, (val) => {
 
 const emailSelect = ref(currentUserInfo.value.is_inherited_email === false
   ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit
-);
+  : OpenDialogSelect.inherit);
 
 const phoneSelect = ref(currentUserInfo.value.is_inherited_phone === false
   ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit
-);
-console.log(currentUserInfo.value.is_inherited_phone)
+  : OpenDialogSelect.inherit);
+console.log(currentUserInfo.value.is_inherited_phone);
 
 // 切换手机号
 const togglePhone = (value: boolean) => {
@@ -740,6 +764,28 @@ const handleRes = (response: any) => {
   }
   return false;
 };
+
+const showVerifyDialog = ref(false);
+const currentVerifyConfig = reactive({
+  type: OpenDialogType.email,
+});
+// 验证身份信息下的邮箱或手机号
+const verifyIdentityInfo = (type: OpenDialogType) => {
+  currentVerifyConfig.type = type;
+  showVerifyDialog.value = true;
+};
+const curEmail = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_email
+    ? currentUserInfo.value.email
+    : currentUserInfo.value.custom_email;
+  return result === '--' ? '' : result;
+});
+const curPhone = computed<string>(() => {
+  const result: string = currentUserInfo.value.is_inherited_phone
+    ? currentUserInfo.value.phone
+    : currentUserInfo.value.custom_phone;
+  return result === '--' ? '' : result;
+});
 
 const customRequest = (event) => {
   getBase64(event.file).then((res) => {
