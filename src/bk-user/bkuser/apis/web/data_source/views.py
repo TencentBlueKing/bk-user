@@ -449,7 +449,6 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         slz = LocalDataSourceImportInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-
         data_source = self.get_object()
         if not (data_source.is_local and data_source.is_real_type):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源支持导入功能"))
@@ -466,7 +465,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             overwrite=data["overwrite"],
             incremental=data["incremental"],
             # FIXME (su) 本地数据源导入也要改成异步行为，但是要解决 excel 如何传递的问题
-            async_run=False,
+            async_run=True,
             trigger=SyncTaskTrigger.MANUAL,
         )
 

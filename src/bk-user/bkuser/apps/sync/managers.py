@@ -9,6 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import base64
+import io
 from typing import Any, Dict, Optional
 
 from django.conf import settings
@@ -20,6 +22,7 @@ from bkuser.apps.sync.data_models import DataSourceSyncOptions, TenantSyncOption
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
 class DataSourceSyncManager:
@@ -29,11 +32,11 @@ class DataSourceSyncManager:
         self.data_source = data_source
         self.sync_options = sync_options
         self.sync_timeout = data_source.sync_timeout
+        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_ASYNC)
 
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
         plugin_init_extra_kwargs = plugin_init_extra_kwargs or {}
-
         task = DataSourceSyncTask.objects.create(
             data_source=self.data_source,
             status=SyncTaskStatus.PENDING.value,
@@ -49,8 +52,14 @@ class DataSourceSyncManager:
         )
 
         if self.sync_options.async_run:
-            self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
-            sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
+            workbook = plugin_init_extra_kwargs["workbook"]
+            with io.BytesIO() as buffer:
+                workbook.save(buffer)
+                content = buffer.getvalue()
+            encoded_data = base64.b64encode(content).decode("utf-8")
+            task_key = f"data_source: {self.data_source.id}: {task.id}"
+            self.cache.set(task_key, encoded_data, 2 * self.sync_timeout)
+            sync_data_source.apply_async(args=[task.id, task_key], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()

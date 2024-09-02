@@ -127,3 +127,9 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
         extras={"async_run": True, "overwrite": True},
     )
     return [success_task, failed_task, other_tenant_task]
+
+
+@pytest.fixture(autouse=True)
+def _celery_config(settings):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
