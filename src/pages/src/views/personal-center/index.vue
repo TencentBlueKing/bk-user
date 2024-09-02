@@ -151,18 +151,19 @@
                       {{ $t('邮箱') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditEmail">
-                        <bk-radio-group
-                          class="mr8"
-                          v-model="currentUserInfo.is_inherited_email"
+                        <bk-select
+                          class="bk-select"
+                          v-model="emailSelect"
                           @change="toggleEmail"
-                        >
-                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
-                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
-                        </bk-radio-group>
+                          :filterable="false"
+                          :clearable="false">
+                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
+                          <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
+                        </bk-select>
                         <bk-input
-                          v-if="currentUserInfo.is_inherited_email"
+                          v-if="emailSelect === OpenDialogSelect.inherit"
                           v-model="currentUserInfo.email"
-                          :disabled="currentUserInfo.is_inherited_email" />
+                          :disabled="true" />
                         <bk-form-item v-else class="email-input" property="custom_email">
                           <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
                         </bk-form-item>
@@ -192,20 +193,21 @@
                       {{ $t('手机号') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditPhone">
-                        <bk-radio-group
-                          class="mr8"
-                          v-model="currentUserInfo.is_inherited_phone"
+                        <bk-select
+                          class="bk-select"
+                          v-model="phoneSelect"
                           @change="togglePhone"
-                        >
-                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
-                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
-                        </bk-radio-group>
+                          :filterable="false"
+                          :clearable="false">
+                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
+                          <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
+                        </bk-select>
                         <bk-form-item
-                          v-if="currentUserInfo.is_inherited_phone"
+                          v-if="phoneSelect === OpenDialogSelect.inherit"
                           class="phone-input">
                           <phoneInput
                             :form-data="currentUserInfo"
-                            :disabled="currentUserInfo.is_inherited_phone"
+                            :disabled="true"
                             autofocus="autofocus"
                           />
                         </bk-form-item>
@@ -403,6 +405,7 @@ import {
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
+import { OpenDialogSelect } from './openDialogType';
 
 const user = useUser();
 const userInfo = ref(user.user);
@@ -620,7 +623,8 @@ watch(() => isEditEmail.value, (val) => {
 const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === currentTenantInfo.value.full_name);
 
 // 切换邮箱
-const toggleEmail = (value) => {
+const toggleEmail = (value: boolean) => {
+  currentUserInfo.value.is_inherited_email === value;
   nextTick(() => {
     if (!value) {
       currentUserInfo.value.custom_email = customEmail.value;
@@ -661,8 +665,20 @@ watch(() => isEditPhone.value, (val) => {
   }
 });
 
+const emailSelect = ref(currentUserInfo.value.is_inherited_email === false
+  ? OpenDialogSelect.custom
+  : OpenDialogSelect.inherit
+);
+
+const phoneSelect = ref(currentUserInfo.value.is_inherited_phone === false
+  ? OpenDialogSelect.custom
+  : OpenDialogSelect.inherit
+);
+console.log(currentUserInfo.value.is_inherited_phone)
+
 // 切换手机号
-const togglePhone = (value) => {
+const togglePhone = (value: boolean) => {
+  currentUserInfo.value.is_inherited_phone = value;
   nextTick(() => {
     if (value) return telError.value = false;
     currentUserInfo.value.custom_phone = customPhone.value;
@@ -1080,7 +1096,9 @@ const hidePasswordModal = () => {
                     display: flex;
                     align-items: center;
                     height: 50px;
-
+                    .bk-select {
+                      width: 106px;
+                    }
                     .bk-input {
                       width: 240px;
                     }
