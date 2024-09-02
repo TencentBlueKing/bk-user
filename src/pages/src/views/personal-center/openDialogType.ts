@@ -9,7 +9,7 @@ export enum OpenDialogType {
 };
 
 export enum OpenDialogSelect {
-  inherit = 'true',
+  inherit = 'inherit',
   custom = 'custom',
 };
 

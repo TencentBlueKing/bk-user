@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { InfoBox } from 'bkui-vue';
+import { InfoBox, Message } from 'bkui-vue';
 import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
 import { computed, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
@@ -77,8 +77,14 @@ import { useCountDown, useValidate } from '@/hooks';
 import { postPersonalCenterUserEmailCaptcha, postPersonalCenterUserPhoneCaptcha } from '@/http/personalCenterFiles';
 import { t } from '@/language/index';
 
+interface VerifyData {
+  phone: string,
+  email: string,
+  phone_country_code: string
+}
 interface VerifyConfig {
   type: OpenDialogType,
+  data: VerifyData
 }
 
 const props = defineProps({
@@ -103,12 +109,11 @@ const telError = ref(false);
 
 const changeTelError = (value: boolean, phone: string) => {
   telError.value = value;
-  verifyForm.phone = phone;
+  verifyForm.custom_phone = phone;
 };
 const changeCountryCode = (code: string) => {
-  verifyForm.phone_country_code = code;
+  verifyForm.custom_phone_country_code = code;
 };
-
 
 const dialogTitle = computed(() => (props.currentVerifyConfig.type === OpenDialogType.email ? t('邮箱验证') : t('手机号验证')));
 
@@ -125,9 +130,9 @@ const curFormItemList = computed(() => {
 
 interface VerifyForm {
   email: string,
-  phone: string,
+  custom_phone: string,
   captcha: string,
-  phone_country_code: string
+  custom_phone_country_code: string
 };
 
 const verifyFormCaptchaBtn = reactive({
@@ -137,12 +142,13 @@ const verifyFormCaptchaBtn = reactive({
 
 // 发送验证码
 const handleSendCaptcha = async () => {
-  try {
-    await verifyFormRef.value.validate();
-  } catch (err) {
-    return;
+  if (props.currentVerifyConfig.type === OpenDialogType.email) {
+    const result = await verifyFormRef.value.validate().catch(() => false);
+    if (!result) return;
   }
-  if (telError.value) return;
+  if (props.currentVerifyConfig.type === OpenDialogType.phone) {
+    if (telError.value) return;
+  }
   const captchaCoolingTime = 60;
   const shutDownPointTime = 0;
   const { closeTimePolling } = useCountDown({
@@ -151,17 +157,21 @@ const handleSendCaptcha = async () => {
         verifyFormCaptchaBtn.times = captchaCoolingTime;
         verifyFormCaptchaBtn.disabled = true;
         const { userId } = props;
+        // 获取邮箱验证码
         if (props.currentVerifyConfig.type === OpenDialogType.email) {
-          const result = await postPersonalCenterUserEmailCaptcha(userId, {
+          await postPersonalCenterUserEmailCaptcha(userId, {
             email: verifyForm.email,
           });
-          console.log(result);
+          Message({ theme: 'success', message: t('发送成功') });
         }
-        // else if (props.currentVerifyConfig.type === OpenDialogType.phone) {
-        //   const result = await postPersonalCenterUserPhoneCaptcha(userId,{
-
-        //   });
-        // }
+        // 获取手机验证码
+        if (props.currentVerifyConfig.type === OpenDialogType.phone) {
+          await postPersonalCenterUserPhoneCaptcha(userId, {
+            phone: verifyForm.custom_phone,
+            phone_country_code: verifyForm.custom_phone_country_code
+          });
+          Message({ theme: 'success', message: t('发送成功') });
+        }
       })();
     },
     intervalFn: () => verifyFormCaptchaBtn.times -= 1,
@@ -177,7 +187,7 @@ const handleSendCaptcha = async () => {
 
 const verifyForm = reactive<VerifyForm>({
   email: '',
-  phone: '',
+  custom_phone: '',
   phone_country_code: '86',
   captcha: '',
 });
@@ -189,9 +199,18 @@ const verifyFormRules = {
 
 const resetCustomForm = () => {
   verifyForm.email = '';
-  verifyForm.phone = '';
+  verifyForm.custom_phone = '';
   verifyForm.captcha = '';
+  verifyForm.custom_phone_country_code = '86';
 };
+
+watch(isShow, (newShow) => {
+  if (newShow) {
+    verifyForm.email = props.currentVerifyConfig.data?.email;
+    verifyForm.custom_phone = props.currentVerifyConfig.data?.phone;
+    verifyForm.custom_phone_country_code = props.currentVerifyConfig.data?.phone_country_code;
+  }
+});
 
 const handleCloseVerifyDialog = () => {
   isShow.value = false;
@@ -214,7 +233,6 @@ const handleSubmitVerifyForm = async () => {
     title: '',
     closeIcon: false,
   };
-  console.log(verifyForm);
 
   // if (type === email && active === custom)
 
