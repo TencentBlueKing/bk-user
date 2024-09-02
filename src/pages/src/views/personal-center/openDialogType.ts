@@ -8,9 +8,9 @@ export enum OpenDialogType {
   phone = 'phone'
 };
 
-export enum OpenDialogActive {
-  inherit = 'inherit',
-  custom = 'custom'
+export enum OpenDialogSelect {
+  inherit = 'true',
+  custom = 'custom',
 };
 
 export enum openDialogResult {
