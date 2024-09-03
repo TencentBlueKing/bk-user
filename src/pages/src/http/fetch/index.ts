@@ -105,7 +105,11 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
 
   // 全局捕获错误给出提示
   if (config.globalError) {
-    details[0].message = JSON.parse(details[0].message);
+    try {
+      details[0].message = JSON.parse(details[0].message);
+    } catch (errpr) {
+      console.log('errpr', errpr);
+    }
     const config = {
       overview: '',
       code,

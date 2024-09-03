@@ -74,7 +74,7 @@ import { formItemPropName, openDialogResult, OpenDialogType } from './openDialog
 
 import phoneInput from '@/components/phoneInput.vue';
 import { useCountDown, useValidate } from '@/hooks';
-import { postPersonalCenterUserEmailCaptcha, postPersonalCenterUserPhoneCaptcha } from '@/http/personalCenterFiles';
+import { patchUsersEmail, patchUsersPhone, postPersonalCenterUserEmailCaptcha, postPersonalCenterUserPhoneCaptcha } from '@/http/personalCenterFiles';
 import { t } from '@/language/index';
 
 interface VerifyData {
@@ -188,7 +188,7 @@ const handleSendCaptcha = async () => {
 const verifyForm = reactive<VerifyForm>({
   email: '',
   custom_phone: '',
-  phone_country_code: '86',
+  custom_phone_country_code: '86',
   captcha: '',
 });
 const verifyFormRef = ref(null);
@@ -222,28 +222,49 @@ const submitBtnLoading = ref(false);
 const handleSubmitVerifyForm = async () => {
   const result = await verifyFormRef.value?.validate().catch(() => false);
   if (!result) return;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+  submitBtnLoading.value = true;
+
   const { type } = props.currentVerifyConfig;
   const { email, phone } = OpenDialogType;
   const { success, fail } = openDialogResult;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  submitBtnLoading.value = true;
   const infoBoxConfig: Partial<BkInfoBoxConfig> = {
     type: success,
     title: '',
     closeIcon: false,
   };
-
-  // if (type === email && active === custom)
-
-  if (type === email && infoBoxConfig.type === success) infoBoxConfig.title = t('邮箱验证成功');
-  if (type === email && infoBoxConfig.type === fail) infoBoxConfig.title = t('邮箱验证失败');
-  if (type === phone && infoBoxConfig.type === success) infoBoxConfig.title = t('手机号验证成功');
-  if (type === phone && infoBoxConfig.type === fail) infoBoxConfig.title = t('手机号验证失败');
-
+  if (type === email) {
+    try {
+      await patchUsersEmail({
+        id: props.userId,
+        is_inherited_email: false,
+        custom_email: verifyForm.email,
+        verification_code: verifyForm.captcha,
+      });
+      infoBoxConfig.title = t('邮箱验证成功');
+    } catch (err) {
+      infoBoxConfig.title = t('邮箱验证失败');
+      infoBoxConfig.type = fail;
+    }
+  }
+  if (type === phone) {
+    try {
+      await patchUsersPhone({
+        id: props.userId,
+        is_inherited_phone: false,
+        custom_phone: verifyForm.custom_phone,
+        custom_phone_country_code: verifyForm.custom_phone_country_code,
+        verification_code: verifyForm.captcha,
+      });
+      infoBoxConfig.title = t('手机号验证成功');
+    } catch (err) {
+      infoBoxConfig.title = t('手机号验证失败');
+      infoBoxConfig.type = fail;
+    }
+  }
   submitBtnLoading.value = false;
-  // handleCloseVerifyDialog();
-  // InfoBox(infoBoxConfig);
+  handleCloseVerifyDialog();
+  InfoBox(infoBoxConfig);
 };
 
 </script>

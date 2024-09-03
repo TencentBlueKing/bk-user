@@ -5,6 +5,7 @@ export interface PatchUserEmailParams {
   id: string,
   is_inherited_email: boolean,
   custom_email: string,
+  verification_code?: string,
 }
 
 /**
@@ -15,6 +16,7 @@ export interface PatchUserPhoneParams {
   is_inherited_phone: boolean,
   custom_phone: string,
   custom_phone_country_code: string,
+  verification_code?: string,
 }
 
 /**
