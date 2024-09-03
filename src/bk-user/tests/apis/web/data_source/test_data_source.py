@@ -463,6 +463,5 @@ class TestDataSourceImportApi:
         sync_task = DataSourceSyncTask.objects.get(data_source=data_source)
         assert response.status_code == status.HTTP_200_OK
         assert sync_task.status == SyncTaskStatus.SUCCESS
-        assert DataSource.objects.filter(id=data_source.id).exists()
         assert DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
         assert DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()

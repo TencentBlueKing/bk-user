@@ -32,7 +32,7 @@ class DataSourceSyncManager:
         self.data_source = data_source
         self.sync_options = sync_options
         self.sync_timeout = data_source.sync_timeout
-        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_ASYNC)
+        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
@@ -53,31 +53,26 @@ class DataSourceSyncManager:
         )
 
         if self.sync_options.async_run:
-            workbook = plugin_init_extra_kwargs["workbook"]
-            with io.BytesIO() as buffer:
-                workbook.save(buffer)
-                content = buffer.getvalue()
-            encoded_data = base64.b64encode(content).decode("utf-8")
-            task_key = f"data_source: {self.data_source.id}: {task.id}"
-            self.cache.set(task_key, encoded_data, 2 * self.sync_timeout)
-            sync_data_source.apply_async(args=[task.id, task_key], soft_time_limit=self.sync_timeout)
+            if self.data_source.is_local and self.data_source.is_real_type:
+                self._process_workbook(plugin_init_extra_kwargs, task.id)
+            sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
         return task
 
-    @staticmethod
-    def _ensure_only_basic_type_in_kwargs(kwargs: Dict[str, Any]):
-        """确保 插件初始化额外参数 中只有基础类型"""
-        if not kwargs:
-            return
-
-        for v in kwargs.values():
-            if isinstance(v, (int, float, str, bytes, bool, dict, list)):
-                continue
-
-            raise TypeError("only basic type allowed in plugin_init_extra_kwargs!")
+    def _process_workbook(self, plugin_init_extra_kwargs, task_id):
+        workbook = plugin_init_extra_kwargs.get("workbook")
+        if workbook:
+            with io.BytesIO() as buffer:
+                workbook.save(buffer)
+                content = buffer.getvalue()
+            encoded_data = base64.b64encode(content).decode("utf-8")
+            task_key = f"data_source:{self.data_source.id}:{task_id}"
+            self.cache.set(task_key, encoded_data, 2 * self.sync_timeout)
+            plugin_init_extra_kwargs["task_key"] = task_key
+            plugin_init_extra_kwargs.pop("workbook")
 
 
 class TenantSyncManager:

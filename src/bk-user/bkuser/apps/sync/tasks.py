@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 import base64
 import logging
 from io import BytesIO
+from typing import Any, Dict
 
 from openpyxl import load_workbook
 
@@ -29,24 +30,27 @@ from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.task import BaseTask
 
 logger = logging.getLogger(__name__)
-cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_ASYNC)
+cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def sync_data_source(task_id: int, task_key: str):
+def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
-    encoded_data = cache.get(task_key)
-    if not encoded_data:
-        logger.error("[celery] data source sync task file not found: %s", task_id)
-        task = DataSourceSyncTask.objects.get(id=task_id)
-        task.status = SyncTaskStatus.FAILED.value
-        task.logs = "data source sync task file not found: %s" % task_id
-        task.save()
-        return
-    cache.delete(task_key)
-    workbook = load_workbook(filename=BytesIO(base64.b64decode(encoded_data)))
-    plugin_init_extra_kwargs = {"workbook": workbook}
+    if plugin_init_extra_kwargs.get("task_key"):
+        task_key = plugin_init_extra_kwargs["task_key"]
+        plugin_init_extra_kwargs.pop("task_key")
+        encoded_data = cache.get(task_key)
+        if not encoded_data:
+            logger.error("[celery] data source sync task file not found: %s", task_id)
+            task = DataSourceSyncTask.objects.get(id=task_id)
+            task.status = SyncTaskStatus.FAILED.value
+            task.logs = "data source sync task file not found: %s" % task_id
+            task.save()
+            return
+        cache.delete(task_key)
+        workbook = load_workbook(filename=BytesIO(base64.b64decode(encoded_data)))
+        plugin_init_extra_kwargs["workbook"] = workbook
     task = DataSourceSyncTask.objects.get(id=task_id)
     DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
