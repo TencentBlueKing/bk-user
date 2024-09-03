@@ -9,7 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import base64
 import datetime
+import io
 from typing import Any, Dict, List
 
 import pytest
@@ -24,7 +26,9 @@ from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from django.test.utils import override_settings
+from django.conf import settings
+from openpyxl.reader.excel import load_workbook
+from openpyxl.workbook import Workbook
 
 from tests.test_utils.helpers import generate_random_string
 
@@ -130,7 +134,25 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
     return [success_task, failed_task, other_tenant_task]
 
 
-@pytest.fixture(autouse=True)
-def _celery_config():
-    with override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True):
-        yield
+@pytest.fixture()
+def data_source_sync_task(data_source) -> DataSourceSyncTask:
+    return DataSourceSyncTask.objects.create(
+        data_source=data_source,
+        status=SyncTaskStatus.PENDING,
+        has_warning=True,
+        trigger=SyncTaskTrigger.MANUAL,
+        extras={"async_run": True, "overwrite": False, "incremental": True},
+    )
+
+
+@pytest.fixture()
+def user_workbook() -> Workbook:
+    return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")
+
+
+@pytest.fixture()
+def encoded_file(user_workbook):
+    with io.BytesIO() as buffer:
+        user_workbook.save(buffer)
+        content = buffer.getvalue()
+    return base64.b64encode(content).decode("utf-8")
