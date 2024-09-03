@@ -19,7 +19,7 @@
             :key="item"
             :class="{ 'disabled': item.disabled }"
             v-bk-tooltips="{
-              content: $t('当前租户未启用账密登录，无法修改密码'),
+              content: item.tips,
               disabled: !item.disabled
             }"
             @click.prevent="() => {
@@ -199,6 +199,7 @@ const dropdownList = ref<any[]>([
     label: t('移动至组织'),
     isShow: true,
     disabled: !isLocalDataSource.value,
+    tips: t('非本地数据源，无法移动至组织'),
     confirmFn: batchCreate,
     handle: (item: any) => {
       emits('moveOrg', item);
@@ -208,6 +209,7 @@ const dropdownList = ref<any[]>([
     label: t('重置密码'),
     key: 'password',
     disabled: !props.isEnabledPassword && !isLocalDataSource.value,
+    tips: !props.isEnabledPassword ? t('当前租户未启用账密登录，无法修改密码') : !isLocalDataSource.value ? t('非本地数据源，无法重置密码') : '',
     handle: () => {
       const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
@@ -245,6 +247,7 @@ const dropdownList = ref<any[]>([
     label: t('删除'),
     isShow: true,
     disabled: !isLocalDataSource.value,
+    tips: t('非本地数据源，无法删除'),
     handle: () => {
       confirmBatchAction('delete');
     },
@@ -278,7 +281,7 @@ watch(infoFormData, (val) => {
 
 const selectOption = (selectedItem) => {
   if (selectedItem.disabled) {
-    dropdownVisible.value = true;
+    userInfoVisible.value = false;
     return;
   }
   userInfoOptions.value.forEach(item => item.selected = false);
