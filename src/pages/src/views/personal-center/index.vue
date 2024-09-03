@@ -687,7 +687,7 @@ const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === cu
 // 切换邮箱
 const toggleEmail = (value: OpenDialogSelect) => {
   const currentInherit = value === OpenDialogSelect.inherit;
-  currentUserInfo.value.is_inherited_email === currentInherit;
+  currentUserInfo.value.is_inherited_email = currentInherit;
   nextTick(() => {
     if (!currentInherit) {
       currentUserInfo.value.custom_email = customEmail.value;
