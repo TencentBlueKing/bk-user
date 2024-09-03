@@ -89,7 +89,7 @@
             <bk-dropdown-item
               v-for="(item, index) in userInfoOptions"
               :key="index"
-              :class="{ 'is-selected': item.selected }"
+              :class="{ 'is-selected': item.selected, 'is-disabled': item.disabled }"
               @click.native="selectOption(item)"
             >
               {{ item.text }}
@@ -142,7 +142,7 @@
 import { clickoutside as vClickoutside, InfoBox, Message } from 'bkui-vue';
 import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -161,6 +161,11 @@ const props = defineProps({
   isEnabledPassword: {
     type: Boolean,
   },
+});
+
+/** 是否为本地数据源 */
+const isLocalDataSource = computed(() => {
+  return appStore.currentTenant?.data_source?.plugin_id === 'local';
 });
 
 const formData = ref({
@@ -193,6 +198,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('移动至组织'),
     isShow: true,
+    disabled: !isLocalDataSource.value,
     confirmFn: batchCreate,
     handle: (item: any) => {
       emits('moveOrg', item);
@@ -201,7 +207,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('重置密码'),
     key: 'password',
-    disabled: !props.isEnabledPassword,
+    disabled: !props.isEnabledPassword && !isLocalDataSource.value,
     handle: () => {
       const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
@@ -238,6 +244,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('删除'),
     isShow: true,
+    disabled: !isLocalDataSource.value,
     handle: () => {
       confirmBatchAction('delete');
     },
@@ -245,8 +252,8 @@ const dropdownList = ref<any[]>([
 ]);
 
 const userInfoOptions = ref([
-  { text: t('续期'), type: 'date', selected: false },
-  { text: t('直属上级'), type: 'leader', selected: false },
+  { text: t('续期'), type: 'date', selected: false, disabled: false },
+  { text: t('直属上级'), type: 'leader', selected: false, disabled: !isLocalDataSource.value },
 ]);
 
 onMounted(async () => {
@@ -270,6 +277,10 @@ watch(infoFormData, (val) => {
 }, { deep: true, immediate: true });
 
 const selectOption = (selectedItem) => {
+  if (selectedItem.disabled) {
+    dropdownVisible.value = true;
+    return;
+  }
   userInfoOptions.value.forEach(item => item.selected = false);
   selectedItem.selected = true;
   userInfoVisible.value = false;
@@ -431,6 +442,15 @@ const confirmBatchAction = (actionType) => {
   justify-content: space-between;
   align-items: center;
 }
+
+.is-disabled {
+  color: #c4c6cc !important;
+  cursor: not-allowed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .icon-check-line {
   font-size: 14px
 }
