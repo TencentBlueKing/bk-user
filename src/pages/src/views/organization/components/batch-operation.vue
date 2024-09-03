@@ -89,7 +89,7 @@
             <bk-dropdown-item
               v-for="(item, index) in userInfoOptions"
               :key="index"
-              :class="{ 'is-selected': item.selected }"
+              :class="{ 'is-selected': item.selected, 'is-disabled': item.disabled }"
               @click.native="selectOption(item)"
             >
               {{ item.text }}
@@ -142,7 +142,7 @@
 import { clickoutside as vClickoutside, InfoBox, Message } from 'bkui-vue';
 import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, PropType, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -160,6 +160,15 @@ const props = defineProps({
   },
   isEnabledPassword: {
     type: Boolean,
+  },
+  isEnabledMoveOrg: {
+    type: Boolean,
+  },
+  isEnabledDelPassword: {
+    type: Boolean,
+  },
+  permittedUpdateItems: {
+    type: Object as PropType<Array<String> | null>,
   },
 });
 
@@ -193,6 +202,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('移动至组织'),
     isShow: true,
+    disabled: !props.isEnabledMoveOrg,
     confirmFn: batchCreate,
     handle: (item: any) => {
       emits('moveOrg', item);
@@ -238,15 +248,25 @@ const dropdownList = ref<any[]>([
   {
     label: t('删除'),
     isShow: true,
+    disabled: !props.isEnabledDelPassword,
     handle: () => {
       confirmBatchAction('delete');
     },
   },
 ]);
 
+const isPermittedUpdateItemsArray = (value: Array<String> | null): value is Array<String> => value instanceof Array;
+
+const isUserInfoOptionEnable = (type: string): boolean => {
+  if (isPermittedUpdateItemsArray(props.permittedUpdateItems)) {
+    return !props.permittedUpdateItems.includes(type);
+  }
+  return false;
+};
+
 const userInfoOptions = ref([
-  { text: t('续期'), type: 'date', selected: false },
-  { text: t('直属上级'), type: 'leader', selected: false },
+  { text: t('续期'), type: 'date', selected: false, disabled: isUserInfoOptionEnable('date') },
+  { text: t('直属上级'), type: 'leader', selected: false, disabled: isUserInfoOptionEnable('leader') },
 ]);
 
 onMounted(async () => {
@@ -270,6 +290,10 @@ watch(infoFormData, (val) => {
 }, { deep: true, immediate: true });
 
 const selectOption = (selectedItem) => {
+  if (selectedItem.disabled) {
+    dropdownVisible.value = true;
+    return;
+  }
   userInfoOptions.value.forEach(item => item.selected = false);
   selectedItem.selected = true;
   userInfoVisible.value = false;
@@ -431,6 +455,15 @@ const confirmBatchAction = (actionType) => {
   justify-content: space-between;
   align-items: center;
 }
+
+.is-disabled {
+  color: #c4c6cc !important;
+  cursor: not-allowed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .icon-check-line {
   font-size: 14px
 }
