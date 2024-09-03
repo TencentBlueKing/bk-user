@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from .constants import VerificationCodeScene
-from .exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
+from .exceptions import GenerateCodeTooFrequently, InvalidVerificationCode, RetryLimitExceeded
 from .managers import EmailVerificationCodeManager, PhoneVerificationCodeManager
 
 __all__ = [
@@ -23,4 +23,6 @@ __all__ = [
     "InvalidVerificationCode",
     # 生成验证码过于频繁
     "GenerateCodeTooFrequently",
+    # 重试次数过多
+    "RetryLimitExceeded",
 ]

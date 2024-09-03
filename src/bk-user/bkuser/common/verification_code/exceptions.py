@@ -16,3 +16,7 @@ class InvalidVerificationCode(Exception):
 
 class GenerateCodeTooFrequently(Exception):
     """生成验证码过于频繁"""
+
+
+class RetryLimitExceeded(Exception):
+    """超过验证码重试次数"""

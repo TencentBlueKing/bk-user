@@ -52,6 +52,7 @@ from bkuser.common.verification_code import (
     GenerateCodeTooFrequently,
     InvalidVerificationCode,
     PhoneVerificationCodeManager,
+    RetryLimitExceeded,
     VerificationCodeScene,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -203,6 +204,8 @@ class TenantUserPhoneUpdateApi(
             PhoneVerificationCodeManager(phone, phone_country_code, scene).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
+        except RetryLimitExceeded:
+            raise error_codes.VERIFY_VERIFICATION_CODE_FAILED.f(_("超过验证码重试次数"))
         except Exception:
             logger.exception("validate verification code for phone +%s %s failed", phone_country_code, phone)
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码校验失败，请联系管理员处理"))
@@ -296,6 +299,8 @@ class TenantUserEmailUpdateApi(
             EmailVerificationCodeManager(email, scene).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
+        except RetryLimitExceeded:
+            raise error_codes.VERIFY_VERIFICATION_CODE_FAILED.f(_("超过验证码重试次数"))
         except Exception:
             logger.exception("validate verification code for email %s failed", email)
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码校验失败，请联系管理员处理"))

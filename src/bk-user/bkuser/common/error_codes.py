@@ -118,6 +118,7 @@ class ErrorCodes:
     INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))
     SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
     SEND_RESET_PASSWORD_EMAIL_FAILED = ErrorCode(_("发送重置密码邮件失败"))
+    VERIFY_VERIFICATION_CODE_FAILED = ErrorCode(_("验证失败"))
 
 
 # 实例化一个全局对象

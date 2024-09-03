@@ -17,7 +17,11 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.verification_code.constants import VerificationCodeScene
-from bkuser.common.verification_code.exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
+from bkuser.common.verification_code.exceptions import (
+    GenerateCodeTooFrequently,
+    InvalidVerificationCode,
+    RetryLimitExceeded,
+)
 
 
 class BaseVerificationCodeManager:
@@ -41,7 +45,7 @@ class BaseVerificationCodeManager:
     def validate(self, code: str):
         """校验验证码是否正确"""
         if not self._can_retries():
-            raise InvalidVerificationCode(_("超过验证码重试次数"))
+            raise RetryLimitExceeded(_("超过验证码重试次数"))
 
         if self.cache.get(self.code_cache_key) != code:
             raise InvalidVerificationCode(_("验证码错误或已失效"))
