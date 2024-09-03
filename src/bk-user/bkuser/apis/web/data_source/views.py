@@ -449,6 +449,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         slz = LocalDataSourceImportInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
         data_source = self.get_object()
         if not (data_source.is_local and data_source.is_real_type):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源支持导入功能"))
