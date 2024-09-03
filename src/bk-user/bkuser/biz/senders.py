@@ -42,7 +42,8 @@ class PhoneVerificationCodeSender:
         ).send(tenant_user, verification_code=code)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
-        phone, phone_country_code = tenant_user.phone_info
+        phone = tenant_user.custom_phone
+        phone_country_code = tenant_user.custom_phone_country_code
         send_cnt_cache_key = f"{self.scene.value}:{phone_country_code}:{phone}:send_cnt"
 
         send_cnt = self.cache.get(send_cnt_cache_key, 0)
@@ -72,7 +73,7 @@ class EmailVerificationCodeSender:
         ).send(tenant_user, verification_code=code)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
-        email = tenant_user.email
+        email = tenant_user.custom_email
         send_cnt_cache_key = f"{self.scene.value}:{email}:send_cnt"
 
         send_cnt = self.cache.get(send_cnt_cache_key, 0)
