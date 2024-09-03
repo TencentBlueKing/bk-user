@@ -13,13 +13,7 @@
             </bk-button>
             <bk-button class="mr-[16px]" v-if="isShowBtn"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <batchOperation
-               :select-list="selectList"
-               :isEnabledPassword="isEnabledPassword"
-               :isEnabledMoveOrg="isEnabledMoveOrg"
-               :isEnabledDelPassword="isEnabledDelPassword"
-               :permittedUpdateItems="permittedUpdateItems"
-               @moveOrg="batchMoveOrg" @reloadList="reloadList"/>
+            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="reloadList"/>
             <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
@@ -222,7 +216,7 @@
   </template>
   
 <script setup lang="tsx">
-  import { ref, reactive, computed, inject, watch, Ref} from 'vue';
+  import { ref, reactive, computed, inject, watch} from 'vue';
   import { InfoBox, Message} from 'bkui-vue';
   import Empty from '@/components/SearchEmpty.vue'; 
   import { Upload} from 'bkui-vue/lib/icon'; 
@@ -298,16 +292,7 @@
     return appStore.currentTenant?.data_source?.id;
   });
   const isEnabledPassword = computed(() => {
-    return appStore.currentTenant?.data_source?.enable_password && isLocalDataSource.value;
-  })
-  const isEnabledMoveOrg = computed(() => isLocalDataSource.value)
-  const isEnabledDelPassword = computed(() => isLocalDataSource.value)
-  const permittedUpdateItems: Ref<string[] | null> = computed(() => {
-    if (!isLocalDataSource.value) {
-      const permittedType: string[] = ['date']
-      return permittedType
-    }
-    return null
+    return appStore.currentTenant?.data_source?.enable_password;
   })
 
   const isShowBtn = computed(() => {

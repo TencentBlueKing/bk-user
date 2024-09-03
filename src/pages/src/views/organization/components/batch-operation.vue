@@ -142,7 +142,7 @@
 import { clickoutside as vClickoutside, InfoBox, Message } from 'bkui-vue';
 import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
-import { computed, onMounted, PropType, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -161,15 +161,11 @@ const props = defineProps({
   isEnabledPassword: {
     type: Boolean,
   },
-  isEnabledMoveOrg: {
-    type: Boolean,
-  },
-  isEnabledDelPassword: {
-    type: Boolean,
-  },
-  permittedUpdateItems: {
-    type: Object as PropType<Array<String> | null>,
-  },
+});
+
+/** 是否为本地数据源 */
+const isLocalDataSource = computed(() => {
+  return appStore.currentTenant?.data_source?.plugin_id === 'local';
 });
 
 const formData = ref({
@@ -202,7 +198,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('移动至组织'),
     isShow: true,
-    disabled: !props.isEnabledMoveOrg,
+    disabled: !isLocalDataSource.value,
     confirmFn: batchCreate,
     handle: (item: any) => {
       emits('moveOrg', item);
@@ -211,7 +207,7 @@ const dropdownList = ref<any[]>([
   {
     label: t('重置密码'),
     key: 'password',
-    disabled: !props.isEnabledPassword,
+    disabled: !props.isEnabledPassword && !isLocalDataSource.value,
     handle: () => {
       const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
@@ -248,25 +244,16 @@ const dropdownList = ref<any[]>([
   {
     label: t('删除'),
     isShow: true,
-    disabled: !props.isEnabledDelPassword,
+    disabled: !isLocalDataSource.value,
     handle: () => {
       confirmBatchAction('delete');
     },
   },
 ]);
 
-const isPermittedUpdateItemsArray = (value: Array<String> | null): value is Array<String> => value instanceof Array;
-
-const isUserInfoOptionEnable = (type: string): boolean => {
-  if (isPermittedUpdateItemsArray(props.permittedUpdateItems)) {
-    return !props.permittedUpdateItems.includes(type);
-  }
-  return false;
-};
-
 const userInfoOptions = ref([
-  { text: t('续期'), type: 'date', selected: false, disabled: isUserInfoOptionEnable('date') },
-  { text: t('直属上级'), type: 'leader', selected: false, disabled: isUserInfoOptionEnable('leader') },
+  { text: t('续期'), type: 'date', selected: false, disabled: false },
+  { text: t('直属上级'), type: 'leader', selected: false, disabled: !isLocalDataSource.value },
 ]);
 
 onMounted(async () => {
