@@ -24,6 +24,7 @@ from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.test.utils import override_settings
 
 from tests.test_utils.helpers import generate_random_string
 
@@ -130,6 +131,6 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
 
 
 @pytest.fixture(autouse=True)
-def _celery_config(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+def _celery_config():
+    with override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True):
+        yield
