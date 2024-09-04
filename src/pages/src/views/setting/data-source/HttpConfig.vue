@@ -602,7 +602,7 @@ const handleSubmit = async () => {
     } else {
       params.plugin_id = serverConfigData.value.plugin_id;
       await newDataSource(params);
-      emit('updateSuccess', t('新建'));
+      emit('updateSuccess', t('新建成功'));
     }
     window.changeInput = false;
   } catch (e) {

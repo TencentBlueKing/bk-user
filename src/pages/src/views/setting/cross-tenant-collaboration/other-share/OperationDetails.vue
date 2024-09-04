@@ -375,7 +375,7 @@ const handleChange = () => {
 
           li:nth-child(2) {
             width: 32px;
-            font-family: MicrosoftYaHei-Bold;
+            font-family: 'Microsoft YaHei', 'Microsoft YaHei Bold', sans-serif;
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 0;

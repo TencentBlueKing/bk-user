@@ -72,7 +72,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.apps.tenant.utils import gen_tenant_user_id, is_username_frozen
+from bkuser.apps.tenant.utils import TenantUserIDGenerator, is_username_frozen
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
@@ -360,7 +360,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             }
             # 创建本租户的租户用户
             tenant_user = TenantUser.objects.create(
-                id=gen_tenant_user_id(cur_tenant_id, data_source, data_source_user),
+                id=TenantUserIDGenerator(cur_tenant_id, data_source).gen(data_source_user),
                 tenant_id=cur_tenant_id,
                 data_source=data_source,
                 data_source_user=data_source_user,
@@ -369,7 +369,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             # 根据协同策略，将协同的租户用户也创建出来
             collaboration_tenant_users = [
                 TenantUser(
-                    id=gen_tenant_user_id(strategy.target_tenant_id, data_source, data_source_user),
+                    id=TenantUserIDGenerator(strategy.target_tenant_id, data_source).gen(data_source_user),
                     tenant_id=strategy.target_tenant_id,
                     data_source=data_source,
                     data_source_user=data_source_user,
@@ -821,9 +821,10 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         }
 
         # 新建租户用户，需要计算账号有效期
+        generator = TenantUserIDGenerator(cur_tenant_id, data_source, prepare_batch=True)
         tenant_users = [
             TenantUser(
-                id=gen_tenant_user_id(cur_tenant_id, data_source, user),
+                id=generator.gen(user),
                 tenant_id=tenant_dept.tenant_id,
                 data_source=data_source,
                 data_source_user=user,
@@ -840,9 +841,10 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             source_status=CollaborationStrategyStatus.ENABLED,
             target_status=CollaborationStrategyStatus.ENABLED,
         ):
+            generator = TenantUserIDGenerator(strategy.target_tenant_id, data_source, prepare_batch=True)
             collaboration_tenant_users += [
                 TenantUser(
-                    id=gen_tenant_user_id(strategy.target_tenant_id, data_source, user),
+                    id=generator.gen(user),
                     tenant_id=strategy.target_tenant_id,
                     data_source=data_source,
                     data_source_user=user,

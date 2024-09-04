@@ -36,7 +36,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.apps.tenant.utils import gen_tenant_user_id
+from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
@@ -172,7 +172,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 创建对应的租户用户
         tenant_user = TenantUser.objects.create(
-            id=gen_tenant_user_id(tenant.id, data_source, data_source_user),
+            id=TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user),
             data_source_user=data_source_user,
             tenant=tenant,
             data_source=data_source,

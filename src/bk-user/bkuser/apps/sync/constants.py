@@ -72,8 +72,9 @@ class DataSourceSyncObjectType(str, StructuredEnum):
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
-    USER_RELATION = EnumField("user_relation", label=_("用户关系"))
     DEPARTMENT_RELATION = EnumField("department_relation", label=_("部门关系"))
+    USER_LEADER_RELATION = EnumField("user_leader_relation", label=_("用户 Leader 关系"))
+    USER_DEPARTMENT_RELATION = EnumField("user_department_relation", label=_("用户部门关系"))
 
 
 class TenantSyncObjectType(str, StructuredEnum):

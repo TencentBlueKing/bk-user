@@ -13,6 +13,7 @@
             </bk-button>
             <bk-button class="mr-[16px]" v-if="isShowBtn"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
+            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="reloadList"/>
             <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
@@ -52,7 +53,7 @@
               @handle-update="reloadList"
             />
           </template>
-          <template #prepend v-if="selectList.length">
+          <template #prepend v-if="selectList.length && prependData.length">
               <div class="table-total">
                   <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
                   <label
@@ -215,18 +216,19 @@
   </template>
   
 <script setup lang="tsx">
-  import { ref, reactive, computed, inject, onMounted, onBeforeMount, watch, nextTick } from 'vue';
-  import { InfoBox, Message } from 'bkui-vue';
-  import Empty from '@/components/SearchEmpty.vue';
-  import { Upload} from 'bkui-vue/lib/icon';
+  import { ref, reactive, computed, inject, watch} from 'vue';
+  import { InfoBox, Message} from 'bkui-vue';
+  import Empty from '@/components/SearchEmpty.vue'; 
+  import { Upload} from 'bkui-vue/lib/icon'; 
   import { t } from '@/language/index';
   import FastInputDialog from './fast-input-dialog.vue';
   import EditDetails from './edit-detail.vue';
   import ImportDialog from '@/components/import-dialog/import-dialog.vue'
-  import ViewUser from '../details/ViewUser.vue';
+  import ViewUser from '../details/ViewUser.vue'; 
   import { randomPasswords } from '@/http';
   import { getFields } from '@/http/settingFiles';
   import passwordInput from '@/components/passwordInput.vue';
+  import batchOperation from './batch-operation.vue';
   import {
     getTenantsUserList,
     getFieldsTips,
@@ -343,16 +345,6 @@
       }
     },
   ]);
-  const moveOperation = reactive([
-    {
-      label: t('移至目标组织'),
-      isShow: true,
-      confirmFn: batchCreate,
-      handle: () => {
-        handleOperations(true, t('移至目标组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
-      }
-    }
-  ])
   const operationList = reactive([...[
     {
       label: t('移出当前组织'),
@@ -389,7 +381,7 @@
         handleOperations(false, t('清空并加入组织'), t('清空'), t('的现有组织，并加入到以下组织'));
       }
     }, 
-  ], ...moveOperation, ...defaultOperation]);
+  ]]);
   const rowOperation = ref([...[       
     {
       label: t('停用'),
@@ -422,7 +414,7 @@
     },
   ], ...defaultOperation]);
   const prependData = computed(() => {
-    return appStore.currentOrg.isTenant ? [...moveOperation, ...defaultOperation] : operationList;
+    return appStore.currentOrg.isTenant ? [] : operationList;
   })
   const pagination = reactive({ count: 0, limit: 10, current: 1 })
   const isScrollLoading = ref(false);
@@ -469,11 +461,15 @@
         label: t("所属组织"),
         field: "departments",
         render: ({ row, column }) => {
-          const config = {
-            content: (row?.organization_paths || []).join('\n'),
-            disabled: row[column?.field]?.length === 0
-          }
-          return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
+          return <>
+            <bk-popover
+              content={(row?.organization_paths || []).map(path => <div>{path}</div>)}
+              disabled={row[column?.field]?.length === 0}
+              render-type="auto"
+              theme="dark">
+              <span onMouseenter={() => handleHoverOrg(row)}>{(row[column?.field] || []).join('、') || '--'}</span>
+            </bk-popover>
+          </>
         }
     }
   ]);
@@ -632,6 +628,16 @@
   watch(() => appStore.currentOrg, (val) => {
     !!val && reloadList();
   });
+
+  const handleHoverOrg = (row) => {
+    if (!row?.organization_paths) {
+      const currentIndex = tableData.value.findIndex(item => item === row)
+      getOrganizationPaths(row.id).then(res => {
+        const organization_paths = res?.data?.organization_paths;  
+        tableData.value[currentIndex].organization_paths  = organization_paths;
+      });
+    }
+  }
   
   const initTenantsUserList = async () => {
     isDataEmpty.value = false;
@@ -656,12 +662,6 @@
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
-        tableData.value.map(item => {
-          getOrganizationPaths(item.id).then(res => {
-            const organization_paths = res?.data?.organization_paths;
-            item.organization_paths = organization_paths;
-          });
-        });
     } catch (e) {
         console.warn(e);
         isDataError.value = true;
@@ -678,7 +678,7 @@
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
     const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
-    password.value = res.data?.password;
+      password.value = res.data?.password;
   };
   /** 重置密码 */
   const resetPasswordConfirm = async () => {
@@ -713,8 +713,6 @@
   const handleClear = () => {
     keyword.value = '';
     reloadList();
-  };
-  const handleSelect = (v) => {
   };
   // 勾选数据行
   const handleSelectTable = ({ row, checked }) => {
@@ -773,13 +771,17 @@
   };
 
   const inputPassword = (val) => {
-  password.value = val;
+    password.value = val;
 };
 
 const importDialogHandle = () => {
   importDialogShow.value = true
 }
 
+const batchMoveOrg = (params) => {
+  currentHandle.value = params
+  handleOperations(true, t('移动至组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
+}
 defineExpose({
   importDialogHandle
 })
@@ -887,10 +889,6 @@ defineExpose({
           background: #979BA5;
         }
       }
-    }
-
-    .user-select-main {
-    
     }
 
     .operate-menu-list {

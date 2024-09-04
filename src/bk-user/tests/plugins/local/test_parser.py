@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List
 
 import pytest
@@ -28,92 +29,92 @@ from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
 class TestLocalDataSourceDataParser:
-    def test_validate_case_not_user_sheet(self, logger, user_wk):
+    def test_validate_case_not_user_sheet(self, logger, user_workbook):
         # 删除 user sheet，导致空数据
-        user_wk.remove(user_wk["users"])
+        user_workbook.remove(user_workbook["users"])
         with pytest.raises(UserSheetNotExists):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_columns_not_match(self, logger, user_wk):
+    def test_validate_case_columns_not_match(self, logger, user_workbook):
         # 修改列名，导致与内建字段不匹配
-        user_wk["users"]["B2"].value = "这不是姓名/not_full_name"
+        user_workbook["users"]["B2"].value = "这不是姓名/not_full_name"
         with pytest.raises(SheetColumnsNotMatch):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_custom_column_name_empty(self, logger, user_wk):
+    def test_validate_case_custom_column_name_empty(self, logger, user_workbook):
         # 修改列名，导致自定义列名不合法
-        user_wk["users"]["G2"].value = ""
+        user_workbook["users"]["G2"].value = ""
         with pytest.raises(CustomColumnNameInvalid):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_custom_column_name_invalid(self, logger, user_wk):
+    def test_validate_case_custom_column_name_invalid(self, logger, user_workbook):
         # 修改列名，导致自定义列名不合法
-        user_wk["users"]["G2"].value = "年龄@45"
+        user_workbook["users"]["G2"].value = "年龄@45"
         with pytest.raises(CustomColumnNameInvalid):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_column_name(self, logger, user_wk):
+    def test_validate_case_duplicate_column_name(self, logger, user_workbook):
         # 修改列名，导致自定义列名重复
-        user_wk["users"]["H2"].value = "年龄/age"
+        user_workbook["users"]["H2"].value = "年龄/age"
         with pytest.raises(DuplicateColumnName):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_required_field_is_empty(self, logger, user_wk):
+    def test_validate_case_required_field_is_empty(self, logger, user_workbook):
         # 修改表格数据，导致必填字段为空
-        user_wk["users"]["A3"].value = ""
+        user_workbook["users"]["A3"].value = ""
         with pytest.raises(RequiredFieldIsEmpty):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_username_chinese(self, logger, user_wk):
+    def test_validate_case_invalid_username_chinese(self, logger, user_workbook):
         # 修改表格数据，导致用户名非法
-        user_wk["users"]["A4"].value = "张三"
+        user_workbook["users"]["A4"].value = "张三"
         with pytest.raises(InvalidUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_username_punctuation(self, logger, user_wk):
+    def test_validate_case_invalid_username_punctuation(self, logger, user_workbook):
         # 修改表格数据，导致用户名非法
-        user_wk["users"]["A4"].value = "zhangsan@m.com"
+        user_workbook["users"]["A4"].value = "zhangsan@m.com"
         with pytest.raises(InvalidUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_start_with_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_start_with_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "/公司/部门A"
+        user_workbook["users"]["E4"].value = "/公司/部门A"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_end_with_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_end_with_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "公司/部门A/"
+        user_workbook["users"]["E4"].value = "公司/部门A/"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_continuous_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_continuous_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "公司//部门A"
+        user_workbook["users"]["E4"].value = "公司//部门A"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_leader(self, logger, user_wk):
+    def test_validate_case_invalid_leader(self, logger, user_workbook):
         # 修改表格数据，导致用户是自己的 leader
-        user_wk["users"]["F4"].value = "zhangsan, lisi,wangwu"
+        user_workbook["users"]["F4"].value = "zhangsan, lisi,wangwu"
         with pytest.raises(InvalidLeader):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_username(self, logger, user_wk):
+    def test_validate_case_duplicate_username(self, logger, user_workbook):
         # 修改表格数据，导致用户名重复
-        user_wk["users"]["A6"].value = "zhangsan"
+        user_workbook["users"]["A6"].value = "zhangsan"
         with pytest.raises(DuplicateUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_username_case_insensitive(self, logger, user_wk):
+    def test_validate_case_duplicate_username_case_insensitive(self, logger, user_workbook):
         # 修改表格数据，导致用户名重复（大小写不敏感的检查）
-        user_wk["users"]["A6"].value = "ZhangSan"
+        user_workbook["users"]["A6"].value = "ZhangSan"
         with pytest.raises(DuplicateUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_get_departments(self, logger, user_wk):
-        parser = LocalDataSourceDataParser(logger, user_wk)
+    def test_get_departments(self, logger, user_workbook):
+        parser = LocalDataSourceDataParser(logger, user_workbook)
         parser.parse()
 
         company_code = gen_dept_code("公司")
@@ -144,8 +145,8 @@ class TestLocalDataSourceDataParser:
             RawDataSourceDepartment(code=dept_c_code, name="部门C", parent=company_code),
         ]
 
-    def test_get_users(self, logger, user_wk):
-        parser = LocalDataSourceDataParser(logger, user_wk)
+    def test_get_users(self, logger, user_workbook):
+        parser = LocalDataSourceDataParser(logger, user_workbook)
         parser.parse()
 
         def gen_depts(orgs: List[str]) -> List[str]:

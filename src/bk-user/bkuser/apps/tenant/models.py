@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Tuple
 
 from django.conf import settings
@@ -249,3 +250,21 @@ class TenantUserIDGenerateConfig(TimestampedModel):
         default=TenantUserIdRuleEnum.UUID4_HEX.value,
     )
     domain = models.CharField("目标租户域名", max_length=128, unique=True, blank=True, null=True)
+
+
+class TenantUserIDRecord(TimestampedModel):
+    """
+    租户用户 ID 记录
+
+    Q：为什么需要有这个表？
+    A：为了解决这么一个场景：数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，需要使用一致的租户用户 ID
+       由于在同一个数据源中，code 是唯一的，因此这里选择存储 (tenant_id, data_source_id, code) -> 租户用户 ID 映射关系
+    """
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    code = models.CharField("用户在数据源中的唯一标识", max_length=128)
+    tenant_user_id = models.CharField("租户用户 ID", max_length=128)
+
+    class Meta:
+        unique_together = [("tenant", "data_source", "code")]

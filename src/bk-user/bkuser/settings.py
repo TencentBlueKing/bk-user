@@ -652,9 +652,9 @@ EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
 
 # 数据源同步默认超时时间（秒）
-DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = env.int("DATA_SOURCE_SYNC_DEFAULT_TIMEOUT", 30 * 60)
+DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = env.int("DATA_SOURCE_SYNC_DEFAULT_TIMEOUT", 60 * 60)
 # 租户同步默认超时时间（秒）
-TENANT_SYNC_DEFAULT_TIMEOUT = env.int("TENANT_SYNC_DEFAULT_TIMEOUT", 10 * 60)
+TENANT_SYNC_DEFAULT_TIMEOUT = env.int("TENANT_SYNC_DEFAULT_TIMEOUT", 15 * 60)
 
 # 限制组织架构页面用户/部门搜索 API 返回的最大条数
 # 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件

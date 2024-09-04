@@ -33,8 +33,8 @@
 <script setup lang="ts"> import { onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import Http from './HttpConfig.vue';
 import Success from './ConfigSuccess.vue';
+import Http from './HttpConfig.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import {

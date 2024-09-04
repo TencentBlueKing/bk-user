@@ -10,11 +10,19 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
-from django.conf import settings
-from openpyxl.reader.excel import load_workbook
-from openpyxl.workbook import Workbook
+from bkuser.apps.sync.constants import SyncTaskStatus
+from bkuser.apps.sync.runners import TenantSyncTaskRunner
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
-def user_workbook() -> Workbook:
-    return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")
+class TestTenantSyncRunner:
+    def test_standard(self, full_local_data_source, tenant_sync_task):
+        TenantSyncTaskRunner(tenant_sync_task).run()
+
+        tenant_sync_task.refresh_from_db()
+        assert tenant_sync_task.status == SyncTaskStatus.SUCCESS
+
+        assert TenantDepartment.objects.filter(data_source=full_local_data_source).count() == 9
+        assert TenantUser.objects.filter(data_source=full_local_data_source).count() == 11
