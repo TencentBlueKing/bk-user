@@ -461,11 +461,15 @@
         label: t("所属组织"),
         field: "departments",
         render: ({ row, column }) => {
-          const config = {
-            content: (row?.organization_paths || []).join('\n'),
-            disabled: row[column?.field]?.length === 0
-          }
-          return <span v-bk-tooltips={config}>{(row[column?.field] || []).join('、') || '--'}</span>
+          return <>
+            <bk-popover
+              content={(row?.organization_paths || []).join('\n')}
+              disabled={row[column?.field]?.length === 0}
+              render-type="auto"
+              theme="dark">
+              <span onMouseenter={() => handleHoverOrg(row)}>{(row[column?.field] || []).join('、') || '--'}</span>
+            </bk-popover>
+          </>
         }
     }
   ]);
@@ -624,6 +628,16 @@
   watch(() => appStore.currentOrg, (val) => {
     !!val && reloadList();
   });
+
+  const handleHoverOrg = (row) => {
+    if (!row?.organization_paths) {
+      const currentIndex = tableData.value.findIndex(item => item === row)
+      getOrganizationPaths(row.id).then(res => {
+        const organization_paths = res?.data?.organization_paths;          
+        tableData.value[currentIndex].organization_paths  = organization_paths;
+      });
+    }
+  }
   
   const initTenantsUserList = async () => {
     isDataEmpty.value = false;
@@ -648,12 +662,6 @@
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
-        tableData.value.map(item => {
-          getOrganizationPaths(item.id).then(res => {
-            const organization_paths = res?.data?.organization_paths;
-            item.organization_paths = organization_paths;
-          });
-        });
     } catch (e) {
         console.warn(e);
         isDataError.value = true;
