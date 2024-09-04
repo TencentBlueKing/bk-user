@@ -201,7 +201,7 @@ class TestTenantUserPhoneUpdateApi:
 
     def test_update_with_inherited_blank_custom_phone(self, api_client, tenant_user):
         tenant_user.custom_phone = "12345678901"
-        tenant_user.save()
+        tenant_user.save(update_fields=["custom_phone"])
 
         data = {
             "is_inherited_phone": "True",
@@ -257,7 +257,7 @@ class TestTenantUserEmailUpdateApi:
 
     def test_update_with_inherited_blank_custom_email(self, api_client, tenant_user):
         tenant_user.custom_email = "123456@qq.com"
-        tenant_user.save()
+        tenant_user.save(update_fields=["custom_email"])
 
         data = {
             "is_inherited_email": "True",
