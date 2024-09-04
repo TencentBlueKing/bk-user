@@ -466,8 +466,7 @@
               content={(row?.organization_paths || []).join('\n')}
               disabled={row[column?.field]?.length === 0}
               render-type="auto"
-              theme="dark"
-              allow-html>
+              theme="dark">
               <span onMouseenter={() => handleHoverOrg(row)}>{(row[column?.field] || []).join('、') || '--'}</span>
             </bk-popover>
           </>
