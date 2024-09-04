@@ -463,7 +463,7 @@
         render: ({ row, column }) => {
           return <>
             <bk-popover
-              content={(row?.organization_paths || []).join('\n')}
+              content={(row?.organization_paths || []).map(path => <div>{path}</div>)}
               disabled={row[column?.field]?.length === 0}
               render-type="auto"
               theme="dark">
@@ -633,7 +633,7 @@
     if (!row?.organization_paths) {
       const currentIndex = tableData.value.findIndex(item => item === row)
       getOrganizationPaths(row.id).then(res => {
-        const organization_paths = res?.data?.organization_paths;          
+        const organization_paths = res?.data?.organization_paths;  
         tableData.value[currentIndex].organization_paths  = organization_paths;
       });
     }
