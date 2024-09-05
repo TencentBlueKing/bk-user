@@ -37,21 +37,25 @@ cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
-    if plugin_init_extra_kwargs.get("task_key"):
-        task_key = plugin_init_extra_kwargs["task_key"]
-        plugin_init_extra_kwargs.pop("task_key")
-        encoded_data = cache.get(task_key)
+
+    task = DataSourceSyncTask.objects.get(id=task_id)
+
+    # 若已指定原始数据 Key，则需要从缓存中获取数据
+    if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
+        encoded_data = cache.get(task_raw_data_key)
         if not encoded_data:
-            logger.error("[celery] data source sync task file not found: %s", task_id)
-            task = DataSourceSyncTask.objects.get(id=task_id)
-            task.status = SyncTaskStatus.FAILED.value
-            task.logs = "data source sync task file not found: %s" % task_id
-            task.save()
+            task.status = SyncTaskStatus.FAILED
+            task.logs = f"data source sync task {task_id} require raw data in cache"
+            task.save(update_fields=["status", "logs", "updated_at"])
             return
-        cache.delete(task_key)
+
+        # 取到数据后立即清理缓存
+        cache.delete(task_raw_data_key)
+
         workbook = load_workbook(filename=BytesIO(base64.b64decode(encoded_data)))
         plugin_init_extra_kwargs["workbook"] = workbook
-    task = DataSourceSyncTask.objects.get(id=task_id)
+        plugin_init_extra_kwargs.pop("task_key")
+
     DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
 

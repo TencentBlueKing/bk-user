@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional
 
 from django.conf import settings
 from django.utils import timezone
+from openpyxl.workbook import Workbook
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus
@@ -32,7 +33,6 @@ class DataSourceSyncManager:
         self.data_source = data_source
         self.sync_options = sync_options
         self.sync_timeout = data_source.sync_timeout
-        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
@@ -62,17 +62,25 @@ class DataSourceSyncManager:
 
         return task
 
-    def _process_workbook(self, plugin_init_extra_kwargs, task_id):
+    def _process_workbook(self, plugin_init_extra_kwargs: Dict[str, Any], task_id: int):
         workbook = plugin_init_extra_kwargs.get("workbook")
-        if workbook:
-            with io.BytesIO() as buffer:
-                workbook.save(buffer)
-                content = buffer.getvalue()
-            encoded_data = base64.b64encode(content).decode("utf-8")
-            task_key = f"data_source:{self.data_source.id}:{task_id}"
-            self.cache.set(task_key, encoded_data, 2 * self.sync_timeout)
-            plugin_init_extra_kwargs["task_key"] = task_key
-            plugin_init_extra_kwargs.pop("workbook")
+        task_key = self.save_workbook_to_cache(workbook, task_id, self.data_source.id)
+        plugin_init_extra_kwargs["task_key"] = task_key
+        plugin_init_extra_kwargs.pop("workbook")
+
+    def save_workbook_to_cache(self, workbook: Workbook, task_id: int, data_source_id: int) -> str:
+        """将 workbook 保存到缓存中"""
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
+
+        with io.BytesIO() as buffer:
+            workbook.save(buffer)
+            content = buffer.getvalue()
+
+        encoded_data = base64.b64encode(content).decode("utf-8")
+        task_key = f"data_source:{data_source_id}:{task_id}"
+        cache.set(task_key, encoded_data, 2 * self.sync_timeout)
+
+        return task_key
 
 
 class TenantSyncManager:

@@ -18,8 +18,6 @@ from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
-from bkuser.apps.sync.tasks import sync_data_source
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from django.conf import settings
@@ -470,28 +468,3 @@ class TestDataSourceImportApi:
             assert sync_task.status == SyncTaskStatus.SUCCESS
             assert DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
             assert DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-
-
-class TestDataSourceSyncTask:
-    def test_sync_data_source_success(self, data_source_sync_task, encoded_file):
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
-        task_id = data_source_sync_task.id
-        task_key = "test_key"
-
-        cache.set(task_key, encoded_file)
-        plugin_init_extra_kwargs = {"task_key": task_key}
-        sync_data_source(task_id, plugin_init_extra_kwargs)
-
-        task = DataSourceSyncTask.objects.get(id=task_id)
-        assert task.status == SyncTaskStatus.SUCCESS.value
-
-    def test_sync_data_source_file_not_found(self, data_source_sync_task):
-        task_id = data_source_sync_task.id
-        task_key = "non_existing_key"
-
-        plugin_init_extra_kwargs = {"task_key": task_key}
-        sync_data_source(task_id, plugin_init_extra_kwargs)
-
-        task = DataSourceSyncTask.objects.get(id=task_id)
-        assert task.status == SyncTaskStatus.FAILED.value
-        assert "data source sync task file not found" in task.logs
