@@ -42,4 +42,6 @@ COPY src/idp-plugins/idp_plugins /app/bkuser/idp_plugins
 COPY --from=StaticBuilding /dist /app/staticfiles
 COPY --from=StaticBuilding /dist/index.html /app/templates/index.html
 
+RUN python manage.py collectstatic --noinput
+
 CMD ["bash", "/app/bin/start.sh"]
