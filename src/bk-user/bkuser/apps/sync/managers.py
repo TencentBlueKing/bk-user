@@ -9,13 +9,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import base64
-import io
 from typing import Any, Dict, Optional
 
 from django.conf import settings
 from django.utils import timezone
-from openpyxl.workbook import Workbook
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus
@@ -24,6 +21,7 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.storage import RedisTemporaryStorage
 
 
 class DataSourceSyncManager:
@@ -37,7 +35,6 @@ class DataSourceSyncManager:
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
         plugin_init_extra_kwargs = plugin_init_extra_kwargs or {}
-
         task = DataSourceSyncTask.objects.create(
             data_source=self.data_source,
             status=SyncTaskStatus.PENDING.value,
@@ -63,24 +60,15 @@ class DataSourceSyncManager:
         return task
 
     def _process_workbook(self, plugin_init_extra_kwargs: Dict[str, Any], task_id: int):
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
         workbook = plugin_init_extra_kwargs.get("workbook")
-        task_key = self.save_workbook_to_cache(workbook, task_id, self.data_source.id)
+        task_key = f"data_source:{self.data_source.id}:{task_id}"
+
+        storage = RedisTemporaryStorage(cache)
+        storage.save(workbook, data={"key": task_key, "timeout": 2 * self.sync_timeout})
+
         plugin_init_extra_kwargs["task_key"] = task_key
         plugin_init_extra_kwargs.pop("workbook")
-
-    def save_workbook_to_cache(self, workbook: Workbook, task_id: int, data_source_id: int) -> str:
-        """将 workbook 保存到缓存中"""
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
-
-        with io.BytesIO() as buffer:
-            workbook.save(buffer)
-            content = buffer.getvalue()
-
-        encoded_data = base64.b64encode(content).decode("utf-8")
-        task_key = f"data_source:{data_source_id}:{task_id}"
-        cache.set(task_key, encoded_data, 2 * self.sync_timeout)
-
-        return task_key
 
 
 class TenantSyncManager:
