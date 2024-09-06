@@ -9,12 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import base64
 import logging
-from io import BytesIO
 from typing import Any, Dict
-
-from openpyxl import load_workbook
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
@@ -27,6 +23,7 @@ from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRun
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.celery import app
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.storage import RedisTemporaryStorage
 from bkuser.common.task import BaseTask
 
 logger = logging.getLogger(__name__)
@@ -42,17 +39,16 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
 
     # 若已指定原始数据 Key，则需要从缓存中获取数据
     if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
-        encoded_data = cache.get(task_raw_data_key)
-        if not encoded_data:
+        storage = RedisTemporaryStorage(CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
+
+        try:
+            workbook = storage.get_workbook(task_raw_data_key)
+        except ValueError:
             task.status = SyncTaskStatus.FAILED
             task.logs = f"data source sync task {task_id} require raw data in cache"
             task.save(update_fields=["status", "logs", "updated_at"])
             return
 
-        # 取到数据后立即清理缓存
-        cache.delete(task_raw_data_key)
-
-        workbook = load_workbook(filename=BytesIO(base64.b64decode(encoded_data)))
         plugin_init_extra_kwargs["workbook"] = workbook
         plugin_init_extra_kwargs.pop("task_key")
 

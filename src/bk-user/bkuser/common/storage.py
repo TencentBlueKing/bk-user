@@ -11,47 +11,34 @@ specific language governing permissions and limitations under the License.
 
 import base64
 import io
-from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Any, Dict
 
 from openpyxl import load_workbook
 from openpyxl.workbook import Workbook
 
-from bkuser.common.cache import Cache
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-class TemporaryStorageBackend(ABC):
-    """临时存储基类"""
+class RedisTemporaryStorage:
+    """数据源同步任务时 redis 临时存储"""
 
-    @abstractmethod
-    def save(self, workbook: Workbook, data: Dict[str, Any]) -> None:
-        """保存 Workbook 数据"""
+    def __init__(self, scene: CacheKeyPrefixEnum):
+        self.storage = Cache(CacheEnum.REDIS, scene)
 
-    @abstractmethod
-    def get(self, data: Dict[str, Any]) -> Workbook:
-        """获取 Workbook 数据"""
-
-
-class RedisTemporaryStorage(TemporaryStorageBackend):
-    """redis 临时存储"""
-
-    def __init__(self, cache: Cache):
-        self.cache = cache
-
-    def save(self, workbook: Workbook, data: Dict[str, Any]) -> None:
+    def save_workbook(self, data: Workbook, identifier_key: str, timeout: int) -> None:
         """保存 Workbook 数据至 redis"""
         with io.BytesIO() as buffer:
-            workbook.save(buffer)
+            data.save(buffer)
             content = buffer.getvalue()
 
         encoded_data = base64.b64encode(content).decode("utf-8")
-        self.cache.set(data["key"], encoded_data, 2 * data["timeout"])
+        self.storage.set(identifier_key, encoded_data, 2 * timeout)
 
-    def get(self, data: Dict[str, Any]) -> Workbook:
+    def get_workbook(self, identifier_key: str) -> Workbook:
         """从 redis 中获取 Workbook 数据"""
-        key = data["key"]
-        encoded_data = self.cache.get(key)
-        self.cache.delete(key)
+        encoded_data = self.storage.get(identifier_key)
+        if not encoded_data:
+            raise ValueError("data not found in cache")
 
+        self.storage.delete(identifier_key)
         return load_workbook(filename=BytesIO(base64.b64decode(encoded_data)))
