@@ -158,7 +158,7 @@
                           :filterable="false"
                           :clearable="false">
                           <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
-                          <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
+                          <bk-option :id="OpenDialogSelect.custom" :key="1" :name="$t('自定义')"></bk-option>
                         </bk-select>
                         <bk-input
                           v-if="emailSelect === OpenDialogSelect.inherit"
