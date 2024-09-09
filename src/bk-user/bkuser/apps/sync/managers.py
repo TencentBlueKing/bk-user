@@ -21,7 +21,7 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
 from bkuser.common.cache import CacheKeyPrefixEnum
-from bkuser.common.storage import RedisTemporaryStorage
+from bkuser.common.storage import TemporaryStorage
 
 
 class DataSourceSyncManager:
@@ -61,12 +61,13 @@ class DataSourceSyncManager:
 
     def _process_workbook(self, plugin_init_extra_kwargs: Dict[str, Any], task_id: int):
         workbook = plugin_init_extra_kwargs.get("workbook")
-        task_key = f"data_source:{self.data_source.id}:{task_id}"
+        identifier_key = f"data_source:{self.data_source.id}:{task_id}"
+        scene = CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA
 
-        storage = RedisTemporaryStorage(CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
-        storage.save_workbook(workbook, task_key, self.sync_timeout)
+        storage = TemporaryStorage(scene)
+        storage.save_workbook(workbook, identifier_key, self.sync_timeout)
 
-        plugin_init_extra_kwargs["task_key"] = task_key
+        plugin_init_extra_kwargs["task_key"] = identifier_key
         plugin_init_extra_kwargs.pop("workbook")
 
 

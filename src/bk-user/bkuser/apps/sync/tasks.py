@@ -23,7 +23,7 @@ from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRun
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.celery import app
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
-from bkuser.common.storage import RedisTemporaryStorage
+from bkuser.common.storage import TemporaryStorage
 from bkuser.common.task import BaseTask
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
 
     # 若已指定原始数据 Key，则需要从缓存中获取数据
     if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
-        storage = RedisTemporaryStorage(CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
+        storage = TemporaryStorage(CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 
         try:
             workbook = storage.get_workbook(task_raw_data_key)

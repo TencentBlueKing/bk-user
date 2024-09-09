@@ -19,7 +19,7 @@ from openpyxl.workbook import Workbook
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-class RedisTemporaryStorage:
+class TemporaryStorage:
     """数据源同步任务时 redis 临时存储"""
 
     def __init__(self, scene: CacheKeyPrefixEnum):
