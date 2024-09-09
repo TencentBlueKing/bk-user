@@ -5,26 +5,29 @@
     :close-icon="false"
     :quick-close="false">
     <template #header>
-      <div class="pt-[20px] pl-[20px]">
-        <span class="font-black text-[30px]">{{ dialogTitle }}</span>
-        <div class="text-xs mt-[10px] text-[#8a8b92]">
-          <slot name="header-tips"></slot>
-        </div>
+      <div class="mt-[24px] ml-[16px]">
+        <span class="font-black text-[32px]">{{ dialogTitle }}</span>
       </div>
     </template>
     <template #default>
-      <bk-form :model="verifyForm" ref="verifyFormRef" :rules="verifyFormRules" form-type="vertical">
+      <bk-form
+        :model="verifyForm"
+        ref="verifyFormRef"
+        :rules="verifyFormRules"
+        form-type="vertical"
+        class="ml-[16px] mr-[16px]">
         <bk-form-item
-          class="m-[10px] mt-[20px] !mb-[10px] h-[40px]"
+          class="mt-[32px]"
           v-if="curFormItemList.includes(formItemPropName.customEmail)" property="email" required>
-          <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
+          <bk-input class="!w-[400px] !h-[40px]" :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
           </bk-input>
         </bk-form-item>
 
         <bk-form-item
-          class="m-[10px] mt-[20px] !mb-[10px] h-[40px]"
+          class="mt-[32px] h-[40px]"
           v-if="curFormItemList.includes(formItemPropName.customPhone)">
           <phoneInput
+            class="!w-[400px] phone-input"
             :form-data="verifyForm"
             :tel-error="telError"
             @change-country-code="changeCountryCode"
@@ -33,15 +36,17 @@
         </bk-form-item>
 
         <bk-form-item
-          class="m-[10px] mt-[20px]"
+          class="mt-[24px] !mb-[0px]"
           v-if="curFormItemList.includes(formItemPropName.captcha)">
           <div class="flex justify-center">
             <bk-input
+              class="!w-[400px] !h-[40px]"
               :placeholder="t('请输入验证码')"
               v-model="verifyForm.captcha"
               property="captcha" />
             <bk-button
-              outline theme="primary" class="ml-[10px] w-[120px]"
+              outline theme="primary"
+              class="!w-[141.68px] ml-[12px] !h-[40px]"
               :disabled="verifyFormCaptchaBtn.disabled"
               @click="handleSendCaptcha">
               {{ verifyFormCaptchaBtn.disabled ? `${verifyFormCaptchaBtn.times}s` : t('获取验证码') }}
@@ -51,14 +56,14 @@
       </bk-form>
     </template>
     <template #footer>
-      <div class="pb-[20px] m-[10px] mb-[0px]">
+      <div class="pb-[20px] ml-[16px] mb-[0px] w-[400px]">
         <bk-button
-          class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
+          class="mb-[10px] block h-[40px] w-[100%]" theme="primary" size="large" width="100%"
           :loading="submitBtnLoading"
           @click="handleSubmitVerifyForm">
           {{ t('确定') }}
         </bk-button>
-        <bk-button class="w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
+        <bk-button class="h-[40px] w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
       </div>
     </template>
   </bk-dialog>
@@ -269,15 +274,7 @@ const handleSubmitVerifyForm = async () => {
 
 </script>
 
-<style lang="less">
-.verify-identity-info-tab-panel {
-  margin-top: -10px;
-  height: 170px;
-  .bk-tab-header {
-    justify-content: center;
-  }
-}
-
+<style lang="less" scoped>
 .verify-icon {
   display: inline-block;
   width: 16px;
@@ -285,4 +282,21 @@ const handleSubmitVerifyForm = async () => {
   margin-right: 5px;
   vertical-align: middle;
 }
+
+.phone-input {
+  ::v-deep .iti {
+    height: 40px;
+    .iti__flag-container {
+      height: 100%;
+    }
+    input {
+      height: 100% !important;
+    }
+  }
+}
+
+.bk-dialog-footer {
+  border: none;
+}
+
 </style>
