@@ -254,7 +254,7 @@ const handleSubmitVerifyForm = async () => {
         is_inherited_email: false,
         custom_email: verifyForm.email,
         verification_code: verifyForm.captcha,
-      });
+      }, { globalError: false });
       infoBoxConfig.title = t('邮箱验证成功');
     } catch (err) {
       captchaMessage.value = err.response.data?.errror?.message;
@@ -270,7 +270,7 @@ const handleSubmitVerifyForm = async () => {
         custom_phone: verifyForm.custom_phone,
         custom_phone_country_code: verifyForm.custom_phone_country_code,
         verification_code: verifyForm.captcha,
-      });
+      }, { globalError: false });
       infoBoxConfig.title = t('手机号验证成功');
     } catch (err) {
       captchaMessage.value = err.response.data?.errror?.message;
