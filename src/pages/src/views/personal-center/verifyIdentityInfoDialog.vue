@@ -5,26 +5,29 @@
     :close-icon="false"
     :quick-close="false">
     <template #header>
-      <div class="pt-[20px] pl-[20px]">
-        <span class="font-black text-[30px]">{{ dialogTitle }}</span>
-        <div class="text-xs mt-[10px] text-[#8a8b92]">
-          <slot name="header-tips"></slot>
-        </div>
+      <div class="mt-[24px] ml-[16px]">
+        <span class="font-black text-[32px]">{{ dialogTitle }}</span>
       </div>
     </template>
     <template #default>
-      <bk-form :model="verifyForm" ref="verifyFormRef" :rules="verifyFormRules" form-type="vertical">
+      <bk-form
+        :model="verifyForm"
+        ref="verifyFormRef"
+        :rules="verifyFormRules"
+        form-type="vertical"
+        class="ml-[16px] mr-[16px]">
         <bk-form-item
-          class="m-[10px] mt-[20px] !mb-[10px] h-[40px]"
-          v-if="curFormItemList.includes(formItemPropName.customEmail)" property="email" required>
-          <bk-input :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
+          class="mt-[32px]"
+          v-if="curFormItemList.includes(formItemPropName.customEmail)" property="email">
+          <bk-input class="!w-[400px] !h-[40px]" :placeholder="t('请输入邮箱以接收邮箱验证码')" v-model="verifyForm.email">
           </bk-input>
         </bk-form-item>
 
         <bk-form-item
-          class="m-[10px] mt-[20px] !mb-[10px] h-[40px]"
+          class="mt-[32px] h-[40px]"
           v-if="curFormItemList.includes(formItemPropName.customPhone)">
           <phoneInput
+            class="!w-[400px] phone-input"
             :form-data="verifyForm"
             :tel-error="telError"
             @change-country-code="changeCountryCode"
@@ -33,32 +36,37 @@
         </bk-form-item>
 
         <bk-form-item
-          class="m-[10px] mt-[20px]"
+          class="mt-[24px] !mb-[0px]"
+          property="captcha"
           v-if="curFormItemList.includes(formItemPropName.captcha)">
           <div class="flex justify-center">
             <bk-input
+              :class="`!w-[400px] !h-[40px] ${captchaValidate ? 'captcha-input-validate' : ''}`"
               :placeholder="t('请输入验证码')"
+              @blur="() => captchaValidate = false"
               v-model="verifyForm.captcha"
               property="captcha" />
             <bk-button
-              outline theme="primary" class="ml-[10px] w-[120px]"
+              outline theme="primary"
+              class="!w-[141.68px] ml-[12px] !h-[40px]"
               :disabled="verifyFormCaptchaBtn.disabled"
               @click="handleSendCaptcha">
               {{ verifyFormCaptchaBtn.disabled ? `${verifyFormCaptchaBtn.times}s` : t('获取验证码') }}
             </bk-button>
           </div>
+          <p v-if="captchaValidate" class="captcha-error-text">{{ t('验证码错误，请重试') }}</p>
         </bk-form-item>
       </bk-form>
     </template>
     <template #footer>
-      <div class="pb-[20px] m-[10px] mb-[0px]">
+      <div class="pb-[20px] ml-[16px] mb-[0px] w-[400px]">
         <bk-button
-          class="w-[100%] mb-[10px] block" theme="primary" size="large" width="100%"
+          class="mb-[10px] block h-[40px] w-[100%]" theme="primary" size="large" width="100%"
           :loading="submitBtnLoading"
           @click="handleSubmitVerifyForm">
           {{ t('确定') }}
         </bk-button>
-        <bk-button class="w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
+        <bk-button class="h-[40px] w-[100%]" size="large" @click="handleCloseVerifyDialog">{{ t('取消') }}</bk-button>
       </div>
     </template>
   </bk-dialog>
@@ -140,6 +148,9 @@ const verifyFormCaptchaBtn = reactive({
   times: 0,
 });
 
+const captchaValidate = ref(false);
+const captchaMessage = ref('');
+
 // 发送验证码
 const handleSendCaptcha = async () => {
   if (props.currentVerifyConfig.type === OpenDialogType.email) {
@@ -168,7 +179,7 @@ const handleSendCaptcha = async () => {
         if (props.currentVerifyConfig.type === OpenDialogType.phone) {
           await postPersonalCenterUserPhoneCaptcha(userId, {
             phone: verifyForm.custom_phone,
-            phone_country_code: verifyForm.custom_phone_country_code
+            phone_country_code: verifyForm.custom_phone_country_code,
           });
           Message({ theme: 'success', message: t('发送成功') });
         }
@@ -195,6 +206,7 @@ const verifyFormRef = ref(null);
 const validate = useValidate();
 const verifyFormRules = {
   email: [validate.required, validate.email],
+  captcha: [validate.required],
 };
 
 const resetCustomForm = () => {
@@ -220,6 +232,8 @@ const handleCloseVerifyDialog = () => {
 
 const submitBtnLoading = ref(false);
 const handleSubmitVerifyForm = async () => {
+  captchaValidate.value = false;
+  captchaMessage.value = '';
   const result = await verifyFormRef.value?.validate().catch(() => false);
   if (!result) return;
 
@@ -240,11 +254,12 @@ const handleSubmitVerifyForm = async () => {
         is_inherited_email: false,
         custom_email: verifyForm.email,
         verification_code: verifyForm.captcha,
-      });
+      }, { globalError: false });
       infoBoxConfig.title = t('邮箱验证成功');
     } catch (err) {
-      infoBoxConfig.title = t('邮箱验证失败');
+      captchaMessage.value = err.response.data?.errror?.message;
       infoBoxConfig.type = fail;
+      captchaValidate.value = true;
     }
   }
   if (type === phone) {
@@ -255,34 +270,52 @@ const handleSubmitVerifyForm = async () => {
         custom_phone: verifyForm.custom_phone,
         custom_phone_country_code: verifyForm.custom_phone_country_code,
         verification_code: verifyForm.captcha,
-      });
+      }, { globalError: false });
       infoBoxConfig.title = t('手机号验证成功');
     } catch (err) {
-      infoBoxConfig.title = t('手机号验证失败');
+      captchaMessage.value = err.response.data?.errror?.message;
       infoBoxConfig.type = fail;
+      captchaValidate.value = true;
     }
   }
   submitBtnLoading.value = false;
-  handleCloseVerifyDialog();
-  InfoBox(infoBoxConfig);
+  if (infoBoxConfig.type === success) {
+    InfoBox(infoBoxConfig);
+    handleCloseVerifyDialog();
+  }
 };
 
 </script>
 
-<style lang="less">
-.verify-identity-info-tab-panel {
-  margin-top: -10px;
-  height: 170px;
-  .bk-tab-header {
-    justify-content: center;
+<style lang="less" scoped>
+
+.phone-input {
+  ::v-deep .iti {
+    height: 40px;
+    .iti__flag-container {
+      height: 100%;
+    }
+    input {
+      height: 100% !important;
+    }
   }
 }
 
-.verify-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 5px;
-  vertical-align: middle;
+.captcha-input-validate {
+  border: 1px solid #ea3636 !important;
 }
+
+.captcha-error-text {
+  position: absolute;
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: #ea3636;
+  animation: form-error-appear-animation .15s
+}
+
+::v-deep .bk-dialog-footer {
+  border: none;
+}
+
 </style>
