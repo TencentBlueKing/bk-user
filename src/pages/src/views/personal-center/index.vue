@@ -228,7 +228,7 @@
                           v-if="phoneSelect === OpenDialogSelect.inherit"
                           class="phone-input">
                           <phoneInput
-                            style="width: 269px; margin-left: -2px;"
+                            class="phone-input-input"
                             :form-data="currentUserInfo"
                             :disabled="true"
                             autofocus="autofocus"
@@ -236,7 +236,7 @@
                         </bk-form-item>
                         <bk-form-item v-else class="phone-input">
                           <phoneInput
-                            style="width: 269px; margin-left: -2px;"
+                            class="phone-input-input"
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
@@ -1214,9 +1214,20 @@ const hidePasswordModal = () => {
                         }
                       }
                     }
+                    .phone-input {
+                      width: 269px;
+                      margin-left: -1px;
+                      ::v-deep .iti__tel-input {
+                        border-top-left-radius: 0px;
+                        border-bottom-left-radius: 0px;
+                      }
+                    }
+
                     .bk-input {
                       width: 269px;
-                      margin: -2px;
+                      margin: -1px;
+                      border-top-left-radius: 0px;
+                      border-bottom-left-radius: 0px;
                     }
 
                     ::v-deep .bk-button-text {
