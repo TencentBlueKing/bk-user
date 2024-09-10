@@ -248,8 +248,8 @@ const handleSubmitVerifyForm = async () => {
       });
       infoBoxConfig.title = t('邮箱验证成功');
     } catch (err) {
-      infoBoxConfig.title = t('邮箱验证失败');
-      infoBoxConfig.type = fail;
+      // infoBoxConfig.title = t('邮箱验证失败');
+      // infoBoxConfig.type = fail;
     }
   }
   if (type === phone) {
@@ -263,13 +263,15 @@ const handleSubmitVerifyForm = async () => {
       });
       infoBoxConfig.title = t('手机号验证成功');
     } catch (err) {
-      infoBoxConfig.title = t('手机号验证失败');
-      infoBoxConfig.type = fail;
+      // infoBoxConfig.title = t('手机号验证失败');
+      // infoBoxConfig.type = fail;
     }
   }
   submitBtnLoading.value = false;
-  handleCloseVerifyDialog();
-  InfoBox(infoBoxConfig);
+  if (infoBoxConfig.type === success) {
+    InfoBox(infoBoxConfig);
+    handleCloseVerifyDialog();
+  }
 };
 
 </script>

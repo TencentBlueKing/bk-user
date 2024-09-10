@@ -154,15 +154,7 @@
                         <bk-select
                           class="bk-select"
                           v-model="emailSelect"
-                        <bk-select
-                          class="bk-select"
-                          v-model="emailSelect"
                           @change="toggleEmail"
-                          :filterable="false"
-                          :clearable="false">
-                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
-                          <bk-option :id="OpenDialogSelect.custom" :key="1" :name="$t('自定义')"></bk-option>
-                        </bk-select>
                           :filterable="false"
                           :clearable="false">
                           <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
@@ -170,18 +162,11 @@
                         </bk-select>
                         <bk-input
                           v-if="emailSelect === OpenDialogSelect.inherit"
-                          v-if="emailSelect === OpenDialogSelect.inherit"
                           v-model="currentUserInfo.email"
-                          :disabled="true" />
                           :disabled="true" />
                         <bk-form-item v-else class="email-input" property="custom_email">
                           <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
                         </bk-form-item>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="changeEmail"
-                          v-if="emailUpdateRestriction === emailEidtable.YES
-                            || emailSelect === OpenDialogSelect.inherit">
                         <bk-button
                           text theme="primary" class="ml-[12px] mr-[12px]"
                           @click="changeEmail"
@@ -221,11 +206,6 @@
                           class="user-icon icon-edit"
                           @click="isEditEmail = true">
                         </i>
-                        <i
-                          v-if="emailUpdateRestriction !== emailEidtable.No"
-                          class="user-icon icon-edit"
-                          @click="isEditEmail = true">
-                        </i>
                       </div>
                     </div>
                   </li>
@@ -238,15 +218,7 @@
                         <bk-select
                           class="bk-select"
                           v-model="phoneSelect"
-                        <bk-select
-                          class="bk-select"
-                          v-model="phoneSelect"
                           @change="togglePhone"
-                          :filterable="false"
-                          :clearable="false">
-                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
-                          <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
-                        </bk-select>
                           :filterable="false"
                           :clearable="false">
                           <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
@@ -254,19 +226,17 @@
                         </bk-select>
                         <bk-form-item
                           v-if="phoneSelect === OpenDialogSelect.inherit"
-                          v-if="phoneSelect === OpenDialogSelect.inherit"
                           class="phone-input">
                           <phoneInput
-                            style="width: 269px"
+                            style="width: 269px; margin-left: -2px;"
                             :form-data="currentUserInfo"
-                            :disabled="true"
                             :disabled="true"
                             autofocus="autofocus"
                           />
                         </bk-form-item>
                         <bk-form-item v-else class="phone-input">
                           <phoneInput
-                            style="width: 269px"
+                            style="width: 269px; margin-left: -2px;"
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
@@ -274,11 +244,6 @@
                             @change-tel-error="changeTelError"
                             @keydown.enter="changePhone" />
                         </bk-form-item>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="changePhone"
-                          v-if="phoneUpdateRestriction === phoneEidtable.YES
-                            || phoneSelect === OpenDialogSelect.inherit">
                         <bk-button
                           text theme="primary" class="ml-[12px] mr-[12px]"
                           @click="changePhone"
@@ -312,11 +277,6 @@
                             ? currentUserInfo.phone
                             : currentUserInfo.custom_phone }}
                         </span>
-                        <i
-                          v-if="phoneUpdateRestriction !== phoneEidtable.No"
-                          class="user-icon icon-edit"
-                          @click="isEditPhone = true">
-                        </i>
                         <i
                           v-if="phoneUpdateRestriction !== phoneEidtable.No"
                           class="user-icon icon-edit"
@@ -472,24 +432,12 @@
         :cur-email-text="curEmail"
         :cur-phone-text="curPhone">
       </verifyIdentityInfoDialog>
-      <!-- 邮箱、手机号编辑验证 -->
-      <verifyIdentityInfoDialog
-        v-model:is-show="showVerifyDialog"
-        :current-verify-config="currentVerifyConfig"
-        :user-id="currentUserInfo.id"
-        :cur-email-text="curEmail"
-        :cur-phone-text="curPhone">
-      </verifyIdentityInfoDialog>
     </template>
   </bk-resize-layout>
 </template>
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
-
-import { emailEidtable, OpenDialogSelect, OpenDialogType, phoneEidtable  } from './openDialogType';
-import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import { emailEidtable, OpenDialogSelect, OpenDialogType, phoneEidtable  } from './openDialogType';
@@ -585,8 +533,6 @@ const getCurrentUser = async (id) => {
       extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
     };
     canChangePassword.value = featureRes.data.can_change_password;
-    emailUpdateRestriction.value = featureRes.data.email_update_restriction;
-    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
     emailUpdateRestriction.value = featureRes.data.email_update_restriction;
     phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
     extrasList.value = [...currentUserInfo.value.extras];
@@ -744,9 +690,6 @@ const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === cu
 const toggleEmail = (value: OpenDialogSelect) => {
   const currentInherit = value === OpenDialogSelect.inherit;
   currentUserInfo.value.is_inherited_email = currentInherit;
-const toggleEmail = (value: OpenDialogSelect) => {
-  const currentInherit = value === OpenDialogSelect.inherit;
-  currentUserInfo.value.is_inherited_email = currentInherit;
   nextTick(() => {
     if (!currentInherit) {
       currentUserInfo.value.custom_email = customEmail.value;
@@ -795,23 +738,11 @@ const phoneSelect = ref(currentUserInfo.value.is_inherited_phone === false
   ? OpenDialogSelect.custom
   : OpenDialogSelect.inherit);
 
-const emailSelect = ref(currentUserInfo.value.is_inherited_email === false
-  ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit);
-
-const phoneSelect = ref(currentUserInfo.value.is_inherited_phone === false
-  ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit);
-
 // 切换手机号
 const togglePhone = (value: OpenDialogSelect) => {
   const currentInherit = value === OpenDialogSelect.inherit;
   currentUserInfo.value.is_inherited_phone = currentInherit;
-const togglePhone = (value: OpenDialogSelect) => {
-  const currentInherit = value === OpenDialogSelect.inherit;
-  currentUserInfo.value.is_inherited_phone = currentInherit;
   nextTick(() => {
-    if (currentInherit) return telError.value = false;
     if (currentInherit) return telError.value = false;
     currentUserInfo.value.custom_phone = customPhone.value;
     const phoneInput = document.querySelectorAll('.phone-input input');
@@ -1272,12 +1203,20 @@ const hidePasswordModal = () => {
                     height: 50px;
                     .bk-select {
                       width: 106px;
+                      line-height: 0px;
                     }
-                    .bk-select {
-                      width: 106px;
+                    .email-input {
+                      height: 32px;
+                      .bk-form-content {
+                        height: 100%;
+                        .bk-input--text {
+                          height: 100%;
+                        }
+                      }
                     }
                     .bk-input {
                       width: 269px;
+                      margin: -2px;
                     }
 
                     ::v-deep .bk-button-text {
