@@ -173,6 +173,7 @@
       :title="updateConfig.title"
       quick-close
       width="960"
+      render-directive="if"
       transfer
     >
       <SyncRecords :data-source="dataSource" />

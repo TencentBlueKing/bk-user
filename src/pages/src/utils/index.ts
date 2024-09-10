@@ -243,6 +243,34 @@ export const SYNC_CONFIG_LIST = [
   },
 ];
 
+// 同步超时时间
+export const SYNC_TIMEOUT_LIST = [
+  {
+    value: 15 * 60,
+    label: t('15 分钟'),
+  },
+  {
+    value: 30 * 60,
+    label: t('30 分钟'),
+  },
+  {
+    value: 45 * 60,
+    label: t('45 分钟'),
+  },
+  {
+    value: 60 * 60,
+    label: t('1 小时'),
+  },
+  {
+    value: 3 * 60 * 60,
+    label: t('3 小时'),
+  },
+  {
+    value: 6 * 60 * 60,
+    label: t('6 小时'),
+  },
+];
+
 // 数据更新记录状态
 export const dataRecordStatus = {
   pending: {

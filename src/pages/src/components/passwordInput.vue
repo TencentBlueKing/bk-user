@@ -41,7 +41,7 @@ const inputValue = ref('');
 
 watch(() => props.modelValue, (val) => {
   inputValue.value = val;
-});
+}, {immediate: true});
 
 const isPassword  = ref(false);
 

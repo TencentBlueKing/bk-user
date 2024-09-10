@@ -190,6 +190,20 @@
             />
           </bk-select>
         </bk-form-item>
+        <bk-form-item :label="$t('同步超时时间')" required>
+          <bk-select
+            class="w-[560px]"
+            :clearable="false"
+            v-model="fieldSettingData.sync_config.sync_timeout"
+            @change="handleChange">
+            <bk-option
+              v-for="item in SYNC_TIMEOUT_LIST"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </bk-select>
+        </bk-form-item>
         <div class="btn">
           <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
           <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
@@ -220,7 +234,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { SYNC_CONFIG_LIST } from '@/utils';
+import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 const props = defineProps({
   curStep: {
@@ -277,6 +291,7 @@ const fieldSettingData = ref({
   // 同步配置
   sync_config: {
     sync_period: 24 * 60,
+    sync_timeout: 60 * 60,
   },
   addFieldList: [],
 });
