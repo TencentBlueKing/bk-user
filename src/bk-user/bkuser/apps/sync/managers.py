@@ -54,12 +54,25 @@ class DataSourceSyncManager:
                 identifier_key = storage.save_workbook(plugin_init_extra_kwargs.get("workbook"))
                 plugin_init_extra_kwargs = {"task_key": identifier_key}
 
+            self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
             sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
         return task
+
+    @staticmethod
+    def _ensure_only_basic_type_in_kwargs(kwargs: Dict[str, Any]):
+        """确保 插件初始化额外参数 中只有基础类型"""
+        if not kwargs:
+            return
+
+        for v in kwargs.values():
+            if isinstance(v, (int, float, str, bytes, bool, dict, list)):
+                continue
+
+            raise TypeError("only basic type allowed in plugin_init_extra_kwargs!")
 
 
 class TenantSyncManager:
