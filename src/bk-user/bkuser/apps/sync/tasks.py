@@ -38,6 +38,8 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     if not data_source.is_local:
         logger.debug("not local data source, skip data source sync task")
         return
+
+    # 若已指定原始数据 Key，则需要从缓存中获取数据
     if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
         storage = TemporaryStorage()
         try:
