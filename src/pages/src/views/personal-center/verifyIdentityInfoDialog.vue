@@ -25,6 +25,7 @@
 
         <bk-form-item
           class="mt-[32px] h-[40px]"
+          property="custom_phone"
           v-if="curFormItemList.includes(formItemPropName.customPhone)">
           <phoneInput
             class="!w-[400px] phone-input"
@@ -44,6 +45,7 @@
               :class="`!w-[400px] !h-[40px] ${captchaValidate ? 'captcha-input-validate' : ''}`"
               :placeholder="t('请输入验证码')"
               @blur="() => captchaValidate = false"
+              @input="() => captchaValidate = false"
               v-model="verifyForm.captcha"
               property="captcha" />
             <bk-button
@@ -54,7 +56,12 @@
               {{ verifyFormCaptchaBtn.disabled ? `${verifyFormCaptchaBtn.times}s` : t('获取验证码') }}
             </bk-button>
           </div>
-          <p v-if="captchaValidate" class="captcha-error-text">{{ t('验证码错误，请重试') }}</p>
+          <bk-overflow-title
+            v-if="captchaValidate"
+            class="captcha-error-text"
+            type="tips">
+            {{ captchaMessage }}
+          </bk-overflow-title>
         </bk-form-item>
       </bk-form>
     </template>
@@ -74,7 +81,7 @@
 
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { InfoBox, Message } from 'bkui-vue';
+import { InfoBox, Message, overflowTitle } from 'bkui-vue';
 import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
 import { computed, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
@@ -151,15 +158,22 @@ const verifyFormCaptchaBtn = reactive({
 const captchaValidate = ref(false);
 const captchaMessage = ref('');
 
+const clearCaptchaValidate = () => {
+  captchaValidate.value = false;
+  captchaMessage.value = '';
+};
+
 // 发送验证码
 const handleSendCaptcha = async () => {
   if (props.currentVerifyConfig.type === OpenDialogType.email) {
-    const result = await verifyFormRef.value.validate().catch(() => false);
+    const result = validate.email.validator(verifyForm.email);
     if (!result) return;
   }
   if (props.currentVerifyConfig.type === OpenDialogType.phone) {
     if (telError.value) return;
   }
+  clearCaptchaValidate();
+  verifyFormRef.value.clearValidate();
   const captchaCoolingTime = 60;
   const shutDownPointTime = 0;
   const { closeTimePolling } = useCountDown({
@@ -170,18 +184,28 @@ const handleSendCaptcha = async () => {
         const { userId } = props;
         // 获取邮箱验证码
         if (props.currentVerifyConfig.type === OpenDialogType.email) {
-          await postPersonalCenterUserEmailCaptcha(userId, {
-            email: verifyForm.email,
-          });
-          Message({ theme: 'success', message: t('发送成功') });
+          try {
+            await postPersonalCenterUserEmailCaptcha(userId, {
+              email: verifyForm.email,
+            }, { globalError: false });
+            Message({ theme: 'success', message: t('发送成功') });
+          } catch (err) {
+            captchaValidate.value = true;
+            captchaMessage.value = err.response.data?.error?.message;
+          }
         }
         // 获取手机验证码
         if (props.currentVerifyConfig.type === OpenDialogType.phone) {
-          await postPersonalCenterUserPhoneCaptcha(userId, {
-            phone: verifyForm.custom_phone,
-            phone_country_code: verifyForm.custom_phone_country_code,
-          });
-          Message({ theme: 'success', message: t('发送成功') });
+          try {
+            await postPersonalCenterUserPhoneCaptcha(userId, {
+              phone: verifyForm.custom_phone,
+              phone_country_code: verifyForm.custom_phone_country_code,
+            }, { globalError: false });
+            Message({ theme: 'success', message: t('发送成功') });
+          } catch (err) {
+            captchaValidate.value = true;
+            captchaMessage.value = err.response.data?.error?.message;
+          }
         }
       })();
     },
@@ -206,6 +230,7 @@ const verifyFormRef = ref(null);
 const validate = useValidate();
 const verifyFormRules = {
   email: [validate.required, validate.email],
+  custom_phone: [validate.required],
   captcha: [validate.required],
 };
 
@@ -227,6 +252,7 @@ watch(isShow, (newShow) => {
 const handleCloseVerifyDialog = () => {
   isShow.value = false;
   telError.value = false;
+  clearCaptchaValidate();
   resetCustomForm();
 };
 
@@ -257,7 +283,7 @@ const handleSubmitVerifyForm = async () => {
       }, { globalError: false });
       infoBoxConfig.title = t('邮箱验证成功');
     } catch (err) {
-      captchaMessage.value = err.response.data?.errror?.message;
+      captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
       captchaValidate.value = true;
     }
@@ -273,7 +299,7 @@ const handleSubmitVerifyForm = async () => {
       }, { globalError: false });
       infoBoxConfig.title = t('手机号验证成功');
     } catch (err) {
-      captchaMessage.value = err.response.data?.errror?.message;
+      captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
       captchaValidate.value = true;
     }
@@ -306,6 +332,7 @@ const handleSubmitVerifyForm = async () => {
 }
 
 .captcha-error-text {
+  width: 70%;
   position: absolute;
   margin: 2px 0 0;
   font-size: 12px;

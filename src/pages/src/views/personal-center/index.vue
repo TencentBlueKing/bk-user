@@ -718,6 +718,7 @@ const changeEmail = async () => {
 const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
   currentUserInfo.value.custom_email = customEmail.value;
+  emailSelect.value = isInheritedEmail.value ? OpenDialogSelect.inherit : OpenDialogSelect.custom
   isEditEmail.value = false;
   isEditing();
 };
@@ -770,6 +771,7 @@ const cancelEditPhone = () => {
   currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
   currentUserInfo.value.custom_phone = customPhone.value;
   currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
+  phoneSelect.value = isInheritedPhone.value ? OpenDialogSelect.inherit :　OpenDialogSelect.custom
   isEditPhone.value = false;
   telError.value = false;
   isEditing();

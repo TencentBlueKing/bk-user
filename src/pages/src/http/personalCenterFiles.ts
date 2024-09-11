@@ -25,12 +25,12 @@ export const getPersonalCenterUsers = (id: string) => http.get(`/api/v3/web/pers
 /**
  * 租户用户更新邮箱
  */
-export const patchUsersEmail = (params: PatchUserEmailParams, config: Config) => http.put(`/api/v3/web/personal-center/tenant-users/${params.id}/email/`, params, config);
+export const patchUsersEmail = (params: PatchUserEmailParams, config?: Config) => http.put(`/api/v3/web/personal-center/tenant-users/${params.id}/email/`, params, config);
 
 /**
  * 租户用户更新手机号
  */
-export const patchUsersPhone = (params: PatchUserPhoneParams, config: Config) => http.put(`/api/v3/web/personal-center/tenant-users/${params.id}/phone/`, params, config);
+export const patchUsersPhone = (params: PatchUserPhoneParams, config?: Config) => http.put(`/api/v3/web/personal-center/tenant-users/${params.id}/phone/`, params, config);
 
 /**
  * 租户用户更新头像
@@ -70,9 +70,9 @@ export const getPersonalCenterUserFeature = (id: string) => http.get(`/api/v3/we
 /**
  * 个人中心-租户修改手机号时，发送验证码
  */
-export const postPersonalCenterUserPhoneCaptcha = (id: string, params: postPersonalCenterUserPhoneCaptchaParams) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/phone-verification-code/`, params);
+export const postPersonalCenterUserPhoneCaptcha = (id: string, params: postPersonalCenterUserPhoneCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/phone-verification-code/`, params, config);
 
 /**
  * 个人中心-租户修改邮箱时，发送验证码
  */
-export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/ `, params);
+export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/ `, params, config);
