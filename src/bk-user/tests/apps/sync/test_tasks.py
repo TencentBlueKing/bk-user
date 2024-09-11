@@ -20,7 +20,7 @@ pytestmark = pytest.mark.django_db
 
 class TestSyncDataSourceTask:
     def test_success(self, data_source_sync_task, encoded_file):
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.TEMPORARY_STORAGE)
         task_id = data_source_sync_task.id
         task_key = "test_key"
 

@@ -22,12 +22,10 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.celery import app
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.storage import TemporaryStorage
 from bkuser.common.task import BaseTask
 
 logger = logging.getLogger(__name__)
-cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -39,8 +37,7 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
 
     # 若已指定原始数据 Key，则需要从缓存中获取数据
     if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
-        storage = TemporaryStorage(CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA)
-
+        storage = TemporaryStorage()
         try:
             workbook = storage.get_workbook(task_raw_data_key)
         except ValueError:
@@ -49,8 +46,7 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
             task.save(update_fields=["status", "logs", "updated_at"])
             return
 
-        plugin_init_extra_kwargs["workbook"] = workbook
-        plugin_init_extra_kwargs.pop("task_key")
+        plugin_init_extra_kwargs = {"workbook": workbook}
 
     DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 

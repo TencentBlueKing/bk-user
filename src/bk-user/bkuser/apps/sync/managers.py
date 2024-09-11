@@ -20,7 +20,6 @@ from bkuser.apps.sync.data_models import DataSourceSyncOptions, TenantSyncOption
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
-from bkuser.common.cache import CacheKeyPrefixEnum
 from bkuser.common.storage import TemporaryStorage
 
 
@@ -51,24 +50,16 @@ class DataSourceSyncManager:
 
         if self.sync_options.async_run:
             if self.data_source.is_local and self.data_source.is_real_type:
-                self._process_workbook(plugin_init_extra_kwargs, task.id)
+                storage = TemporaryStorage()
+                identifier_key = storage.save_workbook(plugin_init_extra_kwargs.get("workbook"))
+                plugin_init_extra_kwargs = {"task_key": identifier_key}
+
             sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
         return task
-
-    def _process_workbook(self, plugin_init_extra_kwargs: Dict[str, Any], task_id: int):
-        workbook = plugin_init_extra_kwargs.get("workbook")
-        identifier_key = f"data_source:{self.data_source.id}:{task_id}"
-        scene = CacheKeyPrefixEnum.DATA_SOURCE_SYNC_RAW_DATA
-
-        storage = TemporaryStorage(scene)
-        storage.save_workbook(workbook, identifier_key, self.sync_timeout)
-
-        plugin_init_extra_kwargs["task_key"] = identifier_key
-        plugin_init_extra_kwargs.pop("workbook")
 
 
 class TenantSyncManager:

@@ -41,6 +41,8 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     RESET_PASSWORD_TOKEN = "rpt"
     # 数据源同步任务原始数据
     DATA_SOURCE_SYNC_RAW_DATA = "dssrd"
+    # 临时存储
+    TEMPORARY_STORAGE = "ts"
 
 
 def _default_key_function(*args, **kwargs):
