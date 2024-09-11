@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
-
     task = DataSourceSyncTask.objects.get(id=task_id)
 
     # 若已指定原始数据 Key，则需要从缓存中获取数据
