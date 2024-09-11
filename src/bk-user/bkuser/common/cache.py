@@ -39,8 +39,6 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     VERIFICATION_CODE = "vc"
     # 用户重置密码用 Token
     RESET_PASSWORD_TOKEN = "rpt"
-    # 数据源同步任务原始数据
-    DATA_SOURCE_SYNC_RAW_DATA = "dssrd"
     # 临时存储
     TEMPORARY_STORAGE = "ts"
 

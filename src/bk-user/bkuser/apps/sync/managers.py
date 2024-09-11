@@ -34,6 +34,7 @@ class DataSourceSyncManager:
     def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
         """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
         plugin_init_extra_kwargs = plugin_init_extra_kwargs or {}
+
         task = DataSourceSyncTask.objects.create(
             data_source=self.data_source,
             status=SyncTaskStatus.PENDING.value,
