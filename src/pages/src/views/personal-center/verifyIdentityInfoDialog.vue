@@ -189,7 +189,7 @@ const handleSendCaptcha = async () => {
               email: verifyForm.email,
             }, { globalError: false });
             Message({ theme: 'success', message: t('发送成功') });
-          } catch (err) {
+          } catch (err: any) {
             captchaValidate.value = true;
             captchaMessage.value = err.response.data?.error?.message;
           }
@@ -202,7 +202,7 @@ const handleSendCaptcha = async () => {
               phone_country_code: verifyForm.custom_phone_country_code,
             }, { globalError: false });
             Message({ theme: 'success', message: t('发送成功') });
-          } catch (err) {
+          } catch (err: any) {
             captchaValidate.value = true;
             captchaMessage.value = err.response.data?.error?.message;
           }
@@ -282,7 +282,7 @@ const handleSubmitVerifyForm = async () => {
         verification_code: verifyForm.captcha,
       }, { globalError: false });
       infoBoxConfig.title = t('邮箱验证成功');
-    } catch (err) {
+    } catch (err: any) {
       captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
       captchaValidate.value = true;
@@ -298,7 +298,7 @@ const handleSubmitVerifyForm = async () => {
         verification_code: verifyForm.captcha,
       }, { globalError: false });
       infoBoxConfig.title = t('手机号验证成功');
-    } catch (err) {
+    } catch (err: any) {
       captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
       captchaValidate.value = true;
