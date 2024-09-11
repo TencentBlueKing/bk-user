@@ -50,7 +50,7 @@ class DataSourceSyncManager:
         )
 
         if self.sync_options.async_run:
-            if self.data_source.is_local and self.data_source.is_real_type:
+            if self.data_source.is_local:
                 storage = TemporaryStorage()
                 identifier_key = storage.save_workbook(plugin_init_extra_kwargs.get("workbook"))
                 plugin_init_extra_kwargs = {"task_key": identifier_key}
