@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestSyncDataSource:
-    def test_success(self, data_source_sync_task, encoded_file, user_workbook):
+    def test_success(self, data_source_sync_task, user_workbook):
         task_id = data_source_sync_task.id
         storage = TemporaryStorage()
         task_key = storage.save_workbook(user_workbook)
