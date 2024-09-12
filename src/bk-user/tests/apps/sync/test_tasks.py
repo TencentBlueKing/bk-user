@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus
-from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.tasks import sync_data_source
 from bkuser.common.storage import TemporaryStorage
 
@@ -27,8 +26,8 @@ class TestSyncDataSource:
         plugin_init_extra_kwargs = {"task_key": task_key}
         sync_data_source(task_id, plugin_init_extra_kwargs)
 
-        task = DataSourceSyncTask.objects.get(id=task_id)
-        assert task.status == SyncTaskStatus.SUCCESS
+        data_source_sync_task.refresh_from_db()
+        assert data_source_sync_task.status == SyncTaskStatus.SUCCESS
 
     def test_file_not_found(self, data_source_sync_task):
         task_id = data_source_sync_task.id
@@ -37,6 +36,6 @@ class TestSyncDataSource:
         plugin_init_extra_kwargs = {"task_key": task_key}
         sync_data_source(task_id, plugin_init_extra_kwargs)
 
-        task = DataSourceSyncTask.objects.get(id=task_id)
-        assert task.status == SyncTaskStatus.FAILED
-        assert f"data source sync task {task_id} require raw data in cache" in task.logs
+        data_source_sync_task.refresh_from_db()
+        assert data_source_sync_task.status == SyncTaskStatus.FAILED
+        assert f"data source sync task {task_id} require raw data in cache" in data_source_sync_task.logs
