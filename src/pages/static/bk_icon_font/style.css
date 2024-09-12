@@ -32,6 +32,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-refresh:before {
 	content: "\e146";
 }
+.icon-remind-fill:before {
+	content: "\e154";
+}
 .icon-info-i:before {
 	content: "\e105";
 }
@@ -244,4 +247,10 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 }
 .icon-tongbu-2:before {
 	content: "\e153";
+}
+.icon-shouji:before {
+	content: "\e155";
+}
+.icon-youxiang:before {
+	content: "\e156";
 }

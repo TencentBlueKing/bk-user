@@ -199,6 +199,28 @@ class TestTenantUserPhoneUpdateApi:
             assert tenant_user.custom_phone_country_code == "86"
             assert not tenant_user.is_inherited_phone
 
+    def test_update_with_inherited_blank_custom_phone(self, api_client, tenant_user):
+        tenant_user.custom_phone = "12345678901"
+        tenant_user.save(update_fields=["custom_phone"])
+
+        data = {
+            "is_inherited_phone": "True",
+            "custom_phone": "",
+            "custom_phone_country_code": "86",
+        }
+
+        with override_settings(
+            TENANT_PHONE_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            tenant_user.refresh_from_db()
+            assert resp.status_code == status.HTTP_204_NO_CONTENT
+            assert tenant_user.custom_phone == "12345678901"
+            assert tenant_user.custom_phone_country_code == "86"
+            assert tenant_user.is_inherited_phone
+
     def test_update_phone_not_editable(self, api_client, tenant_user):
         data = {
             "is_inherited_phone": "False",
@@ -232,6 +254,26 @@ class TestTenantUserEmailUpdateApi:
             assert resp.status_code == status.HTTP_204_NO_CONTENT
             assert tenant_user.custom_email == "123456@qq.com"
             assert not tenant_user.is_inherited_email
+
+    def test_update_with_inherited_blank_custom_email(self, api_client, tenant_user):
+        tenant_user.custom_email = "123456@qq.com"
+        tenant_user.save(update_fields=["custom_email"])
+
+        data = {
+            "is_inherited_email": "True",
+            "custom_email": "",
+        }
+
+        with override_settings(
+            TENANT_EMAIL_UPDATE_RESTRICTIONS={"default": PhoneOrEmailUpdateRestrictionEnum.EDITABLE_DIRECTLY}
+        ):
+            resp = api_client.put(
+                reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user.id}), data=data
+            )
+            tenant_user.refresh_from_db()
+            assert resp.status_code == status.HTTP_204_NO_CONTENT
+            assert tenant_user.custom_email == "123456@qq.com"
+            assert tenant_user.is_inherited_email
 
     def test_update_email_not_editable(self, api_client, tenant_user):
         data = {

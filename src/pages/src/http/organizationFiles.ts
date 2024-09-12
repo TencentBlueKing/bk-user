@@ -100,7 +100,7 @@ export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${
 /**
  * 更新租户用户
  */
-export const getOrganizationPaths = (id: string, params: any) => http.get(`${prefix}/tenants/users/${id}/organization-paths/`, params);
+export const getOrganizationPaths = (id: string, params?: any) => http.get(`${prefix}/tenants/users/${id}/organization-paths/`, params);
 
 /**
  * 删除租户用户
