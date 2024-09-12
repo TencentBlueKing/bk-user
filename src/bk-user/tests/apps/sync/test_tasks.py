@@ -13,18 +13,17 @@ import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.tasks import sync_data_source
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.storage import TemporaryStorage
 
 pytestmark = pytest.mark.django_db
 
 
-class TestSyncDataSourceTask:
-    def test_success(self, data_source_sync_task, encoded_file):
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.TEMPORARY_STORAGE)
+class TestSyncDataSource:
+    def test_success(self, data_source_sync_task, encoded_file, user_workbook):
         task_id = data_source_sync_task.id
-        task_key = "test_key"
+        storage = TemporaryStorage()
+        task_key = storage.save_workbook(user_workbook)
 
-        cache.set(task_key, encoded_file)
         plugin_init_extra_kwargs = {"task_key": task_key}
         sync_data_source(task_id, plugin_init_extra_kwargs)
 

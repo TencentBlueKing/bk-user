@@ -23,7 +23,7 @@ TemporaryStorageDefaultTimeout = 10 * 60
 
 
 class TemporaryStorage:
-    """数据源同步任务时 redis 临时存储"""
+    """基于 redis 的临时存储"""
 
     def __init__(self):
         self.storage = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.TEMPORARY_STORAGE)

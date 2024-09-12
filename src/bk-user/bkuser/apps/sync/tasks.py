@@ -33,9 +33,8 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
     task = DataSourceSyncTask.objects.get(id=task_id)
-    data_source = task.data_source
 
-    if not data_source.is_local:
+    if not task.data_source.is_local:
         logger.debug("not local data source, skip data source sync task")
         return
 
