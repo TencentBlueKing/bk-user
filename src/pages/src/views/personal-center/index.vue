@@ -430,7 +430,9 @@
         :current-verify-config="currentVerifyConfig"
         :user-id="currentUserInfo.id"
         :cur-email-text="curEmail"
-        :cur-phone-text="curPhone">
+        :cur-phone-text="curPhone"
+        @confirm-verify-email="verifyEmail"
+        @confirm-verify-phone="verifyPhone">
       </verifyIdentityInfoDialog>
     </template>
   </bk-resize-layout>
@@ -714,11 +716,19 @@ const changeEmail = async () => {
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
+
+const verifyEmail = (data: any) => {
+  isEditEmail.value = false;
+  isEditing();
+  isInheritedEmail.value = false;
+  customEmail.value = data.custom_email;
+  currentUserInfo.value.custom_email = data.custom_email;
+};
+
 // 取消编辑邮箱
 const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
   currentUserInfo.value.custom_email = customEmail.value;
-  emailSelect.value = isInheritedEmail.value ? OpenDialogSelect.inherit : OpenDialogSelect.custom
   isEditEmail.value = false;
   isEditing();
 };
@@ -731,13 +741,13 @@ watch(() => isEditPhone.value, (val) => {
   }
 });
 
-const emailSelect = ref(currentUserInfo.value.is_inherited_email === false
+const emailSelect = computed(() => (currentUserInfo.value.is_inherited_email === false
   ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit);
+  : OpenDialogSelect.inherit));
 
-const phoneSelect = ref(currentUserInfo.value.is_inherited_phone === false
+const phoneSelect = computed(() => (currentUserInfo.value.is_inherited_phone === false
   ? OpenDialogSelect.custom
-  : OpenDialogSelect.inherit);
+  : OpenDialogSelect.inherit));
 
 // 切换手机号
 const togglePhone = (value: OpenDialogSelect) => {
@@ -766,12 +776,22 @@ const changePhone = () => {
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
+
+const verifyPhone = (data: any) => {
+  isEditPhone.value = false;
+  isEditing();
+  isInheritedPhone.value = false;
+  customPhone.value = data.custom_phone;
+  currentUserInfo.value.custom_phone = data.custom_phone;
+  customPhoneCode.value = data.custom_phone_country_code;
+  currentUserInfo.value.custom_phone_country_code = data.custom_phone_country_code;
+};
+
 // 取消编辑手机号
 const cancelEditPhone = () => {
   currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
   currentUserInfo.value.custom_phone = customPhone.value;
   currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
-  phoneSelect.value = isInheritedPhone.value ? OpenDialogSelect.inherit :　OpenDialogSelect.custom
   isEditPhone.value = false;
   telError.value = false;
   isEditing();
