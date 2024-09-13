@@ -762,7 +762,7 @@ const changePhone = () => {
     isEditPhone.value = false;
     isEditing();
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-    customEmail.value = currentUserInfo.value.custom_phone;
+    customPhone.value = currentUserInfo.value.custom_phone;
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
