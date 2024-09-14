@@ -188,7 +188,7 @@
                             && emailSelect === OpenDialogSelect.custom">
                           {{ $t('验证') }}
                         </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditEmail">
+                        <bk-button text theme="primary" @click="cancelEditEmail" class="leading-[19px]">
                           {{ $t('取消') }}
                         </bk-button>
                       </div>
@@ -228,6 +228,7 @@
                           v-if="phoneSelect === OpenDialogSelect.inherit"
                           class="phone-input">
                           <phoneInput
+                            class="phone-input-input"
                             :form-data="currentUserInfo"
                             :disabled="true"
                             autofocus="autofocus"
@@ -235,6 +236,7 @@
                         </bk-form-item>
                         <bk-form-item v-else class="phone-input">
                           <phoneInput
+                            class="phone-input-input"
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
@@ -262,7 +264,7 @@
                             && phoneSelect === OpenDialogSelect.custom">
                           {{ $t('验证') }}
                         </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditPhone">
+                        <bk-button text theme="primary" @click="cancelEditPhone" class="leading-[19px]">
                           {{ $t('取消') }}
                         </bk-button>
                       </div>
@@ -700,8 +702,6 @@ const toggleEmail = (value: OpenDialogSelect) => {
 const changeEmail = async () => {
   const result = await formRef.value.validate().catch(() => false);
   if (!result) return;
-  isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-  customEmail.value = currentUserInfo.value.custom_email;
   patchUsersEmail({
     id: currentUserInfo.value.id,
     is_inherited_email: currentUserInfo.value.is_inherited_email,
@@ -709,6 +709,8 @@ const changeEmail = async () => {
   }).then(() => {
     isEditEmail.value = false;
     isEditing();
+    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+    customEmail.value = currentUserInfo.value.custom_email;
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
@@ -716,6 +718,7 @@ const changeEmail = async () => {
 const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
   currentUserInfo.value.custom_email = customEmail.value;
+  emailSelect.value = isInheritedEmail.value ? OpenDialogSelect.inherit : OpenDialogSelect.custom
   isEditEmail.value = false;
   isEditing();
 };
@@ -758,6 +761,8 @@ const changePhone = () => {
   }).then(() => {
     isEditPhone.value = false;
     isEditing();
+    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+    customEmail.value = currentUserInfo.value.custom_phone;
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
@@ -766,6 +771,7 @@ const cancelEditPhone = () => {
   currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
   currentUserInfo.value.custom_phone = customPhone.value;
   currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
+  phoneSelect.value = isInheritedPhone.value ? OpenDialogSelect.inherit :　OpenDialogSelect.custom
   isEditPhone.value = false;
   telError.value = false;
   isEditing();
@@ -817,8 +823,14 @@ const currentVerifyConfig = reactive({
 });
 
 // 验证身份信息下的邮箱或手机号
-const verifyIdentityInfo = (type: OpenDialogType, value: VerifyData) => {
-  if (telError.value) return;
+const verifyIdentityInfo = async (type: OpenDialogType, value: VerifyData | string) => {
+  if (type === OpenDialogType.phone && telError.value) {
+    return;
+  }
+  if (type === OpenDialogType.email) {
+    const result = await formRef.value.validate();
+    if (!result) return;
+  }
   currentVerifyConfig.type = type;
   currentVerifyConfig.data = value;
   showVerifyDialog.value = true;
@@ -1193,9 +1205,35 @@ const hidePasswordModal = () => {
                     height: 50px;
                     .bk-select {
                       width: 106px;
+                      line-height: 0px;
                     }
+                    .email-input {
+                      height: 32px;
+                      .bk-form-content {
+                        height: 100%;
+                        .bk-input--text {
+                          height: 100%;
+                        }
+                      }
+                    }
+                    .phone-input {
+                      width: 269px;
+                      margin-left: -1px;
+                      ::v-deep .iti__tel-input {
+                        border-top-left-radius: 0px;
+                        border-bottom-left-radius: 0px;
+                      }
+                    }
+
                     .bk-input {
-                      width: 240px;
+                      width: 269px;
+                      margin: -1px;
+                      border-top-left-radius: 0px;
+                      border-bottom-left-radius: 0px;
+                    }
+
+                    ::v-deep .bk-button-text {
+                      line-height: 19px;
                     }
                   }
 

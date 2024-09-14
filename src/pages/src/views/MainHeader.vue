@@ -377,7 +377,7 @@ const openVersionLog = async () => {
 
   .bk-dropdown {
     .help-info {
-      padding: 5px;
+      padding: 2px;
       cursor: pointer;
       border-radius: 50%;
     }
