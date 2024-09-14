@@ -83,7 +83,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { InfoBox, Message, overflowTitle } from 'bkui-vue';
 import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
-import { computed, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
 import { formItemPropName, openDialogResult, OpenDialogType } from './openDialogType';
 
@@ -119,6 +119,7 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['confirmVerifyEmail', 'confirmVerifyPhone']);
 const isShow = defineModel<boolean>('isShow', { required: true });
 const telError = ref(false);
 
@@ -282,6 +283,7 @@ const handleSubmitVerifyForm = async () => {
         verification_code: verifyForm.captcha,
       }, { globalError: false });
       infoBoxConfig.title = t('邮箱验证成功');
+      emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
       captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
@@ -298,6 +300,10 @@ const handleSubmitVerifyForm = async () => {
         verification_code: verifyForm.captcha,
       }, { globalError: false });
       infoBoxConfig.title = t('手机号验证成功');
+      emit('confirmVerifyPhone', {
+        custom_phone: verifyForm.custom_phone,
+        custom_phone_country_code: verifyForm.custom_phone_country_code,
+      });
     } catch (err: any) {
       captchaMessage.value = err.response.data?.error?.message;
       infoBoxConfig.type = fail;
