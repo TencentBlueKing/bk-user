@@ -23,6 +23,12 @@
             :is-reset="isReset"
             @update-cur-step="updateCurStep"
             @update-success="updateSuccess" />
+          <SchemaForm
+            v-if="currentType === 'custom_plugin'"
+            ref="schemaFormRef"
+            :form-data="formData"
+            :plugins-config="jsonSchema"
+            @change-plugin-config="changePluginConfig" />
         </div>
       </template>
     </DataSourceCard>
@@ -37,7 +43,9 @@ import Success from './ConfigSuccess.vue';
 import Http from './HttpConfig.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
+import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import {
+  getCustomPlugin,
   getDataSourcePlugins,
 } from '@/http';
 import { t } from '@/language/index';
@@ -51,6 +59,21 @@ const route = useRoute();
 const userStore = useUser();
 
 const currentType = ref('');
+
+const formData = reactive({
+  plugin_config: {},
+});
+const schemaFormRef = ref();
+const jsonSchema = ref({});
+const changePluginConfig = (value: any) => {
+  formData.plugin_config = value;
+};
+const getJsonSchema = () => {
+  getCustomPlugin(currentType.value).then((res) => {
+    jsonSchema.value = res.data?.json_schema;
+  });
+};
+
 // 获取数据源类型
 watch(() => route.query.type, (val: string) => {
   if (val) {
@@ -85,6 +108,7 @@ const typeSteps = reactive({
 
 onMounted(() => {
   initDataSourcePlugins();
+  getJsonSchema();
 });
 
 const initDataSourcePlugins = () => {

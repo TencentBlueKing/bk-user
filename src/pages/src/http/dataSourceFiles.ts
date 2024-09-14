@@ -128,3 +128,8 @@ export const deleteDataSources = (params: DeleteDataSourcesParams) => http.delet
  * 数据源关联资源信息
  */
 export const getRelatedResource = (id: string) => http.get(`/api/v3/web/data-sources/${id}/related-resource-statistics/`);
+
+/**
+ * 自定义数据源插件配置信息
+ */
+export const getCustomPlugin = (id: string) => http.get(`https://bk-user-tenant.paas3-dev.bktencent.com/api/v3/web/data-sources/plugins/${id}/config-meta/`);
