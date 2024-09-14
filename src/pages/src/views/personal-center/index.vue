@@ -707,7 +707,7 @@ const changeEmail = async () => {
   patchUsersEmail({
     id: currentUserInfo.value.id,
     is_inherited_email: currentUserInfo.value.is_inherited_email,
-    custom_email: currentUserInfo.value.custom_email,
+    custom_email: currentUserInfo.value.custom_email === '--' ? '' : currentUserInfo.value.custom_email,
   }).then(() => {
     isEditEmail.value = false;
     isEditing();
@@ -766,7 +766,7 @@ const changePhone = () => {
   patchUsersPhone({
     id: currentUserInfo.value.id,
     is_inherited_phone: currentUserInfo.value.is_inherited_phone,
-    custom_phone: currentUserInfo.value.custom_phone,
+    custom_phone: currentUserInfo.value.custom_phone === '--' ? '' : currentUserInfo.value.custom_phone,
     custom_phone_country_code: currentUserInfo.value.custom_phone_country_code,
   }).then(() => {
     isEditPhone.value = false;
