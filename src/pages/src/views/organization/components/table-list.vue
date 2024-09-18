@@ -110,7 +110,7 @@
                 v-if="item.organization_paths.length > 1"
                 theme="info"
                 class="inline-block !m-0 h-[20px] !ml-[2px]"
-                v-bk-tooltips="{ content: item.organization_paths.join('\n'), boundary: 'parent' }"
+                v-bk-tooltips="{ content: item.organization_paths.join('\n'), placement: 'right', extCls: 'tag-tool-tips' }"
               >
                 +{{ item.organization_paths.length }}
               </bk-tag>
@@ -925,6 +925,9 @@ defineExpose({
     color: #c4c6cc;
     cursor: not-allowed;
   }
+}
+.tag-tool-tips {
+  z-index: 99999 !important;
 }
 
 .operate-menu-list {
