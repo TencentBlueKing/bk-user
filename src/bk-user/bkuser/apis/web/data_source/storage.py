@@ -22,19 +22,26 @@ from bkuser.utils.uuid import generate_uuid
 TemporaryStorageDefaultTimeout = 10 * 60
 
 
-class TemporaryStorage:
+class WorkbookTempStore:
     """基于 redis 的临时存储"""
 
     def __init__(self):
-        self.storage = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.TEMPORARY_STORAGE)
+        # 初始化 redis 临时存储
+        self.storage = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WORKBOOK_TEMPORARY_STORE)
 
-    def save(self, data: bytes, timeout: int = TemporaryStorageDefaultTimeout) -> str:
+    def save_workbook(self, workbook: Workbook, timeout: int = TemporaryStorageDefaultTimeout) -> str:
         """
-        保存临时数据
-        :param data: 二进制数据
+        [快捷方法] 将 Excel workbook 保存到临时存储中，并返回临时存储的数据唯一标识
+        :param workbook: Excel workbook
         :param timeout: 过期时间
         :return: 临时数据唯一标识
         """
+
+        # 将 workbook 保存到 内存字节流，便于获取到字节内容
+        with io.BytesIO() as buffer:
+            workbook.save(buffer)
+            data = buffer.getvalue()
+
         # 生成临时数据的唯一标识，用于后续查询
         temporary_storage_id = generate_uuid()
 
@@ -43,12 +50,13 @@ class TemporaryStorage:
 
         return temporary_storage_id
 
-    def get(self, temporary_storage_id: str) -> bytes:
+    def get_workbook(self, temporary_storage_id: str) -> Workbook:
         """
-        获取临时数据
+        [快捷方法] 从临时存储中获取临时数据并转换为 Excel Workbook
         :param temporary_storage_id: 临时数据唯一标识
-        :return: 二进制数据
+        :return: Excel workbook
         """
+
         encoded_data = self.storage.get(temporary_storage_id)
         if not encoded_data:
             raise ValueError(f"data(id={temporary_storage_id}) not found in temporary storage")
@@ -56,21 +64,5 @@ class TemporaryStorage:
         # 获取成功则删除，无需等待过期
         self.storage.delete(temporary_storage_id)
 
-        return base64.b64decode(encoded_data)
-
-    def save_workbook(self, workbook: Workbook) -> str:
-        """[快捷方法] 将 Excel workbook 保存到临时存储中，并返回临时存储的数据唯一标识"""
-
-        # 将 workbook 保存到 内存字节流，便于获取到字节内容
-        with io.BytesIO() as buffer:
-            workbook.save(buffer)
-            data = buffer.getvalue()
-
-        return self.save(data)
-
-    def get_workbook(self, temporary_storage_id: str) -> Workbook:
-        """[快捷方法] 从临时存储中获取临时数据并转换为 Excel Workbook"""
-
-        data = self.get(temporary_storage_id)
-
+        data = base64.b64decode(encoded_data)
         return load_workbook(filename=io.BytesIO(data))

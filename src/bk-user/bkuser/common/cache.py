@@ -39,8 +39,8 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     VERIFICATION_CODE = "vc"
     # 用户重置密码用 Token
     RESET_PASSWORD_TOKEN = "rpt"
-    # 临时存储
-    TEMPORARY_STORAGE = "ts"
+    # Workbook 临时存储
+    WORKBOOK_TEMPORARY_STORE = "wts"
 
 
 def _default_key_function(*args, **kwargs):

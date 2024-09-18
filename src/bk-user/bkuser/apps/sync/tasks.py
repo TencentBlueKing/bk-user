@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict
 
+from bkuser.apis.web.data_source.storage import WorkbookTempStore
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSource
@@ -22,7 +23,6 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.celery import app
-from bkuser.common.storage import TemporaryStorage
 from bkuser.common.task import BaseTask
 
 logger = logging.getLogger(__name__)
@@ -34,18 +34,14 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     logger.info("[celery] receive data source sync task: %s", task_id)
     task = DataSourceSyncTask.objects.get(id=task_id)
 
-    if not task.data_source.is_local:
-        logger.debug("not local data source, skip data source sync task")
-        return
-
-    # 若已指定原始数据 Key，则需要从缓存中获取数据
-    if task_raw_data_key := plugin_init_extra_kwargs.get("task_key"):
-        storage = TemporaryStorage()
+    if task.data_source.is_local and (task_raw_data_key := plugin_init_extra_kwargs.get("temporary_storage_key")):
+        # 若已指定原始数据 Key，则需要从临时存储中获取数据
+        storage = WorkbookTempStore()
         try:
             workbook = storage.get_workbook(task_raw_data_key)
         except ValueError:
             task.status = SyncTaskStatus.FAILED
-            task.logs = f"data source sync task {task_id} require raw data in cache"
+            task.logs = f"data source sync task {task_id} require raw data in cache, but not found"
             task.save(update_fields=["status", "logs", "updated_at"])
             return
 
