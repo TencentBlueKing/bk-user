@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -58,13 +58,6 @@ class PasswordRuleConfig(BaseModel):
     # 不允许重复字母，数字，特殊字符
     not_repeated_symbol: bool
 
-    # 密码有效期（单位：天）
-    valid_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_PASSWORD_VALID_TIME)
-    # 密码试错次数
-    max_retries: int = Field(ge=0, le=PASSWORD_MAX_RETRIES)
-    # 锁定时间（单位：秒）
-    lock_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_LOCK_TIME)
-
     def to_rule(self) -> PasswordRule:
         """转换成密码工具可用的规则"""
         return PasswordRule(
@@ -120,8 +113,6 @@ class NotificationConfig(BaseModel):
 class PasswordInitialConfig(BaseModel):
     """初始密码设置"""
 
-    # 首次登录后强制修改密码
-    force_change_at_first_login: bool
     # 修改密码时候不能使用之前的密码
     cannot_use_previous_password: bool
     # 之前的 N 个密码不能被本次修改使用，仅当 cannot_use_previous_password 为 True 时有效
@@ -135,12 +126,25 @@ class PasswordInitialConfig(BaseModel):
 
 
 class PasswordExpireConfig(BaseModel):
-    """密码到期相关配置"""
+    """密码有效期相关配置"""
 
+    # 密码有效期（单位：天）
+    valid_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_PASSWORD_VALID_TIME)
     # 在密码到期多久前提醒，单位：天，多个值表示多次提醒
     remind_before_expire: List[int]
     # 通知相关配置
     notification: NotificationConfig
+
+
+class LoginLimitConfig(BaseModel):
+    """登录限制配置"""
+
+    # 首次登录后强制修改密码
+    force_change_at_first_login: bool
+    # 密码试错次数
+    max_retries: int = Field(ge=0, le=PASSWORD_MAX_RETRIES)
+    # 锁定时间（单位：秒）
+    lock_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_LOCK_TIME)
 
 
 class LocalDataSourcePluginConfig(BasePluginConfig):
@@ -151,23 +155,25 @@ class LocalDataSourcePluginConfig(BasePluginConfig):
         "password_initial.fixed_password",
     ]
 
-    # 是否允许使用账密登录
-    enable_account_password_login: bool
+    # 是否启用密码，即用户是否添加密码数据
+    enable_password: bool
     # 密码生成规则
     password_rule: Optional[PasswordRuleConfig] = None
     # 密码初始化/修改规则
     password_initial: Optional[PasswordInitialConfig] = None
     # 密码到期规则
     password_expire: Optional[PasswordExpireConfig] = None
+    # 登录限制
+    login_limit: Optional[LoginLimitConfig] = None
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "LocalDataSourcePluginConfig":
         """插件配置合法性检查"""
-        # 如果没有开启账密登录，则不需要检查配置
-        if not self.enable_account_password_login:
+        # 如果没有开启密码，则不需要检查配置
+        if not self.enable_password:
             return self
 
-        # 若启用账密登录，则各字段都需要配置上
+        # 若启用密码功能，则各字段都需要配置上
         if not (self.password_rule and self.password_initial and self.password_expire):
             raise ValueError(_("密码生成规则、初始密码设置、密码到期设置均不能为空"))
 

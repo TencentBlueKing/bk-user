@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G004
 from collections import Counter
 from typing import List
 
@@ -29,7 +32,7 @@ from bkuser.plugins.local.exceptions import (
     SheetColumnsNotMatch,
     UserSheetNotExists,
 )
-from bkuser.plugins.local.utils import gen_code
+from bkuser.plugins.local.utils import gen_dept_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
@@ -122,7 +125,7 @@ class LocalDataSourceDataParser:
         self.custom_col_names = sheet_col_names[builtin_col_length:]
         self.all_col_names = self.builtin_col_names + self.custom_col_names
         self.valid_col_length = len(self.all_col_names)
-        self.logger.info(f"all column names parsed from workbook: {self.all_col_names}")  # noqa: G004
+        self.logger.info(f"all column names parsed from workbook: {self.all_col_names}")
 
         # 2. 检查自定义字段是否符合格式，格式：display_name/field_name
         for col_name in self.custom_col_names:
@@ -135,7 +138,7 @@ class LocalDataSourceDataParser:
 
         # 获取所有的字段名
         self.all_field_names = [n.split("/")[-1] for n in self.all_col_names]
-        self.logger.info(f"all field names parsed from workbook: {self.all_field_names}")  # noqa: G004
+        self.logger.info(f"all field names parsed from workbook: {self.all_field_names}")
 
         # 3. 检查是否有重复列
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
@@ -148,7 +151,7 @@ class LocalDataSourceDataParser:
             start=self.user_data_min_row_idx,
         ):
             if not any(cell_values):
-                self.logger.warning(f"empty row found at line {idx} in sheet, skip...")  # noqa: G004
+                self.logger.warning(f"empty row found at line {idx} in sheet, skip...")
                 continue
 
             info = dict(zip(self.all_field_names, cell_values, strict=True))
@@ -190,7 +193,7 @@ class LocalDataSourceDataParser:
 
             username, user_orgs = cell_values[self.username_idx_in_row], cell_values[self.organization_idx_in_row]
             if not user_orgs:
-                self.logger.info(f"username {username} not provide organization, skip...")  # noqa: G004
+                self.logger.info(f"username {username} not provide organization, skip...")
                 continue
 
             for org in user_orgs.split(","):
@@ -209,7 +212,7 @@ class LocalDataSourceDataParser:
                     organizations.add(cur_org.strip())
 
         # 组织路径：本数据源部门 Code 映射表
-        org_code_map = {org: gen_code(org) for org in organizations}
+        org_code_map = {org: gen_dept_code(org) for org in organizations}
         for org in organizations:
             parent_org, __, dept_name = org.rpartition("/")
             self.departments.append(
@@ -233,15 +236,11 @@ class LocalDataSourceDataParser:
 
             departments, leaders = [], []
             if organizations := properties.pop("organizations"):
-                for org in organizations.split(","):
-                    if org := org.strip():
-                        departments.append(gen_code(org))
+                departments = [gen_dept_code(org.strip()) for org in organizations.split(",") if org.strip()]
 
             if leader_names := properties.pop("leaders"):
-                for ld in leader_names.split(","):
-                    if ld := ld.strip():
-                        # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
-                        leaders.append(ld)
+                # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
+                leaders = [ld.strip() for ld in leader_names.split(",") if ld.strip()]
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的

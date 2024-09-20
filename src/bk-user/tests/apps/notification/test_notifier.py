@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -25,8 +25,8 @@ class TestTenantUserNotifier:
     """测试租户用户通知功能"""
 
     @pytest.fixture()
-    def data_source(self, default_tenant, full_local_data_source):
-        sync_users_depts_to_tenant(default_tenant, full_local_data_source)
+    def data_source(self, random_tenant, full_local_data_source):
+        sync_users_depts_to_tenant(random_tenant, full_local_data_source)
         return full_local_data_source
 
     def test_render_tmpl_user_initialize(self, data_source):
@@ -35,7 +35,7 @@ class TestTenantUserNotifier:
         tmpl = "{{ username }}, {{ full_name }}, {{ password }}, {{ url }}"
         assert (
             notifier._render_tmpl(user, tmpl, passwd="123456")
-            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/reset-password"  # noqa: E501
+            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/personal-center"  # noqa: E501
         )
 
     def test_get_templates(self):

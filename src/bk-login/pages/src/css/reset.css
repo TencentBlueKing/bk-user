@@ -1,4 +1,4 @@
-/*CSS Reset*/
+/* CSS Reset */
 html,
 body,
 div,
@@ -24,7 +24,6 @@ textarea,
 p,
 blockquote,
 tr,
- 
 th,
 td,
 hgroup,
@@ -39,82 +38,50 @@ menu,
 button,
 applet,
 object,
- 
 iframe,
 a,
 abbr,
- 
 acronym,
- 
 address,
 big,
- 
 cite,
- 
 code,
 del,
- 
 dfn,
- 
 em,
- 
 img,
- 
 ins,
- 
 kbd,
- 
 q,
 s,
- 
 samp,
 small,
- 
 strike,
- 
 strong,
- 
 sub,
- 
 sup,
- 
 tt,
- 
 var,
 b,
 u,
- 
 i,
- 
 center,
 label,
 table,
- 
 caption,
- 
 tbody,
- 
 tfoot,
- 
 thead,
- 
 canvas,
- 
 details,
 embed,
 main,
- 
 output,
- 
 ruby,
- 
 summary,
 time,
- 
 mark,
- 
 audio,
- 
 video {
   margin: 0;
   padding: 0;
@@ -122,32 +89,23 @@ video {
 
 /* HTML5 display-role reset for older browsers */
 article,
- 
 aside,
- 
 details,
- 
 figcaption,
- 
 figure,
- 
 footer,
- 
 hgroup,
- 
 menu,
- 
 nav,
- 
 section {
   display: block;
 }
 
 body {
-  font-family: -apple-system,BlinkMacSystemFont,PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-size: 12px;
-  color: #63656E;
+  color: #63656e;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   outline: 0;
@@ -207,7 +165,6 @@ option {
 input,
 select,
 textarea {
-  box-sizing: content-box;
   box-sizing: content-box;
   box-sizing: content-box;
 }

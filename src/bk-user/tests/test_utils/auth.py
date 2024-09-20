@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 
 from typing import Optional
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.auth.models import User
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 from tests.test_utils.helpers import generate_random_string
 
@@ -24,8 +26,12 @@ def create_user(tenant: Tenant, username: Optional[str] = None) -> User:
     user, _ = User.objects.get_or_create(username=username)
     user.set_property("tenant_id", tenant.id)
 
-    # 获取租户默认的本地数据源
-    data_source = DataSource.objects.get(owner_tenant_id=tenant.id, name=f"{tenant.id}-default-local")
+    # 获取租户内置的管理数据源
+    data_source = DataSource.objects.get(
+        owner_tenant_id=tenant.id,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+        type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
+    )
 
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,

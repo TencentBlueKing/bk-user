@@ -1,5 +1,5 @@
 <template>
-  <div class="main-breadcrumbs">
+  <div :class="['main-breadcrumbs', { 'hidden-box-shadow': hiddenBoxShadow }]">
     <slot>
       <i
         v-if="showBack"
@@ -17,7 +17,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const store = useMainViewStore();
 const route = useRoute();
@@ -31,6 +31,9 @@ const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
  * back control
  */
 const showBack = computed(() => route.meta.showBack);
+
+const hiddenBoxShadow = computed(() => route.meta.hiddenBoxShadow);
+
 const handleBack = () => {
   const { back } = window.history.state;
   if (back) {
@@ -74,5 +77,9 @@ const handleBack = () => {
     .bk-tag {
       margin-right: 4px;
     }
+  }
+
+  .hidden-box-shadow {
+    box-shadow: none !important;
   }
 </style>

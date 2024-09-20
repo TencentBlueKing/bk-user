@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -17,6 +17,7 @@ from django.dispatch import receiver
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pydantic import ValidationError
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import DataSourceSyncPeriod
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
@@ -24,6 +25,8 @@ from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +34,26 @@ logger = logging.getLogger(__name__)
 @receiver(post_sync_data_source)
 def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
-    # TODO (su) 目前没有跨租户协同，因此只要往数据源所属租户同步即可
-    TenantSyncManager(data_source, data_source.owner_tenant_id, TenantSyncOptions()).execute()
+    sync_opts = TenantSyncOptions()
+    # 同步到数据源所属租户
+    TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
+
+    # 虽然逻辑上只有实名数据源会同步 & 发送 post_sync_data_source 信号，但是防御一下比较好
+    if data_source.type != DataSourceTypeEnum.REAL:
+        logger.warning("data source %s is not real user type, skip sync...", data_source.id)
+        return
+
+    # 根据配置的协同策略，同步其他租户
+    for strategy in CollaborationStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
+        # 任意一方状态不是已启用，就不会执行协同同步
+        if strategy.source_status != CollaborationStrategyStatus.ENABLED:
+            logger.info("collaboration strategy %s is not enabled by source, skip sync...", strategy.id)
+            continue
+        if strategy.target_status != CollaborationStrategyStatus.ENABLED:
+            logger.info("collaboration strategy %s is not enabled by target, skip sync...", strategy.id)
+            continue
+
+        TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()
 
 
 @receiver(post_sync_tenant)
@@ -50,7 +71,7 @@ def sync_identity_infos_and_notify_after_sync_tenant(sender, data_source: DataSo
 @receiver(post_save, sender=DataSource)
 def sync_identity_infos_and_notify_after_modify_data_source(sender, instance: DataSource, created: bool, **kwargs):
     """
-    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
+    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用密码功能，
     则需要对没有账密信息的用户，进行密码的初始化 & 发送通知，批量创建数据源用户同理
     """
     if created:

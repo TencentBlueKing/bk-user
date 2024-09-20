@@ -1,30 +1,31 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Any, Dict, List
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
-from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import FieldMappingOperation
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
+from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import PasswordRuleConfig
@@ -35,37 +36,15 @@ from bkuser.utils.pydantic import stringify_pydantic_error
 logger = logging.getLogger(__name__)
 
 
-class DataSourceSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", required=False)
+class DataSourceListInputSLZ(serializers.Serializer):
+    type = serializers.ChoiceField(help_text="数据源类型", choices=DataSourceTypeEnum.get_choices(), required=False)
 
 
-class DataSourceSearchOutputSLZ(serializers.Serializer):
+class DataSourceListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
-    name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
-    plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
-    cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
-    status = serializers.CharField(help_text="数据源状态")
-    updater = serializers.SerializerMethodField(help_text="更新者")
-    updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
-
-    def get_plugin_name(self, obj: DataSource) -> str:
-        return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
-
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            help_text="协作公司",
-            child=serializers.CharField(),
-            allow_empty=True,
-        )
-    )
-    def get_cooperation_tenants(self, obj: DataSource) -> List[str]:
-        # TODO 目前未支持数据源跨租户协作，因此该数据均为空
-        return []
-
-    def get_updater(self, obj: DataSource) -> str:
-        return self.context["user_display_name_map"].get(obj.updater) or obj.updater
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -106,22 +85,22 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     """数据源同步配置"""
 
     sync_period = serializers.ChoiceField(help_text="同步周期", choices=DataSourceSyncPeriod.get_choices())
+    sync_timeout = serializers.IntegerField(
+        help_text="同步超时时间（单位：秒，范围：5m-12h）",
+        required=False,
+        default=settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT,
+        min_value=5 * 60,
+        max_value=12 * 60 * 60,
+    )
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-
-    def validate_name(self, name: str) -> str:
-        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("同名数据源已存在"))
-
-        return name
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -137,6 +116,10 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 租户至多拥有一个实体类型的数据源
+        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
+            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+
         # 除本地数据源类型外，都需要配置字段映射
         plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
@@ -175,9 +158,8 @@ class DataSourcePluginDefaultConfigOutputSLZ(serializers.Serializer):
 
 class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
-    name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
-    status = serializers.CharField(help_text="数据源状态")
+    type = serializers.CharField(help_text="数据源类型")
     plugin = DataSourcePluginOutputSLZ(help_text="数据源插件")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
@@ -185,22 +167,11 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-
-    def validate_name(self, name: str) -> str:
-        # 自己目前在用的名字是可以的，不然每次更新都要修改名字
-        if name == self.context["current_name"]:
-            return name
-
-        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("同名数据源已存在"))
-
-        return name
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> BasePluginConfig:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
@@ -233,8 +204,12 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):
-    status = serializers.CharField(help_text="数据源状态")
+class DataSourceRelatedResourceStatsOutputSLZ(serializers.Serializer):
+    own_department_count = serializers.IntegerField(help_text="本租户自有的部门数量")
+    own_user_count = serializers.IntegerField(help_text="本租户自有的用户数量")
+    shared_to_tenant_count = serializers.IntegerField(help_text="从本租户协同数据的租户数量")
+    shared_to_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
+    shared_to_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):
@@ -313,10 +288,10 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
                 owner_tenant_id=self.context["tenant_id"],
             ).first()
             if not data_source:
-                raise ValidationError(_("指定数据源不存在或不可用"))
+                raise ValidationError(_("指定数据源不存在"))
 
             plugin_config = data_source.get_plugin_cfg()
-            if not plugin_config.enable_account_password_login:
+            if not plugin_config.enable_password:
                 raise ValidationError(_("无法使用该数据源生成随机密码"))
 
             attrs["password_rule"] = plugin_config.password_rule.to_rule()
@@ -350,6 +325,12 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
 
         return file
 
+    def validate_incremental(self, incremental: bool) -> bool:
+        if not incremental:
+            raise ValidationError(_("出于安全考虑，全量导入模式暂不可用"))
+
+        return incremental
+
 
 class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
     """数据源导入/同步结果"""
@@ -361,44 +342,36 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
     data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
-    status = serializers.CharField(help_text="数据源同步状态", required=False)
-
-    def validate(self, attrs):
-        if attrs.get("status"):
-            attrs["statuses"] = attrs["status"].split(",")
-
-        return attrs
+    statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    data_source_id = serializers.IntegerField(help_text="数据源 ID")
-    data_source_name = serializers.SerializerMethodField(help_text="数据源名称")
     status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
     operator = serializers.SerializerMethodField(help_text="操作人")
-    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
-    def get_data_source_name(self, obj: DataSourceSyncTask) -> str:
-        return self.context["data_source_name_map"].get(obj.data_source_id)
-
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
-
-    def get_start_at(self, obj: DataSourceSyncTask) -> str:
-        return obj.start_at_display
 
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     status = serializers.CharField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
-    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
 
-    def get_start_at(self, obj: DataSourceSyncTask) -> str:
-        return obj.start_at_display
+
+class DataSourceDestroyInputSLZ(serializers.Serializer):
+    is_delete_idp = serializers.BooleanField(help_text="重置数据源时是否同时删除 Idp 相关配置", default=False)
+
+
+class DataSourcePluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源插件唯一标识")
+    json_schema = serializers.JSONField(help_text="配置的 JSON Schema")

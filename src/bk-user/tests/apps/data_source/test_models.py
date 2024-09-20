@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -76,7 +76,7 @@ def test_set_plugin_config_with_replace(local_ds_with_sensitive):
 
 
 def test_set_plugin_config_not_value(bare_local_data_source):
-    plugin_cfg = LocalDataSourcePluginConfig(enable_account_password_login=False)
+    plugin_cfg = LocalDataSourcePluginConfig(enable_password=False)
 
     bare_local_data_source.set_plugin_cfg(plugin_cfg)
     assert get_items(bare_local_data_source.plugin_config, "password_initial.fixed_password") is None
@@ -85,8 +85,8 @@ def test_set_plugin_config_not_value(bare_local_data_source):
 def test_set_plugin_config_empty_value(local_ds_plugin_cfg, bare_local_data_source):
     plugin_cfg = LocalDataSourcePluginConfig(**local_ds_plugin_cfg)
     # local_ds_plugin_cfg 本身 fixed_password 本身就是 None，这里修改别的字段，是为了验证真的更新
-    plugin_cfg.password_initial.force_change_at_first_login = False  # type: ignore
+    plugin_cfg.login_limit.force_change_at_first_login = False  # type: ignore
 
     bare_local_data_source.set_plugin_cfg(plugin_cfg)
     assert get_items(bare_local_data_source.plugin_config, "password_initial.fixed_password") is None
-    assert get_items(bare_local_data_source.plugin_config, "password_initial.force_change_at_first_login") is False
+    assert get_items(bare_local_data_source.plugin_config, "login_limit.force_change_at_first_login") is False

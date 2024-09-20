@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G003, G004
 import re
 from typing import Any, Dict, List
 
@@ -18,7 +21,7 @@ from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
-from bkuser.apps.sync.context import TaskLogger
+from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.validators import validate_phone_with_country_code
@@ -92,14 +95,13 @@ class DataSourceUserConverter:
             field_mapping = self._get_field_mapping_from_data_source_config()
             if not field_mapping:
                 self.logger.warning(
-                    f"data source (id: {self.data_source.id}) hasn't field mapping,"  # noqa: G004
-                    "generated from field settings...",
+                    f"data source (id: {self.data_source.id}) hasn't field mapping, generated from field settings...",
                 )
                 # 2. 若数据源配置中不存在，或者格式异常，则根据字段配置中生成，字段映射方式为直接映射
                 field_mapping = self._get_field_mapping_from_tenant_user_fields()
 
         self.logger.info(
-            f"use {[str(m) for m in field_mapping]} as data source (id: {self.data_source.id}) field mapping"  # noqa: G004, E501
+            f"use {[str(m) for m in field_mapping]} as data source (id: {self.data_source.id}) field mapping"
         )
         return field_mapping
 
@@ -109,8 +111,8 @@ class DataSourceUserConverter:
             return [DataSourceUserFieldMapping(**mapping) for mapping in self.data_source.field_mapping]
         except pydantic.ValidationError as e:
             self.logger.warning(
-                f"data source (id: {self.data_source.id}) has invalid field mapping: "  # noqa: G004
-                f"{self.data_source.field_mapping}, error: {stringify_pydantic_error(e)}"
+                f"data source (id: {self.data_source.id}) has invalid field mapping: "
+                + f"{self.data_source.field_mapping}, error: {stringify_pydantic_error(e)}"
             )
 
         return []
@@ -127,7 +129,9 @@ class DataSourceUserConverter:
             for f in fields
         ]
 
-    def _build_extras(self, username: str, props: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, Any]:  # noqa: C901
+    def _build_extras(  # noqa: C901
+        self, username: str, props: Dict[str, str], mapping: Dict[str, str]
+    ) -> Dict[str, Any]:
         extras = {}
         for f in self.custom_fields:
             # 并不是所有的自定义字段，都已经被配置到字段映射中，这里应该以字段映射为准

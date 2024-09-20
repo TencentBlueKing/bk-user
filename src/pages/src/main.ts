@@ -1,7 +1,8 @@
 // 全量引入 bkui-vue
-import bkui, { InfoBox } from 'bkui-vue';
+import bkui, { bkTooltips, InfoBox } from 'bkui-vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
+import VueDOMPurifyHTML from 'vue-dompurify-html';
 
 import App from './app.vue';
 import i18n from './language/index';
@@ -20,11 +21,13 @@ const leaveBox = (opt = {}) => new Promise((resolve) => {
   const opts = Object.assign({
     title: i18n.global.t('确定离开当前页？'),
     subTitle: i18n.global.t('离开将会导致未保存的信息丢失'),
+    class: 'leave-box',
     quickClose: false,
     onConfirm: async () => {
       window.changeInput = false;
       resolve(true);
     },
+    confirmText: i18n.global.t('确定'),
     onClose: () => {
       resolve(false);
     },
@@ -46,24 +49,12 @@ const leaveBefore = async () => {
 
 window.leaveBefore = leaveBefore;
 
-window.loginBox = true;
-let pre = window;
-while (pre.parent && pre.parent !== pre) {
-  pre = pre.parent;
-  if (pre.loginBox) {
-    pre.close?.();
-    break;
-  }
-}
-
-window.close = () => {
-  window.login.hideLogin();
-};
-
 createApp(App)
   .use(router)
   .use(createPinia())
   .use(bkui)
   .use(i18n)
+  .use(VueDOMPurifyHTML)
   .provide('editLeaveBefore', leaveBox)
+  .directive('bkTooltips', bkTooltips)
   .mount('.app');

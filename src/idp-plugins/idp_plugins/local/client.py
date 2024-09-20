@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -63,7 +63,7 @@ class BkUserAPIClient:
         """
         resp_data = self._call(
             http_post,
-            "/api/v1/login/local-user-credentials/authenticate/",
+            "/api/v3/login/local-user-credentials/authenticate/",
             json={"data_source_ids": data_source_ids, "username": username, "password": password},
         )
 

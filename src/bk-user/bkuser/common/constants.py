@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import datetime
 
+import pytz
 from blue_krill.data_types.enum import EnumField, StructuredEnum
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class BkLanguageEnum(str, StructuredEnum):
@@ -34,3 +36,8 @@ PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, 
 
 # 敏感信息掩码（7 位 * 是故意的，避免遇到用户输入 6/8 位 * 的情况）
 SENSITIVE_MASK = "*******"
+
+TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.all_timezones)]
+
+# datetime 对比时允许最大偏移的秒数内认为是相等的，默认 2 分钟
+ALLOWED_DATETIME_MAX_OFFSET = 120

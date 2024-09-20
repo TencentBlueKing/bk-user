@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -36,30 +37,30 @@ class DataSourcePlugin(models.Model):
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
 
-class DataSourceManager(models.Manager):
-    """数据源管理器类"""
+class DataSourceQuerySet(models.QuerySet):
+    """数据源 QuerySet 类"""
 
     @transaction.atomic()
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         if "plugin_config" not in kwargs:
-            return super().create(*args, **kwargs)
+            return super().create(**kwargs)
 
         plugin_cfg = kwargs.pop("plugin_config")
         assert isinstance(plugin_cfg, BasePluginConfig)
 
-        data_source: DataSource = super().create(*args, **kwargs)
+        data_source: DataSource = super().create(**kwargs)
         data_source.set_plugin_cfg(plugin_cfg)
         return data_source
 
 
+# 数据源管理器类
+DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
+
+
 class DataSource(AuditedModel):
-    name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
-    status = models.CharField(
-        "数据源状态",
-        max_length=32,
-        choices=DataSourceStatus.get_choices(),
-        default=DataSourceStatus.ENABLED,
+    type = models.CharField(
+        "数据源类型", max_length=32, choices=DataSourceTypeEnum.get_choices(), default=DataSourceTypeEnum.REAL
     )
     # Note: 数据源插件被删除的前提是，插件没有被任何数据源使用
     plugin = models.ForeignKey(DataSourcePlugin, on_delete=models.PROTECT)
@@ -68,19 +69,14 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
-    domain = models.CharField("所属租户域名", max_length=128, unique=True, blank=True, null=True)
-    owner_tenant_user_id_rule = models.CharField(
-        "归属租户用户 ID 生成规则",
-        max_length=64,
-        choices=TenantUserIdRuleEnum.get_choices(),
-        default=TenantUserIdRuleEnum.UUID4_HEX.value,
-    )
 
     objects = DataSourceManager()
 
     class Meta:
         ordering = ["id"]
-        unique_together = [("name", "owner_tenant_id")]
+        unique_together = [
+            ("owner_tenant_id", "type"),
+        ]
 
     @property
     def is_local(self) -> bool:
@@ -88,9 +84,14 @@ class DataSource(AuditedModel):
         return self.plugin.id == DataSourcePluginEnum.LOCAL
 
     @property
-    def is_username_frozen(self) -> bool:
-        """用户名在初始化后不可再次更新，对于租户用户 ID 为 uuid 的数据源无效"""
-        return bool(self.owner_tenant_user_id_rule != TenantUserIdRuleEnum.UUID4_HEX)
+    def is_real_type(self) -> bool:
+        """检查数据源类型是否为实体"""
+        return self.type == DataSourceTypeEnum.REAL
+
+    @property
+    def sync_timeout(self) -> int:
+        """同步超时时间（单位：秒）"""
+        return self.sync_config.get("sync_timeout", settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT)
 
     def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置
@@ -186,9 +187,6 @@ class DataSourceUserDeprecatedPasswordRecord(TimestampedModel):
     user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE)
     password = models.CharField("用户曾用密码", max_length=128)
     operator = models.CharField("操作人", max_length=128)
-
-    class Meta:
-        ordering = ["-created_at"]
 
 
 class DataSourceDepartment(TimestampedModel):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -22,14 +22,19 @@ from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 logger = logging.getLogger(__name__)
 
 
 def forwards_func(apps, schema_editor):
     """初始化本地数据源插件"""
-    admin_username = os.environ.get("INITIAL_ADMIN_USERNAME")
-    admin_password = os.environ.get("INITIAL_ADMIN_PASSWORD")
+    if os.getenv("SKIP_INIT_DEFAULT_TENANT", "false").lower() == "true":
+        logger.info("skip initialize default tenant & data source")
+        return
+
+    admin_username = os.getenv("INITIAL_ADMIN_USERNAME")
+    admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
     if not (admin_username and admin_password):
         raise RuntimeError("INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD must be set in environment variables")
 
@@ -38,7 +43,6 @@ def forwards_func(apps, schema_editor):
         admin_username,
     )
 
-    # TODO: 国际化时需要考虑如何实现
     Tenant = apps.get_model("tenant", "Tenant")
     TenantUser = apps.get_model("tenant", "TenantUser")
     TenantManager = apps.get_model("tenant", "TenantManager")
@@ -48,16 +52,14 @@ def forwards_func(apps, schema_editor):
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
     Idp = apps.get_model("idp", "Idp")
 
-    default_tenant = Tenant.objects.create(id="default", name="默认租户", is_default=True)
-    TenantUserValidityPeriodConfig.objects.create(
-        tenant=default_tenant,
-        **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
-    )
+    default_tenant = Tenant.objects.create(id="default", name="Default", is_default=True)
+    # 租户配置
+    TenantUserValidityPeriodConfig.objects.create(tenant=default_tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
 
     data_source = DataSource.objects.create(
-        name="default",
-        plugin_id=DataSourcePluginEnum.LOCAL,
+        type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         owner_tenant_id=default_tenant.id,
+        plugin_id=DataSourcePluginEnum.LOCAL,
         plugin_config=get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).model_dump(),
     )
 
@@ -84,11 +86,12 @@ def forwards_func(apps, schema_editor):
     TenantManager.objects.create(tenant=default_tenant, tenant_user=tenant_user)
 
     Idp.objects.create(
-        name="本地账密",
+        name="=Administrator",
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         owner_tenant_id=default_tenant.id,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]).model_dump(),
         data_source_match_rules=[gen_data_source_match_rule_of_local(data_source.id).model_dump()],
+        data_source_id=data_source.id,
     )
 
     logger.info(

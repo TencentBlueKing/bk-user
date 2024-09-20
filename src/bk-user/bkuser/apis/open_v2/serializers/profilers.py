@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List
 
 from rest_framework import serializers
@@ -61,7 +62,6 @@ class ProfileRetrieveInputSLZ(ProfileFieldsSLZ):
     lookup_field = serializers.ChoiceField(
         help_text="指定路径参数值的字段", choices=["id", "username"], required=False, default="username"
     )
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", required=False, default=False)
 
 
 class ProfileListInputSLZ(ProfileFieldsSLZ):
@@ -81,21 +81,19 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
             # 生命周期相关
             "status",
             "staff_status",
-            "enabled",
             # IAM 特有
             "create_time",
         ],
         required=False,
+        default="username",
     )
     exact_lookups = StringArrayField(help_text="精确匹配字段", required=False)
     fuzzy_lookups = StringArrayField(help_text="模糊匹配字段", required=False)
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", required=False, default=False)
     no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)
 
 
 class DepartmentProfileListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
-    include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", required=False, default=False)
     no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)
 
 

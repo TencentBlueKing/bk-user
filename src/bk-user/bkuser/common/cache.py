@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -26,6 +26,7 @@ class CacheEnum(str, StructuredEnum):
 # 项目里不同场景的缓存实现都分散在各处，实现缓存中可能出现不同场景缓存 key 冲突问题，
 # 为避免该问题，所以缓存场景都必须在这里定义其 Key 的前缀
 # 完整 Key = [全局前缀]settings.Caches.KEY_PREFIX + [全局版本]settings.Caches.VERSION + CacheKeyPrefixEnum + CustomKey
+# 注意：KeyPrefix 应不互相冲突且尽可能短，不需要优先考虑可读性
 class CacheKeyPrefixEnum(str, StructuredEnum):
     # 用于使用 cached 和 cachedmethod 装饰器自动生成 key 的
     AUTO = "auto"
@@ -33,6 +34,10 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     LOCK = "lock"
     # API 响应结果数据
     V2_API = "v2_api"
+    # 用户验证码
+    VERIFICATION_CODE = "vc"
+    # 用户重置密码用 Token
+    RESET_PASSWORD_TOKEN = "rpt"
 
 
 def _default_key_function(*args, **kwargs):
@@ -122,6 +127,10 @@ class Cache:
     def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None):
         key = self._make_key(key)
         self.cache.set(key, value, timeout, version)
+
+    def delete(self, key, version=None):
+        key = self._make_key(key)
+        self.cache.delete(key, version)
 
     def get_many(self, keys, version=None):
         if not keys:

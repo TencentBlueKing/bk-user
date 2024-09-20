@@ -1,6 +1,6 @@
 <template>
   <div class="details-info-wrapper user-scroll-y">
-    <div v-if="!isEdit" style="padding: 24px;">
+    <div v-if="!isEdit">
       <ul class="details-info-content">
         <li class="content-item">
           <div class="item-header">
@@ -45,7 +45,7 @@
               <Empty :is-data-empty="state.isDataEmpty" />
             </template>
             <bk-table-column prop="username" :label="$t('用户名')" />
-            <bk-table-column prop="full_name" :label="$t('全名')" />
+            <bk-table-column prop="full_name" :label="$t('姓名')" />
             <bk-table-column prop="email" :label="$t('邮箱')">
               <template #default="{ row }">
                 <span>{{ row.email || '--' }}</span>
@@ -64,8 +64,8 @@
       v-else
       :tenants-data="state"
       :managers="state.managers"
-      @handleCancel="handleCancel"
-      @updateTenantsList="updateTenantsList" />
+      @handle-cancel="handleCancel"
+      @update-tenants-list="updateTenantsList" />
   </div>
 </template>
 
@@ -74,11 +74,10 @@ import { computed, defineEmits, defineProps, reactive, watch } from 'vue';
 
 import EditInfo from './EditDetailsInfo.vue';
 
-import Empty from '@/components/Empty.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { t } from '@/language/index';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 
-const userStore = useUser();
 const props = defineProps({
   userData: {
     type: Object,
@@ -89,9 +88,8 @@ const props = defineProps({
     default: false,
   },
 });
-
 const emit = defineEmits(['updateTenantsList', 'handleCancel', 'changeEdit']);
-
+const userStore = useUser();
 const state = reactive({
   ...props?.userData,
   isDataEmpty: false,
@@ -128,9 +126,4 @@ const updateTenantsList = () => {
 
 <style lang="less" scoped>
 @import url("@/css/tenantViewStyle.less");
-
-.details-info-wrapper {
-  height: calc(100vh - 140px);
-  padding-bottom: 0;
-}
 </style>

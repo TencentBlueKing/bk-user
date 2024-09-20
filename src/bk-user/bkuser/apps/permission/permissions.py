@@ -16,6 +16,7 @@ limitations under the License.
 We undertake not to change the open source license (MIT license) applicable
 to the current version of the project delivered to anyone in the future.
 """
+
 import logging
 
 from rest_framework.permissions import BasePermission
@@ -24,7 +25,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.permission.constants import PermAction, UserRole
-from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantManager, TenantUser
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def perm_class(action: PermAction):  # noqa: C901
                 return is_super_manager(cur_tenant_id, username)
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(cur_tenant_id, username)
-            if action == PermAction.USE_PLATFORM:
+            if action == PermAction.USE_PLATFORM:  # noqa: SIM103
                 # 平台使用的情况，需要用具体的 object 来判断权限
                 return True
 
@@ -65,15 +66,19 @@ def perm_class(action: PermAction):  # noqa: C901
 
             # 租户权限与具体对象有关系的，需要根据具体对象确定关联的租户后再鉴权
             if action == PermAction.MANAGE_TENANT:
+                # 协作策略比较特殊，只要是源 / 目标租户的管理员即可（Views 层会具体过滤）
+                if isinstance(obj, CollaborationStrategy):
+                    is_source_tenant_mgr = is_tenant_manager(obj.source_tenant_id, username)
+                    is_target_tenant_mgr = is_tenant_manager(obj.target_tenant_id, username)
+                    return is_source_tenant_mgr or is_target_tenant_mgr
+
                 if isinstance(obj, Tenant):
                     tenant_id = obj.id
                 elif hasattr(obj, "tenant_id"):
                     tenant_id = obj.tenant_id
                 elif isinstance(obj, DataSource):
-                    # TODO (su) 考虑数据源协同的情况
                     tenant_id = obj.owner_tenant_id
                 elif hasattr(obj, "data_source"):
-                    # TODO (su) 考虑数据源协同的情况
                     tenant_id = obj.data_source.owner_tenant_id
                 elif isinstance(obj, Idp):
                     tenant_id = obj.owner_tenant_id
@@ -103,8 +108,7 @@ def is_super_manager(tenant_id: str, username: str) -> bool:
 
 def is_tenant_manager(tenant_id: str, username: str) -> bool:
     """本租户的管理员，拥有管理当前租户配置的权限"""
-    tenant = Tenant.objects.get(id=tenant_id)
-    return TenantManager.objects.filter(tenant=tenant, tenant_user_id=username).exists()
+    return TenantManager.objects.filter(tenant_id=tenant_id, tenant_user_id=username).exists()
 
 
 def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) -> bool:

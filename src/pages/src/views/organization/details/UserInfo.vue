@@ -1,16 +1,18 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
     <header>
-      <bk-checkbox
-        :class="{ 'is-status': isTenant }"
-        v-model="isCurrentUsers"
-        @change="emit('changeUsers', isCurrentUsers ? false : true)">
-        {{ $t('仅显示本级用户') }}（<span>{{ props.pagination.count }}</span>）
-      </bk-checkbox>
+      <div>
+        <bk-checkbox
+          v-if="!isTenant"
+          v-model="isCurrentUsers"
+          @change="emit('changeUsers', isCurrentUsers ? false : true)">
+          {{ $t('仅显示本级用户') }}（<span>{{ props.pagination.count }}</span>）
+        </bk-checkbox>
+      </div>
       <bk-input
         class="header-right"
         v-model="searchValue"
-        :placeholder="$t('搜索用户名、全名')"
+        :placeholder="$t('搜索用户名、姓名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -34,8 +36,8 @@
           :is-data-empty="props.isDataEmpty"
           :is-search-empty="props.isEmptySearch"
           :is-data-error="props.isDataError"
-          @handleEmpty="handleClear"
-          @handleUpdate="handleClear" />
+          @handle-empty="handleClear"
+          @handle-update="handleClear" />
       </template>
       <template v-for="(item, index) in tableSettings.fields" :key="index">
         <bk-table-column :prop="item.field" :label="item.name">
@@ -76,16 +78,14 @@ import { defineEmits, defineProps, inject, reactive, ref } from 'vue';
 
 import ViewUser from './ViewUser.vue';
 
-import Empty from '@/components/Empty.vue';
-import { useCustomFields } from '@/hooks/useCustomFields';
+import Empty from '@/components/SearchEmpty.vue';
+import { useCustomFields } from '@/hooks';
 import {
-  getTenantUsers,
-} from '@/http/organizationFiles';
-import { getFields } from '@/http/settingFiles';
+  getFields,
+  getTenantOrganizationUsers,
+} from '@/http';
 import { t } from '@/language/index';
 import { formatConvert, getTableValue } from '@/utils';
-
-const editLeaveBefore = inject('editLeaveBefore');
 
 const props = defineProps({
   userData: {
@@ -121,7 +121,11 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
 const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent', 'handleSettingChange']);
+
+const editLeaveBefore = inject('editLeaveBefore');
+
 const isCurrentUsers = ref(true);
 const detailsConfig = reactive({
   isShow: false,
@@ -144,7 +148,7 @@ const hideSideBar = () => {
 const handleClick = async (item: any) => {
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
-    getTenantUsers(item.id),
+    getTenantOrganizationUsers(item.id),
     getFields(),
   ]);
   state.userInfo = userRes.data;
@@ -157,8 +161,10 @@ const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
-    detailsConfig.isShow = false;
-    hideSideBar();
+    if (enableLeave) {
+      detailsConfig.isShow = false;
+      hideSideBar();
+    }
   } else {
     detailsConfig.isShow = false;
     hideSideBar();
@@ -167,7 +173,7 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
-// 搜索用户名、全名
+// 搜索用户名、姓名
 const handleEnter = (value: string) => {
   emit('searchUsers', value);
 };
@@ -195,10 +201,6 @@ const pageCurrentChange = (current) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-
-    .is-status {
-      visibility: hidden;
-    }
 
     .header-right {
       width: 400px;
@@ -242,24 +244,24 @@ const pageCurrentChange = (current) => {
     }
   }
 
-  :deep(.bk-modal-content) {
-    overflow-y: auto;
+  // :deep(.bk-modal-content) {
+  //   overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
+  //   &::-webkit-scrollbar {
+  //     width: 4px;
+  //     background-color: transparent;
+  //   }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
+  //   &::-webkit-scrollbar-thumb {
+  //     background-color: #dcdee5;
+  //     border-radius: 4px;
+  //   }
 
-    &:hover {
-      &::-webkit-scrollbar-thumb {
-        background-color: #979ba5;
-      }
-    }
-  }
+  //   &:hover {
+  //     &::-webkit-scrollbar-thumb {
+  //       background-color: #979ba5;
+  //     }
+  //   }
+  // }
 }
 </style>

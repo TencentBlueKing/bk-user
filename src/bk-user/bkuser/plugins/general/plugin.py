@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -86,7 +86,9 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             err_msg = str(e)
         except Exception as e:
             logger.exception("general data source plugin test connection error")
-            err_msg = str(e)
+            err_msg = _("连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息：{}").format(
+                str(e)
+            )
 
         # 请求 API 有异常，直接返回
         if err_msg:

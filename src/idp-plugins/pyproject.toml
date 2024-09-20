@@ -12,9 +12,9 @@ priority = "default"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-django = "3.2.21"
+django = "3.2.25"
 pydantic = "2.3.0"
-blue-krill = "2.0.2"
+blue-krill = "2.0.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.4"

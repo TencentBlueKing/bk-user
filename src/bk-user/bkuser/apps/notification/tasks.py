@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -14,15 +14,16 @@ from datetime import timedelta
 from functools import reduce
 
 from django.db.models import Q
-from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.utils.time import get_midnight
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ def notify_password_expiring_users(data_source_id: int):
         return
 
     identity_infos = LocalDataSourceIdentityInfo.objects.filter(data_source_id=data_source_id)
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # 将要过期提醒，支持配置多值，对应 1/7/15 天等
     expired_date_filters = []
     for remain_days in plugin_cfg.password_expire.remind_before_expire:
@@ -76,8 +77,14 @@ def build_and_run_notify_password_expiring_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
 
+    tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
-        if data_source.plugin_config.get("enable_account_password_login", False):
+        # 对于租户已停用的数据源，不发送密码即将过期提醒
+        if not tenant_enabled_map.get(data_source.owner_tenant_id):
+            logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
+            continue
+
+        if data_source.plugin_config.get("enable_password", False):
             notify_password_expiring_users.delay(data_source.id)
 
 
@@ -86,7 +93,7 @@ def notify_password_expired_users(data_source_id: int):
     """对昨天过期的租户用户发送通知"""
     logger.info("[celery] receive task: notify_password_expired_users, data_source_id is %s", data_source_id)
 
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     identity_infos = LocalDataSourceIdentityInfo.objects.filter(
         data_source_id=data_source_id,
         password_expired_at__gt=midnight - timedelta(days=1),
@@ -108,8 +115,14 @@ def build_and_run_notify_password_expired_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
 
+    tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
-        if data_source.plugin_config.get("enable_account_password_login", False):
+        # 对于租户已停用的数据源，不发送密码过期提醒
+        if not tenant_enabled_map.get(data_source.owner_tenant_id):
+            logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
+            continue
+
+        if data_source.plugin_config.get("enable_password", False):
             notify_password_expired_users.delay(data_source.id)
 
 
@@ -125,7 +138,7 @@ def notify_expiring_tenant_users(tenant_id: str):
 
     tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
 
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # 将要过期提醒，支持配置多值，对应 1/7/15 天等
     expired_date_filters = []
     for remain_days in cfg.remind_before_expire:
@@ -148,7 +161,8 @@ def build_and_run_notify_expiring_tenant_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expiring_tenant_users_task")
 
-    for tenant_id in Tenant.objects.all().values_list("id", flat=True):
+    # 对于停用的租户，不需要对即将过期的租户用户进行提醒
+    for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expiring_tenant_users.delay(tenant_id)
 
 
@@ -159,7 +173,7 @@ def notify_expired_tenant_users(tenant_id: str):
 
     # Q：为什么不使用 timezone.now 而是要转换成 midnight?
     # A: 相关讨论：https://github.com/TencentBlueKing/bk-user/pull/1504#discussion_r1438059142
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # Q：为什么不使用 account_expired_at__date=time_now.date() 的方式？
     # A：在 USE_TZ == True 的情况下，查询的 SQL 中会使用 CONVERT_TZ 对时间进行转换，
     #    该转换要求 DB 中有配置对应的时区（如 UTC，GMT，Asia/Shanghai 等）
@@ -181,5 +195,6 @@ def build_and_run_notify_expired_tenant_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expired_tenant_users_task")
 
-    for tenant_id in Tenant.objects.all().values_list("id", flat=True):
+    # 对于停用的租户，不需要对过期的租户用户进行提醒
+    for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expired_tenant_users.delay(tenant_id)

@@ -1,272 +1,523 @@
 <template>
-  <div class="login-setting-content user-scroll-y">
-    <!-- <div class="setting-item">
-      <p class="item-title">登录方式设置</p>
-      <bk-form class="setting-form" form-type="vertical">
-        <bk-form-item label="基本登录" description="至少选择一种默认方式">
-          <bk-checkbox-group>
-            <bk-checkbox
-              class="hover-checkbox"
-              v-for="item in state.basicLogin"
-              :key="item.value"
-              :label="item.name"
-            >
-              {{ item.name }}
-              <bk-tag theme="info" v-if="item.default">默认</bk-tag>
-            </bk-checkbox>
-          </bk-checkbox-group>
-        </bk-form-item>
-        <bk-form-item label="个人社交账号登录">
-          <bk-checkbox-group>
-            <bk-checkbox
-              v-for="item in state.accountLogin"
-              :key="item.value"
-              :label="item.name"
-            >
-              {{ item.name }}
-            </bk-checkbox>
-          </bk-checkbox-group>
-        </bk-form-item>
-      </bk-form>
-    </div> -->
-    <div class="setting-item">
-      <p class="item-title">MFA认证方式</p>
-      <bk-form class="setting-form" form-type="vertical">
-        <bk-form-item label="MFA认证方式">
-          <bk-checkbox-group>
-            <bk-checkbox label="手机号+验证码" />
-            <bk-checkbox label="邮箱+验证码" />
-          </bk-checkbox-group>
-        </bk-form-item>
-        <div class="item-flex">
-          <bk-form-item label="强制开启MFA" description="强制开启MFA">
-            <bk-switcher v-model="state.openMFA" theme="primary" size="large" />
-          </bk-form-item>
-          <bk-form-item label="启用范围">
-            <div class="add-wrapper">
-              <bk-button theme="primary" text v-if="!isShow" @click="handleClickAdd">
-                <i class="user-icon icon-plus-fill mr8" />
-                添加范围
-              </bk-button>
-              <template v-else>
-                <bk-button theme="primary" text class="add-text">
-                  已添加 <span>1</span> 个租户，<span>1</span>个组织，<span>2</span>个用户
-                </bk-button>
-                <ul class="add-list">
-                  <li>
-                    <i class="user-icon icon-homepage mr8"></i>
-                    <span>租户</span>
-                  </li>
-                  <li>
-                    <i class="bk-sq-icon icon-file-close mr8"></i>
-                    <span>组织</span>
-                  </li>
-                  <li>
-                    <i class="bk-sq-icon icon-personal-user mr8"></i>
-                    <span>用户</span>
-                  </li>
-                </ul>
-              </template>
+  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+    <ul v-if="currentDataSource?.plugin_id" class="login-setting-content">
+      <li class="item-box">
+        <div class="header">
+          <p>{{ $t('基本登录方式') }}</p>
+        </div>
+        <div class="login-box">
+          <div
+            class="login-item"
+            v-for="(item, index) in idpsPlugins"
+            :key="index">
+            <div
+              :class="['login-content',
+                       { 'login-content-disabled': currentDataSource.plugin_id !== 'local' && item.id === 'local' }]">
+              <div
+                :class="['box', { 'disabled-box': item.status === 'disabled' && !item.idp_id }]"
+                v-bk-tooltips="{
+                  content: item.text,
+                  disabled: item.status !== 'disabled' || item.idp_id,
+                }"
+                @click="handleClickActive(item)">
+                <img :src="item.logo" class="logo-style" />
+                <span>
+                  <bk-overflow-title> {{ item.name }}</bk-overflow-title>
+                </span>
+                <bk-tag
+                  v-if="item.id === 'local'"
+                  class="tag-info"
+                  type="stroke"
+                  theme="info"
+                  @click="handleClickActive(item)"
+                >
+                  {{ $t('本地') }}
+                </bk-tag>
+              </div>
+              <bk-tag
+                v-if="item.status === 'enabled'"
+                class="status-tag"
+                type="filled"
+                theme="success"
+              >
+                {{ $t('已启用') }}
+              </bk-tag>
             </div>
-          </bk-form-item>
-        </div>
-        <div class="item-flex">
-          <bk-form-item label="动态信任策略" description="动态信任策略">
-            <bk-switcher v-model="state.openMFA" theme="primary" size="large" />
-          </bk-form-item>
-          <bk-form-item label="信任天数">
-            <bk-radio-group v-model="state.days">
-              <bk-radio-button
-                v-for="item in state.daysList"
-                :key="item.value"
-                :label="item.name"
-              />
-            </bk-radio-group>
-          </bk-form-item>
-        </div>
-        <bk-form-item label="" required>
-          <div class="item-flex">
-            <bk-checkbox>
-              连续
-            </bk-checkbox>
-            <bk-input
-              style="width: 85px;"
-              type="number"
-              behavior="simplicity"
-              :min="0"
-              :max="5"
-            />
-            <span class="text-sm/[32px]">天 未登录自动冻结（冻结后用户无法登录）</span>
           </div>
-        </bk-form-item>
-      </bk-form>
+        </div>
+      </li>
+    </ul>
+    <div v-else>
+      <bk-exception
+        class="exception-wrap-item mt-[30px]"
+        type="building"
+        :title="$t('暂未配置数据源')"
+        :description="$t('需要先配置数据源后才可进行登录配置，当前支持使用以下方式进行登录')"
+      >
+        <div class="bg-white px-[24px] py-[16px] w-[508px] text-left">
+          <p class="mb-[8px]">{{ $t('基本登录方式') }}</p>
+          <bk-tag v-for="(item, index) in idpsPlugins" :key="index" class="mr-[8px] !important">
+            <template #icon>
+              <img :src="item.logo" class="w-[16px] h-[16px]">
+            </template>
+            {{ item.name }}
+          </bk-tag>
+        </div>
+        <bk-button theme="primary" class="mt-[24px]" @click="handleDataSource">
+          {{ $t('配置数据源') }}
+        </bk-button>
+      </bk-exception>
     </div>
-    <div class="setting-btn">
-      <bk-button theme="primary" class="mr8">保存</bk-button>
-      <bk-button>重置</bk-button>
-    </div>
-    <!-- 添加范围 -->
-    <bk-dialog
-      width="640"
-      height="520"
-      class="department-dialog"
-      :auto-close="false"
-      :title="'添加启用范围'"
-      :is-show="isShowSetDepartments"
-      @confirm="selectDeConfirmFn"
-      @closed="isShowSetDepartments = false">
-      <div class="select-department-wrapper">
-        <SetDepartment
-          :initial-departments="[]" />
-      </div>
-    </bk-dialog>
+    <!-- 认证源详情 -->
+    <bk-sideslider
+      :width="(authDetails?.id === 'local' && detailsConfig.isEdit) ? 960 : 640"
+      :is-show="detailsConfig.show"
+      :title="detailsConfig.title"
+      :before-close="handleBeforeClose"
+      quick-close
+    >
+      <template #header>
+        <span>{{ detailsConfig.title }}</span>
+        <div>
+          <bk-button
+            v-if="!detailsConfig.isEdit"
+            outline
+            theme="primary"
+            @click="handleEditDetails">
+            {{ $t('编辑') }}
+          </bk-button>
+          <!-- <bk-button>删除</bk-button> -->
+        </div>
+      </template>
+      <template #default>
+        <template v-if="authDetails?.id === 'local'">
+          <Local
+            v-if="detailsConfig.isEdit"
+            :current-id="authDetails?.idp_id"
+            :default-name="authDetails?.name"
+            @cancel="cancelEdit"
+            @success="localSuccess" />
+          <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
+        </template>
+        <template v-else-if="authDetails?.id === 'wecom'">
+          <WeCom
+            v-if="detailsConfig.isEdit"
+            :data-source-id="currentDataSource?.id"
+            :current-id="authDetails?.idp_id"
+            :default-name="authDetails?.name"
+            @success="weComSuccess"
+            @cancel-edit="cancelEdit" />
+          <WeComView v-else :current-id="authDetails?.idp_id" />
+        </template>
+        <template v-else>
+          <Custom
+            v-if="detailsConfig.isEdit"
+            :data-source-id="currentDataSource?.id"
+            :auth-details="authDetails"
+            @success="customSuccess"
+            @cancel-edit="cancelEdit" />
+          <CustomView v-else :current-id="authDetails?.idp_id" :auth-details-id="authDetails?.id" />
+        </template>
+      </template>
+    </bk-sideslider>
   </div>
 </template>
 
-<script setup lang="ts">
-import { Message } from 'bkui-vue';
-import { reactive, ref } from 'vue';
+<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+import { h, inject, onMounted, reactive, ref } from 'vue';
 
-import SetDepartment from '@/components/set-department/SetDepartment.vue';
+import Custom from './auth-config/CustomLogin.vue';
+import CustomView from './auth-config/CustomView.vue';
+import Local from './auth-config/LocalAccount.vue';
+import LocalView from './auth-config/LocalView.vue';
+import WeCom from './auth-config/WeCom.vue';
+import WeComView from './auth-config/WeComView.vue';
 
-const isShow = ref(false);
-const isShowSetDepartments = ref(false);
-const getSelectedDepartments = ref([]);
-const state = reactive({
-  basicLogin: [
-    { name: '账密登录（本地）', value: '1', default: false },
-    { name: 'OpenLDAP登录', value: '2', default: false },
-    { name: 'MAD登录', value: '3', default: false },
-    { name: '企业微信登录', value: '4', default: false },
-    { name: '手机号+验证码', value: '5', default: false },
-    { name: '邮箱+验证码', value: '6', default: false },
-  ],
-  accountLogin: [
-    { name: '微信', value: 'weixin' },
-    { name: 'QQ', value: 'qq' },
-    { name: 'Google', value: 'google' },
-  ],
-  openMFA: true,
-  days: '3天',
-  daysList: [
-    { name: '3天', value: 3 },
-    { name: '7天', value: 7 },
-    { name: '14天', value: 14 },
-    { name: '30天', value: 30 },
-    { name: '60天', value: 60 },
-  ],
+import {
+  getDataSourceList,
+  getIdps,
+  getIdpsPlugins,
+} from '@/http';
+import { t } from '@/language/index';
+import router from '@/router';
+import { useMainViewStore } from '@/store';
+import { copy } from '@/utils';
+
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
+const editLeaveBefore = inject('editLeaveBefore');
+
+const isLoading = ref(false);
+const idpsPlugins = ref([]);
+const currentDataSource = ref({});
+onMounted(() => {
+  getRealDataSource();
+  initIdpsPlugins();
 });
 
-const handleClickAdd = () => {
-  isShowSetDepartments.value = true;
+// 获取当前实名数据源
+const getRealDataSource = () => {
+  getDataSourceList({ type: 'real' }).then((res) => {
+    currentDataSource.value = res.data[0] || {};
+  });
 };
 
-const selectDeConfirmFn = () => {
-  if (!getSelectedDepartments.value.length) {
-    Message({
-      message: '请选择组织',
-      theme: 'warning',
+const initIdpsPlugins = async () => {
+  try {
+    isLoading.value = true;
+    const [pluginsRes, idpsRes] = await Promise.all([
+      getIdpsPlugins(),
+      getIdps(''),
+    ]);
+
+    idpsPlugins.value = pluginsRes.data;
+
+    idpsPlugins.value.forEach((plugin) => {
+      const idp = idpsRes.data.find(idp => idp.plugin.id === plugin.id);
+      if (idp) {
+        plugin.idp_id = idp.id;
+        plugin.status = idp.status;
+      } else {
+        plugin.status = 'disabled';
+        plugin.text = currentDataSource.value.plugin_id !== 'local' && plugin.id === 'local'
+          ? t('仅对本地数据源启用')
+          : t('暂未配置');
+      }
     });
-    return;
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
   }
+};
+
+const detailsConfig = reactive({
+  show: false,
+  title: t('认证源详情'),
+  isEdit: false,
+});
+
+const authDetails = ref({});
+
+const handleClickActive = (item) => {
+  if (currentDataSource.value.plugin_id !== 'local' && item.id === 'local') return;
+  if (!item.idp_id) {
+    detailsConfig.isEdit = true;
+    detailsConfig.title = `${item.name}${t('登录配置')}`;
+  } else {
+    detailsConfig.isEdit = false;
+    detailsConfig.title = `${item.name}${t('登录详情')}`;
+  }
+  authDetails.value = item;
+  detailsConfig.show = true;
+};
+
+const currentRow = ref({});
+const updateRow = (row) => {
+  currentRow.value = row;
+};
+
+const handleEditDetails = () => {
+  detailsConfig.isEdit = true;
+};
+
+const cancelEdit = () => {
+  detailsConfig.show = false;
+  window.changeInput = false;
+};
+
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    if (enableLeave) {
+      detailsConfig.show = false;
+      detailsConfig.isEdit = false;
+    }
+  } else {
+    detailsConfig.show = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+};
+
+// 本地认证源配置成功
+const localSuccess = (status: boolean) => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  InfoBox({
+    title: t('配置成功'),
+    infoType: 'success',
+    confirmText: t('确定'),
+    subTitle: h('div', {
+      style: {
+        background: '#F5F7FA',
+        padding: '13px 0',
+        display: status ? 'flex' : 'none',
+        alignItems: 'center',
+      },
+    }, [
+      h('i', {
+        class: 'user-icon icon-info-i',
+        style: {
+          margin: '0 8px 0 12px',
+        },
+      }),
+      h('span', {
+        style: {
+          fontSize: '12px',
+        },
+      }, t('账号陆续生效中，生效时间请以用户最终收到的邮件为准')),
+    ]),
+    footerAlign: 'center',
+    closeIcon: false,
+    quickClose: false,
+    onConfirm: () => {
+      initIdpsPlugins();
+    },
+  });
+};
+
+// 企业微信认证源配置成功
+const weComSuccess = (url: string) => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  if (url) {
+    InfoBox({
+      title: t('配置成功'),
+      subTitle: h('div', {
+        style: {
+          display: url ? 'block' : 'none',
+          textAlign: 'left',
+        },
+      }, [
+        h('p', {
+          style: {
+            marginBottom: '12px',
+          },
+        }, t('请将以下回调地址填写到企业微信配置内：')),
+        h('div', {
+          style: {
+            background: '#F5F7FA',
+            padding: '8px 12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          },
+        }, [
+          h('p', {
+            style: {
+              width: '230px',
+              wordBreak: 'break-all',
+              wordWrap: 'break-word',
+            },
+          }, url),
+          h('i', {
+            class: 'user-icon icon-copy',
+            style: {
+              color: '#3A84FF',
+              fontSize: '14px',
+              cursor: 'pointer',
+            },
+            onClick: () => copy(url),
+          }),
+        ]),
+      ]),
+      confirmText: t('确定'),
+      infoType: 'success',
+      quickClose: false,
+      closeIcon: false,
+      onConfirm() {
+        initIdpsPlugins();
+      },
+    });
+  } else {
+    initIdpsPlugins();
+  }
+};
+
+// 自定义认证源配置成功
+const customSuccess = (url: string) => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  if (url) {
+    InfoBox({
+      title: t('配置成功'),
+      subTitle: h('div', {
+        style: {
+          display: url ? 'block' : 'none',
+          textAlign: 'left',
+        },
+      }, [
+        h('p', {
+          style: {
+            marginBottom: '12px',
+          },
+        }, t('回调地址为：')),
+        h('div', {
+          style: {
+            background: '#F5F7FA',
+            padding: '8px 12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          },
+        }, [
+          h('p', {
+            style: {
+              width: '230px',
+              wordBreak: 'break-all',
+              wordWrap: 'break-word',
+            },
+          }, url),
+          h('i', {
+            class: 'user-icon icon-copy',
+            style: {
+              color: '#3A84FF',
+              fontSize: '14px',
+              cursor: 'pointer',
+            },
+            onClick: () => copy(url),
+          }),
+        ]),
+      ]),
+      confirmText: t('确定'),
+      infoType: 'success',
+      quickClose: false,
+      closeIcon: false,
+      onConfirm() {
+        initIdpsPlugins();
+      },
+    });
+  } else {
+    initIdpsPlugins();
+  }
+};
+const handleDataSource = () => {
+  router.push({ name: 'dataSource' });
 };
 </script>
 
 <style lang="less" scoped>
-.login-setting-content {
-  height: calc(100vh - 104px);
+.login-setting-wrapper {
   padding: 24px;
 
-  .setting-item {
-    margin-bottom: 16px;
+  .login-setting-content {
+    padding: 24px;
     background: #fff;
-    border-radius: 2px;
-    box-shadow: 0 2px 4px 0 #1919290d;
 
-    .item-title {
-      padding: 16px 0 16px 24px;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .setting-form {
-      margin-left: 64px;
-
-      .item-flex {
+    .item-box {
+      .header {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
 
-        .bk-form-item {
-          width: 145px;
-
-          .icon-plus-fill {
-            font-size: 14px;
-            color: #3a84ff;
-          }
-
-          &:first-child {
-            width: 145px;
-          }
-
-          &:last-child {
-            width: calc(100% - 145px);
-          }
-        }
-      }
-
-      ::v-deep .bk-form-item {
-        &:last-child {
-          padding-bottom: 24px;
-          margin-bottom: 0;
-        }
-      }
-
-      .add-wrapper {
-        .bk-button {
-          display: block;
+        p {
           font-size: 14px;
-          color: #3A84FF;
-        }
-
-        .add-text span {
           font-weight: 700;
+          color: #313238;
         }
+      }
 
-        .add-list {
-          width: 320px;
-          padding: 16px;
-          background: #F5F7FA;
+      .login-box {
+        display: flex;
+        margin: 24px 0;
+        flex-wrap: wrap;
+
+        .login-item {
+          position: relative;
+          display: inline-block;
+          width: 200px;
+          margin-bottom: 16px;
+          margin-left: 16px;
+          text-align: center;
           border-radius: 2px;
 
-          li {
-            i {
-              font-size: 16px;
-              color: #A3C5FD;
+          .login-content-disabled {
+            &:hover {
+              background: #F5F7FA !important;
+            }
+          }
+
+          .login-content {
+            position: relative;
+            height: 80px;
+            line-height: 80px;
+            cursor: pointer;
+            background: #F5F7FA;
+
+            &:hover {
+              background: #E1ECFF;
             }
 
-            span {
-              font-size: 14px;
+            .box {
+              display: flex;
+              align-items: center;
+              height: 100%;
+
+              .logo-style {
+                width: 24px;
+                height: 24px;
+                margin-left: 24px;
+              }
+
+              span {
+                display: block;
+                height: 22px;
+                max-width: 80px;
+                margin: 0 6px 0 12px;
+                font-size: 14px;
+                line-height: 22px;
+                color: #313238;
+              }
+
+              .tag-info {
+                background: #F0F5FF;
+
+                :deep(.bk-tag-text) {
+                  background: #F0F5FF;
+                }
+              }
+            }
+
+            .disabled-box {
+              span {
+                color: #C4C6CC !important;
+              }
+
+              .tag-info {
+                background: #FAFBFD;
+                border: 1px solid #DCDEE5;
+
+                :deep(.bk-tag-text) {
+                  color: #C4C6CC;
+                  background: #FAFBFD;
+                }
+              }
+            }
+
+            .status-tag {
+              position: absolute;
+              top: 0;
+              right: 0;
+              background: #2DCB9D;
             }
           }
         }
       }
-    }
-  }
-
-  .setting-btn {
-    button {
-      width: 88px;
     }
   }
 }
 
-.department-dialog {
-  .select-department-wrapper {
-    height: calc(100% - 7px);
-  }
+:deep(.bk-sideslider-title) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 24px;
 
-  .set-department-wrapper {
-    width: 590px;
-    height: 100%;
+  .bk-button {
+    padding: 5px 17px !important;
   }
 }
 </style>

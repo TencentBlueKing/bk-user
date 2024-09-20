@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.conf import settings
-from django.conf.urls import url
+from django.conf.urls import re_path
 from django.urls import include, path
 from django.views.decorators.cache import never_cache
 from drf_yasg import openapi
@@ -20,16 +21,23 @@ from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
     # 产品功能API
-    path("api/v1/web/", include("bkuser.apis.web.urls")),
+    path("api/v3/web/", include("bkuser.apis.web.urls")),
     # 提供给登录服务使用的内部 API
-    path("api/v1/login/", include("bkuser.apis.login.urls")),
-    # 兼容旧版本（v2）用户管理 OpenAPI
-    # Q: 这里使用 api/v2 而非 api/v2/open,
+    path("api/v3/login/", include("bkuser.apis.login.urls")),
+    # 兼容旧版本用户管理 OpenAPI
+    # Q: 这里使用 api/v1、api/v2 而非 api/v1/open、api/v2/open
     # A: 为了保证 ESB 调用的兼容，只需修改 ESB 配置 bk_user host，不需要依赖 ESB 的版本发布
+    path("api/v1/", include("bkuser.apis.open_v1.urls")),
     path("api/v2/", include("bkuser.apis.open_v2.urls")),
     # 用于监控相关的，比如ping/healthz/sentry/metrics/otel等等
     path("", include("bkuser.monitoring.urls")),
 ]
+
+# 蓝鲸通知中心
+if settings.ENABLE_BK_NOTICE:
+    urlpatterns += [
+        path("api/v3/web/notices/", include(("bk_notice_sdk.urls", "notice"), namespace="notice")),
+    ]
 
 # swagger doc
 if settings.SWAGGER_ENABLE:
@@ -54,5 +62,5 @@ if settings.SWAGGER_ENABLE:
 
 # static file
 urlpatterns += [
-    url("", never_cache(VueTemplateView.as_view())),
+    re_path("", never_cache(VueTemplateView.as_view())),
 ]

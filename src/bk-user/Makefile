@@ -14,7 +14,7 @@ init: ## 初始化 pre-commit, python 依赖包
 ##@ 研发命令
 
 test: ## 执行项目单元测试（pytest）
-	pytest --maxfail=1 -l --reuse-db tests --disable-warnings
+	pytest --maxfail=1 -l --reuse-db tests --disable-warnings -vv
 
 i18n-po: ## 将源代码 & 模版中的 message 采集到 django.po
 	python manage.py makemessages -d django -l en -e html,part -e py
@@ -26,7 +26,9 @@ i18n-mo: ## 将 django.po 文件编译成 django.mo 文件
 i18n-all: i18n-po i18n-mo  ## 执行 i18n-po & i18n-mo
 
 package-plugin: ## 打包自定义数据源插件
-	kubectl create configmap bk-user-plugin-${name} --from-file=bkuser/plugins/${name} --dry-run=client -o yaml > bk-user-plugin-${name}.yaml
+	@configmap_name=bk-user-plugin-$(shell echo ${name} | sed 's/_/-/g'); \
+	kubectl create configmap $${configmap_name} --from-file=bkuser/plugins/${name} --dry-run=client -o yaml > $${configmap_name}.yaml
 
 package-idp-plugin: ## 打包自定义 IDP 插件
-	kubectl create configmap bk-user-idp-plugin-${name} --from-file=bkuser/idp_plugins/${name} --dry-run=client -o yaml > bk-user-idp-plugin-${name}.yaml
+	@configmap_name=bk-user-idp-plugin-$(shell echo ${name} | sed 's/_/-/g'); \
+	kubectl create configmap $${configmap_name} --from-file=bkuser/idp_plugins/${name} --dry-run=client -o yaml > $${configmap_name}.yaml

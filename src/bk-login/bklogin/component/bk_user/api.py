@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Any, Callable, Dict, List
 
@@ -18,7 +19,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.component.http import HttpStatusCode, http_get, http_post
 from bklogin.utils.url import urljoin
 
-from .models import GlobalInfo, IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
+from .models import GlobalSetting, IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +55,10 @@ def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
 
 
-def get_global_info() -> GlobalInfo:
-    """获取全局信息"""
-    data = _call_bk_user_api_20x(http_get, "/api/v1/login/global-infos/")
-    return GlobalInfo(**data)
+def get_global_setting() -> GlobalSetting:
+    """查询全局配置"""
+    data = _call_bk_user_api_20x(http_get, "/api/v3/login/global-settings/")
+    return GlobalSetting(**data)
 
 
 def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
@@ -66,40 +67,29 @@ def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
     if tenant_ids:
         params["tenant_ids"] = ",".join(tenant_ids)
 
-    data = _call_bk_user_api_20x(http_get, "/api/v1/login/tenants/", params=params)
+    data = _call_bk_user_api_20x(http_get, "/api/v3/login/tenants/", params=params)
     return [TenantInfo(**i) for i in data]
 
 
-def get_tenant(tenant_id: str) -> TenantInfo | None:
-    """通过租户 ID 获取租户信息"""
-    resp = _call_bk_user_api(
-        http_get,
-        f"/api/v1/login/tenants/{tenant_id}/",
-        allow_error_status_func=lambda s: s.is_not_found,
-    )
-    if resp.get("error"):
-        return None
-
-    return TenantInfo(**resp["data"])
-
-
-def list_idp(tenant_id: str) -> List[IdpInfo]:
+def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
     """获取租户关联的认证源"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenants/{tenant_id}/idps/")
+    data = _call_bk_user_api_20x(
+        http_get, f"/api/v3/login/tenants/{tenant_id}/idp-owner-tenants/{idp_owner_tenant_id}/idps/"
+    )
     return [IdpInfo(**i) for i in data]
 
 
-def get_idp(idp_id: str) -> IdpDetailInfo:
+def get_idp(idp_id: str) -> IdpDetail:
     """获取IDP信息"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/idps/{idp_id}/")
-    return IdpDetailInfo(**data)
+    data = _call_bk_user_api_20x(http_get, f"/api/v3/login/idps/{idp_id}/")
+    return IdpDetail(**data)
 
 
 def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
     """根据IDP用户查询匹配的租户用户"""
     data = _call_bk_user_api_20x(
         http_post,
-        f"/api/v1/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
+        f"/api/v3/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
         json={"idp_users": idp_users},
     )
     return [TenantUserInfo(**i) for i in data]
@@ -107,5 +97,5 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
 
 def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
     """通过租户用户ID获取租户用户信息"""
-    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenant-users/{tenant_user_id}/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v3/login/tenant-users/{tenant_user_id}/")
     return TenantUserDetailInfo(**data)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -23,7 +23,7 @@ from ..utils import parse_request_body_json
 class LocalIdpPluginConfig(BasePluginConfig):
     """本地账密认证源插件配置"""
 
-    # 开启账密登录的数据源
+    # 开启密码功能的数据源
     data_source_ids: List[int] = []
 
 

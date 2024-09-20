@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import re
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
@@ -71,8 +72,9 @@ class DataSourceSyncObjectType(str, StructuredEnum):
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
-    USER_RELATION = EnumField("user_relation", label=_("用户关系"))
     DEPARTMENT_RELATION = EnumField("department_relation", label=_("部门关系"))
+    USER_LEADER_RELATION = EnumField("user_leader_relation", label=_("用户 Leader 关系"))
+    USER_DEPARTMENT_RELATION = EnumField("user_department_relation", label=_("用户部门关系"))
 
 
 class TenantSyncObjectType(str, StructuredEnum):

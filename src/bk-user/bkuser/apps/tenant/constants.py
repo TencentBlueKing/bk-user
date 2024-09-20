@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -10,22 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import re
 
-import pytz
-from blue_krill.data_types.enum import EnumField, FeatureFlag, FeatureFlagField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
-
-TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,30}[a-zA-Z0-9]$")
+TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{1,30}[a-zA-Z0-9]$")
 
 # 自定义字段英文标识命名规则
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
-
-
-class TenantFeatureFlag(FeatureFlag):  # type: ignore
-    """租户特性标志"""
-
-    USER_NUMBER_VISIBLE = FeatureFlagField(label=_("人员数量是否可见"), default=True)
 
 
 class UserFieldDataType(str, StructuredEnum):
@@ -127,3 +118,50 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         },
     ],
 }
+
+
+class TenantStatus(str, StructuredEnum):
+    """租户状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+
+
+class TenantUserStatus(str, StructuredEnum):
+    """租户用户状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+    EXPIRED = EnumField("expired", label=_("已过期"))
+
+
+class CollaborationStrategyStatus(str, StructuredEnum):
+    """协同策略状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+    # 注：未确认只有接受方会有这个状态
+    UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
+
+
+class CollaborationScopeType(str, StructuredEnum):
+    """协同范围类型"""
+
+    ALL = EnumField("all", label=_("全部"))
+    # TODO (su) 支持指定协同的组织范围 & 用户字段
+    # SPECIFIED = EnumField("specified", label=_("指定"))
+
+
+class FieldMappingOperation(str, StructuredEnum):
+    """字段映射关系"""
+
+    DIRECT = EnumField("direct", label=_("直接"))
+    EXPRESSION = EnumField("expression", label=_("表达式"))
+
+
+class TenantUserIdRuleEnum(str, StructuredEnum):
+    """租户用户 ID 生成规则"""
+
+    UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
+    USERNAME = EnumField("username", label=_("用户名"))
+    USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))

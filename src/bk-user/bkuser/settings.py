@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import hashlib
-import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import environ
@@ -32,12 +32,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", False)
-IS_LOCAL = env.bool("IS_LOCAL", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
+    "modeltranslation",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     "bkuser.apps.idp",
     "bkuser.apps.natural_user",
     "bkuser.apps.permission",
-    "bkuser.apps.global_setting",
     "bkuser.apps.notification",
 ]
 
@@ -74,6 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
+    "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -119,13 +119,19 @@ AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
 AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
-LANGUAGE_CODE = "zh-hans"
+LANGUAGE_CODE = "zh-cn"
+LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
+
+# DB 数据国际化翻译配置
+MODELTRANSLATION_DEFAULT_LANGUAGE = "zh-cn"
+MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
+MODELTRANSLATION_AUTO_POPULATE = True
 
 # SITE
 SITE_URL = "/"
@@ -209,31 +215,41 @@ BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=5
 # 登录回调地址参数Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
 # 登录API URL
-BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login")
+BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
+# bk apigw url tmpl
+BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
+
+# 版本日志
+VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
+# 前端 Console 展示构建的版本信息
+BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
+# 文档链接
+BK_DOCS_URL_PREFIX = env.str("BK_DOCS_URL_PREFIX", default="https://bk.tencent.com/docs")
+BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce/README.md"
+# 反馈问题链接
+BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
+# footer / logo / title 等全局配置存储的共享仓库地址
+BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
 # 连接 BROKER 超时时间
-BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY与RabbitMQ增加60秒心跳设置项
-BROKER_HEARTBEAT = 60
+CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
+# CELERY 与 RabbitMQ 增加60秒心跳设置项
+CELERY_BROKER_HEARTBEAT = 60
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
-CELERYD_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
+CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
 # 与周期任务配置的定时相关UTC
 CELERY_ENABLE_UTC = False
-# 周期任务beat生产者来源
-CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # 任务结果存储
 CELERY_RESULT_BACKEND = "django-db"
-# Celery队列名称
-CELERY_DEFAULT_QUEUE = "bkuser"
 # close celery hijack root logger
-CELERYD_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # disable remote control
-CELERY_ENABLE_REMOTE_CONTROL = False
+CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
 # Celery 消息序列化
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -241,7 +257,7 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
 # CELERY_IMPORTS = []
 # 内置的周期任务
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE = {
     "periodic_notify_expiring_tenant_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
         "schedule": crontab(minute="0", hour="10"),
@@ -257,6 +273,10 @@ CELERYBEAT_SCHEDULE = {
     "periodic_notify_password_expired_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
         "schedule": crontab(minute="30", hour="10"),
+    },
+    "mark_running_sync_task_as_failed_if_exceed_one_day": {
+        "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
+        "schedule": crontab(minute="0", hour="9"),
     },
 }
 # Celery 消息队列配置
@@ -315,8 +335,7 @@ CACHES: Dict[str, Any] = {
             "SOCKET_CONNECT_TIMEOUT": 5,
             # 连接建立后的读写操作超时设置，单位秒
             "SOCKET_TIMEOUT": 5,
-            # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
-            "IGNORE_EXCEPTIONS": True,
+            "IGNORE_EXCEPTIONS": False,
             # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
             # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
             # Redis 连接池配置
@@ -351,7 +370,7 @@ if not CELERY_BROKER_URL:
         CELERY_BROKER_URL = ";".join(
             [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
         )
-        BROKER_TRANSPORT_OPTIONS = {
+        CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
             "socket_timeout": 5,
@@ -361,102 +380,123 @@ if not CELERY_BROKER_URL:
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
-# 日志配置
+# 日志等级，高于或等于该等级的日志才会被记录
 LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
-_LOG_CLASS = "logging.handlers.RotatingFileHandler"
-_DEFAULT_LOG_DIR = BASE_DIR / "logs"
-_LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
-_LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
-if not os.path.exists(_LOG_DIR):
-    os.makedirs(_LOG_DIR)
-_LOGGING_FORMAT = {
-    "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-    "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),
-}
-if IS_LOCAL:
-    _LOGGING_FORMAT = {
-        "format": (
-            "%(levelname)s [%(asctime)s] %(pathname)s "
-            "%(lineno)d %(funcName)s %(process)d %(thread)d "
-            "\n \t%(message)s \n"
-        ),
-        "datefmt": "%Y-%m-%d %H:%M:%S",
-    }
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        "request_id_filter": {
-            "()": "bkuser.common.log.RequestIDFilter",
+# 用于存放日志文件的目录，默认值为空，表示不使用任何文件，所有日志直接输出到控制台。
+# 可配置为有效目录，支持相对或绝对地址，比如："logs" 或 "/var/lib/app_logs/"。
+# 配置本选项后，原有的控制台日志输出将关闭。
+LOGGING_DIRECTORY = env.str("LOGGING_DIRECTORY", default=None)
+# 日志文件格式，可选值为：json/text
+LOGGING_FILE_FORMAT = env.str("LOGGING_FILE_FORMAT", default="json")
+
+if LOGGING_DIRECTORY is None:
+    logging_to_console = True
+    logging_directory = None
+else:
+    logging_to_console = False
+    # The dir allows both absolute and relative path, when it's relative, combine
+    # the value with project's base directory
+    logging_directory = Path(BASE_DIR) / Path(LOGGING_DIRECTORY)
+    logging_directory.mkdir(exist_ok=True)
+
+# 是否总是打印日志到控制台，默认关闭
+LOGGING_ALWAYS_CONSOLE = env.bool("LOGGING_ALWAYS_CONSOLE", default=False)
+if LOGGING_ALWAYS_CONSOLE:
+    logging_to_console = True
+
+
+def build_logging_config(log_level: str, to_console: bool, file_directory: Optional[Path], file_format: str) -> Dict:
+    """Build the global logging config dict.
+
+    :param log_level: The log level.
+    :param to_console: If True, output the logs to the console.
+    :param file_directory: If the value is not None, output the logs to the given directory.
+    :param file_format: The format of the logging file, "json" or "text".
+    :return: The logging config dict.
+    """
+
+    def _build_file_handler(log_path: Path, filename: str, format: str) -> Dict:
+        if format not in ("json", "text"):
+            raise ValueError(f"Invalid file_format: {file_format}")
+        formatter = "verbose_json" if format == "json" else "verbose"
+        return {
+            "class": "concurrent_log_handler.ConcurrentRotatingFileHandler",
+            "level": log_level,
+            "formatter": formatter,
+            "filters": ["request_id_filter"],
+            "filename": str(log_path / filename),
+            # Set max file size to 100MB
+            "maxBytes": 100 * 1024 * 1024,
+            "backupCount": 5,
         }
-    },
-    "formatters": {
-        "verbose": _LOGGING_FORMAT,
-        "simple": {"format": "%(levelname)s %(message)s"},
-    },
-    "handlers": {
-        "null": {"level": "DEBUG", "class": "logging.NullHandler"},
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "simple"},
-        "root": {
-            "class": _LOG_CLASS,
+
+    handlers_config: Dict[str, Any] = {
+        "null": {"level": log_level, "class": "logging.NullHandler"},
+        "console": {
+            "level": log_level,
+            "class": "logging.StreamHandler",
             "formatter": "verbose",
             "filters": ["request_id_filter"],
-            "filename": os.path.join(_LOG_DIR, "%s-django.log" % _LOG_FILE_NAME_PREFIX),
-            "maxBytes": 1024 * 1024 * 10,
-            "backupCount": 5,
         },
-        "component": {
-            "class": _LOG_CLASS,
-            "formatter": "verbose",
-            "filters": ["request_id_filter"],
-            "filename": os.path.join(_LOG_DIR, "%s-component.log" % _LOG_FILE_NAME_PREFIX),
-            "maxBytes": 1024 * 1024 * 10,
-            "backupCount": 5,
+    }
+    # 生成指定 Logger 对应的 Handlers
+    logger_handlers_map: Dict[str, List[str]] = {}
+    for logger_name in ["root", "component", "celery"]:
+        handlers = []
+
+        if to_console:
+            handlers.append("console")
+
+        if file_directory:
+            # 生成 logger 对应日志文件的 Handler
+            handlers_config[logger_name] = _build_file_handler(
+                file_directory, f"{logger_name}-{file_format}.log", file_format
+            )
+            handlers.append(logger_name)
+
+        logger_handlers_map[logger_name] = handlers
+
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "filters": {
+            "request_id_filter": {"()": "bkuser.common.log.RequestIDFilter"},
         },
-        "celery": {
-            "class": _LOG_CLASS,
-            "formatter": "verbose",
-            "filters": ["request_id_filter"],
-            "filename": os.path.join(_LOG_DIR, "%s-celery.log" % _LOG_FILE_NAME_PREFIX),
-            "maxBytes": 1024 * 1024 * 10,
-            "backupCount": 5,
+        "formatters": {
+            "verbose": {
+                "format": (
+                    "%(name)s %(levelname)s [%(asctime)s] %(pathname)s %(lineno)d %(funcName)s %(process)d %(thread)d "
+                    "\n \t%(request_id)s\t%(message)s \n"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+            "verbose_json": {
+                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "fmt": (
+                    "%(name)s %(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                    "%(funcName)s %(process)d %(thread)d %(request_id)s %(message)s"
+                ),
+            },
+            "simple": {"format": "%(name)s %(levelname)s %(message)s"},
         },
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["null"],
-            "level": "INFO",
-            "propagate": True,
+        "handlers": handlers_config,
+        # the root logger, 用于整个项目的默认 logger
+        "root": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
+        "loggers": {
+            "django": {"handlers": ["null"], "level": "INFO", "propagate": True},
+            "django.server": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
+            "django.request": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
+            # 除 root 外的其他指定 Logger
+            **{
+                logger_name: {"handlers": handlers, "level": log_level, "propagate": False}
+                for logger_name, handlers in logger_handlers_map.items()
+                if logger_name != "root"
+            },
         },
-        "django.server": {
-            "handlers": ["root", "console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["root", "console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-        # the root logger, 用于整个项目的 logger
-        "root": {
-            "handlers": ["root", "console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-        # 组件调用日志
-        "component": {
-            "handlers": ["component", "console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-        "celery": {
-            "handlers": ["celery", "console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
-    },
-}
+    }
+
+
+LOGGING = build_logging_config(LOG_LEVEL, logging_to_console, logging_directory, LOGGING_FILE_FORMAT)
 
 # ------------------------------------------ Healthz 配置 ------------------------------------------
 
@@ -527,7 +567,29 @@ PASSWORD_ENCRYPT_ALGORITHM = env.str("PASSWORD_ENCRYPT_ALGORITHM", "")
 if not PASSWORD_ENCRYPT_ALGORITHM:
     PASSWORD_ENCRYPT_ALGORITHM = "pbkdf2_sm3" if BK_CRYPTO_TYPE == "SHANGMI" else "pbkdf2_sha256"
 
+# ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
+
+# 通知中心的功能可通过配置开启
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+if ENABLE_BK_NOTICE:
+    INSTALLED_APPS += ("bk_notice_sdk",)
+    # 对接通知中心的环境，默认为生产环境
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
+    BK_NOTICE = {
+        "STAGE": BK_NOTICE_ENV,
+        "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
+        "DEFAULT_LANGUAGE": "en",
+        "PLATFORM": BK_APP_CODE,  # 平台注册的 code，用于获取系统通知消息时进行过滤
+        "BK_API_URL_TMPL": BK_API_URL_TMPL,
+        "BK_API_APP_CODE": BK_APP_CODE,  # 用于调用 apigw 认证
+        "BK_API_SECRET_KEY": BK_APP_SECRET,  # 用于调用 apigw 认证
+    }
+
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
+# 是否启用虚拟账号页面功能
+ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
+# 是否启用新建租户页面功能
+ENABLE_CREATE_TENANT = env.bool("ENABLE_CREATE_TENANT", default=False)
 
 # logo文件大小限制，单位为: KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
@@ -554,6 +616,33 @@ GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RET
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 
+# 在重置密码时是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
+# TODO 评估接入 Captcha 验证码
+ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
+# 短信验证码有效期，默认 5 min
+VERIFICATION_CODE_VALID_TIME = env.int("VERIFICATION_CODE_VALID_TIME", 60 * 5)
+# 验证码长度，默认 8 位，最长不超过 32 位
+VERIFICATION_CODE_LENGTH = env.int("VERIFICATION_CODE_LENGTH", 8)
+# 验证码最大尝试次数
+VERIFICATION_CODE_MAX_RETRIES = env.int("VERIFICATION_CODE_MAX_RETRIES", 3)
+# 单类验证码每天最大发送次数
+VERIFICATION_CODE_MAX_SEND_PER_DAY = env.int("VERIFICATION_CODE_MAX_SEND_PER_DAY", 3)
+
+# 重置密码 Token 有效期，默认 15 min
+RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 * 15)
+# 重置密码 Token 长度，默认 128 位，最长不超过 255 位
+RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
+# 重置密码 Token 每天最大发送次数
+RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
+# 每个租户对个人中心手机号的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_PHONE_UPDATE_RESTRICTIONS = env.dict("TENANT_PHONE_UPDATE_RESTRICTIONS", default={})
+# 每个租户对个人中心邮箱的更新限制 Note: 默认是 need_verify，无需配置。
+# 可配置的值有：(need_verify / editable_directly / not_editable)
+# 值格式："tenant_id1=not_editable,tenant_id2=editable_directly,..."
+TENANT_EMAIL_UPDATE_RESTRICTIONS = env.dict("TENANT_EMAIL_UPDATE_RESTRICTIONS", default={})
+
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB
 MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
@@ -561,3 +650,14 @@ MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
 EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 # 成员，组织信息导出模板
 EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
+
+# 数据源同步默认超时时间（秒）
+DATA_SOURCE_SYNC_DEFAULT_TIMEOUT = env.int("DATA_SOURCE_SYNC_DEFAULT_TIMEOUT", 60 * 60)
+# 租户同步默认超时时间（秒）
+TENANT_SYNC_DEFAULT_TIMEOUT = env.int("TENANT_SYNC_DEFAULT_TIMEOUT", 15 * 60)
+
+# 限制组织架构页面用户/部门搜索 API 返回的最大条数
+# 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件
+ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)
+# 限制批量操作数量上限，避免性能问题 / 误操作（目前不支持跨页全选，最大单页 100 条数据）
+ORGANIZATION_BATCH_OPERATION_API_LIMIT = env.int("ORGANIZATION_BATCH_OPERATION_API_LIMIT", 100)

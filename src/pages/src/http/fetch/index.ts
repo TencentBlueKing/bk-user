@@ -3,6 +3,11 @@ import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import qs from 'query-string';
 
+import { showLoginModal } from '@blueking/login-modal';
+
+import '../../css/index.css';
+import { getLoginUrl } from '@/common/auth';
+
 type Methods = 'delete' | 'get' | 'head' | 'options' | 'post' | 'put' | 'patch';
 
 interface ResolveResponseParams<D> {
@@ -42,7 +47,6 @@ const axiosInstance = axios.create({
   xsrfCookieName: window.CSRF_COOKIE_NAME,
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
-    'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
     'x-requested-with': 'XMLHttpRequest',
   },
 });
@@ -82,21 +86,18 @@ const handleResponse = <T>({
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { status } = error.response;
-  const { message, data } = error.response.data.error;
+  const { message = '', data = {}, code = '', details = [] } = error.response.data.error;
 
   if (status === 401) {
-    const loginData = data;
-    const src = loginData?.login_url
-      ? `${loginData.login_plain_url}?size=small&${loginData.callback_url_param_key}=${encodeURIComponent(window.location.href)}`
-      : '';
-
-    if (error.config.url === '/api/v1/web/basic/current-user/') {
-      return window.location.href = src;
+    if (error.config.url === '/api/v3/web/basic/current-user/') {
+      return window.location.href = getLoginUrl(false);
     }
-    window.login.showLogin({
-      src,
-      width: loginData.width,
-      height: loginData.height,
+    // 登录弹窗
+    const loginUrl = getLoginUrl();
+    showLoginModal({
+      loginUrl,
+      width: data.width,
+      height: data.height,
     });
 
     return;
@@ -104,16 +105,46 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
 
   // 全局捕获错误给出提示
   if (config.globalError) {
-    Message({ theme: 'error', message, delay: 10000 });
+    try {
+      details[0].message = JSON.parse(details[0].message);
+    } catch (error) {
+      console.log('error', error);
+    }
+    const config = {
+      overview: '',
+      code,
+      suggestion: message,
+      details: details[0],
+    };
+    Message({
+      theme: 'error',
+      message: config,
+      delay: 10000,
+      extCls: 'message-fix-fixed',
+      actions: [
+        {
+          id: 'assistant',
+          disabled: true,
+        },
+      ] });
   }
 
   return Promise.reject(error);
 };
 
+// 更新axios实例的cookie
+function updateAxiosInstance() {
+  const csrfToken = Cookies.get(window.CSRF_COOKIE_NAME);
+  if (csrfToken !== undefined) {
+    axiosInstance.defaults.headers.common['X-CSRFToken'] = csrfToken;
+  }
+}
+
 methods.forEach((method) => {
   Object.defineProperty(http, method, {
     get() {
       return <T>(url: string, payload: any = {}, useConfig = {}) => {
+        updateAxiosInstance();
         const config = initConfig(useConfig);
 
         const fetchURL = getFetchURL(url, method, payload);

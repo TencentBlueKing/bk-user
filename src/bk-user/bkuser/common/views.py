@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import json
 import logging
 
@@ -16,7 +17,6 @@ from django.conf import settings
 from django.http.response import Http404, HttpResponseNotFound
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
-from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from drf_yasg.utils import swagger_auto_schema
@@ -166,8 +166,6 @@ class VueTemplateView(TemplateView):
         # Context
         try:
             context = {
-                # TITLE
-                "TITLE": _("用户管理 | 腾讯蓝鲸智云"),
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
                 # BK LOGIN
@@ -184,6 +182,19 @@ class VueTemplateView(TemplateView):
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
                 # ESB
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
+                # 文档 & 反馈链接
+                "BK_USER_DOC_URL": settings.BK_USER_DOC_URL,
+                "BK_USER_FEEDBACK_URL": settings.BK_USER_FEEDBACK_URL,
+                # 是否启用蓝鲸通知中心功能
+                "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
+                # 前端 console 展示版本信息
+                "BK_BUILD_VERSION": settings.BK_BUILD_VERSION,
+                # footer / logo / title 等全局配置
+                "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
+                # 是否启用虚拟账号功能
+                "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
+                # 是否启用新建租户功能
+                "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
             }
 
         except Exception:  # pylint: disable=broad-except

@@ -7,173 +7,74 @@ export default createRouter({
   routes: [
     {
       path: '/',
+      name: 'tenant',
+      component: () => import('@/views/tenant/index.vue'),
+    },
+    {
+      path: '/organization',
       name: 'organization',
       component: () => import('@/views/organization/index.vue'),
     },
     {
-      path: '/tenant',
-      name: 'tenant',
-      redirect: {
-        name: 'tenantInfo',
-      },
-      meta: {
-        navName: t('租户概览'),
-      },
-      component: () => import('@/views/tenant/index.vue'),
-      children: [
-        {
-          path: 'info',
-          name: 'tenantInfo',
-          meta: {
-            routeParentName: 'tenant',
-            navName: t('租户概览'),
-            isMenu: true,
-          },
-          component: () => import('@/views/tenant/group-details/index.vue'),
-        },
-        // {
-        //   path: "setting",
-        //   name: "globalSetting",
-        //   meta: {
-        //     routeParentName: "tenant",
-        //     navName: "全局设置",
-        //     isMenu: true,
-        //   },
-        // },
-      ],
-    },
-    {
-      path: '/data-source',
-      name: 'dataSource',
-      redirect: {
-        name: 'local',
-      },
-      meta: {
-        navName: t('数据源管理'),
-      },
-      component: () => import('@/views/data-source/index.vue'),
-      children: [
-        {
-          path: '',
-          name: '',
-          meta: {
-            routeParentName: 'data-source',
-            navName: t('数据源管理'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/LocalCompany.vue'),
-          children: [
-            {
-              path: 'local',
-              name: 'local',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/LocalDataSource.vue'),
-            },
-            {
-              path: 'sync-records/:type?',
-              name: 'syncRecords',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/SyncRecords.vue'),
-            },
-            {
-              path: 'other',
-              name: 'other',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/OtherDataSource.vue'),
-            },
-          ],
-        },
-        {
-          path: 'details/:id',
-          name: 'dataConfDetails',
-          meta: {
-            routeParentName: 'dataSource',
-            navName: t('数据源详情'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/local-details/index.vue'),
-        },
-        {
-          path: 'config/:type/:id?',
-          name: 'newLocal',
-          meta: {
-            routeParentName: 'dataSource',
-            navName: t('新建数据源'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/new-data/index.vue'),
-        },
-      ],
-    },
-    {
-      path: '/auth-source',
-      name: 'authSource',
-      meta: {
-        navName: t('认证源管理'),
-      },
-      component: () => import('@/views/auth-source/index.vue'),
-      children: [
-        {
-          path: '',
-          name: 'authSourceList',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('认证源管理'),
-          },
-          component: () => import('@/views/auth-source/List.vue'),
-        },
-        {
-          path: 'new',
-          name: 'newAuthSource',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('新建认证源'),
-          },
-          component: () => import('@/views/auth-source/new-data/index.vue'),
-        },
-        {
-          path: 'edit/:type/:id',
-          name: 'editAuthSource',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('编辑认证源'),
-            showBack: true,
-          },
-          component: () => import('@/views/auth-source/edit-data/index.vue'),
-        },
-      ],
-    },
-    {
-      path: '/audit',
-      name: 'audit',
-      component: () => import('@/views/audit/index.vue'),
+      path: '/virtual-account',
+      name: 'virtual-account',
+      component: () => import('@/views/virtual-account/index.vue'),
     },
     {
       path: '/setting',
       name: 'setting',
       redirect: {
-        name: 'userFields',
+        name: 'admin',
       },
       meta: {
-        navName: t('用户字段设置'),
+        navName: t('设置'),
       },
       component: () => import('@/views/setting/index.vue'),
       children: [
         {
+          path: 'admin',
+          name: 'admin',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('管理员配置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/AdminSetting.vue'),
+        },
+        {
+          path: 'data-source',
+          name: 'dataSource',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('数据源配置'),
+            activeMenu: 'dataSource',
+          },
+          component: () => import('@/views/setting/data-source/ConfigList.vue'),
+        },
+        {
+          path: 'new',
+          name: 'newDataSource',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('数据源配置'),
+            activeMenu: 'dataSource',
+          },
+          component: () => import('@/views/setting/data-source/NewDataSource.vue'),
+        },
+        {
+          path: 'collaboration',
+          name: 'collaboration',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('跨租户协同'),
+            isMenu: true,
+            hiddenBoxShadow: true,
+          },
+          component: () => import('@/views/setting/cross-tenant-collaboration/index.vue'),
+        },
+        {
           path: 'fields',
-          name: 'userFields',
+          name: 'field',
           meta: {
             routeParentName: 'setting',
             navName: t('用户字段设置'),
@@ -192,6 +93,16 @@ export default createRouter({
           component: () => import('@/views/setting/LoginSetting.vue'),
         },
         {
+          path: 'fma',
+          name: 'fma',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('MFA设置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/MFASetting.vue'),
+        },
+        {
           path: 'account',
           name: 'account',
           meta: {
@@ -201,12 +112,37 @@ export default createRouter({
           },
           component: () => import('@/views/setting/AccountSetting.vue'),
         },
+        {
+          path: 'basics',
+          name: 'basics',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('基础设置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/BasicsSetting.vue'),
+        },
       ],
     },
     {
       path: '/personal-center',
       name: 'personalCenter',
       component: () => import('@/views/personal-center/index.vue'),
+    },
+    {
+      path: '/password/:tenantId?',
+      name: 'password',
+      component: () => import('@/views/reset-password/index.vue'),
+    },
+    {
+      path: '/reset-password/:token?',
+      name: 'resetPassword',
+      component: () => import('@/views/reset-password/newPassword.vue'),
+    },
+    {
+      path: '/recycle',
+      name: 'recycle',
+      component: () => import('@/views/recycle/index.vue'),
     },
     {
       path: '/:pathMatch(.*)*',

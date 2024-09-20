@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.urls import path
 
 from . import views
@@ -31,6 +32,12 @@ urlpatterns = [
         views.ProfileDepartmentListApi.as_view(),
         name="open_v2.list_profile_departments",
     ),
+    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况 （ESB yaml 配置里是该情况）
+    path(
+        "profiles/<str:lookup_value>/departments",
+        views.ProfileDepartmentListApi.as_view(),
+        name="open_v2.list_profile_departments.without_slash",
+    ),
     # 查询部门用户关系表
     path(
         "edges/department_profile/",
@@ -52,6 +59,12 @@ urlpatterns = [
         "departments/<str:id>/profiles/",
         views.DepartmentProfileListApi.as_view(),
         name="open_v2.list_department_profiles",
+    ),
+    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况 （ESB yaml 配置里是该情况）
+    path(
+        "departments/<str:id>/profiles",
+        views.DepartmentProfileListApi.as_view(),
+        name="open_v2.list_department_profiles.without_slash",
     ),
     # 更新用户语言
     path(

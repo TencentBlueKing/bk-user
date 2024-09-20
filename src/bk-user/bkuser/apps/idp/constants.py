@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -38,3 +38,6 @@ class AllowBindScopeObjectType(str, StructuredEnum):
 
 # 社会化认证源，允许绑定的范围为任意对象ID
 ANY_ALLOW_BIND_SCOPE_OBJECT_ID = "*"
+
+# 无效的实名数据源 ID
+INVALID_REAL_DATA_SOURCE_ID = 0

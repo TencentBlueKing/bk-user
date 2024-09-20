@@ -23,8 +23,17 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-basic:before {
+	content: "\e151";
+}
 .icon-app-store-fill:before {
 	content: "\e126";
+}
+.icon-refresh:before {
+	content: "\e146";
+}
+.icon-remind-fill:before {
+	content: "\e154";
 }
 .icon-info-i:before {
 	content: "\e105";
@@ -187,4 +196,61 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 }
 .icon-canshu:before {
 	content: "\e13e";
+}
+.icon-weixin:before {
+	content: "\e142";
+}
+.icon-google:before {
+	content: "\e13f";
+}
+.icon-microsoft:before {
+	content: "\e140";
+}
+.icon-qq:before {
+	content: "\e141";
+}
+.icon-qiyeweixin-2:before {
+	content: "\e143";
+}
+.icon-git-hub:before {
+	content: "\e144";
+}
+.icon-shezhi:before {
+	content: "\e145";
+}
+.icon-tongbu:before {
+	content: "\e147";
+}
+.icon-help-document-fill:before {
+	content: "\e148";
+}
+.icon-guanliyuan:before {
+	content: "\e149";
+}
+.icon-renzheng:before {
+	content: "\e14b";
+}
+.icon-shujuyuanshu:before {
+	content: "\e14a";
+}
+.icon-yonghushu:before {
+	content: "\e14c";
+}
+.icon-zhanghaoshu:before {
+	content: "\e14d";
+}
+.icon-zuhushu:before {
+	content: "\e14e";
+}
+.icon-field:before {
+	content: "\e14f";
+}
+.icon-tongbu-2:before {
+	content: "\e153";
+}
+.icon-shouji:before {
+	content: "\e155";
+}
+.icon-youxiang:before {
+	content: "\e156";
 }

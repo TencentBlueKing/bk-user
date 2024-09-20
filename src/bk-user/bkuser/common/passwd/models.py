@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -98,6 +98,40 @@ class PasswordRule(BaseModel):
             raise ValueError(_("需要先设置 [密码不允许连续 N 位出现] 值，才可以选择连续性场景"))
 
         return self
+
+    @property
+    def tips(self) -> List[str]:
+        tips = [_("密码长度为 {}-{} 位").format(self.min_length, self.max_length)]
+
+        # 校验时候已经确保一定有必须包含的字符类型
+        charsets = []
+        if self.contain_lowercase:
+            charsets.append(_("小写字母"))
+        if self.contain_uppercase:
+            charsets.append(_("大写字母"))
+        if self.contain_digit:
+            charsets.append(_("数字"))
+        if self.contain_punctuation:
+            charsets.append(_("特殊符号"))
+
+        tips.append(_("必须包含：") + _("、").join([str(c) for c in charsets]))
+
+        if self.not_continuous_count:
+            kinds = []
+            if self.not_keyboard_order:
+                kinds.append(_("键盘序"))
+            if self.not_continuous_letter:
+                kinds.append(_("连续字母序"))
+            if self.not_continuous_digit:
+                kinds.append(_("连续数字序"))
+            if self.not_repeated_symbol:
+                kinds.append(_("重复字符"))
+
+            tips.append(
+                _("不允许连续 {} 位出现：").format(self.not_continuous_count) + _("、").join([str(k) for k in kinds])
+            )
+
+        return tips
 
 
 class ValidateResult(BaseModel):

@@ -6,7 +6,8 @@
     "dev": "bk-cli-service-webpack dev",
     "build": "bk-cli-service-webpack build",
     "server": "node ./paas-server/index.js",
-    "lint:style": "stylelint **/*.{html,vue,css,sass,scss,less} --fix"
+    "lint:style": "stylelint **/*.{html,vue,css,sass,scss,less} --fix",
+    "lint:fix": "eslint --fix --ext .js,.vue,.ts ./src"
   },
   "keywords": [
     "bk-ci",
@@ -16,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@blueking/platform-config": "^1.0.3",
     "art-template": "^4.13.2",
     "bkui-vue": "0.0.2-beta.112",
     "connect-history-api-fallback": "^2.0.0",
@@ -27,6 +29,8 @@
     "pinia": "^2.0.23",
     "request": "^2.88.2",
     "vue": "^3.2.41",
+    "vue-dompurify-html": "^5.1.0",
+    "vue-i18n": "^9.9.0",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {

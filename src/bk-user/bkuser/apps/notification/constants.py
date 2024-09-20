@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -27,5 +27,6 @@ class NotificationScene(str, StructuredEnum):
     PASSWORD_EXPIRING = EnumField("password_expiring", label=_("密码即将过期"))
     PASSWORD_EXPIRED = EnumField("password_expired", label=_("密码已过期"))
     MANAGER_RESET_PASSWORD = EnumField("manager_reset_password", label=_("管理员重置密码"))
+    SEND_VERIFICATION_CODE = EnumField("send_verification_code", label=_("发送验证码"))
     TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("租户用户即将过期"))
     TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("租户用户已过期"))

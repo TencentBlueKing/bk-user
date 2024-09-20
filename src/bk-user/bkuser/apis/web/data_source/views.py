@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 
 import openpyxl
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -23,15 +25,17 @@ from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
+    DataSourceDestroyInputSLZ,
     DataSourceImportOrSyncOutputSLZ,
+    DataSourceListInputSLZ,
+    DataSourceListOutputSLZ,
+    DataSourcePluginConfigMetaRetrieveOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
     DataSourceRandomPasswordOutputSLZ,
+    DataSourceRelatedResourceStatsOutputSLZ,
     DataSourceRetrieveOutputSLZ,
-    DataSourceSearchInputSLZ,
-    DataSourceSearchOutputSLZ,
-    DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
     DataSourceSyncRecordRetrieveOutputSLZ,
     DataSourceSyncRecordSearchInputSLZ,
@@ -41,27 +45,44 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceStatus
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourcePlugin,
+    DataSourceSensitiveInfo,
+    DataSourceUser,
+)
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
-from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+
+from .schema import get_data_source_plugin_cfg_json_schema
 
 logger = logging.getLogger(__name__)
 
 
 class DataSourcePluginListApi(generics.ListAPIView):
+    """数据源插件列表"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     queryset = DataSourcePlugin.objects.all()
     pagination_class = None
     serializer_class = DataSourcePluginOutputSLZ
@@ -76,9 +97,12 @@ class DataSourcePluginListApi(generics.ListAPIView):
 
 
 class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
+    """数据源插件默认配置"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     queryset = DataSourcePlugin.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source_plugin"],
@@ -99,35 +123,29 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
 
 
 class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
-    pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceSearchOutputSLZ
+    """数据源列表，创建"""
 
-    def get_serializer_context(self):
-        tenant_user_ids = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(),
-        ).values_list("updater", flat=True)
-        return {
-            "data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name")),
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
-        }
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    serializer_class = DataSourceListOutputSLZ
 
     def get_queryset(self):
-        slz = DataSourceSearchInputSLZ(data=self.request.query_params)
+        slz = DataSourceListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
-        if kw := data.get("keyword"):
-            queryset = queryset.filter(name__icontains=kw)
+        if type := data.get("type"):
+            queryset = queryset.filter(type=type)
 
         return queryset
 
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源列表",
-        query_serializer=DataSourceSearchInputSLZ(),
-        responses={status.HTTP_200_OK: DataSourceSearchOutputSLZ(many=True)},
+        query_serializer=DataSourceListInputSLZ(),
+        responses={status.HTTP_200_OK: DataSourceListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -150,8 +168,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         with transaction.atomic():
             current_user = request.user.username
             ds = DataSource.objects.create(
-                name=data["name"],
                 owner_tenant_id=current_tenant_id,
+                type=DataSourceTypeEnum.REAL,
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
@@ -166,11 +184,14 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         )
 
 
-class DataSourceRetrieveUpdateApi(
-    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
+class DataSourceRetrieveUpdateDestroyApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
 ):
-    pagination_class = None
+    """数据源详情、更新、删除"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
     serializer_class = DataSourceRetrieveOutputSLZ
 
     @swagger_auto_schema(
@@ -195,12 +216,14 @@ class DataSourceRetrieveUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         data_source = self.get_object()
+        if not data_source.is_real_type:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅可更新实体类型数据源配置"))
+
         slz = DataSourceUpdateInputSLZ(
             data=request.data,
             context={
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
-                "current_name": data_source.name,
                 "exists_sensitive_infos": DataSourceSensitiveInfo.objects.filter(data_source=data_source),
             },
         )
@@ -208,18 +231,114 @@ class DataSourceRetrieveUpdateApi(
         data = slz.validated_data
 
         with transaction.atomic():
-            data_source.name = data["name"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
-            data_source.save(update_fields=["name", "field_mapping", "sync_config", "updater", "updated_at"])
+            data_source.save(update_fields=["field_mapping", "sync_config", "updater", "updated_at"])
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="重置数据源",
+        query_serializer=DataSourceDestroyInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        """删除数据源及关联的其他数据"""
+        data_source = self.get_object()
+        if not data_source.is_real_type:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅可重置实体类型数据源"))
+
+        slz = DataSourceDestroyInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        is_delete_idp = slz.validated_data["is_delete_idp"]
+
+        # TODO (su) 支持操作审计后可删除该日志
+        logger.warning("user %s delete data source %s", request.user.username, data_source.id)
+
+        with transaction.atomic():
+            if is_delete_idp:
+                # 删除本地以及其他认证源，包括已禁用的认证源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(
+                    owner_tenant_id=data_source.owner_tenant_id,
+                    data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, data_source.id],
+                )
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                waiting_delete_idps.delete()
+            else:
+                idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
+                # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源，并清除对应的敏感信息
+                waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                waiting_delete_idps.delete()
+
+                # 禁用其他认证源
+                Idp.objects.filter(**idp_filters).update(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    updated_at=timezone.now(),
+                    updater=request.user.username,
+                )
+            # 删除数据源 & 关联资源数据
+            DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+    """数据源关联资源信息"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+    queryset = DataSource.objects.all()
+    pagination_class = None
+    serializer_class = DataSourceRelatedResourceStatsOutputSLZ
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源关联资源信息",
+        responses={status.HTTP_200_OK: DataSourceRelatedResourceStatsOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        data_source = self.get_object()
+
+        # 本租户自有的部门数量，即数据源部门数量，用户数量同理（会一比一同步成租户部门/用户）
+        own_department_count = DataSourceDepartment.objects.filter(data_source=data_source).count()
+        own_user_count = DataSourceUser.objects.filter(data_source=data_source).count()
+
+        # 本租户分享给其他租户的：任意不属于本租户的租户部门/用户，但是数据源是本租户的
+        shared_to_departments = TenantDepartment.objects.filter(
+            data_source=data_source,
+        ).exclude(tenant_id=data_source.owner_tenant_id)
+        shared_to_users = TenantUser.objects.filter(
+            data_source=data_source,
+        ).exclude(tenant_id=data_source.owner_tenant_id)
+        shared_to_tenant_count = len(
+            set(shared_to_departments.values_list("tenant_id", flat=True))
+            | set(shared_to_users.values_list("tenant_id", flat=True))
+        )
+
+        resources = {
+            # own
+            "own_department_count": own_department_count,
+            "own_user_count": own_user_count,
+            # shared to
+            "shared_to_tenant_count": shared_to_tenant_count,
+            "shared_to_department_count": shared_to_departments.count(),
+            "shared_to_user_count": shared_to_users.count(),
+        }
+        return Response(DataSourceRelatedResourceStatsOutputSLZ(resources).data)
+
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    """生成数据源用户随机密码"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="生成数据源用户随机密码",
@@ -240,6 +359,8 @@ class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView
 
 class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView):
     """数据源连通性测试"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     serializer_class = DataSourceTestConnectionOutputSLZ
 
@@ -267,35 +388,12 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
         return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
 
-class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
-    """切换数据源状态（启/停）"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceSwitchStatusOutputSLZ
-
-    @swagger_auto_schema(
-        tags=["data_source"],
-        operation_description="变更数据源状态",
-        responses={status.HTTP_200_OK: DataSourceSwitchStatusOutputSLZ()},
-    )
-    def patch(self, request, *args, **kwargs):
-        data_source = self.get_object()
-        if data_source.status == DataSourceStatus.ENABLED:
-            data_source.status = DataSourceStatus.DISABLED
-        else:
-            data_source.status = DataSourceStatus.ENABLED
-
-        data_source.updater = request.user.username
-        data_source.save(update_fields=["status", "updater", "updated_at"])
-
-        return Response(DataSourceSwitchStatusOutputSLZ(instance={"status": data_source.status.value}).data)
-
-
 class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """获取本地数据源数据导入模板"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -306,8 +404,8 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
         """数据源导出模板"""
         # 获取数据源信息，用于后续填充模板中的自定义字段
         data_source = self.get_object()
-        if not data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型有提供导入模板"))
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源有提供导入模板"))
 
         workbook = DataSourceUserExporter(data_source).get_template()
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_tmpl.xlsx")
@@ -316,8 +414,9 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
 class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """本地数据源用户导出"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -327,11 +426,8 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     def get(self, request, *args, **kwargs):
         """导出指定的本地数据源用户数据（Excel 格式）"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
-        if not data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出本地数据源数据"))
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出实体类型的本地数据源数据"))
 
         workbook = DataSourceUserExporter(data_source).export()
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_data.xlsx")
@@ -355,11 +451,8 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         data = slz.validated_data
 
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
-        if not data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源支持导入功能"))
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源支持导入功能"))
 
         # Request file 转换成 openpyxl.workbook
         try:
@@ -406,11 +499,11 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
+
+        if not data_source.is_real_type:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的数据源支持同步"))
 
         # 同步策略：手动点击页面按钮，会触发全量覆盖的同步，且该同步是异步行为
         options = DataSourceSyncOptions(
@@ -427,7 +520,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             # Q: 为什么不包装一层 DataSourceSyncError 而是捕获 Exception？
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
-            raise error_codes.CREATE_DATA_SOURCE_SYNC_TASK_FAILED.f(str(e))
+            raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
@@ -440,6 +533,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """数据源同步记录列表"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     serializer_class = DataSourceSyncRecordListOutputSLZ
 
     def get_queryset(self):
@@ -447,10 +541,16 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
-        if data_source_id := data.get("data_source_id"):
-            queryset = queryset.filter(data_source_id=data_source_id)
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+        ).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源不存在"))
 
+        if not data_source.is_real_type:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的数据源有同步记录"))
+
+        queryset = DataSourceSyncTask.objects.filter(data_source=data_source)
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
 
@@ -462,10 +562,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = DataSourceSyncTask.objects.filter(
             data_source__in=data_sources,
         ).values_list("operator", flat=True)
-        return {
-            "data_source_name_map": {ds.id: ds.name for ds in data_sources},
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
-        }
+        return {"user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids)}
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -480,8 +577,9 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     """数据源同步记录详情"""
 
-    lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
 
     def get_queryset(self):
         return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
@@ -493,3 +591,27 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
     )
     def get(self, request, *args, **kwargs):
         return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+
+
+class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = DataSourcePlugin.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源插件配置元数据",
+        responses={status.HTTP_200_OK: DataSourcePluginConfigMetaRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        plugin = self.get_object()
+
+        try:
+            json_schema = get_data_source_plugin_cfg_json_schema(plugin.id)
+        except NotImplementedError:
+            raise error_codes.DATA_SOURCE_PLUGIN_NOT_LOAD
+
+        return Response(
+            DataSourcePluginConfigMetaRetrieveOutputSLZ(instance={"id": plugin.id, "json_schema": json_schema}).data
+        )

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import List
 
 import pytest
@@ -23,111 +24,111 @@ from bkuser.plugins.local.exceptions import (
     UserSheetNotExists,
 )
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
-from bkuser.plugins.local.utils import gen_code
+from bkuser.plugins.local.utils import gen_dept_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
 class TestLocalDataSourceDataParser:
-    def test_validate_case_not_user_sheet(self, logger, user_wk):
+    def test_validate_case_not_user_sheet(self, logger, user_workbook):
         # 删除 user sheet，导致空数据
-        user_wk.remove(user_wk["users"])
+        user_workbook.remove(user_workbook["users"])
         with pytest.raises(UserSheetNotExists):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_columns_not_match(self, logger, user_wk):
+    def test_validate_case_columns_not_match(self, logger, user_workbook):
         # 修改列名，导致与内建字段不匹配
-        user_wk["users"]["B2"].value = "这不是姓名/not_full_name"
+        user_workbook["users"]["B2"].value = "这不是姓名/not_full_name"
         with pytest.raises(SheetColumnsNotMatch):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_custom_column_name_empty(self, logger, user_wk):
+    def test_validate_case_custom_column_name_empty(self, logger, user_workbook):
         # 修改列名，导致自定义列名不合法
-        user_wk["users"]["G2"].value = ""
+        user_workbook["users"]["G2"].value = ""
         with pytest.raises(CustomColumnNameInvalid):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_custom_column_name_invalid(self, logger, user_wk):
+    def test_validate_case_custom_column_name_invalid(self, logger, user_workbook):
         # 修改列名，导致自定义列名不合法
-        user_wk["users"]["G2"].value = "年龄@45"
+        user_workbook["users"]["G2"].value = "年龄@45"
         with pytest.raises(CustomColumnNameInvalid):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_column_name(self, logger, user_wk):
+    def test_validate_case_duplicate_column_name(self, logger, user_workbook):
         # 修改列名，导致自定义列名重复
-        user_wk["users"]["H2"].value = "年龄/age"
+        user_workbook["users"]["H2"].value = "年龄/age"
         with pytest.raises(DuplicateColumnName):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_required_field_is_empty(self, logger, user_wk):
+    def test_validate_case_required_field_is_empty(self, logger, user_workbook):
         # 修改表格数据，导致必填字段为空
-        user_wk["users"]["A3"].value = ""
+        user_workbook["users"]["A3"].value = ""
         with pytest.raises(RequiredFieldIsEmpty):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_username_chinese(self, logger, user_wk):
+    def test_validate_case_invalid_username_chinese(self, logger, user_workbook):
         # 修改表格数据，导致用户名非法
-        user_wk["users"]["A4"].value = "张三"
+        user_workbook["users"]["A4"].value = "张三"
         with pytest.raises(InvalidUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_username_punctuation(self, logger, user_wk):
+    def test_validate_case_invalid_username_punctuation(self, logger, user_workbook):
         # 修改表格数据，导致用户名非法
-        user_wk["users"]["A4"].value = "zhangsan@m.com"
+        user_workbook["users"]["A4"].value = "zhangsan@m.com"
         with pytest.raises(InvalidUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_start_with_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_start_with_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "/公司/部门A"
+        user_workbook["users"]["E4"].value = "/公司/部门A"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_end_with_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_end_with_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "公司/部门A/"
+        user_workbook["users"]["E4"].value = "公司/部门A/"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_organization_continuous_slash(self, logger, user_wk):
+    def test_validate_case_invalid_organization_continuous_slash(self, logger, user_workbook):
         # 修改表格数据，导致组织非法
-        user_wk["users"]["E4"].value = "公司//部门A"
+        user_workbook["users"]["E4"].value = "公司//部门A"
         with pytest.raises(InvalidOrganization):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_invalid_leader(self, logger, user_wk):
+    def test_validate_case_invalid_leader(self, logger, user_workbook):
         # 修改表格数据，导致用户是自己的 leader
-        user_wk["users"]["F4"].value = "zhangsan, lisi,wangwu"
+        user_workbook["users"]["F4"].value = "zhangsan, lisi,wangwu"
         with pytest.raises(InvalidLeader):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_username(self, logger, user_wk):
+    def test_validate_case_duplicate_username(self, logger, user_workbook):
         # 修改表格数据，导致用户名重复
-        user_wk["users"]["A6"].value = "zhangsan"
+        user_workbook["users"]["A6"].value = "zhangsan"
         with pytest.raises(DuplicateUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_validate_case_duplicate_username_case_insensitive(self, logger, user_wk):
+    def test_validate_case_duplicate_username_case_insensitive(self, logger, user_workbook):
         # 修改表格数据，导致用户名重复（大小写不敏感的检查）
-        user_wk["users"]["A6"].value = "ZhangSan"
+        user_workbook["users"]["A6"].value = "ZhangSan"
         with pytest.raises(DuplicateUsername):
-            LocalDataSourceDataParser(logger, user_wk).parse()
+            LocalDataSourceDataParser(logger, user_workbook).parse()
 
-    def test_get_departments(self, logger, user_wk):
-        parser = LocalDataSourceDataParser(logger, user_wk)
+    def test_get_departments(self, logger, user_workbook):
+        parser = LocalDataSourceDataParser(logger, user_workbook)
         parser.parse()
 
-        company_code = gen_code("公司")
-        dept_a_code = gen_code("公司/部门A")
-        dept_b_code = gen_code("公司/部门B")
-        dept_c_code = gen_code("公司/部门C")
-        center_aa_code = gen_code("公司/部门A/中心AA")
-        center_ab_code = gen_code("公司/部门A/中心AB")
-        group_aaa_code = gen_code("公司/部门A/中心AA/小组AAA")
-        group_aba_code = gen_code("公司/部门A/中心AB/小组ABA")
-        center_ba_code = gen_code("公司/部门B/中心BA")
-        group_baa_code = gen_code("公司/部门B/中心BA/小组BAA")
-        center_ca_code = gen_code("公司/部门C/中心CA")
-        group_caa_code = gen_code("公司/部门C/中心CA/小组CAA")
+        company_code = gen_dept_code("公司")
+        dept_a_code = gen_dept_code("公司/部门A")
+        dept_b_code = gen_dept_code("公司/部门B")
+        dept_c_code = gen_dept_code("公司/部门C")
+        center_aa_code = gen_dept_code("公司/部门A/中心AA")
+        center_ab_code = gen_dept_code("公司/部门A/中心AB")
+        group_aaa_code = gen_dept_code("公司/部门A/中心AA/小组AAA")
+        group_aba_code = gen_dept_code("公司/部门A/中心AB/小组ABA")
+        center_ba_code = gen_dept_code("公司/部门B/中心BA")
+        group_baa_code = gen_dept_code("公司/部门B/中心BA/小组BAA")
+        center_ca_code = gen_dept_code("公司/部门C/中心CA")
+        group_caa_code = gen_dept_code("公司/部门C/中心CA/小组CAA")
 
         assert sorted(parser.get_departments(), key=lambda d: d.name) == [
             RawDataSourceDepartment(code=center_aa_code, name="中心AA", parent=dept_a_code),
@@ -144,12 +145,12 @@ class TestLocalDataSourceDataParser:
             RawDataSourceDepartment(code=dept_c_code, name="部门C", parent=company_code),
         ]
 
-    def test_get_users(self, logger, user_wk):
-        parser = LocalDataSourceDataParser(logger, user_wk)
+    def test_get_users(self, logger, user_workbook):
+        parser = LocalDataSourceDataParser(logger, user_workbook)
         parser.parse()
 
         def gen_depts(orgs: List[str]) -> List[str]:
-            return [gen_code(o) for o in orgs]
+            return [gen_dept_code(o) for o in orgs]
 
         assert sorted(parser.get_users(), key=lambda u: u.properties["age"]) == [
             RawDataSourceUser(

@@ -37,3 +37,87 @@ export interface PutUserValidityParams {
   enabled_notification_methods: string[],
   notification_templates: [],
 }
+
+/**
+ * 管理员配置-变更内置管理员账号密码相关信息
+ */
+export interface PatchBuiltinManagerParams {
+  username?: string,
+  enable_login?: boolean,
+}
+
+/**
+ * 管理员配置-重置内置管理账号密码参数
+ */
+export interface PutPasswordParams {
+  password: string,
+}
+
+/**
+ * 管理员配置-租户实名用户列表参数
+ */
+export interface RealUsersParams {
+  page?: number,
+  page_size?: number,
+  exclude_manager?: boolean,
+  keyword?: string,
+}
+
+/**
+ * 管理员配置-修改租户实名管理员账号列表参数
+ */
+export interface PutRealManagersParams {
+  ids: string[],
+}
+
+/**
+ * 管理员配置-更新租户
+ */
+export interface PutTenantInfoParams {
+  name: string,
+  logo?: string,
+  visible: boolean,
+  user_number_visible: boolean,
+}
+
+/**
+ * 跨租户协同-新建协同策略
+ */
+export interface NewToStrategiesParams {
+  name: string,
+  target_tenant_id: string,
+  source_config: {
+    organization_scope_type: string,
+    organization_scope_config: object,
+    field_scope_type: string,
+    field_scope_config: object,
+  },
+}
+
+/**
+ * 跨租户协同-确认协同策略
+ */
+export interface FromStrategiesConfirmParams {
+  id: number,
+  target_config: {
+    organization_scope_type: string,
+    organization_scope_config: object,
+    field_mapping: {
+      source_field: string,
+      mapping_operation: string,
+      target_field: string,
+    }[],
+  },
+}
+
+/**
+ * 跨租户协同-数据更新记录
+ */
+export interface CollaborationSyncRecordsParams {
+  page?: number,
+  pageSize?: number,
+}
+
+export interface TenantItem {
+  tenant_ids: string
+}

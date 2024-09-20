@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -33,7 +33,7 @@ class TestLocalDataSourceIdentityInfoInitializer:
 
     def test_skip_not_account_password_login_data_source(self, full_local_data_source):
         """没有启用账密登录的，同步不会生效"""
-        full_local_data_source.plugin_config["enable_account_password_login"] = False
+        full_local_data_source.plugin_config["enable_password"] = False
         full_local_data_source.save()
 
         LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize()

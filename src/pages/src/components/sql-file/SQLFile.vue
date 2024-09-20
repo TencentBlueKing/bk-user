@@ -1,7 +1,9 @@
 <template>
   <div
     ref="rootRef"
-    class="sql-execute-editor">
+    class="sql-execute-editor"
+    :class="{ 'full': isFullscreen }"
+  >
     <div class="editor-layout-header">
       <span>{{ title }}</span>
       <div class="editro-action-box">
@@ -95,7 +97,8 @@ const handleDownload = () => {
 };
 
 const handleFullScreen = () => {
-  screenfull.toggle(rootRef.value);
+  const bodyNode = document.querySelector('body');
+  screenfull.toggle(bodyNode);
 };
 
 const handleExitFullScreen = () => {
@@ -202,5 +205,15 @@ onBeforeUnmount(() => {
     height: calc(100% - 40px);
     background: #212121;
   }
+}
+
+.full{
+  position:fixed !important;
+  inset: 0;
+  z-index:200;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding:0;
+  margin:0;
 }
 </style>

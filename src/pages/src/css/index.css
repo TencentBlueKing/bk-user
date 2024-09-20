@@ -73,3 +73,14 @@
     visibility: hidden;
   }
 }
+
+.leave-box {
+  .bk-modal-content {
+    font-size: 14px;
+  }
+  
+}
+
+.message-fix-fixed .overview .tools .tool.fix {
+  position: static;
+}

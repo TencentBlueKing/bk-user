@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -21,35 +21,30 @@ def forwards_func(apps, schema_editor):
     DataSourcePlugin = apps.get_model("data_source", "DataSourcePlugin")
 
     # 本地数据源插件
-    # TODO 插件名称，描述国际化
     DataSourcePlugin.objects.get_or_create(
         id=DataSourcePluginEnum.LOCAL,
         defaults={
             "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL),
+            "name_zh_cn": "本地数据源",
+            "name_en_us": "Local Data Source",
             "description": "支持用户和部门的增删改查，以及用户的登录认证",
+            "description_zh_cn": "支持用户和部门的增删改查，以及用户的登录认证",
+            "description_en_us": "Supports CRUD operations for users and departments, as well as user authentication.",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/local/logo.png"),
         },
     )
 
-    # 通用 HTTP 数据源插件
-    # TODO 插件名称，描述国际化
+    # Http数据源插件
     DataSourcePlugin.objects.get_or_create(
         id=DataSourcePluginEnum.GENERAL,
         defaults={
             "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.GENERAL),
+            "name_zh_cn": "通用 HTTP 数据源",
+            "name_en_us": "General HTTP Data Source",
             "description": "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据` API",
+            "description_zh_cn": "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据` API",
+            "description_en_us": "Supports integration with general HTTP data sources. Users need to provide `User Data` and `Department Data` APIs at the service provider.",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/general/logo.png"),
-        },
-    )
-
-    # LDAP 数据源插件
-    # TODO 插件名称，描述国际化
-    DataSourcePlugin.objects.get_or_create(
-        id=DataSourcePluginEnum.LDAP,
-        defaults={
-            "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LDAP),
-            "description": "支持对接 LDAP 服务的插件，支持同步 LDAP 用户，组织，用户组等数据",
-            "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/ldap/logo.png"),
         },
     )
 

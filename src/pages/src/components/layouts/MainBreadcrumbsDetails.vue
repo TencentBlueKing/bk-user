@@ -3,6 +3,7 @@
     <slot>
       <div class="main-breadcrumbs-left">
         <i
+          v-if="showBack"
           class="user-icon icon-arrow-left main-breadcrumbs-back"
           @click="handleBack" />
         <span class="main-breadcrumbs-current">
@@ -12,9 +13,7 @@
             {{ subtitle }}
           </span>
         </span>
-        <slot name="tag" />
       </div>
-      <slot name="content" />
       <slot name="right" />
     </slot>
   </div>
@@ -24,7 +23,7 @@
 import { computed, defineEmits, defineProps } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 defineProps({
   subtitle: {
@@ -42,6 +41,7 @@ store.customBreadcrumbs = true;
  * 当前面包屑展示文案
  */
 const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
+const showBack = computed(() => route.meta.showBack);
 /**
  * back control
  */
@@ -66,6 +66,7 @@ const handleBack = () => {
   .main-breadcrumbs-left {
     display: flex;
     align-items: center;
+    width: 100%;
   }
 
   .main-breadcrumbs-back {

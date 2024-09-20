@@ -130,7 +130,7 @@
       <bk-checkbox
         :value="fieldsInfor.manager_editable"
         v-model="fieldsInfor.manager_editable"
-        :disabled="isEdit">
+        :disabled="true">
         <span v-bk-tooltips="{ content: $t('该字段在用户信息里可编辑') }">{{ $t('管理员可编辑') }}</span>
       </bk-checkbox>
     </div>
@@ -154,7 +154,9 @@
       </bk-form-item>
     </bk-form>
     <div class="submit-btn">
-      <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading">{{ $t('保存') }}</bk-button>
+      <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading" :disabled="isDisabled">
+        {{ $t('保存') }}
+      </bk-button>
       <bk-button theme="default" @click="$emit('handleCancel')">{{ $t('取消') }}</bk-button>
     </div>
     <!-- 枚举值删除确认弹框 -->
@@ -211,8 +213,8 @@
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
-import useValidate from '@/hooks/use-validate';
-import { newCustomFields, putCustomFields } from '@/http/settingFiles';
+import { useValidate } from '@/hooks';
+import { newCustomFields, putCustomFields } from '@/http';
 import { t } from '@/language/index';
 
 const props = defineProps({
@@ -231,6 +233,8 @@ const validate = useValidate();
 const fieldsRef = ref();
 const enumRef = ref();
 const fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
+const originalData = JSON.parse(JSON.stringify({ ...props.currentEditorData }));
+const isDisabled = ref(true);
 const state = reactive({
   defaultSelected: 'string',
   isDeleteOption: true,
@@ -294,6 +298,11 @@ const rulesEnum = {
 const isEdit = computed(() => props?.setType === 'edit');
 const uniqueDisabled = ref(false);
 const uniqueText = ref(t('该字段在不同用户信息里不能相同'));
+
+watch(fieldsInfor, () => {
+  isDisabled.value = isEdit.value ? JSON.stringify(originalData) === JSON.stringify(fieldsInfor) : false;
+}, { deep: true });
+
 
 watch(() => fieldsInfor.data_type, (val) => {
   uniqueDisabled.value = val === 'enum' || val === 'multi_enum' || props?.currentEditorData?.id;
@@ -396,9 +405,13 @@ const changeEnumValue = async () => {
     enumDialog.value.isShow = false;
 
     const findIndexById = id => fieldsInfor.options.findIndex(item => item.id === id);
-    fieldsInfor.default = fieldsInfor.data_type === 'enum' ? findIndexById(fieldsInfor.default)
-      : fieldsInfor.data_type === 'multi_enum' ? fieldsInfor.default?.map(findIndexById)
-        : fieldsInfor.default;
+    if (fieldsInfor.data_type === 'enum') {
+      fieldsInfor.default = findIndexById(fieldsInfor.default);
+    } else if (fieldsInfor.data_type === 'multi_enum') {
+      fieldsInfor.default = fieldsInfor.default?.map(findIndexById);
+    } else {
+      fieldsInfor.default = fieldsInfor.default;
+    }
   } catch (error) {
     console.warn(error);
   } finally {
@@ -556,8 +569,8 @@ const blurId = () => findFirstDuplicate('id');
 const blurValue = () => findFirstDuplicate('value');
 </script>
 
-<style lang="less">
-.enum-dialog-wrapper .enum-dialog-content {
+<style lang="less" scoped>
+.enum-dialog-content {
   .header {
     margin-bottom: 12px;
     text-align: center;

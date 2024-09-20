@@ -4,7 +4,7 @@
     <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
     <meta charset="utf-8">
-    <title> {{ TITLE }} </title>
+    <title> 用户管理 | 腾讯蓝鲸智云 </title>
   </head>
     <body>
       <div class="app"></div>
@@ -18,6 +18,19 @@
         window.CSRF_COOKIE_NAME = '<%= process.env.BK_CSRF_COOKIE_NAME %>';
         window.BK_COMPONENT_API_URL = '<%= process.env.BK_COMPONENT_API_URL %>';
         window.BK_DOMAIN = '<%= process.env.BK_DOMAIN %>';
+        window.BK_USER_DOC_URL = '<%= process.env.BK_USER_DOC_URL %>';
+        window.BK_USER_FEEDBACK_URL = '<%= process.env.BK_USER_FEEDBACK_URL %>';
+        window.ENABLE_BK_NOTICE = '<%= process.env.BK_ENABLE_BK_NOTICE %>';
+        window.BK_BUILD_VERSION = decodeURIComponent('{{ BK_BUILD_VERSION }}');
+        window.BK_SHARED_RES_URL = '<%= process.env.BK_SHARED_RES_URL %>';
+        window.ENABLE_VIRTUAL_USER = '<%= process.env.BK_ENABLE_VIRTUAL_USER %>';
+        window.ENABLE_CREATE_TENANT = '<%= process.env.BK_ENABLE_CREATE_TENANT %>';
+        console.log(
+          `%c版本信息%c${ BK_BUILD_VERSION }%c >> ${new Date().toString().slice(0, 16)}<<`,
+          'padding: 2px 5px; background: #ea3636; color: #fff; border-radius: 3px 0 0 3px;',
+          'padding: 2px 5px; background: #42c02e; color: #fff; border-radius: 0 3px 3px 0; font-weight: bold;',
+          'background-color: #3A84FF; color: #fff; padding: 2px 5px; border-radius: 3px; font-weight: bold;margin-left: 16px;',
+        );
       </script>
     </body>
 </html>

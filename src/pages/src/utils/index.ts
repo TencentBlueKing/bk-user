@@ -1,43 +1,33 @@
 import { Message } from 'bkui-vue';
+import Cookies from 'js-cookie';
 import moment from 'moment';
+import momentTimeZone from 'moment-timezone';
 import { ref } from 'vue';
 
 import abnormalImg from '@/images/abnormal.svg';
 import loadingImg from '@/images/loading.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
-import { t } from '@/language/index';
+import warningImg from '@/images/warning.svg';
+import I18n, { t } from '@/language/index';
 export * from './countryCode';
 
 export const copy = (value: string) => {
-  const textArea = document.createElement('textarea');
-  textArea.value = value;
-
-  textArea.style.zIndex = '-99999';
-  textArea.style.position = 'fixed';
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const res = document.execCommand('copy');
-    if (res) {
+  navigator.clipboard.writeText(value)
+    .then(() => {
       Message({
         message: t('复制成功'),
         theme: 'success',
         delay: 1500,
       });
-      return;
-    }
-    throw new Error();
-  } catch (e) {
-    Message({
-      message: t('复制失败'),
-      theme: 'error',
-      delay: 1500,
+    })
+    .catch(() => {
+      Message({
+        message: t('复制失败'),
+        theme: 'error',
+        delay: 1500,
+      });
     });
-  }
 };
 
 // file 转 base64
@@ -72,6 +62,18 @@ export function dateConvert(value: string) {
   }
 }
 
+// 时区获取
+export const TIME_ZONES = momentTimeZone.tz.names()?.map(item => ({
+  value: item,
+  label: item,
+}));
+
+// 语言
+export const LANGUAGE_OPTIONS = [
+  { value: 'zh-cn', label: '简体中文' },
+  { value: 'en', label: 'English' },
+];
+
 // logo转换
 export function logoConvert(value: string) {
   return value?.charAt(0).toUpperCase();
@@ -92,6 +94,14 @@ export const dataSourceStatus = {
     icon: unknownImg,
     text: t('未启用'),
   },
+  confirmed: {
+    icon: warningImg,
+    text: t('待确认'),
+  },
+  unconfirmed: {
+    icon: warningImg,
+    text: t('待确认'),
+  },
 };
 
 export const validTime = {
@@ -107,9 +117,9 @@ export function validTimeMap(value: number) {
 }
 
 export const noticeTime = {
-  1: t('1天'),
-  7: t('7天'),
-  15: t('15天'),
+  1: t('1天前'),
+  7: t('7天前'),
+  15: t('15天前'),
 };
 export function noticeTimeMap(value: any) {
   const list: string[] = value?.map(key => noticeTime[key]).filter(Boolean) || [];
@@ -233,6 +243,34 @@ export const SYNC_CONFIG_LIST = [
   },
 ];
 
+// 同步超时时间
+export const SYNC_TIMEOUT_LIST = [
+  {
+    value: 15 * 60,
+    label: t('15 分钟'),
+  },
+  {
+    value: 30 * 60,
+    label: t('30 分钟'),
+  },
+  {
+    value: 45 * 60,
+    label: t('45 分钟'),
+  },
+  {
+    value: 60 * 60,
+    label: t('1 小时'),
+  },
+  {
+    value: 3 * 60 * 60,
+    label: t('3 小时'),
+  },
+  {
+    value: 6 * 60 * 60,
+    label: t('6 小时'),
+  },
+];
+
 // 数据更新记录状态
 export const dataRecordStatus = {
   pending: {
@@ -268,9 +306,9 @@ export const VALID_TIME = [
 
 // 提醒时间
 export const REMIND_DAYS = [
-  { value: 1, label: t('1天') },
-  { value: 7, label: t('7天') },
-  { value: 15, label: t('15天') },
+  { value: 1, label: t('1天前') },
+  { value: 7, label: t('7天前') },
+  { value: 15, label: t('15天前') },
 ];
 
 // 通知方式
@@ -282,26 +320,79 @@ export const NOTIFICATION_METHODS = [
 // 自定义字段转换
 export function customFieldsMap(item: any) {
   const fields = ref('');
-  fields.value = item.value === '' ? '--'
-    : item.data_type === 'enum' ? item.options?.find(option => option.id === item.value)?.value
-      : item.data_type === 'multi_enum' ? item.value?.map(key => item.options?.find(option => option.id === key)?.value)
-        .filter(Boolean)
-        .join(', ')
-        : item.value;
+
+  if (item.value === '') {
+    fields.value = '--';
+  } else if (item.data_type === 'enum') {
+    fields.value = item.options?.find(option => option.id === item.value)?.value || '';
+  } else if (item.data_type === 'multi_enum') {
+    fields.value = item.value
+      ?.map(key => item.options?.find(option => option.id === key)?.value)
+      .filter(Boolean)
+      .join(', ') || '';
+  } else {
+    fields.value = item.value;
+  }
+
   return fields.value;
-};
+}
 
 // 用户表格数据转换
 export function getTableValue(row: any, item: any) {
   let val = '';
+
   if (Object.keys(row).length !== 0) {
-    val = row[item.field] === '' ? '--'
-      : item.data_type === 'enum' ? item.options?.find(option => option.id === row[item.field])?.value
-        : item.data_type === 'multi_enum' ? row[item.field]?.map(key => item.options?.find(a => a.id === key)?.value)
-          .filter(Boolean)
-          .join(', ')
-          : row[item.field];
+    const fieldValue = row[item.field];
+
+    if (fieldValue === '') {
+      val = '--';
+    } else if (item.data_type === 'enum') {
+      val = item.options?.find(option => option.id === fieldValue)?.value || '';
+    } else if (item.data_type === 'multi_enum') {
+      val = fieldValue
+        ?.map(key => item.options?.find(option => option.id === key)?.value)
+        .filter(Boolean)
+        .join(', ') || '';
+    } else {
+      val = fieldValue;
+    }
   }
+
   return val;
+}
+
+// 数据源启用状态
+export const tenantStatus = {
+  enabled: {
+    icon: normalImg,
+    text: t('已启用'),
+  },
+  disabled: {
+    icon: unknownImg,
+    text: t('未启用'),
+  },
 };
 
+// 语言切换
+export const handleSwitchLocale = (locale: string) => {
+  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  const scriptId = 'jsonp-script';
+  const prevJsonpScript = document.getElementById(scriptId);
+  if (prevJsonpScript) {
+    document.body.removeChild(prevJsonpScript);
+  }
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = `${api}?language=${locale}`;
+  script.id = scriptId;
+  document.body.appendChild(script);
+
+  Cookies.set('blueking_language', locale, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  I18n.global.locale.value = locale as any;
+  document.querySelector('html')?.setAttribute('lang', locale);
+  window.location.reload();
+};

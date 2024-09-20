@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -15,6 +15,7 @@ from bkuser.plugins.local.constants import (
 )
 from bkuser.plugins.local.models import (
     LocalDataSourcePluginConfig,
+    LoginLimitConfig,
     NotificationConfig,
     NotificationTemplate,
     PasswordExpireConfig,
@@ -24,7 +25,7 @@ from bkuser.plugins.local.models import (
 
 # 本地数据源插件默认配置
 DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
-    enable_account_password_login=True,
+    enable_password=False,
     password_rule=PasswordRuleConfig(
         min_length=12,
         contain_lowercase=True,
@@ -36,12 +37,8 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
         not_continuous_letter=False,
         not_continuous_digit=False,
         not_repeated_symbol=False,
-        valid_time=90,
-        max_retries=3,
-        lock_time=60 * 60,
     ),
     password_initial=PasswordInitialConfig(
-        force_change_at_first_login=True,
         cannot_use_previous_password=True,
         reserved_previous_password_count=3,
         generate_method=PasswordGenerateMethod.RANDOM,
@@ -77,13 +74,13 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     content=(
                         "您好：\n"
                         + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}\n"
-                        + "该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{{ reset_url }}\n"
+                        + "该链接有效时间为 {{ valid_minutes }} 分钟，过期后请重新通过平台发送\n"
                         + "此邮件为系统自动发送，请勿回复。"
                     ),
                     content_html=(
                         "<p>您好：</p>"
-                        + "<p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }} </p>"
-                        + "<p>该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{{ reset_url }}</p>"
+                        + "<p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}</p>"
+                        + "<p>该链接有效时间为 {{ valid_minutes }} 分钟，过期后请重新通过平台发送</p>"
                         + "<p>此邮件为系统自动发送，请勿回复。</p>"
                     ),
                 ),
@@ -115,13 +112,13 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     content=(
                         "您好：\n"
                         + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}\n"
-                        + "该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{{ reset_url }}\n"
+                        + "该链接有效时间为 {{ valid_minutes }} 分钟，过期后请重新通过平台发送\n"
                         + "该短信为系统自动发送，请勿回复。"
                     ),
                     content_html=(
                         "<p>您好：</p>"
                         + "<p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }} </p>"
-                        + "<p>该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{{ reset_url }}</p>"
+                        + "<p>该链接有效时间为 {{ valid_minutes }} 分钟，过期后请重新通过平台发送</p>"
                         + "<p>该短信为系统自动发送，请勿回复。</p>"
                     ),
                 ),
@@ -129,6 +126,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
         ),
     ),
     password_expire=PasswordExpireConfig(
+        valid_time=90,
         remind_before_expire=[1, 7, 15],
         notification=NotificationConfig(
             enabled_methods=[NotificationMethod.EMAIL],
@@ -199,5 +197,10 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                 ),
             ],
         ),
+    ),
+    login_limit=LoginLimitConfig(
+        force_change_at_first_login=True,
+        max_retries=3,
+        lock_time=60 * 60,
     ),
 )

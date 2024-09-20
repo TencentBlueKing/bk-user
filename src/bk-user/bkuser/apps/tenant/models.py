@@ -1,41 +1,70 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Tuple
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
-from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
+from bkuser.apps.tenant.constants import (
+    CollaborationStrategyStatus,
+    TenantStatus,
+    TenantUserIdRuleEnum,
+    TenantUserStatus,
+    UserFieldDataType,
+)
+from bkuser.common.constants import PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
-from bkuser.common.time import datetime_to_display
 
 
-class Tenant(TimestampedModel):
+class Tenant(AuditedModel):
     id = models.CharField("租户唯一标识", primary_key=True, max_length=128)
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
-    feature_flags = models.JSONField("租户特性标志集", default=dict)
+    status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
+    # 特性
+    visible = models.BooleanField("租户可见性", default=True)
+    user_number_visible = models.BooleanField("人员数量是否可见", default=True)
 
     class Meta:
         ordering = ["created_at"]
 
-    def has_feature_flag(self, ff: TenantFeatureFlag) -> bool:
-        default_flags = TenantFeatureFlag.get_default_flags()
-        return self.feature_flags.get(ff, default_flags[ff])
+
+class TenantUserManager(models.Manager):
+    """TenantUser DB 模型管理器"""
+
+    def filter_by_email(self, tenant_id: str, email: str) -> QuerySet["TenantUser"]:
+        return self.filter(tenant_id=tenant_id).filter(
+            Q(is_inherited_email=False, custom_email=email) | Q(is_inherited_email=True, data_source_user__email=email)
+        )
+
+    def filter_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> QuerySet["TenantUser"]:
+        return self.filter(tenant_id=tenant_id).filter(
+            Q(
+                is_inherited_email=False,
+                custom_phone=phone,
+                custom_phone_country_code=phone_country_code,
+            )
+            | Q(
+                is_inherited_email=True,
+                data_source_user__phone=phone,
+                data_source_user__phone_country_code=phone_country_code,
+            )
+        )
 
 
-class TenantUser(TimestampedModel):
+class TenantUser(AuditedModel):
     """
     租户用户即蓝鲸用户
     """
@@ -49,9 +78,14 @@ class TenantUser(TimestampedModel):
     # Note: 值：对于新用户则为uuid，对于迁移则兼容旧版本 username@domain或username
     # 兼容旧版本：对外 id/username/bk_username 这3个字段，值是一样的
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
+    status = models.CharField(
+        "状态", max_length=32, choices=TenantUserStatus.get_choices(), default=TenantUserStatus.ENABLED
+    )
 
     # 蓝鲸特有
-    language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="zh-cn", max_length=32)
+    language = models.CharField(
+        "语言", choices=BkLanguageEnum.get_choices(), default=BkLanguageEnum.ZH_CN, max_length=32
+    )
     time_zone = models.CharField("时区", choices=TIME_ZONE_CHOICES, default="Asia/Shanghai", max_length=32)
 
     # wx_userid/wx_openid 兼容旧版本迁移
@@ -74,14 +108,12 @@ class TenantUser(TimestampedModel):
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
     custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")
 
+    objects = TenantUserManager()
+
     class Meta:
         unique_together = [
             ("data_source_user", "tenant"),
         ]
-
-    @property
-    def account_expired_at_display(self) -> str:
-        return datetime_to_display(self.account_expired_at)
 
     @property
     def email(self) -> str:
@@ -173,18 +205,66 @@ class TenantUserValidityPeriodConfig(AuditedModel):
     notification_templates = models.JSONField("通知模板", default=list)
 
 
-# class TenantUserSocialAccountRelation(TimestampedModel):
-#     """租户用户与社交账号绑定表"""
-#
-#     tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
-#     idp = models.ForeignKey(Idp, on_delete=models.DO_NOTHING, db_constraint=False)
-#     social_client_id = models.CharField("社交认证源对应的ClientID", max_length=128)
-#     social_account_id = models.CharField("绑定的社交账号ID", max_length=128)
-#
-#     class Meta:
-#         unique_together = [
-#             ("social_account_id", "tenant_user", "idp", "social_client_id"),
-#         ]
-#         index_together = [
-#             ("social_account_id", "idp", "social_client_id"),
-#         ]
+class CollaborationStrategy(AuditedModel):
+    """协同策略"""
+
+    name = models.CharField("策略名称", max_length=128)
+    source_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="source_tenant"
+    )
+    target_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="target_tenant"
+    )
+    source_status = models.CharField(
+        "策略状态（分享方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.ENABLED,
+        max_length=32,
+    )
+    target_status = models.CharField(
+        "策略状态（接受方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.UNCONFIRMED,
+        max_length=32,
+    )
+    source_config = models.JSONField("策略配置（分享方）", default=dict)
+    target_config = models.JSONField("策略配置（接受方）", default=dict)
+
+    class Meta:
+        unique_together = [
+            ("name", "source_tenant"),
+            ("source_tenant", "target_tenant"),
+        ]
+
+
+class TenantUserIDGenerateConfig(TimestampedModel):
+    """租户用户 ID 生成规则（兼容 v2 版本迁移数据）"""
+
+    # 注：每个数据源只能配置一个到某个租户的生成规则，若到某租户的规则不存在，则生成的租户用户 ID 是 uuid
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, unique=True, db_constraint=False)
+    target_tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    rule = models.CharField(
+        "租户用户 ID 生成规则",
+        max_length=64,
+        choices=TenantUserIdRuleEnum.get_choices(),
+        default=TenantUserIdRuleEnum.UUID4_HEX.value,
+    )
+    domain = models.CharField("目标租户域名", max_length=128, unique=True, blank=True, null=True)
+
+
+class TenantUserIDRecord(TimestampedModel):
+    """
+    租户用户 ID 记录
+
+    Q：为什么需要有这个表？
+    A：为了解决这么一个场景：数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，需要使用一致的租户用户 ID
+       由于在同一个数据源中，code 是唯一的，因此这里选择存储 (tenant_id, data_source_id, code) -> 租户用户 ID 映射关系
+    """
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    code = models.CharField("用户在数据源中的唯一标识", max_length=128)
+    tenant_user_id = models.CharField("租户用户 ID", max_length=128)
+
+    class Meta:
+        unique_together = [("tenant", "data_source", "code")]

@@ -15,26 +15,25 @@
     <div id="particles-js"></div>
     <footer class="footer">
       <p>
-        <a href="https://wpa1.qq.com/KziXGWJs?_type=wpa&amp;qidian=true">技术支持</a>
-        | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" class="link">社区论坛</a>
-        | <a href="http://bk.tencent.com/" target="_blank" class="link">产品官网</a>
-        |
+        <span v-dompurify-html="contact"></span>
         <bk-popover theme="light" placement="bottom">
           <a href="" target="_blank" class="link follow-us">
-            关注我们
+            | {{ $t('关注我们') }}
           </a>
           <template #content>
             <span class="qr-box"><img class="qr" src="../static/images/qr.png" alt=""></span>
           </template>
         </bk-popover>
       </p>
-      <p>Copyright © 2012 Tencent BlueKing. All Rights Reserved.</p>
+      <p>{{ copyright }}</p>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
+import { getPlatformConfig, setShortcutIcon, setDocumentTitle } from '@blueking/platform-config';
+import { platformConfig } from '@/store/platformConfig';
 
 onMounted(() => {
   particlesJS(
@@ -157,6 +156,27 @@ onMounted(() => {
     },
   );
 });
+
+const platformConfigData = platformConfig();
+const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`;  // url 远程配置文件地址
+const defaults = {
+  name: '登录',
+  nameEn: 'Login',
+  brandName: '蓝鲸智云',
+  brandNameEn: 'BlueKing',
+  version: '3.0',
+};
+
+const getConfigData = async () => {
+  const config =  await getPlatformConfig(url, defaults);
+  
+  setShortcutIcon(config.favicon);
+  setDocumentTitle(config.i18n);
+  platformConfigData.update(config);
+};
+getConfigData();
+const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
+const copyright = computed(() => platformConfigData.footerCopyrightContent);
 </script>
 
 <style lang="postcss" scoped>
@@ -170,7 +190,7 @@ onMounted(() => {
   left: 50%;
   top: 35%;
   transform: translate(-50%, -35%);
-  padding: 32px 40px;
+  padding: 52px 40px 32px;
 }
 .main-content {
   height: 100%;
@@ -228,10 +248,15 @@ onMounted(() => {
 
 .footer a {
   color: #bfcbd7;
-  margin: 0 5px;
 
   &:hover {
     color: #fff;
   }
+}
+:deep(.link-item ){
+  color: #bfcbd7;
+}
+:deep(.link-item:hover) {
+  color: #fff;
 }
 </style>

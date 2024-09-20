@@ -13,24 +13,25 @@
       theme="info"
       :title="$t('密码修改成功后需要进行重新登录')"
       closable
+      class="mb-[24px]"
     />
     <bk-form
       form-type="vertical"
       ref="formRef"
       :model="formData">
       <bk-form-item :label="$t('旧密码')" property="oldPassword" required>
-        <bk-input type="password" v-model="formData.oldPassword" />
+        <passwordInput v-model="formData.oldPassword" @input="(val) => inputPassword('oldPassword', val)" />
       </bk-form-item>
       <bk-form-item :label="$t('新密码')" property="newPassword" required>
-        <bk-input type="password" v-model="formData.newPassword" />
+        <passwordInput v-model="formData.newPassword" @input="(val) => inputPassword('newPassword', val)" />
       </bk-form-item>
       <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
-        <bk-input
+        <passwordInput
           :class="{ 'is-error': isError }"
-          type="password"
           v-model="formData.confirmPassword"
-          @input="changePassword" />
-        <p class="error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</p>
+          :value="formData.confirmPassword"
+          @input="(val) => inputPassword('confirmPassword', val)" />
+        <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
       </bk-form-item>
     </bk-form>
   </bk-dialog>
@@ -41,17 +42,17 @@ import { Message } from 'bkui-vue';
 import { reactive, ref, watch } from 'vue';
 
 import { logout } from '@/common/auth';
-import { putPersonalCenterUserPassword } from '@/http/personalCenterFiles';
+import passwordInput from '@/components/passwordInput.vue';
+import { putPersonalCenterUserPassword } from '@/http';
 import { t } from '@/language/index';
 
-const emit = defineEmits(['closed']);
 const props = defineProps({
   config: {
     type: Object,
     default: () => ({}),
   },
 });
-
+const emit = defineEmits(['closed']);
 const formRef = ref();
 const formData = reactive({
   oldPassword: '',
@@ -70,8 +71,11 @@ watch(() => props.config?.isShow, (value: boolean) => {
   }
 });
 
-const changePassword = () => {
-  isError.value = false;
+const inputPassword = (param, val) => {
+  formData[param] = val;
+  if (param === 'confirmPassword') {
+    isError.value = false;
+  }
 };
 
 const confirm = async () => {

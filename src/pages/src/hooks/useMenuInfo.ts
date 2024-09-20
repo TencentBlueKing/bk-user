@@ -1,7 +1,7 @@
 import { computed, inject } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, useRoute, useRouter } from 'vue-router';
 
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 export const useMenuInfo = () => {
   const route = useRoute();

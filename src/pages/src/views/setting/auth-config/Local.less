@@ -1,0 +1,45 @@
+.details-wrapper {
+  position: relative;
+  background: #F5F7FA;
+
+  .div-flex {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #63656e;
+  }
+
+  .form-item-flex {
+    ::v-deep .bk-form-content {
+      display: flex;
+
+      .input-password {
+        width: 240px;
+        margin-left: 28px;
+      }
+    }
+  }
+
+  .error-text {
+    font-size: 12px;
+    line-height: 1;
+    color: #ea3636;
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 0;
+    z-index: 9;
+    width: 100%;
+    height: 48px;
+    padding-left: 24px;
+    margin-bottom: 0;
+    line-height: 48px;
+    background: #FAFBFD;
+    box-shadow: 0 -1px 0 0 #DCDEE5;
+
+    button {
+      min-width: 88px;
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
@@ -35,20 +35,24 @@ class IdpPlugin(models.Model):
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
 
-class IdpManager(models.Manager):
-    """认证源管理器类"""
+class IdpQuerySet(models.QuerySet):
+    """认证源 QuerySet 类"""
 
     @transaction.atomic()
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         if "plugin_config" not in kwargs:
-            return super().create(*args, **kwargs)
+            return super().create(**kwargs)
 
         plugin_cfg = kwargs.pop("plugin_config")
         assert isinstance(plugin_cfg, BasePluginConfig)
 
-        idp: Idp = super().create(*args, **kwargs)
+        idp: Idp = super().create(**kwargs)
         idp.set_plugin_cfg(plugin_cfg)
         return idp
+
+
+# 认证源管理器类
+IdpManager = models.Manager.from_queryset(IdpQuerySet)
 
 
 class Idp(AuditedModel):
@@ -64,8 +68,9 @@ class Idp(AuditedModel):
     plugin_config = models.JSONField("插件配置", default=dict)
     # 认证源与数据源的匹配规则
     data_source_match_rules = models.JSONField("匹配规则", default=list)
-    # 允许关联社会化认证源的租户组织架构范围
-    allow_bind_scopes = models.JSONField("允许范围", default=list)
+    # 冗余字段，用于添加、删除或变更时使用
+    # Note: -1 表示无限制，0 表示 "实名数据源"被删除，但不删除认证源，其他 >=0 则表示实际绑定的数据源 ID
+    data_source_id = models.IntegerField("数据源 ID")
 
     objects = IdpManager()
 
@@ -73,6 +78,8 @@ class Idp(AuditedModel):
         ordering = ["created_at"]
         unique_together = [
             ("name", "owner_tenant_id"),
+            # 同一个数据源对于同一种类型的认证源插件，只允许配置一个
+            ("data_source_id", "plugin", "owner_tenant_id"),
         ]
 
     @property
