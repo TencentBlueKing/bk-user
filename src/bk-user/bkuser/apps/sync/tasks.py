@@ -35,7 +35,7 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     task = DataSourceSyncTask.objects.get(id=task_id)
 
     if task.data_source.is_local and (temporary_storage_id := plugin_init_extra_kwargs.get("temporary_storage_id")):
-        # 若已指定原始数据 Key，则需要从临时存储中获取数据
+        # 若已指定临时存储的数据唯一标识，则需要从临时存储中获取数据
         storage = WorkbookTempStore()
         try:
             workbook = storage.get(temporary_storage_id)
