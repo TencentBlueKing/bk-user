@@ -31,13 +31,13 @@ class WorkbookTempStore:
 
     def save(self, workbook: Workbook, timeout: int = TemporaryStorageDefaultTimeout) -> str:
         """
-        将 Excel workbook 保存到临时存储中，并返回临时存储的数据唯一标识
-        :param workbook: Excel workbook
+        将 Excel Workbook 保存到临时存储中，并返回临时存储的数据唯一标识
+        :param workbook: Excel Workbook
         :param timeout: 过期时间
         :return: 临时数据唯一标识
         """
 
-        # 将 workbook 保存到 内存字节流，便于获取到字节内容
+        # 将 Workbook 保存到 内存字节流，便于获取到字节内容
         with io.BytesIO() as buffer:
             workbook.save(buffer)
             data = buffer.getvalue()
@@ -54,7 +54,7 @@ class WorkbookTempStore:
         """
         从临时存储中获取临时数据并转换为 Excel Workbook
         :param temporary_storage_id: 临时数据唯一标识
-        :return: Excel workbook
+        :return: Excel Workbook
         """
 
         encoded_data = self.storage.get(temporary_storage_id)
