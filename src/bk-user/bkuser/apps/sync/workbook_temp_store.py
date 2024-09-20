@@ -23,15 +23,15 @@ TemporaryStorageDefaultTimeout = 10 * 60
 
 
 class WorkbookTempStore:
-    """基于 redis 的临时存储"""
+    """导入 Workbook 时的临时存储"""
 
     def __init__(self):
-        # 初始化 redis 临时存储
+        # 初始化 redis 临时存储，后续加入 bk-repo 等 backend
         self.storage = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WORKBOOK_TEMPORARY_STORE)
 
-    def save_workbook(self, workbook: Workbook, timeout: int = TemporaryStorageDefaultTimeout) -> str:
+    def save(self, workbook: Workbook, timeout: int = TemporaryStorageDefaultTimeout) -> str:
         """
-        [快捷方法] 将 Excel workbook 保存到临时存储中，并返回临时存储的数据唯一标识
+        将 Excel workbook 保存到临时存储中，并返回临时存储的数据唯一标识
         :param workbook: Excel workbook
         :param timeout: 过期时间
         :return: 临时数据唯一标识
@@ -50,9 +50,9 @@ class WorkbookTempStore:
 
         return temporary_storage_id
 
-    def get_workbook(self, temporary_storage_id: str) -> Workbook:
+    def get(self, temporary_storage_id: str) -> Workbook:
         """
-        [快捷方法] 从临时存储中获取临时数据并转换为 Excel Workbook
+        从临时存储中获取临时数据并转换为 Excel Workbook
         :param temporary_storage_id: 临时数据唯一标识
         :return: Excel workbook
         """
