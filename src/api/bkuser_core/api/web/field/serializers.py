@@ -15,6 +15,7 @@ from rest_framework.validators import ValidationError
 
 from bkuser_core.profiles.models import DynamicFieldInfo
 
+
 # NOTE: 这里比较分裂的是, 前端输入的数据需要转换, 才能create/update, 并且吐出去之前要转成前端的格式
 
 
@@ -92,8 +93,15 @@ class DynamicFieldUpdateInputSLZ(serializers.Serializer):
         return data
 
     def validate(self, attrs):
+        display_name = attrs.get("display_name")
+        instance_id = self.instance.id if self.instance else None
 
-        if DynamicFieldInfo.objects.exclude(id=self.instance.id).filter(display_name=attrs["display_name"]).exists():
-            raise ValidationError(_("名称为 {} 的自定义字段已存在").format(attrs["display_name"]))
+        # 检查 display_name 是否存在
+        if DynamicFieldInfo.objects.exclude(id=instance_id).filter(display_name=display_name).exists():
+            raise ValidationError(_("名称为 {} 的自定义字段已存在").format(display_name))
+
+        # 检查是否有 builtin=True 且 name 不等于 "position" 的字段存在
+        if DynamicFieldInfo.objects.filter(builtin=True, id=instance_id).exclude(name="position").exists():
+            raise ValidationError(_("内置字段 {} 不可以修改").format(display_name))
 
         return super().validate(attrs)
