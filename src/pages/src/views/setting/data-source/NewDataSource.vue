@@ -24,7 +24,7 @@
             @update-cur-step="updateCurStep"
             @update-success="updateSuccess" />
           <SchemaForm
-            v-if="currentType === 'custom_plugin'"
+            v-if="currentType === customPlugin"
             ref="schemaFormRef"
             :form-data="formData"
             :plugins-config="jsonSchema"
@@ -68,7 +68,9 @@ const jsonSchema = ref({});
 const changePluginConfig = (value: any) => {
   formData.plugin_config = value;
 };
+const customPlugin = 'custom_plugin';
 const getJsonSchema = () => {
+  if (currentType.value !== customPlugin) return;
   getCustomPlugin(currentType.value).then((res) => {
     jsonSchema.value = res.data?.json_schema;
   });
