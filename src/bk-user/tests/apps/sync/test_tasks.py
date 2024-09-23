@@ -47,7 +47,7 @@ class TestSyncDataSource:
         task_id = data_source_sync_task.id
         storage = WorkbookTempStore()
         temporary_storage_id = storage.save(user_workbook)
-        storage.get(temporary_storage_id)
+        storage.get_once(temporary_storage_id)
 
         plugin_init_extra_kwargs = {"temporary_storage_id": temporary_storage_id}
         sync_data_source(task_id, plugin_init_extra_kwargs)
