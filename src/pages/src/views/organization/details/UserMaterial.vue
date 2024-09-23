@@ -332,6 +332,7 @@ export default {
         id: this.currentCategoryId,
       });
       if (res.data) {
+        this.updatePasswordInfo(res.data);
         res.data.forEach((item) => {
           if (item.key === 'enable_password_rsa_encrypted') {
             this.isRsaEncrypted = item.value;
@@ -341,6 +342,18 @@ export default {
           }
         });
       }
+    },
+    // 更新密码校验规则
+    updatePasswordInfo(data) {
+      const passwordInfo = this.$convertArrayToObject(data).default;
+      this.passwordRules = {
+        passwordMinLength: passwordInfo.password_min_length,
+        passwordMustIncludes: passwordInfo.password_must_includes,
+      };
+      this.$store.commit('organization/updatePasswordInfo', {
+        id: this.currentCategoryId,
+        data: passwordInfo,
+      });
     },
     // 验证密码的格式
     async confirmReset() {
@@ -357,15 +370,7 @@ export default {
             const res = await this.$store.dispatch('catalog/ajaxGetPassport', {
               id: this.currentCategoryId,
             });
-            const passwordInfo = this.$convertArrayToObject(res.data).default;
-            this.passwordRules = {
-              passwordMinLength: passwordInfo.password_min_length,
-              passwordMustIncludes: passwordInfo.password_must_includes,
-            };
-            this.$store.commit('organization/updatePasswordInfo', {
-              id: this.currentCategoryId,
-              data: passwordInfo,
-            });
+            this.updatePasswordInfo(res.data);
           } catch (e) {
             // 如果获取规则失败，就给后端校验
             console.warn(e);
