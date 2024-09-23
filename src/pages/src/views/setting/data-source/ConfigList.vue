@@ -167,6 +167,30 @@
         </div>
       </template>
     </bk-dialog>
+    <bk-dialog
+      v-model:is-show="isImportStatusVisible"
+      class="import-status-dialog"
+      width="640"
+      footer-align="center"
+      :confirm-text="t('查看组织架构')"
+      :cancel-text="t('关闭')"
+      @closed="handleCloseImportDialog"
+      @confirm="() => router.push({ name: 'organization' })"
+    >
+      <div class="text-center pt-[24px]">
+        <div class="flex justify-center">
+          <img :src="right" class="h-[56px] w-[56px] " />
+        </div>
+        <div class="bk-infobox-title !text-[16px] !mt-[20px] h-[24px]">{{t('导入成功')}}</div>
+        <div class="progress-area flex justify-center mt-[24px]">
+          <div class="text-[12px]">{{ t('同步进度') }}</div>
+          <bk-progress
+            :percent="syncPercent"
+            size="small"
+          />
+        </div>
+      </div>
+    </bk-dialog>
     <!-- 数据更新记录 -->
     <bk-sideslider
       v-model:isShow="updateConfig.isShow"
@@ -194,7 +218,8 @@ import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
-import { deleteDataSources, getRelatedResource } from '@/http';
+import { deleteDataSources, getRelatedResource, getSyncRecords } from '@/http';
+import right from '@/images/right.svg';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
@@ -210,10 +235,13 @@ const {
   isLoading,
   initDataSourceList,
   syncStatus,
+  syncPercent,
   handleClick,
   importDialog,
   handleOperationsSync,
   stopPolling,
+  handleImportLocalDataSync,
+  stopImportDataTimePolling,
 } = useDataSource();
 
 // 重置数据源
@@ -301,6 +329,7 @@ const handleExportTemplate = () => {
   window.open(url);
 };
 
+const isImportStatusVisible = ref(false);
 // 导入用户
 const confirmImportUsers = async () => {
   if (!uploadInfo.file.name) {
@@ -327,19 +356,8 @@ const confirmImportUsers = async () => {
     const res = await axios.post(url, formData, config);
     if (res.data.data.status === 'success') {
       importDialog.isShow = false;
-      InfoBox({
-        width: 450,
-        infoType: 'success',
-        title: t('导入成功'),
-        confirmText: t('查看组织架构'),
-        cancelText: t('关闭'),
-        onConfirm: () => {
-          router.push({ name: 'organization' });
-        },
-        onClosed: () => {
-          initDataSourceList();
-        },
-      });
+      isImportStatusVisible.value = true;
+      handleImportLocalDataSync();
     } else {
       Message({ theme: 'error', message: res.data.data.summary });
     }
@@ -348,6 +366,11 @@ const confirmImportUsers = async () => {
   } finally {
     importDialog.loading = false;
   }
+};
+
+const handleCloseImportDialog = () => {
+  syncPercent.value = 0;
+  initDataSourceList();
 };
 
 const closed = () => {
@@ -380,6 +403,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopPolling();
+  stopImportDataTimePolling();
 });
 </script>
 
@@ -496,6 +520,34 @@ onBeforeUnmount(() => {
 ::v-deep .card-header {
   &:hover {
     border: 1px solid #A3C5FD;
+  }
+}
+
+.import-status-dialog {
+  ::v-deep .bk-modal-header {
+    height: 0px;
+  }
+  ::v-deep .bk-dialog-header {
+    padding: 0px;
+    height: 0px;
+  }
+  ::v-deep .bk-dialog-footer {
+    border: none;
+    background-color: #fff;
+  }
+  .progress-area {
+    ::v-deep .bk-progress {
+      margin-left: 12px;
+      height: 20px !important;
+      width: 160px !important;
+    }
+    ::v-deep .bk-progress-small {
+      margin-right: 8px !important;
+    }
+  }
+  ::v-deep .bk-modal-footer {
+    padding-top: 4px;
+    padding-bottom: 24px;
   }
 }
 </style>

@@ -53,11 +53,12 @@ export const useDataSource = () => {
 
   // 获取同步数据源状态
   const syncStatus = ref({});
-  const initSyncRecords = () => {
+  const initSyncRecords = (customFn: Function = null) => {
     getSyncRecords({ id: currentDataSourceId.value })
       .then((res) => {
         if (res.data?.count === 0) return;
         syncStatus.value = res.data?.results[0];
+        if (customFn) customFn(res.data);
       })
       .catch((error) => {
         console.warn(error);
@@ -109,6 +110,46 @@ export const useDataSource = () => {
       pollingInterval.value = null;
     }
   };
+
+  const importDataTimePolling = ref(null);
+  const syncPercent = ref(0);
+
+  const handleImportLocalDataSync = () => {
+    initSyncRecords(importDataSync);
+    importDataTimePolling.value = setInterval(() => {
+      initSyncRecords(importDataSync);
+    }, 5000);
+  };
+
+  const stopImportDataTimePolling = () => {
+    if (importDataTimePolling.value) {
+      clearInterval(importDataTimePolling.value);
+      importDataTimePolling.value = null;
+    }
+  };
+
+  const importDataSync = (data: { results: { status: any; }[]; }) => {
+    const currentStatus = data.results[0].status;
+    switch (currentStatus) {
+      case 'pending':
+        syncPercent.value = 0;
+        break;
+      case 'success':
+      case 'fail':
+        syncPercent.value = 100;
+        stopImportDataTimePolling();
+        break;
+      case 'running':
+        if (syncPercent.value <= 50) {
+          syncPercent.value = 50;
+        }
+        break;
+      default:
+        syncPercent.value += 7;
+        break;
+    };
+  };
+
   return {
     dataSourcePlugins,
     dataSource,
@@ -116,10 +157,13 @@ export const useDataSource = () => {
     isLoading,
     initDataSourceList,
     syncStatus,
+    syncPercent,
     initSyncRecords,
     handleClick,
     importDialog,
     handleOperationsSync,
     stopPolling,
+    handleImportLocalDataSync,
+    stopImportDataTimePolling
   };
 };
