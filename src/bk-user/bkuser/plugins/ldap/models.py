@@ -8,18 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+from typing import Literal
+
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field, model_validator
 
 from bkuser.plugins.ldap.constants import (
     DEFAULT_REQ_TIMEOUT,
-    DEFAULT_RETRIES,
     LDAP_BASE_DN_REGEX,
     LDAP_BIND_DN_REGEX,
     MAX_REQ_TIMEOUT,
-    MAX_RETRIES,
     MIN_REQ_TIMEOUT,
-    MIN_RETRIES,
     SERVER_URL_REGEX,
     PageSize,
 )
@@ -41,8 +41,13 @@ class ServerConfig(BaseModel):
     page_size: PageSize = PageSize.CNT_100
     # 单次请求超时时间
     request_timeout: int = Field(ge=MIN_REQ_TIMEOUT, le=MAX_REQ_TIMEOUT, default=DEFAULT_REQ_TIMEOUT)
-    # 请求失败重试次数
-    retries: int = Field(ge=MIN_RETRIES, le=MAX_RETRIES, default=DEFAULT_RETRIES)
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "ServerConfig":
+        if not self.bind_password:
+            raise ValueError(_("LDAP 服务需要提供密码"))
+
+        return self
 
 
 class DataConfig(BaseModel):
@@ -51,11 +56,27 @@ class DataConfig(BaseModel):
     # 用户对象类
     user_object_class: str
     # 用户过滤器
-    user_search_filter: str = ""
+    user_search_filter: str
     # 部门对象类
     dept_object_class: str
     # 部门过滤器
-    dept_search_filter: str = ""
+    dept_search_filter: str
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "DataConfig":
+        if not self.user_object_class:
+            raise ValueError(_("需要提供用户对象类"))
+
+        if not self.user_search_filter:
+            raise ValueError(_("需要提供用户过滤器（DN）"))
+
+        if not self.dept_object_class:
+            raise ValueError(_("需要提供部门对象类"))
+
+        if not self.dept_search_filter:
+            raise ValueError(_("需要提供部门过滤器（DN）"))
+
+        return self
 
 
 class UserGroupConfig(BaseModel):
@@ -64,13 +85,30 @@ class UserGroupConfig(BaseModel):
     # 是否支持用户组
     enabled: bool
     # 用户组对象类
-    object_class: str
+    object_class: Literal["groupOfNames", "groupOfUniqueNames", ""] = ""
     # 用户组过滤器
     search_filter: str = ""
-    # 用户组名称字段
-    group_name_field: str
     # 用户组成员字段
-    group_member_field: str
+    group_member_field: Literal["member", "uniqueMember", ""] = ""
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "UserGroupConfig":
+        if not self.enabled:
+            return self
+
+        if not self.object_class:
+            raise ValueError(_("需要提供用户组对象类"))
+
+        if not self.search_filter:
+            raise ValueError(_("需要提供用户组过滤器"))
+
+        if self.object_class == "groupOfNames" and self.group_member_field != "member":
+            raise ValueError(_("用户组对象类为 groupOfNames 时，成员字段应为 member"))
+
+        if self.object_class == "groupOfUniqueNames" and self.group_member_field != "uniqueMember":
+            raise ValueError(_("用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"))
+
+        return self
 
 
 class LeaderConfig(BaseModel):
@@ -79,7 +117,17 @@ class LeaderConfig(BaseModel):
     # 是否支持用户 Leader
     enabled: bool
     # Leader 字段名
-    leader_field: str
+    leader_field: str = ""
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "LeaderConfig":
+        if not self.enabled:
+            return self
+
+        if not self.leader_field:
+            raise ValueError(_("需要提供 Leader 字段名"))
+
+        return self
 
 
 class LDAPDataSourcePluginConfig(BasePluginConfig):
@@ -91,7 +139,7 @@ class LDAPDataSourcePluginConfig(BasePluginConfig):
 
     # 服务配置
     server_config: ServerConfig
-    # 认证配置
+    # 数据配置
     data_config: DataConfig
     # 用户组配置
     user_group_config: UserGroupConfig
@@ -101,26 +149,10 @@ class LDAPDataSourcePluginConfig(BasePluginConfig):
     @model_validator(mode="after")
     def validate_attrs(self) -> "LDAPDataSourcePluginConfig":
         """插件配置合法性检查"""
-        if not self.server_config.bind_password:
-            raise ValueError(_("LDAP 服务需要提供密码"))
+        if not self.data_config.user_search_filter.endswith(self.server_config.base_dn):
+            raise ValueError(_("用户过滤器（DN）必须是 Base DN 的子节点"))
 
-        if not self.data_config.user_object_class:
-            raise ValueError(_("需要提供用户对象类"))
-
-        if not self.data_config.dept_object_class:
-            raise ValueError(_("需要提供部门对象类"))
-
-        if self.user_group_config.enabled:
-            if not self.user_group_config.object_class:
-                raise ValueError(_("需要提供用户组对象类"))
-
-            if not self.user_group_config.group_name_field:
-                raise ValueError(_("需要提供用户组名称字段"))
-
-            if not self.user_group_config.group_member_field:
-                raise ValueError(_("需要提供用户组成员字段"))
-
-        if self.leader_config.enabled and not self.leader_config.leader_field:
-            raise ValueError(_("需要提供 Leader 字段名"))
+        if not self.data_config.dept_search_filter.endswith(self.server_config.base_dn):
+            raise ValueError(_("用户过滤器（DN）必须是 Base DN 的子节点"))
 
         return self
