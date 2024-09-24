@@ -24,10 +24,13 @@ class LDAPClient:
 
     def __init__(self, server_config: ServerConfig):
         self.server_config = server_config
-        self._conn = self._gen_conn(server_config)
-        self._conn.bind()
 
-    def __del__(self):
+    def __enter__(self):
+        self._conn = self._gen_conn(self.server_config)
+        self._conn.bind()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         self._conn.unbind()
 
     def fetch_all_objects(self, search_filter: str, object_class: str) -> List[Dict]:

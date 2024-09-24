@@ -26,6 +26,7 @@ from tests.fixtures.data_source import (  # noqa: F401
     full_local_data_source,
     general_ds_plugin,
     general_ds_plugin_cfg,
+    ldap_ds_plugin_cfg,
     local_ds_plugin,
     local_ds_plugin_cfg,
 )

@@ -37,7 +37,6 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
     def __init__(self, plugin_config: LDAPDataSourcePluginConfig, logger: PluginLogger):
         self.plugin_config = plugin_config
         self.logger = logger
-        self.client = LDAPClient(plugin_config.server_config)
         # 缓存部门相关信息，解析用户时候需要使用，可避免重复拉取 & 计算
         self.dept_dn_code_map: Dict[str, str] = {}
         self.user_group_dns_map: DefaultDict[str, List[str]] = defaultdict(list)
@@ -45,8 +44,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""
         cfg = self.plugin_config.data_config
-        depts = self.client.fetch_all_objects(cfg.dept_search_filter, cfg.dept_object_class)
-        self.logger.info(f"fetch {len(depts)} departments from ldap server")
+        with LDAPClient(self.plugin_config.server_config) as ldap_client:
+            depts = ldap_client.fetch_all_objects(cfg.dept_search_filter, cfg.dept_object_class)
+            self.logger.info(f"fetch {len(depts)} departments from ldap server")
 
         raw_depts = [self._gen_raw_dept(d) for d in depts]
 
@@ -54,11 +54,12 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         if self.plugin_config.user_group_config.enabled:
             self.logger.info("user group enabled...")
 
-            groups = self.client.fetch_all_objects(
-                self.plugin_config.user_group_config.search_filter,
-                self.plugin_config.user_group_config.object_class,  # type: ignore
-            )
-            self.logger.info(f"fetch {len(groups)} groups from ldap server")
+            with LDAPClient(self.plugin_config.server_config) as ldap_client:
+                groups = ldap_client.fetch_all_objects(
+                    self.plugin_config.user_group_config.search_filter,
+                    self.plugin_config.user_group_config.object_class,  # type: ignore
+                )
+                self.logger.info(f"fetch {len(groups)} groups from ldap server")
 
             # 提前存用户 - 用户组映射表，而不是后续依赖用户的 memberOf 属性
             # memberOf 属性需要特殊配置，ldap server 不一定会提供
@@ -93,8 +94,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             self.logger.warning("dept cache not found, this will cause user not dept infos")
 
         cfg = self.plugin_config.data_config
-        users = self.client.fetch_all_objects(cfg.user_search_filter, cfg.user_object_class)
-        self.logger.info(f"fetch {len(users)} users from ldap server")
+        with LDAPClient(self.plugin_config.server_config) as ldap_client:
+            users = ldap_client.fetch_all_objects(cfg.user_search_filter, cfg.user_object_class)
+            self.logger.info(f"fetch {len(users)} users from ldap server")
 
         # 生成的原始用户数据，不含部门，leader 信息
         raw_users = [self._gen_raw_user(u) for u in users]
@@ -113,8 +115,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         err_msg, user, dept = "", None, None
         user_data, dept_data = None, None
         try:
-            dept_data = self.client.fetch_first_object(cfg.dept_search_filter, cfg.dept_object_class)
-            user_data = self.client.fetch_first_object(cfg.user_search_filter, cfg.user_object_class)
+            with LDAPClient(self.plugin_config.server_config) as ldap_client:
+                dept_data = ldap_client.fetch_first_object(cfg.dept_search_filter, cfg.dept_object_class)
+                user_data = ldap_client.fetch_first_object(cfg.user_search_filter, cfg.user_object_class)
         except DataNotFoundError as e:
             err_msg = str(e)
         except Exception as e:
@@ -176,7 +179,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
 
         for u in raw_users:
             user_dn = u.properties["dn"]
-            for leader_dn in u.properties.get(leader_field, []):
+            for leader_dn in u.properties.get(leader_field, "").split(" "):
                 if leader_code := user_dn_code_map.get(leader_dn):
                     u.leaders.append(leader_code)
                 else:
@@ -221,11 +224,11 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         return RawDataSourceUser(code=attributes["entryUUID"], properties=properties, leaders=[], departments=[])
 
     @staticmethod
-    def _gen_user_group_dns_map(groups: List[Dict[str, Any]], member_field) -> DefaultDict[str, List[str]]:
+    def _gen_user_group_dns_map(groups: List[Dict[str, Any]], group_member_field: str) -> DefaultDict[str, List[str]]:
         """根据用户组信息，生成用户 - 用户组映射关系"""
         user_group_dns_map: DefaultDict[str, List[str]] = defaultdict(list)
         for g in groups:
-            for member in g["attributes"].get("member", []):
+            for member in g["attributes"].get(group_member_field, []):
                 user_group_dns_map[member].append(g["dn"])
 
         return user_group_dns_map
