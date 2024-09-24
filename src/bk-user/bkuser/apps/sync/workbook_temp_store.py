@@ -50,7 +50,7 @@ class WorkbookTempStore:
 
         return temporary_storage_id
 
-    def get_once(self, temporary_storage_id: str) -> Workbook:
+    def pop(self, temporary_storage_id: str) -> Workbook:
         """
         从临时存储中获取临时数据并转换为 Excel Workbook, 获取成功后即删除该临时存储中的临时数据
         :param temporary_storage_id: 临时数据唯一标识

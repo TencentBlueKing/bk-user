@@ -38,7 +38,7 @@ def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
         # 若已指定临时存储的数据唯一标识，则需要从临时存储中获取数据
         storage = WorkbookTempStore()
         try:
-            workbook = storage.get_once(temporary_storage_id)
+            workbook = storage.pop(temporary_storage_id)
         except ValueError:
             task.status = SyncTaskStatus.FAILED
             task.logs = f"data source sync task {task_id} require raw data in temporary storage, but not found"
