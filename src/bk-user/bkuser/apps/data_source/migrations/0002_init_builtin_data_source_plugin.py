@@ -34,7 +34,7 @@ def forwards_func(apps, schema_editor):
         },
     )
 
-    # Http数据源插件
+    # 通用 HTTP 数据源插件
     DataSourcePlugin.objects.get_or_create(
         id=DataSourcePluginEnum.GENERAL,
         defaults={
@@ -45,6 +45,20 @@ def forwards_func(apps, schema_editor):
             "description_zh_cn": "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据` API",
             "description_en_us": "Supports integration with general HTTP data sources. Users need to provide `User Data` and `Department Data` APIs at the service provider.",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/general/logo.png"),
+        },
+    )
+
+    # LDAP 数据源插件
+    DataSourcePlugin.objects.get_or_create(
+        id=DataSourcePluginEnum.LDAP,
+        defaults={
+            "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LDAP),
+            "name_zh_cn": "LDAP 数据源",
+            "name_en_us": "LDAP Data Source",
+            "description": "支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 OpenLDAP、Microsoft Active Directory 等",
+            "description_zh_cn": "支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 OpenLDAP、Microsoft Active Directory 等",
+            "description_en_us": "Supports integration with LDAP data sources. Users need to provide data services that comply with the LDAP protocol, such as OpenLDAP, Microsoft Active Directory, etc.",
+            "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/ldap/logo.png"),
         },
     )
 
