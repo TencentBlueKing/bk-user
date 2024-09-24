@@ -58,7 +58,7 @@ export const useDataSource = () => {
       .then((res) => {
         if (res.data?.count === 0) return;
         syncStatus.value = res.data?.results[0];
-        if (customFn) customFn(res.data);
+        if (customFn) customFn(syncStatus.value);
       })
       .catch((error) => {
         console.warn(error);
@@ -112,12 +112,11 @@ export const useDataSource = () => {
   };
 
   const importDataTimePolling = ref(null);
-  const syncPercent = ref(0);
 
   const handleImportLocalDataSync = () => {
-    initSyncRecords(importDataSync);
+    initSyncRecords(importDataStopRule);
     importDataTimePolling.value = setInterval(() => {
-      initSyncRecords(importDataSync);
+      initSyncRecords(importDataStopRule);
     }, 5000);
   };
 
@@ -128,26 +127,10 @@ export const useDataSource = () => {
     }
   };
 
-  const importDataSync = (data: { results: { status: any; }[]; }) => {
-    const currentStatus = data.results[0].status;
-    switch (currentStatus) {
-      case 'pending':
-        syncPercent.value = 0;
-        break;
-      case 'success':
-      case 'fail':
-        syncPercent.value = 100;
-        stopImportDataTimePolling();
-        break;
-      case 'running':
-        if (syncPercent.value <= 50) {
-          syncPercent.value = 50;
-        }
-        break;
-      default:
-        syncPercent.value += 7;
-        break;
-    };
+  const importDataStopRule = (data) => {
+    if (data.status === 'success') {
+      stopImportDataTimePolling();
+    }
   };
 
   return {
@@ -157,7 +140,6 @@ export const useDataSource = () => {
     isLoading,
     initDataSourceList,
     syncStatus,
-    syncPercent,
     initSyncRecords,
     handleClick,
     importDialog,

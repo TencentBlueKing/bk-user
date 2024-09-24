@@ -182,13 +182,6 @@
           <img :src="right" class="h-[56px] w-[56px] " />
         </div>
         <div class="bk-infobox-title !text-[16px] !mt-[20px] h-[24px]">{{t('导入成功')}}</div>
-        <div class="progress-area flex justify-center mt-[24px]">
-          <div class="text-[12px]">{{ t('同步进度') }}</div>
-          <bk-progress
-            :percent="syncPercent"
-            size="small"
-          />
-        </div>
       </div>
     </bk-dialog>
     <!-- 数据更新记录 -->
@@ -235,7 +228,6 @@ const {
   isLoading,
   initDataSourceList,
   syncStatus,
-  syncPercent,
   handleClick,
   importDialog,
   handleOperationsSync,
@@ -369,7 +361,6 @@ const confirmImportUsers = async () => {
 };
 
 const handleCloseImportDialog = () => {
-  syncPercent.value = 0;
   initDataSourceList();
 };
 
@@ -426,31 +417,16 @@ onBeforeUnmount(() => {
   }
 
   .tag-style {
-    display: inline-block;
-    height: 22px;
-    padding: 0 10px;
-    margin-right: 4px;
-    font-size: 12px;
-    line-height: 22px;
-    border-radius: 2px;
+    .tag-style();
   }
-
   .success {
-    color: #14a568;
-    background-color: #e4faf0;
-    border-color: #14a5684d;
+    .success();
   }
-
   .danger {
-    color: #ea3636;
-    background-color: #feebea;
-    border-color: #ea35364d;
+    .danger();
   }
-
   .warning {
-    color: #fe9c00;
-    background-color: #fff1db;
-    border-color: #fea5004d;
+    .warning();
   }
 }
 
@@ -535,19 +511,37 @@ onBeforeUnmount(() => {
     border: none;
     background-color: #fff;
   }
-  .progress-area {
-    ::v-deep .bk-progress {
-      margin-left: 12px;
-      height: 20px !important;
-      width: 160px !important;
-    }
-    ::v-deep .bk-progress-small {
-      margin-right: 8px !important;
-    }
-  }
   ::v-deep .bk-modal-footer {
     padding-top: 4px;
     padding-bottom: 24px;
   }
+}
+
+.tag-style() {
+  display: inline-block;
+  height: 22px;
+  padding: 0 10px;
+  margin-right: 4px;
+  font-size: 12px;
+  line-height: 22px;
+  border-radius: 2px;
+}
+
+.success() {
+  color: #14a568;
+  background-color: #e4faf0;
+  border-color: #14a5684d;
+}
+
+.danger() {
+  color: #ea3636;
+  background-color: #feebea;
+  border-color: #ea35364d;
+}
+
+.warning() {
+  color: #fe9c00;
+  background-color: #fff1db;
+  border-color: #fea5004d;
 }
 </style>
