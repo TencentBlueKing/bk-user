@@ -548,6 +548,14 @@ const getCurrentUser = async (id) => {
       language: currentUserInfo.value.language,
       time_zone: currentUserInfo.value.time_zone,
     };
+    if (currentUserInfo.value.is_inherited_email) {
+      currentUserInfo.value.custom_email = '';
+      customEmail.value = '';
+    }
+    if (currentUserInfo.value.is_inherited_phone) {
+      currentUserInfo.value.custom_phone = '';
+      customPhone.value = '';
+    }
   } catch (error) {
     console.warn(error);
   } finally {
