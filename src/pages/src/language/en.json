@@ -365,6 +365,7 @@
   "邮箱+验证码": "Email + Verification code",
   "手机号验证": "Mobile number verification",
   "邮箱验证": "Email verification",
+  "验证码错误，请重试": "Verification code error, please try again",
   "收到的邮箱验证码": "received email verification code",
   "收到的手机验证码": "received mobile number verification code",
   "强制开启MFA": "Mandatory MFA enablement",

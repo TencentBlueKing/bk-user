@@ -109,7 +109,6 @@
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Message, overflowTitle } from 'bkui-vue';
-import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
 import { computed, defineEmits, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
 import { formItemPropName, openDialogResult, OpenDialogType } from './openDialogType';
@@ -299,11 +298,9 @@ const handleSubmitVerifyForm = async () => {
   const { type } = props.currentVerifyConfig;
   const { email, phone } = OpenDialogType;
   const { success, fail } = openDialogResult;
-  const infoBoxConfig: Partial<BkInfoBoxConfig> = {
-    type: success,
-    title: '',
-    closeIcon: false,
-  };
+  const OVERLOAD_ERROR_CN = `验证码无效: 验证码错误`;
+  const OVERLOAD_ERROR_EN = `Invalid verification code: Incorrect verification code`;
+  let verifyResult = success;
   if (type === email) {
     try {
       await patchUsersEmail({
@@ -315,8 +312,13 @@ const handleSubmitVerifyForm = async () => {
       verifySuccessText.value = t('邮箱验证成功');
       emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
-      captchaMessage.value = err.response.data?.error?.message;
-      infoBoxConfig.type = fail;
+      const captchaTips = err.response.data?.error?.message;
+      if (captchaTips === OVERLOAD_ERROR_CN || captchaTips === OVERLOAD_ERROR_EN) {
+        captchaMessage.value = t('验证码错误，请重试');
+      } else {
+        captchaMessage.value = captchaTips;
+      }
+      verifyResult = fail;
       captchaValidate.value = true;
     }
   }
@@ -335,13 +337,18 @@ const handleSubmitVerifyForm = async () => {
         custom_phone_country_code: verifyForm.custom_phone_country_code,
       });
     } catch (err: any) {
-      captchaMessage.value = err.response.data?.error?.message;
-      infoBoxConfig.type = fail;
+      const captchaTips = err.response.data?.error?.message;
+      if (captchaTips === OVERLOAD_ERROR_CN || captchaTips === OVERLOAD_ERROR_EN) {
+        captchaMessage.value = t('验证码错误，请重试');
+      } else {
+        captchaMessage.value = captchaTips;
+      }
+      verifyResult = fail;
       captchaValidate.value = true;
     }
   }
   submitBtnLoading.value = false;
-  if (infoBoxConfig.type === success) {
+  if (verifyResult === success) {
     verifySuccessVisible.value = true;
     handleCloseVerifyDialog();
   }
