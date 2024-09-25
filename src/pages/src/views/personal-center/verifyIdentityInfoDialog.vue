@@ -33,6 +33,7 @@
             :tel-error="telError"
             @change-country-code="changeCountryCode"
             @change-tel-error="changeTelError"
+            custom-tel-error-text="请输入正确的手机号格式"
             :custom="true" />
         </bk-form-item>
 
