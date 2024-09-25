@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 
 # 服务 URL 正则
-SERVER_URL_REGEX = r"^ldaps?://[a-zA-Z0-9-\.]+(:\d+)?$"
+SERVER_URL_REGEX = r"^ldaps?://[a-zA-Z0-9-/\.]+(:\d+)?$"
 
 # LDAP BIND DN 正则：必须提供 1 个 cn/uid，0 或 N 个 ou，0 或 1 个 o，1 或 N 个 dc
 LDAP_BIND_DN_REGEX = r"^(cn|uid)=[^,]+(,ou=[^,]+)*(,o=[^,]+)?(,dc=[^,]+)+$"
