@@ -77,11 +77,37 @@
       </div>
     </template>
   </bk-dialog>
+  <bk-dialog
+    v-model:is-show="verifySuccessVisible"
+    class="verify-success-dialog"
+    :close-icon="false"
+    :quick-close="false"
+    :esc-close="false"
+  >
+    <div class="text-center mt-[-4.62px]">
+      <div class="flex justify-center">
+        <img :src="right" class="h-[131.25px] w-[131.25px] " />
+      </div>
+      <div
+        class="bk-infobox-title !text-[24px] !mt-[33.37px] leading-[32px] text-[#313238] font-bold">
+        {{ verifySuccessText }}
+      </div>
+    </div>
+    <div class="flex justify-center mt-[32px] pb-[8px]">
+      <bk-button
+        theme="primary"
+        class="!h-[40px] !w-[100px] justify-center !text-[16px] !leading-[24px]"
+        @click="verifySuccessVisible = false">
+        {{ t('确定') }}
+      </bk-button>
+    </div>
+    <template #footer></template>
+  </bk-dialog>
 </template>
 
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { InfoBox, Message, overflowTitle } from 'bkui-vue';
+import { Message, overflowTitle } from 'bkui-vue';
 import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
 import { computed, defineEmits, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
@@ -90,6 +116,7 @@ import { formItemPropName, openDialogResult, OpenDialogType } from './openDialog
 import phoneInput from '@/components/phoneInput.vue';
 import { useCountDown, useValidate } from '@/hooks';
 import { patchUsersEmail, patchUsersPhone, postPersonalCenterUserEmailCaptcha, postPersonalCenterUserPhoneCaptcha } from '@/http/personalCenterFiles';
+import right from '@/images/right.svg';
 import { t } from '@/language/index';
 
 interface VerifyData {
@@ -258,6 +285,8 @@ const handleCloseVerifyDialog = () => {
 };
 
 const submitBtnLoading = ref(false);
+const verifySuccessVisible = ref(false);
+const verifySuccessText = ref(null);
 const handleSubmitVerifyForm = async () => {
   captchaValidate.value = false;
   captchaMessage.value = '';
@@ -282,7 +311,7 @@ const handleSubmitVerifyForm = async () => {
         custom_email: verifyForm.email,
         verification_code: verifyForm.captcha,
       }, { globalError: false });
-      infoBoxConfig.title = t('邮箱验证成功');
+      verifySuccessText.value = t('邮箱验证成功');
       emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
       captchaMessage.value = err.response.data?.error?.message;
@@ -299,7 +328,7 @@ const handleSubmitVerifyForm = async () => {
         custom_phone_country_code: verifyForm.custom_phone_country_code,
         verification_code: verifyForm.captcha,
       }, { globalError: false });
-      infoBoxConfig.title = t('手机号验证成功');
+      verifySuccessText.value = t('手机号验证成功');
       emit('confirmVerifyPhone', {
         custom_phone: verifyForm.custom_phone,
         custom_phone_country_code: verifyForm.custom_phone_country_code,
@@ -312,7 +341,7 @@ const handleSubmitVerifyForm = async () => {
   }
   submitBtnLoading.value = false;
   if (infoBoxConfig.type === success) {
-    InfoBox(infoBoxConfig);
+    verifySuccessVisible.value = true;
     handleCloseVerifyDialog();
   }
 };
@@ -349,6 +378,7 @@ const handleSubmitVerifyForm = async () => {
 
 ::v-deep .bk-dialog-footer {
   border: none;
+  background-color: #fff;
 }
 
 </style>
