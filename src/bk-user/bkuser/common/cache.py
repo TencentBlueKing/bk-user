@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import functools
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
@@ -38,6 +39,8 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     VERIFICATION_CODE = "vc"
     # 用户重置密码用 Token
     RESET_PASSWORD_TOKEN = "rpt"
+    # Workbook 临时存储
+    WORKBOOK_TEMPORARY_STORE = "wts"
 
 
 def _default_key_function(*args, **kwargs):
