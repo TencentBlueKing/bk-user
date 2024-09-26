@@ -335,6 +335,7 @@ const confirmImportUsers = async () => {
     await axios.post(url, formData, config);
     importDialog.isShow = false;
     handleImportLocalDataSync();
+    initDataSourceList();
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
   } finally {
