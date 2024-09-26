@@ -52,9 +52,11 @@
             <bk-button
               outline theme="primary"
               class="!w-[141.68px] ml-[12px] !h-[40px]"
-              :disabled="verifyFormCaptchaBtn.disabled"
+              :disabled="verifyFormCaptchaBtn[currentVerifyConfig.type].disabled"
               @click="handleSendCaptcha">
-              {{ verifyFormCaptchaBtn.disabled ? `${verifyFormCaptchaBtn.times}s` : t('获取验证码') }}
+              {{ verifyFormCaptchaBtn[currentVerifyConfig.type].disabled ?
+                `${verifyFormCaptchaBtn[currentVerifyConfig.type].times}s`
+                : t('获取验证码') }}
             </bk-button>
           </div>
           <bk-overflow-title
@@ -179,8 +181,14 @@ interface VerifyForm {
 };
 
 const verifyFormCaptchaBtn = reactive({
-  disabled: false,
-  times: 0,
+  phone: {
+    disabled: false,
+    times: 0,
+  },
+  email: {
+    disabled: false,
+    times: 0,
+  },
 });
 
 const captchaValidate = ref(false);
@@ -191,6 +199,7 @@ const clearCaptchaValidate = () => {
   captchaMessage.value = '';
 };
 
+const closeTimePolling = ref(null);
 // 发送验证码
 const handleSendCaptcha = async () => {
   if (props.currentVerifyConfig.type === OpenDialogType.email) {
@@ -204,11 +213,11 @@ const handleSendCaptcha = async () => {
   verifyFormRef.value.clearValidate();
   const captchaCoolingTime = 60;
   const shutDownPointTime = 0;
-  const { closeTimePolling } = useCountDown({
+  const { closeTimePolling: countDownCloseTimePolling } = useCountDown({
     beforeStart: () => {
       (async () => {
-        verifyFormCaptchaBtn.times = captchaCoolingTime;
-        verifyFormCaptchaBtn.disabled = true;
+        verifyFormCaptchaBtn[props.currentVerifyConfig.type].times = captchaCoolingTime;
+        verifyFormCaptchaBtn[props.currentVerifyConfig.type].disabled = true;
         const { userId } = props;
         // 获取邮箱验证码
         if (props.currentVerifyConfig.type === OpenDialogType.email) {
@@ -237,13 +246,14 @@ const handleSendCaptcha = async () => {
         }
       })();
     },
-    intervalFn: () => verifyFormCaptchaBtn.times -= 1,
-    beforeClose: () => verifyFormCaptchaBtn.disabled = false,
+    intervalFn: () => verifyFormCaptchaBtn[props.currentVerifyConfig.type].times -= 1,
+    beforeClose: () => verifyFormCaptchaBtn[props.currentVerifyConfig.type].disabled = false,
   });
+  closeTimePolling.value = countDownCloseTimePolling;
 
-  watch([() => verifyFormCaptchaBtn.times, isShow], ([curBtnTimes, curShow]) => {
-    curBtnTimes === shutDownPointTime && closeTimePolling();
-    !curShow && closeTimePolling();
+  // 关闭dialog仍需保持倒计时
+  watch(() => verifyFormCaptchaBtn[props.currentVerifyConfig.type].times, (curBtnTimes) => {
+    curBtnTimes === shutDownPointTime && closeTimePolling.value();
   });
   return;
 };
@@ -298,8 +308,8 @@ const handleSubmitVerifyForm = async () => {
   const { type } = props.currentVerifyConfig;
   const { email, phone } = OpenDialogType;
   const { success, fail } = openDialogResult;
-  const OVERLOAD_ERROR_CN = `验证码无效: 验证码错误`;
-  const OVERLOAD_ERROR_EN = `Invalid verification code: Incorrect verification code`;
+  const OVERLOAD_ERROR_CN = '验证码无效: 验证码错误';
+  const OVERLOAD_ERROR_EN = 'Invalid verification code: Incorrect verification code';
   let verifyResult = success;
   if (type === email) {
     try {
@@ -351,6 +361,7 @@ const handleSubmitVerifyForm = async () => {
   if (verifyResult === success) {
     verifySuccessVisible.value = true;
     handleCloseVerifyDialog();
+    closeTimePolling.value?.();
   }
 };
 
