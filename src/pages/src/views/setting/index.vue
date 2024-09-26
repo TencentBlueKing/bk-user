@@ -23,7 +23,7 @@
           class="main-menu__toggle"
           @click="menuStore.toggle">
           <i
-            class="user-icon icon-arrow-left main-menu__icon"
+            class="user-icon icon-arrow-right main-menu__icon"
             :class="[{
               'main-menu__icon--active': menuStore.toggleCollapsed
             }]" />
