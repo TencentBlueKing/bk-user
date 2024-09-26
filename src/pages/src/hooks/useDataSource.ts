@@ -99,8 +99,8 @@ export const useDataSource = () => {
     postOperationsSync(dataSource.value?.id).then((res) => {
       Message({ theme: res.data.status, message: res.data.summary });
       if (pollingInterval.value) return;
-      initSyncRecords();
-      pollingInterval.value = setInterval(initSyncRecords, 10000);
+      initSyncRecords(stopOperationPollingRule);
+      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 10000);
     });
   };
 
@@ -110,6 +110,12 @@ export const useDataSource = () => {
       pollingInterval.value = null;
     }
   };
+
+  const stopOperationPollingRule = (data) => {
+    if (data.status === 'success') {
+      stopPolling();
+    }
+  }
 
   const importDataTimePolling = ref(null);
 
