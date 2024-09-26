@@ -31,10 +31,16 @@
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
-              <span :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
+              <span
+                v-if="syncStatus?.status !== 'running' || dataSource?.plugin_id !== 'local'"
+                :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
-              <span>{{ syncStatus?.start_at }}</span>
+              <span v-else class="flex">
+                <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
+                <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
+              </span>
+              <span v-if="syncStatus?.status !== 'running'">{{ syncStatus?.start_at }}</span>
             </div>
             <div v-if="dataSource?.plugin_id === 'local'">
               <bk-button
@@ -167,23 +173,6 @@
         </div>
       </template>
     </bk-dialog>
-    <bk-dialog
-      v-model:is-show="isImportStatusVisible"
-      class="import-status-dialog"
-      width="640"
-      footer-align="center"
-      :confirm-text="t('查看组织架构')"
-      :cancel-text="t('关闭')"
-      @closed="handleCloseImportDialog"
-      @confirm="() => router.push({ name: 'organization' })"
-    >
-      <div class="text-center pt-[24px]">
-        <div class="flex justify-center">
-          <img :src="right" class="h-[56px] w-[56px] " />
-        </div>
-        <div class="bk-infobox-title !text-[16px] !mt-[20px] h-[24px]">{{t('导入成功')}}</div>
-      </div>
-    </bk-dialog>
     <!-- 数据更新记录 -->
     <bk-sideslider
       v-model:isShow="updateConfig.isShow"
@@ -212,7 +201,7 @@ import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource, getSyncRecords } from '@/http';
-import right from '@/images/right.svg';
+import loadingImg from '@/images/loading.svg';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
@@ -320,8 +309,6 @@ const handleExportTemplate = () => {
   const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/download_template/`;
   window.open(url);
 };
-
-const isImportStatusVisible = ref(false);
 // 导入用户
 const confirmImportUsers = async () => {
   if (!uploadInfo.file.name) {
@@ -345,23 +332,14 @@ const confirmImportUsers = async () => {
       withCredentials: true,
     };
     const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/import/`;
-    const res = await axios.post(url, formData, config);
-    if (res.data.data.status === 'success') {
-      importDialog.isShow = false;
-      isImportStatusVisible.value = true;
-      handleImportLocalDataSync();
-    } else {
-      Message({ theme: 'error', message: res.data.data.summary });
-    }
+    await axios.post(url, formData, config);
+    importDialog.isShow = false;
+    handleImportLocalDataSync();
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
   } finally {
     importDialog.loading = false;
   }
-};
-
-const handleCloseImportDialog = () => {
-  initDataSourceList();
 };
 
 const closed = () => {

@@ -117,7 +117,7 @@ export const useDataSource = () => {
     initSyncRecords(importDataStopRule);
     importDataTimePolling.value = setInterval(() => {
       initSyncRecords(importDataStopRule);
-    }, 5000);
+    }, 1000);
   };
 
   const stopImportDataTimePolling = () => {
