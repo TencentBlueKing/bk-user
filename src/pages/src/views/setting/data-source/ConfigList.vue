@@ -346,7 +346,7 @@ const confirmImportUsers = async () => {
 const closed = () => {
   importDialog.isShow = false;
   if (!dataSource.value?.id) {
-    deleteDataSources(currentDataSourceId.value).then(() => {
+    deleteDataSources({ id: currentDataSourceId.value }).then(() => {
       initDataSourceList();
       uploadInfo.file = {};
       uploadInfo.overwrite = false;

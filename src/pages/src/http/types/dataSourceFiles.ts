@@ -132,5 +132,5 @@ export interface ResetPasswordParams {
  */
 export interface DeleteDataSourcesParams {
   id: string,
-  is_delete_idp: string,
+  is_delete_idp?: string,
 }
