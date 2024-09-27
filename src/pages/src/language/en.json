@@ -72,6 +72,7 @@
   "每 7 天": "Every 7 days",
   "每 30 天": "Every 30 days",
   "待执行": "Pending",
+  "同步状态": "Synchronization status",
   "同步中": "Running",
   "成功": "Success",
   "失败": "Failed",

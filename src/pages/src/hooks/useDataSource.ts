@@ -53,11 +53,12 @@ export const useDataSource = () => {
 
   // 获取同步数据源状态
   const syncStatus = ref({});
-  const initSyncRecords = () => {
+  const initSyncRecords = (customFn: Function = null) => {
     getSyncRecords({ id: currentDataSourceId.value })
       .then((res) => {
         if (res.data?.count === 0) return;
         syncStatus.value = res.data?.results[0];
+        if (customFn) customFn(syncStatus.value);
       })
       .catch((error) => {
         console.warn(error);
@@ -98,8 +99,8 @@ export const useDataSource = () => {
     postOperationsSync(dataSource.value?.id).then((res) => {
       Message({ theme: res.data.status, message: res.data.summary });
       if (pollingInterval.value) return;
-      initSyncRecords();
-      pollingInterval.value = setInterval(initSyncRecords, 10000);
+      initSyncRecords(stopOperationPollingRule);
+      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 10000);
     });
   };
 
@@ -109,6 +110,35 @@ export const useDataSource = () => {
       pollingInterval.value = null;
     }
   };
+
+  const stopOperationPollingRule = (data) => {
+    if (data.status === 'success') {
+      stopPolling();
+    }
+  }
+
+  const importDataTimePolling = ref(null);
+
+  const handleImportLocalDataSync = () => {
+    initSyncRecords(importDataStopRule);
+    importDataTimePolling.value = setInterval(() => {
+      initSyncRecords(importDataStopRule);
+    }, 1000);
+  };
+
+  const stopImportDataTimePolling = () => {
+    if (importDataTimePolling.value) {
+      clearInterval(importDataTimePolling.value);
+      importDataTimePolling.value = null;
+    }
+  };
+
+  const importDataStopRule = (data) => {
+    if (data.status === 'success') {
+      stopImportDataTimePolling();
+    }
+  };
+
   return {
     dataSourcePlugins,
     dataSource,
@@ -121,5 +151,7 @@ export const useDataSource = () => {
     importDialog,
     handleOperationsSync,
     stopPolling,
+    handleImportLocalDataSync,
+    stopImportDataTimePolling
   };
 };
