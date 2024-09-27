@@ -24,7 +24,7 @@
             @update-cur-step="updateCurStep"
             @update-success="updateSuccess" />
           <SchemaForm
-            v-if="currentType === customPlugin"
+            v-if="isJsonSchema"
             ref="schemaFormRef"
             :form-data="formData"
             :plugins-config="jsonSchema"
@@ -36,7 +36,7 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { onMounted, reactive, ref, watch } from 'vue';
+<script setup lang="ts"> import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Success from './ConfigSuccess.vue';
@@ -68,9 +68,11 @@ const jsonSchema = ref({});
 const changePluginConfig = (value: any) => {
   formData.plugin_config = value;
 };
-const customPlugin = 'custom_plugin';
+const isNotJsonSchemaIds = ['general', 'local'];
+const isJsonSchema = computed(() => !isNotJsonSchemaIds.includes(currentType.value));
+
 const getJsonSchema = () => {
-  if (currentType.value !== customPlugin) return;
+  if (!isJsonSchema.value) return;
   getCustomPlugin(currentType.value).then((res) => {
     jsonSchema.value = res.data?.json_schema;
   });
