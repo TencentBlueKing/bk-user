@@ -83,6 +83,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-user-directory:before {
 	content: "\e113";
 }
+.icon-dui:before {
+	content: "\e157";
+}
 .icon-homepage:before {
 	content: "\e114";
 }
