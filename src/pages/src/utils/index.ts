@@ -285,12 +285,12 @@ export const dataRecordStatus = {
   },
   success: {
     icon: normalImg,
-    text: t('成功'),
+    text: t('同步成功'),
     theme: 'success',
   },
   failed: {
     icon: abnormalImg,
-    text: t('失败'),
+    text: t('同步失败'),
     theme: 'danger',
   },
 };

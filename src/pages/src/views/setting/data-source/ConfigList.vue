@@ -333,12 +333,13 @@ const confirmImportUsers = async () => {
     };
     const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/import/`;
     await axios.post(url, formData, config);
-    importDialog.isShow = false;
+    Message({ theme: 'success', message: t('导入成功') });
     handleImportLocalDataSync();
     initDataSourceList();
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
   } finally {
+    importDialog.isShow = false;
     importDialog.loading = false;
   }
 };
