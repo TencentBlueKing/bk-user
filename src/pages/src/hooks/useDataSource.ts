@@ -11,6 +11,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
+import { useSyncStatus } from '@/store/syncStatus';
 
 export const useDataSource = () => {
   const dataSourcePlugins = ref([]);
@@ -52,13 +53,13 @@ export const useDataSource = () => {
   };
 
   // 获取同步数据源状态
-  const syncStatus = ref({});
+  const syncStatusStore = useSyncStatus();
   const initSyncRecords = (customFn: Function = null) => {
     getSyncRecords({ id: currentDataSourceId.value })
       .then((res) => {
         if (res.data?.count === 0) return;
-        syncStatus.value = res.data?.results[0];
-        if (customFn) customFn(syncStatus.value);
+        syncStatusStore.setSyncStatus(res.data?.results[0]);
+        if (customFn) customFn(syncStatusStore.syncStatus);
       })
       .catch((error) => {
         console.warn(error);
@@ -145,7 +146,6 @@ export const useDataSource = () => {
     currentDataSourceId,
     isLoading,
     initDataSourceList,
-    syncStatus,
     initSyncRecords,
     handleClick,
     importDialog,
