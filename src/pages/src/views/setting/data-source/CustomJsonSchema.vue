@@ -171,7 +171,7 @@ const userProperties = ref([]);
 const isLoading = ref(false);
 
 const defaultServerConfig = () => ({
-  plugin_id: '',
+  plugin_id: props.currentType,
   server_config: {
     server_base_url: '',
     user_api_path: '',
