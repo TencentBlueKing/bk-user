@@ -74,6 +74,8 @@
   "待执行": "Pending",
   "同步状态": "Synchronization status",
   "同步中": "Running",
+  "同步成功": "Synchronization successful",
+  "同步失败": "Synchronization failed",
   "成功": "Success",
   "失败": "Failed",
   "定时": "Scheduled",
