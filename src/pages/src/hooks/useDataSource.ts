@@ -113,10 +113,10 @@ export const useDataSource = () => {
   };
 
   const stopOperationPollingRule = (data) => {
-    if (data.status === 'success') {
+    if (data.status === 'success' || data.status === 'failed') {
       stopPolling();
     }
-  }
+  };
 
   const importDataTimePolling = ref(null);
 
