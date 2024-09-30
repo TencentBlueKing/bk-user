@@ -43,7 +43,7 @@ class BKUserInstrumentor(BaseInstrumentor):
         logger.info("otel instructment: celery")
 
         if getattr(settings, "OTEL_INSTRUMENT_DB_API", False):
-            import pymysql  # noqa
+            import pymysql
 
             dbapi.wrap_connect(
                 __name__,
