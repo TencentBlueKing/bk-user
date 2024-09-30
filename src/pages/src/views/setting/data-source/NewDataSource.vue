@@ -12,7 +12,7 @@
           <bk-steps
             ext-cls="steps"
             :cur-step="curStep"
-            :steps="typeSteps?.[currentType]"
+            :steps="typeSteps"
           />
         </div>
         <div>
@@ -23,12 +23,14 @@
             :is-reset="isReset"
             @update-cur-step="updateCurStep"
             @update-success="updateSuccess" />
-          <SchemaForm
-            v-if="isJsonSchema"
-            ref="schemaFormRef"
-            :form-data="formData"
-            :plugins-config="jsonSchema"
-            @change-plugin-config="changePluginConfig" />
+          <CustomJsonSchema
+            v-if="!isNotJsonSchemaIds.includes(currentType)"
+            :current-type="currentType"
+            :data-source-id="dataSourceId"
+            :cur-step="curStep"
+            :is-reset="isReset"
+            @update-cur-step="updateCurStep"
+            @update-success="updateSuccess" />
         </div>
       </template>
     </DataSourceCard>
@@ -36,18 +38,15 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { computed, onMounted, reactive, ref, watch } from 'vue';
+<script setup lang="ts"> import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Success from './ConfigSuccess.vue';
+import CustomJsonSchema from './CustomJsonSchema.vue';
 import Http from './HttpConfig.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
-import SchemaForm from '@/components/schema-form/SchemaForm.vue';
-import {
-  getCustomPlugin,
-  getDataSourcePlugins,
-} from '@/http';
+import { getDataSourcePlugins } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
 
@@ -60,23 +59,7 @@ const userStore = useUser();
 
 const currentType = ref('');
 
-const formData = reactive({
-  plugin_config: {},
-});
-const schemaFormRef = ref();
-const jsonSchema = ref({});
-const changePluginConfig = (value: any) => {
-  formData.plugin_config = value;
-};
 const isNotJsonSchemaIds = ['general', 'local'];
-const isJsonSchema = computed(() => !isNotJsonSchemaIds.includes(currentType.value));
-
-const getJsonSchema = () => {
-  if (!isJsonSchema.value) return;
-  getCustomPlugin(currentType.value).then((res) => {
-    jsonSchema.value = res.data?.json_schema;
-  });
-};
 
 // 获取数据源类型
 watch(() => route.query.type, (val: string) => {
@@ -103,16 +86,13 @@ const currentPlugins = ref([]);
 const isLoading = ref(false);
 
 const curStep = ref(1);
-const typeSteps = reactive({
-  general: [
-    { title: t('服务配置') },
-    { title: t('字段设置') },
-  ],
-});
+const typeSteps = ref([
+  { title: t('服务配置') },
+  { title: t('字段设置') },
+]);
 
 onMounted(() => {
   initDataSourcePlugins();
-  getJsonSchema();
 });
 
 const initDataSourcePlugins = () => {
