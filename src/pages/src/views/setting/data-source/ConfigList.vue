@@ -191,7 +191,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HttpDetails from './HttpDetails.vue';
@@ -200,23 +200,23 @@ import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
-import { deleteDataSources, getRelatedResource, getSyncRecords } from '@/http';
+import { deleteDataSources, getRelatedResource } from '@/http';
 import loadingImg from '@/images/loading.svg';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useUser } from '@/store';
+import { useSyncStatus, useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
 const route = useRoute();
 
 const userStore = useUser();
-
+const syncStatusStore = useSyncStatus();
+const syncStatus = computed(() => syncStatusStore.syncStatus);
 const {
   dataSourcePlugins,
   dataSource,
   currentDataSourceId,
   isLoading,
   initDataSourceList,
-  syncStatus,
   handleClick,
   importDialog,
   handleOperationsSync,
