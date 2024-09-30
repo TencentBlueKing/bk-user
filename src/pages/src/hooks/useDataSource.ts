@@ -135,7 +135,7 @@ export const useDataSource = () => {
   };
 
   const importDataStopRule = (data) => {
-    if (data.status === 'success') {
+    if (data.status === 'success' || data.status === 'failed') {
       stopImportDataTimePolling();
     }
   };
