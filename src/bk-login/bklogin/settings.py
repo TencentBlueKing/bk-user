@@ -21,9 +21,6 @@ import urllib3
 from django.utils.encoding import force_bytes
 
 pymysql.install_as_MySQLdb()
-# Patch version info to forcely pass Django client check
-pymysql.version_info = 1, 4, 2, "final", 0
-
 
 # environ
 env = environ.Env()
