@@ -13,7 +13,7 @@ priority = "default"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 django = "3.2.25"
-mysqlclient = "2.2.4"
+pymysql = "1.1.1"
 requests = "2.31.0"
 gunicorn = "21.2.0"
 gevent = "23.9.1"
@@ -46,6 +46,7 @@ types-requests = "^2.31.0.2"
 pytest = "^7.4.2"
 pytest-django = "^4.5.2"
 import-linter = "^1.11.1"
+types-pymysql = "^1.1.0.20240524"
 
 [tool.mypy]
 ignore_missing_imports = true
