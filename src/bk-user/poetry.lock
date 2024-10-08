@@ -2963,6 +2963,22 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
 [[package]]
+name = "types-pymysql"
+version = "1.1.0.20240524"
+description = "Typing stubs for PyMySQL"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-PyMySQL-1.1.0.20240524.tar.gz", hash = "sha256:93058fef2077c407e29bdcd1a7dfbbf06a59324a5440df30dd002f572199ac17"},
+    {file = "types_PyMySQL-1.1.0.20240524-py3-none-any.whl", hash = "sha256:8be5be228bf6376f9055ec03bec0dfa6f1a84163f9a89305db446f0b31f87be3"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
 name = "types-pyopenssl"
 version = "24.1.0.20240722"
 description = "Typing stubs for pyOpenSSL"
@@ -3431,4 +3447,4 @@ reference = "tencent"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "4ab7765a4ff9b2014c86c1cbffc9bf08cf31de8474481419dbc34245a7b9f775"
+content-hash = "1d3a173d9d5de3bc1eeea860710c4bd67c39d35c520261809a8353a508fd2c3a"

@@ -46,6 +46,7 @@ types-requests = "^2.31.0.2"
 pytest = "^7.4.2"
 pytest-django = "^4.5.2"
 import-linter = "^1.11.1"
+types-pymysql = "^1.1.0.20240524"
 
 [tool.mypy]
 ignore_missing_imports = true
