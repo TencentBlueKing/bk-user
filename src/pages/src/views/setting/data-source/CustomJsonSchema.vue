@@ -464,6 +464,11 @@ onMounted(async () => {
     ::v-deep .bk-schema-form-group {
       padding: 0 4px;
     }
+    ::v-deep .bk-form-content {
+      & > .bk-select {
+        border: none !important;
+      }
+    }
   }
   .btn {
     position: relative;
