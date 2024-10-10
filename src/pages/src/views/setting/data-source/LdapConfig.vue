@@ -402,7 +402,10 @@ const handleTestConnection = async () => {
       connectionText.value = t('测试成功');
       nextDisabled.value = false;
       userProperties.value = Object.keys(res.data?.user?.properties);
-      leaderOptions.value = res.data?.user?.leaders;
+      leaderOptions.value = res.data?.user?.properties?.manager?.split(',').map((item: string) => ({
+        value: item,
+        label: item,
+      }));
     } else {
       connectionStatus.value = false;
       connectionText.value = res.data.error_message;
