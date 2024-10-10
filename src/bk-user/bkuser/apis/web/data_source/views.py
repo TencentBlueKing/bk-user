@@ -465,8 +465,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             operator=request.user.username,
             overwrite=data["overwrite"],
             incremental=data["incremental"],
-            # FIXME (su) 本地数据源导入也要改成异步行为，但是要解决 excel 如何传递的问题
-            async_run=False,
+            async_run=True,
             trigger=SyncTaskTrigger.MANUAL,
         )
 

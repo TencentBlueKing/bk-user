@@ -20,6 +20,7 @@ from bkuser.apps.sync.data_models import DataSourceSyncOptions, TenantSyncOption
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.apps.sync.tasks import sync_data_source, sync_tenant
+from bkuser.apps.sync.workbook_temp_store import WorkbookTempStore
 
 
 class DataSourceSyncManager:
@@ -49,6 +50,12 @@ class DataSourceSyncManager:
         )
 
         if self.sync_options.async_run:
+            # 若数据源是本地数据源，则将 Workbook 文件存储到临时存储中
+            if self.data_source.is_local:
+                storage = WorkbookTempStore()
+                temporary_storage_id = storage.save(plugin_init_extra_kwargs["workbook"])
+                plugin_init_extra_kwargs = {"temporary_storage_id": temporary_storage_id}
+
             self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
             sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:

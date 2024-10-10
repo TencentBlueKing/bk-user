@@ -91,7 +91,7 @@
             </template>
           </bk-dropdown>
           <bk-dropdown
-            class="pl-[10px]"
+            class="pl-[12px]"
             placement="bottom-end"
             @hide="() => (state.logoutDropdown = false)"
             @show="() => (state.logoutDropdown = true)"
@@ -270,7 +270,7 @@ const openVersionLog = async () => {
 }
 
 .main-navigation {
-  min-width: 1200px;
+  min-width: 1280px;
 
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
@@ -364,7 +364,7 @@ const openVersionLog = async () => {
   text-decoration: none;
 
   &:hover {
-    color: #d3d9e4;
+    color: #c2cee5;
   }
 
   &.main-navigation-nav--active {

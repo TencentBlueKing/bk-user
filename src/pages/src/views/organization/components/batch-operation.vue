@@ -260,7 +260,10 @@ const userInfoOptions = ref([
 ]);
 
 onMounted(async () => {
-  const [fieldsRes, leadersRes] = await Promise.all([getFields(), optionalLeaderList()]);
+  const [fieldsRes, leadersRes] = await Promise.all([
+    getFields(),
+    isLocalDataSource.value ? optionalLeaderList() : Promise.resolve([]),
+  ]);
   extrasList.value = fieldsRes.data.custom_fields;
   extrasList.value.forEach((item) => {
     userInfoOptions.value.push({

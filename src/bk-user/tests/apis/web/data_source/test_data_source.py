@@ -16,8 +16,13 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOp
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.sync.constants import SyncTaskStatus
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -441,3 +446,25 @@ class TestDataSourceSyncRecordApi:
         other_tenant_task = data_source_sync_tasks[2]
         resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": other_tenant_task.id}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestDataSourceImportApi:
+    def test_data_source_import_success(self, api_client, data_source):
+        with override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True):
+            with open(settings.BASE_DIR / "tests/assets/fake_users.xlsx", "rb") as excel_file:
+                uploaded_file = SimpleUploadedFile(
+                    name="fake_users.xlsx",
+                    content=excel_file.read(),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            resp = api_client.post(
+                reverse("data_source.import_from_excel", kwargs={"id": data_source.id}),
+                data={"overwrite": False, "incremental": True, "file": uploaded_file},
+                format="multipart",
+            )
+            sync_task = DataSourceSyncTask.objects.get(data_source=data_source)
+
+            assert resp.status_code == status.HTTP_200_OK
+            assert sync_task.status == SyncTaskStatus.SUCCESS
+            assert DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+            assert DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()

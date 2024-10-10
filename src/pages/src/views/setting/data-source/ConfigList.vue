@@ -31,10 +31,16 @@
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
-              <span :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
+              <span
+                v-if="syncStatus?.status !== 'running' || dataSource?.plugin_id !== 'local'"
+                :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
-              <span>{{ syncStatus?.start_at }}</span>
+              <span v-else class="flex">
+                <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
+                <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
+              </span>
+              <span v-if="syncStatus?.status !== 'running'">{{ syncStatus?.start_at }}</span>
             </div>
             <div v-if="dataSource?.plugin_id === 'local'">
               <bk-button
@@ -185,7 +191,7 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HttpDetails from './HttpDetails.vue';
@@ -195,25 +201,28 @@ import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
+import loadingImg from '@/images/loading.svg';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useUser } from '@/store';
+import { useSyncStatus, useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
 const route = useRoute();
 
 const userStore = useUser();
-
+const syncStatusStore = useSyncStatus();
+const syncStatus = computed(() => syncStatusStore.syncStatus);
 const {
   dataSourcePlugins,
   dataSource,
   currentDataSourceId,
   isLoading,
   initDataSourceList,
-  syncStatus,
   handleClick,
   importDialog,
   handleOperationsSync,
   stopPolling,
+  handleImportLocalDataSync,
+  stopImportDataTimePolling,
 } = useDataSource();
 
 // 重置数据源
@@ -300,7 +309,6 @@ const handleExportTemplate = () => {
   const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/download_template/`;
   window.open(url);
 };
-
 // 导入用户
 const confirmImportUsers = async () => {
   if (!uploadInfo.file.name) {
@@ -324,28 +332,14 @@ const confirmImportUsers = async () => {
       withCredentials: true,
     };
     const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/import/`;
-    const res = await axios.post(url, formData, config);
-    if (res.data.data.status === 'success') {
-      importDialog.isShow = false;
-      InfoBox({
-        width: 450,
-        infoType: 'success',
-        title: t('导入成功'),
-        confirmText: t('查看组织架构'),
-        cancelText: t('关闭'),
-        onConfirm: () => {
-          router.push({ name: 'organization' });
-        },
-        onClosed: () => {
-          initDataSourceList();
-        },
-      });
-    } else {
-      Message({ theme: 'error', message: res.data.data.summary });
-    }
+    await axios.post(url, formData, config);
+    Message({ theme: 'success', message: t('导入成功') });
+    handleImportLocalDataSync();
+    initDataSourceList();
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
   } finally {
+    importDialog.isShow = false;
     importDialog.loading = false;
   }
 };
@@ -353,7 +347,7 @@ const confirmImportUsers = async () => {
 const closed = () => {
   importDialog.isShow = false;
   if (!dataSource.value?.id) {
-    deleteDataSources(currentDataSourceId.value).then(() => {
+    deleteDataSources({ id: currentDataSourceId.value }).then(() => {
       initDataSourceList();
       uploadInfo.file = {};
       uploadInfo.overwrite = false;
@@ -380,6 +374,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopPolling();
+  stopImportDataTimePolling();
 });
 </script>
 
@@ -402,31 +397,16 @@ onBeforeUnmount(() => {
   }
 
   .tag-style {
-    display: inline-block;
-    height: 22px;
-    padding: 0 10px;
-    margin-right: 4px;
-    font-size: 12px;
-    line-height: 22px;
-    border-radius: 2px;
+    .tag-style();
   }
-
   .success {
-    color: #14a568;
-    background-color: #e4faf0;
-    border-color: #14a5684d;
+    .success();
   }
-
   .danger {
-    color: #ea3636;
-    background-color: #feebea;
-    border-color: #ea35364d;
+    .danger();
   }
-
   .warning {
-    color: #fe9c00;
-    background-color: #fff1db;
-    border-color: #fea5004d;
+    .warning();
   }
 }
 
@@ -497,5 +477,51 @@ onBeforeUnmount(() => {
   &:hover {
     border: 1px solid #A3C5FD;
   }
+}
+
+.import-status-dialog {
+  ::v-deep .bk-modal-header {
+    height: 0px;
+  }
+  ::v-deep .bk-dialog-header {
+    padding: 0px;
+    height: 0px;
+  }
+  ::v-deep .bk-dialog-footer {
+    border: none;
+    background-color: #fff;
+  }
+  ::v-deep .bk-modal-footer {
+    padding-top: 4px;
+    padding-bottom: 24px;
+  }
+}
+
+.tag-style() {
+  display: inline-block;
+  height: 22px;
+  padding: 0 10px;
+  margin-right: 4px;
+  font-size: 12px;
+  line-height: 22px;
+  border-radius: 2px;
+}
+
+.success() {
+  color: #14a568;
+  background-color: #e4faf0;
+  border-color: #14a5684d;
+}
+
+.danger() {
+  color: #ea3636;
+  background-color: #feebea;
+  border-color: #ea35364d;
+}
+
+.warning() {
+  color: #fe9c00;
+  background-color: #fff1db;
+  border-color: #fea5004d;
 }
 </style>

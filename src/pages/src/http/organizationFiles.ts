@@ -194,7 +194,7 @@ export const optionalDepartmentsList = (params: any) => http.get(`${prefix}/tena
 /**
  * 可选leader
  */
-export const optionalLeaderList = (params: any) => http.get(`${prefix}/tenants/optional-leaders/`, params);
+export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/tenants/optional-leaders/`, params);
 
 /**
  * 搜索组织

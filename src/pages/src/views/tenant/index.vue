@@ -260,7 +260,7 @@
             <LabelContent v-if="dialogData.isShowItem" :label="$t('访问地址')" class="access-url">
               <a :href="dialogData.accessUrl" target="_blank">{{dialogData.accessUrl}}</a>
             </LabelContent>
-            <LabelContent v-if="dialogData.isShowItem" :label="$t('用户名')">admin-{{ dialogData.name}}</LabelContent>
+            <LabelContent v-if="dialogData.isShowItem" :label="$t('用户名')">admin</LabelContent>
             <LabelContent v-if="dialogData.isShowItem" :label="$t('登录密码')">
               {{ dialogData.fixed_password }}
             </LabelContent>

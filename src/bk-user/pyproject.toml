@@ -17,7 +17,7 @@ djangorestframework = "3.14.0"
 celery = "5.3.1"
 django-celery-beat = "2.5.0"
 django-celery-results = "2.5.1"
-mysqlclient = "2.2.4"
+pymysql = "1.1.1"
 requests = "2.31.0"
 gunicorn = "20.1.0"
 gevent = "24.2.1"
@@ -63,6 +63,7 @@ pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
 import-linter = "^1.11.1"
 types-redis = "^4.6.0.20240806"
+types-pymysql = "^1.1.0.20240524"
 
 [tool.mypy]
 ignore_missing_imports = true

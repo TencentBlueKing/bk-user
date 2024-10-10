@@ -9,10 +9,16 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import base64
+import io
+
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
+from django.conf import settings
 from django.utils import timezone
+from openpyxl.reader.excel import load_workbook
+from openpyxl.workbook import Workbook
 
 
 @pytest.fixture()
@@ -42,3 +48,17 @@ def tenant_sync_task(full_local_data_source, default_tenant, data_source_sync_ta
         start_at=timezone.now(),
         extras={"async_run": False},
     )
+
+
+@pytest.fixture()
+def user_workbook() -> Workbook:
+    return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")
+
+
+@pytest.fixture()
+def encoded_file(user_workbook) -> str:
+    with io.BytesIO() as buffer:
+        user_workbook.save(buffer)
+        content = buffer.getvalue()
+
+    return base64.b64encode(content).decode("utf-8")
