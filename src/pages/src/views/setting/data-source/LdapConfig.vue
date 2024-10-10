@@ -595,9 +595,9 @@ onMounted(async () => {
       ldapConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
         ldapConfigData.value.data_config = res.data?.plugin_config?.data_config;
-        ldapConfigData.value.leader_config = res.data?.plugin_config?.leader_config;
         ldapConfigData.value.server_config = res.data?.plugin_config?.server_config;
-        ldapConfigData.value.user_group_config = res.data?.plugin_config?.user_group_config;
+        fieldSettingData.value.leader_config = res.data?.plugin_config?.leader_config;
+        fieldSettingData.value.user_group_config = res.data?.plugin_config?.user_group_config;
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
@@ -660,8 +660,6 @@ const handleCancel = () => {
 };
 
 </script>
-
-
 
 <style lang="less" scoped>
 .api-url-style {
