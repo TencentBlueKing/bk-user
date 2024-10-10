@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 from typing import Collection
 
@@ -42,11 +43,11 @@ class BKUserInstrumentor(BaseInstrumentor):
         logger.info("otel instructment: celery")
 
         if getattr(settings, "OTEL_INSTRUMENT_DB_API", False):
-            import MySQLdb  # noqa
+            import pymysql
 
             dbapi.wrap_connect(
                 __name__,
-                MySQLdb,
+                pymysql.connect,
                 "connect",
                 "mysql",
                 {"database": "db", "port": "port", "host": "host", "user": "user"},

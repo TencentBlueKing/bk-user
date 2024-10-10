@@ -15,9 +15,12 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import environ
+import pymysql
 import urllib3
 from celery.schedules import crontab
 from django.utils.encoding import force_bytes
+
+pymysql.install_as_MySQLdb()
 
 # environ
 env = environ.Env()
