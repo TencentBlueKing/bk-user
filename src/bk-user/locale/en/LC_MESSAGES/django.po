@@ -302,11 +302,11 @@ msgstr "Department name is not allowed to contain slashes (/)"
 
 #: bkuser/apis/web/organization/serializers/departments.py:185
 msgid "自己不能成为自己的子部门"
-msgstr ""
+msgstr "Department cannot be its sub-department"
 
 #: bkuser/apis/web/organization/serializers/departments.py:206
 msgid "不能移动至自己的子部门下"
-msgstr ""
+msgstr "Department cannot move to its sub-department"
 
 #: bkuser/apis/web/organization/serializers/relations.py:28
 #: bkuser/apis/web/organization/serializers/users.py:590
@@ -568,23 +568,23 @@ msgstr "Change Password"
 
 #: bkuser/apis/web/personal_center/constants.py:22
 msgid "手机号更新限制"
-msgstr ""
+msgstr "Phone update restriction"
 
 #: bkuser/apis/web/personal_center/constants.py:23
 msgid "邮箱更新限制"
-msgstr ""
+msgstr "Email update restriction"
 
 #: bkuser/apis/web/personal_center/constants.py:27
 msgid "验证后修改"
-msgstr ""
+msgstr "Need verify"
 
 #: bkuser/apis/web/personal_center/constants.py:28
 msgid "可直接修改"
-msgstr ""
+msgstr "Editable directly"
 
 #: bkuser/apis/web/personal_center/constants.py:29
 msgid "不可修改"
-msgstr ""
+msgstr "Not editable"
 
 #: bkuser/apis/web/personal_center/serializers.py:172
 msgid "自定义手机号码为必填项"
@@ -600,7 +600,7 @@ msgstr "Old password validation failed"
 
 #: bkuser/apis/web/personal_center/views.py:178
 msgid "手机号码不可编辑"
-msgstr ""
+msgstr "Phone number cannot be edited"
 
 #: bkuser/apis/web/personal_center/views.py:183
 #: bkuser/apis/web/personal_center/views.py:289
@@ -615,15 +615,15 @@ msgstr "Exceeded verification code retry attempts"
 
 #: bkuser/apis/web/personal_center/views.py:229
 msgid "当前租户更新手机号不允许发送验证码"
-msgstr ""
+msgstr "Current tenant don't allow the verification code to be sent when updating the phone number"
 
 #: bkuser/apis/web/personal_center/views.py:284
 msgid "邮箱不可编辑"
-msgstr ""
+msgstr "Email address cannot be edited"
 
 #: bkuser/apis/web/personal_center/views.py:324
 msgid "当前租户更新邮箱不允许发送验证码"
-msgstr ""
+msgstr "Current tenant don't allow the verification code to be sent when updating the email"
 
 #: bkuser/apis/web/personal_center/views.py:343
 msgid "发送邮箱验证码过于频繁，请稍后再试"
@@ -673,14 +673,12 @@ msgstr "Default tenant cannot be deactivated"
 #: bkuser/apis/web/tenant_info/serializers.py:103
 msgid "非本租户实名账号（ids={}）不允许添加"
 msgstr ""
-"Non-real-name accounts (ids={}) or accounts from other tenants are not "
-"allowed to be added"
+"Non-real-name accounts (ids={}) or accounts from other tenants are not allowed to be added"
 
 #: bkuser/apis/web/tenant_info/views.py:125
 msgid "不存在实名管理员，无法禁用内置管理员账号登录"
 msgstr ""
-"There is no real-name administrator, so built-in administrator account login "
-"cannot be disabled"
+"There is no real-name administrator, so built-in administrator account login cannot be disabled"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:31
 msgid "需要提供至少一个枚举选项"
@@ -704,14 +702,11 @@ msgstr "Enum default value {} needs to be one of the optional values {}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:58
 msgid "多选枚举类型自定义字段 默认值 必须是 列表类型"
-msgstr ""
-"The default value for multiple-choice enum custom fields must be of list type"
+msgstr "The default value for multiple-choice enum custom fields must be of list type"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:61
 msgid "多选枚举默认值 {} 不是可选值 {} 的子集"
-msgstr ""
-"The multiple-choice enum default value {} must not be a subset of the "
-"optional values {}"
+msgstr "The multiple-choice enum default value {} must not be a subset of the optional values {}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:117
 msgid "字段名称 {} 已存在"
@@ -735,33 +730,23 @@ msgstr "Enum type fields do not support setting uniqueness"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:156
 msgid "设置为在个人中心可编辑的字段必须也设置可见"
-msgstr ""
-"Fields set to be editable in personal center must also be set to be visible"
+msgstr "Fields set to be editable in personal center must also be set to be visible"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:164
-msgid ""
-"字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"
-msgstr ""
-"Field migration mapping must be of dictionary type, format: {deleted enum "
-"ID: target value enum ID}"
+msgid "字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"
+msgstr "Field migration mapping must be of dictionary type, format: {deleted enum ID: target value enum ID}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:168
 msgid "枚举选项没有修改，无需配置字段迁移映射"
-msgstr ""
-"Enum options have not been modified, no need to configure field migration "
-"mapping"
+msgstr "Enum options have not been modified, no need to configure field migration mapping"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:173
 msgid "被删除的枚举项 {} 均需要配置字段迁移映射"
-msgstr ""
-"All deleted enumeration items {} need to be configured with field migration "
-"mapping"
+msgstr "All deleted enumeration items {} need to be configured with field migration mapping"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:177
 msgid "字段迁移映射的目标值 {} 不在新的枚举选项中"
-msgstr ""
-"The target value {} of the field migration mapping is not in the new enum "
-"options"
+msgstr "The target value {} of the field migration mapping is not in the new enum options"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:194
 msgid "展示用名称 {} 已存在"
@@ -988,7 +973,7 @@ msgstr "Department Relation"
 
 #: bkuser/apps/sync/constants.py:76
 msgid "用户 Leader 关系"
-msgstr ""
+msgstr "User Leader Relation"
 
 #: bkuser/apps/sync/constants.py:77
 msgid "用户部门关系"
@@ -1004,9 +989,7 @@ msgstr "Data source synchronized successfully"
 
 #: bkuser/apps/sync/models.py:48
 msgid "数据源同步失败，请前往 `数据更新记录` 查看日志详情"
-msgstr ""
-"Data source synchronization failed, please check 'Data Update Records' for "
-"log details"
+msgstr "Data source synchronization failed, please check 'Data Update Records' for log details"
 
 #: bkuser/apps/sync/models.py:51
 msgid "数据源导入成功"
@@ -1129,8 +1112,7 @@ msgstr "Field {} with value {} is not one of the options"
 
 #: bkuser/biz/validators.py:150
 msgid "多选枚举类型自定义字段值必须是非空列表"
-msgstr ""
-"The value of a multiple-choice enum custom field must be a non-empty list"
+msgstr "The value of a multiple-choice enum custom field must be a non-empty list"
 
 #: bkuser/biz/validators.py:153
 msgid "字段 {} 的值 {} 不是可选项的子集"
@@ -1358,7 +1340,7 @@ msgstr "Failed to send password reset email"
 
 #: bkuser/common/error_codes.py:121
 msgid "验证失败"
-msgstr ""
+msgstr "Authentication failed"
 
 #: bkuser/common/locks.py:24
 msgid "全局锁"
@@ -1370,7 +1352,7 @@ msgstr "Data source sync lock"
 
 #: bkuser/common/locks.py:26
 msgid "租户同步锁"
-msgstr ""
+msgstr "Tenant sync lock"
 
 #: bkuser/common/passwd/constants.py:18
 msgid "重复"
@@ -1422,9 +1404,7 @@ msgstr ""
 
 #: bkuser/common/passwd/models.py:88
 msgid "当设置不允许连续 N 位出现的规则时，该值不可小于 {}"
-msgstr ""
-"When setting the rule that disallows consecutive N characters, this value "
-"cannot be less than {}"
+msgstr "When setting the rule that disallows consecutive N characters, this value cannot be less than {}"
 
 #: bkuser/common/passwd/models.py:94
 msgid "至少应该选择键盘序，连续字母序，连续数字序，重复字符中的一个场景"
@@ -1516,8 +1496,7 @@ msgstr "Password strength rating is too low"
 
 #: bkuser/common/passwd/validator.py:143
 msgid "密码中包含过多的常见单词或弱密码（如：{} 或 {}）"
-msgstr ""
-"Password contains too many common words or weak passwords (e.g., {} or {})"
+msgstr "Password contains too many common words or weak passwords (e.g., {} or {})"
 
 #: bkuser/common/passwd/validator.py:178
 msgid "密码不可包含 {} 位键盘序（{}）"
@@ -1525,13 +1504,11 @@ msgstr "Password cannot contain a {}-character keyboard sequence ({})"
 
 #: bkuser/common/passwd/validator.py:188
 msgid "密码不可包含 {} 位连续字母序（{}）"
-msgstr ""
-"Password cannot contain a {}-character continuous alphabetic order ({})"
+msgstr "Password cannot contain a {}-character continuous alphabetic order ({})"
 
 #: bkuser/common/passwd/validator.py:198
 msgid "密码不可包含连续 {} 位数字序（{}）"
-msgstr ""
-"Password cannot contain a {}-character continuous numeric sequence ({})"
+msgstr "Password cannot contain a {}-character continuous numeric sequence ({})"
 
 #: bkuser/common/passwd/validator.py:203
 msgid "密码不可包含 {} 位重复字符（{}）"
@@ -1598,13 +1575,11 @@ msgstr ""
 
 #: bkuser/plugins/general/constants.py:46
 msgid "请求被拒绝，请确保实现的 API 允许用户管理服务调用"
-msgstr ""
-"Request denied, please ensure the implemented API allows User Management service calls"
+msgstr "Request denied, please ensure the implemented API allows User Management service calls"
 
 #: bkuser/plugins/general/constants.py:47
 msgid "请求的资源未找到，请检查服务地址与 API 路径是否正确"
-msgstr ""
-"Requested resource not found, please check if the service address and API path are correct"
+msgstr "Requested resource not found, please check if the service address and API path are correct"
 
 #: bkuser/plugins/general/constants.py:48
 msgid ""
@@ -1616,9 +1591,7 @@ msgstr ""
 
 #: bkuser/plugins/general/constants.py:49
 msgid "请求过于频繁，请检查实现的 API 是否添加了频率限制，并稍后再试"
-msgstr ""
-"Request is too frequent, please check if the implemented API has frequency "
-"limits and try again later"
+msgstr "Request is too frequent, please check if the implemented API has frequency limits and try again later"
 
 #: bkuser/plugins/general/constants.py:50
 msgid "实现的 API 服务异常，请查询实现的 API 服务日志排查问题原因"
@@ -1640,9 +1613,7 @@ msgstr ""
 
 #: bkuser/plugins/general/constants.py:53
 msgid "API 无响应或超时，请检查实现的 API 服务是否正常运行"
-msgstr ""
-"API did not respond or timed out, please check if the implemented API "
-"service is running properly"
+msgstr "API did not respond or timed out, please check if the implemented API service is running properly"
 
 #: bkuser/plugins/general/constants.py:54
 msgid ""
@@ -1675,8 +1646,7 @@ msgstr ""
 
 #: bkuser/plugins/general/http.py:119 bkuser/plugins/general/http.py:176
 msgid "数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}"
-msgstr ""
-"Data source API {} parameter {} returned non-Json format, response content {}"
+msgstr "Data source API {} parameter {} returned non-Json format, response content {}"
 
 #: bkuser/plugins/general/plugin.py:89
 msgid ""
@@ -1687,9 +1657,7 @@ msgstr ""
 
 #: bkuser/plugins/general/plugin.py:99
 msgid "获取到的用户/部门数据为空，请检查数据源 API 服务"
-msgstr ""
-"The retrieved user/department data is empty, please check the data source "
-"API service"
+msgstr "The retrieved user/department data is empty, please check the data source API service"
 
 #: bkuser/plugins/general/plugin.py:105
 msgid "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
