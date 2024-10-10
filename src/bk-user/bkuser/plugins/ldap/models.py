@@ -64,6 +64,9 @@ class DataConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "DataConfig":
+        # Q：为什么不是使用 Pydantic 的能力限制非空（比如 min_length=1）？
+        # A：上面这种做法，只能使用 Pydantic 的错误提示，作为定制化的数据源之一，
+        #   使用更具体的提示会更好，可以减少后续接受咨询 & 排查问题的成本 :)
         if not self.user_object_class:
             raise ValueError(_("需要提供用户对象类"))
 
