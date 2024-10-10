@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from typing import Literal
+from typing import Any, Dict, Literal
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field, model_validator
@@ -21,7 +21,7 @@ from bkuser.plugins.ldap.constants import (
     MAX_REQ_TIMEOUT,
     MIN_REQ_TIMEOUT,
     SERVER_URL_REGEX,
-    PageSize,
+    PageSizeEnum,
 )
 from bkuser.plugins.models import BasePluginConfig
 
@@ -38,7 +38,7 @@ class ServerConfig(BaseModel):
     # Base DN 访问的根目录
     base_dn: str = Field(pattern=LDAP_BASE_DN_REGEX)
     # 单次分页请求数量
-    page_size: PageSize = PageSize.CNT_100
+    page_size: PageSizeEnum = PageSizeEnum.SIZE_100
     # 单次请求超时时间
     request_timeout: int = Field(ge=MIN_REQ_TIMEOUT, le=MAX_REQ_TIMEOUT, default=DEFAULT_REQ_TIMEOUT)
 
@@ -153,6 +153,18 @@ class LDAPDataSourcePluginConfig(BasePluginConfig):
             raise ValueError(_("用户过滤器（DN）必须是 Base DN 的子节点"))
 
         if not self.data_config.dept_search_filter.endswith(self.server_config.base_dn):
-            raise ValueError(_("用户过滤器（DN）必须是 Base DN 的子节点"))
+            raise ValueError(_("部门过滤器（DN）必须是 Base DN 的子节点"))
+
+        if self.user_group_config.enabled and not self.user_group_config.search_filter.endswith(
+            self.server_config.base_dn
+        ):
+            raise ValueError(_("用户组过滤器（DN）必须是 Base DN 的子节点"))
 
         return self
+
+
+class LDAPObject(BaseModel):
+    """LDAP 对象"""
+
+    dn: str
+    attrs: Dict[str, Any]

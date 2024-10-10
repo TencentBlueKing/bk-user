@@ -38,12 +38,12 @@ DEFAULT_REQ_TIMEOUT = 30
 REQUIRED_OPERATIONAL_ATTRIBUTES = ["entryUUID"]
 
 
-class PageSize(int, StructuredEnum):
+class PageSizeEnum(int, StructuredEnum):
     """每页数量"""
 
-    CNT_100 = EnumField(100, label="100")
-    CNT_200 = EnumField(200, label="200")
-    CNT_500 = EnumField(500, label="500")
-    CNT_1000 = EnumField(1000, label="1000")
-    CNT_2000 = EnumField(2000, label="2000")
-    CNT_5000 = EnumField(5000, label="5000")
+    SIZE_100 = EnumField(100, label="100")
+    SIZE_200 = EnumField(200, label="200")
+    SIZE_500 = EnumField(500, label="500")
+    SIZE_1000 = EnumField(1000, label="1000")
+    SIZE_2000 = EnumField(2000, label="2000")
+    SIZE_5000 = EnumField(5000, label="5000")

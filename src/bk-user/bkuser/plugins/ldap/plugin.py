@@ -13,7 +13,7 @@ specific language governing permissions and limitations under the License.
 # ruff: noqa: G004
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List
+from typing import DefaultDict, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 
@@ -22,7 +22,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.ldap import utils
 from bkuser.plugins.ldap.client import LDAPClient
 from bkuser.plugins.ldap.exceptions import DataNotFoundError
-from bkuser.plugins.ldap.models import LDAPDataSourcePluginConfig
+from bkuser.plugins.ldap.models import LDAPDataSourcePluginConfig, LDAPObject
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 
 logger = logging.getLogger(__name__)
@@ -186,32 +186,30 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                     self.logger.warning(f"user {user_dn} leader dn {leader_dn} code not found, skip...")
 
     @staticmethod
-    def _gen_raw_dept(data: Dict[str, Any]) -> RawDataSourceDepartment:
+    def _gen_raw_dept(obj: LDAPObject) -> RawDataSourceDepartment:
         """生成部门信息"""
 
         # dn 格式如：ou=dept_a,ou=company,dc=bk,dc=example,dc=com
-        dn = data["dn"]
-        # rdns: [ou=dept_a, ou=company, dc=bk, dc=example, dc=com]
-        rdns = utils.parse_dn(dn)
+        # -> rdns: [ou=dept_a, ou=company, dc=bk, dc=example, dc=com]
+        rdns = utils.parse_dn(obj.dn)
         # 当前对象
         cur, parent = rdns[0], rdns[1:]
         # 这里直接填充父 DN，只有 dc 也没关系，后续转换成 Code 会去掉的
         parent_dn = utils.gen_dn(parent) if parent else None
 
         return RawDataSourceDepartment(
-            code=data["attributes"]["entryUUID"],
+            code=obj.attrs["entryUUID"],
             name=cur.attr_value,
             # 其实这里的 dn 还不是最终需要的值，需要下一步转换成 entryUUID
             parent=parent_dn,
-            extras={"attr_type": cur.attr_type, "dn": data["dn"]},
+            extras={"attr_type": cur.attr_type, "dn": obj.dn},
         )
 
     @staticmethod
-    def _gen_raw_user(data: Dict[str, Any]) -> RawDataSourceUser:
-        properties: Dict[str, str] = {"dn": data["dn"]}
-        attributes: Dict[str, Any] = data["attributes"]
+    def _gen_raw_user(obj: LDAPObject) -> RawDataSourceUser:
+        properties: Dict[str, str] = {"dn": obj.dn}
 
-        for k, v in attributes.items():
+        for k, v in obj.attrs.items():
             if k in ["entryUUID", "objectClass"]:
                 continue
 
@@ -221,15 +219,15 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 properties[k] = str(v)
 
         # 由于 LDAP 用户数据结果比较特殊，因此生成的时候，不带 leaders，departments 字段，由后续处理
-        return RawDataSourceUser(code=attributes["entryUUID"], properties=properties, leaders=[], departments=[])
+        return RawDataSourceUser(code=obj.attrs["entryUUID"], properties=properties, leaders=[], departments=[])
 
     @staticmethod
-    def _gen_user_group_dns_map(groups: List[Dict[str, Any]], group_member_field: str) -> DefaultDict[str, List[str]]:
+    def _gen_user_group_dns_map(groups: List[LDAPObject], group_member_field: str) -> DefaultDict[str, List[str]]:
         """根据用户组信息，生成用户 - 用户组映射关系"""
         user_group_dns_map: DefaultDict[str, List[str]] = defaultdict(list)
         for g in groups:
-            for member in g["attributes"].get(group_member_field, []):
-                user_group_dns_map[member].append(g["dn"])
+            for member in g.attrs.get(group_member_field, []):
+                user_group_dns_map[member].append(g.dn)
 
         return user_group_dns_map
 

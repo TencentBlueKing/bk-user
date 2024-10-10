@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from bkuser.plugins.ldap.constants import PageSize
+from bkuser.plugins.ldap.constants import PageSizeEnum
 from bkuser.plugins.ldap.models import (
     DataConfig,
     LDAPDataSourcePluginConfig,
@@ -25,7 +25,7 @@ DEFAULT_PLUGIN_CONFIG = LDAPDataSourcePluginConfig(
         bind_dn="cn=admin,ou=system_users,dc=bk,dc=example,dc=com",
         bind_password="******",
         base_dn="dc=bk,dc=example,dc=com",
-        page_size=PageSize.CNT_100,
+        page_size=PageSizeEnum.SIZE_100,
         request_timeout=30,
     ),
     data_config=DataConfig(

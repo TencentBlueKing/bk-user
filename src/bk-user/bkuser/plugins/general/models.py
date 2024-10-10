@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from pydantic import BaseModel, Field
 
 from bkuser.plugins.general.constants import (
@@ -20,7 +21,7 @@ from bkuser.plugins.general.constants import (
     MIN_REQ_TIMEOUT,
     MIN_RETRIES,
     AuthMethod,
-    PageSize,
+    PageSizeEnum,
 )
 from bkuser.plugins.models import BasePluginConfig
 
@@ -46,7 +47,7 @@ class ServerConfig(BaseModel):
     # 部门数据 API 请求参数
     department_api_query_params: list[QueryParam] = []
     # 单次分页请求数量
-    page_size: PageSize = PageSize.CNT_100
+    page_size: PageSizeEnum = PageSizeEnum.SIZE_100
     # 单次请求超时时间
     request_timeout: int = Field(ge=MIN_REQ_TIMEOUT, le=MAX_REQ_TIMEOUT, default=DEFAULT_REQ_TIMEOUT)
     # 请求失败重试次数
