@@ -132,4 +132,4 @@ export const getRelatedResource = (id: string) => http.get(`/api/v3/web/data-sou
 /**
  * 自定义数据源插件配置信息
  */
-export const getCustomPlugin = (id: string) => http.get(`https://bk-user-tenant.paas3-dev.bktencent.com/api/v3/web/data-sources/plugins/${id}/config-meta/`);
+export const getCustomPlugin = (id: string) => http.get(`/api/v3/web/data-sources/plugins/${id}/config-meta/`);
