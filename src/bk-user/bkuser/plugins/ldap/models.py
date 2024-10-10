@@ -100,7 +100,7 @@ class UserGroupConfig(BaseModel):
             raise ValueError(_("需要提供用户组对象类"))
 
         if not self.search_filter:
-            raise ValueError(_("需要提供用户组过滤器"))
+            raise ValueError(_("需要提供用户组过滤器（DN）"))
 
         if self.object_class == "groupOfNames" and self.group_member_field != "member":
             raise ValueError(_("用户组对象类为 groupOfNames 时，成员字段应为 member"))
