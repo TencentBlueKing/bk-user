@@ -83,7 +83,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 d.extras["parent_dn"] = d.parent
                 d.parent = parent_code
             else:
-                self.logger.warning(f"parent code not found for dn: {d.parent}, set parent to None")
+                self.logger.warning(f"parent code not found for dn `{d.parent}`, set parent to None")
                 d.parent = None
 
         return raw_depts
@@ -155,7 +155,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             if dept_code := self.dept_dn_code_map.get(dept_dn):
                 u.departments.append(dept_code)
             else:
-                self.logger.warning(f"user {user_dn} dept dn: {dept_dn} code not found, skip...")
+                self.logger.warning(f"user `{user_dn}` dept dn: `{dept_dn}` code not found, skip...")
 
             # 用户组关联所得的部门
             if group_dns := self.user_group_dns_map.get(user_dn):
@@ -163,7 +163,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                     if group_code := self.dept_dn_code_map.get(group_dn):
                         u.departments.append(group_code)
                     else:
-                        self.logger.warning(f"user {user_dn} group dn: {group_dn} code not found, skip...")
+                        self.logger.warning(f"user `{user_dn}` group dn `{group_dn}` code not found, skip...")
 
     def _set_raw_users_leaders(self, raw_users: List[RawDataSourceUser]):
         """为用户设置 leader 信息"""
@@ -172,7 +172,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             return
 
         leader_field = self.plugin_config.leader_config.leader_field
-        self.logger.info(f"user leader enabled, use field {leader_field} as leader")
+        self.logger.info(f"user leader enabled, use field `{leader_field}` as leader")
 
         # 用户 DN -> Code 映射表
         user_dn_code_map = {u.properties["dn"]: u.code for u in raw_users}
@@ -183,7 +183,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 if leader_code := user_dn_code_map.get(leader_dn):
                     u.leaders.append(leader_code)
                 else:
-                    self.logger.warning(f"user {user_dn} leader dn {leader_dn} code not found, skip...")
+                    self.logger.warning(f"user `{user_dn}` leader dn `{leader_dn}` code not found, skip...")
 
     @staticmethod
     def _gen_raw_dept(obj: LDAPObject) -> RawDataSourceDepartment:
