@@ -81,5 +81,7 @@ class LDAPClient:
             user=server_config.bind_dn,
             password=server_config.bind_password,
             client_strategy=SAFE_SYNC,
+            read_only=True,
+            raise_exceptions=True,
             receive_timeout=server_config.request_timeout,
         )
