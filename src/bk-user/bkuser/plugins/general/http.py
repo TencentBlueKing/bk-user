@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import base64
 import logging
 from typing import Any, Dict, List
@@ -24,7 +25,7 @@ from bkuser.plugins.general.constants import (
     PAGE_SIZE_FOR_FETCH_FIRST,
     STATUS_CODE_REASON_MAP,
     AuthMethod,
-    PageSize,
+    PageSizeEnum,
 )
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
 from bkuser.plugins.general.models import AuthConfig, QueryParam
@@ -69,7 +70,7 @@ def get_reason_from_status_code(status_code: int) -> str:
 
 
 def fetch_all_data(
-    url: str, headers: Dict[str, str], params: Dict[str, Any], page_size: PageSize, timeout: int, retries: int
+    url: str, headers: Dict[str, str], params: Dict[str, Any], page_size: PageSizeEnum, timeout: int, retries: int
 ) -> List[Dict[str, Any]]:
     """
     根据指定配置，请求数据源 API 以获取用户 / 部门数据

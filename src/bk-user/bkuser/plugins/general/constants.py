@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
@@ -61,12 +62,12 @@ class AuthMethod(str, StructuredEnum):
     BASIC_AUTH = EnumField("basic_auth", label="BasicAuth")
 
 
-class PageSize(int, StructuredEnum):
+class PageSizeEnum(int, StructuredEnum):
     """每页数量"""
 
-    CNT_100 = EnumField(100, label="100")
-    CNT_200 = EnumField(200, label="200")
-    CNT_500 = EnumField(500, label="500")
-    CNT_1000 = EnumField(1000, label="1000")
-    CNT_2000 = EnumField(2000, label="2000")
-    CNT_5000 = EnumField(5000, label="5000")
+    SIZE_100 = EnumField(100, label="100")
+    SIZE_200 = EnumField(200, label="200")
+    SIZE_500 = EnumField(500, label="500")
+    SIZE_1000 = EnumField(1000, label="1000")
+    SIZE_2000 = EnumField(2000, label="2000")
+    SIZE_5000 = EnumField(5000, label="5000")

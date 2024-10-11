@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from typing import Any, Dict
 
 import pytest
@@ -188,3 +189,32 @@ def full_general_data_source(bare_general_data_source) -> DataSource:
     """携带用户，部门信息的通用 HTTP 数据源"""
     init_data_source_users_depts_and_relations(bare_general_data_source)
     return bare_general_data_source
+
+
+@pytest.fixture()
+def ldap_ds_plugin_cfg() -> Dict[str, Any]:
+    return {
+        "server_config": {
+            "server_url": "ldaps://bk.example.com:8389",
+            "bind_dn": "cn=admin,dc=bk,dc=example,dc=com",
+            "bind_password": "******",
+            "base_dn": "dc=bk,dc=example,dc=com",
+            "request_timeout": 30,
+        },
+        "data_config": {
+            "user_object_class": "inetOrgPerson",
+            "user_search_filter": "ou=company,dc=bk,dc=example,dc=com",
+            "dept_object_class": "organizationalUnit",
+            "dept_search_filter": "ou=company,dc=bk,dc=example,dc=com",
+        },
+        "user_group_config": {
+            "enabled": True,
+            "object_class": "groupOfNames",
+            "search_filter": "ou=company,dc=bk,dc=example,dc=com",
+            "group_member_field": "member",
+        },
+        "leader_config": {
+            "enabled": True,
+            "leader_field": "manager",
+        },
+    }
