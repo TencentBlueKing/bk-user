@@ -9,7 +9,7 @@
       <Row :title="$t('服务配置')">
         <bk-form-item class="w-[560px]" :label="$t('LDAP服务地址')" required property="server_config.server_url">
           <bk-input
-            placeholder="Idap://127.0.0.1:3390"
+            placeholder="ldap://127.0.0.1:3390"
             v-model="ldapConfigData.server_config.server_url"
             @focus="handleFocus"
             @input="handleChange" />
