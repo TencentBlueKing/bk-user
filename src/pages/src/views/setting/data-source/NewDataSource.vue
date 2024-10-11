@@ -23,6 +23,13 @@
             :is-reset="isReset"
             @update-cur-step="updateCurStep"
             @update-success="updateSuccess" />
+          <Ldap
+            v-if="currentType === 'ldap'"
+            :cur-step="curStep"
+            :data-source-id="dataSourceId"
+            :is-reset="isReset"
+            @update-cur-step="updateCurStep"
+            @update-success="updateSuccess" />
           <CustomJsonSchema
             v-if="!isNotJsonSchemaIds.includes(currentType)"
             :current-type="currentType"
@@ -44,6 +51,7 @@ import { useRoute } from 'vue-router';
 import Success from './ConfigSuccess.vue';
 import CustomJsonSchema from './CustomJsonSchema.vue';
 import Http from './HttpConfig.vue';
+import Ldap from './LdapConfig.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import { getDataSourcePlugins } from '@/http';
@@ -59,7 +67,7 @@ const userStore = useUser();
 
 const currentType = ref('');
 
-const isNotJsonSchemaIds = ['general', 'local'];
+const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
 
 // 获取数据源类型
 watch(() => route.query.type, (val: string) => {
