@@ -7,7 +7,7 @@
       :model="ldapConfigData"
       :rules="rulesLdapConfig">
       <Row :title="$t('服务配置')">
-        <bk-form-item class="w-[560px]" :label="$t('LDAP服务地址')" required property="server_config.server_url">
+        <bk-form-item class="w-[560px]" :label="$t('LDAP 服务地址')" required property="server_config.server_url">
           <bk-input
             placeholder="ldap://127.0.0.1:3390"
             v-model="ldapConfigData.server_config.server_url"
@@ -23,6 +23,8 @@
         </bk-form-item>
         <bk-form-item class="w-[560px]" :label="$t('Bind DN 密码')" required property="server_config.bind_password">
           <bk-input
+            type="password"
+            autocomplete="new-password"
             placeholder="*********"
             v-model="ldapConfigData.server_config.bind_password"
             @focus="handleFocus"
@@ -190,12 +192,13 @@
               placeholder="manager"
               v-model="fieldSettingData.leader_config.leader_field"
               :clearable="false"
-              @change="handleChange">
+              @change="(val, oldVal) => changeApiFields(val, oldVal)">
               <bk-option
-                v-for="item in leaderOptions"
-                :key="item.value"
-                :value="item.value"
-                :label="item.label"
+                v-for="item in apiFields"
+                :key="item.key"
+                :value="item.key"
+                :label="item.key"
+                :disabled="item.disabled"
               />
             </bk-select>
           </bk-form-item>
@@ -312,7 +315,6 @@ watch(() => props.isReset, () => {
   }
 });
 
-const leaderOptions = ref([]);
 const userGroupClassOptions = [
   {
     value: 'groupOfNames',
@@ -422,10 +424,6 @@ const handleTestConnection = async () => {
       connectionText.value = t('测试成功');
       nextDisabled.value = false;
       userProperties.value = Object.keys(res.data?.user?.properties);
-      leaderOptions.value = res.data?.user?.properties?.manager?.split(',').map((item: string) => ({
-        value: item,
-        label: item,
-      }));
     } else {
       connectionStatus.value = false;
       connectionText.value = res.data.error_message;
