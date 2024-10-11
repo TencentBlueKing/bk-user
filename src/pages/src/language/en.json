@@ -158,7 +158,7 @@
   "用户过滤器": "User filter",
   "过滤器中无需指定对象类，如（objectclass=xxx）": "No object class needs to be specified in the filter, such as (objectclass=xxx)",
   "部门对象类": "Department Object Class",
-  "LDAP服务地址": "LDAP service address",
+  "LDAP 服务地址": "LDAP service address",
   "Bind DN 密码": "Bind DN password",
   "根目录 (Base DN)": "Root directory (Base DN)",
   "服务地址": "Service address",

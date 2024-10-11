@@ -158,7 +158,7 @@
   "用户过滤器": "用户过滤器",
   "过滤器中无需指定对象类，如（objectclass=xxx）": "过滤器中无需指定对象类，如（objectclass=xxx）",
   "部门对象类": "部门对象类",
-  "LDAP服务地址": "LDAP服务地址",
+  "LDAP 服务地址": "LDAP 服务地址",
   "Bind DN 密码": "Bind DN 密码",
   "根目录 (Base DN)": "根目录 (Base DN)",
   "服务地址": "服务地址",
