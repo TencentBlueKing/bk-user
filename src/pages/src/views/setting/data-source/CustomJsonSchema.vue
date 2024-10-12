@@ -1,6 +1,6 @@
 <template>
-  <div class="json-schema-container" v-if="formData.plugin_config.plugin_id">
-    <template v-if="props.curStep === 1">
+  <bk-loading :loading="isLoading" class="json-schema-container user-scroll-y">
+    <template v-if="props.curStep === 1 && formData.plugin_config.plugin_id"">
       <SchemaForm
         ref="schemaFormRef"
         :form-data="formData"
@@ -91,8 +91,7 @@
         </div>
       </Row>
     </bk-form>
-  </div>
-
+  </bk-loading>
 </template>
 
 <script setup lang="ts">
