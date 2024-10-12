@@ -32,7 +32,7 @@
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
               <span
-                v-if="syncStatus?.status !== 'running' || dataSource?.plugin_id !== 'local'"
+                v-if="syncStatus?.status !== 'running'"
                 :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
