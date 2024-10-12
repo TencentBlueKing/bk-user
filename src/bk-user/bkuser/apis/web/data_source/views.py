@@ -45,6 +45,8 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.audit.constants import OperationEnum, OperationTarget
+from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -72,6 +74,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.utils.ip import get_client_ip
 
 from .schema import get_data_source_plugin_cfg_json_schema
 
@@ -178,6 +181,14 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
+        add_operation_audit_record(
+            operator=current_user,
+            ip=get_client_ip(request),
+            target=OperationTarget.DATA_SOURCE,
+            operation=OperationEnum.CREATE_DATA_SOURCE,
+            instance={"data_source": ds.id, "data_source_plugin": ds.plugin_id},
+        )
+
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
             status=status.HTTP_201_CREATED,
@@ -230,6 +241,11 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        data_before = {
+            "plugin_config": data_source.plugin_config,
+            "field_mapping": data_source.field_mapping,
+            "sync_config": data_source.sync_config,
+        }
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
@@ -237,6 +253,20 @@ class DataSourceRetrieveUpdateDestroyApi(
             data_source.save(update_fields=["field_mapping", "sync_config", "updater", "updated_at"])
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
+
+        add_operation_audit_record(
+            operator=data_source.updater,
+            ip=get_client_ip(request),
+            target=OperationTarget.DATA_SOURCE,
+            operation=OperationEnum.MODIFY_DATA_SOURCE,
+            instance={"data_source": data_source.id, "data_source_plugin": data_source.plugin_id},
+            data_before=data_before,
+            data_after={
+                "plugin_config": data_source.plugin_config,
+                "field_mapping": data_source.field_mapping,
+                "sync_config": data_source.sync_config,
+            },
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -255,9 +285,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz = DataSourceDestroyInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
-
-        # TODO (su) 支持操作审计后可删除该日志
-        logger.warning("user %s delete data source %s", request.user.username, data_source.id)
+        instance = {"data_source": data_source.id, "data_source_plugin": data_source.plugin_id}
 
         with transaction.atomic():
             if is_delete_idp:
@@ -284,6 +312,14 @@ class DataSourceRetrieveUpdateDestroyApi(
                 )
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
+        add_operation_audit_record(
+            operator=request.user.username,
+            ip=get_client_ip(request),
+            target=OperationTarget.DATA_SOURCE,
+            operation=OperationEnum.DELETE_DATA_SOURCE,
+            instance=instance,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -477,6 +513,14 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
+
+        add_operation_audit_record(
+            operator=request.user.username,
+            ip=get_client_ip(request),
+            target=OperationTarget.DATA_SOURCE,
+            operation=OperationEnum.IMPORT_DATA_SOURCE,
+            instance={"data_source": data_source.id, "data_source_plugin": data_source.plugin_id},
+        )
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
