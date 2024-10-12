@@ -12,6 +12,8 @@ specific language governing permissions and limitations under the License.
 from urllib.parse import urlencode
 
 import pytest
+from bkuser.apps.audit.constants import OperationEnum, OperationTarget
+from bkuser.apps.audit.data_models import OperationAuditRecord
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
@@ -65,6 +67,9 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_minimal_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
@@ -75,6 +80,9 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
@@ -83,6 +91,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "数据源插件不存在" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_without_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
@@ -91,6 +102,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_broken_plugin_config(self, api_client, random_tenant, local_ds_plugin_cfg):
         local_ds_plugin_cfg["password_initial"] = None
@@ -103,6 +117,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "密码生成规则、初始密码设置、密码到期设置均不能为空" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_invalid_notification_template(self, api_client, random_tenant, local_ds_plugin_cfg):
         local_ds_plugin_cfg["password_expire"]["notification"]["templates"][0]["title"] = None
@@ -115,6 +132,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "邮件通知模板需要提供标题" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_invalid_plugin_config(self, api_client, random_tenant, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_password")
@@ -127,6 +147,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_password: Field required" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_general_data_source(
         self, api_client, random_tenant, general_ds_plugin_cfg, tenant_user_custom_fields, field_mapping, sync_config
@@ -142,6 +165,9 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_without_required_field_mapping(
         self, api_client, random_tenant, general_ds_plugin_cfg, sync_config
@@ -158,6 +184,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "当前数据源类型必须配置字段映射" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_invalid_field_mapping_case_not_allowed_field(
         self, api_client, random_tenant, general_ds_plugin_cfg
@@ -178,6 +207,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "字段映射中的目标字段 {'xxx_username'} 不属于用户自定义字段或内置字段" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_invalid_field_mapping_case_missed_field(
         self, api_client, random_tenant, general_ds_plugin_cfg
@@ -198,6 +230,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "缺少字段映射" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_without_sync_config(self, api_client, random_tenant, general_ds_plugin_cfg, field_mapping):
         resp = api_client.post(
@@ -210,6 +245,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "当前数据源类型必须提供同步配置" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
     def test_create_with_invalid_sync_config(self, api_client, random_tenant, general_ds_plugin_cfg, field_mapping):
         resp = api_client.post(
@@ -223,6 +261,9 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "sync_config.sync_period: “-1” 不是合法选项。" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
+        ).exists()
 
 
 class TestDataSourceListApi:
@@ -250,6 +291,9 @@ class TestDataSourceUpdateApi:
 
         resp = api_client.get(url)
         assert resp.data["plugin_config"]["enable_password"] is False
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_password")
@@ -259,6 +303,9 @@ class TestDataSourceUpdateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_password: Field required" in resp.data["message"]
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_general_data_source(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping, sync_config
@@ -272,6 +319,9 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_without_required_field_mapping(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, sync_config
@@ -283,6 +333,9 @@ class TestDataSourceUpdateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须配置字段映射"
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_without_required_sync_config(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping
@@ -294,6 +347,9 @@ class TestDataSourceUpdateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须提供同步配置"
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_with_sensitive_mask(
         self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
@@ -313,6 +369,9 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
     def test_update_with_sensitive_mask_but_not_init(
         self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
@@ -329,6 +388,9 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert not OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
+        ).exists()
 
 
 class TestDataSourceRetrieveApi:
@@ -360,6 +422,9 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert updated_wecom_idp.status == IdpStatus.DISABLED
         assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
+        ).exists()
 
     def test_destroy_with_delete_idp(self, api_client, data_source, local_idp, wecom_idp):
         resp = api_client.delete(
@@ -375,6 +440,9 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=wecom_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
+        ).exists()
 
     def test_destroy_with_delete_invalid_idp(self, api_client, data_source, local_idp, disabled_idp):
         resp = api_client.delete(
@@ -390,6 +458,9 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=disabled_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
+        assert OperationAuditRecord.objects.filter(
+            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
+        ).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:
@@ -468,3 +539,9 @@ class TestDataSourceImportApi:
             assert sync_task.status == SyncTaskStatus.SUCCESS
             assert DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
             assert DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+            assert OperationAuditRecord.objects.filter(
+                target=OperationTarget.DATA_SOURCE, operation=OperationEnum.IMPORT_DATA_SOURCE
+            ).exists()
+            assert OperationAuditRecord.objects.filter(
+                target=OperationTarget.DATA_SOURCE, operation=OperationEnum.SYNC_DATA_SOURCE
+            ).exists()
