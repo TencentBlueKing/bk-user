@@ -11,7 +11,4 @@ specific language governing permissions and limitations under the License.
 
 
 def get_client_ip(request):
-    ip_address = request.META.get("REMOTE_ADDR")
-    if not ip_address:
-        ip_address = request.META.get("HTTP_X_FORWARDED_FOR")
-    return ip_address
+    return request.META.get("REMOTE_ADDR") or request.META.get("HTTP_X_FORWARDED_FOR", "")
