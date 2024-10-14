@@ -40,7 +40,7 @@ class OperationEnum(str, StructuredEnum):
     MODIFY_IDP_STATUS = EnumField("modify_idp_status", label=_("修改 IDP（认证源）状态"))
     # 用户
     CREATE_USER = EnumField("create_user", label=_("创建用户"))
-    MODIFY_USER = EnumField("modify_user", label=_("修改用户"))
+    MODIFY_USER = EnumField("modify_user", label=_("修改用户信息"))
     DELETE_USER = EnumField("delete_user", label=_("删除用户"))
     MODIFY_DEPARTMENT_USER_RELATIONS = EnumField("modify_department_user_relations", label=_("修改用户所属部门"))
     MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
@@ -53,12 +53,12 @@ class OperationEnum(str, StructuredEnum):
     SEND_PHONE_VERIFICATION_CODE = EnumField("send_phone_verification_code", label=_("发送手机验证码"))
     # 组织
     CREATE_ORGANIZATION = EnumField("create_organization", label=_("创建组织"))
-    MODIFY_ORGANIZATION = EnumField("modify_organization", label=_("修改组织"))
+    MODIFY_ORGANIZATION = EnumField("modify_organization", label=_("修改组织名称"))
     DELETE_ORGANIZATION = EnumField("delete_organization", label=_("删除组织"))
     MODIFY_PARENT_ORGANIZATION = EnumField("modify_parent_organization", label=_("修改上级组织"))
     # 平台管理
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))
-    MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户"))
+    MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户信息"))
     DELETE_TENANT = EnumField("delete_tenant", label=_("删除租户"))
     MODIFY_TENANT_STATUS = EnumField("modify_tenant_status", label=_("修改租户状态"))
     # 租户
@@ -67,5 +67,5 @@ class OperationEnum(str, StructuredEnum):
     MODIFY_VALIDITY_PERIOD_CONFIG = EnumField("modify_validity_period_config", label=_("修改租户账户有效期配置"))
     # 虚拟用户
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
-    MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户"))
+    MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户信息"))
     DELETE_VIRTUAL_USER = EnumField("delete_virtual_user", label=_("删除虚拟用户"))
