@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 
 from typing import Optional
 
-from .data_models import OperationAuditRecord
+from .models import OperationAuditRecord
 
 
 def add_operation_audit_record(

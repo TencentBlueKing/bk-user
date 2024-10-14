@@ -241,7 +241,11 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_before = DataSourceUpdateInputSLZ(data_source).data
+        data_before = {
+            "plugin_config": data_source.plugin_config,
+            "field_mapping": data_source.field_mapping,
+            "sync_config": data_source.sync_config,
+        }
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
@@ -257,7 +261,11 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             instance={"data_source": data_source.id, "data_source_plugin": data_source.plugin_id},
             data_before=data_before,
-            data_after=DataSourceUpdateInputSLZ(data_source).data,
+            data_after={
+                "plugin_config": data_source.plugin_config,
+                "field_mapping": data_source.field_mapping,
+                "sync_config": data_source.sync_config,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

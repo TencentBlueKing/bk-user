@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 
 import pytest
 from bkuser.apps.audit.constants import OperationEnum, OperationTarget
-from bkuser.apps.audit.data_models import OperationAuditRecord
+from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
