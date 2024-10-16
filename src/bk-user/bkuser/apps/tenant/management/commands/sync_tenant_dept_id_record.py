@@ -16,11 +16,11 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 
 class Command(BaseCommand):
     """
-    同步租户部门 ID 记录
+    同步租户部门 ID 记录：(tenant_id, data_source_id, dept_code) -> tenant_department_id
 
     $ python manage.py sync_tenant_dept_id_record
 
-    执行时机：首次部署 & 数据迁移完成后执行一次，可重入
+    执行时机：首次部署 & 数据迁移完成后执行一次（可重复执行）
     """
 
     def handle(self, *args, **options):

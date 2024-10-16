@@ -14,7 +14,7 @@ from typing import Set
 import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.syncers import TenantUserSyncer
-from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserIDRecord
 
 pytestmark = pytest.mark.django_db
 
@@ -51,6 +51,9 @@ class TestTenantUserSyncer:
         TenantUserSyncer(tenant_sync_task_ctx, full_local_data_source, random_tenant).sync()
 
         assert not TenantUser.objects.filter(tenant=random_tenant, data_source=full_local_data_source).exists()
+
+        # 租户用户 ID 复用
+        assert TenantUserIDRecord.objects.filter(tenant=random_tenant, data_source=full_local_data_source).exists()
 
     @staticmethod
     def _gen_ds_user_ids_with_tenant(tenant: Tenant, data_source: DataSource) -> Set[int]:

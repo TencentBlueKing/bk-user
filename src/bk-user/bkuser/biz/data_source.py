@@ -21,6 +21,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import (
     TenantDepartment,
+    TenantDepartmentIDRecord,
     TenantUser,
     TenantUserIDGenerateConfig,
     TenantUserIDRecord,
@@ -41,6 +42,8 @@ class DataSourceHandler:
         TenantUserIDGenerateConfig.objects.filter(data_source=data_source).delete()
         # 4. 删除租户用户 ID 映射记录
         TenantUserIDRecord.objects.filter(data_source=data_source).delete()
+        # 5. 删除租户部门 ID 映射记录
+        TenantDepartmentIDRecord.objects.filter(data_source=data_source).delete()
 
         # ======== 删除数据源相关模型数据 ========
         # 1. 删除部门 - 用户关系
