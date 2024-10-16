@@ -16,7 +16,8 @@ from django.db import transaction
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment
 from bkuser.apps.sync.constants import SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.contexts import TenantSyncTaskContext
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantDepartmentIDRecord
+from bkuser.apps.tenant.utils import TenantDeptIDGenerator
 
 
 class TenantDepartmentSyncer:
@@ -45,6 +46,7 @@ class TenantDepartmentSyncer:
         )
         waiting_create_tenant_departments = [
             TenantDepartment(
+                id=TenantDeptIDGenerator(self.tenant.id, self.data_source).gen(dept),
                 tenant=self.tenant,
                 data_source_department=dept,
                 data_source=self.data_source,
@@ -56,6 +58,20 @@ class TenantDepartmentSyncer:
         with transaction.atomic():
             waiting_delete_tenant_departments.delete()
             TenantDepartment.objects.bulk_create(waiting_create_tenant_departments, batch_size=self.batch_size)
+
+            # 批量记录租户部门 ID（后续有复用需求）
+            records = [
+                TenantDepartmentIDRecord(
+                    tenant=self.tenant,
+                    data_source=self.data_source,
+                    code=dept.data_source_department.code,
+                    tenant_department_id=dept.id,
+                )
+                for dept in TenantDepartment.objects.filter(
+                    tenant=self.tenant, data_source_department__in=waiting_sync_data_source_departments
+                ).select_related("data_source_department")
+            ]
+            TenantDepartmentIDRecord.objects.bulk_create(records, batch_size=self.batch_size, ignore_conflicts=True)
 
         # 记录删除日志，变更记录
         self.ctx.logger.info(f"delete {len(waiting_delete_tenant_departments)} tenant departments")

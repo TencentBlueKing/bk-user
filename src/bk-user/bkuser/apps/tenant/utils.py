@@ -12,9 +12,9 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Dict, Tuple
 
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
-from bkuser.apps.tenant.models import TenantUserIDGenerateConfig, TenantUserIDRecord
+from bkuser.apps.tenant.models import TenantDepartmentIDRecord, TenantUserIDGenerateConfig, TenantUserIDRecord
 from bkuser.utils.uuid import generate_uuid
 
 logger = logging.getLogger(__name__)
@@ -84,3 +84,38 @@ class TenantUserIDGenerator:
             tenant_id=self.target_tenant_id, data_source_id=self.data_source.id, code=user.code, tenant_user_id=uuid
         )
         return uuid
+
+
+class TenantDeptIDGenerator:
+    """租户部门 ID 生成器"""
+
+    def __init__(self, target_tenant_id: str, data_source: DataSource, prepare_batch: bool = False):
+        self.target_tenant_id = target_tenant_id
+        self.data_source = data_source
+
+        self.prepare_batch = prepare_batch
+        # 租户部门 ID 映射表：{(tenant_id, data_source_id, code): tenant_dept_id}
+        self.tenant_dept_id_map: Dict[Tuple[str, int, int], int] = {}
+        if prepare_batch:
+            self.tenant_dept_id_map = {
+                (target_tenant_id, data_source.id, record.code): record.tenant_department_id
+                for record in TenantDepartmentIDRecord.objects.filter(
+                    tenant_id=target_tenant_id, data_source=data_source
+                )
+            }
+
+    def gen(self, dept: DataSourceDepartment) -> int | None:
+        """生成租户部门 ID，没有历史记录，则返回 None，由 DB 生成自增 ID"""
+        if self.prepare_batch:
+            # 有准备的，直接从映射表里面查询
+            if dept_id := self.tenant_dept_id_map.get((self.target_tenant_id, self.data_source.id, dept.code)):
+                return dept_id
+        else:
+            # 没有准备的需现查 DB，没有的话就创建并生成
+            record = TenantDepartmentIDRecord.objects.filter(
+                tenant_id=self.target_tenant_id, data_source=self.data_source, code=dept.code
+            ).first()
+            if record and record.tenant_department_id:
+                return record.tenant_department_id
+
+        return None

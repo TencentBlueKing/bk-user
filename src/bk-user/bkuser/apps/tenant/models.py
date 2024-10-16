@@ -268,3 +268,15 @@ class TenantUserIDRecord(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "data_source", "code")]
+
+
+class TenantDepartmentIDRecord(TimestampedModel):
+    """租户部门 ID 记录"""
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    code = models.CharField("部门在数据源中的唯一标识", max_length=128)
+    tenant_department_id = models.BigIntegerField("租户部门 ID")
+
+    class Meta:
+        unique_together = [("tenant", "data_source", "code")]
