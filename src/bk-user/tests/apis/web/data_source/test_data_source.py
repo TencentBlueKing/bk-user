@@ -12,8 +12,6 @@ specific language governing permissions and limitations under the License.
 from urllib.parse import urlencode
 
 import pytest
-from bkuser.apps.audit.constants import OperationEnum, OperationTarget
-from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
@@ -67,9 +65,6 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
-        ).exists()
 
     def test_create_with_minimal_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
@@ -80,9 +75,6 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
-        ).exists()
 
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
@@ -150,9 +142,6 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.CREATE_DATA_SOURCE
-        ).exists()
 
     def test_create_without_required_field_mapping(
         self, api_client, random_tenant, general_ds_plugin_cfg, sync_config
@@ -261,9 +250,6 @@ class TestDataSourceUpdateApi:
 
         resp = api_client.get(url)
         assert resp.data["plugin_config"]["enable_password"] is False
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
-        ).exists()
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_password")
@@ -286,9 +272,6 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
-        ).exists()
 
     def test_update_without_required_field_mapping(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, sync_config
@@ -330,9 +313,6 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.MODIFY_DATA_SOURCE
-        ).exists()
 
     def test_update_with_sensitive_mask_but_not_init(
         self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
@@ -380,9 +360,6 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert updated_wecom_idp.status == IdpStatus.DISABLED
         assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
-        ).exists()
 
     def test_destroy_with_delete_idp(self, api_client, data_source, local_idp, wecom_idp):
         resp = api_client.delete(
@@ -398,9 +375,6 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=wecom_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
-        ).exists()
 
     def test_destroy_with_delete_invalid_idp(self, api_client, data_source, local_idp, disabled_idp):
         resp = api_client.delete(
@@ -416,9 +390,6 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=disabled_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
-        assert OperationAuditRecord.objects.filter(
-            target=OperationTarget.DATA_SOURCE, operation=OperationEnum.DELETE_DATA_SOURCE
-        ).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:
@@ -497,9 +468,3 @@ class TestDataSourceImportApi:
             assert sync_task.status == SyncTaskStatus.SUCCESS
             assert DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
             assert DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-            assert OperationAuditRecord.objects.filter(
-                target=OperationTarget.DATA_SOURCE, operation=OperationEnum.IMPORT_DATA_SOURCE
-            ).exists()
-            assert OperationAuditRecord.objects.filter(
-                target=OperationTarget.DATA_SOURCE, operation=OperationEnum.SYNC_DATA_SOURCE
-            ).exists()

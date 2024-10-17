@@ -45,7 +45,7 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.audit.constants import OperationEnum, OperationTarget
+from bkuser.apps.audit.constants import OperationTarget, OperationType
 from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -74,7 +74,6 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.utils.ip import get_client_ip
 
 from .schema import get_data_source_plugin_cfg_json_schema
 
@@ -183,10 +182,11 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
 
         add_operation_audit_record(
             operator=current_user,
-            ip=get_client_ip(request),
-            target=OperationTarget.DATA_SOURCE,
-            operation=OperationEnum.CREATE_DATA_SOURCE,
-            instance={"data_source": ds.id, "data_source_plugin": ds.plugin_id},
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.CREATE_DATA_SOURCE,
+            tenant_id=current_tenant_id,
+            data_source_id=ds.id,
+            extras={"data_source_plugin_id": ds.plugin_id},
         )
 
         return Response(
@@ -241,11 +241,6 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_before = {
-            "plugin_config": data_source.plugin_config,
-            "field_mapping": data_source.field_mapping,
-            "sync_config": data_source.sync_config,
-        }
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
@@ -256,16 +251,18 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=data_source.updater,
-            ip=get_client_ip(request),
-            target=OperationTarget.DATA_SOURCE,
-            operation=OperationEnum.MODIFY_DATA_SOURCE,
-            instance={"data_source": data_source.id, "data_source_plugin": data_source.plugin_id},
-            data_before=data_before,
-            data_after={
-                "plugin_config": data_source.plugin_config,
-                "field_mapping": data_source.field_mapping,
-                "sync_config": data_source.sync_config,
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.MODIFY_DATA_SOURCE,
+            data_change={
+                "data_after": {
+                    "plugin_config": data_source.plugin_config,
+                    "field_mapping": data_source.field_mapping,
+                    "sync_config": data_source.sync_config,
+                }
             },
+            tenant_id=data_source.owner_tenant_id,
+            data_source_id=data_source.id,
+            extras={"data_source_plugin_id": data_source.plugin_id},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -285,7 +282,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz = DataSourceDestroyInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
-        instance = {"data_source": data_source.id, "data_source_plugin": data_source.plugin_id}
+        data_source_id = data_source.id
 
         with transaction.atomic():
             if is_delete_idp:
@@ -315,10 +312,11 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=request.user.username,
-            ip=get_client_ip(request),
-            target=OperationTarget.DATA_SOURCE,
-            operation=OperationEnum.DELETE_DATA_SOURCE,
-            instance=instance,
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.DELETE_DATA_SOURCE,
+            tenant_id=self.get_current_tenant_id(),
+            data_source_id=data_source_id,
+            extras={"data_source_plugin_id": data_source.plugin_id, "is_delete_idp": is_delete_idp},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -516,10 +514,24 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 
         add_operation_audit_record(
             operator=request.user.username,
-            ip=get_client_ip(request),
-            target=OperationTarget.DATA_SOURCE,
-            operation=OperationEnum.IMPORT_DATA_SOURCE,
-            instance={"data_source": data_source.id, "data_source_plugin": data_source.plugin_id},
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.IMPORT_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            data_source_id=data_source.id,
+        )
+
+        add_operation_audit_record(
+            operator=task.operator,
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.SYNC_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            data_source_id=data_source.id,
+            extras={
+                "task_id": task.id,
+                "overwrite": data["overwrite"],
+                "incremental": data["incremental"],
+                "data_source_plugin_id": data_source.plugin_id,
+            },
         )
 
         return Response(
@@ -564,6 +576,20 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
+
+        add_operation_audit_record(
+            operator=task.operator,
+            operation_target=OperationTarget.DATA_SOURCE,
+            operation_type=OperationType.SYNC_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            data_source_id=data_source.id,
+            extras={
+                "task_id": task.id,
+                "overwrite": True,
+                "incremental": False,
+                "data_source_plugin_id": data_source.plugin_id,
+            },
+        )
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(

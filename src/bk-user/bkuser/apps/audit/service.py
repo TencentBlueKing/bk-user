@@ -9,26 +9,27 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from typing import Optional
+from typing import Dict
 
+from .constants import OperationTarget, OperationType
 from .models import OperationAuditRecord
 
 
 def add_operation_audit_record(
     operator: str,
-    target: str,
-    operation: str,
-    ip: Optional[str] = None,
-    data_before: Optional[dict] = None,
-    data_after: Optional[dict] = None,
-    instance: Optional[dict] = None,
+    operation_target: OperationTarget,
+    operation_type: OperationType,
+    tenant_id: str,
+    data_change: Dict | None = None,
+    data_source_id: str | None = None,
+    extras: Dict | None = None,
 ) -> OperationAuditRecord:
     return OperationAuditRecord.objects.create(
-        operator=operator,
-        target=target,
-        operation=operation,
-        ip=ip,
-        data_before=data_before,
-        data_after=data_after,
-        instance=instance,
+        creator=operator,
+        operation_target=operation_target,
+        operation_type=operation_type,
+        tenant_id=tenant_id,
+        data_change=data_change,
+        data_source_id=data_source_id,
+        extras=extras,
     )

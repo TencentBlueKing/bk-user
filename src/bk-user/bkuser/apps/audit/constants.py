@@ -17,15 +17,15 @@ class OperationTarget(str, StructuredEnum):
     """操作对象"""
 
     DATA_SOURCE = EnumField("data_source", label=_("数据源"))
-    IDP = EnumField("idp", label=_("IDP（认证源）"))
+    IDP = EnumField("idp", label=_("认证源"))
     USER = EnumField("user", label=_("用户"))
     ORGANIZATION = EnumField("organization", label=_("组织"))
-    PLATFORM_MANAGEMENT = EnumField("platform_management", label=_("平台管理"))
+    MANAGEMENT_PLATFORM = EnumField("management_platform", label=_("管理平台"))
     TENANT = EnumField("tenant", label=_("租户"))
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
 
 
-class OperationEnum(str, StructuredEnum):
+class OperationType(str, StructuredEnum):
     """操作类型"""
 
     # 数据源
@@ -34,21 +34,21 @@ class OperationEnum(str, StructuredEnum):
     DELETE_DATA_SOURCE = EnumField("delete_data_source", label=_("删除数据源"))
     SYNC_DATA_SOURCE = EnumField("sync_data_source", label=_("同步数据源"))
     IMPORT_DATA_SOURCE = EnumField("import_data_source", label=_("导入数据源"))
-    # IDP（认证源）
-    CREATE_IDP = EnumField("create_idp", label=_("创建 IDP（认证源）"))
-    MODIFY_IDP = EnumField("modify_idp", label=_("修改 IDP（认证源）"))
-    MODIFY_IDP_STATUS = EnumField("modify_idp_status", label=_("修改 IDP（认证源）状态"))
+    # 认证源
+    CREATE_IDP = EnumField("create_idp", label=_("创建认证源"))
+    MODIFY_IDP = EnumField("modify_idp", label=_("修改认证源"))
+    MODIFY_IDP_STATUS = EnumField("modify_idp_status", label=_("修改认证源状态"))
     # 用户
     CREATE_USER = EnumField("create_user", label=_("创建用户"))
     MODIFY_USER = EnumField("modify_user", label=_("修改用户信息"))
     DELETE_USER = EnumField("delete_user", label=_("删除用户"))
-    MODIFY_DEPARTMENT_USER_RELATIONS = EnumField("modify_department_user_relations", label=_("修改用户所属部门"))
+    MODIFY_USER_ORGANIZATION_RELATIONS = EnumField("modify_user_organization_relations", label=_("修改用户所属组织"))
     MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
     MODIFY_ACCOUNT_EXPIRED_AT = EnumField("modify_account_expired_at", label=_("修改账户过期时间"))
-    MODIFY_LEADERS = EnumField("modify_leaders", label=_("修改用户上级"))
+    MODIFY_USER_LEADERS = EnumField("modify_user_leaders", label=_("修改用户上级"))
     MODIFY_USER_PASSWORD = EnumField("modify_user_password", label=_("重置用户密码"))
-    MODIFY_EMAIL = EnumField("modify_email", label=_("修改邮箱"))
-    MODIFY_PHONE = EnumField("modify_phone", label=_("修改电话号码"))
+    MODIFY_USER_EMAIL = EnumField("modify_user_email", label=_("修改用户邮箱"))
+    MODIFY_USER_PHONE = EnumField("modify_user_phone", label=_("修改用户电话号码"))
     SEND_EMAIL_VERIFICATION_CODE = EnumField("send_email_verification_code", label=_("发送邮箱验证码"))
     SEND_PHONE_VERIFICATION_CODE = EnumField("send_phone_verification_code", label=_("发送手机验证码"))
     # 组织
@@ -56,7 +56,7 @@ class OperationEnum(str, StructuredEnum):
     MODIFY_ORGANIZATION = EnumField("modify_organization", label=_("修改组织名称"))
     DELETE_ORGANIZATION = EnumField("delete_organization", label=_("删除组织"))
     MODIFY_PARENT_ORGANIZATION = EnumField("modify_parent_organization", label=_("修改上级组织"))
-    # 平台管理
+    # 管理平台
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))
     MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户信息"))
     DELETE_TENANT = EnumField("delete_tenant", label=_("删除租户"))

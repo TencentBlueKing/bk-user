@@ -13,21 +13,19 @@ import uuid
 
 from django.db import models
 
-from bkuser.apps.audit.constants import OperationEnum, OperationTarget
+from bkuser.common.models import AuditedModel
 
 
-class OperationAuditRecord(models.Model):
-    event_id = models.UUIDField(
+class OperationAuditRecord(AuditedModel):
+    id = models.UUIDField(
         "事件 id", default=uuid.uuid4, primary_key=True, editable=False, auto_created=True, unique=True
     )
-    operator = models.CharField(max_length=32, verbose_name="操作用户")
-    ip = models.CharField(max_length=32, verbose_name="来源 ip", null=True, blank=True)
-    operate_time = models.DateTimeField(auto_now_add=True, verbose_name="操作时间", db_index=True)
-    target = models.CharField(max_length=32, verbose_name="操作对象", choices=OperationTarget.get_choices())
-    operation = models.CharField(max_length=32, verbose_name="操作类型", choices=OperationEnum.get_choices())
-    data_before = models.JSONField(verbose_name="操作前的数据", null=True, blank=True)
-    data_after = models.JSONField(verbose_name="操作后的数据", null=True, blank=True)
-    instance = models.JSONField(verbose_name="操作对象实例", null=True, blank=True)
+    operation_target = models.CharField(max_length=32, verbose_name="操作对象")
+    operation_type = models.CharField(max_length=32, verbose_name="操作类型")
+    tenant_id = models.CharField(max_length=32, verbose_name="操作对象所属的租户 id")
+    data_change = models.JSONField(max_length=32, verbose_name="操作数据变更", null=True, blank=True)
+    data_source_id = models.CharField(max_length=32, verbose_name="操作对象所属的数据源 id", null=True, blank=True)
+    extras = models.JSONField(verbose_name="操作额外信息", null=True, blank=True)
 
     class Meta:
-        ordering = ["-operate_time"]  # 按照 operate_time 字段降序排列
+        ordering = ["-created_at"]  # 按照 created_at 字段降序排列

@@ -14,8 +14,6 @@ from typing import Any, Dict, Optional
 from django.conf import settings
 from django.utils import timezone
 
-from bkuser.apps.audit.constants import OperationEnum, OperationTarget
-from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.data_models import DataSourceSyncOptions, TenantSyncOptions
@@ -63,17 +61,6 @@ class DataSourceSyncManager:
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
-
-        add_operation_audit_record(
-            operator=task.operator,
-            target=OperationTarget.DATA_SOURCE,
-            operation=OperationEnum.SYNC_DATA_SOURCE,
-            instance={
-                "data_source": self.data_source.id,
-                "data_source_plugin": self.data_source.plugin_id,
-                "task": task.id,
-            },
-        )
 
         return task
 
