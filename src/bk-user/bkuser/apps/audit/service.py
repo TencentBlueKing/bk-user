@@ -21,7 +21,7 @@ def add_operation_audit_record(
     operation_type: OperationType,
     tenant_id: str,
     data_change: Dict | None = None,
-    data_source_id: str | None = None,
+    data_source_id: int | None = None,
     extras: Dict | None = None,
 ) -> OperationAuditRecord:
     return OperationAuditRecord.objects.create(

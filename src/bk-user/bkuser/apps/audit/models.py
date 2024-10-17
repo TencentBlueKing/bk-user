@@ -24,7 +24,7 @@ class OperationAuditRecord(AuditedModel):
     operation_type = models.CharField(max_length=32, verbose_name="操作类型")
     tenant_id = models.CharField(max_length=32, verbose_name="操作对象所属的租户 id")
     data_change = models.JSONField(max_length=32, verbose_name="操作数据变更", null=True, blank=True)
-    data_source_id = models.CharField(max_length=32, verbose_name="操作对象所属的数据源 id", null=True, blank=True)
+    data_source_id = models.IntegerField(max_length=32, verbose_name="操作对象所属的数据源 id", null=True, blank=True)
     extras = models.JSONField(verbose_name="操作额外信息", null=True, blank=True)
 
     class Meta:
