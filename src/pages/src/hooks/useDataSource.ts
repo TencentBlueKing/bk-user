@@ -101,7 +101,7 @@ export const useDataSource = () => {
       Message({ theme: res.data.status, message: res.data.summary });
       if (pollingInterval.value) return;
       initSyncRecords(stopOperationPollingRule);
-      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 10000);
+      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 5000);
     });
   };
 
@@ -124,7 +124,7 @@ export const useDataSource = () => {
     initSyncRecords(importDataStopRule);
     importDataTimePolling.value = setInterval(() => {
       initSyncRecords(importDataStopRule);
-    }, 1000);
+    }, 5000);
   };
 
   const stopImportDataTimePolling = () => {
