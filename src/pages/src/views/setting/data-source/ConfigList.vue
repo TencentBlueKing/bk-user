@@ -12,6 +12,7 @@
         <bk-button
           class="min-w-[64px]"
           hover-theme="primary"
+          :loading="resetLoading"
           @click="handleReset"
         >
           {{ $t('重置') }}
@@ -225,12 +226,13 @@ const {
   stopImportDataTimePolling,
 } = useDataSource();
 
+const resetLoading = ref(false);
 // 重置数据源
 const handleReset = async () => {
   try {
+    resetLoading.value = true;
     const res = await getRelatedResource(dataSource.value?.id);
     const { subContent, resetIdpConfig } = useInfoBoxContent(res.data, '');
-
 
     InfoBox({
       width: 600,
@@ -240,6 +242,7 @@ const handleReset = async () => {
       confirmText: t('重置'),
       theme: 'danger',
       onConfirm: () => {
+        resetLoading.value = true;
         const resetConfig = resetIdpConfig.value ? 'True' : 'False';
         if (dataSource.value?.id) {
           deleteDataSources({ id: dataSource.value.id, is_delete_idp: resetConfig }).then(() => {
@@ -248,9 +251,14 @@ const handleReset = async () => {
           });
         }
       },
+      onClose: () => {
+        resetLoading.value = false;
+      }
     });
   } catch (e) {
     console.warn(e);
+  } finally {
+    resetLoading.value = false;
   }
 };
 
