@@ -275,7 +275,7 @@ export const SYNC_TIMEOUT_LIST = [
 export const dataRecordStatus = {
   pending: {
     icon: loadingImg,
-    text: t('待执行'),
+    text: t('同步中'),
     theme: 'warning',
   },
   running: {

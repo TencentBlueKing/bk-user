@@ -33,7 +33,7 @@
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
               <span
-                v-if="syncStatus?.status !== 'running'"
+                v-if="syncStatus?.status !== 'running' && syncStatus?.status !== 'pending'"
                 :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
@@ -41,7 +41,9 @@
                 <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
                 <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
               </span>
-              <span v-if="syncStatus?.status !== 'running'">{{ syncStatus?.start_at }}</span>
+              <span v-if="syncStatus?.status !== 'running' && syncStatus?.status !== 'pending'">
+                {{ syncStatus?.start_at }}
+              </span>
             </div>
             <div v-if="dataSource?.plugin_id === 'local'">
               <bk-button
@@ -248,12 +250,10 @@ const handleReset = async () => {
           deleteDataSources({ id: dataSource.value.id, is_delete_idp: resetConfig }).then(() => {
             Message({ theme: 'success', message: t('数据源重置成功') });
             initDataSourceList();
-          });
+          })
+            .finally(() => resetLoading.value = false);
         }
       },
-      onClose: () => {
-        resetLoading.value = false;
-      }
     });
   } catch (e) {
     console.warn(e);
