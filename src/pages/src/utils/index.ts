@@ -273,6 +273,7 @@ export const SYNC_TIMEOUT_LIST = [
 
 // 数据更新记录状态
 export const dataRecordStatus = {
+  // pending状态下文本由待执行改为同步中
   pending: {
     icon: loadingImg,
     text: t('同步中'),
@@ -294,6 +295,8 @@ export const dataRecordStatus = {
     theme: 'danger',
   },
 };
+
+export const RUNNING_FIELDS = ['pending', 'running'];
 
 // 有效期
 export const VALID_TIME = [

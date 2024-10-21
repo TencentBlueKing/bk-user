@@ -14,6 +14,7 @@
           hover-theme="primary"
           :loading="resetLoading"
           @click="handleReset"
+          :disabled="RUNNING_FIELDS.includes(syncStatus?.status)"
         >
           {{ $t('重置') }}
         </bk-button>
@@ -33,7 +34,7 @@
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
               <span
-                v-if="syncStatus?.status !== 'running' && syncStatus?.status !== 'pending'"
+                v-if="!RUNNING_FIELDS.includes(syncStatus?.status)"
                 :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
@@ -41,7 +42,7 @@
                 <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
                 <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
               </span>
-              <span v-if="syncStatus?.status !== 'running' && syncStatus?.status !== 'pending'">
+              <span v-if="!RUNNING_FIELDS.includes(syncStatus?.status)">
                 {{ syncStatus?.start_at }}
               </span>
             </div>
@@ -204,11 +205,10 @@ import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
-import loadingImg from '@/images/loading.svg';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useSyncStatus, useUser } from '@/store';
-import { dataRecordStatus } from '@/utils';
+import { dataRecordStatus, RUNNING_FIELDS } from '@/utils';
 const route = useRoute();
 
 const userStore = useUser();
