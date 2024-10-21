@@ -29,7 +29,6 @@ class Command(BaseCommand):
         # 再根据租户部门数据，重新创建
         records = [
             TenantDepartmentIDRecord(
-                id=dept.id,
                 tenant_id=dept.tenant_id,
                 data_source_id=dept.data_source_id,
                 code=dept.data_source_department.code,

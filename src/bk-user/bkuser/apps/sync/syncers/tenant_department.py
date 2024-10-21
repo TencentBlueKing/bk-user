@@ -71,6 +71,7 @@ class TenantDepartmentSyncer:
                     tenant=self.tenant, data_source_department__in=waiting_sync_data_source_departments
                 ).select_related("data_source_department")
             ]
+            # 由于存量历史数据（Record）也会被下发，因此需要忽略冲突保证其他数据可以正常插入
             TenantDepartmentIDRecord.objects.bulk_create(records, batch_size=self.batch_size, ignore_conflicts=True)
 
         # 记录删除日志，变更记录

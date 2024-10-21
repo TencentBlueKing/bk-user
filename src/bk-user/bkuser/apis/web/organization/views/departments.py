@@ -236,6 +236,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                     data_source_department=data_source_dept,
                 )
             ]
+            # 由于存量历史数据（Record）也会被下发，因此需要忽略冲突保证其他数据可以正常插入
             TenantDepartmentIDRecord.objects.bulk_create(records, ignore_conflicts=True)
 
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)

@@ -229,7 +229,9 @@ class TestTenantUserCreateApi:
         ).exists()
         # 租户用户 ID 会被记录，以便后续复用
         assert TenantUserIDRecord.objects.filter(
-            tenant=random_tenant, data_source=full_local_data_source, code=tenant_user.data_source_user.code
+            tenant=random_tenant,
+            data_source=full_local_data_source,
+            code=tenant_user.data_source_user.code,
         ).exists()
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
