@@ -229,7 +229,7 @@ const handleSendCaptcha = async () => {
           } catch (err: any) {
             captchaValidate.value = true;
             const captchaTips = err.response.data?.error?.message;
-            transformTips(captchaTips);
+            transformTips(captchaTips, 'captcha');
           }
         }
         // 获取手机验证码
@@ -243,7 +243,7 @@ const handleSendCaptcha = async () => {
           } catch (err: any) {
             captchaValidate.value = true;
             const captchaTips = err.response.data?.error?.message;
-            transformTips(captchaTips);
+            transformTips(captchaTips, 'captcha');
           }
         }
       })();
@@ -324,7 +324,7 @@ const handleSubmitVerifyForm = async () => {
       emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
       const captchaTips = err.response.data?.error?.message;
-      transformTips(captchaTips);
+      transformTips(captchaTips, 'verify');
       verifyResult = fail;
       captchaValidate.value = true;
     }
@@ -345,7 +345,7 @@ const handleSubmitVerifyForm = async () => {
       });
     } catch (err: any) {
       const captchaTips = err.response.data?.error?.message;
-      transformTips(captchaTips);
+      transformTips(captchaTips, 'verify');
       verifyResult = fail;
       captchaValidate.value = true;
     }
@@ -358,23 +358,21 @@ const handleSubmitVerifyForm = async () => {
   }
 };
 
-const transformTips = (currentTips: string) => {
+const transformTips = (currentTips: string, type: string) => {
   const CAPTCHA_ERROR_CN = '验证码无效: 验证码错误';
   const CAPTCHA_ERROR_EN = 'Invalid verification code: Incorrect verification code';
   const OVER_LIMIT_ERROR_CN = '发送验证码失败: 今日发送验证码次数超过上限，请明天再试';
   // eslint-disable-next-line @typescript-eslint/quotes
   const OVER_LIMIT_ERROR_EN = `Failed to send verification code: Today's limit for sending verification codes has been exceeded, please try again tomorrow`;
-  if (currentTips === CAPTCHA_ERROR_CN || currentTips === CAPTCHA_ERROR_EN) {
-    captchaMessage.value = t('验证码错误，请重试');
-  } else {
-    captchaMessage.value = currentTips;
+  let transformedMessage = currentTips;
+
+  if (type === 'verify' && (currentTips === CAPTCHA_ERROR_CN || currentTips === CAPTCHA_ERROR_EN)) {
+    transformedMessage = t('验证码错误，请重试');
+  } else if (type === 'captcha' && (currentTips === OVER_LIMIT_ERROR_CN || currentTips === OVER_LIMIT_ERROR_EN)) {
+    transformedMessage = t('发送验证码次数超过上限，请一天之后再试');
   }
 
-  if (currentTips === OVER_LIMIT_ERROR_CN || currentTips === OVER_LIMIT_ERROR_EN) {
-    captchaMessage.value = t('发送验证码次数超过上限，请一天之后再试');
-  } else {
-    captchaMessage.value = currentTips;
-  }
+  captchaMessage.value = transformedMessage;
 };
 
 </script>
