@@ -30,6 +30,7 @@ import { defineProps } from 'vue';
 
 import { useDataSource } from '@/hooks';
 import router from '@/router';
+import { useSyncStatus } from '@/store';
 
 defineProps({
   title: {
@@ -39,10 +40,11 @@ defineProps({
 });
 
 const { handleOperationsSync } = useDataSource();
-
+const syncStatusStore = useSyncStatus();
 // 同步数据后跳转到数据源配置页面
 const handleSync = () => {
   handleOperationsSync();
+  syncStatusStore.setRefresh(false);
   router.push({ name: 'dataSource' });
 };
 
