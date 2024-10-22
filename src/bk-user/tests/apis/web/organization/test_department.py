@@ -15,7 +15,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
 )
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 from django.urls import reverse
 from rest_framework import status
 
@@ -119,17 +119,27 @@ class TestTenantDepartmentListApi:
 
 class TestTenantDepartmentCreateApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant):
+    def test_standard(self, api_client, full_local_data_source, random_tenant):
         url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})
 
         # 创建根部门
-        resp = api_client.post(url, data={"parent_department_id": 0, "name": generate_random_string()})
+        root_dept_name = generate_random_string()
+        resp = api_client.post(url, data={"parent_department_id": 0, "name": root_dept_name})
         assert resp.status_code == status.HTTP_201_CREATED
 
         # 创建子部门
+        child_dept_name = generate_random_string()
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
-        resp = api_client.post(url, data={"parent_department_id": company.id, "name": generate_random_string()})
+        resp = api_client.post(url, data={"parent_department_id": company.id, "name": child_dept_name})
         assert resp.status_code == status.HTTP_201_CREATED
+
+        codes = DataSourceDepartment.objects.filter(
+            data_source=full_local_data_source,
+            name__in=[root_dept_name, child_dept_name],
+        ).values_list("code", flat=True)
+
+        # 租户部门 ID 会被记录，以便后续复用
+        assert TenantDepartmentIDRecord.objects.filter(tenant=random_tenant, code__in=codes).count() == 2
 
     def test_create_without_data_source(self, api_client, random_tenant):
         url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})

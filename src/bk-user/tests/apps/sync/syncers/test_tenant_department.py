@@ -17,7 +17,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
 )
 from bkuser.apps.sync.syncers import TenantDepartmentSyncer
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantDepartmentIDRecord
 
 pytestmark = pytest.mark.django_db
 
@@ -46,6 +46,12 @@ class TestTenantDepartmentSyncer:
         TenantDepartmentSyncer(tenant_sync_task_ctx, full_local_data_source, random_tenant).sync()
 
         assert not TenantDepartment.objects.filter(tenant=random_tenant, data_source=full_local_data_source).exists()
+
+        # 租户部门 ID 复用
+        assert TenantDepartmentIDRecord.objects.filter(
+            tenant=random_tenant,
+            data_source=full_local_data_source,
+        ).exists()
 
     @staticmethod
     def _gen_ds_dept_ids_with_tenant(tenant: Tenant, data_source: DataSource) -> Set[int]:

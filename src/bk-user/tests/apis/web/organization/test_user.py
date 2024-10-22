@@ -21,7 +21,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -203,7 +203,7 @@ class TestTenantUserCreateApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant, tenant_user_data):
+    def test_standard(self, api_client, full_local_data_source, random_tenant, tenant_user_data):
         # 在部门 B 下放一个新用户，设置其 leader 为 wangwu
         dept_b = TenantDepartment.objects.get(data_source_department__name="部门B", tenant=random_tenant)
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
@@ -226,6 +226,12 @@ class TestTenantUserCreateApi:
         # 检查存在 wangwu -> 新用户的关联边
         assert DataSourceUserLeaderRelation.objects.filter(
             user_id=tenant_user.data_source_user_id, leader_id=wangwu.data_source_user_id
+        ).exists()
+        # 租户用户 ID 会被记录，以便后续复用
+        assert TenantUserIDRecord.objects.filter(
+            tenant=random_tenant,
+            data_source=full_local_data_source,
+            code=tenant_user.data_source_user.code,
         ).exists()
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
