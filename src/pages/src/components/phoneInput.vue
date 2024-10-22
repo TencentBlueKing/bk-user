@@ -15,7 +15,7 @@
     <template v-if="tooltips">
       <bk-popover
         v-if="telError && data.phone"
-        :content="$t('请填写正确的手机号')"
+        :content="$t(telErrorText)"
         placement="top"
       >
         <ExclamationCircleShape class="error-icon" />
@@ -30,7 +30,7 @@
     </template>
     <template v-else>
       <p class="error-text" v-show="telError && data.phone">
-        {{ $t('请填写正确的手机号') }}
+        {{ $t(telErrorText) }}
       </p>
       <p class="error-text" v-show="telError && !data.phone && required">
         {{ $t('必填项') }}
@@ -55,6 +55,10 @@ const props = defineProps({
   telError: {
     type: Boolean,
     default: false,
+  },
+  customTelErrorText: {
+    type: String,
+    default: '',
   },
   disabled: {
     type: Boolean,
@@ -88,6 +92,13 @@ const data = computed(() => {
     };
   }
   return props.formData;
+});
+
+const telErrorText = computed(() => {
+  if (props.customTelErrorText !== '') {
+    return props.customTelErrorText;
+  }
+  return '请填写正确的手机号';
 });
 
 const telRef = ref();

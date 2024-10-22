@@ -33,6 +33,7 @@
             :tel-error="telError"
             @change-country-code="changeCountryCode"
             @change-tel-error="changeTelError"
+            custom-tel-error-text="请输入正确的手机号格式"
             :custom="true" />
         </bk-form-item>
 
@@ -51,9 +52,11 @@
             <bk-button
               outline theme="primary"
               class="!w-[141.68px] ml-[12px] !h-[40px]"
-              :disabled="verifyFormCaptchaBtn.disabled"
+              :disabled="verifyFormCaptchaBtn[currentVerifyConfig.type].disabled"
               @click="handleSendCaptcha">
-              {{ verifyFormCaptchaBtn.disabled ? `${verifyFormCaptchaBtn.times}s` : t('获取验证码') }}
+              {{ verifyFormCaptchaBtn[currentVerifyConfig.type].disabled ?
+                `${verifyFormCaptchaBtn[currentVerifyConfig.type].times}s`
+                : t('获取验证码') }}
             </bk-button>
           </div>
           <bk-overflow-title
@@ -77,12 +80,37 @@
       </div>
     </template>
   </bk-dialog>
+  <bk-dialog
+    v-model:is-show="verifySuccessVisible"
+    class="verify-success-dialog"
+    :close-icon="false"
+    :quick-close="false"
+    :esc-close="false"
+  >
+    <div class="text-center mt-[-4.62px]">
+      <div class="flex justify-center">
+        <img :src="right" class="h-[131.25px] w-[131.25px] " />
+      </div>
+      <div
+        class="bk-infobox-title !text-[24px] !mt-[33.37px] leading-[32px] text-[#313238] font-bold">
+        {{ verifySuccessText }}
+      </div>
+    </div>
+    <div class="flex justify-center mt-[32px] pb-[8px]">
+      <bk-button
+        theme="primary"
+        class="!h-[40px] !w-[100px] justify-center !text-[16px] !leading-[24px]"
+        @click="verifySuccessVisible = false">
+        {{ t('确定') }}
+      </bk-button>
+    </div>
+    <template #footer></template>
+  </bk-dialog>
 </template>
 
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { InfoBox, Message, overflowTitle } from 'bkui-vue';
-import type { Props as BkInfoBoxConfig } from 'bkui-vue/lib/info-box/info-box';
+import { Message, overflowTitle } from 'bkui-vue';
 import { computed, defineEmits, defineModel, defineProps, PropType, reactive, ref, watch } from 'vue';
 
 import { formItemPropName, openDialogResult, OpenDialogType } from './openDialogType';
@@ -90,6 +118,7 @@ import { formItemPropName, openDialogResult, OpenDialogType } from './openDialog
 import phoneInput from '@/components/phoneInput.vue';
 import { useCountDown, useValidate } from '@/hooks';
 import { patchUsersEmail, patchUsersPhone, postPersonalCenterUserEmailCaptcha, postPersonalCenterUserPhoneCaptcha } from '@/http/personalCenterFiles';
+import right from '@/images/right.svg';
 import { t } from '@/language/index';
 
 interface VerifyData {
@@ -152,8 +181,14 @@ interface VerifyForm {
 };
 
 const verifyFormCaptchaBtn = reactive({
-  disabled: false,
-  times: 0,
+  phone: {
+    disabled: false,
+    times: 0,
+  },
+  email: {
+    disabled: false,
+    times: 0,
+  },
 });
 
 const captchaValidate = ref(false);
@@ -164,6 +199,7 @@ const clearCaptchaValidate = () => {
   captchaMessage.value = '';
 };
 
+const closeTimePolling = ref(null);
 // 发送验证码
 const handleSendCaptcha = async () => {
   if (props.currentVerifyConfig.type === OpenDialogType.email) {
@@ -177,11 +213,11 @@ const handleSendCaptcha = async () => {
   verifyFormRef.value.clearValidate();
   const captchaCoolingTime = 60;
   const shutDownPointTime = 0;
-  const { closeTimePolling } = useCountDown({
+  const { closeTimePolling: countDownCloseTimePolling } = useCountDown({
     beforeStart: () => {
       (async () => {
-        verifyFormCaptchaBtn.times = captchaCoolingTime;
-        verifyFormCaptchaBtn.disabled = true;
+        verifyFormCaptchaBtn[props.currentVerifyConfig.type].times = captchaCoolingTime;
+        verifyFormCaptchaBtn[props.currentVerifyConfig.type].disabled = true;
         const { userId } = props;
         // 获取邮箱验证码
         if (props.currentVerifyConfig.type === OpenDialogType.email) {
@@ -192,7 +228,8 @@ const handleSendCaptcha = async () => {
             Message({ theme: 'success', message: t('发送成功') });
           } catch (err: any) {
             captchaValidate.value = true;
-            captchaMessage.value = err.response.data?.error?.message;
+            const captchaTips = err.response.data?.error?.message;
+            transformTips(captchaTips);
           }
         }
         // 获取手机验证码
@@ -205,18 +242,20 @@ const handleSendCaptcha = async () => {
             Message({ theme: 'success', message: t('发送成功') });
           } catch (err: any) {
             captchaValidate.value = true;
-            captchaMessage.value = err.response.data?.error?.message;
+            const captchaTips = err.response.data?.error?.message;
+            transformTips(captchaTips);
           }
         }
       })();
     },
-    intervalFn: () => verifyFormCaptchaBtn.times -= 1,
-    beforeClose: () => verifyFormCaptchaBtn.disabled = false,
+    intervalFn: () => verifyFormCaptchaBtn[props.currentVerifyConfig.type].times -= 1,
+    beforeClose: () => verifyFormCaptchaBtn[props.currentVerifyConfig.type].disabled = false,
   });
+  closeTimePolling.value = countDownCloseTimePolling;
 
-  watch([() => verifyFormCaptchaBtn.times, isShow], ([curBtnTimes, curShow]) => {
-    curBtnTimes === shutDownPointTime && closeTimePolling();
-    !curShow && closeTimePolling();
+  // 关闭dialog仍需保持倒计时
+  watch(() => verifyFormCaptchaBtn[props.currentVerifyConfig.type].times, (curBtnTimes) => {
+    curBtnTimes === shutDownPointTime && closeTimePolling.value();
   });
   return;
 };
@@ -258,6 +297,8 @@ const handleCloseVerifyDialog = () => {
 };
 
 const submitBtnLoading = ref(false);
+const verifySuccessVisible = ref(false);
+const verifySuccessText = ref(null);
 const handleSubmitVerifyForm = async () => {
   captchaValidate.value = false;
   captchaMessage.value = '';
@@ -269,11 +310,8 @@ const handleSubmitVerifyForm = async () => {
   const { type } = props.currentVerifyConfig;
   const { email, phone } = OpenDialogType;
   const { success, fail } = openDialogResult;
-  const infoBoxConfig: Partial<BkInfoBoxConfig> = {
-    type: success,
-    title: '',
-    closeIcon: false,
-  };
+
+  let verifyResult = success;
   if (type === email) {
     try {
       await patchUsersEmail({
@@ -282,11 +320,12 @@ const handleSubmitVerifyForm = async () => {
         custom_email: verifyForm.email,
         verification_code: verifyForm.captcha,
       }, { globalError: false });
-      infoBoxConfig.title = t('邮箱验证成功');
+      verifySuccessText.value = t('邮箱验证成功');
       emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
-      captchaMessage.value = err.response.data?.error?.message;
-      infoBoxConfig.type = fail;
+      const captchaTips = err.response.data?.error?.message;
+      transformTips(captchaTips);
+      verifyResult = fail;
       captchaValidate.value = true;
     }
   }
@@ -299,21 +338,42 @@ const handleSubmitVerifyForm = async () => {
         custom_phone_country_code: verifyForm.custom_phone_country_code,
         verification_code: verifyForm.captcha,
       }, { globalError: false });
-      infoBoxConfig.title = t('手机号验证成功');
+      verifySuccessText.value = t('手机号验证成功');
       emit('confirmVerifyPhone', {
         custom_phone: verifyForm.custom_phone,
         custom_phone_country_code: verifyForm.custom_phone_country_code,
       });
     } catch (err: any) {
-      captchaMessage.value = err.response.data?.error?.message;
-      infoBoxConfig.type = fail;
+      const captchaTips = err.response.data?.error?.message;
+      transformTips(captchaTips);
+      verifyResult = fail;
       captchaValidate.value = true;
     }
   }
   submitBtnLoading.value = false;
-  if (infoBoxConfig.type === success) {
-    InfoBox(infoBoxConfig);
+  if (verifyResult === success) {
+    verifySuccessVisible.value = true;
     handleCloseVerifyDialog();
+    closeTimePolling.value?.();
+  }
+};
+
+const transformTips = (currentTips: string) => {
+  const CAPTCHA_ERROR_CN = '验证码无效: 验证码错误';
+  const CAPTCHA_ERROR_EN = 'Invalid verification code: Incorrect verification code';
+  const OVER_LIMIT_ERROR_CN = '发送验证码失败: 今日发送验证码次数超过上限，请明天再试';
+  // eslint-disable-next-line @typescript-eslint/quotes
+  const OVER_LIMIT_ERROR_EN = `Failed to send verification code: Today's limit for sending verification codes has been exceeded, please try again tomorrow`;
+  if (currentTips === CAPTCHA_ERROR_CN || currentTips === CAPTCHA_ERROR_EN) {
+    captchaMessage.value = t('验证码错误，请重试');
+  } else {
+    captchaMessage.value = currentTips;
+  }
+
+  if (currentTips === OVER_LIMIT_ERROR_CN || currentTips === OVER_LIMIT_ERROR_EN) {
+    captchaMessage.value = t('发送验证码次数超过上限，请一天之后再试');
+  } else {
+    captchaMessage.value = currentTips;
   }
 };
 
@@ -349,6 +409,7 @@ const handleSubmitVerifyForm = async () => {
 
 ::v-deep .bk-dialog-footer {
   border: none;
+  background-color: #fff;
 }
 
 </style>
