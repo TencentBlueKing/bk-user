@@ -366,6 +366,7 @@
   "手机号验证": "Mobile number verification",
   "邮箱验证": "Email verification",
   "验证码错误，请重试": "Verification code error, please try again",
+  "发送验证码次数超过上限，请一天之后再试": "The number of times the verification code has been sent exceeds the limit. Please try again after one day",
   "收到的邮箱验证码": "received email verification code",
   "收到的手机验证码": "received mobile number verification code",
   "强制开启MFA": "Mandatory MFA enablement",

@@ -228,7 +228,8 @@ const handleSendCaptcha = async () => {
             Message({ theme: 'success', message: t('发送成功') });
           } catch (err: any) {
             captchaValidate.value = true;
-            captchaMessage.value = err.response.data?.error?.message;
+            const captchaTips = err.response.data?.error?.message;
+            transformTips(captchaTips);
           }
         }
         // 获取手机验证码
@@ -241,7 +242,8 @@ const handleSendCaptcha = async () => {
             Message({ theme: 'success', message: t('发送成功') });
           } catch (err: any) {
             captchaValidate.value = true;
-            captchaMessage.value = err.response.data?.error?.message;
+            const captchaTips = err.response.data?.error?.message;
+            transformTips(captchaTips);
           }
         }
       })();
@@ -308,8 +310,7 @@ const handleSubmitVerifyForm = async () => {
   const { type } = props.currentVerifyConfig;
   const { email, phone } = OpenDialogType;
   const { success, fail } = openDialogResult;
-  const OVERLOAD_ERROR_CN = '验证码无效: 验证码错误';
-  const OVERLOAD_ERROR_EN = 'Invalid verification code: Incorrect verification code';
+
   let verifyResult = success;
   if (type === email) {
     try {
@@ -323,11 +324,7 @@ const handleSubmitVerifyForm = async () => {
       emit('confirmVerifyEmail', { custom_email: verifyForm.email });
     } catch (err: any) {
       const captchaTips = err.response.data?.error?.message;
-      if (captchaTips === OVERLOAD_ERROR_CN || captchaTips === OVERLOAD_ERROR_EN) {
-        captchaMessage.value = t('验证码错误，请重试');
-      } else {
-        captchaMessage.value = captchaTips;
-      }
+      transformTips(captchaTips);
       verifyResult = fail;
       captchaValidate.value = true;
     }
@@ -348,11 +345,7 @@ const handleSubmitVerifyForm = async () => {
       });
     } catch (err: any) {
       const captchaTips = err.response.data?.error?.message;
-      if (captchaTips === OVERLOAD_ERROR_CN || captchaTips === OVERLOAD_ERROR_EN) {
-        captchaMessage.value = t('验证码错误，请重试');
-      } else {
-        captchaMessage.value = captchaTips;
-      }
+      transformTips(captchaTips);
       verifyResult = fail;
       captchaValidate.value = true;
     }
@@ -362,6 +355,25 @@ const handleSubmitVerifyForm = async () => {
     verifySuccessVisible.value = true;
     handleCloseVerifyDialog();
     closeTimePolling.value?.();
+  }
+};
+
+const transformTips = (currentTips: string) => {
+  const CAPTCHA_ERROR_CN = '验证码无效: 验证码错误';
+  const CAPTCHA_ERROR_EN = 'Invalid verification code: Incorrect verification code';
+  const OVER_LIMIT_ERROR_CN = '发送验证码失败: 今日发送验证码次数超过上限，请明天再试';
+  // eslint-disable-next-line @typescript-eslint/quotes
+  const OVER_LIMIT_ERROR_EN = `Failed to send verification code: Today's limit for sending verification codes has been exceeded, please try again tomorrow`;
+  if (currentTips === CAPTCHA_ERROR_CN || currentTips === CAPTCHA_ERROR_EN) {
+    captchaMessage.value = t('验证码错误，请重试');
+  } else {
+    captchaMessage.value = currentTips;
+  }
+
+  if (currentTips === OVER_LIMIT_ERROR_CN || currentTips === OVER_LIMIT_ERROR_EN) {
+    captchaMessage.value = t('发送验证码次数超过上限，请一天之后再试');
+  } else {
+    captchaMessage.value = currentTips;
   }
 };
 
