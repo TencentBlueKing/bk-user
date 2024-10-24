@@ -42,7 +42,7 @@ def add_batch_operation_audit_records(
     object_type: ObjectType,
     object_ids: List[str],
     tenant_id: str,
-    extras: Optional[Union[Dict, List[Dict]]] = None,
+    extras: Optional[Union[Dict, List]] = None,
 ) -> List[OperationAuditRecord]:
     records = []
     event_id = generate_uuid()
