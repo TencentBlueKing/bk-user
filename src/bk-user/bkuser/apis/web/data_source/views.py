@@ -45,6 +45,8 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.audit.constants import ObjectType, Operation
+from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -178,6 +180,15 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
+        add_operation_audit_record(
+            operator=current_user,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.CREATE_DATA_SOURCE,
+            tenant_id=current_tenant_id,
+            object_id=ds.id,
+            extras={"plugin_config": ds.plugin_config},
+        )
+
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
             status=status.HTTP_201_CREATED,
@@ -230,6 +241,15 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 记录变更前的数据, 变更后的数据可通过 db 查询
+        extras = {
+            "data_before": {
+                "plugin_config": data_source.plugin_config,
+                "field_mapping": data_source.field_mapping,
+                "sync_config": data_source.sync_config,
+            }
+        }
+
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
@@ -237,6 +257,15 @@ class DataSourceRetrieveUpdateDestroyApi(
             data_source.save(update_fields=["field_mapping", "sync_config", "updater", "updated_at"])
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
+
+        add_operation_audit_record(
+            operator=data_source.updater,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.MODIFY_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            object_id=data_source.id,
+            extras=extras,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -255,9 +284,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz = DataSourceDestroyInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
-
-        # TODO (su) 支持操作审计后可删除该日志
-        logger.warning("user %s delete data source %s", request.user.username, data_source.id)
+        data_source_id = data_source.id
 
         with transaction.atomic():
             if is_delete_idp:
@@ -284,6 +311,15 @@ class DataSourceRetrieveUpdateDestroyApi(
                 )
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
+        add_operation_audit_record(
+            operator=request.user.username,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.DELETE_DATA_SOURCE,
+            tenant_id=self.get_current_tenant_id(),
+            object_id=data_source_id,
+            extras={"is_delete_idp": is_delete_idp},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -478,6 +514,23 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
+        add_operation_audit_record(
+            operator=request.user.username,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.IMPORT_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            object_id=data_source.id,
+            extras={"overwrite": options.overwrite},
+        )
+
+        add_operation_audit_record(
+            operator=task.operator,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.SYNC_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            object_id=data_source.id,
+        )
+
         return Response(
             DataSourceImportOrSyncOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}
@@ -520,6 +573,14 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
+
+        add_operation_audit_record(
+            operator=task.operator,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.SYNC_DATA_SOURCE,
+            tenant_id=data_source.owner_tenant_id,
+            object_id=data_source.id,
+        )
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
