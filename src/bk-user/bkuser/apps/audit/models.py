@@ -9,23 +9,20 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import uuid
-
 from django.db import models
 
 from bkuser.common.models import AuditedModel
+from bkuser.utils.uuid import generate_uuid
 
 
 class OperationAuditRecord(AuditedModel):
-    id = models.UUIDField(
-        "事件 id", default=uuid.uuid4, primary_key=True, editable=False, auto_created=True, unique=True
-    )
-    operation_target = models.CharField(max_length=32, verbose_name="操作对象")
-    operation_type = models.CharField(max_length=32, verbose_name="操作类型")
-    tenant_id = models.CharField(max_length=32, verbose_name="操作对象所属的租户 id")
-    data_change = models.JSONField(max_length=32, verbose_name="操作数据变更", null=True, blank=True)
-    data_source_id = models.IntegerField(max_length=32, verbose_name="操作对象所属的数据源 id", null=True, blank=True)
-    extras = models.JSONField(verbose_name="操作额外信息", null=True, blank=True)
+    id = models.CharField(primary_key=True, max_length=128, default=generate_uuid)
+    event_id = models.CharField(max_length=128, default=generate_uuid, verbose_name="事件 ID")
+    operation = models.CharField(max_length=64, verbose_name="操作行为")
+    object_type = models.CharField(max_length=32, verbose_name="操作对象类型")
+    object_id = models.CharField(max_length=128, verbose_name="操作对象 ID")
+    tenant_id = models.CharField(max_length=128, verbose_name="租户 ID")
+    extras = models.JSONField(verbose_name="额外信息", null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]  # 按照 created_at 字段降序排列

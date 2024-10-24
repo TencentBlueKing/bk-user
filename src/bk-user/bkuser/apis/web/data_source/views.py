@@ -45,7 +45,7 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.audit.constants import OperationTarget, OperationType
+from bkuser.apps.audit.constants import ObjectType, Operation
 from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -182,11 +182,11 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
 
         add_operation_audit_record(
             operator=current_user,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.CREATE_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.CREATE_DATA_SOURCE,
             tenant_id=current_tenant_id,
-            data_source_id=ds.id,
-            extras={"data_source_plugin_id": ds.plugin_id},
+            object_id=ds.id,
+            extras={"plugin_config": ds.plugin_config},
         )
 
         return Response(
@@ -251,18 +251,15 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=data_source.updater,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.MODIFY_DATA_SOURCE,
-            data_change={
-                "data_after": {
-                    "plugin_config": data_source.plugin_config,
-                    "field_mapping": data_source.field_mapping,
-                    "sync_config": data_source.sync_config,
-                }
-            },
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.MODIFY_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
-            data_source_id=data_source.id,
-            extras={"data_source_plugin_id": data_source.plugin_id},
+            object_id=data_source.id,
+            extras={
+                "plugin_config": data_source.plugin_config,
+                "field_mapping": data_source.field_mapping,
+                "sync_config": data_source.sync_config,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -312,11 +309,11 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=request.user.username,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.DELETE_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.DELETE_DATA_SOURCE,
             tenant_id=self.get_current_tenant_id(),
-            data_source_id=data_source_id,
-            extras={"data_source_plugin_id": data_source.plugin_id, "is_delete_idp": is_delete_idp},
+            object_id=data_source_id,
+            extras={"is_delete_idp": is_delete_idp},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -514,24 +511,19 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 
         add_operation_audit_record(
             operator=request.user.username,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.IMPORT_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.IMPORT_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
-            data_source_id=data_source.id,
+            object_id=data_source.id,
+            extras={"overwrite": options.overwrite},
         )
 
         add_operation_audit_record(
             operator=task.operator,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.SYNC_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.SYNC_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
-            data_source_id=data_source.id,
-            extras={
-                "task_id": task.id,
-                "overwrite": data["overwrite"],
-                "incremental": data["incremental"],
-                "data_source_plugin_id": data_source.plugin_id,
-            },
+            object_id=data_source.id,
         )
 
         return Response(
@@ -579,16 +571,10 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
 
         add_operation_audit_record(
             operator=task.operator,
-            operation_target=OperationTarget.DATA_SOURCE,
-            operation_type=OperationType.SYNC_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
+            operation=Operation.SYNC_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
-            data_source_id=data_source.id,
-            extras={
-                "task_id": task.id,
-                "overwrite": True,
-                "incremental": False,
-                "data_source_plugin_id": data_source.plugin_id,
-            },
+            object_id=data_source.id,
         )
 
         return Response(

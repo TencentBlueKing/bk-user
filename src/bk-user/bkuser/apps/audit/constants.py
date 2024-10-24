@@ -13,20 +13,19 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class OperationTarget(str, StructuredEnum):
-    """操作对象"""
+class ObjectType(str, StructuredEnum):
+    """操作对象类型"""
 
     DATA_SOURCE = EnumField("data_source", label=_("数据源"))
     IDP = EnumField("idp", label=_("认证源"))
     USER = EnumField("user", label=_("用户"))
     ORGANIZATION = EnumField("organization", label=_("组织"))
-    MANAGEMENT_PLATFORM = EnumField("management_platform", label=_("管理平台"))
     TENANT = EnumField("tenant", label=_("租户"))
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
 
 
-class OperationType(str, StructuredEnum):
-    """操作类型"""
+class Operation(str, StructuredEnum):
+    """操作行为"""
 
     # 数据源
     CREATE_DATA_SOURCE = EnumField("create_data_source", label=_("创建数据源"))
@@ -44,27 +43,26 @@ class OperationType(str, StructuredEnum):
     DELETE_USER = EnumField("delete_user", label=_("删除用户"))
     MODIFY_USER_ORGANIZATION_RELATIONS = EnumField("modify_user_organization_relations", label=_("修改用户所属组织"))
     MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
-    MODIFY_ACCOUNT_EXPIRED_AT = EnumField("modify_account_expired_at", label=_("修改账户过期时间"))
+    MODIFY_USER_ACCOUNT_EXPIRED_AT = EnumField("modify_user_account_expired_at", label=_("修改用户账号过期时间"))
     MODIFY_USER_LEADERS = EnumField("modify_user_leaders", label=_("修改用户上级"))
     MODIFY_USER_PASSWORD = EnumField("modify_user_password", label=_("重置用户密码"))
     MODIFY_USER_EMAIL = EnumField("modify_user_email", label=_("修改用户邮箱"))
     MODIFY_USER_PHONE = EnumField("modify_user_phone", label=_("修改用户电话号码"))
-    SEND_EMAIL_VERIFICATION_CODE = EnumField("send_email_verification_code", label=_("发送邮箱验证码"))
-    SEND_PHONE_VERIFICATION_CODE = EnumField("send_phone_verification_code", label=_("发送手机验证码"))
     # 组织
     CREATE_ORGANIZATION = EnumField("create_organization", label=_("创建组织"))
     MODIFY_ORGANIZATION = EnumField("modify_organization", label=_("修改组织名称"))
     DELETE_ORGANIZATION = EnumField("delete_organization", label=_("删除组织"))
     MODIFY_PARENT_ORGANIZATION = EnumField("modify_parent_organization", label=_("修改上级组织"))
-    # 管理平台
+    # 租户
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))
     MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户信息"))
     DELETE_TENANT = EnumField("delete_tenant", label=_("删除租户"))
     MODIFY_TENANT_STATUS = EnumField("modify_tenant_status", label=_("修改租户状态"))
-    # 租户
-    CREATE_REAL_MANAGER = EnumField("create_real_manager", label=_("创建实名管理员"))
-    DELETE_REAL_MANAGER = EnumField("delete_real_manager", label=_("删除实名管理员"))
-    MODIFY_VALIDITY_PERIOD_CONFIG = EnumField("modify_validity_period_config", label=_("修改租户账户有效期配置"))
+    CREATE_TENANT_REAL_MANAGER = EnumField("create_tenant_real_manager", label=_("创建实名管理员"))
+    DELETE_TENANT_REAL_MANAGER = EnumField("delete_tenant_real_manager", label=_("删除实名管理员"))
+    MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG = EnumField(
+        "modify_tenant_account_validity_period_config", label=_("修改租户账户有效期配置")
+    )
     # 虚拟用户
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
     MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户信息"))
