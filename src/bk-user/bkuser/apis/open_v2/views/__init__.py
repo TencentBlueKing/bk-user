@@ -11,6 +11,9 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
 
 from .categories import CategoriesListApi
 from .departments import DepartmentChildrenListApi, DepartmentListApi, DepartmentRetrieveApi, ProfileDepartmentListApi

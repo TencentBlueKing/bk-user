@@ -11,6 +11,9 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
 # 参考来源：https://github.com/TencentBlueKing/bkpaas-python-sdk/blob/master/sdks/blue-krill/blue_krill/web/std_error.py
 from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union, overload
 
