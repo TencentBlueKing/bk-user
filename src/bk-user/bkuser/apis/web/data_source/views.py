@@ -241,6 +241,15 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 记录变更前的数据, 变更后的数据可通过 db 查询
+        extras = {
+            "data_before": {
+                "plugin_config": data_source.plugin_config,
+                "field_mapping": data_source.field_mapping,
+                "sync_config": data_source.sync_config,
+            }
+        }
+
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
@@ -255,11 +264,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=Operation.MODIFY_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
             object_id=data_source.id,
-            extras={
-                "plugin_config": data_source.plugin_config,
-                "field_mapping": data_source.field_mapping,
-                "sync_config": data_source.sync_config,
-            },
+            extras=extras,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
