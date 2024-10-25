@@ -182,9 +182,9 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
 
         add_operation_audit_record(
             operator=current_user,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.CREATE_DATA_SOURCE,
             tenant_id=current_tenant_id,
+            operation=Operation.CREATE_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=ds.id,
             extras={"plugin_config": ds.plugin_config},
         )
@@ -260,9 +260,9 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=data_source.updater,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.MODIFY_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
+            operation=Operation.MODIFY_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
             extras=extras,
         )
@@ -314,9 +314,9 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         add_operation_audit_record(
             operator=request.user.username,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.DELETE_DATA_SOURCE,
             tenant_id=self.get_current_tenant_id(),
+            operation=Operation.DELETE_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=data_source_id,
             extras={"is_delete_idp": is_delete_idp},
         )
@@ -516,18 +516,18 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 
         add_operation_audit_record(
             operator=request.user.username,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.IMPORT_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
+            operation=Operation.IMPORT_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
             extras={"overwrite": options.overwrite},
         )
 
         add_operation_audit_record(
             operator=task.operator,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.SYNC_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
+            operation=Operation.SYNC_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
         )
 
@@ -576,9 +576,9 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
 
         add_operation_audit_record(
             operator=task.operator,
-            object_type=ObjectType.DATA_SOURCE,
-            operation=Operation.SYNC_DATA_SOURCE,
             tenant_id=data_source.owner_tenant_id,
+            operation=Operation.SYNC_DATA_SOURCE,
+            object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
         )
 

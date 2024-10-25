@@ -16,13 +16,22 @@ from bkuser.utils.uuid import generate_uuid
 
 
 class OperationAuditRecord(AuditedModel):
+    """
+    SaaS 审计操作记录
+    """
+
     id = models.CharField(primary_key=True, max_length=128, default=generate_uuid)
-    event_id = models.CharField(max_length=128, default=generate_uuid, verbose_name="事件 ID")
-    operation = models.CharField(max_length=64, verbose_name="操作行为")
-    object_type = models.CharField(max_length=32, verbose_name="操作对象类型")
-    object_id = models.CharField(max_length=128, verbose_name="操作对象 ID")
-    tenant_id = models.CharField(max_length=128, verbose_name="租户 ID")
-    extras = models.JSONField(verbose_name="额外信息", null=True, blank=True)
+    # 若操作记录具有相同的事件 ID，则表示这些记录由同一个事件触发，特别是批量操作
+    event_id = models.CharField("事件 ID", max_length=128, default=generate_uuid)
+    # 操作对象所属的租户 ID
+    tenant_id = models.CharField("租户 ID", max_length=128)
+
+    # ----------------------- 操作相关 -----------------------
+    operation = models.CharField("操作行为", max_length=64)
+    object_type = models.CharField("操作对象类型", max_length=32)
+    object_id = models.CharField("操作对象 ID", max_length=128)
+    # 与操作对象相关的额外信息，有助于问题溯源
+    extras = models.JSONField("额外信息", null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]  # 按照 created_at 字段降序排列

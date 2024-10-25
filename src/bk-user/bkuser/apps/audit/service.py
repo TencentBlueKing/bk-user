@@ -20,28 +20,28 @@ from ...utils.uuid import generate_uuid
 
 def add_operation_audit_record(
     operator: str,
+    tenant_id: str,
     operation: Operation,
     object_type: ObjectType,
     object_id: str,
-    tenant_id: str,
     extras: Dict | None = None,
 ) -> OperationAuditRecord:
     return OperationAuditRecord.objects.create(
         creator=operator,
+        tenant_id=tenant_id,
         operation=operation,
         object_type=object_type,
         object_id=object_id,
-        tenant_id=tenant_id,
         extras=extras,
     )
 
 
 def add_batch_operation_audit_records(
     operator: str,
+    tenant_id: str,
     operation: Operation,
     object_type: ObjectType,
     object_ids: List[str],
-    tenant_id: str,
     extras: Optional[Union[Dict, List]] = None,
 ) -> List[OperationAuditRecord]:
     records = []
@@ -60,10 +60,10 @@ def add_batch_operation_audit_records(
             OperationAuditRecord(
                 creator=operator,
                 event_id=event_id,
+                tenant_id=tenant_id,
                 operation=operation,
                 object_type=object_type,
                 object_id=object_id,
-                tenant_id=tenant_id,
                 extras=object_extras,
             )
         )
