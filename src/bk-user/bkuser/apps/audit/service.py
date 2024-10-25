@@ -13,9 +13,10 @@ from typing import Dict, List, Optional, Union
 
 from django.db import transaction
 
+from bkuser.utils.uuid import generate_uuid
+
 from .constants import ObjectType, Operation
 from .models import OperationAuditRecord
-from ...utils.uuid import generate_uuid
 
 
 def add_operation_audit_record(
