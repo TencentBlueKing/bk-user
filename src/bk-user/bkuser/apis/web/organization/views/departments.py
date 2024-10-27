@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
-Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://opensource.org/licenses/MIT
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
-"""
+# TencentBlueKing is pleased to support the open source community by making
+# 蓝鲸智云 - 用户管理 (bk-user) available.
+# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Licensed under the MIT License (the "License"); you may not use this file except
+# in compliance with the License. You may obtain a copy of the License at
+#
+#     http://opensource.org/licenses/MIT
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
 
 from collections import defaultdict
 from typing import Dict
@@ -44,7 +50,8 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantDepartmentIDRecord
+from bkuser.apps.tenant.utils import TenantDeptIDGenerator
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
@@ -200,6 +207,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             )
             # 不等同步，直接创建本租户的租户部门
             tenant_dept = TenantDepartment.objects.create(
+                id=TenantDeptIDGenerator(current_tenant_id, data_source).gen(data_source_dept),
                 tenant_id=current_tenant_id,
                 data_source_department=data_source_dept,
                 data_source=data_source,
@@ -207,6 +215,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             # 根据协同策略，将协同的租户部门也创建出来
             collaboration_tenant_depts = [
                 TenantDepartment(
+                    id=TenantDeptIDGenerator(strategy.target_tenant_id, data_source).gen(data_source_dept),
                     tenant_id=strategy.target_tenant_id,
                     data_source_department=data_source_dept,
                     data_source=data_source,
@@ -219,6 +228,22 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             ]
             if collaboration_tenant_depts:
                 TenantDepartment.objects.bulk_create(collaboration_tenant_depts)
+
+            # 刚创建的租户部门，需要捞出来，记录 ID 以便后续复用
+            records = [
+                TenantDepartmentIDRecord(
+                    tenant=dept.tenant,
+                    data_source=data_source,
+                    code=data_source_dept.code,
+                    tenant_department_id=dept.id,
+                )
+                for dept in TenantDepartment.objects.filter(
+                    data_source=data_source,
+                    data_source_department=data_source_dept,
+                )
+            ]
+            # 由于存量历史数据（Record）也会被下发，因此需要忽略冲突保证其他数据可以正常插入
+            TenantDepartmentIDRecord.objects.bulk_create(records, ignore_conflicts=True)
 
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
 

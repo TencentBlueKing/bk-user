@@ -12,7 +12,9 @@
         <bk-button
           class="min-w-[64px]"
           hover-theme="primary"
+          :loading="resetLoading"
           @click="handleReset"
+          :disabled="RUNNING_FIELDS.includes(syncStatus?.status)"
         >
           {{ $t('重置') }}
         </bk-button>
@@ -32,7 +34,7 @@
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
               <span
-                v-if="syncStatus?.status !== 'running'"
+                v-if="!RUNNING_FIELDS.includes(syncStatus?.status)"
                 :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
@@ -40,7 +42,9 @@
                 <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
                 <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
               </span>
-              <span v-if="syncStatus?.status !== 'running'">{{ syncStatus?.start_at }}</span>
+              <span v-if="!RUNNING_FIELDS.includes(syncStatus?.status)">
+                {{ syncStatus?.start_at }}
+              </span>
             </div>
             <div v-if="dataSource?.plugin_id === 'local'">
               <bk-button
@@ -201,11 +205,10 @@ import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
-import loadingImg from '@/images/loading.svg';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useSyncStatus, useUser } from '@/store';
-import { dataRecordStatus } from '@/utils';
+import { dataRecordStatus, RUNNING_FIELDS } from '@/utils';
 const route = useRoute();
 
 const userStore = useUser();
@@ -225,12 +228,13 @@ const {
   stopImportDataTimePolling,
 } = useDataSource();
 
+const resetLoading = ref(false);
 // 重置数据源
 const handleReset = async () => {
   try {
+    resetLoading.value = true;
     const res = await getRelatedResource(dataSource.value?.id);
     const { subContent, resetIdpConfig } = useInfoBoxContent(res.data, '');
-
 
     InfoBox({
       width: 600,
@@ -240,17 +244,21 @@ const handleReset = async () => {
       confirmText: t('重置'),
       theme: 'danger',
       onConfirm: () => {
+        resetLoading.value = true;
         const resetConfig = resetIdpConfig.value ? 'True' : 'False';
         if (dataSource.value?.id) {
           deleteDataSources({ id: dataSource.value.id, is_delete_idp: resetConfig }).then(() => {
             Message({ theme: 'success', message: t('数据源重置成功') });
             initDataSourceList();
-          });
+          })
+            .finally(() => resetLoading.value = false);
         }
       },
     });
   } catch (e) {
     console.warn(e);
+  } finally {
+    resetLoading.value = false;
   }
 };
 

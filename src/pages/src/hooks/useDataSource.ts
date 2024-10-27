@@ -18,6 +18,7 @@ export const useDataSource = () => {
   const dataSource = ref({});
   const currentDataSourceId = ref(null);
   const isLoading = ref(false);
+  const syncStatusStore = useSyncStatus();
 
   onMounted(() => {
     initDataSourcePlugins();
@@ -28,15 +29,31 @@ export const useDataSource = () => {
     isLoading.value = true;
     getDataSourcePlugins().then((res) => {
       dataSourcePlugins.value = res.data;
-      initDataSourceList();
+      if (syncStatusStore.isRefresh) {
+        initDataSourceList(refreshSync);
+      } else {
+        initDataSourceList();
+        syncStatusStore.setRefresh(true);
+      }
     })
       .catch(() => {
         isLoading.value = false;
       });
   };
 
+  const refreshSync = ({ status }) => {
+    if (!['pending', 'running'].includes(status)) {
+      return;
+    }
+    if (dataSource.value.plugin_id === 'local') {
+      handleImportLocalDataSync();
+    } else {
+      handleOperationsSync();
+    }
+  };
+
   // 获取当前数据源
-  const initDataSourceList = () => {
+  const initDataSourceList = (callback: null | Function = null) => {
     getDataSourceList({ type: 'real' }).then((res) => {
       const firstData = res.data[0];
       dataSource.value = firstData;
@@ -44,7 +61,7 @@ export const useDataSource = () => {
       const index = dataSourcePlugins.value?.findIndex(item => item.id === dataSource.value?.plugin_id);
       if (index > -1) {
         dataSourcePlugins.value.unshift(...dataSourcePlugins.value.splice(index, 1));
-        initSyncRecords();
+        initSyncRecords(callback);
       }
     })
       .finally(() => {
@@ -53,7 +70,6 @@ export const useDataSource = () => {
   };
 
   // 获取同步数据源状态
-  const syncStatusStore = useSyncStatus();
   const initSyncRecords = (customFn: Function = null) => {
     getSyncRecords({ id: currentDataSourceId.value })
       .then((res) => {
@@ -101,7 +117,7 @@ export const useDataSource = () => {
       Message({ theme: res.data.status, message: res.data.summary });
       if (pollingInterval.value) return;
       initSyncRecords(stopOperationPollingRule);
-      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 10000);
+      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 5000);
     });
   };
 
@@ -124,7 +140,7 @@ export const useDataSource = () => {
     initSyncRecords(importDataStopRule);
     importDataTimePolling.value = setInterval(() => {
       initSyncRecords(importDataStopRule);
-    }, 1000);
+    }, 5000);
   };
 
   const stopImportDataTimePolling = () => {
@@ -152,6 +168,6 @@ export const useDataSource = () => {
     handleOperationsSync,
     stopPolling,
     handleImportLocalDataSync,
-    stopImportDataTimePolling
+    stopImportDataTimePolling,
   };
 };

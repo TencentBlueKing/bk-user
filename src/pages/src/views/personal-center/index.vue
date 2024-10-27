@@ -179,9 +179,7 @@
                           @click="verifyIdentityInfo(
                             OpenDialogType.email,
                             {
-                              email: currentUserInfo.custom_email,
-                              phone: '',
-                              phone_country_code: ''
+                              email: currentUserInfo.custom_email
                             }
                           )"
                           v-if="emailUpdateRestriction === emailEidtable.Verify
@@ -240,6 +238,7 @@
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
+                            custom-tel-error-text="请输入正确的手机号格式"
                             @change-country-code="changeCountryCode"
                             @change-tel-error="changeTelError"
                             @keydown.enter="changePhone" />
@@ -255,7 +254,7 @@
                           text theme="primary" class="ml-[12px] mr-[12px]"
                           @click="verifyIdentityInfo(
                             OpenDialogType.phone,
-                            { email: '',
+                            {
                               phone: currentUserInfo.custom_phone,
                               phone_country_code: currentUserInfo.custom_phone_country_code
                             }
@@ -425,15 +424,20 @@
         :config="passwordModalConfig"
         @closed="hidePasswordModal" />
       <!-- 邮箱、手机号编辑验证 -->
-      <verifyIdentityInfoDialog
-        v-model:is-show="showVerifyDialog"
-        :current-verify-config="currentVerifyConfig"
+      <EmailVerify
+        v-model:is-show="showEmailVerify"
+        :initial-data="emailInitialData"
         :user-id="currentUserInfo.id"
         :cur-email-text="curEmail"
-        :cur-phone-text="curPhone"
         @confirm-verify-email="verifyEmail"
-        @confirm-verify-phone="verifyPhone">
-      </verifyIdentityInfoDialog>
+      />
+      <PhoneVerify
+        v-model:is-show="showPhoneVerify"
+        :initial-data="phoneInitialData"
+        :user-id="currentUserInfo.id"
+        :cur-email-text="curPhone"
+        @confirm-verify-phone="verifyPhone"
+      />
     </template>
   </bk-resize-layout>
 </template>
@@ -442,8 +446,9 @@
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import EmailVerify from './EmailVerify.vue';
 import { emailEidtable, OpenDialogSelect, OpenDialogType, phoneEidtable  } from './openDialogType';
-import verifyIdentityInfoDialog from './verifyIdentityInfoDialog.vue';
+import PhoneVerify from './PhoneVerify.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import phoneInput from '@/components/phoneInput.vue';
@@ -547,6 +552,14 @@ const getCurrentUser = async (id) => {
       language: currentUserInfo.value.language,
       time_zone: currentUserInfo.value.time_zone,
     };
+    if (currentUserInfo.value.is_inherited_email) {
+      currentUserInfo.value.custom_email = '';
+      customEmail.value = '';
+    }
+    if (currentUserInfo.value.is_inherited_phone) {
+      currentUserInfo.value.custom_phone = '';
+      customPhone.value = '';
+    }
   } catch (error) {
     console.warn(error);
   } finally {
@@ -826,34 +839,41 @@ const handleRes = (response: any) => {
   return false;
 };
 
-const showVerifyDialog = ref(false);
+const showEmailVerify = ref(false);
+const showPhoneVerify = ref(false);
 
-watch(showVerifyDialog, (newShow) => {
+watch(showPhoneVerify, (newShow) => {
   if (!newShow) telError.value = false;
 });
 
-interface VerifyData {
-  phone: string,
+interface EmailInitialData {
   email: string,
+}
+interface PhoneInitialData {
+  phone: string,
   phone_country_code: string
 }
-const currentVerifyConfig = reactive({
-  type: OpenDialogType.email,
-  data: null,
+const emailInitialData = reactive<EmailInitialData>({
+  email: '',
+});
+const phoneInitialData = reactive<PhoneInitialData>({
+  phone: '',
+  phone_country_code: '',
 });
 
 // 验证身份信息下的邮箱或手机号
-const verifyIdentityInfo = async (type: OpenDialogType, value: VerifyData | string) => {
-  if (type === OpenDialogType.phone && telError.value) {
-    return;
+const verifyIdentityInfo = async (type: OpenDialogType, value: any) => {
+  if (type === OpenDialogType.phone && !telError.value) {
+    phoneInitialData.phone = value.phone;
+    phoneInitialData.phone_country_code = value.phone_country_code;
+    showPhoneVerify.value = true;
   }
   if (type === OpenDialogType.email) {
     const result = await formRef.value.validate();
     if (!result) return;
+    emailInitialData.email = value.email;
+    showEmailVerify.value = true;
   }
-  currentVerifyConfig.type = type;
-  currentVerifyConfig.data = value;
-  showVerifyDialog.value = true;
 };
 const curEmail = computed<string>(() => {
   const result: string = currentUserInfo.value.is_inherited_email

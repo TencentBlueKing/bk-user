@@ -31,6 +31,7 @@
         </div>
         <bk-table
             max-height="100%"
+            min-height="30%"
             class="organization-table-main"
             :border="['outer']"
             :data="tableData"

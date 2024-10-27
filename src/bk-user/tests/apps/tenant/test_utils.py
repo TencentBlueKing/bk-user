@@ -1,19 +1,25 @@
 # -*- coding: utf-8 -*-
-"""
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
-Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
-Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://opensource.org/licenses/MIT
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
-"""
+# TencentBlueKing is pleased to support the open source community by making
+# 蓝鲸智云 - 用户管理 (bk-user) available.
+# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Licensed under the MIT License (the "License"); you may not use this file except
+# in compliance with the License. You may obtain a copy of the License at
+#
+#     http://opensource.org/licenses/MIT
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
-from bkuser.apps.tenant.models import TenantUserIDGenerateConfig, TenantUserIDRecord
-from bkuser.apps.tenant.utils import TenantUserIDGenerator
+from bkuser.apps.tenant.models import TenantDepartmentIDRecord, TenantUserIDGenerateConfig, TenantUserIDRecord
+from bkuser.apps.tenant.utils import TenantDeptIDGenerator, TenantUserIDGenerator
 from bkuser.utils.uuid import generate_uuid
 
 pytestmark = pytest.mark.django_db
@@ -82,3 +88,53 @@ class TestTenantUserIdGenerator:
         assert len(generator.gen(lisi)) == 32
         assert len(generator.tenant_user_id_map) == 0
         assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
+
+
+@pytest.fixture()
+def company(full_local_data_source) -> DataSourceDepartment:
+    return DataSourceDepartment.objects.filter(data_source=full_local_data_source, code="company").first()
+
+
+@pytest.fixture()
+def dept_a(full_local_data_source) -> DataSourceDepartment:
+    return DataSourceDepartment.objects.filter(data_source=full_local_data_source, code="dept_a").first()
+
+
+class TestTenantDeptIdGenerator:
+    """测试租户用户 ID 生成器"""
+
+    def test_gen_single_with_record(self, random_tenant, full_local_data_source, company):
+        TenantDepartmentIDRecord.objects.create(
+            tenant_id=random_tenant.id,
+            data_source=full_local_data_source,
+            code=company.code,
+            tenant_department_id=100,
+        )
+
+        generator = TenantDeptIDGenerator(random_tenant.id, full_local_data_source)
+        assert generator.gen(company) == 100
+        assert generator.tenant_dept_id_map == {}
+
+    def test_gen_single_without_record(self, random_tenant, full_local_data_source, company):
+        # 没有历史记录，返回 None，由 DB 生成自增 ID
+        generator = TenantDeptIDGenerator(random_tenant.id, full_local_data_source)
+        assert generator.gen(company) is None
+
+    def test_gen_multi_with_records(self, random_tenant, full_local_data_source, company, dept_a):
+        TenantDepartmentIDRecord.objects.create(
+            tenant_id=random_tenant.id,
+            data_source=full_local_data_source,
+            code=company.code,
+            tenant_department_id=101,
+        )
+
+        generator = TenantDeptIDGenerator(random_tenant.id, full_local_data_source, prepare_batch=True)
+        assert generator.gen(company) == 101
+        assert generator.gen(dept_a) is None
+        assert len(generator.tenant_dept_id_map) == 1
+
+    def test_gen_multi_without_records(self, random_tenant, full_local_data_source, company, dept_a):
+        generator = TenantDeptIDGenerator(random_tenant.id, full_local_data_source, prepare_batch=True)
+        assert generator.gen(company) is None
+        assert generator.gen(dept_a) is None
+        assert len(generator.tenant_dept_id_map) == 0
