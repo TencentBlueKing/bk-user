@@ -186,6 +186,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
+        # 审计记录
         add_operation_audit_record(
             operator=current_user,
             tenant_id=current_tenant_id,
@@ -247,13 +248,11 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 记录变更前的数据, 变更后的数据可通过 db 查询
-        extras = {
-            "data_before": {
-                "plugin_config": data_source.plugin_config,
-                "field_mapping": data_source.field_mapping,
-                "sync_config": data_source.sync_config,
-            }
+        # 【审计】记录变更前数据
+        data_before = {
+            "plugin_config": data_source.plugin_config,
+            "field_mapping": data_source.field_mapping,
+            "sync_config": data_source.sync_config,
         }
 
         with transaction.atomic():
@@ -264,13 +263,14 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
+        # 审计记录
         add_operation_audit_record(
             operator=data_source.updater,
             tenant_id=data_source.owner_tenant_id,
             operation=Operation.MODIFY_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
-            extras=extras,
+            extras=data_before,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -290,7 +290,10 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz = DataSourceDestroyInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
+
+        # 【审计】记录变更前数据，数据删除后便无法获取
         data_source_id = data_source.id
+        plugin_config = data_source.plugin_config
 
         with transaction.atomic():
             if is_delete_idp:
@@ -318,13 +321,14 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
+        # 审计记录
         add_operation_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
             operation=Operation.DELETE_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source_id,
-            extras={"is_delete_idp": is_delete_idp},
+            extras={"is_delete_idp": is_delete_idp, "plugin_config": plugin_config},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -520,21 +524,14 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
-        add_operation_audit_record(
-            operator=request.user.username,
-            tenant_id=data_source.owner_tenant_id,
-            operation=Operation.IMPORT_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
-            object_id=data_source.id,
-            extras={"overwrite": options.overwrite},
-        )
-
+        # 审计记录
         add_operation_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
             operation=Operation.SYNC_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
+            extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
 
         return Response(
@@ -580,12 +577,14 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
+        # 审计记录
         add_operation_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
             operation=Operation.SYNC_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
+            extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
 
         return Response(
