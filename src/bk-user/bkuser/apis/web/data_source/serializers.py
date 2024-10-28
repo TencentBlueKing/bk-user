@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 import logging
+from datetime import timedelta
 from typing import Any, Dict, List
 
 from django.conf import settings
@@ -21,7 +22,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
-from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
@@ -347,25 +348,63 @@ class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
+    status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
     operator = serializers.SerializerMethodField(help_text="操作人")
     start_at = serializers.DateTimeField(help_text="开始时间")
-    duration = serializers.DurationField(help_text="持续时间")
+    duration = serializers.SerializerMethodField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
+    def get_status(self, obj: DataSourceSyncTask) -> str:
+        sync_tasks = self.context["sync_tasks"]
+        task = next((t for t in sync_tasks if t.id == obj.id), None)
+        return task.status if task else obj.status
+
+    def get_duration(self, obj: DataSourceSyncTask) -> str:
+        sync_tasks = self.context["sync_tasks"]
+        task = next((t for t in sync_tasks if t.id == obj.id), None)
+        duration = task.duration if task else obj.duration
+        # 确保 duration 是一个 timedelta 对象
+        if isinstance(duration, timedelta):
+            total_seconds = int(duration.total_seconds())
+            # 使用 divmod 方法将总秒数转换为小时、分钟、秒
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            microseconds = duration.microseconds
+            return f"{hours:02}:{minutes:02}:{seconds:02}.{microseconds:06}"
+        return str(duration)
+
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    status = serializers.CharField(help_text="数据源同步状态")
+    status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     start_at = serializers.DateTimeField(help_text="开始时间")
-    duration = serializers.DurationField(help_text="持续时间")
+    duration = serializers.SerializerMethodField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
+
+    def get_status(self, obj: DataSourceSyncTask) -> str:
+        sync_tasks = self.context["sync_tasks"]
+        task = next((t for t in sync_tasks if t.id == obj.id), None)
+        return task.status if task else obj.status
+
+    def get_duration(self, obj: DataSourceSyncTask) -> str:
+        sync_tasks = self.context["sync_tasks"]
+        task = next((t for t in sync_tasks if t.id == obj.id), None)
+        duration = task.duration if task else obj.duration
+        # 确保 duration 是一个 timedelta 对象
+        if isinstance(duration, timedelta):
+            total_seconds = int(duration.total_seconds())
+            # 使用 divmod 方法将总秒数转换为小时、分钟、秒
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            microseconds = duration.microseconds
+            return f"{hours:02}:{minutes:02}:{seconds:02}.{microseconds:06}"
+        return str(duration)
 
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):

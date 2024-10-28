@@ -561,7 +561,10 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = DataSourceSyncTask.objects.filter(
             data_source__in=data_sources,
         ).values_list("operator", flat=True)
-        return {"user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids)}
+        return {
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+            "sync_tasks": DataSourceHandler.merge_sync_task_status_and_duration(self.get_queryset()),
+        }
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -589,7 +592,12 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
         responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+        return Response(
+            DataSourceSyncRecordRetrieveOutputSLZ(
+                instance=self.get_object(),
+                context={"sync_tasks": DataSourceHandler.merge_sync_task_status_and_duration(self.get_queryset())},
+            ).data
+        )
 
 
 class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
