@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 
 from bkuser.utils.uuid import generate_uuid
 
@@ -56,7 +56,7 @@ def add_batch_operation_audit_records(
     tenant_id: str,
     operation: Operation,
     object_type: ObjectType,
-    objects: List[Dict[str, Optional[Union[str, Dict]]]],
+    objects: List[Dict[str, str | Dict | None]],
 ) -> List[OperationAuditRecord]:
     """
     批量添加操作审计记录
@@ -67,26 +67,22 @@ def add_batch_operation_audit_records(
     :param object_type: 对象类型
     :param objects: 包含 object_id 和 extras 的字典列表
     """
-    records = []
+    # 生成事件 ID
     event_id = generate_uuid()
-    bulk_create_batch_size = 100
 
-    for obj in objects:
-        object_id = obj.get("object_id")
-        object_extras = obj.get("extras", None)
-
-        records.append(
-            OperationAuditRecord(
-                creator=operator,
-                event_id=event_id,
-                tenant_id=tenant_id,
-                operation=operation,
-                object_type=object_type,
-                object_id=object_id,
-                extras=object_extras,
-            )
+    records = [
+        OperationAuditRecord(
+            creator=operator,
+            event_id=event_id,
+            tenant_id=tenant_id,
+            operation=operation,
+            object_type=object_type,
+            object_id=obj["object_id"],
+            extras=obj.get("extras", None),
         )
+        for obj in objects
+    ]
 
-    OperationAuditRecord.objects.bulk_create(records, batch_size=bulk_create_batch_size)
+    OperationAuditRecord.objects.bulk_create(records, batch_size=100)
 
     return records
