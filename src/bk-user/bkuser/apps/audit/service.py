@@ -29,7 +29,7 @@ def add_operation_audit_record(
     operation: Operation,
     object_type: ObjectType,
     object_id: str,
-    extras: Dict | None = None,
+    extras: Dict,
 ) -> OperationAuditRecord:
     """
     添加操作审计记录
@@ -56,7 +56,7 @@ def add_batch_operation_audit_records(
     tenant_id: str,
     operation: Operation,
     object_type: ObjectType,
-    objects: List[Dict[str, str | Dict | None]],
+    objects: List[Dict[str, str | Dict]],
 ) -> List[OperationAuditRecord]:
     """
     批量添加操作审计记录
@@ -77,8 +77,8 @@ def add_batch_operation_audit_records(
             tenant_id=tenant_id,
             operation=operation,
             object_type=object_type,
-            object_id=obj["object_id"],
-            extras=obj.get("extras", None),
+            object_id=obj["id"],
+            extras=obj["extras"],
         )
         for obj in objects
     ]

@@ -270,7 +270,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=Operation.MODIFY_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source.id,
-            extras=data_before,
+            extras={"data_before": data_before},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -294,6 +294,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         # 【审计】记录变更前数据，数据删除后便无法获取
         data_source_id = data_source.id
         plugin_config = data_source.plugin_config
+        field_mapping = data_source.field_mapping
+        sync_config = data_source.sync_config
 
         with transaction.atomic():
             if is_delete_idp:
@@ -303,12 +305,24 @@ class DataSourceRetrieveUpdateDestroyApi(
                     data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, data_source.id],
                 )
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+
+                # 记录被删除的认证源数据
+                delete_idps = list(
+                    waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
+                )
+
                 waiting_delete_idps.delete()
             else:
                 idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
                 # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源，并清除对应的敏感信息
                 waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
                 IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+
+                # 记录被删除的认证源数据
+                delete_idps = list(
+                    waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
+                )
+
                 waiting_delete_idps.delete()
 
                 # 禁用其他认证源
@@ -328,7 +342,13 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=Operation.DELETE_DATA_SOURCE,
             object_type=ObjectType.DATA_SOURCE,
             object_id=data_source_id,
-            extras={"is_delete_idp": is_delete_idp, "plugin_config": plugin_config},
+            extras={
+                "is_delete_idp": is_delete_idp,
+                "plugin_config": plugin_config,
+                "field_mapping": field_mapping,
+                "sync_config": sync_config,
+                "delete_idps": delete_idps,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

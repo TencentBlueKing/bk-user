@@ -37,7 +37,7 @@ class OperationAuditRecord(AuditedModel):
     object_type = models.CharField("操作对象类型", max_length=32)
     object_id = models.CharField("操作对象 ID", max_length=128)
     # 与操作对象相关的额外信息，有助于问题溯源
-    extras = models.JSONField("额外信息", null=True, blank=True)
+    extras = models.JSONField("额外信息", default=dict)
 
     class Meta:
         ordering = ["-created_at"]  # 按照 created_at 字段降序排列
