@@ -19,7 +19,7 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class ObjectType(str, StructuredEnum):
+class ObjectTypeEnum(str, StructuredEnum):
     """操作对象类型"""
 
     DATA_SOURCE = EnumField("data_source", label=_("数据源"))
@@ -30,7 +30,7 @@ class ObjectType(str, StructuredEnum):
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
 
 
-class Operation(str, StructuredEnum):
+class OperationEnum(str, StructuredEnum):
     """操作行为"""
 
     # 数据源

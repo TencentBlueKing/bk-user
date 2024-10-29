@@ -51,7 +51,7 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.audit.constants import ObjectType, Operation
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
 from bkuser.apps.audit.service import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -190,8 +190,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         add_operation_audit_record(
             operator=current_user,
             tenant_id=current_tenant_id,
-            operation=Operation.CREATE_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
+            operation=OperationEnum.CREATE_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=ds.id,
             extras={"plugin_config": ds.plugin_config},
         )
@@ -267,8 +267,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         add_operation_audit_record(
             operator=data_source.updater,
             tenant_id=data_source.owner_tenant_id,
-            operation=Operation.MODIFY_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
+            operation=OperationEnum.MODIFY_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
             extras={"data_before": data_before},
         )
@@ -298,35 +298,32 @@ class DataSourceRetrieveUpdateDestroyApi(
         sync_config = data_source.sync_config
 
         with transaction.atomic():
+            idp_filters = {"owner_tenant_id": data_source.owner_tenant_id}
+
             if is_delete_idp:
-                # 删除本地以及其他认证源，包括已禁用的认证源，并清除对应的敏感信息
-                waiting_delete_idps = Idp.objects.filter(
-                    owner_tenant_id=data_source.owner_tenant_id,
-                    data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, data_source.id],
-                )
-                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
-
-                # 记录被删除的认证源数据
-                delete_idps = list(
-                    waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
-                )
-
-                waiting_delete_idps.delete()
+                # 删除本地以及其他认证源，包括已禁用的认证源
+                idp_filters["data_source_id__in"] = [INVALID_REAL_DATA_SOURCE_ID, data_source.id]
             else:
-                idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
-                # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源，并清除对应的敏感信息
-                waiting_delete_idps = Idp.objects.filter(**idp_filters, plugin_id=BuiltinIdpPluginEnum.LOCAL)
-                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                # 仅删除本地认证源
+                idp_filters["data_source_id"] = data_source.id
+                idp_filters["plugin_id"] = BuiltinIdpPluginEnum.LOCAL
 
-                # 记录被删除的认证源数据
-                delete_idps = list(
-                    waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
-                )
+            # 待删除的认证源
+            waiting_delete_idps = Idp.objects.filter(**idp_filters)
 
-                waiting_delete_idps.delete()
+            # 记录被删除的认证源数据
+            delete_idps = list(
+                waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
+            )
 
+            # 删除认证源敏感信息
+            IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+
+            waiting_delete_idps.delete()
+
+            if not is_delete_idp:
                 # 禁用其他认证源
-                Idp.objects.filter(**idp_filters).update(
+                Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, data_source_id=data_source.id).update(
                     status=IdpStatus.DISABLED,
                     data_source_id=INVALID_REAL_DATA_SOURCE_ID,
                     updated_at=timezone.now(),
@@ -339,8 +336,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         add_operation_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
-            operation=Operation.DELETE_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
+            operation=OperationEnum.DELETE_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source_id,
             extras={
                 "is_delete_idp": is_delete_idp,
@@ -548,8 +545,8 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         add_operation_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
-            operation=Operation.SYNC_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
+            operation=OperationEnum.SYNC_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
             extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
@@ -601,8 +598,8 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
         add_operation_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
-            operation=Operation.SYNC_DATA_SOURCE,
-            object_type=ObjectType.DATA_SOURCE,
+            operation=OperationEnum.SYNC_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
             extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
