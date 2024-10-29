@@ -65,7 +65,7 @@ def add_batch_operation_audit_records(
     :param tenant_id: 租户 ID
     :param operation: 操作类型
     :param object_type: 对象类型
-    :param objects: 包含 id 和 extras 的字典列表
+    :param objects: 包含 object 对象的 id 和对应 extras 的字典列表
     """
     # 生成事件 ID
     event_id = generate_uuid()
