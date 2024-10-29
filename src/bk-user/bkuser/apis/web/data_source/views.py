@@ -291,31 +291,29 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
 
+        idp_filters = {"owner_tenant_id": data_source.owner_tenant_id}
+
+        if is_delete_idp:
+            # 删除本地以及其他认证源，包括已禁用的认证源
+            idp_filters["data_source_id__in"] = [INVALID_REAL_DATA_SOURCE_ID, data_source.id]
+        else:
+            # 仅删除本地认证源
+            idp_filters["data_source_id"] = data_source.id
+            idp_filters["plugin_id"] = BuiltinIdpPluginEnum.LOCAL
+
+        # 待删除的认证源
+        waiting_delete_idps = Idp.objects.filter(**idp_filters)
+
         # 【审计】记录变更前数据，数据删除后便无法获取
+        idps_before_delete = list(
+            waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
+        )
         data_source_id = data_source.id
         plugin_config = data_source.plugin_config
         field_mapping = data_source.field_mapping
         sync_config = data_source.sync_config
 
         with transaction.atomic():
-            idp_filters = {"owner_tenant_id": data_source.owner_tenant_id}
-
-            if is_delete_idp:
-                # 删除本地以及其他认证源，包括已禁用的认证源
-                idp_filters["data_source_id__in"] = [INVALID_REAL_DATA_SOURCE_ID, data_source.id]
-            else:
-                # 仅删除本地认证源
-                idp_filters["data_source_id"] = data_source.id
-                idp_filters["plugin_id"] = BuiltinIdpPluginEnum.LOCAL
-
-            # 待删除的认证源
-            waiting_delete_idps = Idp.objects.filter(**idp_filters)
-
-            # 记录被删除的认证源数据
-            delete_idps = list(
-                waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
-            )
-
             # 删除认证源敏感信息
             IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
 
@@ -344,7 +342,7 @@ class DataSourceRetrieveUpdateDestroyApi(
                 "plugin_config": plugin_config,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
-                "delete_idps": delete_idps,
+                "idps_before_delete": idps_before_delete,
             },
         )
 
