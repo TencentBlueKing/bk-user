@@ -52,7 +52,7 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.service import add_operation_audit_record
+from bkuser.apps.audit.operation_recorder import add_operation_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -193,7 +193,11 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
             operation=OperationEnum.CREATE_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=ds.id,
-            extras={"plugin_config": ds.plugin_config},
+            extras={
+                "plugin_config": ds.plugin_config,
+                "field_mapping": ds.field_mapping,
+                "sync_config": ds.sync_config,
+            },
         )
 
         return Response(

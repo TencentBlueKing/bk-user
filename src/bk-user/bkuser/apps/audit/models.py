@@ -22,9 +22,7 @@ from bkuser.utils.uuid import generate_uuid
 
 
 class OperationAuditRecord(AuditedModel):
-    """
-    SaaS 审计操作记录
-    """
+    """SaaS 审计操作记录"""
 
     id = models.CharField(primary_key=True, max_length=128, default=generate_uuid)
     # 若操作记录具有相同的事件 ID，则表示这些记录由同一个事件触发，特别是批量操作
@@ -40,4 +38,4 @@ class OperationAuditRecord(AuditedModel):
     extras = models.JSONField("额外信息", default=dict)
 
     class Meta:
-        ordering = ["-created_at"]  # 按照 created_at 字段降序排列
+        ordering = ["-created_at"]

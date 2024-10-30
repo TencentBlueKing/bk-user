@@ -20,6 +20,7 @@ from typing import Dict, List
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import ObjectTypeEnum, OperationEnum
+from .data_model import AuditObject
 from .models import OperationAuditRecord
 
 
@@ -28,9 +29,9 @@ def add_operation_audit_record(
     tenant_id: str,
     operation: OperationEnum,
     object_type: ObjectTypeEnum,
-    object_id: str,
+    object_id: str | int,
     extras: Dict | None = None,
-) -> OperationAuditRecord:
+):
     """
     添加操作审计记录
 
@@ -41,7 +42,7 @@ def add_operation_audit_record(
     :param object_id: 操作对象 ID
     :param extras: 额外信息
     """
-    return OperationAuditRecord.objects.create(
+    OperationAuditRecord.objects.create(
         creator=operator,
         tenant_id=tenant_id,
         operation=operation,
@@ -56,8 +57,8 @@ def add_batch_operation_audit_records(
     tenant_id: str,
     operation: OperationEnum,
     object_type: ObjectTypeEnum,
-    objects: List[Dict[str, str | Dict]],
-) -> List[OperationAuditRecord]:
+    objects: List[AuditObject],
+):
     """
     批量添加操作审计记录
 
@@ -65,7 +66,7 @@ def add_batch_operation_audit_records(
     :param tenant_id: 租户 ID
     :param operation: 操作类型
     :param object_type: 对象类型
-    :param objects: 包含 object 对象 ID 和对应 extras 的字典列表
+    :param objects: AuditObject（包含操作对象 ID 和额外信息）对象列表
     """
     # 生成事件 ID
     event_id = generate_uuid()
@@ -77,12 +78,10 @@ def add_batch_operation_audit_records(
             tenant_id=tenant_id,
             operation=operation,
             object_type=object_type,
-            object_id=obj["id"],
-            extras=obj.get("extras", {}),
+            object_id=obj.id,
+            extras=obj.extras,
         )
         for obj in objects
     ]
 
     OperationAuditRecord.objects.bulk_create(records, batch_size=100)
-
-    return records

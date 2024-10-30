@@ -63,8 +63,8 @@ class OperationEnum(str, StructuredEnum):
     MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户信息"))
     DELETE_TENANT = EnumField("delete_tenant", label=_("删除租户"))
     MODIFY_TENANT_STATUS = EnumField("modify_tenant_status", label=_("修改租户状态"))
-    CREATE_TENANT_REAL_MANAGER = EnumField("create_tenant_real_manager", label=_("创建实名管理员"))
-    DELETE_TENANT_REAL_MANAGER = EnumField("delete_tenant_real_manager", label=_("删除实名管理员"))
+    CREATE_TENANT_REAL_MANAGER = EnumField("create_tenant_real_manager", label=_("创建租户实名管理员"))
+    DELETE_TENANT_REAL_MANAGER = EnumField("delete_tenant_real_manager", label=_("删除租户实名管理员"))
     MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG = EnumField(
         "modify_tenant_account_validity_period_config", label=_("修改租户账户有效期配置")
     )
