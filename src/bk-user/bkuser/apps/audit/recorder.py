@@ -52,7 +52,7 @@ def add_audit_record(
     )
 
 
-def add_batch_audit_records(
+def batch_add_audit_records(
     operator: str,
     tenant_id: str,
     operation: OperationEnum,
