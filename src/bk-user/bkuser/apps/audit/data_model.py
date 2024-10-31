@@ -15,6 +15,8 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from typing import Dict
+
 from pydantic import BaseModel, Field
 
 
@@ -24,4 +26,4 @@ class AuditObject(BaseModel):
     # 操作对象 ID
     id: str | int
     # 操作对象额外信息
-    extras: dict = Field(default_factory=dict)
+    extras: Dict = Field(default_factory=dict)

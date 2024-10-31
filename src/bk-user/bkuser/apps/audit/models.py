@@ -24,9 +24,9 @@ from bkuser.utils.uuid import generate_uuid
 class OperationAuditRecord(AuditedModel):
     """SaaS 审计操作记录"""
 
-    id = models.CharField(primary_key=True, max_length=128, default=generate_uuid)
+    id = models.CharField(primary_key=True, max_length=64, default=generate_uuid)
     # 若操作记录具有相同的事件 ID，则表示这些记录由同一个事件触发，特别是批量操作
-    event_id = models.CharField("事件 ID", max_length=128, default=generate_uuid)
+    event_id = models.CharField("事件 ID", max_length=64, default=generate_uuid)
     # 操作对象所属的租户 ID
     tenant_id = models.CharField("租户 ID", max_length=128)
 

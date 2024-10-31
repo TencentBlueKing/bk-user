@@ -24,7 +24,7 @@ from .data_model import AuditObject
 from .models import OperationAuditRecord
 
 
-def add_operation_audit_record(
+def add_audit_record(
     operator: str,
     tenant_id: str,
     operation: OperationEnum,
@@ -47,12 +47,12 @@ def add_operation_audit_record(
         tenant_id=tenant_id,
         operation=operation,
         object_type=object_type,
-        object_id=object_id,
+        object_id=str(object_id),
         extras=extras or {},
     )
 
 
-def add_batch_operation_audit_records(
+def add_batch_audit_records(
     operator: str,
     tenant_id: str,
     operation: OperationEnum,
@@ -78,7 +78,7 @@ def add_batch_operation_audit_records(
             tenant_id=tenant_id,
             operation=operation,
             object_type=object_type,
-            object_id=obj.id,
+            object_id=str(obj.id),
             extras=obj.extras,
         )
         for obj in objects

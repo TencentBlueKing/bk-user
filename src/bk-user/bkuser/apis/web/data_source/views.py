@@ -52,7 +52,7 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.operation_recorder import add_operation_audit_record
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -187,7 +187,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
             )
 
         # 审计记录
-        add_operation_audit_record(
+        add_audit_record(
             operator=current_user,
             tenant_id=current_tenant_id,
             operation=OperationEnum.CREATE_DATA_SOURCE,
@@ -268,7 +268,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             data_source.set_plugin_cfg(data["plugin_config"])
 
         # 审计记录
-        add_operation_audit_record(
+        add_audit_record(
             operator=data_source.updater,
             tenant_id=data_source.owner_tenant_id,
             operation=OperationEnum.MODIFY_DATA_SOURCE,
@@ -335,7 +335,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
         # 审计记录
-        add_operation_audit_record(
+        add_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
             operation=OperationEnum.DELETE_DATA_SOURCE,
@@ -544,7 +544,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
         # 审计记录
-        add_operation_audit_record(
+        add_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
             operation=OperationEnum.SYNC_DATA_SOURCE,
@@ -597,7 +597,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
         # 审计记录
-        add_operation_audit_record(
+        add_audit_record(
             operator=task.operator,
             tenant_id=data_source.owner_tenant_id,
             operation=OperationEnum.SYNC_DATA_SOURCE,
