@@ -593,11 +593,7 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
         responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(
-            DataSourceSyncRecordRetrieveOutputSLZ(
-                instance=self.get_object(),
-            ).data
-        )
+        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
 
 
 class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
