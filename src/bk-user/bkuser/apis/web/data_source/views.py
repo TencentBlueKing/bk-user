@@ -60,7 +60,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
-from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
@@ -561,9 +561,10 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = DataSourceSyncTask.objects.filter(
             data_source__in=data_sources,
         ).values_list("operator", flat=True)
+        tenant_sync_task = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
         return {
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
-            "sync_tasks": DataSourceHandler.merge_sync_task_status_and_duration(self.get_queryset()),
+            "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_task},
         }
 
     @swagger_auto_schema(
@@ -595,7 +596,6 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
         return Response(
             DataSourceSyncRecordRetrieveOutputSLZ(
                 instance=self.get_object(),
-                context={"sync_tasks": DataSourceHandler.merge_sync_task_status_and_duration(self.get_queryset())},
             ).data
         )
 

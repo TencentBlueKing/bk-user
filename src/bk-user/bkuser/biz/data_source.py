@@ -9,8 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.db.models import QuerySet
-
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -21,8 +19,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     DepartmentRelationMPTTTree,
 )
-from bkuser.apps.sync.constants import SyncTaskStatus
-from bkuser.apps.sync.models import TenantSyncTask
 from bkuser.apps.tenant.models import (
     TenantDepartment,
     TenantDepartmentIDRecord,
@@ -66,36 +62,3 @@ class DataSourceHandler:
         DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
         # 8. 删除数据源
         data_source.delete()
-
-    @staticmethod
-    def merge_sync_task_status_and_duration(sync_tasks: QuerySet):
-        """
-        获取当前数据源同步任务的总体状态与耗时（数据源同步 & 租户同步）
-
-        :param sync_tasks: 需要更新状态的 DataSourceSyncTask QuerySet 对象
-        """
-
-        tenant_sync_task_info = TenantSyncTask.objects.filter(
-            data_source_sync_task_id__in=[task.id for task in sync_tasks]
-        ).values("data_source_sync_task_id", "status", "duration", "start_at")
-
-        tenant_sync_task_info_map = {task["data_source_sync_task_id"]: task for task in tenant_sync_task_info}
-
-        for task in sync_tasks:
-            # 若数据源同步任务状态非成功，则无需调整
-            if task.status != SyncTaskStatus.SUCCESS:
-                continue
-
-            tenant_info = tenant_sync_task_info_map.get(task.id)
-
-            # 若租户同步任务还未开始，或租户同步任务状态为待同步或同步中，则将总体状态调整为同步中
-            if not tenant_info or tenant_info["status"] in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
-                task.status = SyncTaskStatus.RUNNING
-                continue
-
-            # 若租户同步任务达到稳定状态（成功 or 失败），计算总体耗时；总体状态即为租户同步任务的状态
-            if tenant_info["status"] in [SyncTaskStatus.SUCCESS, SyncTaskStatus.FAILED]:
-                task.duration = tenant_info["start_at"] - task.start_at + tenant_info["duration"]
-                task.status = tenant_info["status"]
-
-        return sync_tasks
