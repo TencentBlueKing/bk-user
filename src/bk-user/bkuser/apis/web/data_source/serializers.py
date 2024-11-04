@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.utils.duration import duration_string
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
@@ -22,7 +23,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
-from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
@@ -359,15 +360,13 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
     def get_status(self, obj: DataSourceSyncTask) -> str:
-        sync_tasks = self.context["tenant_sync_task_map"]
-        task = sync_tasks.get(obj.id)
+        task = self.context["tenant_sync_task_map"].get(obj.id)
         return task.status if task else obj.status
 
     def get_duration(self, obj: DataSourceSyncTask) -> str:
-        sync_tasks = self.context["tenant_sync_task_map"]
-        task = sync_tasks.get(obj.id)
-        duration = task.duration + obj.duration if task else obj.duration
-        return str(duration)
+        task = self.context["tenant_sync_task_map"].get(obj.id)
+        duration = task.duration + task.start_at - obj.start_at if task else obj.duration
+        return duration_string(duration)
 
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
@@ -379,13 +378,13 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     logs = serializers.CharField(help_text="同步日志")
 
     def get_status(self, obj: DataSourceSyncTask) -> str:
-        task = TenantSyncTask.objects.filter(data_source_sync_task_id=obj.id).first()
+        task = self.context["tenant_sync_task"].get(obj.id)
         return task.status if task else obj.status
 
     def get_duration(self, obj: DataSourceSyncTask) -> str:
-        task = TenantSyncTask.objects.filter(data_source_sync_task_id=obj.id).first()
-        duration = task.duration + obj.duration if task else obj.duration
-        return str(duration)
+        task = self.context["tenant_sync_task"].get(obj.id)
+        duration = task.duration + task.start_at - obj.start_at if task else obj.duration
+        return duration_string(duration)
 
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):

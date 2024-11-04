@@ -593,7 +593,14 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
         responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+        instance = self.get_object()
+        tenant_sync_task = TenantSyncTask.objects.filter(data_source_sync_task_id=instance.id).first()
+        context = {
+            "tenant_sync_task": (
+                {tenant_sync_task.data_source_sync_task_id: tenant_sync_task} if tenant_sync_task else {}
+            )
+        }
+        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=instance, context=context).data)
 
 
 class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
