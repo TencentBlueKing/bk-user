@@ -81,6 +81,7 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
         receivers=[profile.email],
         message=message,
         title=email_config["title"],
+        receiver__username=[profile.username]
     )
 
 

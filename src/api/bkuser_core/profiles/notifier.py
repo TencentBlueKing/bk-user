@@ -47,6 +47,7 @@ class ExpirationNotifier:
             receivers=email_config["receivers"],
             message=email_config["message"],
             title=email_config["title"],
+            receiver__username=email_config["receiver__username"],
         )
 
     def _notice_by_sms(self, sms_config):
@@ -136,6 +137,7 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
                 "send_email": {
                     "sender": email_config["sender"],
                     "receivers": [profile["email"]],
+                    "receiver__username": [profile["username"]],
                     "message": message,
                     "title": email_config["title"],
                 }
