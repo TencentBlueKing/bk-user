@@ -129,23 +129,24 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
         tenant_users = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values(
             "id", "data_source_user_id"
         )
-        tenant_users_map = {user["data_source_user_id"]: user["id"] for user in tenant_users}
 
+        # 【审计】获取用户与部门之间的映射
         user_department_relations = DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids
         ).values("department_id", "user_id")
         user_departments_map = defaultdict(list)
 
-        # 将用户的所有部门存储在列表中
+        # 【审计】将用户的所有部门存储在列表中
         for relation in user_department_relations:
             user_departments_map[relation["user_id"]].append(relation["department_id"])
 
         # 【审计】批量创建审计对象
         objects = [
             AuditObject(
-                id=tenant_users_map[user_id], extras={"data_before": {"departments": user_departments_map[user_id]}}
+                id=user["id"],
+                extras={"data_before": {"departments": user_departments_map[user["data_source_user_id"]]}},
             )
-            for user_id in data_source_user_ids
+            for user in tenant_users
         ]
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边

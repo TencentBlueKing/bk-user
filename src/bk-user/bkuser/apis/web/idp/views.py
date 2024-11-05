@@ -159,6 +159,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
             extras={
+                "name": idp.name,
                 "status": idp.status,
                 "plugin_config": idp.plugin_config,
                 "data_source_match_rules": idp.data_source_match_rules,
@@ -235,8 +236,8 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         data_before = {
             "name": idp.name,
             "status": idp.status,
-            "data_source_match_rules": idp.data_source_match_rules,
             "plugin_config": idp.plugin_config,
+            "data_source_match_rules": idp.data_source_match_rules,
         }
 
         with transaction.atomic():
@@ -353,6 +354,7 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
             extras={
+                "name": idp.name,
                 "status": idp.status,
                 "plugin_config": idp.plugin_config,
                 "data_source_match_rules": idp.data_source_match_rules,

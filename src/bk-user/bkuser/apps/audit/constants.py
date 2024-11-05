@@ -41,7 +41,6 @@ class OperationEnum(str, StructuredEnum):
     # 认证源
     CREATE_IDP = EnumField("create_idp", label=_("创建认证源"))
     MODIFY_IDP = EnumField("modify_idp", label=_("修改认证源"))
-    MODIFY_IDP_STATUS = EnumField("modify_idp_status", label=_("修改认证源状态"))
     # 用户
     CREATE_USER = EnumField("create_user", label=_("创建用户"))
     MODIFY_USER = EnumField("modify_user", label=_("修改用户信息"))
