@@ -362,6 +362,8 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:
         task = self.context["tenant_sync_task_map"].get(obj.id)
+        # 同步租户 task 是在数据源同步任务更新最终状态（成功 or 失败）前创建的
+        # 因此当同步租户 task 不存在时，可以使用数据源同步任务的状态
         return task.status if task else obj.status
 
     def get_duration(self, obj: DataSourceSyncTask) -> str:
@@ -380,11 +382,13 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
 
     # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:
-        task = self.context.get(obj.id)
+        task = self.context["tenant_sync_task"]
+        # 同步租户 task 是在数据源同步任务更新最终状态（成功 or 失败）前创建的
+        # 因此当同步租户 task 不存在时，可以使用数据源同步任务的状态
         return task.status if task else obj.status
 
     def get_duration(self, obj: DataSourceSyncTask) -> str:
-        task = self.context.get(obj.id)
+        task = self.context["tenant_sync_task"]
         duration = task.duration + task.start_at - obj.start_at if task else obj.duration
         return duration_string(duration)
 

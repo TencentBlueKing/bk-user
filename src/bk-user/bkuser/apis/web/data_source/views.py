@@ -595,7 +595,7 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
     def get(self, request, *args, **kwargs):
         data_source_sync_task = self.get_object()
         tenant_sync_task = TenantSyncTask.objects.filter(data_source_sync_task_id=data_source_sync_task.id).first()
-        context = {tenant_sync_task.data_source_sync_task_id: tenant_sync_task} if tenant_sync_task else {}
+        context = {"tenant_sync_task": tenant_sync_task}
         return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=data_source_sync_task, context=context).data)
 
 
