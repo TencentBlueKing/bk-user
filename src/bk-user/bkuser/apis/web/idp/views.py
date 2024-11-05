@@ -23,6 +23,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
@@ -149,6 +151,20 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
             updater=current_user,
         )
 
+        # 审计记录
+        add_audit_record(
+            operator=current_user,
+            tenant_id=current_tenant_id,
+            operation=OperationEnum.CREATE_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=idp.id,
+            extras={
+                "status": idp.status,
+                "plugin_config": idp.plugin_config,
+                "data_source_match_rules": idp.data_source_match_rules,
+            },
+        )
+
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
 
@@ -215,6 +231,14 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        data_before = {
+            "name": idp.name,
+            "status": idp.status,
+            "data_source_match_rules": idp.data_source_match_rules,
+            "plugin_config": idp.plugin_config,
+        }
+
         with transaction.atomic():
             idp.name = data["name"]
             idp.status = data["status"]
@@ -225,6 +249,16 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
                 update_fields=["name", "status", "data_source_match_rules", "data_source_id", "updater", "updated_at"]
             )
             idp.set_plugin_cfg(data["plugin_config"])
+
+        # 审计记录
+        add_audit_record(
+            operator=idp.updater,
+            tenant_id=current_tenant_id,
+            operation=OperationEnum.MODIFY_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=idp.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -311,6 +345,20 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(plugin_config)
 
+        # 审计记录
+        add_audit_record(
+            operator=current_user,
+            tenant_id=current_tenant_id,
+            operation=OperationEnum.CREATE_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=idp.id,
+            extras={
+                "status": idp.status,
+                "plugin_config": idp.plugin_config,
+                "data_source_match_rules": idp.data_source_match_rules,
+            },
+        )
+
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
 
@@ -374,11 +422,28 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        data_before = {
+            "name": idp.name,
+            "status": idp.status,
+            "plugin_config": data_source.plugin_config,
+        }
+
         with transaction.atomic():
             idp.name = data["name"]
             idp.status = data["status"]
             idp.updater = request.user.username
             idp.save(update_fields=["name", "status", "updater", "updated_at"])
             data_source.set_plugin_cfg(data["plugin_config"])
+
+        # 审计记录
+        add_audit_record(
+            operator=idp.updater,
+            tenant_id=current_tenant_id,
+            operation=OperationEnum.MODIFY_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=idp.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

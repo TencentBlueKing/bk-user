@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import itertools
+from collections import defaultdict
 
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
@@ -30,6 +31,9 @@ from bkuser.apis.web.organization.serializers import (
     TenantDeptUserRelationBatchUpdateInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.recorder import batch_add_audit_records
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -74,6 +78,20 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         # 由于复制操作不会影响存量的关联边，所以需要忽略冲突，避免出现用户复选的情况
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(id=user_id, extras={"departments": list(data_source_dept_ids)}) for user_id in data["user_ids"]
+        ]
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -107,6 +125,29 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前数据
+        tenant_users = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values(
+            "id", "data_source_user_id"
+        )
+        tenant_users_map = {user["data_source_user_id"]: user["id"] for user in tenant_users}
+
+        user_department_relations = DataSourceDepartmentUserRelation.objects.filter(
+            user_id__in=data_source_user_ids
+        ).values("department_id", "user_id")
+        user_departments_map = defaultdict(list)
+
+        # 将用户的所有部门存储在列表中
+        for relation in user_department_relations:
+            user_departments_map[relation["user_id"]].append(relation["department_id"])
+
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(
+                id=tenant_users_map[user_id], extras={"data_before": {"departments": user_departments_map[user_id]}}
+            )
+            for user_id in data_source_user_ids
+        ]
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
         with transaction.atomic():
             # 先删除
@@ -117,6 +158,15 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 for dept_id, user_id in itertools.product(data_source_dept_ids, data_source_user_ids)
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -147,6 +197,12 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(id=user_id, extras={"data_before": {"department": source_data_source_dept.id}})
+            for user_id in data["user_ids"]
+        ]
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户在当前部门的存量关联边
         with transaction.atomic():
             # 先删除（仅限于指定部门）
@@ -159,6 +215,15 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 for dept_id, user_id in itertools.product(data_source_dept_ids, data_source_user_ids)
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
+
+        # 批量操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -191,8 +256,22 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(id=user_id, extras={"department": source_data_source_dept.id}) for user_id in data["user_ids"]
+        ]
+
         DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

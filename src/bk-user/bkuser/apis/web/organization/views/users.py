@@ -58,6 +58,9 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserUpdateInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.recorder import add_audit_record, batch_add_audit_records
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -496,6 +499,26 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source=data_source, id__in=data["leader_ids"]
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前的数据
+        departments = DataSourceDepartmentUserRelation.objects.filter(user=data_source_user).values_list(
+            "department_id", flat=True
+        )
+        leaders = DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list(
+            "leader_id", flat=True
+        )
+
+        data_before = {
+            "username": data_source_user.username,
+            "full_name": data_source_user.full_name,
+            "email": data_source_user.email,
+            "phone": data_source_user.phone,
+            "phone_country_code": data_source_user.phone_country_code,
+            "extras": data_source_user.extras,
+            "departments": list(departments),
+            "leaders": list(leaders),
+            "account_expired_at": tenant_user.account_expired_at.isoformat(),
+        }
+
         with transaction.atomic():
             data_source_user.username = data["username"]
             data_source_user.full_name = data["full_name"]
@@ -521,6 +544,16 @@ class TenantUserRetrieveUpdateDestroyApi(
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
+        # 审计操作
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+            extras={"data_before": data_before},
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request, *args, **kwargs):
@@ -534,6 +567,23 @@ class TenantUserRetrieveUpdateDestroyApi(
             raise error_codes.TENANT_USER_DELETE_FAILED.f(_("仅可删除非协同产生的租户用户"))
 
         data_source_user = tenant_user.data_source_user
+
+        # 【审计】记录变更前数据，数据删除后便无法获取
+        tenant_user_id = tenant_user.id
+        username = data_source_user.username
+        full_name = data_source_user.full_name
+        email = data_source_user.email
+        phone = data_source_user.phone
+        phone_country_code = data_source_user.phone_country_code
+        extras = data_source_user.extras
+        departments = DataSourceDepartmentUserRelation.objects.filter(user=data_source_user).values_list(
+            "department_id", flat=True
+        )
+        leaders = DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list(
+            "leader_id", flat=True
+        )
+        account_expired_at = tenant_user.account_expired_at
+
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
@@ -542,6 +592,26 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(user=data_source_user).delete()
             DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
+
+        # 审计操作
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.DELETE_USER,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user_id,
+            extras={
+                "username": username,
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "phone_country_code": phone_country_code,
+                "extras": extras,
+                "departments": list(departments),
+                "leaders": list(leaders),
+                "account_expired_at": account_expired_at.isoformat(),
+            },
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -572,6 +642,12 @@ class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAP
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        data_before = {
+            "account_expired_at": tenant_user.account_expired_at.isoformat(),
+            "status": tenant_user.status,
+        }
+
         tenant_user.account_expired_at = data["account_expired_at"]
         tenant_user.updater = request.user.username
 
@@ -580,6 +656,16 @@ class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAP
             tenant_user.status = TenantUserStatus.ENABLED
 
         tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
+
+        # 审计操作
+        add_audit_record(
+            operator=tenant_user.updater,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -666,6 +752,15 @@ class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixi
             operator=request.user.username,
         )
 
+        # 审计操作
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_USER_PASSWORD,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+        )
+
         # 发送新密码通知到用户
         send_reset_password_to_user.delay(data_source_user.id, raw_password)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -731,6 +826,10 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
     )
     def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
+
+        # 【审计】记录变更前数据
+        data_before = {"status": tenant_user.status}
+
         # 正常 / 过期的租户用户都可以停用
         if tenant_user.status in [TenantUserStatus.ENABLED, TenantUserStatus.EXPIRED]:
             tenant_user.status = TenantUserStatus.DISABLED
@@ -744,6 +843,18 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
 
         tenant_user.updater = request.user.username
         tenant_user.save(update_fields=["status", "updater", "updated_at"])
+
+        # 审计操作
+        add_audit_record(
+            operator=tenant_user.updater,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_USER_STATUS,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+            extras={
+                "data_before": data_before,
+            },
+        )
         return Response(TenantUserStatusUpdateOutputSLZ(tenant_user).data, status=status.HTTP_200_OK)
 
 
@@ -806,6 +917,39 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
 
             # 批量创建租户用户（含协同）
             self._bulk_create_tenant_users(cur_tenant_id, tenant_dept, data_source, data_source_users)
+
+        # 【审计】获取批量创建的租户用户
+        tenant_users = TenantUser.objects.filter(
+            tenant_id=cur_tenant_id, data_source_user__in=data_source_users
+        ).values("id", "data_source_user")
+
+        tenant_users_map = {user["data_source_user"]: user["id"] for user in tenant_users}
+
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(
+                id=tenant_users_map[user],
+                extras={
+                    "username": user.username,
+                    "full_name": user.full_name,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "phone_country_code": user.phone_country_code,
+                    "extras": user.extras,
+                    "department": tenant_dept.data_source_department_id,
+                },
+            )
+            for user in data_source_users
+        ]
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_PASSWORD,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         # 对新增的用户进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
@@ -922,6 +1066,46 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             ).values_list("data_source_user_id", flat=True)
         )
 
+        # 【审计】记录变更前数据，数据删除后便无法获取
+        data_source_users = DataSourceUser.objects.filter(id__in=data_source_user_ids)
+
+        # 获取租户用户与数据源用户映射
+        tenant_users = TenantUser.objects.filter(
+            data_source_user_id__in=data_source_user_ids,
+            tenant_id=cur_tenant_id,
+        ).values("id", "data_source_user_id")
+        tenant_users_map = {user["data_source_user_id"]: user["id"] for user in tenant_users}
+
+        # 获取用户与部门的映射
+        departments = DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids).values(
+            "user_id", "department_id"
+        )
+        departments_map = {dept["user_id"]: dept["department_id"] for dept in departments}
+
+        # 获取用户与上级的映射
+        leaders = DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).values(
+            "user_id", "leader_id"
+        )
+        leaders_map = {leader["user_id"]: leader["leader_id"] for leader in leaders}
+
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(
+                id=tenant_users_map[user.id],
+                extras={
+                    "username": user.username,
+                    "full_name": user.full_name,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "phone_country_code": user.phone_country_code,
+                    "extras": user.extras,
+                    "department": departments_map[user.id],
+                    "leader": leaders_map.get(user.id, ""),
+                },
+            )
+            for user in data_source_users
+        ]
+
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
@@ -934,6 +1118,15 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             DataSourceUserLeaderRelation.objects.filter(leader_id__in=data_source_user_ids).delete()
             # 最后才是批量回收数据源用户
             DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.DELETE_USER,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -961,6 +1154,27 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).values(
+            "id", "status", "account_expired_at"
+        )
+
+        # 【审计】记录变更前数据
+        tenant_users_map = {user["id"]: [user["account_expired_at"], user["status"]] for user in tenant_users}
+
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(
+                id=user_id,
+                extras={
+                    "data_before": {
+                        "account_expired_at": tenant_users_map[user_id][0].isoformat(),
+                        "status": tenant_users_map[user_id][1],
+                    }
+                },
+            )
+            for user_id in data["user_ids"]
+        ]
+
         with transaction.atomic():
             # 根据租户用户当前状态判断，如果是过期状态则转为正常
             TenantUser.objects.filter(
@@ -972,6 +1186,15 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
                 updater=request.user.username,
                 updated_at=timezone.now(),
             )
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1004,6 +1227,15 @@ class TenantUserStatusBatchUpdateApi(
         now = timezone.now()
         updater = request.user.username
 
+        # 【审计】记录变更前数据
+        tenant_users_map = {user.id: user.status for user in tenant_users}
+
+        # 【审计】批量创建审计对象
+        objects = [
+            AuditObject(id=user_id, extras={"data_before": {"status": tenant_users_map[user_id]}})
+            for user_id in data["user_ids"]
+        ]
+
         # 停用的时候，正常 / 过期的租户用户都直接停用
         if data["status"] == TenantUserStatus.DISABLED:
             tenant_users.update(
@@ -1026,6 +1258,15 @@ class TenantUserStatusBatchUpdateApi(
                     updater=updater,
                     updated_at=now,
                 )
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_STATUS,
+            object_type=ObjectTypeEnum.USER,
+            objects=objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1061,6 +1302,22 @@ class TenantUserLeaderBatchUpdateApi(
             "data_source_user_id", flat=True
         )
 
+        # 【审计】记录变更前数据
+        tenant_users = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values(
+            "id", "data_source_user_id"
+        )
+
+        tenant_users_map = {user["data_source_user_id"]: user["id"] for user in tenant_users}
+
+        user_leader_relations = DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).values(
+            "leader_id", "user_id"
+        )
+        user_leaders_map = defaultdict(list)
+
+        # 将租户的所有 leader 存在列表中
+        for relation in user_leader_relations:
+            user_leaders_map[relation["user_id"]].append(relation["leader_id"])
+
         # 新的用户 - 上级关系
         relations = [
             DataSourceUserLeaderRelation(user_id=user_id, leader_id=leader_id, data_source=data_source)
@@ -1073,6 +1330,20 @@ class TenantUserLeaderBatchUpdateApi(
 
             # 再添加新的用户 - 上级关系
             DataSourceUserLeaderRelation.objects.bulk_create(relations)
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_LEADERS,
+            object_type=ObjectTypeEnum.USER,
+            objects=[
+                AuditObject(
+                    id=tenant_users_map[user_id], extras={"data_before": {"leaders": user_leaders_map[user_id]}}
+                )
+                for user_id in data_source_user_ids
+            ],
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1128,6 +1399,20 @@ class TenantUserPasswordBatchResetApi(
             password=raw_password,
             valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
+        )
+
+        # 审计操作
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            operation=OperationEnum.MODIFY_USER_PASSWORD,
+            object_type=ObjectTypeEnum.USER,
+            objects=[
+                AuditObject(
+                    id=user_id,
+                )
+                for user_id in data["user_ids"]
+            ],
         )
 
         for data_source_user in data_source_users:
