@@ -922,7 +922,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         tenant_user_map = {
             user["data_source_user_id"]: user["id"]
             for user in TenantUser.objects.filter(
-                data_source_user_in=data_source_users,
+                data_source_user__in=data_source_users,
                 tenant_id=cur_tenant_id,
             ).values("data_source_user_id", "id")
         }
