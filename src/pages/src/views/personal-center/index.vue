@@ -486,6 +486,7 @@ const isLoading = ref(false);
 const infoLoading = ref(false);
 const isInheritedEmail = ref(true);
 const isInheritedPhone = ref(true);
+// 缓存用户自定义邮箱、手机号，仅当自定义数据为验证后的数据时才缓存
 const customEmail = ref('');
 const customPhone = ref('');
 const customPhoneCode = ref('');
@@ -543,6 +544,7 @@ const getCurrentUser = async (id) => {
     emailUpdateRestriction.value = featureRes.data.email_update_restriction;
     phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
     extrasList.value = [...currentUserInfo.value.extras];
+    // 初始化时读取custom data
     customEmail.value = userRes.data.custom_email;
     customPhone.value = userRes.data.custom_phone;
     customPhoneCode.value = userRes.data.custom_phone_country_code;
@@ -552,6 +554,8 @@ const getCurrentUser = async (id) => {
       language: currentUserInfo.value.language,
       time_zone: currentUserInfo.value.time_zone,
     };
+
+    // 根据当前用户是否继承了邮箱和手机，决定是否重置custom缓存
     if (currentUserInfo.value.is_inherited_email) {
       currentUserInfo.value.custom_email = '';
       customEmail.value = '';
@@ -725,7 +729,9 @@ const changeEmail = async () => {
     isEditEmail.value = false;
     isEditing();
     isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-    customEmail.value = currentUserInfo.value.custom_email;
+    if (!currentUserInfo.value.is_inherited_email) {
+      customEmail.value = currentUserInfo.value.custom_email;
+    }
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
@@ -768,6 +774,8 @@ const togglePhone = (value: OpenDialogSelect) => {
   currentUserInfo.value.is_inherited_phone = currentInherit;
   nextTick(() => {
     if (currentInherit) return telError.value = false;
+    // toggle Select本身不处理缓存清空，仅读取缓存
+    // 与input双向绑定的数据为 currentUSerInfo.value.custom_phone
     currentUserInfo.value.custom_phone = customPhone.value;
     const phoneInput = document.querySelectorAll('.phone-input input');
     phoneInput[0].focus();
@@ -785,7 +793,10 @@ const changePhone = () => {
     isEditPhone.value = false;
     isEditing();
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-    customPhone.value = currentUserInfo.value.custom_phone;
+    // 若当前为自定义，更新缓存
+    if (!currentUserInfo.value.is_inherited_phone) {
+      customPhone.value = currentUserInfo.value.custom_phone;
+    }
     Message({ theme: 'success', message: t('保存成功') });
   });
 };
