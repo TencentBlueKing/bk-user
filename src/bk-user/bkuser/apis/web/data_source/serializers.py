@@ -359,6 +359,7 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
+    # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:
         task = self.context["tenant_sync_task_map"].get(obj.id)
         return task.status if task else obj.status
@@ -377,12 +378,13 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     duration = serializers.SerializerMethodField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
 
+    # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:
-        task = self.context["tenant_sync_task"].get(obj.id)
+        task = self.context.get(obj.id)
         return task.status if task else obj.status
 
     def get_duration(self, obj: DataSourceSyncTask) -> str:
-        task = self.context["tenant_sync_task"].get(obj.id)
+        task = self.context.get(obj.id)
         duration = task.duration + task.start_at - obj.start_at if task else obj.duration
         return duration_string(duration)
 
