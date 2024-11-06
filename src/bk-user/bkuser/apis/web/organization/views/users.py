@@ -509,9 +509,8 @@ class TenantUserRetrieveUpdateDestroyApi(
             "leader_id", flat=True
         )
 
-        # 【审计】记录 name 方便前端展示
-        username = data_source_user.username
         # 【审计】记录变更前的数据源用户信息
+        username = data_source_user.username
         data_before = {
             "full_name": data_source_user.full_name,
             "email": data_source_user.email,
@@ -555,7 +554,11 @@ class TenantUserRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_USER,
             object_type=ObjectTypeEnum.USER,
             object_id=tenant_user.id,
-            extras={"data_before": data_before, "name": username},
+            extras={
+                "data_before": data_before,
+                # 记录 name 方便前端展示
+                "name": username,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

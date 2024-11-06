@@ -233,8 +233,8 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         data = slz.validated_data
 
         # 【审计】记录变更前数据
+        name = idp.name
         data_before = {
-            "name": idp.name,
             "status": idp.status,
             "plugin_config": idp.plugin_config,
             "data_source_match_rules": idp.data_source_match_rules,
@@ -258,7 +258,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
             operation=OperationEnum.MODIFY_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
-            extras={"data_before": data_before},
+            extras={"data_before": data_before, "name": name},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -425,8 +425,8 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         data = slz.validated_data
 
         # 【审计】记录变更前数据
+        name = (idp.name,)
         data_before = {
-            "name": idp.name,
             "status": idp.status,
             "plugin_config": data_source.plugin_config,
         }
@@ -445,7 +445,7 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
             operation=OperationEnum.MODIFY_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
-            extras={"data_before": data_before},
+            extras={"data_before": data_before, "name": name},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
