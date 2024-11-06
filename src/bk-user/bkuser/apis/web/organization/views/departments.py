@@ -356,7 +356,7 @@ class TenantDepartmentUpdateDestroyApi(
             operation=OperationEnum.DELETE_DEPARTMENT,
             object_type=ObjectTypeEnum.DEPARTMENT,
             object_id=tenant_dept.id,
-            extras={"name": data_source_dept.name, "sub_dept_ids": sub_dept_ids},
+            extras={"name": data_source_dept.name, "sub_dept_ids": list(sub_dept_ids)},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
