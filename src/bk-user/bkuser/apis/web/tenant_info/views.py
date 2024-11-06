@@ -78,8 +78,8 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         data = slz.validated_data
 
         # 【审计】记录变更前数据
+        name = tenant.name
         data_before = {
-            "name": tenant.name,
             "visible": tenant.visible,
         }
 
@@ -98,7 +98,7 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
             operation=OperationEnum.MODIFY_TENANT,
             object_type=ObjectTypeEnum.TENANT,
             object_id=tenant.id,
-            extras={"data_before": data_before},
+            extras={"data_before": data_before, "name": name},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -267,7 +267,10 @@ class TenantRealManagerListCreateDestroyApi(
             operation=OperationEnum.CREATE_TENANT_REAL_MANAGER,
             object_type=ObjectTypeEnum.TENANT,
             object_id=tenant_id,
-            extras={"tenant_real_manager_ids": list(waiting_create_ids)},
+            extras={
+                "tenant_real_manager_ids": list(waiting_create_ids),
+                "name": Tenant.objects.filter(id=tenant_id).first().name,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -297,7 +300,10 @@ class TenantRealManagerListCreateDestroyApi(
             operation=OperationEnum.DELETE_TENANT_REAL_MANAGER,
             object_type=ObjectTypeEnum.TENANT,
             object_id=self.get_current_tenant_id(),
-            extras={"deleted_tenant_real_manager_ids": list(ids)},
+            extras={
+                "deleted_tenant_real_manager_ids": list(ids),
+                "name": Tenant.objects.filter(id=self.get_current_tenant_id()).first().name,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

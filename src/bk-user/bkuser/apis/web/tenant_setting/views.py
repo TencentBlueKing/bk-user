@@ -39,6 +39,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import (
+    Tenant,
     TenantUserCustomField,
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
@@ -201,7 +202,10 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
             operation=OperationEnum.MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG,
             object_type=ObjectTypeEnum.TENANT,
             object_id=self.get_current_tenant_id(),
-            extras={"data_before": data_before},
+            extras={
+                "data_before": data_before,
+                "name": Tenant.objects.filter(id=self.get_current_tenant_id()).first().name,
+            },
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
