@@ -40,6 +40,8 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -245,6 +247,16 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             # 由于存量历史数据（Record）也会被下发，因此需要忽略冲突保证其他数据可以正常插入
             TenantDepartmentIDRecord.objects.bulk_create(records, ignore_conflicts=True)
 
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=current_tenant_id,
+            operation=OperationEnum.CREATE_DEPARTMENT,
+            object_type=ObjectTypeEnum.DEPARTMENT,
+            object_id=tenant_dept.id,
+            extras={"name": data_source_dept.name, "parent_department_id": data["parent_department_id"]},
+        )
+
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
 
 
@@ -280,8 +292,26 @@ class TenantDepartmentUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        data_before = {
+            "name": tenant_dept.data_source_department.name,
+        }
+
         tenant_dept.data_source_department.name = data["name"]
         tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_DEPARTMENT,
+            object_type=ObjectTypeEnum.DEPARTMENT,
+            object_id=tenant_dept.id,
+            extras={
+                "data_before": data_before,
+            },
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
@@ -305,6 +335,11 @@ class TenantDepartmentUpdateDestroyApi(
         if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
             raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
 
+        # 【审计】记录变更前数据，删除后无法获取
+        sub_dept_ids = TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).values_list(
+            "id", flat=True
+        )
+
         with transaction.atomic():
             # 连带协同产生的租户部门还有子部门都给你删咯
             TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
@@ -313,6 +348,16 @@ class TenantDepartmentUpdateDestroyApi(
             # 涉及到的部门关联边都要删除，然后再重建
             DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
             DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.DELETE_DEPARTMENT,
+            object_type=ObjectTypeEnum.DEPARTMENT,
+            object_id=tenant_dept.id,
+            extras={"name": data_source_dept.name, "sub_dept_ids": sub_dept_ids},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -452,6 +497,12 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        parent_dept_relation = DataSourceDepartmentRelation.objects.filter(
+            department=tenant_dept.data_source_department, data_source=tenant_dept.data_source
+        ).first()
+        parent_dept_id = parent_dept_relation.parent_id
+
         parent_tenant_dept_id = data["parent_department_id"]
 
         # 获取当前节点部门关系
@@ -471,5 +522,15 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             )
 
         cur_dept_relation.move_to(parent_dept_relation)
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.DELETE_DEPARTMENT,
+            object_type=ObjectTypeEnum.DEPARTMENT,
+            object_id=tenant_dept.id,
+            extras={"name": data_source_dept.name, "sub_dept_ids": parent_dept_id},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

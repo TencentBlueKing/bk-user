@@ -22,6 +22,8 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
@@ -104,6 +106,22 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                 data_source=data_source,
             )
 
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.CREATE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.VIRTUAL_USER,
+            object_id=tenant_user.id,
+            extras={
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "phone": user.phone,
+                "phone_country_code": user.phone_country_code,
+            },
+        )
+
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
 
@@ -144,12 +162,31 @@ class VirtualUserRetrieveUpdateDestroyApi(
         # 实际修改的字段属性都在关联的数据源用户上
         data_source_user = tenant_user.data_source_user
 
+        # 【审计】记录变更前的数据
+        data_before = {
+            "username": data_source_user.username,
+            "full_name": data_source_user.full_name,
+            "email": data_source_user.email,
+            "phone": data_source_user.phone,
+            "phone_country_code": data_source_user.phone_country_code,
+        }
+
         # 覆盖更新
         data_source_user.full_name = data["full_name"]
         data_source_user.email = data["email"]
         data_source_user.phone = data["phone"]
         data_source_user.phone_country_code = data["phone_country_code"]
         data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.VIRTUAL_USER,
+            object_id=tenant_user.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -162,8 +199,31 @@ class VirtualUserRetrieveUpdateDestroyApi(
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
 
+        # 【审计】记录变更前的数据，删除后无法获取
+        username = data_source_user.username
+        full_name = data_source_user.full_name
+        email = data_source_user.email
+        phone = data_source_user.phone
+        phone_country_code = data_source_user.phone_country_code
+
         with transaction.atomic():
             tenant_user.delete()
             data_source_user.delete()
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.DELETE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.VIRTUAL_USER,
+            object_id=tenant_user.id,
+            extras={
+                "username": username,
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "phone_country_code": phone_country_code,
+            },
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
