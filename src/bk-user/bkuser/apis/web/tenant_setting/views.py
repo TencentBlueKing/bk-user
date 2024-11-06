@@ -28,6 +28,8 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserValidityPeriodConfigInputSLZ,
     TenantUserValidityPeriodConfigOutputSLZ,
 )
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.tasks import (
     migrate_user_extras_with_mapping,
     remove_dropped_field_in_data_source_field_mapping,
@@ -174,6 +176,16 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         data = slz.validated_data
 
         cfg = self.get_object()
+
+        # 【审计】记录变更前数据
+        data_before = {
+            "enabled": cfg.enabled,
+            "validity_period": cfg.validity_period,
+            "remind_before_expire": cfg.remind_before_expire,
+            "enabled_notification_methods": cfg.enabled_notification_methods,
+            "notification_templates": cfg.notification_templates,
+        }
+
         cfg.enabled = data["enabled"]
         cfg.validity_period = data["validity_period"]
         cfg.remind_before_expire = data["remind_before_expire"]
@@ -181,5 +193,15 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         cfg.notification_templates = data["notification_templates"]
         cfg.updater = request.user.username
         cfg.save()
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.get_current_tenant_id(),
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

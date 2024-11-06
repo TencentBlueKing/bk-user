@@ -40,6 +40,8 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
 )
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -195,12 +197,30 @@ class TenantUserPhoneUpdateApi(
                 VerificationCodeScene.UPDATE_PHONE,
             )
 
+        # 【审计】记录更改前数据
+        data_before = {
+            "is_inherited_phone": tenant_user.is_inherited_phone,
+            "custom_phone": tenant_user.custom_phone,
+            "custom_phone_country_code": tenant_user.custom_phone_country_code,
+        }
+
         phone_info = TenantUserPhoneInfo(
             is_inherited_phone=is_inherited_phone,
             custom_phone=custom_phone,
             custom_phone_country_code=custom_phone_country_code,
         )
         TenantUserHandler.update_tenant_user_phone(self.get_object(), phone_info)
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant_user.tenant_id,
+            operation=OperationEnum.MODIFY_USER_PHONE,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+            extras={"data_before": data_before},
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _validate_verification_code(
@@ -296,8 +316,25 @@ class TenantUserEmailUpdateApi(
 
             self._validate_verification_code(custom_email, verification_code, VerificationCodeScene.UPDATE_EMAIL)
 
+        # 【审计】记录更改前数据
+        data_before = {
+            "is_inherited_email": tenant_user.is_inherited_email,
+            "custom_email": tenant_user.custom_email,
+        }
+
         email_info = TenantUserEmailInfo(is_inherited_email=is_inherited_email, custom_email=custom_email)
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant_user.tenant_id,
+            operation=OperationEnum.MODIFY_USER_EMAIL,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
+            extras={"data_before": data_before},
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _validate_verification_code(self, email: str, code: str, scene: VerificationCodeScene):
@@ -533,6 +570,15 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
             password=new_password,
             valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
+        )
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant_user.tenant_id,
+            operation=OperationEnum.MODIFY_USER_PASSWORD,
+            object_type=ObjectTypeEnum.USER,
+            object_id=tenant_user.id,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -25,6 +25,8 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourcePlugin, DataSourceUser
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
@@ -111,6 +113,23 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
             # 添加内置管理员账密登录认证源
             self._add_builtin_management_local_idp(tenant.id, data_source.id)
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant.id,
+            operation=OperationEnum.CREATE_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            extras={
+                "name": data["name"],
+                "status": data["status"],
+                "notification_methods": data["notification_methods"],
+                "email": data["email"],
+                "phone": data["phone"],
+                "phone_country_code": data["phone_country_code"],
+            },
+        )
 
         # 对租户内置管理员进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
@@ -227,11 +246,26 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录修改前数据
+        data_before = {
+            "name": tenant.name,
+        }
+
         # 更新
         tenant.name = data["name"]
         tenant.logo = data["logo"]
         tenant.updater = request.user.username
         tenant.save(update_fields=["name", "logo", "updater", "updated_at"])
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant.id,
+            operation=OperationEnum.MODIFY_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -247,6 +281,14 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
         if tenant.status != TenantStatus.DISABLED:
             raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
+
+        # 【审计】记录变更前数据，数据删除后便无法获取
+        tenant_name = tenant.name
+        tenant_status = (tenant.status,)
+        tenant_notification_methods = (tenant.notification_methods,)
+        tenant_email = tenant.email
+        tenant_phone = (tenant.phone,)
+        tenant_phone_country_code = tenant.phone_country_code
 
         with transaction.atomic():
             # 删除租户配置的认证源
@@ -265,6 +307,22 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             TenantDepartment.objects.filter(tenant=tenant).delete()
             # 最后再删除租户
             tenant.delete()
+
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant.id,
+            operation=OperationEnum.DELETE_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            extras={
+                "name": tenant_name,
+                "status": tenant_status,
+                "notification_methods": tenant_notification_methods,
+                "email": tenant_email,
+                "phone": tenant_phone,
+                "phone_country_code": tenant_phone_country_code,
+            },
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -287,9 +345,22 @@ class TenantStatusUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
         if tenant.is_default:
             raise error_codes.TENANT_UPDATE_FAILED.f(_("默认租户不能停用"))
 
+        # 【审计】记录修改前数据
+        data_before = {"status": tenant.status}
+
         tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.ENABLED
         tenant.updater = request.user.username
         tenant.save(update_fields=["status", "updater", "updated_at"])
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant.id,
+            operation=OperationEnum.MODIFY_TENANT_STATUS,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(TenantStatusUpdateOutputSLZ(instance={"status": tenant.status.value}).data)
 

@@ -24,6 +24,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
@@ -75,6 +77,12 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】记录变更前数据
+        data_before = {
+            "name": tenant.name,
+            "visible": tenant.visible,
+        }
+
         # 更新
         tenant.name = data["name"]
         tenant.logo = data["logo"]
@@ -82,6 +90,16 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         tenant.user_number_visible = data["user_number_visible"]
         tenant.updater = request.user.username
         tenant.save(update_fields=["name", "logo", "visible", "user_number_visible", "updater", "updated_at"])
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant.id,
+            operation=OperationEnum.MODIFY_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            extras={"data_before": data_before},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -242,6 +260,16 @@ class TenantRealManagerListCreateDestroyApi(
                 [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_ids]
             )
 
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=tenant_id,
+            operation=OperationEnum.CREATE_TENANT_REAL_MANAGER,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant_id,
+            extras={"tenant_real_manager_ids": list(waiting_create_ids)},
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
@@ -261,6 +289,16 @@ class TenantRealManagerListCreateDestroyApi(
                 tenant_user__data_source__type=DataSourceTypeEnum.REAL,
                 tenant_user_id__in=ids,
             ).delete()
+
+        # 审计记录
+        add_audit_record(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            operation=OperationEnum.DELETE_TENANT_REAL_MANAGER,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.get_current_tenant_id(),
+            extras={"deleted_tenant_real_manager_ids": list(ids)},
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
