@@ -78,10 +78,10 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
 
     send_mail(
         sender=email_config["sender"],
-        receivers=[profile.email],
+        receiver__username=[profile.username],
         message=message,
         title=email_config["title"],
-        receiver__username=[profile.username]
+
     )
 
 

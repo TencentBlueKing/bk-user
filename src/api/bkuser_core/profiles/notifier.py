@@ -44,10 +44,10 @@ class ExpirationNotifier:
     def _notice_by_email(self, email_config):
         send_mail(
             sender=email_config["sender"],
-            receivers=email_config["receivers"],
+            receiver__username=email_config["receiver__username"],
             message=email_config["message"],
             title=email_config["title"],
-            receiver__username=email_config["receiver__username"],
+
         )
 
     def _notice_by_sms(self, sms_config):

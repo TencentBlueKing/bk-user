@@ -36,14 +36,12 @@ class SendSmsFailed(Exception):
     """发送短信失败"""
 
 
-def send_mail(receivers: List[str], message: str, sender: str = None, title: str = None, receiver__username: List[str] = []):
+def send_mail(receiver__username: List[str], message: str, sender: str = None, title: str = None, ):
     """发邮件"""
-    if receiver__username is None:
-        receiver__username = []
-    if not receivers:
+    if not receiver__username:
         raise ReceiversCouldNotBeEmpty(_("收件人不能为空"))
 
-    receivers_str = ",".join(receivers)
+    receivers_str = ",".join(receiver__username)
 
     title = title or _("[用户管理] 通知邮件")
 
