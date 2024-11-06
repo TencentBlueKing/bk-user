@@ -80,7 +80,18 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】批量创建审计对象
         objects = [
-            AuditObject(id=user_id, extras={"departments": list(data_source_dept_ids)}) for user_id in data["user_ids"]
+            AuditObject(
+                id=user.id,
+                extras={
+                    "departments": list(data_source_dept_ids),
+                    # 记录 name 便于前端展示
+                    "name": user.data_source_user.username,
+                },
+            )
+            for user in TenantUser.objects.filter(
+                id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
+            ).select_related("data_source_user")
         ]
 
         # 审计记录
@@ -125,11 +136,6 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】记录变更前数据
-        tenant_users = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).values(
-            "id", "data_source_user_id"
-        )
-
         # 【审计】获取用户与部门之间的映射
         user_department_relations = DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids
@@ -143,10 +149,16 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
         # 【审计】批量创建审计对象
         objects = [
             AuditObject(
-                id=user["id"],
-                extras={"data_before": {"departments": user_departments_map[user["data_source_user_id"]]}},
+                id=user.id,
+                extras={
+                    "data_before": {"departments": user_departments_map[user.data_source_user_id]},
+                    # 记录 name 便于前端展示
+                    "name": user.data_source_user.username,
+                },
             )
-            for user in tenant_users
+            for user in TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).select_related(
+                "data_source_user"
+            )
         ]
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
@@ -200,8 +212,18 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】批量创建审计对象
         objects = [
-            AuditObject(id=user_id, extras={"data_before": {"department": source_data_source_dept.id}})
-            for user_id in data["user_ids"]
+            AuditObject(
+                id=user.id,
+                extras={
+                    "data_before": {"department": source_data_source_dept.id},
+                    # 记录 name 便于前端展示
+                    "name": user.data_source_user.username,
+                },
+            )
+            for user in TenantUser.objects.filter(
+                id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
+            ).select_related("data_source_user")
         ]
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户在当前部门的存量关联边
@@ -259,7 +281,18 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】批量创建审计对象
         objects = [
-            AuditObject(id=user_id, extras={"department": source_data_source_dept.id}) for user_id in data["user_ids"]
+            AuditObject(
+                id=user.id,
+                extras={
+                    "department": source_data_source_dept.id,
+                    # 记录 name 便于前端展示
+                    "name": user.data_source_user.username,
+                },
+            )
+            for user in TenantUser.objects.filter(
+                id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
+            ).select_related("data_source_user")
         ]
 
         DataSourceDepartmentUserRelation.objects.filter(
