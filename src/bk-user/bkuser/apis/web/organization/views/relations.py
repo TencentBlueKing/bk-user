@@ -83,7 +83,7 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
             AuditObject(id=user_id, extras={"departments": list(data_source_dept_ids)}) for user_id in data["user_ids"]
         ]
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -160,7 +160,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -266,7 +266,7 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,

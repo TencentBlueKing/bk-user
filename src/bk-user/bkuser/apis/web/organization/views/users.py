@@ -544,7 +544,7 @@ class TenantUserRetrieveUpdateDestroyApi(
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
-        # 审计操作
+        # 审计记录
         add_audit_record(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -593,7 +593,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
 
-        # 审计操作
+        # 审计记录
         add_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
@@ -657,7 +657,7 @@ class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAP
 
         tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
-        # 审计操作
+        # 审计记录
         add_audit_record(
             operator=tenant_user.updater,
             tenant_id=self.get_current_tenant_id(),
@@ -752,7 +752,7 @@ class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixi
             operator=request.user.username,
         )
 
-        # 审计操作
+        # 审计记录
         add_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
@@ -844,7 +844,7 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         tenant_user.updater = request.user.username
         tenant_user.save(update_fields=["status", "updater", "updated_at"])
 
-        # 审计操作
+        # 审计记录
         add_audit_record(
             operator=tenant_user.updater,
             tenant_id=self.get_current_tenant_id(),
@@ -944,7 +944,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             for user in data_source_users
         ]
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -1129,7 +1129,7 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             # 最后才是批量回收数据源用户
             DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -1195,7 +1195,7 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
                 updated_at=timezone.now(),
             )
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -1261,7 +1261,7 @@ class TenantUserStatusBatchUpdateApi(
                     updated_at=now,
                 )
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -1332,7 +1332,7 @@ class TenantUserLeaderBatchUpdateApi(
             # 再添加新的用户 - 上级关系
             DataSourceUserLeaderRelation.objects.bulk_create(relations)
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
@@ -1402,7 +1402,7 @@ class TenantUserPasswordBatchResetApi(
             operator=request.user.username,
         )
 
-        # 审计操作
+        # 审计记录
         batch_add_audit_records(
             operator=request.user.username,
             tenant_id=cur_tenant_id,
