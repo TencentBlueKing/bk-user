@@ -292,11 +292,6 @@ class TenantDepartmentUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】记录变更前数据
-        data_before = {
-            "name": tenant_dept.data_source_department.name,
-        }
-
         tenant_dept.data_source_department.name = data["name"]
         tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
 
@@ -307,9 +302,7 @@ class TenantDepartmentUpdateDestroyApi(
             operation=OperationEnum.MODIFY_DEPARTMENT,
             object_type=ObjectTypeEnum.DEPARTMENT,
             object_id=tenant_dept.id,
-            extras={
-                "data_before": data_before,
-            },
+            extras={"name": tenant_dept.data_source_department.name},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -335,7 +328,7 @@ class TenantDepartmentUpdateDestroyApi(
         if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
             raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
 
-        # 【审计】记录变更前数据，删除后无法获取
+        # 【审计】记录子部门 ID，删除后无法获取
         sub_dept_ids = TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).values_list(
             "id", flat=True
         )
@@ -497,11 +490,11 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】记录变更前数据
+        # 【审计】记录变更前父部门
         parent_dept_relation = DataSourceDepartmentRelation.objects.filter(
             department=tenant_dept.data_source_department, data_source=tenant_dept.data_source
         ).first()
-        parent_dept_id = parent_dept_relation.parent_id
+        data_before = {"parent_tenant_dept_id": parent_dept_relation.parent_id}
 
         parent_tenant_dept_id = data["parent_department_id"]
 
@@ -527,10 +520,10 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         add_audit_record(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.DELETE_DEPARTMENT,
+            operation=OperationEnum.MODIFY_PARENT_DEPARTMENT,
             object_type=ObjectTypeEnum.DEPARTMENT,
             object_id=tenant_dept.id,
-            extras={"name": data_source_dept.name, "sub_dept_ids": parent_dept_id},
+            extras={"name": data_source_dept.name, "data_before": data_before},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

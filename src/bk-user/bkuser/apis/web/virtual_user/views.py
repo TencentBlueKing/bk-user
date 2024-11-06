@@ -114,7 +114,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             object_type=ObjectTypeEnum.VIRTUAL_USER,
             object_id=tenant_user.id,
             extras={
-                "username": user.username,
+                "name": user.username,
                 "full_name": user.full_name,
                 "email": user.email,
                 "phone": user.phone,
@@ -162,9 +162,9 @@ class VirtualUserRetrieveUpdateDestroyApi(
         # 实际修改的字段属性都在关联的数据源用户上
         data_source_user = tenant_user.data_source_user
 
+        name = data_source_user.username
         # 【审计】记录变更前的数据
         data_before = {
-            "username": data_source_user.username,
             "full_name": data_source_user.full_name,
             "email": data_source_user.email,
             "phone": data_source_user.phone,
@@ -185,7 +185,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_VIRTUAL_USER,
             object_type=ObjectTypeEnum.VIRTUAL_USER,
             object_id=tenant_user.id,
-            extras={"data_before": data_before},
+            extras={"data_before": data_before, "name": name},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -218,7 +218,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
             object_type=ObjectTypeEnum.VIRTUAL_USER,
             object_id=tenant_user.id,
             extras={
-                "username": username,
+                "name": username,
                 "full_name": full_name,
                 "email": email,
                 "phone": phone,
