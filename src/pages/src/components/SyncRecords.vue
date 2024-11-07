@@ -97,7 +97,7 @@ import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http';
 import { t } from '@/language/index';
-import { dataRecordStatus } from '@/utils';
+import { dataRecordStatus, durationText } from '@/utils';
 
 const props = defineProps({
   dataSource: {
@@ -170,19 +170,6 @@ const getSyncRecordsList = async () => {
     console.warn(e);
   } finally {
     dataRecordConfig.loading = false;
-  }
-};
-
-const durationText = (value: string) => {
-  if (value) {
-    const [hour, min, sec] = value.split(':').map(Number);
-    const roundedSec = Math.round(sec);
-    if (min < 1) {
-      return `<1 ${t('分钟')}`;
-    } if (hour < 1) {
-      return `${min} ${t('分钟')}${roundedSec > 0 ? ` ${roundedSec} ${t('秒')}` : ''}`;
-    }
-    return `${hour}小时${min}分钟`;
   }
 };
 

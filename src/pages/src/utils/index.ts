@@ -399,3 +399,16 @@ export const handleSwitchLocale = (locale: string) => {
   document.querySelector('html')?.setAttribute('lang', locale);
   window.location.reload();
 };
+
+export const durationText = (value: string) => {
+  if (value) {
+    const [hour, min, sec] = value.split(':').map(Number);
+    const roundedSec = Math.round(sec);
+    if (min < 1) {
+      return `<1 ${t('分钟')}`;
+    } if (hour < 1) {
+      return `${min} ${t('分钟')}${roundedSec > 0 ? ` ${roundedSec} ${t('秒')}` : ''}`;
+    }
+    return `${hour}小时${min}分钟`;
+  }
+};
