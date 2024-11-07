@@ -561,10 +561,10 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = DataSourceSyncTask.objects.filter(
             data_source__in=data_sources,
         ).values_list("operator", flat=True)
-        tenant_sync_task = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
+        tenant_sync_tasks = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
         return {
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
-            "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_task},
+            "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_tasks},
         }
 
     @swagger_auto_schema(
