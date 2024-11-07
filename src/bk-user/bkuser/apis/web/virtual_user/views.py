@@ -185,6 +185,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_VIRTUAL_USER,
             object_type=ObjectTypeEnum.VIRTUAL_USER,
             object_id=tenant_user.id,
+            # 记录 name 方便前端展示
             extras={"data_before": data_before, "name": name},
         )
 

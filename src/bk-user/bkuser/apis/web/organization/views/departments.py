@@ -349,6 +349,7 @@ class TenantDepartmentUpdateDestroyApi(
             operation=OperationEnum.DELETE_DEPARTMENT,
             object_type=ObjectTypeEnum.DEPARTMENT,
             object_id=tenant_dept.id,
+            # 记录 name 方便前端展示
             extras={"name": data_source_dept.name, "sub_dept_ids": list(sub_dept_ids)},
         )
 
@@ -523,6 +524,7 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             operation=OperationEnum.MODIFY_PARENT_DEPARTMENT,
             object_type=ObjectTypeEnum.DEPARTMENT,
             object_id=tenant_dept.id,
+            # 记录 name 方便前端展示
             extras={"name": data_source_dept.name, "data_before": data_before},
         )
 
