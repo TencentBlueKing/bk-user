@@ -81,6 +81,7 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         name = tenant.name
         data_before = {
             "visible": tenant.visible,
+            "user_number_visible": tenant.user_number_visible,
         }
 
         # 更新

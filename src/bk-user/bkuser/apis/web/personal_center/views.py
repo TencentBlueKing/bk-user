@@ -218,7 +218,7 @@ class TenantUserPhoneUpdateApi(
             operation=OperationEnum.MODIFY_USER_PHONE,
             object_type=ObjectTypeEnum.USER,
             object_id=tenant_user.id,
-            extras={"data_before": data_before, "name": tenant_user.username},
+            extras={"data_before": data_before, "name": tenant_user.data_source_user.username},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -332,7 +332,7 @@ class TenantUserEmailUpdateApi(
             operation=OperationEnum.MODIFY_USER_EMAIL,
             object_type=ObjectTypeEnum.USER,
             object_id=tenant_user.id,
-            extras={"data_before": data_before, "name": tenant_user.username},
+            extras={"data_before": data_before, "name": tenant_user.data_source_user.username},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -579,7 +579,7 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
             operation=OperationEnum.MODIFY_USER_PASSWORD,
             object_type=ObjectTypeEnum.USER,
             object_id=tenant_user.id,
-            extras={"name": tenant_user.username},
+            extras={"name": tenant_user.data_source_user.username},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
