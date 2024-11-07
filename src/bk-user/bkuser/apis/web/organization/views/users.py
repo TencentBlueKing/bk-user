@@ -1489,8 +1489,8 @@ class TenantUserCustomFieldBatchUpdateApi(
         data_source_users = [
             tenant_user.data_source_user
             for tenant_user in TenantUser.objects.filter(
-                tenant_id=cur_tenant_id,
                 id__in=data["user_ids"],
+                tenant_id=cur_tenant_id,
             ).select_related("data_source_user")
         ]
 
