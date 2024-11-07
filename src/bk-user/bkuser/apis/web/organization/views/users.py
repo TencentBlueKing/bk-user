@@ -613,7 +613,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             object_type=ObjectTypeEnum.USER,
             object_id=tenant_user_id,
             extras={
-                "username": username,
+                "name": username,
                 "full_name": full_name,
                 "email": email,
                 "phone": phone,
@@ -952,7 +952,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             AuditObject(
                 id=tenant_user_map[user.id],
                 extras={
-                    "username": user.username,
+                    "name": user.username,
                     "full_name": user.full_name,
                     "email": user.email,
                     "phone": user.phone,
@@ -1125,7 +1125,7 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             AuditObject(
                 id=tenant_user_map[user.id],
                 extras={
-                    "username": user.username,
+                    "name": user.username,
                     "full_name": user.full_name,
                     "email": user.email,
                     "phone": user.phone,
