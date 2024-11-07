@@ -68,7 +68,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
-from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
@@ -646,7 +646,11 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = DataSourceSyncTask.objects.filter(
             data_source__in=data_sources,
         ).values_list("operator", flat=True)
-        return {"user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids)}
+        tenant_sync_tasks = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
+        return {
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+            "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_tasks},
+        }
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -674,7 +678,10 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
         responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)
+        data_source_sync_task = self.get_object()
+        tenant_sync_task = TenantSyncTask.objects.filter(data_source_sync_task_id=data_source_sync_task.id).first()
+        context = {"tenant_sync_task": tenant_sync_task}
+        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=data_source_sync_task, context=context).data)
 
 
 class DataSourcePluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
