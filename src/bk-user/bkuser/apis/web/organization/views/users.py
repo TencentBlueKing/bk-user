@@ -1199,9 +1199,10 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
                     "name": user.data_source_user.username,
                 },
             )
-            for user in TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).select_related(
-                "data_source_user"
-            )
+            for user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
         ]
 
         with transaction.atomic():
@@ -1424,8 +1425,8 @@ class TenantUserPasswordBatchResetApi(
         raw_password = data["password"]
 
         tenant_users = TenantUser.objects.filter(
-            id__in=data["user_ids"],
             tenant_id=cur_tenant_id,
+            id__in=data["user_ids"],
         ).select_related("data_source_user")
 
         data_source_users = [tenant_user.data_source_user for tenant_user in tenant_users]
@@ -1488,8 +1489,8 @@ class TenantUserCustomFieldBatchUpdateApi(
         data_source_users = [
             tenant_user.data_source_user
             for tenant_user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
                 tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
             ).select_related("data_source_user")
         ]
 

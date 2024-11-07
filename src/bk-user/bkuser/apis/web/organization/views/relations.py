@@ -89,8 +89,8 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
                 },
             )
             for user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
                 tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
             ).select_related("data_source_user")
         ]
 
@@ -156,9 +156,10 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                     "name": user.data_source_user.username,
                 },
             )
-            for user in TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["user_ids"]).select_related(
-                "data_source_user"
-            )
+            for user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
         ]
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
@@ -221,8 +222,8 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 },
             )
             for user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
                 tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
             ).select_related("data_source_user")
         ]
 
@@ -290,8 +291,8 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
                 },
             )
             for user in TenantUser.objects.filter(
-                id__in=data["user_ids"],
                 tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
             ).select_related("data_source_user")
         ]
 
