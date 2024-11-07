@@ -482,25 +482,16 @@ const handleRowExpand = async ({ row }) => {
   }
 };
 
-const durationText = (value) => {
+const durationText = (value: string) => {
   if (value) {
-    value = value.slice(6);
-    if (value < 60) {
+    const [hour, min, sec] = value.split(':').map(Number);
+    const roundedSec = Math.round(sec);
+    if (min < 1) {
       return `<1 ${t('分钟')}`;
+    } if (hour < 1) {
+      return `${min} ${t('分钟')}${roundedSec > 0 ? ` ${roundedSec} ${t('秒')}` : ''}`;
     }
-    if (60 <= value && value < 3600) {
-      const time = value / 60;
-      const min = time.toString().split('.')[0];
-      const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
-      return `${min} ${t('分钟')} ${sec} ${t('秒')}`;
-    }
-    if (3600 <= value) {
-      const time = value / 3600;
-      const hour = time.toString().split('.')[0];
-      const min = parseInt(time.toString().split('.')[1][0], 10) * 6;
-      return `${hour}小时${min}分钟`;
-    }
-    return value;
+    return `${hour}小时${min}分钟`;
   }
 };
 </script>
