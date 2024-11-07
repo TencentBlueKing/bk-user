@@ -247,7 +247,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         data = slz.validated_data
 
         # 【审计】记录修改前数据
-        name = tenant.name
+        data_before = {"name": tenant.name}
 
         # 更新
         tenant.name = data["name"]
@@ -262,7 +262,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             operation=OperationEnum.MODIFY_TENANT,
             object_type=ObjectTypeEnum.TENANT,
             object_id=tenant.id,
-            extras={"name": name},
+            extras={"data_before": data_before},
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -282,10 +282,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
         # 【审计】记录变更前数据，数据删除后便无法获取
         tenant_name = tenant.name
-        tenant_status = (tenant.status,)
-        tenant_notification_methods = (tenant.notification_methods,)
+        tenant_status = tenant.status
+        tenant_notification_methods = tenant.notification_methods
         tenant_email = tenant.email
-        tenant_phone = (tenant.phone,)
+        tenant_phone = tenant.phone
         tenant_phone_country_code = tenant.phone_country_code
 
         with transaction.atomic():
@@ -357,7 +357,7 @@ class TenantStatusUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
             operation=OperationEnum.MODIFY_TENANT_STATUS,
             object_type=ObjectTypeEnum.TENANT,
             object_id=tenant.id,
-            extras={"data_before": data_before, "name": tenant.name},
+            extras={"data_before": data_before},
         )
 
         return Response(TenantStatusUpdateOutputSLZ(instance={"status": tenant.status.value}).data)
