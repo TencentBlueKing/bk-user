@@ -57,7 +57,14 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserStatusUpdateOutputSLZ,
     TenantUserUpdateInputSLZ,
 )
-from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apis.web.organization.views.mixins import (
+    CurrentUserDepartmentRelationMixin,
+    CurrentUserLeaderRelationMixin,
+    CurrentUserTenantDataSourceMixin,
+)
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.recorder import batch_add_audit_records
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -84,6 +91,7 @@ from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.utils.django import get_model_dict
 
 
 class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
@@ -496,6 +504,24 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source=data_source, id__in=data["leader_ids"]
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录修改前的数据源用户数据
+        data_source_user_before = get_model_dict(data_source_user)
+
+        # 【审计】记录修改前的租户用户数据
+        tenant_user_before = get_model_dict(tenant_user)
+
+        # 【审计】记录修改前的用户部门
+        data_source_department_ids_before = list(
+            DataSourceDepartmentUserRelation.objects.filter(
+                user=data_source_user,
+            ).values_list("department_id", flat=True)
+        )
+
+        # 【审计】记录修改前的用户上级
+        data_source_leader_ids_before = list(
+            DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list("leader_id", flat=True)
+        )
+
         with transaction.atomic():
             data_source_user.username = data["username"]
             data_source_user.full_name = data["full_name"]
@@ -521,11 +547,79 @@ class TenantUserRetrieveUpdateDestroyApi(
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
+        # 【审计】事务提交后，重新查询数据表以获取最新的数据
+        data_source_user = DataSourceUser.objects.get(id=data_source_user.id)
+        tenant_user = TenantUser.objects.get(id=tenant_user.id)
+
+        # 【审计】创建审计对象列表
+        audit_objects = []
+
+        # 【审计】创建数据源用户审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user.id,
+                name=data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_DATA_SOURCE_USER,
+                data_before=data_source_user_before,
+                data_after=get_model_dict(data_source_user),
+                extras={},
+            )
+        )
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user.id,
+                name=data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+                # 采用 sorted 为了 list 对象比较
+                data_before={"department_ids": sorted(data_source_department_ids_before)},
+                data_after={"department_ids": sorted(data_source_dept_ids)},
+                extras={},
+            )
+        )
+
+        # 【审计】创建用户-上级审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user.id,
+                name=data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_LEADER_RELATIONS,
+                # 采用 sorted 为了 list 对象比较
+                data_before={"leader_ids": sorted(data_source_leader_ids_before)},
+                data_after={"leader_ids": sorted(data_source_leader_ids)},
+                extras={},
+            )
+        )
+
+        # 【审计】创建租户用户审计对象
+        audit_objects.append(
+            AuditObject(
+                id=tenant_user.id,
+                type=ObjectTypeEnum.TENANT_USER,
+                operation=OperationEnum.MODIFY_TENANT_USER,
+                data_before=tenant_user_before,
+                data_after=get_model_dict(tenant_user),
+                extras={},
+            )
+        )
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request, *args, **kwargs):
         tenant_user = self.get_object()
         data_source = tenant_user.data_source
+        cur_tenant_id = self.get_current_tenant_id()
 
         if not (data_source.is_local and data_source.is_real_type):
             raise error_codes.TENANT_USER_DELETE_FAILED.f(_("仅本地实名数据源支持删除用户"))
@@ -534,6 +628,25 @@ class TenantUserRetrieveUpdateDestroyApi(
             raise error_codes.TENANT_USER_DELETE_FAILED.f(_("仅可删除非协同产生的租户用户"))
 
         data_source_user = tenant_user.data_source_user
+
+        # 【审计】记录待删除的数据源用户信息
+        data_source_user_to_delete = get_model_dict(data_source_user)
+
+        # 【审计】记录待删除的租户用户
+        tenant_users_to_delete = list(TenantUser.objects.filter(data_source_user=data_source_user))
+
+        # 【审计】记录删除前的用户部门
+        data_source_department_ids_before = list(
+            DataSourceDepartmentUserRelation.objects.filter(
+                user=data_source_user,
+            ).values_list("department_id", flat=True)
+        )
+
+        # 【审计】记录删除前的用户上级
+        data_source_leader_ids_before = list(
+            DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list("leader_id", flat=True)
+        )
+
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
@@ -542,6 +655,74 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(user=data_source_user).delete()
             DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
+
+        # 【审计】创建审计对象列表
+        audit_objects = []
+
+        # 【审计】创建数据源用户审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user_to_delete["id"],
+                name=data_source_user_to_delete["username"],
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.DELETE_DATA_SOURCE_USER,
+                data_before=data_source_user_to_delete,
+                data_after={},
+                extras={},
+            )
+        )
+
+        # 【审计】创建租户用户审计对象（包括协同租户用户）
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=(
+                        OperationEnum.DELETE_COLLABORATION_TENANT_USER
+                        if tenant_user.tenant_id != cur_tenant_id
+                        else OperationEnum.DELETE_TENANT_USER
+                    ),
+                    data_before=get_model_dict(tenant_user),
+                    data_after={},
+                    extras={},
+                )
+                for tenant_user in tenant_users_to_delete
+            ]
+        )
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user_to_delete["id"],
+                name=data_source_user_to_delete["username"],
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.DELETE_USER_DEPARTMENT_RELATIONS,
+                data_before={"department_ids": data_source_department_ids_before},
+                data_after={"department_ids": []},
+                extras={},
+            )
+        )
+
+        # 【审计】创建用户-上级审计对象
+        audit_objects.append(
+            AuditObject(
+                id=data_source_user_to_delete["id"],
+                name=data_source_user_to_delete["username"],
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.DELETE_USER_LEADER_RELATIONS,
+                data_before={"leader_ids": data_source_leader_ids_before},
+                data_after={"leader_ids": []},
+                extras={},
+            )
+        )
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=self.get_current_tenant_id(),
+            objects=audit_objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -807,6 +988,63 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             # 批量创建租户用户（含协同）
             self._bulk_create_tenant_users(cur_tenant_id, tenant_dept, data_source, data_source_users)
 
+        # 【审计】重新查询租户用户和协同租户用户
+        tenant_users = TenantUser.objects.filter(data_source=data_source, data_source_user__in=data_source_users)
+
+        # 【审计】创建审计对象列表
+        audit_objects = []
+
+        # 【审计】创建数据源用户、用户-部门审计对象
+        for user in data_source_users:
+            audit_objects.append(
+                AuditObject(
+                    id=user.id,
+                    name=user.username,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    operation=OperationEnum.CREATE_DATA_SOURCE_USER,
+                    data_before={},
+                    data_after=get_model_dict(user),
+                    extras={},
+                )
+            )
+            audit_objects.append(
+                AuditObject(
+                    id=user.id,
+                    name=user.username,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    operation=OperationEnum.CREATE_USER_DEPARTMENT_RELATIONS,
+                    data_before={},
+                    data_after={"department_ids": tenant_dept.data_source_department.id},
+                    extras={},
+                )
+            )
+
+        # 【审计】创建租户用户审计对象
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=(
+                        OperationEnum.CREATE_COLLABORATION_TENANT_USER
+                        if tenant_user.tenant_id != cur_tenant_id
+                        else OperationEnum.CREATE_TENANT_USER
+                    ),
+                    data_before={},
+                    data_after=get_model_dict(tenant_user),
+                    extras={},
+                )
+                for tenant_user in tenant_users
+            ]
+        )
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
+
         # 对新增的用户进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -892,7 +1130,12 @@ class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics
         )
 
 
-class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.DestroyAPIView):
+class TenantUserBatchDeleteApi(
+    CurrentUserTenantDataSourceMixin,
+    CurrentUserDepartmentRelationMixin,
+    CurrentUserLeaderRelationMixin,
+    generics.DestroyAPIView,
+):
     """批量删除租户用户"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -922,6 +1165,16 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             ).values_list("data_source_user_id", flat=True)
         )
 
+        # 【审计】记录待删除的租户用户和数据源用户
+        tenant_users_to_delete = list(TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids))
+        data_source_users_to_delete = list(DataSourceUser.objects.filter(id__in=data_source_user_ids))
+
+        # 【审计】记录变更前用户-部门映射
+        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
+        # 【审计】记录变更前用户-上级映射
+        user_leader_map_before = self.get_user_leader_map(data_source_user_ids=data_source_user_ids)
+
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
@@ -934,6 +1187,83 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             DataSourceUserLeaderRelation.objects.filter(leader_id__in=data_source_user_ids).delete()
             # 最后才是批量回收数据源用户
             DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
+
+        # 【审计】创建审计对象列表
+        audit_objects = []
+
+        # 【审计】创建数据源用户审计对象
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=data_source_user.id,
+                    name=data_source_user.username,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    operation=OperationEnum.DELETE_DATA_SOURCE_USER,
+                    data_before=get_model_dict(data_source_user),
+                    data_after={},
+                    extras={},
+                )
+                for data_source_user in data_source_users_to_delete
+            ]
+        )
+
+        # 【审计】创建租户用户审计对象
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=(
+                        OperationEnum.DELETE_COLLABORATION_TENANT_USER
+                        if tenant_user.tenant_id != cur_tenant_id
+                        else OperationEnum.DELETE_TENANT_USER
+                    ),
+                    data_before=get_model_dict(tenant_user),
+                    data_after={},
+                    extras={},
+                )
+                for tenant_user in tenant_users_to_delete
+            ]
+        )
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=data_source_user.id,
+                    name=data_source_user.username,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    operation=OperationEnum.DELETE_USER_DEPARTMENT_RELATIONS,
+                    data_before={"department_ids": user_department_map_before[data_source_user.id]},
+                    data_after={"department_ids": []},
+                    extras={},
+                )
+                for data_source_user in data_source_users_to_delete
+            ]
+        )
+
+        # 【审计】创建用户-上级审计对象
+        audit_objects.extend(
+            [
+                AuditObject(
+                    id=data_source_user.id,
+                    name=data_source_user.username,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    operation=OperationEnum.DELETE_USER_LEADER_RELATIONS,
+                    data_before={"leader_ids": user_leader_map_before[data_source_user.id]},
+                    data_after={"leader_ids": []},
+                    extras={},
+                )
+                for data_source_user in data_source_users_to_delete
+            ]
+        )
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

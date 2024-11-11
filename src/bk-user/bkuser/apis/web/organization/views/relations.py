@@ -29,14 +29,22 @@ from bkuser.apis.web.organization.serializers import (
     TenantDeptUserRelationBatchPatchInputSLZ,
     TenantDeptUserRelationBatchUpdateInputSLZ,
 )
-from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apis.web.organization.views.mixins import (
+    CurrentUserDepartmentRelationMixin,
+    CurrentUserTenantDataSourceMixin,
+)
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.recorder import batch_add_audit_records
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 
-class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
+class TenantDeptUserRelationBatchCreateApi(
+    CurrentUserTenantDataSourceMixin, CurrentUserDepartmentRelationMixin, generics.CreateAPIView
+):
     """批量添加 / 拉取租户用户（添加部门 - 用户关系）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -66,6 +74,9 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前用户-部门映射
+        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
         # 复制操作：为数据源部门 & 用户添加关联边，但是不会影响存量的关联边
         relations = [
             DataSourceDepartmentUserRelation(user_id=user_id, department_id=dept_id, data_source=data_source)
@@ -74,10 +85,39 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         # 由于复制操作不会影响存量的关联边，所以需要忽略冲突，避免出现用户复选的情况
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
+        # 【审计】记录变更后用户-部门映射
+        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects = [
+            AuditObject(
+                id=tenant_user.data_source_user_id,
+                name=tenant_user.data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
+                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                extras={"department_ids": list(data_source_dept_ids)},
+            )
+            for tenant_user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
+        ]
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, generics.UpdateAPIView):
+class TenantDeptUserRelationBatchUpdateApi(
+    CurrentUserTenantDataSourceMixin, CurrentUserDepartmentRelationMixin, generics.UpdateAPIView
+):
     """批量移动租户用户（更新部门 - 用户关系）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -107,6 +147,9 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前用户-部门映射
+        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
         with transaction.atomic():
             # 先删除
@@ -117,6 +160,33 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 for dept_id, user_id in itertools.product(data_source_dept_ids, data_source_user_ids)
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+        # 【审计】记录变更后用户-部门映射
+        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects = [
+            AuditObject(
+                id=tenant_user.data_source_user_id,
+                name=tenant_user.data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
+                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                extras={"department_ids": list(data_source_dept_ids)},
+            )
+            for tenant_user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
+        ]
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -147,6 +217,9 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前用户-部门映射
+        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户在当前部门的存量关联边
         with transaction.atomic():
             # 先删除（仅限于指定部门）
@@ -160,10 +233,39 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
+        # 【审计】记录变更后用户-部门映射
+        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects = [
+            AuditObject(
+                id=tenant_user.data_source_user_id,
+                name=tenant_user.data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
+                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                extras={},
+            )
+            for tenant_user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
+        ]
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.DestroyAPIView):
+class TenantDeptUserRelationBatchDeleteApi(
+    CurrentUserTenantDataSourceMixin, CurrentUserDepartmentRelationMixin, generics.DestroyAPIView
+):
     """批量删除指定部门 & 用户的部门 - 用户关系"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -191,8 +293,38 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】记录变更前用户-部门映射
+        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
         DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
+
+        # 【审计】记录变更后用户-部门映射
+        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+
+        # 【审计】创建用户-部门审计对象
+        audit_objects = [
+            AuditObject(
+                id=tenant_user.data_source_user_id,
+                name=tenant_user.data_source_user.username,
+                type=ObjectTypeEnum.DATA_SOURCE_USER,
+                operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
+                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
+                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                extras={"department_id": source_data_source_dept.id},
+            )
+            for tenant_user in TenantUser.objects.filter(
+                tenant_id=cur_tenant_id,
+                id__in=data["user_ids"],
+            ).select_related("data_source_user")
+        ]
+
+        # 【审计】批量添加审计记录
+        batch_add_audit_records(
+            operator=request.user.username,
+            tenant_id=cur_tenant_id,
+            objects=audit_objects,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

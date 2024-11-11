@@ -15,25 +15,17 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Dict
+import json
+from typing import Any, Dict
 
-from pydantic import BaseModel
+from django.core.serializers.json import DjangoJSONEncoder
+from django.forms import model_to_dict
 
 
-class AuditObject(BaseModel):
-    """审计操作对象相关信息"""
-
-    # 操作对象 ID
-    id: str | int
-    # 操作对象类型
-    type: str
-    # 操作对象名称
-    name: str | None = None
-    # 操作行为
-    operation: str
-    # 操作前数据
-    data_before: Dict
-    # 操作后数据
-    data_after: Dict
-    # 额外信息
-    extras: Dict
+def get_model_dict(obj) -> Dict[str, Any]:
+    # 获取模型的所有字段名称
+    fields = [field.name for field in obj._meta.fields]
+    # 将模型对象转换为字典
+    model_dict = model_to_dict(obj, fields=fields)
+    # 使用 DjangoJSONEncoder 将字典转换为 JSON 字符串，然后再解析回字典
+    return json.loads(json.dumps(model_dict, cls=DjangoJSONEncoder))

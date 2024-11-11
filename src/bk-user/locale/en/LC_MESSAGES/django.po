@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-30 16:12+0800\n"
+"POT-Creation-Date: 2024-11-11 17:37+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,45 +178,45 @@ msgstr "The file to be imported must not exceed {} M in size"
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "Full import mode is temporarily unavailable for security reasons"
 
-#: bkuser/apis/web/data_source/views.py:238
+#: bkuser/apis/web/data_source/views.py:242
 msgid "仅可更新实体类型数据源配置"
 msgstr "Only configurations of real type data sources can be updated"
 
-#: bkuser/apis/web/data_source/views.py:288
+#: bkuser/apis/web/data_source/views.py:290
 msgid "仅可重置实体类型数据源"
 msgstr "Only real type data sources can be reset"
 
-#: bkuser/apis/web/data_source/views.py:469
+#: bkuser/apis/web/data_source/views.py:475
 msgid "仅实体类型的本地数据源有提供导入模板"
 msgstr "Only local data sources of real type provide import templates"
 
-#: bkuser/apis/web/data_source/views.py:491
+#: bkuser/apis/web/data_source/views.py:497
 msgid "仅能导出实体类型的本地数据源数据"
 msgstr "Only data from local real type data sources can be exported"
 
-#: bkuser/apis/web/data_source/views.py:516
+#: bkuser/apis/web/data_source/views.py:522
 msgid "仅实体类型的本地数据源支持导入功能"
 msgstr "Only local real type data sources support import functions"
 
-#: bkuser/apis/web/data_source/views.py:523
+#: bkuser/apis/web/data_source/views.py:529
 msgid "文件格式异常"
 msgstr "File format exception"
 
-#: bkuser/apis/web/data_source/views.py:573
+#: bkuser/apis/web/data_source/views.py:581
 msgid "本地数据源不支持同步，请使用导入功能"
 msgstr ""
 "Local data source does not support synchronization, please use the import "
 "function"
 
-#: bkuser/apis/web/data_source/views.py:576
+#: bkuser/apis/web/data_source/views.py:584
 msgid "仅实体类型的数据源支持同步"
 msgstr "Only real type data sources support synchronization"
 
-#: bkuser/apis/web/data_source/views.py:628 bkuser/common/error_codes.py:93
+#: bkuser/apis/web/data_source/views.py:638 bkuser/common/error_codes.py:93
 msgid "数据源不存在"
 msgstr "Data source does not exist"
 
-#: bkuser/apis/web/data_source/views.py:631
+#: bkuser/apis/web/data_source/views.py:641
 msgid "仅实体类型的数据源有同步记录"
 msgstr "Only real type data sources have synchronization records"
 
@@ -446,50 +446,50 @@ msgstr ""
 msgid "数据类型：{}"
 msgstr "Data type: {}"
 
-#: bkuser/apis/web/organization/views/users.py:309
+#: bkuser/apis/web/organization/views/users.py:313
 msgid "仅可创建属于当前租户的用户"
 msgstr "Only users belonging to the current tenant can be created"
 
-#: bkuser/apis/web/organization/views/users.py:469
+#: bkuser/apis/web/organization/views/users.py:473
 msgid "仅本地实名数据源支持更新用户信息"
 msgstr "Only local real-name data sources support updating user information"
 
-#: bkuser/apis/web/organization/views/users.py:472
+#: bkuser/apis/web/organization/views/users.py:476
 msgid "仅可更新非协同产生的租户用户"
 msgstr "Only tenant users not created through collaboration can be updated"
 
-#: bkuser/apis/web/organization/views/users.py:489
+#: bkuser/apis/web/organization/views/users.py:493
 msgid "当前用户不允许更新用户名"
 msgstr "The current user is not allowed to update the username"
 
-#: bkuser/apis/web/organization/views/users.py:531
+#: bkuser/apis/web/organization/views/users.py:611
 msgid "仅本地实名数据源支持删除用户"
 msgstr "Only local real-name data sources support deleting users"
 
-#: bkuser/apis/web/organization/views/users.py:534
+#: bkuser/apis/web/organization/views/users.py:614
 msgid "仅可删除非协同产生的租户用户"
 msgstr "Only tenant users not created through collaboration can be deleted"
 
-#: bkuser/apis/web/organization/views/users.py:611
+#: bkuser/apis/web/organization/views/users.py:766
 msgid "该租户用户没有可用的密码规则"
 msgstr "There are no available password rules for this tenant user"
 
-#: bkuser/apis/web/organization/views/users.py:648
+#: bkuser/apis/web/organization/views/users.py:803
 #: bkuser/apis/web/personal_center/views.py:517
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr ""
 "Password can only be reset for users of local data sources with the password "
 "function enabled"
 
-#: bkuser/apis/web/organization/views/users.py:776
+#: bkuser/apis/web/organization/views/users.py:931
 msgid "指定的租户部门不存在"
 msgstr "The specified tenant department does not exist"
 
-#: bkuser/apis/web/organization/views/users.py:1104
+#: bkuser/apis/web/organization/views/users.py:1422
 msgid "当前数据源未启用密码功能"
 msgstr "Current data source has not enabled password functionality"
 
-#: bkuser/apis/web/password/constants.py:24
+#: bkuser/apis/web/password/constants.py:24 bkuser/apps/audit/constants.py:28
 msgid "租户用户"
 msgstr "Tenant user"
 
@@ -788,145 +788,184 @@ msgstr "Data Source"
 msgid "认证源"
 msgstr "IDP"
 
-#: bkuser/apps/audit/constants.py:27 bkuser/apps/idp/constants.py:38
-#: bkuser/apps/sync/constants.py:79 bkuser/apps/sync/constants.py:89
-msgid "用户"
-msgstr "User"
+#: bkuser/apps/audit/constants.py:27
+msgid "数据源用户"
+msgstr "Data Source User"
 
-#: bkuser/apps/audit/constants.py:28 bkuser/apps/idp/constants.py:39
+#: bkuser/apps/audit/constants.py:29 bkuser/apps/idp/constants.py:39
 #: bkuser/apps/sync/constants.py:80 bkuser/apps/sync/constants.py:90
 msgid "部门"
 msgstr "Department"
 
-#: bkuser/apps/audit/constants.py:29 bkuser/apps/idp/constants.py:41
+#: bkuser/apps/audit/constants.py:30 bkuser/apps/idp/constants.py:41
 msgid "租户"
 msgstr "Tenant"
 
-#: bkuser/apps/audit/constants.py:30
+#: bkuser/apps/audit/constants.py:31
 msgid "虚拟用户"
 msgstr "Virtual User"
 
-#: bkuser/apps/audit/constants.py:37
+#: bkuser/apps/audit/constants.py:38
 msgid "创建数据源"
 msgstr "Create data source"
 
-#: bkuser/apps/audit/constants.py:38
+#: bkuser/apps/audit/constants.py:39
 msgid "修改数据源"
 msgstr "Modify data source"
 
-#: bkuser/apps/audit/constants.py:39
-msgid "删除数据源"
-msgstr "Delete data source"
-
 #: bkuser/apps/audit/constants.py:40
+msgid "重置数据源"
+msgstr "Reset data source"
+
+#: bkuser/apps/audit/constants.py:41
 msgid "同步数据源"
 msgstr "Sync data source"
 
-#: bkuser/apps/audit/constants.py:42
+#: bkuser/apps/audit/constants.py:43
 msgid "创建认证源"
 msgstr "Create idp"
 
-#: bkuser/apps/audit/constants.py:43
+#: bkuser/apps/audit/constants.py:44
 msgid "修改认证源"
 msgstr "Modify idp"
 
-#: bkuser/apps/audit/constants.py:44
+#: bkuser/apps/audit/constants.py:45
 msgid "修改认证源状态"
 msgstr "Modify status of idp"
 
 #: bkuser/apps/audit/constants.py:46
-msgid "创建用户"
-msgstr "Create user"
-
-#: bkuser/apps/audit/constants.py:47
-msgid "修改用户信息"
-msgstr "Modify user"
+msgid "重置认证源"
+msgstr "Reset idp"
 
 #: bkuser/apps/audit/constants.py:48
-msgid "删除用户"
-msgstr "Delete user"
+msgid "创建数据源用户"
+msgstr "Create data source user"
 
 #: bkuser/apps/audit/constants.py:49
-msgid "修改用户所属部门"
-msgstr "Modify the user's department"
+msgid "创建租户用户"
+msgstr "Create tenant user"
 
 #: bkuser/apps/audit/constants.py:50
+msgid "创建用户-上级关系"
+msgstr "Create user-leader relations"
+
+#: bkuser/apps/audit/constants.py:51
+msgid "创建用户-部门关系"
+msgstr "Create user-department relations"
+
+#: bkuser/apps/audit/constants.py:52
+msgid "创建协同租户用户"
+msgstr "Create collaboration tenant user"
+
+#: bkuser/apps/audit/constants.py:54
+msgid "修改数据源用户"
+msgstr "Modify data source user"
+
+#: bkuser/apps/audit/constants.py:55
+msgid "修改租户用户"
+msgstr "Modify tenant user"
+
+#: bkuser/apps/audit/constants.py:56
+msgid "修改用户-上级关系"
+msgstr "Modify user-leader relations"
+
+#: bkuser/apps/audit/constants.py:57
+msgid "修改用户-部门关系"
+msgstr "Modify user-department relations"
+
+#: bkuser/apps/audit/constants.py:59
+msgid "删除数据源用户"
+msgstr "Delete data source user"
+
+#: bkuser/apps/audit/constants.py:60
+msgid "删除租户用户"
+msgstr "Delete tenant user"
+
+#: bkuser/apps/audit/constants.py:61
+msgid "删除用户-上级关系"
+msgstr "Delete user-leader relations"
+
+#: bkuser/apps/audit/constants.py:62
+msgid "删除用户-部门关系"
+msgstr "Delete user-department relations"
+
+#: bkuser/apps/audit/constants.py:63
+msgid "删除协同租户用户"
+msgstr "Delete collaboration tenant user"
+
+#: bkuser/apps/audit/constants.py:65
 msgid "修改用户状态"
 msgstr "Modify the user's status"
 
-#: bkuser/apps/audit/constants.py:51
+#: bkuser/apps/audit/constants.py:66
 msgid "修改用户账号过期时间"
 msgstr "Modify the expiration time of the user account"
 
-#: bkuser/apps/audit/constants.py:52
-msgid "修改用户上级"
-msgstr "Modify the user's leader"
-
-#: bkuser/apps/audit/constants.py:53
+#: bkuser/apps/audit/constants.py:67
 msgid "重置用户密码"
 msgstr "Reset user's password"
 
-#: bkuser/apps/audit/constants.py:54
+#: bkuser/apps/audit/constants.py:68
 msgid "修改用户邮箱"
 msgstr "Modify the user's email"
 
-#: bkuser/apps/audit/constants.py:55
+#: bkuser/apps/audit/constants.py:69
 msgid "修改用户电话号码"
 msgstr "Modify the user's phone number"
 
-#: bkuser/apps/audit/constants.py:57
+#: bkuser/apps/audit/constants.py:71
 msgid "创建部门"
 msgstr "Create department"
 
-#: bkuser/apps/audit/constants.py:58
+#: bkuser/apps/audit/constants.py:72
 msgid "修改部门名称"
 msgstr "Modify the name of department"
 
-#: bkuser/apps/audit/constants.py:59
+#: bkuser/apps/audit/constants.py:73
 msgid "删除部门"
 msgstr "Delete department"
 
-#: bkuser/apps/audit/constants.py:60
+#: bkuser/apps/audit/constants.py:74
 msgid "修改上级部门"
 msgstr "Modify the superior department"
 
-#: bkuser/apps/audit/constants.py:62
+#: bkuser/apps/audit/constants.py:76
 msgid "创建租户"
 msgstr "Create tenant"
 
-#: bkuser/apps/audit/constants.py:63
+#: bkuser/apps/audit/constants.py:77
 msgid "修改租户信息"
 msgstr "Modify tenant"
 
-#: bkuser/apps/audit/constants.py:64
+#: bkuser/apps/audit/constants.py:78
 msgid "删除租户"
 msgstr "Delete tenant"
 
-#: bkuser/apps/audit/constants.py:65
+#: bkuser/apps/audit/constants.py:79
 msgid "修改租户状态"
 msgstr "Modify the status of tenant"
 
-#: bkuser/apps/audit/constants.py:66
-msgid "创建实名管理员"
+#: bkuser/apps/audit/constants.py:80
+msgid "创建租户实名管理员"
 msgstr "Create real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:67
-msgid "删除实名管理员"
+#: bkuser/apps/audit/constants.py:81
+msgid "删除租户实名管理员"
 msgstr "Delete real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:69
+#: bkuser/apps/audit/constants.py:83
 msgid "修改租户账户有效期配置"
 msgstr "Modify the validity period config of tenant account"
 
-#: bkuser/apps/audit/constants.py:72
+#: bkuser/apps/audit/constants.py:86
 msgid "创建虚拟用户"
 msgstr "Create virtual user"
 
-#: bkuser/apps/audit/constants.py:73
+#: bkuser/apps/audit/constants.py:87
 msgid "修改虚拟用户信息"
 msgstr "Modify virtual user"
 
-#: bkuser/apps/audit/constants.py:74
+#: bkuser/apps/audit/constants.py:88
 msgid "删除虚拟用户"
 msgstr "Delete virtual user"
 
@@ -966,6 +1005,11 @@ msgstr "Enabled"
 #: bkuser/apps/idp/constants.py:32
 msgid "未启用"
 msgstr "Disabled"
+
+#: bkuser/apps/idp/constants.py:38 bkuser/apps/sync/constants.py:79
+#: bkuser/apps/sync/constants.py:89
+msgid "用户"
+msgstr "User"
 
 #: bkuser/apps/idp/constants.py:42
 msgid "任意"
