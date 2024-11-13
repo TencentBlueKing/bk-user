@@ -52,7 +52,8 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.recorder import add_audit_record
+from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.recorder import add_audit_record, batch_add_audit_records
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -80,6 +81,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.utils.django import get_model_dict
 
 from .schema import get_data_source_plugin_cfg_json_schema
 
@@ -193,11 +195,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
             operation=OperationEnum.CREATE_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=ds.id,
-            extras={
-                "plugin_config": ds.plugin_config,
-                "field_mapping": ds.field_mapping,
-                "sync_config": ds.sync_config,
-            },
+            data_after=get_model_dict(ds),
         )
 
         return Response(
@@ -253,11 +251,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         data = slz.validated_data
 
         # 【审计】记录变更前数据
-        data_before = {
-            "plugin_config": data_source.plugin_config,
-            "field_mapping": data_source.field_mapping,
-            "sync_config": data_source.sync_config,
-        }
+        data_before_data_source = get_model_dict(data_source)
 
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
@@ -274,7 +268,8 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
-            extras={"data_before": data_before},
+            data_before=data_before_data_source,
+            data_after=get_model_dict(data_source),
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -308,14 +303,23 @@ class DataSourceRetrieveUpdateDestroyApi(
         # 待删除的认证源
         waiting_delete_idps = Idp.objects.filter(**idp_filters)
 
-        # 【审计】记录变更前数据，数据删除后便无法获取
-        idps_before_delete = list(
-            waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
+        # 记录 data_source 删除前数据
+        data_source_audit_object = AuditObject(
+            id=data_source.id,
+            type=ObjectTypeEnum.DATA_SOURCE,
+            operation=OperationEnum.RESET_DATA_SOURCE,
+            data_before=get_model_dict(data_source),
         )
-        data_source_id = data_source.id
-        plugin_config = data_source.plugin_config
-        field_mapping = data_source.field_mapping
-        sync_config = data_source.sync_config
+        # 记录 idp 删除前数据
+        idp_audit_objects = [
+            AuditObject(
+                id=data_before_idp.id,
+                type=ObjectTypeEnum.IDP,
+                operation=OperationEnum.RESET_IDP,
+                data_before=get_model_dict(data_before_idp),
+            )
+            for data_before_idp in list(waiting_delete_idps)
+        ]
 
         with transaction.atomic():
             # 删除认证源敏感信息
@@ -334,20 +338,12 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
+        audit_objects = [data_source_audit_object] + idp_audit_objects
         # 审计记录
-        add_audit_record(
+        batch_add_audit_records(
             operator=request.user.username,
             tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.DELETE_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=data_source_id,
-            extras={
-                "is_delete_idp": is_delete_idp,
-                "plugin_config": plugin_config,
-                "field_mapping": field_mapping,
-                "sync_config": sync_config,
-                "idps_before_delete": idps_before_delete,
-            },
+            objects=audit_objects,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

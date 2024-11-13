@@ -39,6 +39,8 @@ urlpatterns = [
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置
     path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
+    # 操作审计
+    path("audit/", include("bkuser.apis.web.audit.urls")),
     # ------------------------------------------ 面向个人 --------------------------------------------
     # 个人中心
     path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
