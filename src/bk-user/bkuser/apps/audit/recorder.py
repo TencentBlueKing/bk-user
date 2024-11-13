@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from bkuser.utils.uuid import generate_uuid
 
@@ -31,9 +31,9 @@ def add_audit_record(
     object_type: ObjectTypeEnum,
     object_id: str | int,
     object_name: str = "",
-    data_before: Dict[str, Any] = None,
-    data_after: Dict[str, Any] = None,
-    extras: Dict[str, Any] = None,
+    data_before: Optional[Dict[str, Any]] = None,
+    data_after: Optional[Dict[str, Any]] = None,
+    extras: Optional[Dict[str, Any]] = None,
 ):
     """
     添加操作审计记录
