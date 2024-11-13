@@ -15,25 +15,15 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Dict
+from django.urls import path
 
-from pydantic import BaseModel, Field
+from bkuser.apis.web.audit import views
 
-
-class AuditObject(BaseModel):
-    """审计操作对象相关信息"""
-
-    # 操作对象 ID
-    id: str | int
-    # 操作对象类型
-    type: str
-    # 操作对象名称
-    name: str = ""
-    # 操作行为
-    operation: str
-    # 操作前数据
-    data_before: Dict = Field(default_factory=dict)
-    # 操作后数据
-    data_after: Dict = Field(default_factory=dict)
-    # 额外信息
-    extras: Dict = Field(default_factory=dict)
+urlpatterns = [
+    # 操作审计列表
+    path(
+        "",
+        views.AuditRecordListAPIView.as_view(),
+        name="audit.list",
+    ),
+]

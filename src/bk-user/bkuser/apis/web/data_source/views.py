@@ -253,7 +253,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         data = slz.validated_data
 
         # 【审计】记录变更前数据
-        data_before = get_model_dict(data_source)
+        data_before_data_source = get_model_dict(data_source)
 
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
@@ -270,7 +270,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
-            data_before=data_before,
+            data_before=data_before_data_source,
             data_after=get_model_dict(data_source),
             extras={},
         )
@@ -318,14 +318,14 @@ class DataSourceRetrieveUpdateDestroyApi(
         # 记录 idp 删除前数据
         idp_audit_objects = [
             AuditObject(
-                id=idp.id,
+                id=data_before_idp.id,
                 type=ObjectTypeEnum.IDP,
                 operation=OperationEnum.RESET_IDP,
-                data_before=get_model_dict(idp),
+                data_before=get_model_dict(data_before_idp),
                 data_after={},
                 extras={},
             )
-            for idp in list(waiting_delete_idps)
+            for data_before_idp in list(waiting_delete_idps)
         ]
 
         with transaction.atomic():

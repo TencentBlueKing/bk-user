@@ -34,7 +34,7 @@ class OperationAuditRecord(AuditedModel):
     operation = models.CharField("操作行为", max_length=64)
     object_type = models.CharField("操作对象类型", max_length=32)
     object_id = models.CharField("操作对象 ID", max_length=128)
-    object_name = models.CharField("操作对象名称", max_length=128, null=True)
+    object_name = models.CharField("操作对象名称", max_length=128, default="")
     # 记录操作前后的数据，有助于问题溯源
     data_before = models.JSONField("操作前数据", default=dict)
     data_after = models.JSONField("操作后数据", default=dict)

@@ -33,7 +33,7 @@ def add_audit_record(
     data_after: Dict,
     object_id: str | int,
     extras: Dict,
-    object_name: str | None = None,
+    object_name: str = "",
 ):
     """
     添加操作审计记录
@@ -58,8 +58,8 @@ def add_audit_record(
             object_type=object_type,
             object_id=str(object_id),
             object_name=object_name,
-            data_before=data_before,
-            data_after=data_after,
+            data_before=sort_dict_values(data_before),
+            data_after=sort_dict_values(data_after),
             extras=extras,
         )
 
@@ -88,8 +88,8 @@ def batch_add_audit_records(
             object_type=obj.type,
             object_id=str(obj.id),
             object_name=obj.name,
-            data_before=obj.data_before,
-            data_after=obj.data_after,
+            data_before=sort_dict_values(obj.data_before),
+            data_after=sort_dict_values(obj.data_after),
             extras=obj.extras,
         )
         for obj in objects
@@ -98,3 +98,17 @@ def batch_add_audit_records(
     ]
 
     OperationAuditRecord.objects.bulk_create(records, batch_size=100)
+
+
+def sort_dict_values(ordinary_dict: Dict) -> Dict:
+    """
+    对字典的值为列表的项进行排序，返回排序后的字典
+
+    :param ordinary_dict: 原始字典
+    :return: 排序后的字典
+    """
+    return {
+        # 仅对值为列表的项进行排序
+        k: sorted(v) if isinstance(v, list) else v
+        for k, v in ordinary_dict.items()
+    }

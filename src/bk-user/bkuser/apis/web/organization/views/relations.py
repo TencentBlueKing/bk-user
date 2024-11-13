@@ -75,7 +75,7 @@ class TenantDeptUserRelationBatchCreateApi(
         ).values_list("data_source_user_id", flat=True)
 
         # 【审计】记录变更前用户-部门映射
-        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_before_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 复制操作：为数据源部门 & 用户添加关联边，但是不会影响存量的关联边
         relations = [
@@ -86,7 +86,7 @@ class TenantDeptUserRelationBatchCreateApi(
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】记录变更后用户-部门映射
-        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_after_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 【审计】创建用户-部门审计对象
         audit_objects = [
@@ -95,8 +95,8 @@ class TenantDeptUserRelationBatchCreateApi(
                 name=tenant_user.data_source_user.username,
                 type=ObjectTypeEnum.DATA_SOURCE_USER,
                 operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
-                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
-                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                data_before={"department_ids": data_before_user_department_map[tenant_user.data_source_user_id]},
+                data_after={"department_ids": data_after_user_department_map[tenant_user.data_source_user_id]},
                 extras={"department_ids": list(data_source_dept_ids)},
             )
             for tenant_user in TenantUser.objects.filter(
@@ -148,7 +148,7 @@ class TenantDeptUserRelationBatchUpdateApi(
         ).values_list("data_source_user_id", flat=True)
 
         # 【审计】记录变更前用户-部门映射
-        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_before_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
         with transaction.atomic():
@@ -162,7 +162,7 @@ class TenantDeptUserRelationBatchUpdateApi(
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
         # 【审计】记录变更后用户-部门映射
-        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_after_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 【审计】创建用户-部门审计对象
         audit_objects = [
@@ -171,8 +171,8 @@ class TenantDeptUserRelationBatchUpdateApi(
                 name=tenant_user.data_source_user.username,
                 type=ObjectTypeEnum.DATA_SOURCE_USER,
                 operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
-                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
-                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                data_before={"department_ids": data_before_user_department_map[tenant_user.data_source_user_id]},
+                data_after={"department_ids": data_after_user_department_map[tenant_user.data_source_user_id]},
                 extras={"department_ids": list(data_source_dept_ids)},
             )
             for tenant_user in TenantUser.objects.filter(
@@ -218,7 +218,7 @@ class TenantDeptUserRelationBatchUpdateApi(
         ).values_list("data_source_user_id", flat=True)
 
         # 【审计】记录变更前用户-部门映射
-        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_before_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户在当前部门的存量关联边
         with transaction.atomic():
@@ -234,7 +234,7 @@ class TenantDeptUserRelationBatchUpdateApi(
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】记录变更后用户-部门映射
-        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_after_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 【审计】创建用户-部门审计对象
         audit_objects = [
@@ -243,8 +243,8 @@ class TenantDeptUserRelationBatchUpdateApi(
                 name=tenant_user.data_source_user.username,
                 type=ObjectTypeEnum.DATA_SOURCE_USER,
                 operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
-                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
-                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                data_before={"department_ids": data_before_user_department_map[tenant_user.data_source_user_id]},
+                data_after={"department_ids": data_after_user_department_map[tenant_user.data_source_user_id]},
                 extras={},
             )
             for tenant_user in TenantUser.objects.filter(
@@ -294,14 +294,14 @@ class TenantDeptUserRelationBatchDeleteApi(
         ).values_list("data_source_user_id", flat=True)
 
         # 【审计】记录变更前用户-部门映射
-        user_department_map_before = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_before_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
 
         # 【审计】记录变更后用户-部门映射
-        user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
+        data_after_user_department_map = self.get_user_department_map(data_source_user_ids=data_source_user_ids)
 
         # 【审计】创建用户-部门审计对象
         audit_objects = [
@@ -310,8 +310,8 @@ class TenantDeptUserRelationBatchDeleteApi(
                 name=tenant_user.data_source_user.username,
                 type=ObjectTypeEnum.DATA_SOURCE_USER,
                 operation=OperationEnum.MODIFY_USER_DEPARTMENT_RELATIONS,
-                data_before={"department_ids": user_department_map_before[tenant_user.data_source_user_id]},
-                data_after={"department_ids": user_department_map[tenant_user.data_source_user_id]},
+                data_before={"department_ids": data_before_user_department_map[tenant_user.data_source_user_id]},
+                data_after={"department_ids": data_after_user_department_map[tenant_user.data_source_user_id]},
                 extras={"department_id": source_data_source_dept.id},
             )
             for tenant_user in TenantUser.objects.filter(
