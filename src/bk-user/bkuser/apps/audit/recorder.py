@@ -17,8 +17,6 @@
 
 from typing import Dict, List
 
-from pydantic import Field
-
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import ObjectTypeEnum, OperationEnum
@@ -33,9 +31,9 @@ def add_audit_record(
     object_type: ObjectTypeEnum,
     object_id: str | int,
     object_name: str = "",
-    data_before: Dict = Field(default_factory=dict),
-    data_after: Dict = Field(default_factory=dict),
-    extras: Dict = Field(default_factory=dict),
+    data_before: Dict = None,
+    data_after: Dict = None,
+    extras: Dict = None,
 ):
     """
     添加操作审计记录
@@ -50,9 +48,11 @@ def add_audit_record(
     :param data_after: 修改前数据
     :param extras: 额外相关数据
     """
+    data_before = data_before or {}
+    data_after = data_after or {}
 
     # 若有数据变更，则添加记录
-    if sort_dict_values(data_before) != sort_dict_values(data_after) or extras != {}:
+    if data_before != data_after or extras != {}:
         OperationAuditRecord.objects.create(
             creator=operator,
             tenant_id=tenant_id,
@@ -62,7 +62,7 @@ def add_audit_record(
             object_name=object_name,
             data_before=data_before,
             data_after=data_after,
-            extras=extras,
+            extras=extras or {},
         )
 
 
@@ -96,21 +96,7 @@ def batch_add_audit_records(
         )
         for obj in objects
         # 若有数据变更，则添加记录
-        if sort_dict_values(obj.data_before) != sort_dict_values(obj.data_after) or obj.extras != {}
+        if obj.data_before != obj.data_after or obj.extras != {}
     ]
 
     OperationAuditRecord.objects.bulk_create(records, batch_size=100)
-
-
-def sort_dict_values(ordinary_dict: Dict) -> Dict:
-    """
-    对字典的值为列表的项进行排序，返回排序后的字典
-
-    :param ordinary_dict: 原始字典
-    :return: 排序后的字典
-    """
-    return {
-        # 仅对值为列表的项进行排序
-        k: sorted(v) if isinstance(v, list) else v
-        for k, v in ordinary_dict.items()
-    }
