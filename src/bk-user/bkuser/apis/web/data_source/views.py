@@ -52,7 +52,7 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.data_model import AuditObject
+from bkuser.apps.audit.data_models import AuditObject
 from bkuser.apps.audit.recorder import add_audit_record, batch_add_audit_records
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (

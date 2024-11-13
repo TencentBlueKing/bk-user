@@ -22,7 +22,7 @@ from pydantic import Field
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import ObjectTypeEnum, OperationEnum
-from .data_model import AuditObject
+from .data_models import AuditObject
 from .models import OperationAuditRecord
 
 
