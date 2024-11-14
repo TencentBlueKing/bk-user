@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from bkuser.utils.uuid import generate_uuid
 
@@ -30,10 +30,7 @@ def add_audit_record(
     operation: OperationEnum,
     object_type: ObjectTypeEnum,
     object_id: str | int,
-    object_name: str = "",
-    data_before: Optional[Dict[str, Any]] = None,
-    data_after: Optional[Dict[str, Any]] = None,
-    extras: Optional[Dict[str, Any]] = None,
+    extras: Dict | None = None,
 ):
     """
     添加操作审计记录
@@ -43,33 +40,23 @@ def add_audit_record(
     :param operation: 操作行为
     :param object_type: 操作对象类型
     :param object_id: 操作对象 ID
-    :param object_name: 操作对象名称
-    :param data_before: 修改前数据
-    :param data_after: 修改前数据
-    :param extras: 额外相关数据
+    :param extras: 额外信息
     """
-    data_before = data_before or {}
-    data_after = data_after or {}
-    extras = extras or {}
-
-    # 若有数据变更，则添加记录
-    if data_before != data_after or extras:
-        OperationAuditRecord.objects.create(
-            creator=operator,
-            tenant_id=tenant_id,
-            operation=operation,
-            object_type=object_type,
-            object_id=str(object_id),
-            object_name=object_name,
-            data_before=data_before,
-            data_after=data_after,
-            extras=extras,
-        )
+    OperationAuditRecord.objects.create(
+        creator=operator,
+        tenant_id=tenant_id,
+        operation=operation,
+        object_type=object_type,
+        object_id=str(object_id),
+        extras=extras or {},
+    )
 
 
 def batch_add_audit_records(
     operator: str,
     tenant_id: str,
+    operation: OperationEnum,
+    object_type: ObjectTypeEnum,
     objects: List[AuditObject],
 ):
     """
@@ -77,7 +64,9 @@ def batch_add_audit_records(
 
     :param operator: 操作者
     :param tenant_id: 租户 ID
-    :param objects: AuditObject（包含操作对象相关信息）对象列表
+    :param operation: 操作类型
+    :param object_type: 对象类型
+    :param objects: AuditObject（包含操作对象 ID 和额外信息）对象列表
     """
     # 生成事件 ID
     event_id = generate_uuid()
@@ -87,17 +76,12 @@ def batch_add_audit_records(
             creator=operator,
             event_id=event_id,
             tenant_id=tenant_id,
-            operation=obj.operation,
-            object_type=obj.type,
+            operation=operation,
+            object_type=object_type,
             object_id=str(obj.id),
-            object_name=obj.name,
-            data_before=obj.data_before,
-            data_after=obj.data_after,
             extras=obj.extras,
         )
         for obj in objects
-        # 若有数据变更，则添加记录
-        if obj.data_before != obj.data_after or obj.extras
     ]
 
     OperationAuditRecord.objects.bulk_create(records, batch_size=100)

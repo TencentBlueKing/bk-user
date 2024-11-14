@@ -25,15 +25,5 @@ class AuditObject(BaseModel):
 
     # 操作对象 ID
     id: str | int
-    # 操作对象类型
-    type: str
-    # 操作对象名称
-    name: str = ""
-    # 操作行为
-    operation: str
-    # 操作前数据
-    data_before: Dict = Field(default_factory=dict)
-    # 操作后数据
-    data_after: Dict = Field(default_factory=dict)
-    # 额外信息
+    # 操作对象额外信息
     extras: Dict = Field(default_factory=dict)

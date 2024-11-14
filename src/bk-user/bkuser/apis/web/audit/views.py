@@ -14,8 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from datetime import timedelta
+from typing import Any, Dict
 
-from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -24,8 +25,9 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.tenant import TenantUserHandler
 
-from .serializers import OperationAuditRecordListInputSerializer, OperationAuditRecordListOutputSerializer
+from .serializers import AuditRecordListInputSLZ, AuditRecordListOutputSLZ
 
 
 class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
@@ -33,34 +35,45 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = OperationAuditRecordListOutputSerializer
+    serializer_class = AuditRecordListOutputSLZ
 
     def get_queryset(self):
-        slz = OperationAuditRecordListInputSerializer(data=self.request.query_params)
+        slz = AuditRecordListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        filters = Q(tenant_id=self.get_current_tenant_id())
-        if params.get("operator"):
-            filters &= Q(creator=params["operator"])
-        if params.get("operation"):
-            filters &= Q(operation=params["operation"])
-        if params.get("object_type"):
-            filters &= Q(object_type=params["object_type"])
-        if params.get("created_at"):
-            start_time = params["created_at"].replace(microsecond=0)
-            end_time = params["created_at"].replace(microsecond=999999)
-            filters &= Q(created_at__range=(start_time, end_time))
-        if params.get("object_name"):
-            filters &= Q(object_name__icontains=params["object_name"])
+        filters = {
+            "tenant_id": self.get_current_tenant_id(),
+        }
 
-        return OperationAuditRecord.objects.filter(filters)
+        if creator := params.get("creator"):
+            filters["creator"] = creator
+
+        if operation := params.get("operation"):
+            filters["operation"] = operation
+
+        if object_type := params.get("object_type"):
+            filters["object_type"] = object_type
+
+        if created_at := params.get("created_at"):
+            filters["created_at__range"] = (created_at, created_at + timedelta(seconds=1))
+
+        if object_name := params.get("object_name"):
+            filters["object_name__icontains"] = object_name
+
+        return OperationAuditRecord.objects.filter(**filters)
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        tenant_user_ids = self.get_queryset().values_list("creator", flat=True)
+        return {
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+        }
 
     @swagger_auto_schema(
         tags=["audit"],
         operation_description="操作审计列表",
-        query_serializer=OperationAuditRecordListInputSerializer(),
-        responses={status.HTTP_200_OK: OperationAuditRecordListOutputSerializer(many=True)},
+        query_serializer=AuditRecordListInputSLZ(),
+        responses={status.HTTP_200_OK: AuditRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

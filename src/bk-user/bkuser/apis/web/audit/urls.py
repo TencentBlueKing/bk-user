@@ -21,9 +21,5 @@ from bkuser.apis.web.audit import views
 
 urlpatterns = [
     # 操作审计列表
-    path(
-        "",
-        views.AuditRecordListAPIView.as_view(),
-        name="audit.list",
-    ),
+    path("", views.AuditRecordListAPIView.as_view(), name="audit.list", ),
 ]

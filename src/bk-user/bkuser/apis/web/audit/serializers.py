@@ -18,11 +18,12 @@
 
 from rest_framework import serializers
 
-from bkuser.apps.audit.constants import OBJECT_TYPE_MAP, OPERATION_MAP, ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.models import OperationAuditRecord
 
 
-class OperationAuditRecordListInputSerializer(serializers.Serializer):
-    operator = serializers.CharField(help_text="操作人", required=False, allow_blank=True)
+class AuditRecordListInputSLZ(serializers.Serializer):
+    creator = serializers.CharField(help_text="操作人", required=False, allow_blank=True)
     operation = serializers.ChoiceField(help_text="操作行为", choices=OperationEnum.get_choices(), required=False)
     object_type = serializers.ChoiceField(
         help_text="操作对象类型", choices=ObjectTypeEnum.get_choices(), required=False
@@ -31,17 +32,12 @@ class OperationAuditRecordListInputSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField(help_text="操作时间", required=False)
 
 
-class OperationAuditRecordListOutputSerializer(serializers.Serializer):
-    operator = serializers.CharField(help_text="操作人", source="creator")
-    operation = serializers.SerializerMethodField(help_text="操作行为")
-    object_type = serializers.SerializerMethodField(help_text="操作对象类型")
+class AuditRecordListOutputSLZ(serializers.Serializer):
+    creator = serializers.SerializerMethodField(help_text="操作人")
+    operation = serializers.CharField(help_text="操作行为")
+    object_type = serializers.CharField(help_text="操作对象类型")
     object_name = serializers.CharField(help_text="操作对象名称", required=False)
     created_at = serializers.DateTimeField(help_text="操作时间")
 
-    def get_operation(self, obj):
-        # 从 operation_map 中提取 operation 对应的中文标识
-        return OPERATION_MAP[obj.operation]
-
-    def get_object_type(self, obj):
-        # 从 object_type_map 中提取 object_type 对应的中文标识
-        return OBJECT_TYPE_MAP[obj.object_type]
+    def get_creator(self, obj: OperationAuditRecord) -> str:
+        return self.context["user_display_name_map"].get(obj.creator) or obj.creator
