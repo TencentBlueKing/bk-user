@@ -50,9 +50,10 @@ def add_audit_record(
     """
     data_before = data_before or {}
     data_after = data_after or {}
+    extras = extras or {}
 
     # 若有数据变更，则添加记录
-    if data_before != data_after or extras != {}:
+    if data_before != data_after or extras:
         OperationAuditRecord.objects.create(
             creator=operator,
             tenant_id=tenant_id,
@@ -62,7 +63,7 @@ def add_audit_record(
             object_name=object_name,
             data_before=data_before,
             data_after=data_after,
-            extras=extras or {},
+            extras=extras,
         )
 
 
@@ -96,7 +97,7 @@ def batch_add_audit_records(
         )
         for obj in objects
         # 若有数据变更，则添加记录
-        if obj.data_before != obj.data_after or obj.extras != {}
+        if obj.data_before != obj.data_after or obj.extras
     ]
 
     OperationAuditRecord.objects.bulk_create(records, batch_size=100)

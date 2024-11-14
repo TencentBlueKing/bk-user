@@ -21,7 +21,6 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
 from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -56,12 +55,6 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
             filters &= Q(object_name__icontains=params["object_name"])
 
         return OperationAuditRecord.objects.filter(filters)
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["operation_map"] = dict(OperationEnum.get_choices())
-        context["object_type_map"] = dict(ObjectTypeEnum.get_choices())
-        return context
 
     @swagger_auto_schema(
         tags=["audit"],

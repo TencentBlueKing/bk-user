@@ -86,3 +86,7 @@ class OperationEnum(str, StructuredEnum):
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
     MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户信息"))
     DELETE_VIRTUAL_USER = EnumField("delete_virtual_user", label=_("删除虚拟用户"))
+
+
+OPERATION_MAP = dict(OperationEnum.get_choices())
+OBJECT_TYPE_MAP = dict(ObjectTypeEnum.get_choices())

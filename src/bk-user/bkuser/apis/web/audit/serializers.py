@@ -18,7 +18,7 @@
 
 from rest_framework import serializers
 
-from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
+from bkuser.apps.audit.constants import OBJECT_TYPE_MAP, OPERATION_MAP, ObjectTypeEnum, OperationEnum
 
 
 class OperationAuditRecordListInputSerializer(serializers.Serializer):
@@ -40,8 +40,8 @@ class OperationAuditRecordListOutputSerializer(serializers.Serializer):
 
     def get_operation(self, obj):
         # 从 operation_map 中提取 operation 对应的中文标识
-        return self.context["operation_map"][obj.operation]
+        return OPERATION_MAP[obj.operation]
 
     def get_object_type(self, obj):
         # 从 object_type_map 中提取 object_type 对应的中文标识
-        return self.context["object_type_map"][obj.object_type]
+        return OBJECT_TYPE_MAP[obj.object_type]
