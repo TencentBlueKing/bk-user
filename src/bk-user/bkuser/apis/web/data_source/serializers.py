@@ -20,6 +20,7 @@ from typing import Any, Dict, List
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.utils.duration import duration_string
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
@@ -27,7 +28,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
-from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
@@ -353,25 +354,49 @@ class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
+    status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
     operator = serializers.SerializerMethodField(help_text="操作人")
     start_at = serializers.DateTimeField(help_text="开始时间")
-    duration = serializers.DurationField(help_text="持续时间")
+    duration = serializers.SerializerMethodField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
+    # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
+    def get_status(self, obj: DataSourceSyncTask) -> str:
+        task = self.context["tenant_sync_task_map"].get(obj.id)
+        # 同步租户 task 是在数据源同步任务更新最终状态（成功 or 失败）前创建的
+        # 因此当同步租户 task 不存在时，可以使用数据源同步任务的状态
+        return task.status if task else obj.status
+
+    def get_duration(self, obj: DataSourceSyncTask) -> str:
+        task = self.context["tenant_sync_task_map"].get(obj.id)
+        duration = task.duration + task.start_at - obj.start_at if task else obj.duration
+        return duration_string(duration)
+
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    status = serializers.CharField(help_text="数据源同步状态")
+    status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     start_at = serializers.DateTimeField(help_text="开始时间")
-    duration = serializers.DurationField(help_text="持续时间")
+    duration = serializers.SerializerMethodField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
+
+    # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
+    def get_status(self, obj: DataSourceSyncTask) -> str:
+        task = self.context["tenant_sync_task"]
+        # 同步租户 task 是在数据源同步任务更新最终状态（成功 or 失败）前创建的
+        # 因此当同步租户 task 不存在时，可以使用数据源同步任务的状态
+        return task.status if task else obj.status
+
+    def get_duration(self, obj: DataSourceSyncTask) -> str:
+        task = self.context["tenant_sync_task"]
+        duration = task.duration + task.start_at - obj.start_at if task else obj.duration
+        return duration_string(duration)
 
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):
