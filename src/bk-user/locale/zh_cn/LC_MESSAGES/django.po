@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-14 01:20+0800\n"
+"POT-Creation-Date: 2024-11-14 20:22+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -166,39 +166,39 @@ msgstr "出于安全考虑，全量导入模式暂不可用"
 msgid "仅可更新实体类型数据源配置"
 msgstr "仅可更新实体类型数据源配置"
 
-#: bkuser/apis/web/data_source/views.py:290
+#: bkuser/apis/web/data_source/views.py:292
 msgid "仅可重置实体类型数据源"
 msgstr "仅可重置实体类型数据源"
 
-#: bkuser/apis/web/data_source/views.py:476
+#: bkuser/apis/web/data_source/views.py:473
 msgid "仅实体类型的本地数据源有提供导入模板"
 msgstr "仅实体类型的本地数据源有提供导入模板"
 
-#: bkuser/apis/web/data_source/views.py:498
+#: bkuser/apis/web/data_source/views.py:495
 msgid "仅能导出实体类型的本地数据源数据"
 msgstr "仅能导出实体类型的本地数据源数据"
 
-#: bkuser/apis/web/data_source/views.py:523
+#: bkuser/apis/web/data_source/views.py:520
 msgid "仅实体类型的本地数据源支持导入功能"
 msgstr "仅实体类型的本地数据源支持导入功能"
 
-#: bkuser/apis/web/data_source/views.py:530
+#: bkuser/apis/web/data_source/views.py:527
 msgid "文件格式异常"
 msgstr "文件格式异常"
 
-#: bkuser/apis/web/data_source/views.py:582
+#: bkuser/apis/web/data_source/views.py:577
 msgid "本地数据源不支持同步，请使用导入功能"
 msgstr "本地数据源不支持同步，请使用导入功能"
 
-#: bkuser/apis/web/data_source/views.py:585
+#: bkuser/apis/web/data_source/views.py:580
 msgid "仅实体类型的数据源支持同步"
 msgstr "仅实体类型的数据源支持同步"
 
-#: bkuser/apis/web/data_source/views.py:639 bkuser/common/error_codes.py:93
+#: bkuser/apis/web/data_source/views.py:632 bkuser/common/error_codes.py:93
 msgid "数据源不存在"
 msgstr "数据源不存在"
 
-#: bkuser/apis/web/data_source/views.py:642
+#: bkuser/apis/web/data_source/views.py:635
 msgid "仅实体类型的数据源有同步记录"
 msgstr "仅实体类型的数据源有同步记录"
 
@@ -756,8 +756,8 @@ msgid "修改数据源"
 msgstr "修改数据源"
 
 #: bkuser/apps/audit/constants.py:40
-msgid "重置数据源"
-msgstr "重置数据源"
+msgid "删除数据源"
+msgstr "删除数据源"
 
 #: bkuser/apps/audit/constants.py:41
 msgid "同步数据源"
@@ -776,8 +776,8 @@ msgid "修改认证源状态"
 msgstr "修改认证源状态"
 
 #: bkuser/apps/audit/constants.py:46
-msgid "重置认证源"
-msgstr "重置认证源"
+msgid "删除认证源"
+msgstr "删除认证源"
 
 #: bkuser/apps/audit/constants.py:48
 msgid "创建数据源用户"

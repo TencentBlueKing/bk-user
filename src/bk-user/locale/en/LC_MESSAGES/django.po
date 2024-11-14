@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-14 01:20+0800\n"
+"POT-Creation-Date: 2024-11-14 20:22+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -182,41 +182,41 @@ msgstr "Full import mode is temporarily unavailable for security reasons"
 msgid "仅可更新实体类型数据源配置"
 msgstr "Only configurations of real type data sources can be updated"
 
-#: bkuser/apis/web/data_source/views.py:290
+#: bkuser/apis/web/data_source/views.py:292
 msgid "仅可重置实体类型数据源"
 msgstr "Only real type data sources can be reset"
 
-#: bkuser/apis/web/data_source/views.py:476
+#: bkuser/apis/web/data_source/views.py:473
 msgid "仅实体类型的本地数据源有提供导入模板"
 msgstr "Only local data sources of real type provide import templates"
 
-#: bkuser/apis/web/data_source/views.py:498
+#: bkuser/apis/web/data_source/views.py:495
 msgid "仅能导出实体类型的本地数据源数据"
 msgstr "Only data from local real type data sources can be exported"
 
-#: bkuser/apis/web/data_source/views.py:523
+#: bkuser/apis/web/data_source/views.py:520
 msgid "仅实体类型的本地数据源支持导入功能"
 msgstr "Only local real type data sources support import functions"
 
-#: bkuser/apis/web/data_source/views.py:530
+#: bkuser/apis/web/data_source/views.py:527
 msgid "文件格式异常"
 msgstr "File format exception"
 
-#: bkuser/apis/web/data_source/views.py:582
+#: bkuser/apis/web/data_source/views.py:577
 msgid "本地数据源不支持同步，请使用导入功能"
 msgstr ""
 "Local data source does not support synchronization, please use the import "
 "function"
 
-#: bkuser/apis/web/data_source/views.py:585
+#: bkuser/apis/web/data_source/views.py:580
 msgid "仅实体类型的数据源支持同步"
 msgstr "Only real type data sources support synchronization"
 
-#: bkuser/apis/web/data_source/views.py:639 bkuser/common/error_codes.py:93
+#: bkuser/apis/web/data_source/views.py:632 bkuser/common/error_codes.py:93
 msgid "数据源不存在"
 msgstr "Data source does not exist"
 
-#: bkuser/apis/web/data_source/views.py:642
+#: bkuser/apis/web/data_source/views.py:635
 msgid "仅实体类型的数据源有同步记录"
 msgstr "Only real type data sources have synchronization records"
 
@@ -814,8 +814,8 @@ msgid "修改数据源"
 msgstr "Modify data source"
 
 #: bkuser/apps/audit/constants.py:40
-msgid "重置数据源"
-msgstr "Reset data source"
+msgid "删除数据源"
+msgstr "Delete data source"
 
 #: bkuser/apps/audit/constants.py:41
 msgid "同步数据源"
@@ -834,8 +834,8 @@ msgid "修改认证源状态"
 msgstr "Modify status of idp"
 
 #: bkuser/apps/audit/constants.py:46
-msgid "重置认证源"
-msgstr "Reset idp"
+msgid "删除认证源"
+msgstr "Delete idp"
 
 #: bkuser/apps/audit/constants.py:48
 msgid "创建数据源用户"
