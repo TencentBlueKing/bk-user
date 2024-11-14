@@ -57,7 +57,7 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
 
         if created_at := params.get("created_at"):
             filters["created_at__gte"] = created_at
-            filters["created_at__lt"] = created_at + timedelta(days=1)
+            filters["created_at__lt"] = created_at + timedelta(seconds=1)
 
         if object_name := params.get("object_name"):
             filters["object_name__icontains"] = object_name
