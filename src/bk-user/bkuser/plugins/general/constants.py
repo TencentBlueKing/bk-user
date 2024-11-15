@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, IntStructuredEnum, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 # 服务基础 URL 正则
@@ -61,14 +61,14 @@ STATUS_CODE_REASON_MAP = {
 }
 
 
-class AuthMethod(str, StructuredEnum):
+class AuthMethod(StrStructuredEnum):
     """鉴权方式"""
 
     BEARER_TOKEN = EnumField("bearer_token", label="BearerToken")
     BASIC_AUTH = EnumField("basic_auth", label="BasicAuth")
 
 
-class PageSizeEnum(int, StructuredEnum):
+class PageSizeEnum(IntStructuredEnum):
     """每页数量"""
 
     SIZE_100 = EnumField(100, label="100")

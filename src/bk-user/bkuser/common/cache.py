@@ -17,13 +17,13 @@
 
 import functools
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.core.cache import cache as default_cache
 from django.core.cache import caches
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 
 
-class CacheEnum(str, StructuredEnum):
+class CacheEnum(StrStructuredEnum):
     """枚举可用的 Cache，与 settings.Cache 配置的 Dict.keys 一致"""
 
     DEFAULT = EnumField("default", label="内存缓存（默认）")
@@ -34,7 +34,7 @@ class CacheEnum(str, StructuredEnum):
 # 为避免该问题，所以缓存场景都必须在这里定义其 Key 的前缀
 # 完整 Key = [全局前缀]settings.Caches.KEY_PREFIX + [全局版本]settings.Caches.VERSION + CacheKeyPrefixEnum + CustomKey
 # 注意：KeyPrefix 应不互相冲突且尽可能短，不需要优先考虑可读性
-class CacheKeyPrefixEnum(str, StructuredEnum):
+class CacheKeyPrefixEnum(StrStructuredEnum):
     # 用于使用 cached 和 cachedmethod 装饰器自动生成 key 的
     AUTO = "auto"
     # 分布式锁

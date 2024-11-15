@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, IntStructuredEnum
 
 # 服务 URL 正则
 SERVER_URL_REGEX = r"^ldaps?://[a-zA-Z0-9-/\.]+(:\d+)?$"
@@ -44,7 +44,7 @@ DEFAULT_REQ_TIMEOUT = 30
 REQUIRED_OPERATIONAL_ATTRIBUTES = ["entryUUID"]
 
 
-class PageSizeEnum(int, StructuredEnum):
+class PageSizeEnum(IntStructuredEnum):
     """每页数量"""
 
     SIZE_100 = EnumField(100, label="100")

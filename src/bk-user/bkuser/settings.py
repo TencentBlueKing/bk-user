@@ -27,6 +27,8 @@ from celery.schedules import crontab
 from django.utils.encoding import force_bytes
 
 pymysql.install_as_MySQLdb()
+# Patch version info to force pass Django client check
+pymysql.version_info = 1, 4, 6, "final", 0
 
 # Patch the SSL module for compatibility with legacy CA credentials.
 # https://stackoverflow.com/questions/72479812/how-to-change-tweak-python-3-10-default-ssl-settings-for-requests-sslv3-alert

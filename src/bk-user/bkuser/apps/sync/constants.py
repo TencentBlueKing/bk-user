@@ -17,7 +17,7 @@
 
 import re
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, IntStructuredEnum, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAME_REGEX  # noqa: F401
@@ -25,7 +25,7 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
 
 
-class DataSourceSyncPeriod(int, StructuredEnum):
+class DataSourceSyncPeriod(IntStructuredEnum):
     """数据源自动同步周期"""
 
     NEVER = EnumField(0, label=_("从不"))
@@ -39,7 +39,7 @@ class DataSourceSyncPeriod(int, StructuredEnum):
     PER_30_DAY = EnumField(30 * 24 * 60, label=_("每 30 天"))
 
 
-class SyncTaskTrigger(str, StructuredEnum):
+class SyncTaskTrigger(StrStructuredEnum):
     """同步任务触发器枚举"""
 
     CRONTAB = EnumField("crontab", label=_("定时任务"))
@@ -48,7 +48,7 @@ class SyncTaskTrigger(str, StructuredEnum):
     SIGNAL = EnumField("signal", label=_("信号触发"))
 
 
-class SyncLogLevel(str, StructuredEnum):
+class SyncLogLevel(StrStructuredEnum):
     """同步日志等级"""
 
     INFO = EnumField("INFO", label="INFO")
@@ -56,7 +56,7 @@ class SyncLogLevel(str, StructuredEnum):
     ERROR = EnumField("ERROR", label="ERROR")
 
 
-class SyncTaskStatus(str, StructuredEnum):
+class SyncTaskStatus(StrStructuredEnum):
     """同步任务状态枚举"""
 
     PENDING = EnumField("pending", label=_("等待"))
@@ -65,7 +65,7 @@ class SyncTaskStatus(str, StructuredEnum):
     FAILED = EnumField("failed", label=_("失败"))
 
 
-class SyncOperation(str, StructuredEnum):
+class SyncOperation(StrStructuredEnum):
     """同步操作枚举"""
 
     CREATE = EnumField("create", label=_("创建"))
@@ -73,7 +73,7 @@ class SyncOperation(str, StructuredEnum):
     DELETE = EnumField("delete", label=_("删除"))
 
 
-class DataSourceSyncObjectType(str, StructuredEnum):
+class DataSourceSyncObjectType(StrStructuredEnum):
     """数据源同步数据类型枚举"""
 
     USER = EnumField("user", label=_("用户"))
@@ -83,7 +83,7 @@ class DataSourceSyncObjectType(str, StructuredEnum):
     USER_DEPARTMENT_RELATION = EnumField("user_department_relation", label=_("用户部门关系"))
 
 
-class TenantSyncObjectType(str, StructuredEnum):
+class TenantSyncObjectType(StrStructuredEnum):
     """租户同步数据类型枚举"""
 
     USER = EnumField("user", label=_("用户"))

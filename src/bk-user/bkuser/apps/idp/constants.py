@@ -14,25 +14,25 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class IdpCategory(str, StructuredEnum):
+class IdpCategory(StrStructuredEnum):
     """认证源分类"""
 
     ENTERPRISE = EnumField("enterprise", label=_("企业"))
     SOCIAL = EnumField("social", label=_("社交"))
 
 
-class IdpStatus(str, StructuredEnum):
+class IdpStatus(StrStructuredEnum):
     """认证源状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("未启用"))
 
 
-class AllowBindScopeObjectType(str, StructuredEnum):
+class AllowBindScopeObjectType(StrStructuredEnum):
     """社会化认证源，允许绑定的范围对象类型"""
 
     USER = EnumField("user", label=_("用户"))

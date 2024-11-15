@@ -14,10 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 
 
-class CompatibilityApiErrorCodeEnum(str, StructuredEnum):
+class CompatibilityApiErrorCodeEnum(StrStructuredEnum):
     """兼容 API 错误码"""
 
     SUCCESS = EnumField("SUCCESS")

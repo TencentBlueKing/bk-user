@@ -17,14 +17,14 @@
 
 from typing import Any, Optional
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 from redis.exceptions import LockNotOwnedError  # type: ignore
 
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-class LockType(str, StructuredEnum):
+class LockType(StrStructuredEnum):
     """锁类型"""
 
     GLOBAL = EnumField("global", label=_("全局锁"))

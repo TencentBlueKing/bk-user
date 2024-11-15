@@ -16,13 +16,13 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
 
-class UserRole(str, StructuredEnum):
+class UserRole(StrStructuredEnum):
     """用户角色"""
 
     SUPER_MANAGER = EnumField("super_manager", label=_("超级管理员"))
@@ -30,7 +30,7 @@ class UserRole(str, StructuredEnum):
     NATURAL_USER = EnumField("natural_user", label=_("普通用户"))
 
 
-class PermAction(str, StructuredEnum):
+class PermAction(StrStructuredEnum):
     """权限行为"""
 
     # TODO (su) 接入 IAM 时，需要评估是否细化 Action

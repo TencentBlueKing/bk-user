@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 # 非内置插件，必须以指定前缀开头
@@ -24,14 +24,14 @@ CUSTOM_PLUGIN_ID_PREFIX = "custom_"
 MAX_LOGO_SIZE = 64 * 1024
 
 
-class PluginTypeEnum(str, StructuredEnum):
+class PluginTypeEnum(StrStructuredEnum):
     """认证源插件类型枚举"""
 
     CREDENTIAL = EnumField("credential", label=_("身份凭证认证"))
     FEDERATION = EnumField("federation", label=_("联邦认证"))
 
 
-class BuiltinIdpPluginEnum(str, StructuredEnum):
+class BuiltinIdpPluginEnum(StrStructuredEnum):
     # 直接身份认证
     LOCAL = EnumField("local", label=_("本地账密"))
     LDAP = EnumField("ldap", label=_("LDAP"))
@@ -49,12 +49,12 @@ class BuiltinIdpPluginEnum(str, StructuredEnum):
 BuiltinIdpPluginIDs = list(BuiltinIdpPluginEnum)  # type: ignore
 
 
-class AllowedHttpMethodEnum(str, StructuredEnum):
+class AllowedHttpMethodEnum(StrStructuredEnum):
     GET = EnumField("get")
     POST = EnumField("post")
 
 
-class BuiltinActionEnum(str, StructuredEnum):
+class BuiltinActionEnum(StrStructuredEnum):
     AUTHENTICATE = EnumField("authenticate")
     LOGIN = EnumField("login")
     CALLBACK = EnumField("callback")

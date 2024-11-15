@@ -18,16 +18,16 @@
 import datetime
 
 import pytz
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class BkLanguageEnum(str, StructuredEnum):
+class BkLanguageEnum(StrStructuredEnum):
     ZH_CN = EnumField("zh-cn", label="中文")
     EN = EnumField("en", label="英文")
 
 
-class BKNonEntityUser(str, StructuredEnum):
+class BKNonEntityUser(StrStructuredEnum):
     """蓝鲸非实体用户，主要用于 API 调用时的审计，区别于正常的实体用户"""
 
     # 用于 API 调用时，ESB / APIGW 传递过来的 jwt.user.verified 为 False 时，
