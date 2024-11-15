@@ -66,7 +66,7 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
 
     def get_serializer_context(self) -> Dict[str, Any]:
         queryset = self.paginate_queryset(self.get_queryset())
-        tenant_user_ids = queryset.values_list("creator", flat=True)
+        tenant_user_ids = [record.creator for record in queryset]
         return {
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
         }
