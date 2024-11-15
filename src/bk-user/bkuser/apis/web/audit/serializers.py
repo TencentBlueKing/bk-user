@@ -36,7 +36,7 @@ class AuditRecordListOutputSLZ(serializers.Serializer):
     creator = serializers.SerializerMethodField(help_text="操作人")
     operation = serializers.CharField(help_text="操作行为")
     object_type = serializers.CharField(help_text="操作对象类型")
-    object_name = serializers.CharField(help_text="操作对象名称", required=False)
+    object_name = serializers.CharField(help_text="操作对象名称", allow_blank=True, allow_null=True)
     created_at = serializers.DateTimeField(help_text="操作时间")
 
     def get_creator(self, obj: OperationAuditRecord) -> str:
