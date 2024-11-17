@@ -55,7 +55,7 @@ django-modeltranslation = "0.18.11"
 ldap3 = "2.9.1"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "0.7.1"
+ruff = "^0.5.2"
 mypy = "1.13.0"
 types-requests = "^2.31.0.1"
 pytest = "8.3.3"
