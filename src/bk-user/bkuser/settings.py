@@ -30,11 +30,6 @@ pymysql.install_as_MySQLdb()
 # Patch version info to force pass Django client check
 pymysql.version_info = 1, 4, 6, "final", 0
 
-# Patch the SSL module for compatibility with legacy CA credentials.
-# https://stackoverflow.com/questions/72479812/how-to-change-tweak-python-3-10-default-ssl-settings-for-requests-sslv3-alert
-urllib3.util.ssl_.DEFAULT_CIPHERS = "ALL:@SECLEVEL=1"
-
-
 # environ
 env = environ.Env()
 # load environment variables from .env file
