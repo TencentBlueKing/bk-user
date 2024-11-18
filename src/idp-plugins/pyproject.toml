@@ -20,9 +20,9 @@ blue-krill = "2.0.7"
 ruff = "^0.1.4"
 mypy = "^1.6.1"
 types-requests = "^2.31.0.1"
-pytest = "8.3.3"
-pytest-django = "4.9.0"
-import-linter = "2.1"
+pytest = "^8.3.3"
+pytest-django = "^4.9.0"
+import-linter = "^2.1"
 
 [tool.mypy]
 ignore_missing_imports = true
