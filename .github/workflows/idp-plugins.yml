@@ -25,7 +25,7 @@ jobs:
       - name: Format & Lint with ruff
         run: |
           ruff format src/idp-plugins --config=src/idp-plugins/pyproject.toml --no-cache
-          ruff src/idp-plugins --config=src/idp-plugins/pyproject.toml --no-cache
+          ruff check src/idp-plugins --config=src/idp-plugins/pyproject.toml --no-cache
       - name: Lint with mypy
         run: |
           mypy src/idp-plugins --config-file=src/idp-plugins/pyproject.toml
