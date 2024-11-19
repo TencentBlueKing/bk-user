@@ -30,7 +30,7 @@ from bkuser.plugins.local.utils import gen_dept_code
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def _init_data_source_users_depts(bare_local_data_source):
     """初始化存量部门 & 用户数据"""
     ds = bare_local_data_source

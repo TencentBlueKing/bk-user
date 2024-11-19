@@ -17,7 +17,7 @@
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def raw_password() -> str:
     """测试用的原始密码"""
     return "pass-@-123456"

@@ -36,7 +36,7 @@ from tests.test_utils.helpers import generate_random_string
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
     # FIXME (su) 使用 data_source 这个 fixture 其实可以不用 random_tenant，因为使用了 get_or_create
     # 在移除默认租户的初始化 migration 中创建的 real 类型的数据源后，可以批量删除 random_tenant 逻辑
@@ -49,7 +49,7 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
     return ds
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="local",
@@ -60,7 +60,7 @@ def local_idp(data_source) -> Idp:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def disabled_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="invalid_wecom",
@@ -74,7 +74,7 @@ def disabled_idp(data_source) -> Idp:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def wecom_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="wecom",
@@ -87,7 +87,7 @@ def wecom_idp(data_source) -> Idp:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def field_mapping(request) -> List[Dict]:
     """字段映射，不含自定义字段"""
     fields = ["username", "full_name", "phone_country_code", "phone", "email"]
@@ -97,13 +97,13 @@ def field_mapping(request) -> List[Dict]:
     return [{"source_field": f, "mapping_operation": "direct", "target_field": f} for f in fields]
 
 
-@pytest.fixture()
+@pytest.fixture
 def sync_config() -> Dict[str, Any]:
     """数据源同步配置"""
     return {"sync_period": 30}
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
     success_task = DataSourceSyncTask.objects.create(
         data_source=data_source,

@@ -29,7 +29,7 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_data_source(default_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """默认租户的本地数据源"""
     data_source = DataSource.objects.create(
@@ -43,7 +43,7 @@ def local_data_source(default_tenant, local_ds_plugin_cfg, local_ds_plugin) -> D
     return data_source
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaboration_data_source(default_tenant, random_tenant, general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """向默认租户进行同步的通用 HTTP 数据源"""
     data_source = DataSource.objects.create(

@@ -29,11 +29,11 @@ pytestmark = pytest.mark.django_db
 class TestDataSourceUserExtrasUniqueValidator:
     """测试对有唯一性要求的自定义字段的校验"""
 
-    @pytest.fixture()
+    @pytest.fixture
     def logger(self) -> TaskLogger:
         return TaskLogger()
 
-    @pytest.fixture()
+    @pytest.fixture
     def tenant_user_custom_field(self, request) -> TenantUserCustomField:
         tenant = request.getfixturevalue("random_tenant")
         return TenantUserCustomField.objects.create(
@@ -46,20 +46,20 @@ class TestDataSourceUserExtrasUniqueValidator:
             default=0,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def random_ds(self, request) -> DataSource:
         tenant_id = request.getfixturevalue("random_tenant").id
         ds, _ = DataSource.objects.get_or_create(owner_tenant_id=tenant_id, plugin_id=DataSourcePluginEnum.LOCAL)
         return ds
 
-    @pytest.fixture()
+    @pytest.fixture
     def user_lisi(self, request) -> DataSourceUser:
         random_ds = request.getfixturevalue("random_ds")
         return DataSourceUser.objects.create(
             data_source=random_ds, username="lisi", full_name="李四", extras={"age": 20}
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def user_wangwu(self, request) -> DataSourceUser:
         random_ds = request.getfixturevalue("random_ds")
         return DataSourceUser.objects.create(

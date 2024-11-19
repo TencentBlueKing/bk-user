@@ -21,7 +21,7 @@ from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.general.plugin import GeneralDataSourcePlugin
 
 
-@pytest.fixture()
+@pytest.fixture
 def general_ds_cfg(general_ds_plugin_cfg) -> GeneralDataSourcePluginConfig:
     return GeneralDataSourcePluginConfig(**general_ds_plugin_cfg)
 

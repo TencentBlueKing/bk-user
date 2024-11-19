@@ -24,17 +24,17 @@ from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from tests.test_utils.helpers import generate_random_string
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContext:
     return DataSourceSyncTaskContext(data_source_sync_task)
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_sync_task_ctx(tenant_sync_task) -> TenantSyncTaskContext:
     return TenantSyncTaskContext(tenant_sync_task)
 
 
-@pytest.fixture()
+@pytest.fixture
 def raw_departments() -> List[RawDataSourceDepartment]:
     """数据源插件提供的原始部门信息"""
     return [
@@ -51,7 +51,7 @@ def raw_departments() -> List[RawDataSourceDepartment]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def raw_users() -> List[RawDataSourceUser]:
     """数据源插件提供的原始用户信息"""
     return [
@@ -212,7 +212,7 @@ def raw_users() -> List[RawDataSourceUser]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_raw_department() -> RawDataSourceDepartment:
     """生成随机部门"""
     return RawDataSourceDepartment(
@@ -223,7 +223,7 @@ def random_raw_department() -> RawDataSourceDepartment:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_raw_user() -> RawDataSourceUser:
     """生成随机用户"""
     return RawDataSourceUser(

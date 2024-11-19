@@ -31,7 +31,7 @@ from tests.test_utils.helpers import generate_random_string
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def wecom_plugin_cfg() -> Dict[str, Any]:
     """企业微信插件配置"""
     return {
@@ -41,7 +41,7 @@ def wecom_plugin_cfg() -> Dict[str, Any]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_source_match_rules(bare_general_data_source) -> List[Dict[str, Any]]:
     """匹配数据源规则"""
     return [
@@ -53,7 +53,7 @@ def data_source_match_rules(bare_general_data_source) -> List[Dict[str, Any]]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def wecom_idp(bk_user, random_tenant, wecom_plugin_cfg, data_source_match_rules) -> Idp:
     return Idp.objects.create(
         name=generate_random_string(),

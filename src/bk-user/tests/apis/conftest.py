@@ -18,7 +18,7 @@ import pytest
 from rest_framework.test import APIClient
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_client(bk_user) -> APIClient:
     """Return an authenticated client"""
     client = APIClient()

@@ -18,7 +18,7 @@ import pytest
 from bkuser.common.passwd import PasswordRule
 
 
-@pytest.fixture()
+@pytest.fixture
 def strict_passwd_rule() -> PasswordRule:
     """严格的密码规则"""
     return PasswordRule(
@@ -36,7 +36,7 @@ def strict_passwd_rule() -> PasswordRule:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_passwd_rule() -> PasswordRule:
     """宽松的密码规则"""
     return PasswordRule(

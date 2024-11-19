@@ -28,7 +28,7 @@ pytestmark = pytest.mark.django_db
 class TestDataSourceUserConverter:
     """测试将 RawDataSourceUser 转换成 DataSourceUser 对象"""
 
-    @pytest.fixture()
+    @pytest.fixture
     def logger(self) -> TaskLogger:
         return TaskLogger()
 

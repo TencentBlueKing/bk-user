@@ -21,7 +21,7 @@ from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_user_custom_fields(request, default_tenant) -> List[TenantUserCustomField]:
     """初始化租户用户自定义字段"""
     tenant = default_tenant

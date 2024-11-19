@@ -21,7 +21,7 @@ from bkuser.common.passwd import PasswordRule
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def passwd_rule_cfg() -> Dict:
     return {
         "min_length": 10,

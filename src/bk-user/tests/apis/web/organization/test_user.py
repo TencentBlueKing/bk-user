@@ -189,7 +189,7 @@ class TestTenantUserListApi:
 
 
 class TestTenantUserCreateApi:
-    @pytest.fixture()
+    @pytest.fixture
     def tenant_user_data(self, random_tenant) -> Dict[str, Any]:
         username = generate_random_string()
         return {
@@ -591,7 +591,7 @@ class TestTenantUserStatusUpdateApi:
 class TestTenantUserBatchCreateAndPreviewApi:
     """测试快速录入（批量创建）用户 * 预览 API"""
 
-    @pytest.fixture()
+    @pytest.fixture
     def raw_user_infos(self) -> List[str]:
         # username full_name email phone age gender region hobbies
         return [

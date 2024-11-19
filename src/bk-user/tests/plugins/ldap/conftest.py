@@ -288,7 +288,7 @@ class MockedLDAPConnection:
         pass
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_ldap_client():
     with mock.patch(
         "bkuser.plugins.ldap.client.paged_search_accumulator",
@@ -300,6 +300,6 @@ def _mock_ldap_client():
         yield
 
 
-@pytest.fixture()
+@pytest.fixture
 def ldap_ds_cfg(ldap_ds_plugin_cfg) -> LDAPDataSourcePluginConfig:
     return LDAPDataSourcePluginConfig(**ldap_ds_plugin_cfg)
