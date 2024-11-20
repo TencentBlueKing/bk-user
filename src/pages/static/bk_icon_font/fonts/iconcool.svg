@@ -53,6 +53,18 @@
       <glyph glyph-name="uniE103" unicode="&#xE103;" d="M64-36C64-71.2 92.8-100 128-100H896C931.2-100 960-71.2 960-36V348H64V-36ZM896 572H736V636C736 671.2 707.2 700 672 700H352C316.8 700 288 671.2 288 636V572H128C92.8 572 64 543.2 64 508V412H960V508C960 543.2 931.2 572 896 572ZM352 636H672V572H352V636Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
 
       
+      <glyph glyph-name="uniE158" unicode="&#xE158;" d="M376 308L600 532 648 484 472 308 648 132 600 84 376 308Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
+
+      
+      <glyph glyph-name="uniE159" unicode="&#xE159;" d="M288 364L336 412 512 236 688 412 736 364 512 140Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
+
+      
+      <glyph glyph-name="uniE15A" unicode="&#xE15A;" d="M424 84L376 132 552 308 376 484 424 532 648 308 424 84Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
+
+      
+      <glyph glyph-name="uniE15B" unicode="&#xE15B;" d="M512 444L736 220 688 172 512 348 336 172 288 220 512 444Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
+
+      
       <glyph glyph-name="uniE104" unicode="&#xE104;" d="M704 460L752 412 448 108 272 284 320 332 448 204Z"  horiz-adv-x="1024" vert-adv-y="1024"  />
 
       
