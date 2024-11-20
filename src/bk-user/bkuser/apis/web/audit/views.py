@@ -35,19 +35,12 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    pagination_class = None
-
     serializer_class = AuditRecordListOutputSLZ
 
     def get_queryset(self):
         slz = AuditRecordListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
-
-        # 分页所需参数
-        page = int(self.request.query_params.get("page", 1))
-        page_size = int(self.request.query_params.get("page_size", 10))
-        offset = (page - 1) * page_size
 
         filters = {
             "tenant_id": self.get_current_tenant_id(),
@@ -69,10 +62,12 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
         if object_name := params.get("object_name"):
             filters["object_name__icontains"] = object_name
 
-        return OperationAuditRecord.objects.filter(**filters)[offset : offset + page_size]
+        return OperationAuditRecord.objects.filter(**filters)
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        tenant_user_ids = list(self.get_queryset().values_list("creator", flat=True))
+        # 对于 tenant_user_id 的查询也采取分页的方式，不需要全量查询
+        paginated_queryset = self.paginate_queryset(self.get_queryset().only("creator"))
+        tenant_user_ids = [obj.creator for obj in paginated_queryset]
         return {
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
         }
