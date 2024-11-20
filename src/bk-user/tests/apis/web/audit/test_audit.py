@@ -27,50 +27,50 @@ class TestAuditRecordListApi:
         resp = api_client.get(reverse("audit.list"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
+        assert len(resp.data) == 4
 
     def test_audit_record_list_filter_by_creator(self, api_client, bk_user, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"creator": bk_user.username})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
-        assert all(record["creator"] == bk_user.username for record in resp.data["results"])
+        assert len(resp.data) == 4
+        assert all(record["creator"] == bk_user.username for record in resp.data)
 
     def test_audit_record_list_filter_by_operation(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"operation": "create_data_source"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["operation"] == "create_data_source"
+        assert len(resp.data) == 1
+        assert resp.data[0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_object_type(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"object_type": "data_source"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
-        assert all(record["object_type"] == "data_source" for record in resp.data["results"])
+        assert len(resp.data) == 4
+        assert all(record["object_type"] == "data_source" for record in resp.data)
 
     def test_audit_record_list_filter_by_object_name(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"object_name": "DataSource1"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_fuzzy_object_name(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"object_name": "DataSource"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
-        assert all("DataSource" in record["object_name"] for record in resp.data["results"])
+        assert len(resp.data) == 4
+        assert all("DataSource" in record["object_name"] for record in resp.data)
 
     def test_audit_record_list_filter_by_object_type_and_name(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"object_type": "data_source", "object_name": "DataSource1"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_object_type_and_operation(self, api_client, audit_records):
         resp = api_client.get(
@@ -78,9 +78,9 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["operation"] == "create_data_source"
+        assert len(resp.data) == 1
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_creator_and_operation(self, api_client, bk_user, audit_records):
         resp = api_client.get(
@@ -88,27 +88,26 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["operation"] == "create_data_source"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_creator_and_object_type(self, api_client, bk_user, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"creator": bk_user.username, "object_type": "data_source"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
+        assert len(resp.data) == 4
         assert all(
-            record["creator"] == bk_user.username and record["object_type"] == "data_source"
-            for record in resp.data["results"]
+            record["creator"] == bk_user.username and record["object_type"] == "data_source" for record in resp.data
         )
 
     def test_audit_record_list_filter_by_creator_and_object_name(self, api_client, bk_user, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"creator": bk_user.username, "object_name": "DataSource1"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_operation_and_object_name(self, api_client, audit_records):
         resp = api_client.get(
@@ -116,9 +115,9 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["operation"] == "create_data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["operation"] == "create_data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_creator_object_type_and_operation(self, api_client, bk_user, audit_records):
         resp = api_client.get(
@@ -127,10 +126,10 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["operation"] == "create_data_source"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_creator_object_type_and_object_name(self, api_client, bk_user, audit_records):
         resp = api_client.get(
@@ -139,10 +138,10 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_creator_operation_and_object_name(self, api_client, bk_user, audit_records):
         resp = api_client.get(
@@ -151,10 +150,10 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["operation"] == "create_data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["operation"] == "create_data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_object_type_operation_and_object_name(self, api_client, audit_records):
         resp = api_client.get(
@@ -163,10 +162,10 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["operation"] == "create_data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["operation"] == "create_data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_creator_object_type_operation_and_object_name(
         self, api_client, bk_user, audit_records
@@ -182,11 +181,11 @@ class TestAuditRecordListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
-        assert resp.data["results"][0]["object_type"] == "data_source"
-        assert resp.data["results"][0]["operation"] == "create_data_source"
-        assert resp.data["results"][0]["object_name"] == "DataSource1"
+        assert len(resp.data) == 1
+        assert resp.data[0]["creator"] == bk_user.username
+        assert resp.data[0]["object_type"] == "data_source"
+        assert resp.data[0]["operation"] == "create_data_source"
+        assert resp.data[0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_invalid_operation(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"operation": "non_existent_operation"})
@@ -202,18 +201,16 @@ class TestAuditRecordListApi:
         resp = api_client.get(reverse("audit.list"), data={"object_name": "non_existent_object_name"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 0
+        assert len(resp.data) == 0
 
     def test_audit_record_list_pagination_first_page(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"page": 1, "page_size": 2})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
-        assert len(resp.data["results"]) == 2
+        assert len(resp.data) == 2
 
     def test_audit_record_list_pagination_second_page(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"page": 2, "page_size": 2})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 4
-        assert len(resp.data["results"]) == 2
+        assert len(resp.data) == 2
