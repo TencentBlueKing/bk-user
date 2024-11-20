@@ -65,9 +65,9 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
         return OperationAuditRecord.objects.filter(**filters)
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        # 对于 tenant_user_id 的查询也采取分页的方式，不需要全量查询
-        paginated_queryset = self.paginate_queryset(self.get_queryset().only("creator"))
-        tenant_user_ids = [obj.creator for obj in paginated_queryset]
+        # 对于 tenant_user_id 的查询也采取分页的方式，不需要全表查询
+        tenant_user_ids = self.paginate_queryset(self.get_queryset().values_list("creator", flat=True))
+
         return {
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
         }
