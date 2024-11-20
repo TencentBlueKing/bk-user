@@ -214,3 +214,15 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
+
+    def test_audit_record_list_pagination_third_page(self, api_client, audit_records):
+        resp = api_client.get(reverse("audit.list"), data={"page": 3, "page_size": 2})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
+
+    def test_audit_record_list_pagination_large_page(self, api_client, audit_records):
+        resp = api_client.get(reverse("audit.list"), data={"page": 100, "page_size": 2})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
