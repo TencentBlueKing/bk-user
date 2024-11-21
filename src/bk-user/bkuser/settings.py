@@ -203,7 +203,7 @@ SESSION_COOKIE_DOMAIN = _BK_USER_HOSTNAME
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = f"bkuser_csrftoken_{_BK_USER_URL_MD5_16BIT}"
 # 对于特殊端口，带端口和不带端口都得添加，其他只需要添加默认原生的即可
-# Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme （http:// 或 https://) 开头
+# Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme (http:// 或 https://) 开头
 CSRF_TRUSTED_ORIGINS = (
     [f"{_BK_USER_SCHEME}://{_BK_USER_HOSTNAME}", f"{_BK_USER_SCHEME}://{_BK_USER_NETLOC}"]
     if _BK_USER_IS_SPECIAL_PORT

@@ -177,7 +177,7 @@ SESSION_COOKIE_NAME = f"bklogin_sessionid_{_BK_LOGIN_URL_MD5_16BIT}"
 SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
 CSRF_COOKIE_NAME = f"bklogin_csrftoken_{_BK_LOGIN_URL_MD5_16BIT}"
 # 对于特殊端口，带端口和不带端口都得添加，其他只需要添加默认原生的即可
-# Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme （http:// 或 https://) 开头
+# Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme (http:// 或 https://) 开头
 CSRF_TRUSTED_ORIGINS = (
     [f"{_BK_LOGIN_SCHEME}://{_BK_LOGIN_HOSTNAME}", f"{_BK_LOGIN_SCHEME}://{_BK_LOGIN_NETLOC}"]
     if _BK_LOGIN_IS_SPECIAL_PORT
