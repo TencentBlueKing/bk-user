@@ -14,18 +14,18 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class NotificationMethod(str, StructuredEnum):
+class NotificationMethod(StrStructuredEnum):
     """通知方式"""
 
     EMAIL = EnumField("email", label=_("邮件"))
     SMS = EnumField("sms", label=_("短信"))
 
 
-class NotificationScene(str, StructuredEnum):
+class NotificationScene(StrStructuredEnum):
     """通知场景"""
 
     USER_INITIALIZE = EnumField("user_initialize", label=_("用户初始化"))

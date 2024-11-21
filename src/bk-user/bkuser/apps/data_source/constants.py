@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAME_REGEX  # noqa: F401
@@ -23,14 +23,14 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
 
 
-class FieldMappingOperation(str, StructuredEnum):
+class FieldMappingOperation(StrStructuredEnum):
     """字段映射关系"""
 
     DIRECT = EnumField("direct", label=_("直接"))
     EXPRESSION = EnumField("expression", label=_("表达式"))
 
 
-class DataSourceTypeEnum(str, StructuredEnum):
+class DataSourceTypeEnum(StrStructuredEnum):
     """数据源类型"""
 
     REAL = EnumField("real", label=_("实体"))

@@ -14,11 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class TokenRelatedObjType(str, StructuredEnum):
+class TokenRelatedObjType(StrStructuredEnum):
     """令牌关联对象类型"""
 
     TENANT_USER = EnumField("tenant_user", label=_("租户用户"))

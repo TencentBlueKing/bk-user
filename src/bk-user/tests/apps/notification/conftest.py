@@ -22,7 +22,7 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_user(default_tenant, full_local_data_source) -> TenantUser:
     sync_users_depts_to_tenant(default_tenant, full_local_data_source)
     return TenantUser.objects.filter(data_source_id=full_local_data_source.id).first()

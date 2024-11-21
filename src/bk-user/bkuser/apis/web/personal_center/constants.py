@@ -15,11 +15,11 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class PersonalCenterFeatureFlag(str, StructuredEnum):
+class PersonalCenterFeatureFlag(StrStructuredEnum):
     """
     TODO：技术债，不使用 FeatureFlag 命名，需要统一 Review 调整
     """
@@ -29,7 +29,7 @@ class PersonalCenterFeatureFlag(str, StructuredEnum):
     EMAIL_UPDATE_RESTRICTION = EnumField("email_update_restriction", label=_("邮箱更新限制"))
 
 
-class PhoneOrEmailUpdateRestrictionEnum(str, StructuredEnum):
+class PhoneOrEmailUpdateRestrictionEnum(StrStructuredEnum):
     NEED_VERIFY = EnumField("need_verify", label=_("验证后修改"))
     EDITABLE_DIRECTLY = EnumField("editable_directly", label=_("可直接修改"))
     NOT_EDITABLE = EnumField("not_editable", label=_("不可修改"))

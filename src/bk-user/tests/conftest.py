@@ -46,19 +46,19 @@ post_save.disconnect(set_data_source_sync_periodic_task, sender=DataSource)
 post_save.disconnect(sync_identity_infos_and_notify_after_modify_data_source, sender=DataSource)
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_tenant() -> Tenant:
     """初始化默认租户"""
     return create_tenant()
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_tenant() -> Tenant:
     """生成随机租户"""
     return create_tenant(generate_random_string())
 
 
-@pytest.fixture()
+@pytest.fixture
 def bk_user(request, default_tenant) -> User:
     """生成随机用户"""
     tenant = default_tenant

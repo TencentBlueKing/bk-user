@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 FAKE_PASSWORD = "Pa-@-114514-2887"
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_ds_with_sensitive(bare_local_data_source) -> DataSource:
     """包含敏感信息的本地数据源"""
     plugin_config = bare_local_data_source.plugin_config

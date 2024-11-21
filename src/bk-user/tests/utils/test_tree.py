@@ -89,7 +89,7 @@ def test_bfs_traversal_tree_single():
 
 
 class TestTree:
-    @pytest.fixture()
+    @pytest.fixture
     def simple_tree(self) -> Tree:
         return Tree(
             [

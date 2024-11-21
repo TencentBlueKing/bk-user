@@ -29,7 +29,7 @@ from tests.test_utils.data_source import init_data_source_users_depts_and_relati
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 
-@pytest.fixture()
+@pytest.fixture
 def open_v1_api_client() -> APIClient:
     client = APIClient()
 
@@ -43,7 +43,7 @@ def open_v1_api_client() -> APIClient:
         yield client
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_data_source(default_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """默认租户的本地数据源"""
     data_source = DataSource.objects.create(

@@ -16,13 +16,13 @@
 # to the current version of the project delivered to anyone in the future.
 from http import HTTPStatus
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 from bklogin.utils.std_error import ErrorCode
 
 
-class ErrorCodeCategoryEnum(str, StructuredEnum):
+class ErrorCodeCategoryEnum(StrStructuredEnum):
     # 400
     INVALID_ARGUMENT = EnumField("INVALID_ARGUMENT", label=_("参数不符合格式"))
     INVALID_REQUEST = EnumField("INVALID_REQUEST", label=_("参数符合格式但不符合业务规则"))

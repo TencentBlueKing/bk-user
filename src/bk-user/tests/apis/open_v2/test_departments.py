@@ -138,7 +138,7 @@ class TestListDepartmentChildren:
 
 
 class TestListProfileDepartments:
-    @pytest.fixture()
+    @pytest.fixture
     def user_lushi(self, default_tenant, local_data_source) -> TenantUser:
         return TenantUser.objects.get(
             tenant=default_tenant,

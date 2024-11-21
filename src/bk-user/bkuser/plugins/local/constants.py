@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import re
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 # 本地数据源密码最大长度
@@ -47,21 +47,21 @@ MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{1,30}[a-zA-Z0-9]$")
 
 
-class PasswordGenerateMethod(str, StructuredEnum):
+class PasswordGenerateMethod(StrStructuredEnum):
     """密码生成方式"""
 
     RANDOM = EnumField("random", label=_("随机生成"))
     FIXED = EnumField("fixed", label=_("固定值"))
 
 
-class NotificationMethod(str, StructuredEnum):
+class NotificationMethod(StrStructuredEnum):
     """通知方式"""
 
     EMAIL = EnumField("email", label=_("邮件通知"))
     SMS = EnumField("sms", label=_("短信通知"))
 
 
-class NotificationScene(str, StructuredEnum):
+class NotificationScene(StrStructuredEnum):
     """通知场景"""
 
     USER_INITIALIZE = EnumField("user_initialize", label=_("用户初始化"))

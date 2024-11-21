@@ -91,31 +91,31 @@ def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
     return [age_field, gender_field, region_field, hobbies_field]
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_tenant_custom_fields(random_tenant) -> List[TenantUserCustomField]:
     """随机租户的自定义字段"""
     return _create_tenant_custom_fields(random_tenant)
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaboration_tenant_custom_fields(collaboration_tenant) -> List[TenantUserCustomField]:
     """协同租户的自定义字段"""
     return _create_tenant_custom_fields(collaboration_tenant)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _init_tenant_users_depts(random_tenant, full_local_data_source, random_tenant_custom_fields) -> None:
     """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaboration_tenant() -> Tenant:
     """创建随机的协同租户"""
     return create_tenant(generate_random_string())
 
 
-@pytest.fixture()
+@pytest.fixture
 def _init_collaboration_users_depts(
     random_tenant,
     collaboration_tenant,

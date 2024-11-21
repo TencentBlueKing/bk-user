@@ -15,11 +15,11 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class ObjectTypeEnum(str, StructuredEnum):
+class ObjectTypeEnum(StrStructuredEnum):
     """操作对象类型"""
 
     DATA_SOURCE = EnumField("data_source", label=_("数据源"))
@@ -31,7 +31,7 @@ class ObjectTypeEnum(str, StructuredEnum):
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
 
 
-class OperationEnum(str, StructuredEnum):
+class OperationEnum(StrStructuredEnum):
     """操作行为"""
 
     # 数据源

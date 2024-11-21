@@ -16,8 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 from django.conf import settings
-from django.conf.urls import re_path
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.decorators.cache import never_cache
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view

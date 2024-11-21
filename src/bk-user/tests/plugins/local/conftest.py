@@ -21,6 +21,6 @@ from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_workbook() -> Workbook:
     return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")

@@ -27,7 +27,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_ds_plugin_cfg() -> Dict[str, Any]:
     return {
         "enable_password": True,
@@ -131,12 +131,12 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_ds_plugin() -> DataSourcePlugin:
     return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL)
 
 
-@pytest.fixture()
+@pytest.fixture
 def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
@@ -147,14 +147,14 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def full_local_data_source(bare_local_data_source) -> DataSource:
     """携带用户，部门信息的本地数据源"""
     init_data_source_users_depts_and_relations(bare_local_data_source)
     return bare_local_data_source
 
 
-@pytest.fixture()
+@pytest.fixture
 def general_ds_plugin_cfg() -> Dict[str, Any]:
     return {
         "server_config": {
@@ -173,12 +173,12 @@ def general_ds_plugin_cfg() -> Dict[str, Any]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def general_ds_plugin() -> DataSourcePlugin:
     return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
 
 
-@pytest.fixture()
+@pytest.fixture
 def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
@@ -190,14 +190,14 @@ def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_pl
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def full_general_data_source(bare_general_data_source) -> DataSource:
     """携带用户，部门信息的通用 HTTP 数据源"""
     init_data_source_users_depts_and_relations(bare_general_data_source)
     return bare_general_data_source
 
 
-@pytest.fixture()
+@pytest.fixture
 def ldap_ds_plugin_cfg() -> Dict[str, Any]:
     return {
         "server_config": {

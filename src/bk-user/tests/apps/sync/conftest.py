@@ -27,7 +27,7 @@ from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
     """数据源同步任务"""
     return DataSourceSyncTask.objects.create(
@@ -40,7 +40,7 @@ def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_sync_task(full_local_data_source, default_tenant, data_source_sync_task) -> TenantSyncTask:
     """租户数据同步任务"""
     return TenantSyncTask.objects.create(
@@ -56,12 +56,12 @@ def tenant_sync_task(full_local_data_source, default_tenant, data_source_sync_ta
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_workbook() -> Workbook:
     return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")
 
 
-@pytest.fixture()
+@pytest.fixture
 def encoded_file(user_workbook) -> str:
     with io.BytesIO() as buffer:
         user_workbook.save(buffer)

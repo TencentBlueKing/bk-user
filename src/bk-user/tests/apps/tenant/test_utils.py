@@ -25,12 +25,12 @@ from bkuser.utils.uuid import generate_uuid
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def zhangsan(full_local_data_source) -> DataSourceUser:
     return DataSourceUser.objects.filter(data_source=full_local_data_source, username="zhangsan").first()
 
 
-@pytest.fixture()
+@pytest.fixture
 def lisi(full_local_data_source) -> DataSourceUser:
     return DataSourceUser.objects.filter(data_source=full_local_data_source, username="lisi").first()
 
@@ -90,12 +90,12 @@ class TestTenantUserIdGenerator:
         assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
 
 
-@pytest.fixture()
+@pytest.fixture
 def company(full_local_data_source) -> DataSourceDepartment:
     return DataSourceDepartment.objects.filter(data_source=full_local_data_source, code="company").first()
 
 
-@pytest.fixture()
+@pytest.fixture
 def dept_a(full_local_data_source) -> DataSourceDepartment:
     return DataSourceDepartment.objects.filter(data_source=full_local_data_source, code="dept_a").first()
 

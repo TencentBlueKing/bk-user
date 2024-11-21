@@ -25,7 +25,7 @@ from tests.test_utils.tenant import create_tenant
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def audit_records(bk_user, default_tenant, other_tenant) -> List[OperationAuditRecord]:
     return [
         OperationAuditRecord.objects.create(
@@ -71,6 +71,6 @@ def audit_records(bk_user, default_tenant, other_tenant) -> List[OperationAuditR
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def other_tenant() -> Tenant:
     return create_tenant(tenant_id="other_tenant")

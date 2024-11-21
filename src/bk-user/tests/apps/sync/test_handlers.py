@@ -25,7 +25,7 @@ from django_celery_beat.models import PeriodicTask
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def _enable_signal():
     post_save.connect(set_data_source_sync_periodic_task, sender=DataSource)
     yield

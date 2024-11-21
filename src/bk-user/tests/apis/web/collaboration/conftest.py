@@ -23,13 +23,13 @@ from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaboration_tenant() -> Tenant:
     """创建随机的协同租户"""
     return create_tenant(generate_random_string())
 
 
-@pytest.fixture()
+@pytest.fixture
 def strategy_source_config() -> Dict:
     return {
         "organization_scope_type": CollaborationScopeType.ALL,
@@ -39,7 +39,7 @@ def strategy_source_config() -> Dict:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def strategy_target_config(random_tenant, collaboration_tenant) -> Dict:
     return {
         "organization_scope_type": CollaborationScopeType.ALL,
@@ -67,7 +67,7 @@ def _create_strategy(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaborate_to_strategy(
     random_tenant, collaboration_tenant, strategy_source_config, strategy_target_config
 ) -> CollaborationStrategy:
@@ -75,7 +75,7 @@ def collaborate_to_strategy(
     return _create_strategy(random_tenant, collaboration_tenant, strategy_source_config, strategy_target_config)
 
 
-@pytest.fixture()
+@pytest.fixture
 def collaborate_from_strategy(
     random_tenant, collaboration_tenant, strategy_source_config, strategy_target_config
 ) -> CollaborationStrategy:
@@ -120,11 +120,11 @@ def _create_tenant_custom_fields(tenant: Tenant) -> None:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def _init_random_tenant_custom_fields(random_tenant):
     _create_tenant_custom_fields(random_tenant)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _init_collaboration_tenant_custom_fields(collaboration_tenant):
     _create_tenant_custom_fields(collaboration_tenant)

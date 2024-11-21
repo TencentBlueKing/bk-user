@@ -30,7 +30,7 @@ pytestmark = pytest.mark.django_db
 class TestTenantUserNotifier:
     """测试租户用户通知功能"""
 
-    @pytest.fixture()
+    @pytest.fixture
     def data_source(self, random_tenant, full_local_data_source):
         sync_users_depts_to_tenant(random_tenant, full_local_data_source)
         return full_local_data_source

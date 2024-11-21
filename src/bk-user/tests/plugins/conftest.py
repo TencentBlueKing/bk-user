@@ -19,6 +19,6 @@ import pytest
 from bkuser.apps.sync.loggers import TaskLogger
 
 
-@pytest.fixture()
+@pytest.fixture
 def logger() -> TaskLogger:
     return TaskLogger()

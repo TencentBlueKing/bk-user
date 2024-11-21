@@ -11,18 +11,18 @@ url = "https://mirrors.tencent.com/pypi/simple/"
 priority = "default"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-django = "3.2.25"
-pydantic = "2.3.0"
-blue-krill = "2.0.3"
+python = ">=3.11,<3.12"
+django = "4.2.16"
+pydantic = "2.6.4"
+blue-krill = "2.0.7"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.1.4"
-mypy = "^1.6.1"
-types-requests = "^2.31.0.10"
-pytest = "^7.4.3"
-pytest-django = "^4.5.2"
-import-linter = "^1.12.0"
+ruff = "^0.7.4"
+mypy = "^1.13.0"
+types-requests = "^2.31.0.1"
+pytest = "^8.3.3"
+pytest-django = "^4.9.0"
+import-linter = "^2.1"
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -38,7 +38,7 @@ module = [
 ]
 ignore_errors = true
 
-[tool.ruff]
+[tool.ruff.lint]
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
 # All Rule: https://beta.ruff.rs/docs/rules/
@@ -46,8 +46,6 @@ select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", 
 ignore = [
     # Consider moving this statement to an else block
     "TRY300",
-    # Use raise from to specify exception cause
-    "TRY200",
     # Avoid specifying long messages outside the exception class
     "TRY003",
     # Use contextlib.suppress({exception}) instead of try-except-pass
@@ -61,6 +59,8 @@ ignore = [
     # raise-without-from-inside-except
     "B904"
 ]
+
+[tool.ruff]
 # Same as Black.
 line-length = 119
 # show an enumeration of all autofixed lint violations
@@ -93,11 +93,11 @@ exclude = [
 ]
 force-exclude = true
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 relative-imports-order = "closest-to-furthest"
 
 [tool.importlinter]

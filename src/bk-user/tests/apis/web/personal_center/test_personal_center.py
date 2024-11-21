@@ -25,7 +25,7 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_user(bk_user) -> TenantUser:
     return TenantUser.objects.get(tenant_id=bk_user.get_property("tenant_id"), id=bk_user.username)
 

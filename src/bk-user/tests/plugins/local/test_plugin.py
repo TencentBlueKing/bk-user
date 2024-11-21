@@ -20,7 +20,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.local.plugin import LocalDataSourcePlugin
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_ds_cfg(local_ds_plugin_cfg):
     return LocalDataSourcePluginConfig(**local_ds_plugin_cfg)
 

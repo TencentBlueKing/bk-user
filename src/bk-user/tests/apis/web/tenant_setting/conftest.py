@@ -23,7 +23,7 @@ from bkuser.apps.tenant.models import TenantUserCustomField
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
+@pytest.fixture
 def custom_fields(default_tenant):
     custom_field_data = [
         {

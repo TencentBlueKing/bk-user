@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import re
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{1,30}[a-zA-Z0-9]$")
@@ -25,7 +25,7 @@ TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{1,30}[a-zA-Z0-9]$")
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
-class UserFieldDataType(str, StructuredEnum):
+class UserFieldDataType(StrStructuredEnum):
     """租户用户自定义字段数据类型"""
 
     STRING = EnumField("string", label=_("字符串"))
@@ -34,14 +34,14 @@ class UserFieldDataType(str, StructuredEnum):
     MULTI_ENUM = EnumField("multi_enum", label=_("多选枚举"))
 
 
-class NotificationMethod(str, StructuredEnum):
+class NotificationMethod(StrStructuredEnum):
     """通知方式"""
 
     EMAIL = EnumField("email", label=_("邮件通知"))
     SMS = EnumField("sms", label=_("短信通知"))
 
 
-class NotificationScene(str, StructuredEnum):
+class NotificationScene(StrStructuredEnum):
     """通知场景"""
 
     TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("租户用户即将过期"))
@@ -126,14 +126,14 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
 }
 
 
-class TenantStatus(str, StructuredEnum):
+class TenantStatus(StrStructuredEnum):
     """租户状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
 
 
-class TenantUserStatus(str, StructuredEnum):
+class TenantUserStatus(StrStructuredEnum):
     """租户用户状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
@@ -141,7 +141,7 @@ class TenantUserStatus(str, StructuredEnum):
     EXPIRED = EnumField("expired", label=_("已过期"))
 
 
-class CollaborationStrategyStatus(str, StructuredEnum):
+class CollaborationStrategyStatus(StrStructuredEnum):
     """协同策略状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
@@ -150,7 +150,7 @@ class CollaborationStrategyStatus(str, StructuredEnum):
     UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
 
 
-class CollaborationScopeType(str, StructuredEnum):
+class CollaborationScopeType(StrStructuredEnum):
     """协同范围类型"""
 
     ALL = EnumField("all", label=_("全部"))
@@ -158,14 +158,14 @@ class CollaborationScopeType(str, StructuredEnum):
     # SPECIFIED = EnumField("specified", label=_("指定"))
 
 
-class FieldMappingOperation(str, StructuredEnum):
+class FieldMappingOperation(StrStructuredEnum):
     """字段映射关系"""
 
     DIRECT = EnumField("direct", label=_("直接"))
     EXPRESSION = EnumField("expression", label=_("表达式"))
 
 
-class TenantUserIdRuleEnum(str, StructuredEnum):
+class TenantUserIdRuleEnum(StrStructuredEnum):
     """租户用户 ID 生成规则"""
 
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))

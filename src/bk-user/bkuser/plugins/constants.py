@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 # 非内置插件，必须以指定前缀开头
@@ -25,7 +25,7 @@ CUSTOM_PLUGIN_ID_PREFIX = "custom_"
 MAX_LOGO_SIZE = 64 * 1024
 
 
-class DataSourcePluginEnum(str, StructuredEnum):
+class DataSourcePluginEnum(StrStructuredEnum):
     """数据源插件枚举"""
 
     LOCAL = EnumField("local", label=_("本地数据源"))

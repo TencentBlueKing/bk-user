@@ -19,13 +19,13 @@ import pytest
 from bkuser.common.passwd import PasswordStrengthError, PasswordValidator
 
 
-@pytest.fixture()
+@pytest.fixture
 def strict_validator(strict_passwd_rule) -> PasswordValidator:
     """严格的密码强度校验器，会限制所有规则"""
     return PasswordValidator(strict_passwd_rule)
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_validator(simple_passwd_rule) -> PasswordValidator:
     """简单的密码强度校验器，仅包含少量限制"""
     return PasswordValidator(simple_passwd_rule)
