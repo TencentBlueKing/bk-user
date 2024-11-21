@@ -160,7 +160,9 @@
               />
             </bk-select>
           </bk-form-item>
-          <bk-form-item class="w-[560px]" :label="$t('用户组过滤器')">
+          <bk-form-item
+            class="w-[560px]" :label="$t('用户组过滤器')" required
+            property="user_group_config.search_filter">
             <bk-input
               placeholder="ou=company,dc=bk,dc=example,dc=com"
               v-model="fieldSettingData.user_group_config.search_filter"
@@ -357,6 +359,7 @@ const rulesFieldSetting = {
   source_field: [validate.required],
   'user_group_config.object_class': [validate.required],
   'user_group_config.group_member_field': [validate.required],
+  'user_group_config.search_filter': [validate.required],
   'leader_config.leader_field': [validate.required],
 };
 
@@ -397,21 +400,21 @@ const handleTestConnection = async () => {
     await formRef1.value.validate();
     connectionLoading.value = true;
     connectionStatus.value = null;
-    // LDAP连通性测试必需要带上user_group_config、leader_config的默认参数
+    // LDAP连通性测试必需要带上user_group_config、leader_config
     const params = {
       plugin_id: ldapConfigData.value.plugin_id,
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
         data_config: ldapConfigData.value.data_config,
         user_group_config: {
-          enabled: true,
-          object_class: 'groupOfNames',
-          search_filter: 'ou=company,dc=bk,dc=example,dc=com',
-          group_member_field: 'member',
+          enabled: false,
+          object_class: '',
+          search_filter: '',
+          group_member_field: '',
         },
         leader_config: {
-          enabled: true,
-          leader_field: 'manager',
+          enabled: false,
+          leader_field: '',
         },
       },
     };

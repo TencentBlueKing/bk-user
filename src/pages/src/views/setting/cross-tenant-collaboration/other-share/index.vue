@@ -289,7 +289,7 @@ import { useTableMaxHeight } from '@/hooks';
 import { getCollaborationSyncRecords, getCollaborationSyncRecordsLogs, getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
-import { dataRecordStatus, dataSourceStatus } from '@/utils';
+import { dataRecordStatus, dataSourceStatus, durationText } from '@/utils';
 
 const props = defineProps({
   active: {
@@ -479,28 +479,6 @@ const handleRowExpand = async ({ row }) => {
       createdObjs: res.data?.created_objs,
       deletedObjs: res.data?.deleted_objs,
     });
-  }
-};
-
-const durationText = (value) => {
-  if (value) {
-    value = value.slice(6);
-    if (value < 60) {
-      return `<1 ${t('分钟')}`;
-    }
-    if (60 <= value && value < 3600) {
-      const time = value / 60;
-      const min = time.toString().split('.')[0];
-      const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
-      return `${min} ${t('分钟')} ${sec} ${t('秒')}`;
-    }
-    if (3600 <= value) {
-      const time = value / 3600;
-      const hour = time.toString().split('.')[0];
-      const min = parseInt(time.toString().split('.')[1][0], 10) * 6;
-      return `${hour}小时${min}分钟`;
-    }
-    return value;
   }
 };
 </script>
