@@ -6,7 +6,7 @@ WORKDIR /
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
-FROM python:3.10.12-slim-bullseye
+FROM python:3.11.10-slim-bullseye
 USER root
 
 RUN rm /etc/apt/sources.list && \
