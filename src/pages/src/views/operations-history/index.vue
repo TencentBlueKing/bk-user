@@ -12,7 +12,18 @@
             :model="formData"
             class="w-full mt-[24px]">
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作人')">
-              <bk-input class="items-input" v-model="formData.creator" clearable />
+              <MemberSelector
+                class="w-[300px]"
+                :state="realUsers"
+                :params="params"
+                :show-on-init="false"
+                :multiple="false"
+                :clearable="true"
+                :model-value="formData.creator"
+                @change-select-list="changeSelectList"
+                @search-user-list="fetchRealUsers"
+                @scroll-change="scrollChange"
+              />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
               <bk-select class="items-select" v-model="formData.operation">
@@ -119,7 +130,9 @@
 import dayjs from 'dayjs';
 import { onMounted, reactive, ref } from 'vue';
 
+import MemberSelector from '@/components/MemberSelector.vue';
 import { getAudit } from '@/http/operationHistoryFiles';
+import { getRealUsers } from '@/http/settingFiles';
 import { t } from '@/language/index';
 
 const isHover = ref(false);
@@ -141,7 +154,7 @@ const operationTypeMap = {
 const isLoading = ref(false);
 const tableData = ref([]);
 const formData = reactive({
-  creator: '',  // 操作人
+  creator: [],  // 操作人
   operation: '', // 操作类型
   object_type: '', // 操作对象
   object_name: '', // 操作实例
@@ -152,9 +165,20 @@ const pagination = reactive({
   count: 0,
   limit: 10,
 });
+const realUsers = ref({
+  count: 0,
+  results: [],
+});
+const params = reactive({
+  page: 1,
+  page_size: 10,
+  keyword: '',
+  exclude_manager: true,
+});
 
 onMounted(() => {
   initAudit();
+  initCreator();
 });
 
 const initAudit = async () => {
@@ -177,6 +201,13 @@ const initAudit = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const initCreator = async () => {
+  const res = await getRealUsers({
+    exclude_manager: params.exclude_manager,
+  });
+  realUsers.value = res.data;
 };
 
 const pageLimitChange = (pageSize: number) => {
@@ -202,11 +233,31 @@ const toggleFold = () => {
 
 const handleReset = () => {
   formData.created_at = '';
-  formData.creator = '';
+  formData.creator = [];
   formData.object_name = '';
   formData.object_type = '';
   formData.operation = '';
 };
+
+const changeSelectList = (values: string[]) => {
+  formData.creator = values;
+};
+const scrollChange = () => {
+  params.page += 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value.count = res.data.count;
+    realUsers.value.results.push(...res.data.results);
+  });
+};
+// 获取用户列表
+const fetchRealUsers = (value: string) => {
+  params.keyword = value;
+  params.page = 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value = res.data;
+  });
+};
+
 </script>
 
 <style lang="less" scoped>
