@@ -82,7 +82,7 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】将审计记录保存至数据库
-        auditor.batch_record(extras={"department_ids": list(data_source_dept_ids)})
+        auditor.batch_record()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

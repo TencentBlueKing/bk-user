@@ -276,7 +276,7 @@ class TenantUserDepartmentRelationsAuditor:
             )
         )
 
-    def batch_record(self, extras: Dict[str, List]):
+    def batch_record(self, extras: Dict[str, List] | None = None):
         """批量记录"""
         data_source_users = DataSourceUser.objects.filter(
             id__in=self.data_source_user_ids,
@@ -287,7 +287,7 @@ class TenantUserDepartmentRelationsAuditor:
         for data_source_user in data_source_users:
             data_before = self.data_before[data_source_user.id]
             data_after = {"department_ids": data_after_map.get(data_source_user.id, [])}
-            self.record(data_source_user, data_before, data_after, extras)
+            self.record(data_source_user, data_before, data_after, extras or {})
         batch_add_audit_records(self.operator, self.tenant_id, self.audit_objects)
 
     @staticmethod

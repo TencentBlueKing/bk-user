@@ -1229,18 +1229,16 @@ class TenantUserLeaderBatchUpdateApi(
         # 【审计】批量创建 AuditObject 对象
         audit_objects = [
             AuditObject(
-                id=tenant_user.id,
+                id=data_source_user.id,
                 type=ObjectTypeEnum.DATA_SOURCE_USER,
-                name=tenant_user.data_source_user.username,
+                name=data_source_user.username,
                 operation=OperationEnum.MODIFY_USER_LEADER,
-                data_before={"leader_ids": data_before_user_leader_map[tenant_user.data_source_user_id]},
+                data_before={"leader_ids": data_before_user_leader_map[data_source_user.id]},
                 data_after={"leader_ids": list(leader_ids)},
-                extras={"leader_ids": list(leader_ids)},
             )
-            for tenant_user in TenantUser.objects.filter(
-                tenant_id=cur_tenant_id,
-                id__in=data["user_ids"],
-            ).select_related("data_source_user")
+            for data_source_user in DataSourceUser.objects.filter(
+                id__in=data_source_user_ids,
+            )
         ]
 
         # 记录审计
