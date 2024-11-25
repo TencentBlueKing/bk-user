@@ -62,11 +62,11 @@ class DataConfig(BaseModel):
     # 用户对象类
     user_object_class: str
     # 用户 Base DN 列表
-    user_search_base_dns: List[str]
+    user_base_dns: List[str]
     # 部门对象类
     dept_object_class: str
     # 部门 Base DN 列表
-    dept_search_base_dns: List[str]
+    dept_base_dns: List[str]
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "DataConfig":
@@ -76,13 +76,13 @@ class DataConfig(BaseModel):
         if not self.user_object_class:
             raise ValueError(_("需要提供用户对象类"))
 
-        if not self.user_search_base_dns:
+        if not self.user_base_dns:
             raise ValueError(_("需要提供用户 Base DN"))
 
         if not self.dept_object_class:
             raise ValueError(_("需要提供部门对象类"))
 
-        if not self.dept_search_base_dns:
+        if not self.dept_base_dns:
             raise ValueError(_("需要提供部门 Base DN"))
 
         return self
@@ -96,7 +96,7 @@ class UserGroupConfig(BaseModel):
     # 用户组对象类
     object_class: Literal["groupOfNames", "groupOfUniqueNames", ""] = ""
     # 用户组 Base DN 列表
-    search_base_dns: List[str] = []
+    base_dns: List[str] = []
     # 用户组成员字段
     group_member_field: Literal["member", "uniqueMember", ""] = ""
 
@@ -108,7 +108,7 @@ class UserGroupConfig(BaseModel):
         if not self.object_class:
             raise ValueError(_("需要提供用户组对象类"))
 
-        if not self.search_base_dns:
+        if not self.base_dns:
             raise ValueError(_("需要提供用户组 Base DN"))
 
         if self.object_class == "groupOfNames" and self.group_member_field != "member":
@@ -158,16 +158,16 @@ class LDAPDataSourcePluginConfig(BasePluginConfig):
     @model_validator(mode="after")
     def validate_attrs(self) -> "LDAPDataSourcePluginConfig":
         """插件配置合法性检查"""
-        for dn in self.data_config.user_search_base_dns:
+        for dn in self.data_config.user_base_dns:
             if not dn.endswith(self.server_config.base_dn):
                 raise ValueError(_("用户 Base DN 必须都是 Base DN 的子节点"))
 
-        for dn in self.data_config.dept_search_base_dns:
+        for dn in self.data_config.dept_base_dns:
             if not dn.endswith(self.server_config.base_dn):
                 raise ValueError(_("部门 Base DN 必须都是 Base DN 的子节点"))
 
         if self.user_group_config.enabled:
-            for dn in self.user_group_config.search_base_dns:
+            for dn in self.user_group_config.base_dns:
                 if not dn.endswith(self.server_config.base_dn):
                     raise ValueError(_("用户组 Base DN 必须都是 Base DN 的子节点"))
 

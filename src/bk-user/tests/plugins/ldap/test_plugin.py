@@ -96,12 +96,12 @@ class TestLDAPDataSourcePlugin:
 class TestLDAPDataSourcePluginMultipleBaseDNs:
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_departments(self, ldap_ds_cfg, logger):
-        search_base_dns = [
+        base_dns = [
             "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
             "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         ]
-        ldap_ds_cfg.data_config.dept_search_base_dns = search_base_dns
-        ldap_ds_cfg.user_group_config.search_base_dns = search_base_dns
+        ldap_ds_cfg.data_config.dept_base_dns = base_dns
+        ldap_ds_cfg.user_group_config.base_dns = base_dns
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
         # 注意：cn=dept_b,ou=company,dc=bk,dc=example,dc=com 不匹配
@@ -109,7 +109,7 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
 
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_departments_without_group(self, ldap_ds_cfg, logger):
-        ldap_ds_cfg.data_config.dept_search_base_dns = [
+        ldap_ds_cfg.data_config.dept_base_dns = [
             "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
             "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         ]
@@ -120,7 +120,7 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
 
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_users(self, ldap_ds_cfg, logger):
-        ldap_ds_cfg.data_config.user_search_base_dns = [
+        ldap_ds_cfg.data_config.user_base_dns = [
             "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
             "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         ]
