@@ -167,7 +167,6 @@ class TenantUserUpdateDestroyAuditor:
                         type=ObjectTypeEnum.TENANT_USER,
                         operation=OperationEnum.DELETE_COLLABORATION_TENANT_USER,
                         data_before=user_data,
-                        data_after={},
                     )
                     for user_id, user_data in self.data_befores[tenant_user_id]["collaboration_tenant_users"].items()
                 ]
@@ -206,14 +205,12 @@ class TenantUserCreateAuditor:
                 AuditObject(
                     **ds_user_object,
                     operation=OperationEnum.CREATE_DATA_SOURCE_USER,
-                    data_before={},
                     data_after=get_model_dict(data_source_user),
                 ),
                 # 数据源用户的部门
                 AuditObject(
                     **ds_user_object,
                     operation=OperationEnum.CREATE_USER_DEPARTMENT,
-                    data_before={},
                     data_after={
                         "department_ids": list(
                             DataSourceDepartmentUserRelation.objects.filter(
@@ -229,7 +226,6 @@ class TenantUserCreateAuditor:
                     operation=OperationEnum.CREATE_COLLABORATION_TENANT_USER
                     if tenant_user.tenant_id != self.tenant_id
                     else OperationEnum.CREATE_TENANT_USER,
-                    data_before={},
                     data_after=get_model_dict(tenant_user),
                 ),
             ]
@@ -256,11 +252,11 @@ class TenantUserDepartmentRelationsAuditor:
     def pre_record_data_before(self):
         """记录变更前的相关数据记录"""
         # 获取用户与部门之间的映射关系
-        data_before_map = self.get_user_department_map(self.data_source_user_ids)
+        data_before_user_dept_map = self.get_user_department_map(self.data_source_user_ids)
 
         # 初始化 data_before, 记录变更前用户与部门之间的映射关系
         for data_source_user_id in self.data_source_user_ids:
-            self.data_before[data_source_user_id] = {"department_ids": data_before_map.get(data_source_user_id, [])}
+            self.data_before[data_source_user_id] = {"department_ids": data_before_user_dept_map[data_source_user_id]}
 
     def record(self, data_source_user: DataSourceUser, data_before: Dict, data_after: Dict, extras: Dict):
         """调用 apps.audit 模块里的方法进行记录"""
@@ -282,11 +278,11 @@ class TenantUserDepartmentRelationsAuditor:
             id__in=self.data_source_user_ids,
         )
         # 记录变更后的用户与部门之间的映射关系
-        data_after_map = self.get_user_department_map(self.data_source_user_ids)
+        data_after_user_dept_map = self.get_user_department_map(self.data_source_user_ids)
 
         for data_source_user in data_source_users:
             data_before = self.data_before[data_source_user.id]
-            data_after = {"department_ids": data_after_map.get(data_source_user.id, [])}
+            data_after = {"department_ids": data_after_user_dept_map[data_source_user.id]}
             self.record(data_source_user, data_before, data_after, extras or {})
         batch_add_audit_records(self.operator, self.tenant_id, self.audit_objects)
 
