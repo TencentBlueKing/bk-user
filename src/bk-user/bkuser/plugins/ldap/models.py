@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Any, Dict, Literal
+from typing import Any, Dict, List, Literal
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field, model_validator
@@ -61,12 +61,12 @@ class DataConfig(BaseModel):
 
     # 用户对象类
     user_object_class: str
-    # 用户过滤器
-    user_search_filter: str
+    # 用户 Base DN 列表
+    user_base_dns: List[str]
     # 部门对象类
     dept_object_class: str
-    # 部门过滤器
-    dept_search_filter: str
+    # 部门 Base DN 列表
+    dept_base_dns: List[str]
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "DataConfig":
@@ -76,14 +76,14 @@ class DataConfig(BaseModel):
         if not self.user_object_class:
             raise ValueError(_("需要提供用户对象类"))
 
-        if not self.user_search_filter:
-            raise ValueError(_("需要提供用户过滤器（DN）"))
+        if not self.user_base_dns:
+            raise ValueError(_("需要提供用户 Base DN"))
 
         if not self.dept_object_class:
             raise ValueError(_("需要提供部门对象类"))
 
-        if not self.dept_search_filter:
-            raise ValueError(_("需要提供部门过滤器（DN）"))
+        if not self.dept_base_dns:
+            raise ValueError(_("需要提供部门 Base DN"))
 
         return self
 
@@ -95,8 +95,8 @@ class UserGroupConfig(BaseModel):
     enabled: bool
     # 用户组对象类
     object_class: Literal["groupOfNames", "groupOfUniqueNames", ""] = ""
-    # 用户组过滤器
-    search_filter: str = ""
+    # 用户组 Base DN 列表
+    base_dns: List[str] = []
     # 用户组成员字段
     group_member_field: Literal["member", "uniqueMember", ""] = ""
 
@@ -108,8 +108,8 @@ class UserGroupConfig(BaseModel):
         if not self.object_class:
             raise ValueError(_("需要提供用户组对象类"))
 
-        if not self.search_filter:
-            raise ValueError(_("需要提供用户组过滤器（DN）"))
+        if not self.base_dns:
+            raise ValueError(_("需要提供用户组 Base DN"))
 
         if self.object_class == "groupOfNames" and self.group_member_field != "member":
             raise ValueError(_("用户组对象类为 groupOfNames 时，成员字段应为 member"))
@@ -158,16 +158,18 @@ class LDAPDataSourcePluginConfig(BasePluginConfig):
     @model_validator(mode="after")
     def validate_attrs(self) -> "LDAPDataSourcePluginConfig":
         """插件配置合法性检查"""
-        if not self.data_config.user_search_filter.endswith(self.server_config.base_dn):
-            raise ValueError(_("用户过滤器（DN）必须是 Base DN 的子节点"))
+        for dn in self.data_config.user_base_dns:
+            if not dn.endswith(self.server_config.base_dn):
+                raise ValueError(_("用户 Base DN 必须都是 Base DN 的子节点"))
 
-        if not self.data_config.dept_search_filter.endswith(self.server_config.base_dn):
-            raise ValueError(_("部门过滤器（DN）必须是 Base DN 的子节点"))
+        for dn in self.data_config.dept_base_dns:
+            if not dn.endswith(self.server_config.base_dn):
+                raise ValueError(_("部门 Base DN 必须都是 Base DN 的子节点"))
 
-        if self.user_group_config.enabled and not self.user_group_config.search_filter.endswith(
-            self.server_config.base_dn
-        ):
-            raise ValueError(_("用户组过滤器（DN）必须是 Base DN 的子节点"))
+        if self.user_group_config.enabled:
+            for dn in self.user_group_config.base_dns:
+                if not dn.endswith(self.server_config.base_dn):
+                    raise ValueError(_("用户组 Base DN 必须都是 Base DN 的子节点"))
 
         return self
 

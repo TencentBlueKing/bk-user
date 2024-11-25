@@ -36,14 +36,14 @@ DEFAULT_PLUGIN_CONFIG = LDAPDataSourcePluginConfig(
     ),
     data_config=DataConfig(
         user_object_class="inetOrgPerson",
-        user_search_filter="ou=company,dc=bk,dc=example,dc=com",
+        user_base_dns=["ou=company,dc=bk,dc=example,dc=com"],
         dept_object_class="organizationalUnit",
-        dept_search_filter="ou=company,dc=bk,dc=example,dc=com",
+        dept_base_dns=["ou=company,dc=bk,dc=example,dc=com"],
     ),
     user_group_config=UserGroupConfig(
         enabled=True,
         object_class="groupOfNames",
-        search_filter="ou=company,dc=bk,dc=example,dc=com",
+        base_dns=["ou=company,dc=bk,dc=example,dc=com"],
         group_member_field="member",
     ),
     leader_config=LeaderConfig(

@@ -39,21 +39,21 @@ class LDAPClient:
     def __exit__(self, exc_type, exc_value, traceback):
         self._conn.unbind()
 
-    def fetch_all_objects(self, search_filter: str, object_class: str) -> List[LDAPObject]:
-        return self._fetch_objects_with_page(search_filter, object_class, self.server_config.page_size)
+    def fetch_all_objects(self, base_dn: str, object_class: str) -> List[LDAPObject]:
+        return self._fetch_objects_with_page(base_dn, object_class, self.server_config.page_size)
 
-    def fetch_first_object(self, search_filter: str, object_class: str) -> LDAPObject:
-        results = self._fetch_objects_with_page(search_filter, object_class, 1)
+    def fetch_first_object(self, base_dn: str, object_class: str) -> LDAPObject:
+        results = self._fetch_objects_with_page(base_dn, object_class, 1)
         if not results:
-            raise DataNotFoundError(f"no object found in {search_filter} (objectclass={object_class})")
+            raise DataNotFoundError(f"no object found in {base_dn} (objectclass={object_class})")
 
         return results[0]
 
-    def _fetch_objects_with_page(self, search_filter: str, object_class: str, page_size: int) -> List[LDAPObject]:
+    def _fetch_objects_with_page(self, base_dn: str, object_class: str, page_size: int) -> List[LDAPObject]:
         """
         以分页方式获取对象列表
 
-        :param search_filter: LDAP 查询过滤器，如：ou=company,dc=bk,dc=example,dc=com
+        :param base_dn: LDAP Base DN，如：ou=company,dc=bk,dc=example,dc=com
         :param object_class: LDAP 对象类，如：inetOrgPerson
         :param page_size: 分页大小
         :return: 对象列表
@@ -63,7 +63,7 @@ class LDAPClient:
 
         results = paged_search_accumulator(
             self._conn,
-            search_base=search_filter,
+            search_base=base_dn,
             search_filter=f"(objectclass={object_class})",
             dereference_aliases=DEREF_NEVER,
             get_operational_attributes=False,
