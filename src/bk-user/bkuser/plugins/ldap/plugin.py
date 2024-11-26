@@ -51,7 +51,11 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         """获取部门信息"""
         cfg = self.plugin_config.data_config
         with LDAPClient(self.plugin_config.server_config) as ldap_client:
-            depts = ldap_client.fetch_all_objects(cfg.dept_search_filter, cfg.dept_object_class)
+            depts = [
+                dept
+                for dn in cfg.dept_search_base_dns
+                for dept in ldap_client.fetch_all_objects(dn, cfg.dept_object_class)
+            ]
             self.logger.info(f"fetch {len(depts)} departments from ldap server")
 
         raw_depts = [self._gen_raw_dept(d) for d in depts]
@@ -61,10 +65,10 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             self.logger.info("user group enabled...")
 
             with LDAPClient(self.plugin_config.server_config) as ldap_client:
-                groups = ldap_client.fetch_all_objects(
-                    self.plugin_config.user_group_config.search_filter,
-                    self.plugin_config.user_group_config.object_class,  # type: ignore
-                )
+                base_dns = self.plugin_config.user_group_config.search_base_dns
+                obj_cls = self.plugin_config.user_group_config.object_class
+                groups = [g for dn in base_dns for g in ldap_client.fetch_all_objects(dn, obj_cls)]
+
                 self.logger.info(f"fetch {len(groups)} groups from ldap server")
 
             # 提前存用户 - 用户组映射表，而不是后续依赖用户的 memberOf 属性
@@ -101,7 +105,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
 
         cfg = self.plugin_config.data_config
         with LDAPClient(self.plugin_config.server_config) as ldap_client:
-            users = ldap_client.fetch_all_objects(cfg.user_search_filter, cfg.user_object_class)
+            users = [
+                u for dn in cfg.user_search_base_dns for u in ldap_client.fetch_all_objects(dn, cfg.user_object_class)
+            ]
             self.logger.info(f"fetch {len(users)} users from ldap server")
 
         # 生成的原始用户数据，不含部门，leader 信息
@@ -122,8 +128,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         user_data, dept_data = None, None
         try:
             with LDAPClient(self.plugin_config.server_config) as ldap_client:
-                dept_data = ldap_client.fetch_first_object(cfg.dept_search_filter, cfg.dept_object_class)
-                user_data = ldap_client.fetch_first_object(cfg.user_search_filter, cfg.user_object_class)
+                # 连通性测试以第一个 DN 的为准
+                dept_data = ldap_client.fetch_first_object(cfg.dept_search_base_dns[0], cfg.dept_object_class)
+                user_data = ldap_client.fetch_first_object(cfg.user_search_base_dns[0], cfg.user_object_class)
         except DataNotFoundError as e:
             err_msg = str(e)
         except Exception as e:

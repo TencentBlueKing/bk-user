@@ -209,14 +209,14 @@ def ldap_ds_plugin_cfg() -> Dict[str, Any]:
         },
         "data_config": {
             "user_object_class": "inetOrgPerson",
-            "user_search_filter": "ou=company,dc=bk,dc=example,dc=com",
+            "user_search_base_dns": ["ou=company,dc=bk,dc=example,dc=com"],
             "dept_object_class": "organizationalUnit",
-            "dept_search_filter": "ou=company,dc=bk,dc=example,dc=com",
+            "dept_search_base_dns": ["ou=company,dc=bk,dc=example,dc=com"],
         },
         "user_group_config": {
             "enabled": True,
             "object_class": "groupOfNames",
-            "search_filter": "ou=company,dc=bk,dc=example,dc=com",
+            "search_base_dns": ["ou=company,dc=bk,dc=example,dc=com"],
             "group_member_field": "member",
         },
         "leader_config": {
