@@ -36,12 +36,12 @@ class SendSmsFailed(Exception):
     """发送短信失败"""
 
 
-def send_mail(receiver__username: List[str], message: str, sender: str = None, title: str = None, ):
+def send_mail(receiver_usernames: List[str], message: str, sender: str = None, title: str = None, ):
     """发邮件"""
-    if not receiver__username:
+    if not receiver_usernames:
         raise ReceiversCouldNotBeEmpty(_("收件人不能为空"))
 
-    receivers_str = ",".join(receiver__username)
+    receivers_str = ",".join(receiver_usernames)
 
     title = title or _("[用户管理] 通知邮件")
 
@@ -61,7 +61,7 @@ def send_mail(receiver__username: List[str], message: str, sender: str = None, t
         "content": message_encoded,
         "is_content_base64": True,
         "email_type": "SEND_TO_INTERNET",
-        "receiver__username": receiver__username,
+        "receiver__username": receiver_usernames,
     }
     if not settings.FAKE_SEND_EMAIL:
         ret = client.cmsi.send_mail(**send_mail_params)
