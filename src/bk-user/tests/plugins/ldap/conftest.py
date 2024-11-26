@@ -263,17 +263,17 @@ inet_org_person_data = [
 def _mocked_paged_search_accumulator(*args, **kwargs) -> List[Dict]:
     """测试用函数，用于屏蔽 LDAP 服务"""
 
-    base_dn = kwargs["search_base"]
+    search_base = kwargs["search_base"]
     search_filter = kwargs["search_filter"]
 
     if "inetOrgPerson" in search_filter:
-        return [p for p in inet_org_person_data if p["dn"].endswith(base_dn)]  # type: ignore
+        return [p for p in inet_org_person_data if p["dn"].endswith(search_base)]  # type: ignore
 
     if "organizationalUnit" in search_filter:
-        return [ou for ou in organizational_unit_data if ou["dn"].endswith(base_dn)]  # type: ignore
+        return [ou for ou in organizational_unit_data if ou["dn"].endswith(search_base)]  # type: ignore
 
     if "groupOfNames" in search_filter:
-        return [g for g in group_of_names_data if g["dn"].endswith(base_dn)]  # type: ignore
+        return [g for g in group_of_names_data if g["dn"].endswith(search_base)]  # type: ignore
 
     return []
 
