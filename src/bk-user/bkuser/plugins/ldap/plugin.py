@@ -51,7 +51,11 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         """获取部门信息"""
         cfg = self.plugin_config.data_config
         with LDAPClient(self.plugin_config.server_config) as ldap_client:
-            depts = [d for dn in cfg.dept_base_dns for d in ldap_client.fetch_all_objects(dn, cfg.dept_object_class)]
+            depts = [
+                dept
+                for dn in cfg.dept_search_base_dns
+                for dept in ldap_client.fetch_all_objects(dn, cfg.dept_object_class)
+            ]
             self.logger.info(f"fetch {len(depts)} departments from ldap server")
 
         raw_depts = [self._gen_raw_dept(d) for d in depts]
@@ -61,7 +65,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             self.logger.info("user group enabled...")
 
             with LDAPClient(self.plugin_config.server_config) as ldap_client:
-                base_dns = self.plugin_config.user_group_config.base_dns
+                base_dns = self.plugin_config.user_group_config.search_base_dns
                 obj_cls = self.plugin_config.user_group_config.object_class
                 groups = [g for dn in base_dns for g in ldap_client.fetch_all_objects(dn, obj_cls)]
 
@@ -101,7 +105,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
 
         cfg = self.plugin_config.data_config
         with LDAPClient(self.plugin_config.server_config) as ldap_client:
-            users = [u for dn in cfg.user_base_dns for u in ldap_client.fetch_all_objects(dn, cfg.user_object_class)]
+            users = [
+                u for dn in cfg.user_search_base_dns for u in ldap_client.fetch_all_objects(dn, cfg.user_object_class)
+            ]
             self.logger.info(f"fetch {len(users)} users from ldap server")
 
         # 生成的原始用户数据，不含部门，leader 信息
@@ -123,8 +129,8 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         try:
             with LDAPClient(self.plugin_config.server_config) as ldap_client:
                 # 连通性测试以第一个 DN 的为准
-                dept_data = ldap_client.fetch_first_object(cfg.dept_base_dns[0], cfg.dept_object_class)
-                user_data = ldap_client.fetch_first_object(cfg.user_base_dns[0], cfg.user_object_class)
+                dept_data = ldap_client.fetch_first_object(cfg.dept_search_base_dns[0], cfg.dept_object_class)
+                user_data = ldap_client.fetch_first_object(cfg.user_search_base_dns[0], cfg.user_object_class)
         except DataNotFoundError as e:
             err_msg = str(e)
         except Exception as e:
