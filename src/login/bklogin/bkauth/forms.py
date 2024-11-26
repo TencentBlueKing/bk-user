@@ -24,14 +24,13 @@ class BkAuthenticationForm(AuthenticationForm):
         username = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
 
-        if settings.ENABLE_PASSWORD_RSA_ENCRYPTED:
-            password = rsa_decrypt_password(password, settings.PASSWORD_RSA_PRIVATE_KEY)
-
         if username and password:
-            # will call backend/bk.py: BkUserBackend.authenticate()
+            if settings.ENABLE_PASSWORD_RSA_ENCRYPTED:
+                password = rsa_decrypt_password(password, settings.PASSWORD_RSA_PRIVATE_KEY)
             self.user_cache = authenticate(
                 username=username,
                 password=password,
+                language=getattr(self.request, "LANGUAGE_CODE", ""),
             )
             if self.user_cache is None:
                 raise forms.ValidationError(
@@ -43,3 +42,4 @@ class BkAuthenticationForm(AuthenticationForm):
                 self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
+
