@@ -164,6 +164,7 @@ const userInfo = computed(() => {
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
     { name: t('虚拟账号'), path: 'virtual-account' },
+    { name: t('操作历史'), path: 'operations-history' },
     { name: t('设置'), path: 'setting' },
   ];
 

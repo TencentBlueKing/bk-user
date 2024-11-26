@@ -21,6 +21,11 @@ export default createRouter({
       component: () => import('@/views/virtual-account/index.vue'),
     },
     {
+      path: '/operations-history',
+      name: 'operations-history',
+      component: () => import('@/views/operations-history/index.vue'),
+    },
+    {
       path: '/setting',
       name: 'setting',
       redirect: {

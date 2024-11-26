@@ -47,6 +47,18 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-root-node-i:before {
 	content: "\e103";
 }
+.icon-angle-left:before {
+	content: "\e158";
+}
+.icon-angle-down:before {
+	content: "\e159";
+}
+.icon-angle-right:before {
+	content: "\e15a";
+}
+.icon-angle-up:before {
+	content: "\e15b";
+}
 .icon-duihao-i:before {
 	content: "\e104";
 }
