@@ -148,25 +148,28 @@
         ENABLE_PASSWORD_RSA_ENCRYPTED = "{{ ENABLE_PASSWORD_RSA_ENCRYPTED }}" === "true"
 
         // 密码传输rsa加密
-        function rsa_encrypt_password() {
-            var public_key = window.atob(PASSWORD_RSA_PUBLIC_KEY).split('\n').join("");
-            var password = $('#password').val();
-            var encrypt = new JSEncrypt();
-            encrypt.setKey(public_key);
-            var encrypted = encrypt.encrypt(password);
-            $('#password').val(encrypted);
+    function rsa_encrypt_password() {
+        var public_key = window.atob(PASSWORD_RSA_PUBLIC_KEY).split('\n').join("");
+        var password = $('#password').val();
+        var encrypt = new JSEncrypt();
+        encrypt.setKey(public_key);
+        var encrypted = encrypt.encrypt(password);
+        window.rsa_encrypt_ed = true
+        $('#password').val(encrypted);
+    }
+
+    $(document).ready(function () {
+        if (ENABLE_PASSWORD_RSA_ENCRYPTED) {
+            $('#login-form').submit(() => {
+                if (!window.rsa_encrypt_ed) {
+                    rsa_encrypt_password();
+                }
+                // 避免点击多次登录按钮，导致重复加密
+                document.getElementById("login-btn").disabled = true;
+                document.getElementById('login-btn').textContent = "登录中...";
+            });
         }
-        $(document).ready(function(){
-             if (ENABLE_PASSWORD_RSA_ENCRYPTED) {
-                 $('#login-form').submit(() => {
-                     rsa_encrypt_password();
-                });
-            }
-            var token_set_password_url = "{{ token_set_password_url }}";
-            var error_message = "{{ error_message }}";
-            if (token_set_password_url !== "") {
-                window.location.href = token_set_password_url + '&data=' + JSON.stringify(error_message);
-            }
-        })
+    })
+
     </script>
 </html>
