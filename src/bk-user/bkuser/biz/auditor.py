@@ -39,12 +39,12 @@ class DataSourceAuditor:
         self.operator = operator
         self.tenant_id = tenant_id
         self.data_source = data_source
-        self.data_before: Dict[str, Any] = {}
+        self.data_befores: Dict[str, Any] = {}
 
     def pre_record_data_before(self, waiting_delete_idps: List[Idp] | None = None):
         """记录变更前的相关数据记录"""
-        self.data_before["data_source"] = get_model_dict(self.data_source)
-        self.data_before["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
+        self.data_befores["data_source"] = get_model_dict(self.data_source)
+        self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
 
     def record_create(self):
         """记录数据源创建操作"""
@@ -65,17 +65,17 @@ class DataSourceAuditor:
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=self.data_source.id,
-            data_before=self.data_before["data_source"],
+            data_before=self.data_befores["data_source"],
             data_after=get_model_dict(data_source),
         )
 
     def record_delete(self):
         """记录数据源删除操作"""
         data_source_audit_object = AuditObject(
-            id=self.data_before["data_source"]["id"],
+            id=self.data_befores["data_source"]["id"],
             type=ObjectTypeEnum.DATA_SOURCE,
             operation=OperationEnum.DELETE_DATA_SOURCE,
-            data_before=self.data_before["data_source"],
+            data_before=self.data_befores["data_source"],
         )
         # 记录 idp 删除前数据
         idp_audit_objects = [
@@ -85,7 +85,7 @@ class DataSourceAuditor:
                 operation=OperationEnum.DELETE_IDP,
                 data_before=data_before_idp,
             )
-            for data_before_idp in self.data_before["idps"]
+            for data_before_idp in self.data_befores["idps"]
         ]
 
         batch_add_audit_records(
@@ -208,28 +208,31 @@ class TenantUserDestroyAuditor:
         tenant_user_id = tenant_user.id
 
         # 初始化对应 tenant_user 的审计数据
-        self.data_befores[tenant_user_id] = {
-            "tenant_user": get_model_dict(tenant_user),
-            "data_source_user": get_model_dict(data_source_user),
-            # 记录修改前的协同租户用户
-            # 获取与 data_source_user_id 相关的所有 collab_user，排除当前的 tenant_user
-            "collaboration_tenant_users": {
-                collab_user.id: get_model_dict(collab_user)
-                for collab_user in TenantUser.objects.filter(data_source_user_id=data_source_user.id).exclude(
-                    id=tenant_user.id
-                )
-            },
-            # 记录修改前的用户部门
-            "department_ids": list(
-                DataSourceDepartmentUserRelation.objects.filter(
-                    user=data_source_user,
-                ).values_list("department_id", flat=True)
-            ),
-            # 记录修改前的用户上级
-            "leader_ids": list(
-                DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list("leader_id", flat=True)
-            ),
-        }
+        # 若为本租户下的用户
+        if tenant_user.tenant_id == self.tenant_id:
+            self.data_befores[tenant_user_id] = {
+                "tenant_user": get_model_dict(tenant_user),
+                "data_source_user": get_model_dict(data_source_user),
+                # 记录修改前的用户部门
+                "department_ids": list(
+                    DataSourceDepartmentUserRelation.objects.filter(
+                        user=data_source_user,
+                    ).values_list("department_id", flat=True)
+                ),
+                # 记录修改前的用户上级
+                "leader_ids": list(
+                    DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list(
+                        "leader_id", flat=True
+                    )
+                ),
+                "tenant_id": tenant_user.tenant_id,
+            }
+        # 若为协同租户下的用户
+        else:
+            self.data_befores[tenant_user_id] = {
+                "tenant_user": get_model_dict(tenant_user),
+                "tenant_id": tenant_user.tenant_id,
+            }
 
     def batch_pre_record_data_before(self, tenant_users: List[TenantUser]):
         """批量记录变更前的相关数据记录"""
@@ -239,36 +242,47 @@ class TenantUserDestroyAuditor:
 
     def record(self):
         """组装相关数据，并调用 apps.audit 模块里的方法进行记录"""
-        for tenant_user_id, data_before in self.data_befores.items():
-            ds_user_object = {
-                "id": data_before["data_source_user"]["id"],
-                "name": data_before["data_source_user"]["username"],
-                "type": ObjectTypeEnum.DATA_SOURCE_USER,
-            }
-            self.audit_objects.extend(self.generate_audit_objects(data_before, tenant_user_id, ds_user_object))
+        for tenant_user_id, data_befores in self.data_befores.items():
+            if data_befores["tenant_id"] == self.tenant_id:
+                ds_user_object = {
+                    "id": data_befores["data_source_user"]["id"],
+                    "name": data_befores["data_source_user"]["username"],
+                    "type": ObjectTypeEnum.DATA_SOURCE_USER,
+                }
+                self.audit_objects.extend(self.generate_audit_objects(data_befores, tenant_user_id, ds_user_object))
+            else:
+                self.audit_objects.append(
+                    # 协同租户用户
+                    AuditObject(
+                        id=tenant_user_id,
+                        type=ObjectTypeEnum.TENANT_USER,
+                        operation=OperationEnum.DELETE_COLLABORATION_TENANT_USER,
+                        data_before=data_befores["tenant_user"],
+                    )
+                )
         batch_add_audit_records(self.operator, self.tenant_id, self.audit_objects)
 
     @staticmethod
-    def generate_audit_objects(data_before, tenant_user_id, ds_user_object):
+    def generate_audit_objects(data_befores, tenant_user_id, ds_user_object):
         return [
             # 数据源用户本身信息
             AuditObject(
                 **ds_user_object,
                 operation=OperationEnum.DELETE_DATA_SOURCE_USER,
-                data_before=data_before["data_source_user"],
+                data_before=data_befores["data_source_user"],
             ),
             # 数据源用户的部门
             AuditObject(
                 **ds_user_object,
                 operation=OperationEnum.DELETE_USER_DEPARTMENT,
-                data_before={"department_ids": data_before["department_ids"]},
+                data_before={"department_ids": data_befores["department_ids"]},
                 data_after={"department_ids": []},
             ),
             # 数据源用户的 Leader
             AuditObject(
                 **ds_user_object,
                 operation=OperationEnum.DELETE_USER_LEADER,
-                data_before={"leader_ids": data_before["leader_ids"]},
+                data_before={"leader_ids": data_befores["leader_ids"]},
                 data_after={"leader_ids": []},
             ),
             # 租户用户
@@ -276,17 +290,8 @@ class TenantUserDestroyAuditor:
                 id=tenant_user_id,
                 type=ObjectTypeEnum.TENANT_USER,
                 operation=OperationEnum.DELETE_TENANT_USER,
-                data_before=data_before["tenant_user"],
+                data_before=data_befores["tenant_user"],
             ),
-        ] + [
-            # 协同租户用户
-            AuditObject(
-                id=user_id,
-                type=ObjectTypeEnum.TENANT_USER,
-                operation=OperationEnum.DELETE_COLLABORATION_TENANT_USER,
-                data_before=user_data,
-            )
-            for user_id, user_data in data_before["collaboration_tenant_users"].items()
         ]
 
 
@@ -309,37 +314,47 @@ class TenantUserCreateAuditor:
                 "type": ObjectTypeEnum.DATA_SOURCE_USER,
             }
 
-            self.audit_objects.extend(
-                [
-                    # 数据源用户本身信息
-                    AuditObject(
-                        **ds_user_object,
-                        operation=OperationEnum.CREATE_DATA_SOURCE_USER,
-                        data_after=get_model_dict(data_source_user),
-                    ),
-                    # 数据源用户的部门
-                    AuditObject(
-                        **ds_user_object,
-                        operation=OperationEnum.CREATE_USER_DEPARTMENT,
-                        data_after={
-                            "department_ids": list(
-                                DataSourceDepartmentUserRelation.objects.filter(
-                                    user=data_source_user,
-                                ).values_list("department_id", flat=True)
-                            )
-                        },
-                    ),
-                    # 租户用户（包含协同租户用户）
+            # 若为本租户下的用户
+            if tenant_user.tenant_id == self.tenant_id:
+                self.audit_objects.extend(
+                    [
+                        # 数据源用户本身信息
+                        AuditObject(
+                            **ds_user_object,
+                            operation=OperationEnum.CREATE_DATA_SOURCE_USER,
+                            data_after=get_model_dict(data_source_user),
+                        ),
+                        # 数据源用户的部门
+                        AuditObject(
+                            **ds_user_object,
+                            operation=OperationEnum.CREATE_USER_DEPARTMENT,
+                            data_after={
+                                "department_ids": list(
+                                    DataSourceDepartmentUserRelation.objects.filter(
+                                        user=data_source_user,
+                                    ).values_list("department_id", flat=True)
+                                )
+                            },
+                        ),
+                        # 租户用户信息
+                        AuditObject(
+                            id=tenant_user.id,
+                            type=ObjectTypeEnum.TENANT_USER,
+                            operation=OperationEnum.CREATE_TENANT_USER,
+                            data_after=get_model_dict(tenant_user),
+                        ),
+                    ]
+                )
+            else:
+                self.audit_objects.append(
+                    # 协同租户用户信息
                     AuditObject(
                         id=tenant_user.id,
                         type=ObjectTypeEnum.TENANT_USER,
-                        operation=OperationEnum.CREATE_COLLABORATION_TENANT_USER
-                        if tenant_user.tenant_id != self.tenant_id
-                        else OperationEnum.CREATE_TENANT_USER,
+                        operation=OperationEnum.CREATE_COLLABORATION_TENANT_USER,
                         data_after=get_model_dict(tenant_user),
                     ),
-                ]
-            )
+                )
 
         batch_add_audit_records(self.operator, self.tenant_id, self.audit_objects)
 
