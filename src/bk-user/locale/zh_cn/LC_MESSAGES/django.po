@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-14 20:22+0800\n"
+"POT-Creation-Date: 2024-11-27 18:16+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,73 +92,73 @@ msgstr "无法进行确认，请联系分享方租户管理员启用该策略"
 msgid "请先确认策略，再尝试修改状态"
 msgstr "请先确认策略，再尝试修改状态"
 
-#: bkuser/apis/web/data_source/serializers.py:78
+#: bkuser/apis/web/data_source/serializers.py:79
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 
-#: bkuser/apis/web/data_source/serializers.py:85
+#: bkuser/apis/web/data_source/serializers.py:86
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "必填目标字段 {} 缺少字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:113
+#: bkuser/apis/web/data_source/serializers.py:114
 msgid "数据源插件不存在"
 msgstr "数据源插件不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:127
+#: bkuser/apis/web/data_source/serializers.py:128
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "租户至多拥有一个实体类型的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:133
-#: bkuser/apis/web/data_source/serializers.py:205
+#: bkuser/apis/web/data_source/serializers.py:134
+#: bkuser/apis/web/data_source/serializers.py:206
 msgid "当前数据源类型必须配置字段映射"
 msgstr "当前数据源类型必须配置字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:136
-#: bkuser/apis/web/data_source/serializers.py:208
+#: bkuser/apis/web/data_source/serializers.py:137
+#: bkuser/apis/web/data_source/serializers.py:209
 msgid "当前数据源类型必须提供同步配置"
 msgstr "当前数据源类型必须提供同步配置"
 
-#: bkuser/apis/web/data_source/serializers.py:139
-#: bkuser/apis/web/data_source/serializers.py:246
+#: bkuser/apis/web/data_source/serializers.py:140
+#: bkuser/apis/web/data_source/serializers.py:247
 msgid "数据源插件 {} 不存在"
 msgstr "数据源插件 {} 不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:145
-#: bkuser/apis/web/data_source/serializers.py:193
-#: bkuser/apis/web/data_source/serializers.py:266
+#: bkuser/apis/web/data_source/serializers.py:146
+#: bkuser/apis/web/data_source/serializers.py:194
+#: bkuser/apis/web/data_source/serializers.py:267
 msgid "插件配置不合法：{}"
 msgstr "插件配置不合法：{}"
 
-#: bkuser/apis/web/data_source/serializers.py:243
+#: bkuser/apis/web/data_source/serializers.py:244
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "本地数据源不支持连通性测试"
 
-#: bkuser/apis/web/data_source/serializers.py:254
+#: bkuser/apis/web/data_source/serializers.py:255
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:289
+#: bkuser/apis/web/data_source/serializers.py:290
 msgid "密码规则配置不合法: {}"
 msgstr "密码规则配置不合法: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:297
+#: bkuser/apis/web/data_source/serializers.py:298
 msgid "指定数据源不存在"
 msgstr "指定数据源不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:301
+#: bkuser/apis/web/data_source/serializers.py:302
 msgid "无法使用该数据源生成随机密码"
 msgstr "无法使用该数据源生成随机密码"
 
-#: bkuser/apis/web/data_source/serializers.py:327
+#: bkuser/apis/web/data_source/serializers.py:328
 msgid "待导入文件必须为 Excel 格式"
 msgstr "待导入文件必须为 Excel 格式"
 
-#: bkuser/apis/web/data_source/serializers.py:330
+#: bkuser/apis/web/data_source/serializers.py:331
 msgid "待导入文件大小不得超过 {} M"
 msgstr "待导入文件大小不得超过 {} M"
 
-#: bkuser/apis/web/data_source/serializers.py:336
+#: bkuser/apis/web/data_source/serializers.py:337
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "出于安全考虑，全量导入模式暂不可用"
 
@@ -1778,67 +1778,91 @@ msgstr "获取到的用户/部门数据为空，请检查数据源 API 服务"
 msgid "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
 msgstr "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
 
-#: bkuser/plugins/ldap/models.py:54
+#: bkuser/plugins/ldap/models.py:56
 msgid "LDAP 服务需要提供密码"
 msgstr "LDAP 服务需要提供密码"
 
-#: bkuser/plugins/ldap/models.py:77
+#: bkuser/plugins/ldap/models.py:79
 msgid "需要提供用户对象类"
 msgstr "需要提供用户对象类"
 
-#: bkuser/plugins/ldap/models.py:80
-msgid "需要提供用户过滤器（DN）"
-msgstr "需要提供用户过滤器（DN）"
+#: bkuser/plugins/ldap/models.py:82
+msgid "需要提供用户 Base DN"
+msgstr "需要提供用户 Base DN"
 
-#: bkuser/plugins/ldap/models.py:83
+#: bkuser/plugins/ldap/models.py:85
+msgid "用户 Base DN 数量不能超过 {} 个"
+msgstr "用户 Base DN 数量不能超过 {} 个"
+
+#: bkuser/plugins/ldap/models.py:88
+msgid "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+
+#: bkuser/plugins/ldap/models.py:91
 msgid "需要提供部门对象类"
 msgstr "需要提供部门对象类"
 
-#: bkuser/plugins/ldap/models.py:86
-msgid "需要提供部门过滤器（DN）"
-msgstr "需要提供部门过滤器（DN）"
+#: bkuser/plugins/ldap/models.py:94
+msgid "需要提供部门 Base DN"
+msgstr "需要提供部门 Base DN"
 
-#: bkuser/plugins/ldap/models.py:109
+#: bkuser/plugins/ldap/models.py:97
+msgid "部门 Base DN 数量不能超过 {} 个"
+msgstr "部门 Base DN 数量不能超过 {} 个"
+
+#: bkuser/plugins/ldap/models.py:100
+msgid "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+
+#: bkuser/plugins/ldap/models.py:123
 msgid "需要提供用户组对象类"
 msgstr "需要提供用户组对象类"
 
-#: bkuser/plugins/ldap/models.py:112
-msgid "需要提供用户组过滤器（DN）"
-msgstr "需要提供用户组过滤器（DN）"
+#: bkuser/plugins/ldap/models.py:126
+msgid "需要提供用户组 Base DN"
+msgstr "需要提供用户组 Base DN"
 
-#: bkuser/plugins/ldap/models.py:115
+#: bkuser/plugins/ldap/models.py:129
+msgid "用户组 Base DN 数量不能超过 {} 个"
+msgstr "用户组 Base DN 数量不能超过 {} 个"
+
+#: bkuser/plugins/ldap/models.py:132
+msgid "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+
+#: bkuser/plugins/ldap/models.py:135
 msgid "用户组对象类为 groupOfNames 时，成员字段应为 member"
 msgstr "用户组对象类为 groupOfNames 时，成员字段应为 member"
 
-#: bkuser/plugins/ldap/models.py:118
+#: bkuser/plugins/ldap/models.py:138
 msgid "用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"
 msgstr "用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"
 
-#: bkuser/plugins/ldap/models.py:137
+#: bkuser/plugins/ldap/models.py:157
 msgid "需要提供 Leader 字段名"
 msgstr "需要提供 Leader 字段名"
 
-#: bkuser/plugins/ldap/models.py:162
-msgid "用户过滤器（DN）必须是 Base DN 的子节点"
-msgstr "用户过滤器（DN）必须是 Base DN 的子节点"
+#: bkuser/plugins/ldap/models.py:183
+msgid "用户 Base DN 必须都是 Base DN 的子节点"
+msgstr "用户 Base DN 必须都是 Base DN 的子节点"
 
-#: bkuser/plugins/ldap/models.py:165
-msgid "部门过滤器（DN）必须是 Base DN 的子节点"
-msgstr "部门过滤器（DN）必须是 Base DN 的子节点"
+#: bkuser/plugins/ldap/models.py:187
+msgid "部门 Base DN 必须都是 Base DN 的子节点"
+msgstr "部门 Base DN 必须都是 Base DN 的子节点"
 
-#: bkuser/plugins/ldap/models.py:170
-msgid "用户组过滤器（DN）必须是 Base DN 的子节点"
-msgstr "用户组过滤器（DN）必须是 Base DN 的子节点"
+#: bkuser/plugins/ldap/models.py:192
+msgid "用户组 Base DN 必须都是 Base DN 的子节点"
+msgstr "用户组 Base DN 必须都是 Base DN 的子节点"
 
-#: bkuser/plugins/ldap/plugin.py:131
+#: bkuser/plugins/ldap/plugin.py:144
 msgid "连接测试失败: 无法建立连接或请求超时，请检查配置。异常信息：{}"
 msgstr "连接测试失败: 无法建立连接或请求超时，请检查配置。异常信息：{}"
 
-#: bkuser/plugins/ldap/plugin.py:139
+#: bkuser/plugins/ldap/plugin.py:152
 msgid "获取到的用户/部门数据为空，请检查数据源服务"
 msgstr "获取到的用户/部门数据为空，请检查数据源服务"
 
-#: bkuser/plugins/ldap/plugin.py:145
+#: bkuser/plugins/ldap/plugin.py:158
 msgid "解析用户/部门数据失败，请检查返回的数据格式"
 msgstr "解析用户/部门数据失败，请检查返回的数据格式"
 
