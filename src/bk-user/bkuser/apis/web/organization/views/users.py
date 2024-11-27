@@ -58,9 +58,6 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserUpdateInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
-from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.data_models import AuditObject
-from bkuser.apps.audit.recorder import add_audit_record, batch_add_audit_records
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -82,7 +79,15 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator, is_username_frozen
-from bkuser.biz.auditor import TenantUserCreateAuditor, TenantUserUpdateDestroyAuditor
+from bkuser.biz.auditor import (
+    TenantUserAccountExpiredAtUpdateAuditor,
+    TenantUserCreateAuditor,
+    TenantUserDestroyAuditor,
+    TenantUserLeaderRelationsUpdateAuditor,
+    TenantUserPasswordResetAuditor,
+    TenantUserStatusUpdateAuditor,
+    TenantUserUpdateAuditor,
+)
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
@@ -500,8 +505,8 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source=data_source, id__in=data["leader_ids"]
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】记录变更前的用户相关信息（数据源用户、部门、上级、租户用户）
-        auditor = TenantUserUpdateDestroyAuditor(request.user.username, cur_tenant_id)
+        # 【审计】创建审计对象并记录变更前的用户相关信息（数据源用户、部门、上级、租户用户）
+        auditor = TenantUserUpdateAuditor(request.user.username, cur_tenant_id)
         auditor.pre_record_data_before(tenant_user, data_source_user)
 
         with transaction.atomic():
@@ -529,9 +534,8 @@ class TenantUserRetrieveUpdateDestroyApi(
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
-        # 【审计】保存记录至数据库
+        # 【审计】将审计记录保存至数据库
         auditor.record(tenant_user, data_source_user)
-        auditor.save_audit_records()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -548,10 +552,9 @@ class TenantUserRetrieveUpdateDestroyApi(
 
         data_source_user = tenant_user.data_source_user
 
-        # 【审计】记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））
-        auditor = TenantUserUpdateDestroyAuditor(request.user.username, cur_tenant_id, True)
+        # 【审计】创建审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））
+        auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
         auditor.pre_record_data_before(tenant_user, data_source_user)
-        auditor.record(tenant_user, data_source_user)
 
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
@@ -562,8 +565,8 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
 
-        # 【审计】保存记录至数据库
-        auditor.save_audit_records()
+        # 【审计】将审计记录保存至数据库
+        auditor.record()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -594,11 +597,9 @@ class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAP
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】记录变更前的租户用户账号有效期与状态
-        data_before = {
-            "account_expired_at": tenant_user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),
-            "status": tenant_user.status,
-        }
+        # 【审计】创建审计对象并记录变更前的用户信息
+        auditor = TenantUserAccountExpiredAtUpdateAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
 
         tenant_user.account_expired_at = data["account_expired_at"]
         tenant_user.updater = request.user.username
@@ -609,19 +610,8 @@ class TenantUserAccountExpiredAtUpdateApi(CurrentUserTenantMixin, ExcludePatchAP
 
         tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
-        # 记录审计
-        add_audit_record(
-            operator=request.user.username,
-            tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
-            object_type=ObjectTypeEnum.TENANT_USER,
-            object_id=tenant_user.id,
-            data_before=data_before,
-            data_after={
-                "account_expired_at": tenant_user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),
-                "status": tenant_user.status,
-            },
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.record(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -708,16 +698,10 @@ class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixi
             operator=request.user.username,
         )
 
-        # 记录审计
-        add_audit_record(
-            operator=request.user.username,
-            tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.MODIFY_USER_PASSWORD,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=data_source_user.id,
-            object_name=data_source_user.username,
-            extras={"valid_days": plugin_config.password_expire.valid_time},
-        )
+        # 【审计】创建审计对象
+        auditor = TenantUserPasswordResetAuditor(request.user.username, self.get_current_tenant_id())
+        # 【审计】将审计记录保存至数据库
+        auditor.record(data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         # 发送新密码通知到用户
         send_reset_password_to_user.delay(data_source_user.id, raw_password)
@@ -785,8 +769,9 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
     def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
 
-        # 【审计】记录变更前的租户用户状态
-        data_before_status = {"status": tenant_user.status}
+        # 【审计】创建审计对象并记录变更前的用户信息
+        auditor = TenantUserStatusUpdateAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
 
         # 正常 / 过期的租户用户都可以停用
         if tenant_user.status in [TenantUserStatus.ENABLED, TenantUserStatus.EXPIRED]:
@@ -802,16 +787,8 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         tenant_user.updater = request.user.username
         tenant_user.save(update_fields=["status", "updater", "updated_at"])
 
-        # 记录审计
-        add_audit_record(
-            operator=request.user.username,
-            tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.MODIFY_USER_STATUS,
-            object_type=ObjectTypeEnum.TENANT_USER,
-            object_id=tenant_user.id,
-            data_before=data_before_status,
-            data_after={"status": tenant_user.status},
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.record(tenant_user)
 
         return Response(TenantUserStatusUpdateOutputSLZ(tenant_user).data, status=status.HTTP_200_OK)
 
@@ -883,7 +860,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
 
         # 【审计】记录创建的用户相关信息（数据源用户、用户部门、租户用户（包括协同租户用户））
         auditor = TenantUserCreateAuditor(request.user.username, cur_tenant_id)
-        auditor.batch_record(data_after_tenant_users)
+        # 【审计】将审计记录保存至数据库
+        auditor.record(data_after_tenant_users)
 
         # 对新增的用户进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
@@ -1004,9 +982,8 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
         data_before_tenant_users = list(TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids))
 
         # 【审计】记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））
-        auditor = TenantUserUpdateDestroyAuditor(request.user.username, cur_tenant_id, True)
+        auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
         auditor.batch_pre_record_data_before(data_before_tenant_users)
-        auditor.batch_record(data_before_tenant_users)
 
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
@@ -1022,7 +999,7 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
             DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
 
         # 【审计】保存记录至数据库
-        auditor.save_audit_records()
+        auditor.record()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1053,13 +1030,9 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
         # 【审计】记录变更前的租户用户数据
         data_before_tenant_users = list(TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id))
 
-        data_before_dict = {
-            user.id: {
-                "account_expired_at": user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),
-                "status": user.status,
-            }
-            for user in data_before_tenant_users
-        }
+        # 【审计】创建审计对象
+        auditor = TenantUserAccountExpiredAtUpdateAuditor(request.user.username, cur_tenant_id)
+        auditor.batch_pre_record_data_before(data_before_tenant_users)
 
         with transaction.atomic():
             # 根据租户用户当前状态判断，如果是过期状态则转为正常
@@ -1076,27 +1049,8 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
         # 【审计】记录变更后的租户用户数据
         data_after_tenant_users = list(TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id))
 
-        # 【审计】批量创建 AuditObject 对象
-        audit_objects = [
-            AuditObject(
-                id=user.id,
-                type=ObjectTypeEnum.TENANT_USER,
-                operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
-                data_before=data_before_dict[user.id],
-                data_after={
-                    "account_expired_at": user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),
-                    "status": user.status,
-                },
-            )
-            for user in data_after_tenant_users
-        ]
-
-        # 记录审计
-        batch_add_audit_records(
-            operator=request.user.username,
-            tenant_id=cur_tenant_id,
-            objects=audit_objects,
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.batch_record(data_after_tenant_users)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1129,7 +1083,9 @@ class TenantUserStatusBatchUpdateApi(
         now = timezone.now()
         updater = request.user.username
 
-        data_before_dict = {user.id: user.status for user in tenant_users}
+        # 【审计】创建审计对象并记录变更前的租户用户数据
+        auditor = TenantUserStatusUpdateAuditor(request.user.username, cur_tenant_id)
+        auditor.batch_pre_record_data_before(tenant_users)
 
         # 停用的时候，正常 / 过期的租户用户都直接停用
         if data["status"] == TenantUserStatus.DISABLED:
@@ -1157,24 +1113,8 @@ class TenantUserStatusBatchUpdateApi(
         # 【审计】记录变更后的租户用户数据
         data_after_tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id)
 
-        # 【审计】批量创建 AuditObject 对象
-        audit_objects = [
-            AuditObject(
-                id=user.id,
-                type=ObjectTypeEnum.TENANT_USER,
-                operation=OperationEnum.MODIFY_USER_STATUS,
-                data_before={"status": data_before_dict[user.id]},
-                data_after={"status": user.status},
-            )
-            for user in data_after_tenant_users
-        ]
-
-        # 记录审计
-        batch_add_audit_records(
-            operator=request.user.username,
-            tenant_id=cur_tenant_id,
-            objects=audit_objects,
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.batch_record(data_after_tenant_users)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1216,8 +1156,9 @@ class TenantUserLeaderBatchUpdateApi(
             for leader_id, user_id in itertools.product(leader_ids, data_source_user_ids)
         ]
 
-        # 【审计】记录变更前的用户 - 上级映射
-        data_before_user_leader_map = self.get_user_leader_map(data_source_user_ids=data_source_user_ids)
+        # 【审计】创建审计对象
+        auditor = TenantUserLeaderRelationsUpdateAuditor(request.user.username, cur_tenant_id, data_source_user_ids)
+        auditor.pre_record_data_before()
 
         with transaction.atomic():
             # 先删除现有的用户 - 上级关系
@@ -1226,43 +1167,10 @@ class TenantUserLeaderBatchUpdateApi(
             # 再添加新的用户 - 上级关系
             DataSourceUserLeaderRelation.objects.bulk_create(relations)
 
-        # 【审计】批量创建 AuditObject 对象
-        audit_objects = [
-            AuditObject(
-                id=data_source_user.id,
-                type=ObjectTypeEnum.DATA_SOURCE_USER,
-                name=data_source_user.username,
-                operation=OperationEnum.MODIFY_USER_LEADER,
-                data_before={"leader_ids": data_before_user_leader_map[data_source_user.id]},
-                data_after={"leader_ids": list(leader_ids)},
-            )
-            for data_source_user in DataSourceUser.objects.filter(
-                id__in=data_source_user_ids,
-            )
-        ]
-
-        # 记录审计
-        batch_add_audit_records(
-            operator=request.user.username,
-            tenant_id=cur_tenant_id,
-            objects=audit_objects,
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.record()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @staticmethod
-    def get_user_leader_map(data_source_user_ids: List[int]) -> Dict:
-        # 记录用户与上级之间的映射关系
-        user_leader_relations = DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).values(
-            "leader_id", "user_id"
-        )
-        user_leader_map = defaultdict(list)
-
-        # 将用户的所有上级存储在列表中
-        for relation in user_leader_relations:
-            user_leader_map[relation["user_id"]].append(relation["leader_id"])
-
-        return user_leader_map
 
 
 class TenantUserPasswordBatchResetApi(
@@ -1321,24 +1229,10 @@ class TenantUserPasswordBatchResetApi(
         for data_source_user in data_source_users:
             send_reset_password_to_user.delay(data_source_user.id, raw_password)
 
-        # 【审计】批量创建 AuditObject 对象
-        audit_objects = [
-            AuditObject(
-                id=user.id,
-                type=ObjectTypeEnum.DATA_SOURCE_USER,
-                operation=OperationEnum.MODIFY_USER_PASSWORD,
-                name=user.username,
-                extras={"valid_days": plugin_config.password_expire.valid_time},
-            )
-            for user in data_source_users
-        ]
-
-        # 记录审计
-        batch_add_audit_records(
-            operator=request.user.username,
-            tenant_id=cur_tenant_id,
-            objects=audit_objects,
-        )
+        # 【审计】创建审计对象
+        auditor = TenantUserPasswordResetAuditor(request.user.username, self.get_current_tenant_id())
+        # 【审计】将审计记录保存至数据库
+        auditor.batch_record(data_source_users, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

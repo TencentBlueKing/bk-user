@@ -30,6 +30,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantDeptUserRelationBatchUpdateInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apps.audit.constants import OperationEnum
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -69,7 +70,10 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】创建审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
-            operator=request.user.username, tenant_id=cur_tenant_id, data_source_user_ids=data_source_user_ids
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.CREATE_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -82,7 +86,7 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】将审计记录保存至数据库
-        auditor.batch_record()
+        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -119,7 +123,10 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】创建审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
-            operator=request.user.username, tenant_id=cur_tenant_id, data_source_user_ids=data_source_user_ids
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.MODIFY_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -135,7 +142,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
         # 【审计】将审计记录保存至数据库
-        auditor.batch_record(extras={"department_ids": list(data_source_dept_ids)})
+        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -168,7 +175,10 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】创建审计对象
         auditor = TenantUserDepartmentRelationsAuditor(
-            operator=request.user.username, tenant_id=cur_tenant_id, data_source_user_ids=data_source_user_ids
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.MODIFY_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -186,7 +196,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】将审计记录保存至数据库
-        auditor.batch_record(extras={"department_id": source_data_source_dept.id})
+        auditor.record(extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -221,7 +231,10 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
 
         # 【审计】创建审计对象
         auditor = TenantUserDepartmentRelationsAuditor(
-            operator=request.user.username, tenant_id=cur_tenant_id, data_source_user_ids=data_source_user_ids
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.DELETE_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -230,6 +243,6 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
         ).delete()
 
         # 【审计】将审计记录保存至数据库
-        auditor.batch_record(extras={"department_id": source_data_source_dept.id})
+        auditor.record(extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
