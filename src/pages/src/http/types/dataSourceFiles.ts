@@ -58,7 +58,7 @@ export interface DataSourceUsersParams {
 export interface NewDataSourceParams {
   plugin_id: string,
   plugin_config: {},
-  field_mapping?: [],
+  field_mapping?: any[],
   sync_config?: {},
 }
 
@@ -68,7 +68,7 @@ export interface NewDataSourceParams {
 export interface PutDataSourceParams {
   id: string,
   plugin_config: {},
-  field_mapping: [],
+  field_mapping: any[],
 }
 
 /**
@@ -133,4 +133,115 @@ export interface ResetPasswordParams {
 export interface DeleteDataSourcesParams {
   id: string,
   is_delete_idp?: string,
+}
+
+/**
+ * 数据源详情返回值
+ */
+export interface DataSourceDetails {
+  id: number,
+  owner_tenant_id: string,
+  type: string,
+  plugin: {
+    id: string,
+    name: string,
+    description: string,
+    logo: string,
+  },
+  plugin_config: {
+    server_config: {
+      server_base_url: string,
+      server_url: string,
+      bind_dn: string,
+      bind_password: string,
+      base_dn: string,
+      user_api_path: string,
+      user_api_query_params: any[],
+      department_api_path: string,
+      department_api_query_params: any[],
+      page_size: number,
+      request_timeout: number,
+      retries: number,
+    },
+    auth_config: {
+      method: string,
+      bearer_token: string,
+      username: string,
+      password: string,
+    },
+    data_config: {
+      user_object_class: string,
+      user_search_base_dns: string[],
+      dept_object_class: string,
+      dept_search_base_dns: string[],
+    },
+    leader_config: {
+      enabled: boolean,
+      leader_field: string,
+    },
+    user_group_config: {
+      enabled: boolean,
+      object_class: string,
+      search_filter: string,
+      group_member_field: string,
+    },
+  },
+  sync_config: {
+    sync_period: number,
+    sync_timeout: number,
+  },
+  field_mapping: {
+    source_field: string,
+    mapping_operation: string,
+    target_field: string,
+  }[],
+}
+
+/**
+ * 数据源连通性测试返回值
+ */
+export interface TestConnectionData {
+  error_message: string,
+  user: {
+    code: string,
+    properties: {
+      username: string,
+      full_name: string,
+      email: string,
+      phone: string,
+      phone_country_code: string,
+      age: string,
+      gender: string,
+      region: string,
+    },
+    leaders: any[],
+    departments: string[],
+  },
+  department: {
+    id: string,
+    name: string,
+    parent: any,
+  },
+  extras: {
+    user_data: {
+      departments: string[],
+      email: string,
+      extras: {
+        age: string,
+        gender: string,
+        region: string,
+      },
+      full_name: string,
+      id: string,
+      leaders: any[],
+      phone: string,
+      phone_country_code: string,
+      username: string,
+    },
+    department_data: {
+      id: string,
+      name: string,
+      parent: any,
+    },
+  },
 }
