@@ -243,6 +243,7 @@ class TenantUserDestroyAuditor:
     def record(self):
         """组装相关数据，并调用 apps.audit 模块里的方法进行记录"""
         for tenant_user_id, data_befores in self.data_befores.items():
+            # 若为本租户下的用户
             if data_befores["tenant_id"] == self.tenant_id:
                 ds_user_object = {
                     "id": data_befores["data_source_user"]["id"],
@@ -250,6 +251,7 @@ class TenantUserDestroyAuditor:
                     "type": ObjectTypeEnum.DATA_SOURCE_USER,
                 }
                 self.audit_objects.extend(self.generate_audit_objects(data_befores, tenant_user_id, ds_user_object))
+            # 若为协同租户下的用户
             else:
                 self.audit_objects.append(
                     # 协同租户用户
@@ -306,16 +308,15 @@ class TenantUserCreateAuditor:
     def record(self, tenant_users: List[TenantUser]):
         """组装相关数据，并调用 apps.audit 模块里的方法进行记录"""
         for tenant_user in tenant_users:
-            data_source_user = tenant_user.data_source_user
-
-            ds_user_object = {
-                "id": data_source_user.id,
-                "name": data_source_user.username,
-                "type": ObjectTypeEnum.DATA_SOURCE_USER,
-            }
-
             # 若为本租户下的用户
             if tenant_user.tenant_id == self.tenant_id:
+                data_source_user = tenant_user.data_source_user
+                ds_user_object = {
+                    "id": data_source_user.id,
+                    "name": data_source_user.username,
+                    "type": ObjectTypeEnum.DATA_SOURCE_USER,
+                }
+
                 self.audit_objects.extend(
                     [
                         # 数据源用户本身信息
@@ -345,6 +346,7 @@ class TenantUserCreateAuditor:
                         ),
                     ]
                 )
+            # 若为协同租户下的用户
             else:
                 self.audit_objects.append(
                     # 协同租户用户信息
