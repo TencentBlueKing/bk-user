@@ -261,6 +261,6 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         exist_codes = set()
         for obj in raw_objs:
             if obj.code in exist_codes:
-                raise ValueError(f"duplicate code: {obj.code} found, check your ldap search base dn config!")
+                raise ValueError(f"duplicate code `{obj.code}` found, check your ldap search base dn config!")
 
             exist_codes.add(obj.code)
