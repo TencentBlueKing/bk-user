@@ -12,12 +12,17 @@ import type {
   PutUserValidityParams,
   RealUsersParams,
   TenantItem,
+  TenantSettingFieldsData,
 } from './types/settingFiles';
+
+interface ResponseData<T> {
+  data: T
+}
 
 /**
  * 用户字段列表
  */
-export const getFields = () => http.get('/api/v3/web/tenant-setting/fields/');
+export const getFields = () => http.get<ResponseData<TenantSettingFieldsData>>('/api/v3/web/tenant-setting/fields/');
 
 /**
  * 新建用户自定义字段
