@@ -182,7 +182,7 @@ export interface DataSourceDetails {
     user_group_config: {
       enabled: boolean,
       object_class: string,
-      search_filter: string,
+      search_base_dns: string[],
       group_member_field: string,
     },
   },

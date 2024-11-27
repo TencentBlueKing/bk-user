@@ -72,12 +72,26 @@
             @focus="handleFocus"
             @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('用户过滤器')" :description="$t('过滤器中无需指定对象类，如（objectclass=xxx）')">
-          <bk-input
-            placeholder="ou=company,dc=bk,dc=example,dc=com"
-            v-model="ldapConfigData.data_config.user_search_filter"
-            @focus="handleFocus"
-            @input="handleChange" />
+        <bk-form-item
+          class="w-[560px]"
+          :label="$t('用户 Base DN')"
+          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的BaseDN')">
+          <div
+            v-for="(item, index) in ldapConfigData.data_config.user_search_base_dns"
+            :key="index"
+            class="my-[15px]"
+          >
+            <bk-input
+              placeholder="ou=company,dc=bk,dc=example,dc=com"
+              v-model="ldapConfigData.data_config.user_search_base_dns[index]"
+              @focus="handleFocus"
+              @input="handleChange" />
+            <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('user', index)" />
+          </div>
+          <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('user')">
+            <i class="user-icon icon-add-2 mr8" />
+            {{ $t('新增') }}
+          </bk-button>
         </bk-form-item>
         <bk-form-item class="w-[560px]" :label="$t('部门对象类')" required property="data_config.dept_object_class">
           <bk-input
@@ -86,12 +100,26 @@
             @focus="handleFocus"
             @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('部门过滤器')" :description="$t('过滤器中无需指定对象类，如（objectclass=xxx）')">
-          <bk-input
-            placeholder="ou=company,dc=bk,dc=example,dc=com"
-            v-model="ldapConfigData.data_config.dept_search_filter"
-            @focus="handleFocus"
-            @input="handleChange" />
+        <bk-form-item
+          class="w-[560px]"
+          :label="$t('部门 Base DN')"
+          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的BaseDN')">
+          <div
+            v-for="(item, index) in ldapConfigData.data_config.dept_search_base_dns"
+            :key="index"
+            class="my-[15px]"
+          >
+            <bk-input
+              placeholder="ou=company,dc=bk,dc=example,dc=com"
+              v-model="ldapConfigData.data_config.dept_search_base_dns[index]"
+              @focus="handleFocus"
+              @input="handleChange" />
+            <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('dept', index)" />
+          </div>
+          <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('dept')">
+            <i class="user-icon icon-add-2 mr8" />
+            {{ $t('新增') }}
+          </bk-button>
         </bk-form-item>
         <div class="btn">
           <div>
@@ -161,13 +189,24 @@
             </bk-select>
           </bk-form-item>
           <bk-form-item
-            class="w-[560px]" :label="$t('用户组过滤器')" required
-            property="user_group_config.search_filter">
-            <bk-input
-              placeholder="ou=company,dc=bk,dc=example,dc=com"
-              v-model="fieldSettingData.user_group_config.search_filter"
-              @focus="handleFocus"
-              @change="handleChange" />
+            class="w-[560px]" :label="$t('用户组 Base DN')" required
+            property="user_group_config.search_base_dns">
+            <div
+              v-for="(item, index) in fieldSettingData.user_group_config.search_base_dns"
+              :key="index"
+              class="my-[15px]"
+            >
+              <bk-input
+                placeholder="ou=company,dc=bk,dc=example,dc=com"
+                v-model="fieldSettingData.user_group_config.search_base_dns[index]"
+                @focus="handleFocus"
+                @change="handleChange" />
+              <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('group', index)" />
+            </div>
+            <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('group')">
+              <i class="user-icon icon-add-2 mr8" />
+              {{ $t('新增') }}
+            </bk-button>
           </bk-form-item>
           <bk-form-item
             class="w-[560px]" :label="$t('用户组成员字段')" required
@@ -194,7 +233,7 @@
               placeholder="manager"
               v-model="fieldSettingData.leader_config.leader_field"
               :clearable="false"
-              @change="(val, oldVal) => changeApiFields(val, oldVal)">
+              @change="(val: string, oldVal: string) => changeApiFields(val, oldVal)">
               <bk-option
                 v-for="item in apiFields"
                 :key="item.key"
@@ -272,7 +311,42 @@ const props = defineProps({
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
-const ldapConfigData = ref({});
+
+interface LdapConfigData {
+  plugin_id: string,
+  server_config: {
+    server_url: string,
+    bind_dn: string,
+    bind_password: string,
+    base_dn: string,
+    page_size: number,
+    request_timeout: number
+  },
+  data_config: {
+    user_object_class: string,
+    user_search_base_dns: string[],
+    dept_object_class: string,
+    dept_search_base_dns: string[]
+  }
+}
+
+const ldapConfigData = ref<LdapConfigData>({
+  plugin_id: '',
+  server_config: {
+    server_url: '',
+    bind_dn: '',
+    bind_password: '',
+    base_dn: '',
+    page_size: 0,
+    request_timeout: 0,
+  },
+  data_config: {
+    user_object_class: '',
+    user_search_base_dns: [],
+    dept_object_class: '',
+    dept_search_base_dns: [],
+  },
+});
 
 const validate = useValidate();
 const rulesLdapConfig = {
@@ -296,9 +370,9 @@ const defaultLdapConfig = () => ({
   },
   data_config: {
     user_object_class: '',
-    user_search_filter: '',
+    user_search_base_dns: [''] as string[],
     dept_object_class: '',
-    dept_search_filter: '',
+    dept_search_base_dns: [''] as string[],
   },
 });
 
@@ -338,7 +412,7 @@ const fieldSettingData = ref({
   user_group_config: {
     enabled: true,
     object_class: '',
-    search_filter: '',
+    search_base_dns: [''],
     group_member_field: '',
   },
   leader_config: {
@@ -359,7 +433,7 @@ const rulesFieldSetting = {
   source_field: [validate.required],
   'user_group_config.object_class': [validate.required],
   'user_group_config.group_member_field': [validate.required],
-  'user_group_config.search_filter': [validate.required],
+  'user_group_config.search_base_dns': [validate.required],
   'leader_config.leader_field': [validate.required],
 };
 
@@ -441,6 +515,23 @@ const handleTestConnection = async () => {
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
+interface Field {
+  id?: number;
+  name: any;
+  display_name?: string;
+  data_type?: string;
+  required: any;
+  unique?: boolean;
+  default?: string;
+  options?: any[];
+}
+
+interface Item {
+  target_field: any;
+  source_field: any;
+  mapping_operation: any;
+}
+
 const handleNext = async () => {
   try {
     emit('updateCurStep', 2);
@@ -448,8 +539,8 @@ const handleNext = async () => {
     const res = await getFields();
     if (props?.dataSourceId) {
       const list = [];
-      const customList = [];
-      const mapFields = (fields, item, isDisabled, fieldMappingType) => {
+      const customList: any[] = [];
+      const mapFields = (fields: Field, item: Item, isDisabled: boolean, fieldMappingType: string) => {
         if (fields.name !== item.target_field) return;
 
         list.push(item.source_field);
@@ -476,7 +567,7 @@ const handleNext = async () => {
 
       const filterKeys = new Set(apiFields.value.map(item => item.key));
 
-      const addApiField = (fields, isDisabled) => {
+      const addApiField = (fields: { name: string }, isDisabled: boolean) => {
         if (!filterKeys.has(fields.name)) {
           apiFields.value.push({ key: fields.name, disabled: isDisabled });
           filterKeys.add(fields.name);
@@ -493,7 +584,7 @@ const handleNext = async () => {
     } else {
       const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
 
-      const updateFields = (fields, isBuiltin) => {
+      const updateFields = (fields: any[], isBuiltin: boolean) => {
         fields.forEach((field) => {
           Object.assign(field, {
             mapping_operation: 'direct',
@@ -545,7 +636,7 @@ const handleFocus = () => {
   window.changeInput = true;
 };
 
-const changeApiFields = (newValue, oldValue) => {
+const changeApiFields = (newValue: string, oldValue: string) => {
   apiFields.value.forEach((item) => {
     if (item.key === newValue) {
       item.disabled = true;
@@ -563,10 +654,10 @@ const handleAddField = () => {
 };
 
 // 删除自定义字段
-const handleDeleteField = (item, index) => {
+const handleDeleteField = (item: { target_field: any; source_field: any; }, index: number) => {
   fieldSettingData.value.addFieldList.splice(index, 1);
 
-  const enableField = (fields, fieldKey, fieldName) => {
+  const enableField = (fields: any[], fieldKey: string, fieldName: any) => {
     const field = fields.find(element => element[fieldKey] === fieldName);
     if (field) field.disabled = false;
   };
@@ -577,7 +668,7 @@ const handleDeleteField = (item, index) => {
 };
 
 // 更改自定义字段
-const changeCustomField = (newValue, oldValue) => {
+const changeCustomField = (newValue: string, oldValue: string) => {
   fieldSettingData.value.field_mapping.custom_fields.forEach((element) => {
     if (element.name === newValue) {
       element.disabled = true;
@@ -660,6 +751,40 @@ const handleCancel = () => {
   router.push({ name: 'dataSource' });
 };
 
+const handleAddBaseDn = (type: string) => {
+  if (type === 'user') {
+    ldapConfigData.value.data_config.user_search_base_dns.push('');
+    return;
+  }
+
+  if (type === 'dept') {
+    ldapConfigData.value.data_config.dept_search_base_dns.push('');
+    return;
+  }
+
+  if (type === 'group') {
+    fieldSettingData.value.user_group_config.search_base_dns.push('');
+    return;
+  }
+};
+
+const handleDelBaseDn = (type: string, index: number) => {
+  if (type === 'user') {
+    ldapConfigData.value.data_config.user_search_base_dns.splice(index, 1);
+    return;
+  }
+
+  if (type === 'dept') {
+    ldapConfigData.value.data_config.dept_search_base_dns.splice(index, 1);
+    return;
+  }
+
+  if (type === 'group') {
+    fieldSettingData.value.user_group_config.search_base_dns.splice(index, 1);
+    return;
+  }
+};
+
 </script>
 
 <style lang="less" scoped>
@@ -712,6 +837,19 @@ const handleCancel = () => {
   .icon-duihao-2 {
     font-size: 14px;
     color: #2DCB56;
+  }
+}
+
+.icon-minus-fill {
+  margin-left: 10px;
+  margin-top: 8px;
+  font-size: 16px;
+  color: #dcdee5;
+  cursor: pointer;
+  position: absolute;
+
+  &:hover {
+    color: #c4c6cc;
   }
 }
 </style>
