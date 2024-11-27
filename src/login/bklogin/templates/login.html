@@ -147,7 +147,7 @@
         PASSWORD_RSA_PUBLIC_KEY = "{{ PASSWORD_RSA_PUBLIC_KEY }}"
         ENABLE_PASSWORD_RSA_ENCRYPTED = "{{ ENABLE_PASSWORD_RSA_ENCRYPTED }}" === "true"
 
-        // 密码传输rsa加密
+    // 密码传输rsa加密
     function rsa_encrypt_password() {
         var public_key = window.atob(PASSWORD_RSA_PUBLIC_KEY).split('\n').join("");
         var password = $('#password').val();
