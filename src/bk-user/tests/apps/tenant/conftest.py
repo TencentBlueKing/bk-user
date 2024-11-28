@@ -36,7 +36,7 @@ def not_expired_tenant_user(bare_local_data_source, random_tenant):
     return TenantUser.objects.create(
         id=generate_random_string(),
         tenant=random_tenant,
-        data_source=data_source_user.data_source,
+        data_source=bare_local_data_source,
         data_source_user=data_source_user,
         status=TenantUserStatus.ENABLED,
         account_expired_at=timezone.now() + timedelta(days=1),
@@ -53,7 +53,7 @@ def expired_tenant_user(bare_local_data_source, random_tenant):
     return TenantUser.objects.create(
         id=generate_random_string(),
         tenant=random_tenant,
-        data_source=data_source_user.data_source,
+        data_source=bare_local_data_source,
         data_source_user=data_source_user,
         status=TenantUserStatus.ENABLED,
         account_expired_at=get_midnight() - timedelta(days=1),
