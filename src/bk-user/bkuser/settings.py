@@ -291,7 +291,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "periodic_update_tenant_user_status": {
         "task": "bkuser.apps.tenant.periodic_tasks.update_expired_tenant_user_status",
-        "schedule": crontab(minute="0", hour="8"),
+        "schedule": crontab(minute="0", hour="3"),
     },
 }
 # Celery 消息队列配置

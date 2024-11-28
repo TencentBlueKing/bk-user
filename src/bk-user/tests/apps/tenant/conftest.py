@@ -24,15 +24,18 @@ from bkuser.utils.time import get_midnight
 from django.utils import timezone
 
 from tests.test_utils.helpers import generate_random_string
-from tests.test_utils.tenant import create_tenant
 
 
 @pytest.fixture
-def not_expired_tenant_user(bk_user):
-    data_source_user = DataSourceUser.objects.get(username=bk_user.username)
+def not_expired_tenant_user(bare_local_data_source, random_tenant):
+    data_source_user = DataSourceUser.objects.create(
+        username=generate_random_string(length=8),
+        full_name=generate_random_string(length=8),
+        data_source=bare_local_data_source,
+    )
     return TenantUser.objects.create(
         id=generate_random_string(),
-        tenant=create_tenant(generate_random_string()),
+        tenant=random_tenant,
         data_source=data_source_user.data_source,
         data_source_user=data_source_user,
         status=TenantUserStatus.ENABLED,
@@ -41,11 +44,15 @@ def not_expired_tenant_user(bk_user):
 
 
 @pytest.fixture
-def expired_tenant_user(bk_user):
-    data_source_user = DataSourceUser.objects.get(username=bk_user.username)
+def expired_tenant_user(bare_local_data_source, random_tenant):
+    data_source_user = DataSourceUser.objects.create(
+        username=generate_random_string(length=8),
+        full_name=generate_random_string(length=8),
+        data_source=bare_local_data_source,
+    )
     return TenantUser.objects.create(
         id=generate_random_string(),
-        tenant=create_tenant(generate_random_string()),
+        tenant=random_tenant,
         data_source=data_source_user.data_source,
         data_source_user=data_source_user,
         status=TenantUserStatus.ENABLED,
