@@ -75,7 +75,7 @@
         <bk-form-item
           class="w-[560px]"
           :label="$t('用户 Base DN')"
-          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的BaseDN')">
+          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
           <div
             v-for="(item, index) in ldapConfigData.data_config.user_search_base_dns"
             :key="index"
@@ -103,7 +103,7 @@
         <bk-form-item
           class="w-[560px]"
           :label="$t('部门 Base DN')"
-          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的BaseDN')">
+          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
           <div
             v-for="(item, index) in ldapConfigData.data_config.dept_search_base_dns"
             :key="index"
@@ -190,7 +190,8 @@
           </bk-form-item>
           <bk-form-item
             class="w-[560px]" :label="$t('用户组 Base DN')" required
-            property="user_group_config.search_base_dns">
+            property="user_group_config.search_base_dns"
+            :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
             <div
               v-for="(item, index) in fieldSettingData.user_group_config.search_base_dns"
               :key="index"

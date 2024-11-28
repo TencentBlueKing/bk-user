@@ -162,7 +162,7 @@
   "用户对象类": "User Object Class",
   "用户过滤器": "User filter",
   "过滤器中无需指定对象类，如（objectclass=xxx）": "No object class needs to be specified in the filter, such as (objectclass=xxx)",
-  "支持同步多个 LDAP 树（森林），需为每棵树指定相应的BaseDN": "Support synchronizing multiple LDAP trees (forests), with corresponding BaseDN specified for each tree",
+  "支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN": "Support synchronizing multiple LDAP trees (forests), with corresponding BaseDN specified for each tree",
   "部门对象类": "Department Object Class",
   "LDAP 服务地址": "LDAP service address",
   "Bind DN 密码": "Bind DN password",
