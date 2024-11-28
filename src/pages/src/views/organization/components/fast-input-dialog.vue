@@ -88,7 +88,7 @@
 
 <script setup lang="tsx">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 import { useValidate } from '@/hooks';
 import { batchCreatePreview, getFieldsTips, operationsCreate } from '@/http/organizationFiles';
@@ -124,7 +124,9 @@ watch(() => props.isShow, async (val) => {
   if (val) {
     currentId.value = 1;
     formData.value.val = '';
-    formRef.value?.clearValidate();
+    nextTick(() => {
+      formRef.value?.clearValidate();
+    });
     const res = await getFieldsTips();
     tipsInfo.value = (res.data || []);
     tableData.value = [];
