@@ -81,6 +81,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             # 用户组算是特殊的部门
             raw_depts.extend([self._gen_raw_dept(g) for g in groups])
 
+        # 检查是否有配置不当 / 数据源异常导致有 Code 重复的情况
+        self._validate_duplicate_codes(raw_depts)
+
         # dn -> code (entryUUID) 映射表
         self.dept_dn_code_map = {d.extras["dn"]: d.code for d in raw_depts}
 
@@ -112,6 +115,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
 
         # 生成的原始用户数据，不含部门，leader 信息
         raw_users = [self._gen_raw_user(u) for u in users]
+
+        # 检查是否有配置不当 / 数据源异常导致有 Code 重复的情况
+        self._validate_duplicate_codes(raw_users)
 
         # 给用户填充上部门信息（code）
         self._set_raw_users_departments(raw_users)
@@ -248,3 +254,13 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
     def _parse_dept_dn_from_user_dn(dn: str) -> str:
         """从用户 DN 中获取部门信息（去除第一个层级的就是部门）"""
         return utils.gen_dn(utils.parse_dn(dn)[1:])
+
+    @staticmethod
+    def _validate_duplicate_codes(raw_objs: List[RawDataSourceDepartment] | List[RawDataSourceUser]) -> None:
+        """校验部门/用户 code 是否重复"""
+        exist_codes = set()
+        for obj in raw_objs:
+            if obj.code in exist_codes:
+                raise ValueError(f"duplicate code `{obj.code}` found, check your ldap search base dn config!")
+
+            exist_codes.add(obj.code)

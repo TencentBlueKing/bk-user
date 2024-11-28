@@ -33,6 +33,9 @@ MAX_REQ_TIMEOUT = 120
 # 默认请求超时时间
 DEFAULT_REQ_TIMEOUT = 30
 
+# 至多指定 10 个搜索根目录（LDAP 树）
+MAX_SEARCH_BASE_DN_COUNT = 10
+
 # Operational Attributes 是由 LDAP 服务器管理的特殊属性，
 # 用于记录关于条目元数据和其他操作信息，而不是用户定义的实际数据
 # 举些例子：

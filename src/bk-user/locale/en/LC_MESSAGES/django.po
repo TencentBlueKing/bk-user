@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-14 20:22+0800\n"
+"POT-Creation-Date: 2024-11-27 18:14+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -105,76 +105,76 @@ msgstr ""
 msgid "请先确认策略，再尝试修改状态"
 msgstr "Please confirm the strategy before attempting to modify the status"
 
-#: bkuser/apis/web/data_source/serializers.py:78
+#: bkuser/apis/web/data_source/serializers.py:79
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr ""
 "Target field {} in the field mapping does not belong to either custom or "
 "built-in fields"
 
-#: bkuser/apis/web/data_source/serializers.py:85
+#: bkuser/apis/web/data_source/serializers.py:86
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "Required target field {} is missing a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:113
+#: bkuser/apis/web/data_source/serializers.py:114
 msgid "数据源插件不存在"
 msgstr "Date source plugin does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:127
+#: bkuser/apis/web/data_source/serializers.py:128
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "A tenant can only have one data source of the real type"
 
-#: bkuser/apis/web/data_source/serializers.py:133
-#: bkuser/apis/web/data_source/serializers.py:205
+#: bkuser/apis/web/data_source/serializers.py:134
+#: bkuser/apis/web/data_source/serializers.py:206
 msgid "当前数据源类型必须配置字段映射"
 msgstr "The current date source type must be configured with a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:136
-#: bkuser/apis/web/data_source/serializers.py:208
+#: bkuser/apis/web/data_source/serializers.py:137
+#: bkuser/apis/web/data_source/serializers.py:209
 msgid "当前数据源类型必须提供同步配置"
 msgstr ""
 "The current date source type must provide a synchronization configuration"
 
-#: bkuser/apis/web/data_source/serializers.py:139
-#: bkuser/apis/web/data_source/serializers.py:246
+#: bkuser/apis/web/data_source/serializers.py:140
+#: bkuser/apis/web/data_source/serializers.py:247
 msgid "数据源插件 {} 不存在"
 msgstr "Data source plugin {} does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:145
-#: bkuser/apis/web/data_source/serializers.py:193
-#: bkuser/apis/web/data_source/serializers.py:266
+#: bkuser/apis/web/data_source/serializers.py:146
+#: bkuser/apis/web/data_source/serializers.py:194
+#: bkuser/apis/web/data_source/serializers.py:267
 msgid "插件配置不合法：{}"
 msgstr "Plugin configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:243
+#: bkuser/apis/web/data_source/serializers.py:244
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "Local data source does not support connectivity test"
 
-#: bkuser/apis/web/data_source/serializers.py:254
+#: bkuser/apis/web/data_source/serializers.py:255
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "The current user tenant {} does not have a data source with ID {}"
 
-#: bkuser/apis/web/data_source/serializers.py:289
+#: bkuser/apis/web/data_source/serializers.py:290
 msgid "密码规则配置不合法: {}"
 msgstr "Password rule configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:297
+#: bkuser/apis/web/data_source/serializers.py:298
 msgid "指定数据源不存在"
 msgstr "The specified data source does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:301
+#: bkuser/apis/web/data_source/serializers.py:302
 msgid "无法使用该数据源生成随机密码"
 msgstr "Unable to generate a random password using this data source"
 
-#: bkuser/apis/web/data_source/serializers.py:327
+#: bkuser/apis/web/data_source/serializers.py:328
 msgid "待导入文件必须为 Excel 格式"
 msgstr "The file to be imported must be in Excel format"
 
-#: bkuser/apis/web/data_source/serializers.py:330
+#: bkuser/apis/web/data_source/serializers.py:331
 msgid "待导入文件大小不得超过 {} M"
 msgstr "The file to be imported must not exceed {} M in size"
 
-#: bkuser/apis/web/data_source/serializers.py:336
+#: bkuser/apis/web/data_source/serializers.py:337
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "Full import mode is temporarily unavailable for security reasons"
 
@@ -1883,75 +1883,99 @@ msgstr ""
 "Failed to parse user/department data, please ensure the API returns data "
 "that complies with the protocol specifications"
 
-#: bkuser/plugins/ldap/models.py:54
+#: bkuser/plugins/ldap/models.py:56
 msgid "LDAP 服务需要提供密码"
 msgstr "Must provide LDAP server password"
 
-#: bkuser/plugins/ldap/models.py:77
+#: bkuser/plugins/ldap/models.py:79
 msgid "需要提供用户对象类"
 msgstr "Must provide user object class"
 
-#: bkuser/plugins/ldap/models.py:80
-msgid "需要提供用户过滤器（DN）"
-msgstr "Must provide user search filter (DN)"
+#: bkuser/plugins/ldap/models.py:82
+msgid "需要提供用户 Base DN"
+msgstr "Must provide user base dn"
 
-#: bkuser/plugins/ldap/models.py:83
+#: bkuser/plugins/ldap/models.py:85
+msgid "用户 Base DN 数量不能超过 {} 个"
+msgstr "The number of user Base DNs cannot exceed {}"
+
+#: bkuser/plugins/ldap/models.py:88
+msgid "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "The user Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+
+#: bkuser/plugins/ldap/models.py:91
 msgid "需要提供部门对象类"
 msgstr "Must provide department object class"
 
-#: bkuser/plugins/ldap/models.py:86
-msgid "需要提供部门过滤器（DN）"
-msgstr "Must provide department search filter (DN)"
+#: bkuser/plugins/ldap/models.py:94
+msgid "需要提供部门 Base DN"
+msgstr "Must provide department base dn"
 
-#: bkuser/plugins/ldap/models.py:109
+#: bkuser/plugins/ldap/models.py:97
+msgid "部门 Base DN 数量不能超过 {} 个"
+msgstr "The number of department Base DNs cannot exceed {}"
+
+#: bkuser/plugins/ldap/models.py:100
+msgid "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "The department Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+
+#: bkuser/plugins/ldap/models.py:123
 msgid "需要提供用户组对象类"
 msgstr "Must provide user group object class"
 
-#: bkuser/plugins/ldap/models.py:112
-msgid "需要提供用户组过滤器（DN）"
-msgstr "Must provide user group search filter (DN)"
+#: bkuser/plugins/ldap/models.py:126
+msgid "需要提供用户组 Base DN"
+msgstr "Must provide user group base dn"
 
-#: bkuser/plugins/ldap/models.py:115
+#: bkuser/plugins/ldap/models.py:129
+msgid "用户组 Base DN 数量不能超过 {} 个"
+msgstr "The number of user group Base DNs cannot exceed {}"
+
+#: bkuser/plugins/ldap/models.py:132
+msgid "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
+msgstr "The user group Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+
+#: bkuser/plugins/ldap/models.py:135
 msgid "用户组对象类为 groupOfNames 时，成员字段应为 member"
 msgstr ""
 "The member field should be `member` when the user group object class is "
 "`groupOfNames`"
 
-#: bkuser/plugins/ldap/models.py:118
+#: bkuser/plugins/ldap/models.py:138
 msgid "用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"
 msgstr ""
 "The member field should be `uniqueMember` when the user group object class "
 "is `groupOfUniqueNames`"
 
-#: bkuser/plugins/ldap/models.py:137
+#: bkuser/plugins/ldap/models.py:157
 msgid "需要提供 Leader 字段名"
 msgstr "Must provide leader field name"
 
-#: bkuser/plugins/ldap/models.py:162
-msgid "用户过滤器（DN）必须是 Base DN 的子节点"
-msgstr "User filter (DN) must be a child of Base DN"
+#: bkuser/plugins/ldap/models.py:183
+msgid "用户 Base DN 必须都是 Base DN 的子节点"
+msgstr "User Base DN must be a child node of Base DN"
 
-#: bkuser/plugins/ldap/models.py:165
-msgid "部门过滤器（DN）必须是 Base DN 的子节点"
-msgstr "Department search filter (DN) must be a child of Base DN"
+#: bkuser/plugins/ldap/models.py:187
+msgid "部门 Base DN 必须都是 Base DN 的子节点"
+msgstr "Department Base DN must be a child node of Base DN"
 
-#: bkuser/plugins/ldap/models.py:170
-msgid "用户组过滤器（DN）必须是 Base DN 的子节点"
-msgstr "User group search filter (DN) must be a child of Base DN"
+#: bkuser/plugins/ldap/models.py:192
+msgid "用户组 Base DN 必须都是 Base DN 的子节点"
+msgstr "User group Base DN must be a child node of Base DN"
 
-#: bkuser/plugins/ldap/plugin.py:131
+#: bkuser/plugins/ldap/plugin.py:144
 msgid "连接测试失败: 无法建立连接或请求超时，请检查配置。异常信息：{}"
 msgstr ""
 "Connection test failed: unable to establish connection or request timed out, "
 "please check the settings. Exception information: {}"
 
-#: bkuser/plugins/ldap/plugin.py:139
+#: bkuser/plugins/ldap/plugin.py:152
 msgid "获取到的用户/部门数据为空，请检查数据源服务"
 msgstr ""
 "The retrieved user/department data is empty, please check the data source "
 "service"
 
-#: bkuser/plugins/ldap/plugin.py:145
+#: bkuser/plugins/ldap/plugin.py:158
 msgid "解析用户/部门数据失败，请检查返回的数据格式"
 msgstr ""
 "Failed to parse user/department data, please ensure the returns data format"
