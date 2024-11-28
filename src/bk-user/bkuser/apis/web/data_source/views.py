@@ -51,8 +51,6 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.recorder import add_audit_record
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -70,6 +68,7 @@ from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.biz.tenant import TenantUserHandler
@@ -186,19 +185,10 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
-        # 审计记录
-        add_audit_record(
-            operator=current_user,
-            tenant_id=current_tenant_id,
-            operation=OperationEnum.CREATE_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=ds.id,
-            extras={
-                "plugin_config": ds.plugin_config,
-                "field_mapping": ds.field_mapping,
-                "sync_config": ds.sync_config,
-            },
-        )
+        # 【审计】创建数据源审计对象并记录
+        auditor = DataSourceAuditor(request.user.username, current_tenant_id, ds)
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create()
 
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
@@ -252,12 +242,9 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】记录变更前数据
-        data_before = {
-            "plugin_config": data_source.plugin_config,
-            "field_mapping": data_source.field_mapping,
-            "sync_config": data_source.sync_config,
-        }
+        # 【审计】创建数据源审计对象，并记录变更前数据
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        auditor.pre_record_data_before()
 
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
@@ -267,15 +254,8 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
-        # 审计记录
-        add_audit_record(
-            operator=data_source.updater,
-            tenant_id=data_source.owner_tenant_id,
-            operation=OperationEnum.MODIFY_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=data_source.id,
-            extras={"data_before": data_before},
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -308,14 +288,9 @@ class DataSourceRetrieveUpdateDestroyApi(
         # 待删除的认证源
         waiting_delete_idps = Idp.objects.filter(**idp_filters)
 
-        # 【审计】记录变更前数据，数据删除后便无法获取
-        idps_before_delete = list(
-            waiting_delete_idps.values("id", "name", "status", "plugin_config", "data_source_match_rules")
-        )
-        data_source_id = data_source.id
-        plugin_config = data_source.plugin_config
-        field_mapping = data_source.field_mapping
-        sync_config = data_source.sync_config
+        # 【审计】创建数据源审计对象，并记录变更前数据
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        auditor.pre_record_data_before(list(waiting_delete_idps))
 
         with transaction.atomic():
             # 删除认证源敏感信息
@@ -334,21 +309,8 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
-        # 审计记录
-        add_audit_record(
-            operator=request.user.username,
-            tenant_id=self.get_current_tenant_id(),
-            operation=OperationEnum.DELETE_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=data_source_id,
-            extras={
-                "is_delete_idp": is_delete_idp,
-                "plugin_config": plugin_config,
-                "field_mapping": field_mapping,
-                "sync_config": sync_config,
-                "idps_before_delete": idps_before_delete,
-            },
-        )
+        # 【审计】将审计记录保存至数据库
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -543,15 +505,10 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
-        # 审计记录
-        add_audit_record(
-            operator=task.operator,
-            tenant_id=data_source.owner_tenant_id,
-            operation=OperationEnum.SYNC_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=data_source.id,
-            extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
-        )
+        # 【审计】创建数据源审计对象并记录
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        # 【审计】将审计记录保存至数据库
+        auditor.record_sync(options)
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
@@ -596,15 +553,10 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
-        # 审计记录
-        add_audit_record(
-            operator=task.operator,
-            tenant_id=data_source.owner_tenant_id,
-            operation=OperationEnum.SYNC_DATA_SOURCE,
-            object_type=ObjectTypeEnum.DATA_SOURCE,
-            object_id=data_source.id,
-            extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
-        )
+        # 【审计】创建数据源审计对象并记录
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        # 【审计】将审计记录保存至数据库
+        auditor.record_sync(options)
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
