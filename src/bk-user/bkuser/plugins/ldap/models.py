@@ -30,7 +30,7 @@ from bkuser.plugins.ldap.constants import (
     SERVER_URL_REGEX,
     PageSizeEnum,
 )
-from bkuser.plugins.ldap.utils import any_dn_in_list_is_others_suffix
+from bkuser.plugins.ldap.utils import has_parent_child_dn_relation
 from bkuser.plugins.models import BasePluginConfig
 
 
@@ -84,7 +84,7 @@ class DataConfig(BaseModel):
         if len(self.user_search_base_dns) > MAX_SEARCH_BASE_DN_COUNT:
             raise ValueError(_("用户 Base DN 数量不能超过 {} 个").format(MAX_SEARCH_BASE_DN_COUNT))
 
-        if any_dn_in_list_is_others_suffix(self.user_search_base_dns):
+        if has_parent_child_dn_relation(self.user_search_base_dns):
             raise ValueError(_("用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"))
 
         if not self.dept_object_class:
@@ -96,7 +96,7 @@ class DataConfig(BaseModel):
         if len(self.dept_search_base_dns) > MAX_SEARCH_BASE_DN_COUNT:
             raise ValueError(_("部门 Base DN 数量不能超过 {} 个").format(MAX_SEARCH_BASE_DN_COUNT))
 
-        if any_dn_in_list_is_others_suffix(self.dept_search_base_dns):
+        if has_parent_child_dn_relation(self.dept_search_base_dns):
             raise ValueError(_("部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"))
 
         return self
@@ -128,7 +128,7 @@ class UserGroupConfig(BaseModel):
         if len(self.search_base_dns) > MAX_SEARCH_BASE_DN_COUNT:
             raise ValueError(_("用户组 Base DN 数量不能超过 {} 个").format(MAX_SEARCH_BASE_DN_COUNT))
 
-        if any_dn_in_list_is_others_suffix(self.search_base_dns):
+        if has_parent_child_dn_relation(self.search_base_dns):
             raise ValueError(_("用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"))
 
         if self.object_class == "groupOfNames" and self.group_member_field != "member":

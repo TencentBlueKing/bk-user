@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.plugins.ldap.utils import any_dn_in_list_is_others_suffix
+from bkuser.plugins.ldap.utils import has_parent_child_dn_relation
 
 
 @pytest.mark.parametrize(
@@ -59,5 +59,5 @@ from bkuser.plugins.ldap.utils import any_dn_in_list_is_others_suffix
         ),
     ],
 )
-def test_any_dn_in_list_is_others_suffix(dns, expected):
-    assert any_dn_in_list_is_others_suffix(dns) == expected
+def test_has_parent_child_dn_relation(dns, expected):
+    assert has_parent_child_dn_relation(dns) == expected

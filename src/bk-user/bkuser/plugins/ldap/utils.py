@@ -66,14 +66,11 @@ def gen_dn(rdns: List[RDN]) -> str:
     return separator.join([f"{rdn.attr_type}={rdn.attr_value}" for rdn in rdns])
 
 
-def any_dn_in_list_is_others_suffix(dns: List[str]) -> bool:
+def has_parent_child_dn_relation(dns: List[str]) -> bool:
     """检查 DN 列表中，是否有某个 DN 是别人的后缀（祖先节点）"""
-    dns.sort(key=len)
-    dns_len = len(dns)
-
-    for i in range(dns_len):
-        for j in range(i + 1, dns_len):
-            if dns[j].endswith(dns[i]):
+    for idx, dn1 in enumerate(dns):
+        for dn2 in dns[idx + 1 :]:
+            if dn1.endswith(dn2) or dn2.endswith(dn1):
                 return True
 
     return False
