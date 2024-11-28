@@ -30,6 +30,7 @@ from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp, IdpPlugin, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.auditor import IdpAuditor
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -149,6 +150,11 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
             updater=current_user,
         )
 
+        # 【审计】创建认证源审计对象
+        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create()
+
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
 
@@ -215,6 +221,10 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建认证源审计对象，并记录变更前数据
+        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        auditor.pre_record_data_before()
+
         with transaction.atomic():
             idp.name = data["name"]
             idp.status = data["status"]
@@ -225,6 +235,9 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
                 update_fields=["name", "status", "data_source_match_rules", "data_source_id", "updater", "updated_at"]
             )
             idp.set_plugin_cfg(data["plugin_config"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(idp)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -311,6 +324,11 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(plugin_config)
 
+        # 【审计】创建认证源审计对象
+        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create()
+
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
 
@@ -374,11 +392,18 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建认证源审计对象并记录变更前数据
+        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        auditor.pre_record_data_before()
+
         with transaction.atomic():
             idp.name = data["name"]
             idp.status = data["status"]
             idp.updater = request.user.username
             idp.save(update_fields=["name", "status", "updater", "updated_at"])
             data_source.set_plugin_cfg(data["plugin_config"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(idp)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

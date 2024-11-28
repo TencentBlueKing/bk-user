@@ -185,7 +185,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
-        # 【审计】创建数据源审计对象并记录
+        # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, current_tenant_id, ds)
         # 【审计】将审计记录保存至数据库
         auditor.record_create()
@@ -242,7 +242,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】创建数据源审计对象，并记录变更前数据
+        # 【审计】创建数据源审计对象并记录变更前数据
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
         auditor.pre_record_data_before()
 
@@ -288,7 +288,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         # 待删除的认证源
         waiting_delete_idps = Idp.objects.filter(**idp_filters)
 
-        # 【审计】创建数据源审计对象，并记录变更前数据
+        # 【审计】创建数据源审计对象并记录变更前数据
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
         auditor.pre_record_data_before(list(waiting_delete_idps))
 
@@ -505,7 +505,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
-        # 【审计】创建数据源审计对象并记录
+        # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
         # 【审计】将审计记录保存至数据库
         auditor.record_sync(options)
@@ -553,7 +553,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
-        # 【审计】创建数据源审计对象并记录
+        # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
         # 【审计】将审计记录保存至数据库
         auditor.record_sync(options)

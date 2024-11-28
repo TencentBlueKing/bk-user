@@ -26,7 +26,8 @@ class ObjectTypeEnum(StrStructuredEnum):
     IDP = EnumField("idp", label=_("认证源"))
     DATA_SOURCE_USER = EnumField("data_source_user", label=_("数据源用户"))
     TENANT_USER = EnumField("tenant_user", label=_("租户用户"))
-    DEPARTMENT = EnumField("department", label=_("部门"))
+    DATA_SOURCE_DEPARTMENT = EnumField("data_source_department", label=_("部门"))
+    TENANT_DEPARTMENT = EnumField("tenant_department", label=_("租户部门"))
     TENANT = EnumField("tenant", label=_("租户"))
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
 
@@ -70,10 +71,21 @@ class OperationEnum(StrStructuredEnum):
     DELETE_COLLABORATION_TENANT_USER = EnumField("delete_collaboration_tenant_user", label=_("删除协同租户用户"))
 
     # 部门
-    CREATE_DEPARTMENT = EnumField("create_department", label=_("创建部门"))
-    MODIFY_DEPARTMENT = EnumField("modify_department", label=_("修改部门名称"))
-    DELETE_DEPARTMENT = EnumField("delete_department", label=_("删除部门"))
-    MODIFY_PARENT_DEPARTMENT = EnumField("modify_parent_department", label=_("修改上级部门"))
+    CREATE_DATA_SOURCE_DEPARTMENT = EnumField("create_data_source_department", label=_("创建数据源部门"))
+    CREATE_TENANT_DEPARTMENT = EnumField("create_tenant_department", label=_("创建租户部门"))
+    CREATE_COLLABORATION_TENANT_DEPARTMENT = EnumField(
+        "create_collaboration_tenant_department", label=_("创建协同租户部门")
+    )
+    CREATE_PARENT_DEPARTMENT = EnumField("create_parent_department", label=_("创建部门-父部门关系"))
+    MODIFY_DATA_SOURCE_DEPARTMENT = EnumField("modify_data_source_department", label=_("修改数据源部门"))
+    MODIFY_TENANT_DEPARTMENT = EnumField("modify_tenant_department", label=_("修改租户部门"))
+    MODIFY_PARENT_DEPARTMENT = EnumField("modify_parent_department", label=_("修改部门-父部门关系"))
+    DELETE_DATA_SOURCE_DEPARTMENT = EnumField("delete_data_source_department", label=_("删除数据源部门"))
+    DELETE_TENANT_DEPARTMENT = EnumField("delete_tenant_department", label=_("删除租户部门"))
+    DELETE_COLLABORATION_TENANT_DEPARTMENT = EnumField(
+        "delete_collaboration_tenant_department", label=_("删除协同租户部门")
+    )
+    DELETE_PARENT_DEPARTMENT = EnumField("delete_parent_department", label=_("删除部门-父部门关系"))
 
     # 租户
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))

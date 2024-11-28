@@ -20,15 +20,23 @@ from typing import Any, Dict, List
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
 from bkuser.apps.audit.data_models import AuditObject
 from bkuser.apps.audit.recorder import add_audit_record, batch_add_audit_records
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
+    DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import (
+    Tenant,
+    TenantDepartment,
+    TenantManager,
+    TenantUser,
+    TenantUserValidityPeriodConfig,
+)
 from bkuser.utils.django import get_model_dict
 
 
@@ -107,7 +115,7 @@ class DataSourceAuditor:
 
 
 class TenantUserUpdateAuditor:
-    """用于记录租户用户修改的审计"""
+    """用于记录租户用户修改操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -192,7 +200,7 @@ class TenantUserUpdateAuditor:
 
 
 class TenantUserDestroyAuditor:
-    """用于记录租户用户删除的审计"""
+    """用于记录租户用户删除操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -298,7 +306,7 @@ class TenantUserDestroyAuditor:
 
 
 class TenantUserCreateAuditor:
-    """用于记录租户用户创建的审计"""
+    """用于记录租户用户创建操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -362,7 +370,7 @@ class TenantUserCreateAuditor:
 
 
 class TenantUserDepartmentRelationsAuditor:
-    """用于记录用户-部门关系变更的审计"""
+    """用于记录用户-部门关系变更操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str, data_source_user_ids: List[int], operation: OperationEnum):
         self.operator = operator
@@ -421,7 +429,7 @@ class TenantUserDepartmentRelationsAuditor:
 
 
 class TenantUserLeaderRelationsUpdateAuditor:
-    """用于记录用户-上级关系变更的审计"""
+    """用于记录用户-上级关系变更操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str, data_source_user_ids: List[int]):
         self.operator = operator
@@ -479,7 +487,7 @@ class TenantUserLeaderRelationsUpdateAuditor:
 
 
 class TenantUserAccountExpiredAtUpdateAuditor:
-    """用于记录租户用户账号有效期修改的审计"""
+    """用于记录租户用户账号有效期修改操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -533,7 +541,7 @@ class TenantUserAccountExpiredAtUpdateAuditor:
 
 
 class TenantUserStatusUpdateAuditor:
-    """用于记录租户用户账号状态修改的审计"""
+    """用于记录租户用户账号状态修改操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -575,7 +583,7 @@ class TenantUserStatusUpdateAuditor:
 
 
 class TenantUserPasswordResetAuditor:
-    """用于记录租户用户密码重置的审计"""
+    """用于记录租户用户密码重置操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
@@ -604,3 +612,465 @@ class TenantUserPasswordResetAuditor:
                 )
             )
         batch_add_audit_records(self.operator, self.tenant_id, self.audit_objects)
+
+
+class IdpAuditor:
+    """用于记录认证源相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str, idp: Idp):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_before: Dict[str, Any] = {}
+        self.idp = idp
+
+    def pre_record_data_before(self):
+        """记录变更前的相关数据记录"""
+        self.data_before = get_model_dict(self.idp)
+
+    def record_create(self):
+        """记录认证源创建操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.CREATE_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=self.idp.id,
+            data_after=get_model_dict(self.idp),
+        )
+
+    def record_update(self, idp: Idp):
+        """记录认证源更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=idp.id,
+            data_before=self.data_before,
+            data_after=get_model_dict(idp),
+        )
+
+
+class TenantDepartmentAuditor:
+    """用于记录部门相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[int, Any] = {}
+        self.audit_records: List[AuditObject] = []
+
+    def pre_record_data_before(self, tenant_department: TenantDepartment):
+        """记录变更前的相关数据记录"""
+        if tenant_department.tenant_id == self.tenant_id:
+            data_source_department = tenant_department.data_source_department
+            self.data_befores[tenant_department.id] = {
+                "data_source_department": get_model_dict(data_source_department),
+                "tenant_department": get_model_dict(tenant_department),
+                "parent_department_id": DataSourceDepartmentRelation.objects.get(
+                    department=data_source_department, data_source=data_source_department.data_source
+                ).parent_id,
+                "tenant_id": tenant_department.tenant_id,
+            }
+        else:
+            self.data_befores[tenant_department.id] = {
+                "collaboration_tenant_department": get_model_dict(tenant_department),
+                "tenant_id": tenant_department.tenant_id,
+            }
+
+    def batch_pre_record_data_before(self, tenant_departments: List[TenantDepartment]):
+        """批量记录变更前的相关数据记录"""
+        for tenant_department in tenant_departments:
+            self.pre_record_data_before(tenant_department)
+
+    def record_create(self, tenant_departments: List[TenantDepartment]):
+        """记录部门创建操作"""
+        for tenant_department in tenant_departments:
+            # 若为本租户下的部门
+            if tenant_department.tenant_id == self.tenant_id:
+                data_source_department = tenant_department.data_source_department
+                ds_dept_object = {
+                    "id": data_source_department.id,
+                    "type": ObjectTypeEnum.DATA_SOURCE_DEPARTMENT,
+                    "name": data_source_department.name,
+                }
+
+                # 父部门 ID
+                parent_department_id = DataSourceDepartmentRelation.objects.get(
+                    department=data_source_department, data_source=data_source_department.data_source
+                ).parent_id
+
+                self.audit_records.extend(
+                    [
+                        # 租户部门
+                        AuditObject(
+                            id=tenant_department.id,
+                            type=ObjectTypeEnum.TENANT_DEPARTMENT,
+                            operation=OperationEnum.CREATE_TENANT_DEPARTMENT,
+                            data_after=get_model_dict(tenant_department),
+                        ),
+                        # 数据源部门
+                        AuditObject(
+                            **ds_dept_object,
+                            operation=OperationEnum.CREATE_DATA_SOURCE_DEPARTMENT,
+                            data_after=get_model_dict(data_source_department),
+                        ),
+                        # 租户部门父部门
+                        AuditObject(
+                            **ds_dept_object,
+                            operation=OperationEnum.CREATE_PARENT_DEPARTMENT,
+                            data_after={"parent_department": parent_department_id},
+                        ),
+                    ]
+                )
+            else:
+                # 若为协同租户下的部门
+                self.audit_records.append(
+                    # 协同租户部门
+                    AuditObject(
+                        id=tenant_department.id,
+                        type=ObjectTypeEnum.TENANT_DEPARTMENT,
+                        operation=OperationEnum.CREATE_COLLABORATION_TENANT_DEPARTMENT,
+                        data_after=get_model_dict(tenant_department),
+                    )
+                )
+        batch_add_audit_records(self.operator, self.tenant_id, self.audit_records)
+
+    def record_update(self, tenant_department: TenantDepartment):
+        """记录部门更新操作"""
+        data_source_department = tenant_department.data_source_department
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_DATA_SOURCE_DEPARTMENT,
+            object_type=ObjectTypeEnum.DATA_SOURCE_DEPARTMENT,
+            object_name=self.data_befores[tenant_department.id]["data_source_department"]["name"],
+            object_id=data_source_department.id,
+            data_before={"name": self.data_befores[tenant_department.id]["data_source_department"]["name"]},
+            data_after={"name": data_source_department.name},
+        )
+
+    def record_update_parent_department(self, tenant_department: TenantDepartment):
+        """记录租户部门父部门更新操作"""
+        data_source_department = tenant_department.data_source_department
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_PARENT_DEPARTMENT,
+            object_type=ObjectTypeEnum.DATA_SOURCE_DEPARTMENT,
+            object_id=data_source_department.id,
+            object_name=data_source_department.name,
+            data_before={"parent_department_id": self.data_befores[tenant_department.id]["parent_department_id"]},
+            data_after={
+                "parent_department_id": DataSourceDepartmentRelation.objects.get(
+                    department=data_source_department, data_source=data_source_department.data_source
+                ).parent_id
+            },
+        )
+
+    def record_delete(self):
+        """记录部门删除操作"""
+        for tenant_department_id, data_befores in self.data_befores.items():
+            # 若为本租户下的部门
+            if data_befores["tenant_id"] == self.tenant_id:
+                ds_dept_object = {
+                    "id": data_befores["data_source_department"]["id"],
+                    "type": ObjectTypeEnum.DATA_SOURCE_DEPARTMENT,
+                    "name": data_befores["data_source_department"]["name"],
+                }
+                self.audit_records.extend(
+                    [
+                        # 租户部门
+                        AuditObject(
+                            id=tenant_department_id,
+                            type=ObjectTypeEnum.TENANT_DEPARTMENT,
+                            operation=OperationEnum.DELETE_TENANT_DEPARTMENT,
+                            data_before=data_befores["tenant_department"],
+                        ),
+                        # 数据源部门
+                        AuditObject(
+                            **ds_dept_object,
+                            operation=OperationEnum.DELETE_DATA_SOURCE_DEPARTMENT,
+                            data_before=data_befores["data_source_department"],
+                        ),
+                        # 租户部门父部门
+                        AuditObject(
+                            **ds_dept_object,
+                            operation=OperationEnum.DELETE_PARENT_DEPARTMENT,
+                            data_before={"parent_department_id": data_befores["parent_department_id"]},
+                        ),
+                    ]
+                )
+            else:
+                # 若为协同租户下的部门
+                self.audit_records.append(
+                    # 协同租户部门
+                    AuditObject(
+                        id=tenant_department_id,
+                        type=ObjectTypeEnum.TENANT_DEPARTMENT,
+                        operation=OperationEnum.DELETE_COLLABORATION_TENANT_DEPARTMENT,
+                        data_before=data_befores["collaboration_tenant_department"],
+                    )
+                )
+
+        batch_add_audit_records(self.operator, self.tenant_id, self.audit_records)
+
+
+class VirtualUserAuditor:
+    """用于记录虚拟用户相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, tenant_user: TenantUser):
+        """记录变更前的相关数据记录"""
+        self.data_befores["tenant_user"] = get_model_dict(tenant_user)
+        self.data_befores["data_source_user"] = get_model_dict(tenant_user.data_source_user)
+
+    def record_create(self, tenant_user: TenantUser):
+        """记录虚拟用户创建操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.CREATE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
+            data_after=get_model_dict(tenant_user),
+            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        )
+
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.CREATE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
+            object_id=tenant_user.data_source_user.id,
+            object_name=tenant_user.data_source_user.username,
+            data_after=get_model_dict(tenant_user.data_source_user),
+            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        )
+
+    def record_update(self, tenant_user: TenantUser):
+        """记录虚拟用户更新操作"""
+        data_source_user = tenant_user.data_source_user
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
+            object_id=data_source_user.id,
+            object_name=data_source_user.username,
+            data_before=self.data_befores["data_source_user"],
+            data_after=get_model_dict(data_source_user),
+            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        )
+
+    def record_delete(self):
+        """记录虚拟用户删除操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.DELETE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=self.data_befores["tenant_user"]["id"],
+            data_before=self.data_befores["tenant_user"],
+            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        )
+
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.DELETE_VIRTUAL_USER,
+            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
+            object_id=self.data_befores["data_source_user"]["id"],
+            object_name=self.data_befores["data_source_user"]["username"],
+            data_before=self.data_befores["data_source_user"],
+            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        )
+
+
+class TenantUserPersonalInfoUpdateAuditor:
+    """用于记录用户个人中心信息更新操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, tenant_user: TenantUser):
+        """记录变更前的相关数据记录"""
+        self.data_befores["email"] = tenant_user.email
+        self.data_befores["phone_info"] = tenant_user.phone_info
+
+    def record_update_email(self, tenant_user: TenantUser):
+        """记录用户邮箱更新操作"""
+        tenant_user.refresh_from_db()
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_USER_EMAIL,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
+            data_before={"email": self.data_befores["email"]},
+            data_after={"email": tenant_user.email},
+        )
+
+    def record_update_phone(self, tenant_user: TenantUser):
+        """记录用户手机号更新操作"""
+        tenant_user.refresh_from_db()
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_USER_PHONE,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
+            data_before={"phone_info": self.data_befores["phone_info"]},
+            data_after={"phone_info": tenant_user.phone_info},
+        )
+
+    def record_update_password(self, data_source_user: DataSourceUser, extras: Dict[str, int]):
+        """记录用户密码更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_USER_PASSWORD,
+            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
+            object_id=data_source_user.id,
+            object_name=data_source_user.username,
+            extras=extras,
+        )
+
+
+class TenantAuditor:
+    """用于记录租户相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, tenant: Tenant):
+        """记录变更前的相关数据记录"""
+        self.data_befores["tenant"] = get_model_dict(tenant)
+
+    def record_create(self, tenant: Tenant):
+        """记录租户创建操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.CREATE_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            object_name=tenant.name,
+            data_after=get_model_dict(tenant),
+        )
+
+    def record_update(self, tenant: Tenant):
+        """记录租户更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            object_name=self.data_befores["tenant"]["name"],
+            data_before=self.data_befores["tenant"],
+            data_after=get_model_dict(tenant),
+        )
+
+    def record_delete(self):
+        """记录租户删除操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.DELETE_TENANT,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.data_befores["tenant"]["id"],
+            object_name=self.data_befores["tenant"]["name"],
+            data_before=self.data_befores["tenant"],
+        )
+
+    def record_update_status(self, tenant: Tenant):
+        """记录租户状态更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_TENANT_STATUS,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=tenant.id,
+            object_name=tenant.name,
+            data_before={"status": self.data_befores["tenant"]["status"]},
+            data_after={"status": tenant.status},
+        )
+
+
+class TenantRealManagerAuditor:
+    """用于记录租户实名管理员相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.tenant_name = Tenant.objects.get(id=tenant_id).name
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self):
+        """记录变更前的相关数据记录"""
+        self.data_befores["real_manager_ids"] = list(
+            TenantManager.objects.filter(
+                tenant_id=self.tenant_id, tenant_user__data_source__type=DataSourceTypeEnum.REAL
+            ).values_list("tenant_user_id", flat=True)
+        )
+
+    def record_create(self):
+        """记录租户实名管理员创建操作"""
+        self.create_audit_record(OperationEnum.CREATE_TENANT_REAL_MANAGER)
+
+    def record_delete(self):
+        """记录租户实名管理员删除操作"""
+        self.create_audit_record(OperationEnum.DELETE_TENANT_REAL_MANAGER)
+
+    def create_audit_record(self, operation: OperationEnum):
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=operation,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.tenant_id,
+            object_name=self.tenant_name,
+            data_before={"real_manager_ids": self.data_befores["real_manager_ids"]},
+            data_after={
+                "real_manager_ids": list(
+                    TenantManager.objects.filter(
+                        tenant_id=self.tenant_id, tenant_user__data_source__type=DataSourceTypeEnum.REAL
+                    ).values_list("tenant_user_id", flat=True)
+                )
+            },
+        )
+
+
+class TenantUserValidityPeriodConfigUpdateAuditor:
+    """用于记录租户账户有效期配置相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, config: TenantUserValidityPeriodConfig):
+        """记录变更前的相关数据记录"""
+        self.data_befores["config"] = get_model_dict(config)
+
+    def record(self, config: TenantUserValidityPeriodConfig):
+        """记录租户账户有效期配置更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.tenant_id,
+            object_name=config.tenant.name,
+            data_before=self.data_befores["config"],
+            data_after=get_model_dict(config),
+        )

@@ -43,6 +43,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
+from bkuser.biz.auditor import TenantAuditor
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
@@ -114,6 +115,11 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 对租户内置管理员进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
+
+        # 【审计】创建租户审计对象
+        auditor = TenantAuditor(request.user.username, "default")
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create(tenant)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant.id}).data, status=status.HTTP_201_CREATED)
 
@@ -227,11 +233,18 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建租户审计对象并记录变更前的数据
+        auditor = TenantAuditor(request.user.username, "default")
+        auditor.pre_record_data_before(tenant)
+
         # 更新
         tenant.name = data["name"]
         tenant.logo = data["logo"]
         tenant.updater = request.user.username
         tenant.save(update_fields=["name", "logo", "updater", "updated_at"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(tenant)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -247,6 +260,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
         if tenant.status != TenantStatus.DISABLED:
             raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
+
+        # 【审计】创建租户审计对象并记录变更前的数据
+        auditor = TenantAuditor(request.user.username, "default")
+        auditor.pre_record_data_before(tenant)
 
         with transaction.atomic():
             # 删除租户配置的认证源
@@ -265,6 +282,9 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             TenantDepartment.objects.filter(tenant=tenant).delete()
             # 最后再删除租户
             tenant.delete()
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -287,9 +307,16 @@ class TenantStatusUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
         if tenant.is_default:
             raise error_codes.TENANT_UPDATE_FAILED.f(_("默认租户不能停用"))
 
+        # 【审计】创建租户审计对象并记录变更前的数据
+        auditor = TenantAuditor(request.user.username, "default")
+        auditor.pre_record_data_before(tenant)
+
         tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.ENABLED
         tenant.updater = request.user.username
         tenant.save(update_fields=["status", "updater", "updated_at"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update_status(tenant)
 
         return Response(TenantStatusUpdateOutputSLZ(instance={"status": tenant.status.value}).data)
 

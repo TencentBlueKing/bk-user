@@ -68,7 +68,7 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象并记录变更前的数据
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
@@ -121,7 +121,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象并记录变更前的数据
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
@@ -173,7 +173,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
@@ -229,7 +229,7 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,

@@ -42,6 +42,7 @@ from bkuser.apps.tenant.models import (
     UserBuiltinField,
 )
 from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaboration_strategy_field_mapping
+from bkuser.biz.auditor import TenantUserValidityPeriodConfigUpdateAuditor
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -173,7 +174,11 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建租户账号有效期配置审计对象并记录变更前的数据
+        auditor = TenantUserValidityPeriodConfigUpdateAuditor(request.user.username, self.get_current_tenant_id())
+
         cfg = self.get_object()
+        auditor.pre_record_data_before(cfg)
         cfg.enabled = data["enabled"]
         cfg.validity_period = data["validity_period"]
         cfg.remind_before_expire = data["remind_before_expire"]
@@ -181,5 +186,8 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         cfg.notification_templates = data["notification_templates"]
         cfg.updater = request.user.username
         cfg.save()
+
+        # 【审计】记录变更后的数据
+        auditor.record(cfg)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
