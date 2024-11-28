@@ -20,7 +20,7 @@ export const useValidate = () => {
   };
   const id = {
     validator: (value: string) => /^([a-zA-Z])([a-zA-Z0-9-]){2,31}$/.test(value),
-    message: t('由3-32位字母、数字、连接符(-)字符组成，以字母开头'),
+    message: t('由3-32位小写字母、数字、连接符(-)字符组成，以字母开头'),
     trigger: 'blur',
   };
 
