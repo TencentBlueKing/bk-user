@@ -209,7 +209,7 @@ const initAudit = async () => {
       operation: formData.operation,
       object_type: formData.object_type,
       object_name: formData.object_name,
-      creator: formData.creator,
+      creator: formData.creator[0],
       created_at: formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
