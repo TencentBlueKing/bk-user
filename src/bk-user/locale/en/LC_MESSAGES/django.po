@@ -879,11 +879,11 @@ msgstr "Modify the expiration time of the user account"
 
 #: bkuser/apps/audit/constants.py:61
 msgid "修改用户密码"
-msgstr "Modify the user's status"
+msgstr "Modify the user's password"
 
 #: bkuser/apps/audit/constants.py:62
 msgid "修改用户邮箱"
-msgstr "Modify the user's password"
+msgstr "Modify the user's email"
 
 #: bkuser/apps/audit/constants.py:63
 msgid "修改用户电话号码"
