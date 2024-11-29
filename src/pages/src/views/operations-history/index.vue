@@ -26,21 +26,21 @@
               />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
-              <bk-select class="items-select" v-model="formData.operation">
+              <bk-select class="items-select" v-model="formData.operation" @change="handleOperationChange">
                 <bk-option
-                  v-for="(value, key) in operationMap"
-                  :key="key"
-                  :id="key"
-                  :name="value" />
+                  v-for="item in curOperationOptions"
+                  :key="item.key"
+                  :id="item.key"
+                  :name="item.label" />
               </bk-select>
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
-              <bk-select class="items-select" v-model="formData.object_type">
+              <bk-select class="items-select" v-model="formData.object_type" @change="handleOperationTypeChange">
                 <bk-option
-                  v-for="(value, key) in operationTypeMap"
-                  :key="key"
-                  :id="key"
-                  :name="value" />
+                  v-for="item in curOperationType"
+                  :key="item.key"
+                  :id="item.key"
+                  :name="item.label" />
               </bk-select>
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作实例')">
@@ -111,7 +111,7 @@
           <bk-table-column :label="$t('操作时间')" sort prop="created_at" width="100"></bk-table-column>
           <bk-table-column :label="$t('操作对象')" prop="object_type" width="100">
             <template #default="{ row }">
-              <span>{{ operationTypeMap[row.object_type as keyof typeof operationTypeMap] }}</span>
+              <span>{{ getOperationTypeLabel(row.object_type) }}</span>
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('操作实例')" prop="object_name" width="100"></bk-table-column>
@@ -128,12 +128,26 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+
+import { getCurrentOperationOptions, operationMap, operationType } from './operations';
 
 import MemberSelector from '@/components/MemberSelector.vue';
 import { getAudit } from '@/http/operationHistoryFiles';
 import { getRealUsers } from '@/http/settingFiles';
-import { t } from '@/language/index';
+
+// 人员选择器
+const realUsers = ref({
+  count: 0,
+  results: [],
+});
+// 请求人员数据参数
+const params = reactive({
+  page: 1,
+  page_size: 10,
+  keyword: '',
+  exclude_manager: true,
+});
 
 const isHover = ref(false);
 const isFold = reactive({
@@ -142,15 +156,6 @@ const isFold = reactive({
 });
 
 const formRef = ref();
-const operationMap = {
-  create_data_source: t('创建数据源'),
-  modify_data_source: t('修改数据源'),
-  delete_data_source: t('删除数据源'),
-  sync_data_source: t('同步数据源'),
-};
-const operationTypeMap = {
-  data_source: t('数据源'),
-};
 const isLoading = ref(false);
 const tableData = ref([]);
 const formData = reactive({
@@ -165,22 +170,37 @@ const pagination = reactive({
   count: 0,
   limit: 10,
 });
-const realUsers = ref({
-  count: 0,
-  results: [],
-});
-const params = reactive({
-  page: 1,
-  page_size: 10,
-  keyword: '',
-  exclude_manager: true,
-});
 
-onMounted(() => {
-  initAudit();
-  initCreator();
-});
+// 获取人员选择器数据
+const initCreator = async () => {
+  const res = await getRealUsers({
+    exclude_manager: params.exclude_manager,
+  });
+  realUsers.value = res.data;
+};
 
+// 人员选择器选择回调方法
+const changeSelectList = (values: string[]) => {
+  formData.creator = values;
+};
+// 人员选择器分页请求数据处理
+const scrollChange = () => {
+  params.page += 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value.count = res.data.count;
+    realUsers.value.results.push(...res.data.results);
+  });
+};
+// 获取人员选择器列表
+const fetchRealUsers = (value: string) => {
+  params.keyword = value;
+  params.page = 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value = res.data;
+  });
+};
+
+// 获取audit数据
 const initAudit = async () => {
   try {
     isLoading.value = true;
@@ -190,7 +210,7 @@ const initAudit = async () => {
       operation: formData.operation,
       object_type: formData.object_type,
       object_name: formData.object_name,
-      creator: formData.creator,
+      creator: formData.creator[0],
       created_at: formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
@@ -203,29 +223,22 @@ const initAudit = async () => {
   }
 };
 
-const initCreator = async () => {
-  const res = await getRealUsers({
-    exclude_manager: params.exclude_manager,
-  });
-  realUsers.value = res.data;
-};
-
+// pageSize更改回调方法
 const pageLimitChange = (pageSize: number) => {
   pagination.limit = pageSize;
   initAudit();
 };
 
+// page更改回调方法
 const pageCurrentChange = (page: number) => {
   pagination.current = page;
   initAudit();
 };
 
+// 折叠button处理
 const handleHoverFoldBtn = () => isHover.value = true;
-
 const handleLeaveFoldBtn = () => isHover.value = false;
-
 const togglePreFold = () =>  isFold.preFold = !isFold.preFold;
-
 const toggleFold = () => {
   isFold.curFold = !isFold.curFold;
   isHover.value = false;
@@ -239,24 +252,60 @@ const handleReset = () => {
   formData.operation = '';
 };
 
-const changeSelectList = (values: string[]) => {
-  formData.creator = values;
+// 当前关联操作对象，当操作类型或操作对象有数据时，“锁死”操作类型及操作对象的option，当且仅当两者均为空，relyKey才可以为null
+const relyKey = ref(null);
+// 所有的操作类型
+const operationOptions = getCurrentOperationOptions();
+
+// 基于relyKey筛选后的操作类型
+const curOperationOptions = computed(() => {
+  if (relyKey.value) {
+    return operationOptions
+      .filter((option: {key: string, label: string, relyKey: string}) => option.relyKey === relyKey.value);
+  }
+  return operationOptions;
+});
+
+// 基于relyKey筛选后的操作对象
+const curOperationType = computed(() => {
+  if (relyKey.value) {
+    return operationType.filter((type: {key: string, label: string}) => type.key === relyKey.value);
+  }
+  return operationType;
+});
+
+// 根据后台返回的操作对象的值，找对应label
+const getOperationTypeLabel = (key: string) => {
+  const curType = curOperationType.value.find((type: {key: string, label: string}) => type.key === key);
+  return curType ? curType.label : '--';
 };
-const scrollChange = () => {
-  params.page += 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value.count = res.data.count;
-    realUsers.value.results.push(...res.data.results);
-  });
+
+// 操作类型选择回调方法
+const handleOperationChange = (value: string) => {
+  const curRelyKey = (curOperationOptions.value.find(option => option.key === value))?.relyKey;
+  if (curRelyKey) {
+    // 更新relyKey
+    relyKey.value = curRelyKey;
+    // 同步操作对象数据
+    formData.object_type = curRelyKey;
+  } else if (formData.object_type === '') {
+    // 若操作对象此时未选择，可以清空relyKey
+    relyKey.value = null;
+  }
 };
-// 获取用户列表
-const fetchRealUsers = (value: string) => {
-  params.keyword = value;
-  params.page = 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value = res.data;
-  });
+
+// 操作对象选择回调方法
+const handleOperationTypeChange = (value: string) => {
+  if (formData.operation === '') {
+    // 若操作类型此时未选择，可以清空relyKey
+    relyKey.value = value;
+  }
 };
+
+onMounted(() => {
+  initAudit();
+  initCreator();
+});
 
 </script>
 

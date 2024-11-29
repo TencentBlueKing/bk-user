@@ -135,3 +135,13 @@ export interface TenantSettingFieldsData {
   }[],
   custom_fields: any[],
 }
+
+
+export interface RealUsersData {
+  count: number,
+  results: {
+    id: string,
+    username: string,
+    full_name: string,
+  }[],
+}
