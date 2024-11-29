@@ -513,8 +513,8 @@ class TenantUserAccountExpiredAtUpdateAuditor:
             operator=self.operator,
             tenant_id=self.tenant_id,
             operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=tenant_user.data_source_user.id,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
             data_before=self.data_befores[tenant_user.id],
             data_after={
                 "account_expired_at": tenant_user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -561,8 +561,8 @@ class TenantUserStatusUpdateAuditor:
             operator=self.operator,
             tenant_id=self.tenant_id,
             operation=OperationEnum.MODIFY_USER_STATUS,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=tenant_user.data_source_user.id,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
             data_before=self.data_befores[tenant_user.id],
             data_after={"status": tenant_user.status},
         )
@@ -596,6 +596,7 @@ class TenantUserPasswordResetAuditor:
             tenant_id=self.tenant_id,
             operation=OperationEnum.MODIFY_USER_PASSWORD,
             object_type=ObjectTypeEnum.DATA_SOURCE_USER,
+            object_name=data_source_user.username,
             object_id=data_source_user.id,
             extras=extras,
         )
@@ -928,18 +929,6 @@ class TenantUserPersonalInfoUpdateAuditor:
             object_id=tenant_user.id,
             data_before={"phone_info": self.data_befores["phone_info"]},
             data_after={"phone_info": tenant_user.phone_info},
-        )
-
-    def record_update_password(self, data_source_user: DataSourceUser, extras: Dict[str, int]):
-        """记录用户密码更新操作"""
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.MODIFY_USER_PASSWORD,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=data_source_user.id,
-            object_name=data_source_user.username,
-            extras=extras,
         )
 
 

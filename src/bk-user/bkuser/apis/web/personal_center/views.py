@@ -44,7 +44,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
-from bkuser.biz.auditor import TenantUserPersonalInfoUpdateAuditor
+from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.senders import (
@@ -551,11 +551,9 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
             valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
         )
-        # 【审计】创建租户用户个人信息审计对象
-        auditor = TenantUserPersonalInfoUpdateAuditor(request.user.username, tenant_user.tenant_id)
+        # 【审计】创建租户用户密码重置操作审计对象
+        auditor = TenantUserPasswordResetAuditor(request.user.username, tenant_user.tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_update_password(
-            tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time}
-        )
+        auditor.record(tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
