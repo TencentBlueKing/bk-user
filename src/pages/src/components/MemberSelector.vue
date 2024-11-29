@@ -1,7 +1,6 @@
 <template>
   <div class="member-selector-wrapper" :class="{ 'is-focus': isFocus }">
     <bk-select
-      v-model="modelValue"
       class="member-selector"
       :clearable="clearable"
       :collapse-tags="false"
@@ -55,7 +54,6 @@ const props = defineProps({
     default: true,
   },
 });
-const modelValue = defineModel<string[]>('modelValue');
 const emit = defineEmits(['changeSelectList', 'scrollChange', 'searchUserList']);
 const isFocus = ref(false);
 const scrollLoading = ref(false);

@@ -19,7 +19,6 @@
                 :show-on-init="false"
                 :multiple="false"
                 :clearable="true"
-                :model-value="formData.creator"
                 @change-select-list="changeSelectList"
                 @search-user-list="fetchRealUsers"
                 @scroll-change="scrollChange"
@@ -159,7 +158,7 @@ const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
 const formData = reactive({
-  creator: [],  // 操作人
+  creator: '',  // 操作人
   operation: '', // 操作类型
   object_type: '', // 操作对象
   object_name: '', // 操作实例
@@ -180,7 +179,7 @@ const initCreator = async () => {
 };
 
 // 人员选择器选择回调方法
-const changeSelectList = (values: string[]) => {
+const changeSelectList = (values: string) => {
   formData.creator = values;
 };
 // 人员选择器分页请求数据处理
@@ -210,7 +209,7 @@ const initAudit = async () => {
       operation: formData.operation,
       object_type: formData.object_type,
       object_name: formData.object_name,
-      creator: formData.creator[0],
+      creator: formData.creator,
       created_at: formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
@@ -246,7 +245,7 @@ const toggleFold = () => {
 
 const handleReset = () => {
   formData.created_at = '';
-  formData.creator = [];
+  formData.creator = '';
   formData.object_name = '';
   formData.object_type = '';
   formData.operation = '';
