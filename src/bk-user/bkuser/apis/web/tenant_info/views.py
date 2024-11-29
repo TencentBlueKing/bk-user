@@ -76,7 +76,7 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 【审计】创建租户信息审计对象并记录变更前的数据
+        # 【审计】创建租户审计对象并记录变更前的数据
         auditor = TenantAuditor(request.user.username, tenant.id)
         auditor.pre_record_data_before(tenant)
 

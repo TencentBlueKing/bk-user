@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-29 01:49+0800\n"
+"POT-Creation-Date: 2024-11-29 10:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -400,28 +400,28 @@ msgstr "Tenant data source does not exist"
 msgid "仅本地数据源支持创建部门"
 msgstr "Only local data sources support creating departments"
 
-#: bkuser/apis/web/organization/views/departments.py:289
+#: bkuser/apis/web/organization/views/departments.py:288
 msgid "仅本地数据源支持更新部门"
 msgstr "Only local data sources support updating departments"
 
-#: bkuser/apis/web/organization/views/departments.py:291
+#: bkuser/apis/web/organization/views/departments.py:290
 msgid "仅可更新属于当前租户的部门"
 msgstr "Only departments belonging to the current tenant can be updated"
 
-#: bkuser/apis/web/organization/views/departments.py:318
+#: bkuser/apis/web/organization/views/departments.py:317
 msgid "仅真实用户类型的本地数据源支持删除部门"
 msgstr "Only local data sources of real user type support deleting departments"
 
-#: bkuser/apis/web/organization/views/departments.py:328
+#: bkuser/apis/web/organization/views/departments.py:327
 msgid "该部门或其子部门下存在用户，无法删除"
 msgstr ""
 "There are users in this department or its sub-departments, unable to delete"
 
-#: bkuser/apis/web/organization/views/departments.py:474
+#: bkuser/apis/web/organization/views/departments.py:475
 msgid "仅本地数据源支持移动部门"
 msgstr "Only local data sources support moving departments"
 
-#: bkuser/apis/web/organization/views/departments.py:476
+#: bkuser/apis/web/organization/views/departments.py:477
 msgid "仅可移动属于当前租户的部门"
 msgstr "Only departments belonging to the current tenant can be moving"
 
@@ -925,79 +925,79 @@ msgstr "Create data source department"
 msgid "创建租户部门"
 msgstr "Create tenant department"
 
-#: bkuser/apps/audit/constants.py:76
+#: bkuser/apps/audit/constants.py:77
 msgid "创建协同租户部门"
 msgstr "Create collaboration tenant department"
 
-#: bkuser/apps/audit/constants.py:77
+#: bkuser/apps/audit/constants.py:79
 msgid "创建部门-父部门关系"
 msgstr "Create relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:78
+#: bkuser/apps/audit/constants.py:80
 msgid "修改数据源部门"
 msgstr "Modify data source department"
 
-#: bkuser/apps/audit/constants.py:79
+#: bkuser/apps/audit/constants.py:81
 msgid "修改租户部门"
 msgstr "Modify tenant department"
 
-#: bkuser/apps/audit/constants.py:80
+#: bkuser/apps/audit/constants.py:82
 msgid "修改部门-父部门关系"
 msgstr "Modify relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:81
+#: bkuser/apps/audit/constants.py:83
 msgid "删除数据源部门"
 msgstr "Delete data source department"
 
-#: bkuser/apps/audit/constants.py:82
+#: bkuser/apps/audit/constants.py:84
 msgid "删除租户部门"
 msgstr "Delete tenant department"
 
-#: bkuser/apps/audit/constants.py:83
+#: bkuser/apps/audit/constants.py:86
 msgid "删除协同租户部门"
 msgstr "Delete collaboration tenant department"
 
-#: bkuser/apps/audit/constants.py:84
+#: bkuser/apps/audit/constants.py:88
 msgid "删除部门-父部门关系"
 msgstr "Delete relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:87
+#: bkuser/apps/audit/constants.py:91
 msgid "创建租户"
 msgstr "Create tenant"
 
-#: bkuser/apps/audit/constants.py:88
+#: bkuser/apps/audit/constants.py:92
 msgid "修改租户信息"
 msgstr "Modify tenant"
 
-#: bkuser/apps/audit/constants.py:89
+#: bkuser/apps/audit/constants.py:93
 msgid "删除租户"
 msgstr "Delete tenant"
 
-#: bkuser/apps/audit/constants.py:90
+#: bkuser/apps/audit/constants.py:94
 msgid "修改租户状态"
 msgstr "Modify the status of tenant"
 
-#: bkuser/apps/audit/constants.py:91
+#: bkuser/apps/audit/constants.py:95
 msgid "创建租户实名管理员"
 msgstr "Create real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:92
+#: bkuser/apps/audit/constants.py:96
 msgid "删除租户实名管理员"
 msgstr "Delete real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:94
+#: bkuser/apps/audit/constants.py:98
 msgid "修改租户账户有效期配置"
 msgstr "Modify the validity period config of tenant account"
 
-#: bkuser/apps/audit/constants.py:98
+#: bkuser/apps/audit/constants.py:102
 msgid "创建虚拟用户"
 msgstr "Create virtual user"
 
-#: bkuser/apps/audit/constants.py:99
+#: bkuser/apps/audit/constants.py:103
 msgid "修改虚拟用户信息"
 msgstr "Modify virtual user"
 
-#: bkuser/apps/audit/constants.py:100
+#: bkuser/apps/audit/constants.py:104
 msgid "删除虚拟用户"
 msgstr "Delete virtual user"
 
