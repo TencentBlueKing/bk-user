@@ -526,9 +526,8 @@ class TenantUserAccountExpiredAtUpdateAuditor:
         for tenant_user in tenant_users:
             self.audit_objects.append(
                 AuditObject(
-                    id=tenant_user.data_source_user.id,
-                    name=tenant_user.data_source_user.username,
-                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
                     operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
                     data_before=self.data_befores[tenant_user.id],
                     data_after={
@@ -571,9 +570,8 @@ class TenantUserStatusUpdateAuditor:
         for tenant_user in tenant_users:
             self.audit_objects.append(
                 AuditObject(
-                    id=tenant_user.data_source_user.id,
-                    name=tenant_user.data_source_user.username,
-                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
                     operation=OperationEnum.MODIFY_USER_STATUS,
                     data_before=self.data_befores[tenant_user.id],
                     data_after={"status": tenant_user.status},
