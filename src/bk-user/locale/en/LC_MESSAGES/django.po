@@ -1925,9 +1925,7 @@ msgstr "The number of user Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:88
 msgid "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr ""
-"The user Base DN cannot be repeated or the ancestor node (suffix) of other "
-"DNs."
+msgstr "The user Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
 
 #: bkuser/plugins/ldap/models.py:91
 msgid "需要提供部门对象类"
@@ -1943,9 +1941,7 @@ msgstr "The number of department Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:100
 msgid "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr ""
-"The department Base DN cannot be repeated or the ancestor node (suffix) of "
-"other DNs."
+msgstr "The department Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
 
 #: bkuser/plugins/ldap/models.py:123
 msgid "需要提供用户组对象类"
@@ -1961,9 +1957,7 @@ msgstr "The number of user group Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:132
 msgid "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr ""
-"The user group Base DN cannot be repeated or the ancestor node (suffix) of "
-"other DNs."
+msgstr "The user group Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
 
 #: bkuser/plugins/ldap/models.py:135
 msgid "用户组对象类为 groupOfNames 时，成员字段应为 member"
