@@ -206,7 +206,7 @@
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" @updateUsers="updateUsers" :isShowBtn="!isCollaborativeUsers && isLocalDataSource" v-else />
+      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" @updateUsers="updateUsers" :isShowBtn="!isCollaborativeUsers && (isLocalDataSource || isLdapDataSource)" v-else />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog
@@ -288,6 +288,9 @@
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
+  });
+  const isLdapDataSource = computed(() => {
+    return appStore.currentTenant?.data_source?.plugin_id === 'ldap'; 
   });
   const dataSourceId = computed(() => {
     return appStore.currentTenant?.data_source?.id;
@@ -537,7 +540,7 @@
   const hasOperationColumns = [...columns, ...operationColumns]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
-    return isLocalDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
+    return isLocalDataSource.value || isLdapDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
   });
   const tableColumns = computed(() => {
     return isCollaborativeUsers.value ? columns : columnsRender.value;
