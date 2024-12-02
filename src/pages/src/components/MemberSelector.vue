@@ -1,14 +1,15 @@
 <template>
   <div class="member-selector-wrapper" :class="{ 'is-focus': isFocus }">
     <bk-select
+      v-model="modelValue"
       class="member-selector"
-      :clearable="false"
+      :clearable="clearable"
       :collapse-tags="false"
       :placeholder="$t('请输入')"
       filterable
-      multiple
-      show-on-init
-      multiple-mode="tag"
+      :multiple="multiple"
+      :show-on-init="showOnInit"
+      :multiple-mode="multiple ? 'tag' : 'default'"
       :remote-method="remoteFilter"
       enable-scroll-load
       :scroll-loading="scrollLoading"
@@ -30,13 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, ref } from 'vue';
+import { defineEmits, defineModel, defineProps, ref } from 'vue';
 
 const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => [],
-  },
   state: {
     type: Object,
     default: () => {},
@@ -45,9 +42,21 @@ const props = defineProps({
     type: Object,
     default: () => {},
   },
+  clearable: {
+    type: Boolean,
+    default: false,
+  },
+  showOnInit: {
+    type: Boolean,
+    default: true,
+  },
+  multiple: {
+    type: Boolean,
+    default: true,
+  },
 });
-
-const emit = defineEmits(['update:modelValue', 'changeSelectList', 'scrollChange', 'searchUserList']);
+const modelValue = defineModel<string[]>('modelValue');
+const emit = defineEmits(['changeSelectList', 'scrollChange', 'searchUserList']);
 const isFocus = ref(false);
 const scrollLoading = ref(false);
 const isSearch = ref(false);

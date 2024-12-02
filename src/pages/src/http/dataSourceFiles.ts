@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  DataSourceDetails,
   DataSourceUsersParams,
   DataSourceUsersResult,
   DeleteDataSourcesParams,
@@ -12,8 +13,13 @@ import type {
   PutDataSourceUserParams,
   ResetPasswordParams,
   SyncRecordsParams,
+  TestConnectionData,
   TestConnectionParams,
 } from './types/dataSourceFiles';
+
+interface ResponseData<T> {
+  data: T
+}
 
 /**
  * 数据源用户信息列表
@@ -72,7 +78,7 @@ export const newDataSource = (params: NewDataSourceParams) => http.post('/api/v3
 /**
  * 数据源详情
  */
-export const getDataSourceDetails = (id: string) => http.get(`/api/v3/web/data-sources/${id}/`);
+export const getDataSourceDetails = (id: string) => http.get<ResponseData<DataSourceDetails>>(`/api/v3/web/data-sources/${id}/`);
 
 /**
  * 新建数据源默认配置
@@ -92,7 +98,7 @@ export const changeSwitchStatus = (id: string) => http.patch(`/api/v3/web/data-s
 /**
  * 数据源连通性测试
  */
-export const postTestConnection = (params: TestConnectionParams) => http.post('/api/v3/web/data-sources/test-connection/', params);
+export const postTestConnection = (params: TestConnectionParams) => http.post<ResponseData<TestConnectionData>>('/api/v3/web/data-sources/test-connection/', params);
 
 /**
  * 数据源同步

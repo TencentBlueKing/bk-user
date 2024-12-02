@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { defineExpose, ref } from 'vue';
 
 import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
@@ -62,10 +62,10 @@ const getData =  (isChildren) => {
 
 const treeData = ref([]);
 
-watch(() => appStore.currentOrg.organization_path, async () => {
+const getTreeData = async () => {
   const { data = [] } = await getDepartmentsList(appStore.currentOrg.id, appStore.currentOrg.tenant_id);
   treeData.value = getData(Boolean(data?.length));
-});
+};
 
 const formatTreeData = (data = []) => data.map(item => ({ ...item, async: item.has_children }));
 
@@ -87,4 +87,8 @@ const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
     },
   };
 };
+
+defineExpose({
+  getTreeData,
+});
 </script>

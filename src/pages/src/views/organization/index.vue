@@ -10,9 +10,9 @@
       :max="400"
       :initial-divide="280">
       <template #aside>
-        <search></search>
+        <search @select="handleSearchSelect"></search>
         <div v-show="appStore.isSearchTree">
-          <search-result-tree></search-result-tree>
+          <search-result-tree ref="searchResultTreeRef"></search-result-tree>
         </div>
         <bk-resize-layout
           v-show="!appStore.isSearchTree"
@@ -83,6 +83,13 @@ getList();
 const importHandle = async () => {
   await getList();
   tableListRef.value.importDialogHandle();
+};
+
+const searchResultTreeRef = ref();
+const handleSearchSelect = () => {
+  if (searchResultTreeRef.value) {
+    searchResultTreeRef.value.getTreeData();
+  }
 };
 </script>
 

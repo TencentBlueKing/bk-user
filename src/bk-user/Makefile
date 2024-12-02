@@ -17,7 +17,7 @@ test: ## 执行项目单元测试（pytest）
 	pytest --maxfail=1 -l --reuse-db tests --disable-warnings -vv
 
 i18n-po: ## 将源代码 & 模版中的 message 采集到 django.po
-	python manage.py makemessages -d django -l zh_cn -e html,part -e py
+	python manage.py makemessages -d django -l zh_CN -e html,part -e py
 	python manage.py makemessages -d django -l en -e html,part -e py
 
 i18n-mo: ## 将 django.po 文件编译成 django.mo 文件

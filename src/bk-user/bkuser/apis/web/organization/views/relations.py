@@ -30,10 +30,12 @@ from bkuser.apis.web.organization.serializers import (
     TenantDeptUserRelationBatchUpdateInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
+from bkuser.apps.audit.constants import OperationEnum
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.auditor import TenantUserDepartmentRelationsAuditor
 
 
 class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
@@ -66,6 +68,15 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】创建审计对象并记录变更前的数据
+        auditor = TenantUserDepartmentRelationsAuditor(
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.CREATE_USER_DEPARTMENT,
+        )
+        auditor.pre_record_data_before()
+
         # 复制操作：为数据源部门 & 用户添加关联边，但是不会影响存量的关联边
         relations = [
             DataSourceDepartmentUserRelation(user_id=user_id, department_id=dept_id, data_source=data_source)
@@ -73,6 +84,9 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         ]
         # 由于复制操作不会影响存量的关联边，所以需要忽略冲突，避免出现用户复选的情况
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -107,6 +121,15 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】创建审计对象并记录变更前的数据
+        auditor = TenantUserDepartmentRelationsAuditor(
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.MODIFY_USER_DEPARTMENT,
+        )
+        auditor.pre_record_data_before()
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
         with transaction.atomic():
             # 先删除
@@ -117,6 +140,9 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 for dept_id, user_id in itertools.product(data_source_dept_ids, data_source_user_ids)
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -147,6 +173,15 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】创建审计对象
+        auditor = TenantUserDepartmentRelationsAuditor(
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.MODIFY_USER_DEPARTMENT,
+        )
+        auditor.pre_record_data_before()
+
         # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户在当前部门的存量关联边
         with transaction.atomic():
             # 先删除（仅限于指定部门）
@@ -159,6 +194,9 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
                 for dept_id, user_id in itertools.product(data_source_dept_ids, data_source_user_ids)
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record(extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -191,8 +229,20 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
+        # 【审计】创建审计对象
+        auditor = TenantUserDepartmentRelationsAuditor(
+            request.user.username,
+            cur_tenant_id,
+            data_source_user_ids,
+            OperationEnum.DELETE_USER_DEPARTMENT,
+        )
+        auditor.pre_record_data_before()
+
         DataSourceDepartmentUserRelation.objects.filter(
             user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record(extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)

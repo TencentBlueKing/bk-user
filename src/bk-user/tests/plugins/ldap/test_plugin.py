@@ -91,3 +91,40 @@ class TestLDAPDataSourcePlugin:
             leaders=["97b534de-0e9d-103f-8e86-fb1e46baa127", "97b33a9e-0e9d-103f-8e84-fb1e46baa127"],
             departments=["97a93076-0e9d-103f-8e7d-fb1e46baa127", "97b93908-0e9d-103f-8e8b-fb1e46baa127"],
         )
+
+
+class TestLDAPDataSourcePluginMultipleBaseDNs:
+    @pytest.mark.usefixtures("_mock_ldap_client")
+    def test_get_departments(self, ldap_ds_cfg, logger):
+        search_base_dns = [
+            "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
+            "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
+        ]
+        ldap_ds_cfg.data_config.dept_search_base_dns = search_base_dns
+        ldap_ds_cfg.user_group_config.search_base_dns = search_base_dns
+        plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
+        departments = plugin.fetch_departments()
+        # 注意：cn=dept_b,ou=company,dc=bk,dc=example,dc=com 不匹配
+        assert len(departments) == 6  # noqa: PLR2004
+
+    @pytest.mark.usefixtures("_mock_ldap_client")
+    def test_get_departments_without_group(self, ldap_ds_cfg, logger):
+        ldap_ds_cfg.data_config.dept_search_base_dns = [
+            "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
+            "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
+        ]
+        ldap_ds_cfg.user_group_config.enabled = False
+        plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
+        departments = plugin.fetch_departments()
+        assert len(departments) == 5  # noqa: PLR2004
+
+    @pytest.mark.usefixtures("_mock_ldap_client")
+    def test_get_users(self, ldap_ds_cfg, logger):
+        ldap_ds_cfg.data_config.user_search_base_dns = [
+            "ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
+            "ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
+        ]
+        plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
+        plugin.fetch_departments()
+        users = plugin.fetch_users()
+        assert len(users) == 5  # noqa: PLR2004

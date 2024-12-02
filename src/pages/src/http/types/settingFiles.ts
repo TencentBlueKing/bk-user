@@ -121,3 +121,17 @@ export interface CollaborationSyncRecordsParams {
 export interface TenantItem {
   tenant_ids: string
 }
+
+export interface TenantSettingFieldsData {
+  builtin_fields: {
+    id: number,
+    name: string,
+    display_name: string,
+    data_type: string,
+    required: boolean,
+    unique: boolean,
+    default: string,
+    options: any[],
+  }[],
+  custom_fields: any[],
+}

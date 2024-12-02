@@ -117,7 +117,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { inject, reactive, ref } from 'vue';
+import { defineEmits, inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
 
@@ -127,6 +127,7 @@ import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
 
+const emit = defineEmits(['select']);
 const appStore = useAppStore();
 
 const editLeaveBefore = inject('editLeaveBefore');
@@ -193,6 +194,7 @@ const handleOrgSelect = (org) => {
   selected.value = org;
   searchDialogVisible.value = false;
   appStore.currentOrg = { ...org };
+  emit('select');
 };
 
 const handleUserSelect = async (user) => {

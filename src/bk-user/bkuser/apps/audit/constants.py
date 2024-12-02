@@ -39,11 +39,13 @@ class OperationEnum(StrStructuredEnum):
     MODIFY_DATA_SOURCE = EnumField("modify_data_source", label=_("修改数据源"))
     DELETE_DATA_SOURCE = EnumField("delete_data_source", label=_("删除数据源"))
     SYNC_DATA_SOURCE = EnumField("sync_data_source", label=_("同步数据源"))
+
     # 认证源
     CREATE_IDP = EnumField("create_idp", label=_("创建认证源"))
     MODIFY_IDP = EnumField("modify_idp", label=_("修改认证源"))
     MODIFY_IDP_STATUS = EnumField("modify_idp_status", label=_("修改认证源状态"))
     DELETE_IDP = EnumField("delete_idp", label=_("删除认证源"))
+
     # 用户
     CREATE_DATA_SOURCE_USER = EnumField("create_data_source_user", label=_("创建数据源用户"))
     CREATE_TENANT_USER = EnumField("create_tenant_user", label=_("创建租户用户"))
@@ -55,6 +57,11 @@ class OperationEnum(StrStructuredEnum):
     MODIFY_TENANT_USER = EnumField("modify_tenant_user", label=_("修改租户用户"))
     MODIFY_USER_LEADER = EnumField("modify_user_leader", label=_("修改用户-上级关系"))
     MODIFY_USER_DEPARTMENT = EnumField("modify_user_department", label=_("修改用户-部门关系"))
+    MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
+    MODIFY_USER_ACCOUNT_EXPIRED_AT = EnumField("modify_user_account_expired_at", label=_("修改用户账号过期时间"))
+    MODIFY_USER_PASSWORD = EnumField("modify_user_password", label=_("重置用户密码"))
+    MODIFY_USER_EMAIL = EnumField("modify_user_email", label=_("修改用户邮箱"))
+    MODIFY_USER_PHONE = EnumField("modify_user_phone", label=_("修改用户电话号码"))
 
     DELETE_DATA_SOURCE_USER = EnumField("delete_data_source_user", label=_("删除数据源用户"))
     DELETE_TENANT_USER = EnumField("delete_tenant_user", label=_("删除租户用户"))
@@ -62,16 +69,12 @@ class OperationEnum(StrStructuredEnum):
     DELETE_USER_DEPARTMENT = EnumField("delete_user_department", label=_("删除用户-部门关系"))
     DELETE_COLLABORATION_TENANT_USER = EnumField("delete_collaboration_tenant_user", label=_("删除协同租户用户"))
 
-    MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
-    MODIFY_USER_ACCOUNT_EXPIRED_AT = EnumField("modify_user_account_expired_at", label=_("修改用户账号过期时间"))
-    MODIFY_USER_PASSWORD = EnumField("modify_user_password", label=_("重置用户密码"))
-    MODIFY_USER_EMAIL = EnumField("modify_user_email", label=_("修改用户邮箱"))
-    MODIFY_USER_PHONE = EnumField("modify_user_phone", label=_("修改用户电话号码"))
     # 部门
     CREATE_DEPARTMENT = EnumField("create_department", label=_("创建部门"))
     MODIFY_DEPARTMENT = EnumField("modify_department", label=_("修改部门名称"))
     DELETE_DEPARTMENT = EnumField("delete_department", label=_("删除部门"))
     MODIFY_PARENT_DEPARTMENT = EnumField("modify_parent_department", label=_("修改上级部门"))
+
     # 租户
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))
     MODIFY_TENANT = EnumField("modify_tenant", label=_("修改租户信息"))
@@ -82,6 +85,7 @@ class OperationEnum(StrStructuredEnum):
     MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG = EnumField(
         "modify_tenant_account_validity_period_config", label=_("修改租户账户有效期配置")
     )
+
     # 虚拟用户
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
     MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户信息"))

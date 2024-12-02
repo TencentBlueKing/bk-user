@@ -64,3 +64,13 @@ def gen_dn(rdns: List[RDN]) -> str:
 
     separator = rdns[0].separator
     return separator.join([f"{rdn.attr_type}={rdn.attr_value}" for rdn in rdns])
+
+
+def has_parent_child_dn_relation(dns: List[str]) -> bool:
+    """检查 DN 列表中，是否有某个 DN 是别人的后缀（祖先节点）"""
+    for idx, dn1 in enumerate(dns):
+        for dn2 in dns[idx + 1 :]:
+            if dn1.endswith(dn2) or dn2.endswith(dn1):
+                return True
+
+    return False
