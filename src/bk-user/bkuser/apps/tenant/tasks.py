@@ -16,7 +16,10 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
-from bkuser.apps.tenant.models import CollaborationStrategy
+from django.utils import timezone
+
+from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, TenantUser
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
 
@@ -41,3 +44,29 @@ def remove_dropped_field_in_collaboration_strategy_field_mapping(tenant_id: str,
             mp for mp in strategy.target_config["field_mapping"] if mp["target_field"] != field_name
         ]
         strategy.save(update_fields=["target_config", "updated_at"])
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def update_expired_tenant_user_status():
+    """定时任务：批量更新过期用户的状态"""
+    logger.info("[celery] receive task: update_expired_tenant_user_status")
+
+    now = timezone.now()
+
+    expired_users = TenantUser.objects.filter(
+        status=TenantUserStatus.ENABLED,
+        account_expired_at__lte=now,
+    )
+
+    expired_count = expired_users.count()
+
+    if expired_count == 0:
+        logger.info("No expired users found.")
+        return
+
+    for user in expired_users:
+        user.status = TenantUserStatus.EXPIRED
+        user.updated_at = now
+
+    TenantUser.objects.bulk_update(expired_users, ["status", "updated_at"], batch_size=100)
+    logger.info("Updated %d expired users to EXPIRED status.", expired_count)

@@ -290,7 +290,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="0", hour="9"),
     },
     "periodic_update_tenant_user_status": {
-        "task": "bkuser.apps.tenant.periodic_tasks.update_expired_tenant_user_status",
+        "task": "bkuser.apps.tenant.tasks.update_expired_tenant_user_status",
         "schedule": crontab(minute="0", hour="3"),
     },
 }
