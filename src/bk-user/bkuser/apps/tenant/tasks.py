@@ -68,5 +68,6 @@ def update_expired_tenant_user_status():
         user.status = TenantUserStatus.EXPIRED
         user.updated_at = now
 
-    TenantUser.objects.bulk_update(expired_users, ["status", "updated_at"], batch_size=100)
+    # 防止过期用户过多，导致一次更新过多数据，采用分批次更新
+    TenantUser.objects.bulk_update(expired_users, ["status", "updated_at"], batch_size=500)
     logger.info("Updated %d expired users to EXPIRED status.", expired_count)
