@@ -30,7 +30,7 @@ from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp, IdpPlugin, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.biz.auditor import IdpAuditor
+from bkuser.biz.auditor import DataSourceAuditor, IdpAuditor
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -151,9 +151,9 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         )
 
         # 【审计】创建认证源审计对象
-        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        auditor = IdpAuditor(request.user.username, current_tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_create()
+        auditor.record_create(idp)
 
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
@@ -222,8 +222,8 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         data = slz.validated_data
 
         # 【审计】创建认证源审计对象，并记录变更前数据
-        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
-        auditor.pre_record_data_before()
+        auditor = IdpAuditor(request.user.username, current_tenant_id)
+        auditor.pre_record_data_before(idp)
 
         with transaction.atomic():
             idp.name = data["name"]
@@ -325,9 +325,9 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             data_source.set_plugin_cfg(plugin_config)
 
         # 【审计】创建认证源审计对象
-        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
+        auditor = IdpAuditor(request.user.username, current_tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_create()
+        auditor.record_create(idp)
 
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
@@ -393,8 +393,11 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         data = slz.validated_data
 
         # 【审计】创建认证源审计对象并记录变更前数据
-        auditor = IdpAuditor(request.user.username, current_tenant_id, idp)
-        auditor.pre_record_data_before()
+        idp_auditor = IdpAuditor(request.user.username, current_tenant_id)
+        idp_auditor.pre_record_data_before(idp)
+        # 【审计】创建数据源审计对象并记录变更前数据（本地数据源插件配置）
+        ds_auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
+        ds_auditor.pre_record_data_before(data_source)
 
         with transaction.atomic():
             idp.name = data["name"]
@@ -404,6 +407,7 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
             data_source.set_plugin_cfg(data["plugin_config"])
 
         # 【审计】将审计记录保存至数据库
-        auditor.record_update(idp)
+        idp_auditor.record_update(idp)
+        ds_auditor.record_update(data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

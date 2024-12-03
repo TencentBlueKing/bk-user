@@ -186,9 +186,9 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
             )
 
         # 【审计】创建数据源审计对象
-        auditor = DataSourceAuditor(request.user.username, current_tenant_id, ds)
+        auditor = DataSourceAuditor(request.user.username, current_tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_create()
+        auditor.record_create(ds)
 
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
@@ -243,8 +243,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         data = slz.validated_data
 
         # 【审计】创建数据源审计对象并记录变更前数据
-        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
-        auditor.pre_record_data_before()
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
+        auditor.pre_record_data_before(data_source)
 
         with transaction.atomic():
             data_source.field_mapping = data["field_mapping"]
@@ -289,8 +289,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         waiting_delete_idps = Idp.objects.filter(**idp_filters)
 
         # 【审计】创建数据源审计对象并记录变更前数据
-        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
-        auditor.pre_record_data_before(list(waiting_delete_idps))
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
+        auditor.pre_record_data_before(data_source, list(waiting_delete_idps))
 
         with transaction.atomic():
             # 删除认证源敏感信息
@@ -506,9 +506,9 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
         # 【审计】创建数据源审计对象
-        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_sync(options)
+        auditor.record_sync(data_source, options)
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
@@ -554,9 +554,9 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
         # 【审计】创建数据源审计对象
-        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id, data_source)
+        auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
         # 【审计】将审计记录保存至数据库
-        auditor.record_sync(options)
+        auditor.record_sync(data_source, options)
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(

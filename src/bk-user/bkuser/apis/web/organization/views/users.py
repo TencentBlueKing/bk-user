@@ -507,7 +507,7 @@ class TenantUserRetrieveUpdateDestroyApi(
 
         # 【审计】创建租户用户修改操作审计对象并记录变更前的用户相关信息（数据源用户、部门、上级、租户用户）
         auditor = TenantUserUpdateAuditor(request.user.username, cur_tenant_id)
-        auditor.pre_record_data_before(tenant_user, data_source_user)
+        auditor.pre_record_data_before(tenant_user)
 
         with transaction.atomic():
             data_source_user.username = data["username"]
@@ -535,7 +535,7 @@ class TenantUserRetrieveUpdateDestroyApi(
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
 
         # 【审计】将审计记录保存至数据库
-        auditor.record(tenant_user, data_source_user)
+        auditor.record(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
