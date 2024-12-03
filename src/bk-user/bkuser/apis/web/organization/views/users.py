@@ -1022,7 +1022,7 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
+        data_source = self.get_current_tenant_real_data_source()
 
         slz = TenantUserAccountExpiredAtBatchUpdateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
@@ -1073,7 +1073,7 @@ class TenantUserStatusBatchUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
+        data_source = self.get_current_tenant_real_data_source()
 
         slz = TenantUserStatusBatchUpdateInputSLZ(
             data=request.data,
