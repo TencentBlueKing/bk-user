@@ -64,10 +64,11 @@ def update_expired_tenant_user_status():
         logger.info("No expired users found.")
         return
 
+    # Q: 为什么不直接使用 expired_users.update(...)
+    # A: 为避免 update 数据量过大，这里直接使用 bulk_update 支持 batch_size 分批量处理
     for user in expired_users:
         user.status = TenantUserStatus.EXPIRED
         user.updated_at = now
 
-    # 防止过期用户过多，导致一次更新过多数据，采用分批次更新
-    TenantUser.objects.bulk_update(expired_users, ["status", "updated_at"], batch_size=500)
+    TenantUser.objects.bulk_update(expired_users, fields=["status", "updated_at"], batch_size=500)
     logger.info("Updated %d expired users to EXPIRED status.", expired_count)
