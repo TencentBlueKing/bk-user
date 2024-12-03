@@ -289,6 +289,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
         "schedule": crontab(minute="0", hour="9"),
     },
+    "periodic_update_tenant_user_status": {
+        "task": "bkuser.apps.tenant.tasks.update_expired_tenant_user_status",
+        "schedule": crontab(minute="0", hour="3"),
+    },
 }
 # Celery 消息队列配置
 CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
