@@ -72,7 +72,7 @@
       :theme="'primary'"
       :size="'normal'"
       :height="200"
-      @closed="batchInfo = false;"
+      @closed="cancelBatchInfo"
       @confirm="confirmBatchInfo"
     >
       <bk-dropdown
@@ -341,6 +341,10 @@ const resetBatchPasswordConfirm = async () => {
   }
 };
 
+const cancelBatchInfo = () => {
+  userInfoVisible.value = false;
+  batchInfo.value = false;
+};
 
 /**
  * 修改用户信息
