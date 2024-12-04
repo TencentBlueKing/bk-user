@@ -5,6 +5,7 @@
       :clearable="clearable"
       :collapse-tags="false"
       :placeholder="$t('请输入')"
+      v-model="curMember"
       filterable
       :multiple="multiple"
       :show-on-init="showOnInit"
@@ -58,6 +59,7 @@ const emit = defineEmits(['changeSelectList', 'scrollChange', 'searchUserList'])
 const isFocus = ref(false);
 const scrollLoading = ref(false);
 const isSearch = ref(false);
+const curMember = defineModel<string | string[]>();
 
 // 远程搜索人员
 const remoteFilter = async (value: string) => {

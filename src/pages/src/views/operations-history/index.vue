@@ -17,6 +17,7 @@
                 :state="realUsers"
                 :params="params"
                 :show-on-init="false"
+                v-model:modelValue="curMember"
                 :multiple="false"
                 :clearable="true"
                 @change-select-list="changeSelectList"
@@ -105,18 +106,31 @@
           settings
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
+          :show-overflow-tooltip="true"
         >
-          <bk-table-column :label="$t('操作人')" prop="creator" width="100"></bk-table-column>
-          <bk-table-column :label="$t('操作时间')" sort prop="created_at" width="100"></bk-table-column>
+          <bk-table-column :label="$t('操作人')" prop="creator" width="100">
+            <template #default="{ row }">
+              <span>{{ row.creator || '--' }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('操作时间')" sort prop="created_at" width="100">
+            <template #default="{ row }">
+              <span>{{ row.created_at || '--' }}</span>
+            </template>
+          </bk-table-column>
           <bk-table-column :label="$t('操作对象')" prop="object_type" width="100">
             <template #default="{ row }">
               <span>{{ getOperationTypeLabel(row.object_type) }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('操作实例')" prop="object_name" width="100"></bk-table-column>
+          <bk-table-column :label="$t('操作实例')" prop="object_name" width="100">
+            <template #default="{ row }">
+              <span>{{ row.object_name || '--' }}</span>
+            </template>
+          </bk-table-column>
           <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
             <template #default="{ row }">
-              <span>{{ operationMap[row.operation as keyof typeof operationMap] }}</span>
+              <span>{{ getOperationLabel(row.operation) }}</span>
             </template>
           </bk-table-column>
         </bk-table>
@@ -129,13 +143,14 @@
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { getCurrentOperationOptions, operationMap, operationType } from './operations';
+import { getCurrentOperationOptions, operationType } from './operations';
 
 import MemberSelector from '@/components/MemberSelector.vue';
 import { getAudit } from '@/http/operationHistoryFiles';
 import { getRealUsers } from '@/http/settingFiles';
 
 // 人员选择器
+const curMember = ref('');
 const realUsers = ref({
   count: 0,
   results: [],
@@ -249,6 +264,7 @@ const handleReset = () => {
   formData.object_name = '';
   formData.object_type = '';
   formData.operation = '';
+  curMember.value = '';
 };
 
 // 当前关联操作对象，当操作类型或操作对象有数据时，“锁死”操作类型及操作对象的option，当且仅当两者均为空，relyKey才可以为null
@@ -275,8 +291,14 @@ const curOperationType = computed(() => {
 
 // 根据后台返回的操作对象的值，找对应label
 const getOperationTypeLabel = (key: string) => {
-  const curType = curOperationType.value.find((type: {key: string, label: string}) => type.key === key);
+  const curType = operationType.find((type: {key: string, label: string}) => type.key === key);
   return curType ? curType.label : '--';
+};
+
+// 根据后台返回的操作类型的值，找对应的label
+const getOperationLabel = (key: string) => {
+  const curOperation = operationOptions.find((type: {key: string, label: string}) => type.key === key);
+  return curOperation ? curOperation.label : '--';
 };
 
 // 操作类型选择回调方法
