@@ -6,7 +6,7 @@
       :is-show="dropdownVisible"
       @hide="() => (state.logoutDropdown = false)"
       @show="() => (state.logoutDropdown = true)">
-      <bk-button @click="dropdownVisible = !dropdownVisible">
+      <bk-button @click="dropdownVisible = !dropdownVisible" :disabled="selectList.length === 0">
         <div :class="['help-info', { 'active-username': state.logoutDropdown }]">
           <span class="help-info-name"> {{ $t('批量操作') }}</span>
           <AngleDown class="angle-down-icon" />
@@ -374,6 +374,7 @@ const confirmBatchInfo = () => {
       batchInfo.value = false;
       selectedOption.value = '';
       userInfoOptions.value.forEach(item => item.selected = false);
+      Message({ theme: 'success', message: t('更新成功') });
       emits('reloadList');
     });
   }
