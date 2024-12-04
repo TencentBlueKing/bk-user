@@ -54,7 +54,7 @@
               @handle-update="reloadList"
             />
           </template>
-          <template #prepend v-if="selectList.length && prependData.length">
+          <template #prepend v-if="isLocalDataSource && selectList.length && prependData.length">
               <div class="table-total">
                   <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
                   <label
