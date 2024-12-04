@@ -28,6 +28,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
+from bkuser.biz.auditor import VirtualUserAuditor
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .mixins import CurrentTenantVirtualDataSource
@@ -104,6 +105,11 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                 data_source=data_source,
             )
 
+        # 【审计】创建虚拟用户审计对象
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create(tenant_user)
+
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
 
@@ -141,6 +147,10 @@ class VirtualUserRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建虚拟用户审计对象并记录变更前的数据
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
+
         # 实际修改的字段属性都在关联的数据源用户上
         data_source_user = tenant_user.data_source_user
 
@@ -150,6 +160,9 @@ class VirtualUserRetrieveUpdateDestroyApi(
         data_source_user.phone = data["phone"]
         data_source_user.phone_country_code = data["phone_country_code"]
         data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -162,8 +175,15 @@ class VirtualUserRetrieveUpdateDestroyApi(
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
 
+        # 【审计】创建虚拟用户审计对象并记录变更前的数据
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
+
         with transaction.atomic():
             tenant_user.delete()
             data_source_user.delete()
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

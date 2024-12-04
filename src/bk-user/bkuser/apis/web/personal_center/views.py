@@ -44,6 +44,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.senders import (
@@ -195,12 +196,20 @@ class TenantUserPhoneUpdateApi(
                 VerificationCodeScene.UPDATE_PHONE,
             )
 
+        # 【审计】创建租户用户个人信息审计对象并记录变更前的数据
+        auditor = TenantUserPersonalInfoUpdateAuditor(request.user.username, tenant_user.tenant_id)
+        auditor.pre_record_data_before(tenant_user)
+
         phone_info = TenantUserPhoneInfo(
             is_inherited_phone=is_inherited_phone,
             custom_phone=custom_phone,
             custom_phone_country_code=custom_phone_country_code,
         )
         TenantUserHandler.update_tenant_user_phone(self.get_object(), phone_info)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update_phone(tenant_user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _validate_verification_code(
@@ -296,8 +305,16 @@ class TenantUserEmailUpdateApi(
 
             self._validate_verification_code(custom_email, verification_code, VerificationCodeScene.UPDATE_EMAIL)
 
+        # 【审计】创建租户用户个人信息审计对象并记录变更前的数据
+        auditor = TenantUserPersonalInfoUpdateAuditor(request.user.username, tenant_user.tenant_id)
+        auditor.pre_record_data_before(tenant_user)
+
         email_info = TenantUserEmailInfo(is_inherited_email=is_inherited_email, custom_email=custom_email)
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update_email(tenant_user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _validate_verification_code(self, email: str, code: str, scene: VerificationCodeScene):
@@ -534,5 +551,9 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
             valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
         )
+        # 【审计】创建租户用户密码重置操作审计对象
+        auditor = TenantUserPasswordResetAuditor(request.user.username, tenant_user.tenant_id)
+        # 【审计】将审计记录保存至数据库
+        auditor.record(tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)

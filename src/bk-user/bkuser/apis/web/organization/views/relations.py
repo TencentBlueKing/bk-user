@@ -68,12 +68,11 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象并记录变更前的数据
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
             data_source_user_ids,
-            OperationEnum.CREATE_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -86,7 +85,7 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
         DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】将审计记录保存至数据库
-        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
+        auditor.record(OperationEnum.CREATE_USER_DEPARTMENT, extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -121,12 +120,11 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象并记录变更前的数据
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
             data_source_user_ids,
-            OperationEnum.MODIFY_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -142,7 +140,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
         # 【审计】将审计记录保存至数据库
-        auditor.record(extras={"department_ids": list(data_source_dept_ids)})
+        auditor.record(OperationEnum.MODIFY_USER_DEPARTMENT, extras={"department_ids": list(data_source_dept_ids)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -173,12 +171,11 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
             data_source_user_ids,
-            OperationEnum.MODIFY_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -196,7 +193,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
             DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
 
         # 【审计】将审计记录保存至数据库
-        auditor.record(extras={"department_id": source_data_source_dept.id})
+        auditor.record(OperationEnum.MODIFY_USER_DEPARTMENT, extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -229,12 +226,11 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
             id__in=data["user_ids"],
         ).values_list("data_source_user_id", flat=True)
 
-        # 【审计】创建审计对象
+        # 【审计】创建用户-部门关系变更操作审计对象并记录变更前的数据
         auditor = TenantUserDepartmentRelationsAuditor(
             request.user.username,
             cur_tenant_id,
             data_source_user_ids,
-            OperationEnum.DELETE_USER_DEPARTMENT,
         )
         auditor.pre_record_data_before()
 
@@ -243,6 +239,6 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
         ).delete()
 
         # 【审计】将审计记录保存至数据库
-        auditor.record(extras={"department_id": source_data_source_dept.id})
+        auditor.record(OperationEnum.DELETE_USER_DEPARTMENT, extras={"department_id": source_data_source_dept.id})
 
         return Response(status=status.HTTP_204_NO_CONTENT)

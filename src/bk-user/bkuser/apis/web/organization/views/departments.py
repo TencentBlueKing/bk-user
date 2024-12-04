@@ -52,6 +52,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantDepartmentIDRecord
 from bkuser.apps.tenant.utils import TenantDeptIDGenerator
+from bkuser.biz.auditor import TenantDepartmentAuditor
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
@@ -245,6 +246,18 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             # 由于存量历史数据（Record）也会被下发，因此需要忽略冲突保证其他数据可以正常插入
             TenantDepartmentIDRecord.objects.bulk_create(records, ignore_conflicts=True)
 
+            # 【审计】记录变更后的数据
+            data_after_tenant_depts = TenantDepartment.objects.filter(
+                data_source=data_source,
+                data_source_department=data_source_dept,
+            )
+
+            # 【审计】创建租户部门审计对象
+            auditor = TenantDepartmentAuditor(request.user.username, current_tenant_id)
+
+            # 【审计】将审计记录保存至数据库
+            auditor.record_create(data_after_tenant_depts)
+
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
 
 
@@ -276,12 +289,20 @@ class TenantDepartmentUpdateDestroyApi(
         if tenant_dept.data_source.owner_tenant_id != self.get_current_tenant_id():
             raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅可更新属于当前租户的部门"))
 
+        # 【审计】创建租户部门审计对象并记录变更前的数据
+        auditor = TenantDepartmentAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_dept)
+
         slz = TenantDepartmentUpdateInputSLZ(data=request.data, context={"tenant_dept": tenant_dept})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         tenant_dept.data_source_department.name = data["name"]
         tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(tenant_dept)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
@@ -305,6 +326,15 @@ class TenantDepartmentUpdateDestroyApi(
         if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
             raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
 
+        # 【审计】记录变更前的数据
+        data_before_tenant_departments = TenantDepartment.objects.filter(
+            data_source_department_id__in=data_source_dept_ids
+        )
+
+        # 【审计】创建租户部门审计对象并记录变更前的数据
+        auditor = TenantDepartmentAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.batch_pre_record_data_before(data_before_tenant_departments)
+
         with transaction.atomic():
             # 连带协同产生的租户部门还有子部门都给你删咯
             TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
@@ -313,6 +343,9 @@ class TenantDepartmentUpdateDestroyApi(
             # 涉及到的部门关联边都要删除，然后再重建
             DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
             DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -452,6 +485,10 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建租户部门审计对象并记录变更前的数据
+        auditor = TenantDepartmentAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_dept)
+
         parent_tenant_dept_id = data["parent_department_id"]
 
         # 获取当前节点部门关系
@@ -471,5 +508,8 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             )
 
         cur_dept_relation.move_to(parent_dept_relation)
+
+        # 【审计】记录变更后的数据
+        auditor.record_update_parent_department(tenant_dept)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

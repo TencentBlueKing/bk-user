@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-29 11:38+0800\n"
+"POT-Creation-Date: 2024-11-30 16:39+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -244,15 +244,15 @@ msgstr "认证源插件 {} 不存在"
 msgid "认证源插件配置不合法：{}"
 msgstr "认证源插件配置不合法：{}"
 
-#: bkuser/apis/web/idp/views.py:203
+#: bkuser/apis/web/idp/views.py:209
 msgid "该 API 不支持本地账密认证源更新配置"
 msgstr "该 API 不支持本地账密认证源更新配置"
 
-#: bkuser/apis/web/idp/views.py:287
+#: bkuser/apis/web/idp/views.py:300
 msgid "数据源未配置或非本地类型数据源"
 msgstr "数据源未配置或非本地类型数据源"
 
-#: bkuser/apis/web/idp/views.py:293
+#: bkuser/apis/web/idp/views.py:306
 msgid "本地账密登录已存在"
 msgstr "本地账密登录已存在"
 
@@ -359,39 +359,39 @@ msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
-#: bkuser/apis/web/organization/views/departments.py:170
+#: bkuser/apis/web/organization/views/departments.py:171
 msgid "仅可创建属于当前租户的部门"
 msgstr "仅可创建属于当前租户的部门"
 
-#: bkuser/apis/web/organization/views/departments.py:177
+#: bkuser/apis/web/organization/views/departments.py:178
 msgid "租户数据源不存在"
 msgstr "租户数据源不存在"
 
-#: bkuser/apis/web/organization/views/departments.py:179
+#: bkuser/apis/web/organization/views/departments.py:180
 msgid "仅本地数据源支持创建部门"
 msgstr "仅本地数据源支持创建部门"
 
-#: bkuser/apis/web/organization/views/departments.py:275
+#: bkuser/apis/web/organization/views/departments.py:288
 msgid "仅本地数据源支持更新部门"
 msgstr "仅本地数据源支持更新部门"
 
-#: bkuser/apis/web/organization/views/departments.py:277
+#: bkuser/apis/web/organization/views/departments.py:290
 msgid "仅可更新属于当前租户的部门"
 msgstr "仅可更新属于当前租户的部门"
 
-#: bkuser/apis/web/organization/views/departments.py:296
+#: bkuser/apis/web/organization/views/departments.py:317
 msgid "仅真实用户类型的本地数据源支持删除部门"
 msgstr "仅真实用户类型的本地数据源支持删除部门"
 
-#: bkuser/apis/web/organization/views/departments.py:306
+#: bkuser/apis/web/organization/views/departments.py:327
 msgid "该部门或其子部门下存在用户，无法删除"
 msgstr "该部门或其子部门下存在用户，无法删除"
 
-#: bkuser/apis/web/organization/views/departments.py:442
+#: bkuser/apis/web/organization/views/departments.py:475
 msgid "仅本地数据源支持移动部门"
 msgstr "仅本地数据源支持移动部门"
 
-#: bkuser/apis/web/organization/views/departments.py:444
+#: bkuser/apis/web/organization/views/departments.py:477
 msgid "仅可移动属于当前租户的部门"
 msgstr "仅可移动属于当前租户的部门"
 
@@ -444,7 +444,7 @@ msgid "该租户用户没有可用的密码规则"
 msgstr "该租户用户没有可用的密码规则"
 
 #: bkuser/apis/web/organization/views/users.py:683
-#: bkuser/apis/web/personal_center/views.py:517
+#: bkuser/apis/web/personal_center/views.py:534
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 
@@ -481,19 +481,19 @@ msgid "邮箱 {} 在租户 {} 中匹配不到用户"
 msgstr "邮箱 {} 在租户 {} 中匹配不到用户"
 
 #: bkuser/apis/web/password/views.py:132
-#: bkuser/apis/web/personal_center/views.py:255
+#: bkuser/apis/web/personal_center/views.py:264
 msgid "发送短信验证码过于频繁，请稍后再试"
 msgstr "发送短信验证码过于频繁，请稍后再试"
 
 #: bkuser/apis/web/password/views.py:137
-#: bkuser/apis/web/personal_center/views.py:261
-#: bkuser/apis/web/personal_center/views.py:354
+#: bkuser/apis/web/personal_center/views.py:270
+#: bkuser/apis/web/personal_center/views.py:371
 msgid "今日发送验证码次数超过上限，请明天再试"
 msgstr "今日发送验证码次数超过上限，请明天再试"
 
 #: bkuser/apis/web/password/views.py:140 bkuser/apis/web/password/views.py:234
-#: bkuser/apis/web/personal_center/views.py:264
-#: bkuser/apis/web/personal_center/views.py:357
+#: bkuser/apis/web/personal_center/views.py:273
+#: bkuser/apis/web/personal_center/views.py:374
 msgid "请联系管理员处理"
 msgstr "请联系管理员处理"
 
@@ -502,14 +502,14 @@ msgid "手机号码或验证码错误"
 msgstr "手机号码或验证码错误"
 
 #: bkuser/apis/web/password/views.py:181
-#: bkuser/apis/web/personal_center/views.py:212
-#: bkuser/apis/web/personal_center/views.py:307
+#: bkuser/apis/web/personal_center/views.py:221
+#: bkuser/apis/web/personal_center/views.py:324
 msgid "验证码错误"
 msgstr "验证码错误"
 
 #: bkuser/apis/web/password/views.py:184
-#: bkuser/apis/web/personal_center/views.py:217
-#: bkuser/apis/web/personal_center/views.py:312
+#: bkuser/apis/web/personal_center/views.py:226
+#: bkuser/apis/web/personal_center/views.py:329
 msgid "验证码校验失败，请联系管理员处理"
 msgstr "验证码校验失败，请联系管理员处理"
 
@@ -561,34 +561,34 @@ msgstr "自定义邮箱为必填项"
 msgid "旧密码校验失败"
 msgstr "旧密码校验失败"
 
-#: bkuser/apis/web/personal_center/views.py:184
+#: bkuser/apis/web/personal_center/views.py:185
 msgid "手机号码不可编辑"
 msgstr "手机号码不可编辑"
 
-#: bkuser/apis/web/personal_center/views.py:189
-#: bkuser/apis/web/personal_center/views.py:295
+#: bkuser/apis/web/personal_center/views.py:190
+#: bkuser/apis/web/personal_center/views.py:304
 msgid "验证码不能为空"
 msgstr "验证码不能为空"
 
-#: bkuser/apis/web/personal_center/views.py:214
-#: bkuser/apis/web/personal_center/views.py:309
+#: bkuser/apis/web/personal_center/views.py:223
+#: bkuser/apis/web/personal_center/views.py:326
 #: bkuser/common/verification_code/managers.py:54
 msgid "超过验证码重试次数"
 msgstr "超过验证码重试次数"
 
-#: bkuser/apis/web/personal_center/views.py:235
+#: bkuser/apis/web/personal_center/views.py:244
 msgid "当前租户更新手机号不允许发送验证码"
 msgstr "当前租户更新手机号不允许发送验证码"
 
-#: bkuser/apis/web/personal_center/views.py:290
+#: bkuser/apis/web/personal_center/views.py:299
 msgid "邮箱不可编辑"
 msgstr "邮箱不可编辑"
 
-#: bkuser/apis/web/personal_center/views.py:330
+#: bkuser/apis/web/personal_center/views.py:347
 msgid "当前租户更新邮箱不允许发送验证码"
 msgstr "当前租户更新邮箱不允许发送验证码"
 
-#: bkuser/apis/web/personal_center/views.py:349
+#: bkuser/apis/web/personal_center/views.py:366
 msgid "发送邮箱验证码过于频繁，请稍后再试"
 msgstr "发送邮箱验证码过于频繁，请稍后再试"
 
@@ -616,19 +616,19 @@ msgstr ""
 msgid "密码不符合密码规则：{}"
 msgstr "密码不符合密码规则：{}"
 
-#: bkuser/apis/web/platform_management/views.py:194
+#: bkuser/apis/web/platform_management/views.py:200
 msgid "管理员账密登录"
 msgstr "管理员账密登录"
 
-#: bkuser/apis/web/platform_management/views.py:246
+#: bkuser/apis/web/platform_management/views.py:259
 msgid "默认租户不能删除"
 msgstr "默认租户不能删除"
 
-#: bkuser/apis/web/platform_management/views.py:249
+#: bkuser/apis/web/platform_management/views.py:262
 msgid "需要先停用租户才能删除"
 msgstr "需要先停用租户才能删除"
 
-#: bkuser/apis/web/platform_management/views.py:288
+#: bkuser/apis/web/platform_management/views.py:308
 msgid "默认租户不能停用"
 msgstr "默认租户不能停用"
 
@@ -636,7 +636,7 @@ msgstr "默认租户不能停用"
 msgid "非本租户实名账号（ids={}）不允许添加"
 msgstr "非本租户实名账号（ids={}）不允许添加"
 
-#: bkuser/apis/web/tenant_info/views.py:131
+#: bkuser/apis/web/tenant_info/views.py:139
 msgid "不存在实名管理员，无法禁用内置管理员账号登录"
 msgstr "不存在实名管理员，无法禁用内置管理员账号登录"
 
@@ -739,41 +739,41 @@ msgstr "数据源用户"
 msgid "部门"
 msgstr "部门"
 
-#: bkuser/apps/audit/constants.py:30 bkuser/apps/idp/constants.py:41
+#: bkuser/apps/audit/constants.py:30
+msgid "租户部门"
+msgstr "租户部门"
+
+#: bkuser/apps/audit/constants.py:31 bkuser/apps/idp/constants.py:41
 msgid "租户"
 msgstr "租户"
 
-#: bkuser/apps/audit/constants.py:31
+#: bkuser/apps/audit/constants.py:32
 msgid "虚拟用户"
 msgstr "虚拟用户"
 
-#: bkuser/apps/audit/constants.py:38
+#: bkuser/apps/audit/constants.py:39
 msgid "创建数据源"
 msgstr "创建数据源"
 
-#: bkuser/apps/audit/constants.py:39
+#: bkuser/apps/audit/constants.py:40
 msgid "修改数据源"
 msgstr "修改数据源"
 
-#: bkuser/apps/audit/constants.py:40
+#: bkuser/apps/audit/constants.py:41
 msgid "删除数据源"
 msgstr "删除数据源"
 
-#: bkuser/apps/audit/constants.py:41
+#: bkuser/apps/audit/constants.py:42
 msgid "同步数据源"
 msgstr "同步数据源"
 
-#: bkuser/apps/audit/constants.py:44
+#: bkuser/apps/audit/constants.py:45
 msgid "创建认证源"
 msgstr "创建认证源"
 
-#: bkuser/apps/audit/constants.py:45
+#: bkuser/apps/audit/constants.py:46
 msgid "修改认证源"
 msgstr "修改认证源"
-
-#: bkuser/apps/audit/constants.py:46
-msgid "修改认证源状态"
-msgstr "修改认证源状态"
 
 #: bkuser/apps/audit/constants.py:47
 msgid "删除认证源"
@@ -788,126 +788,150 @@ msgid "创建租户用户"
 msgstr "创建租户用户"
 
 #: bkuser/apps/audit/constants.py:52
-msgid "创建用户-上级关系"
-msgstr "创建用户-上级关系"
-
-#: bkuser/apps/audit/constants.py:53
 msgid "创建用户-部门关系"
 msgstr "创建用户-部门关系"
 
-#: bkuser/apps/audit/constants.py:54
+#: bkuser/apps/audit/constants.py:53
 msgid "创建协同租户用户"
 msgstr "创建协同租户用户"
 
-#: bkuser/apps/audit/constants.py:56
+#: bkuser/apps/audit/constants.py:55
 msgid "修改数据源用户"
 msgstr "修改数据源用户"
 
-#: bkuser/apps/audit/constants.py:57
+#: bkuser/apps/audit/constants.py:56
 msgid "修改租户用户"
 msgstr "修改租户用户"
 
-#: bkuser/apps/audit/constants.py:58
+#: bkuser/apps/audit/constants.py:57
 msgid "修改用户-上级关系"
 msgstr "修改用户-上级关系"
 
-#: bkuser/apps/audit/constants.py:59
+#: bkuser/apps/audit/constants.py:58
 msgid "修改用户-部门关系"
 msgstr "修改用户-部门关系"
 
-#: bkuser/apps/audit/constants.py:60
+#: bkuser/apps/audit/constants.py:59
 msgid "修改用户状态"
 msgstr "修改用户状态"
 
-#: bkuser/apps/audit/constants.py:61
+#: bkuser/apps/audit/constants.py:60
 msgid "修改用户账号过期时间"
 msgstr "修改用户账号过期时间"
 
-#: bkuser/apps/audit/constants.py:62
-msgid "重置用户密码"
-msgstr "重置用户密码"
+#: bkuser/apps/audit/constants.py:61
+msgid "修改用户密码"
+msgstr "修改用户密码"
 
-#: bkuser/apps/audit/constants.py:63
+#: bkuser/apps/audit/constants.py:62
 msgid "修改用户邮箱"
 msgstr "修改用户邮箱"
 
-#: bkuser/apps/audit/constants.py:64
+#: bkuser/apps/audit/constants.py:63
 msgid "修改用户电话号码"
 msgstr "修改用户电话号码"
 
-#: bkuser/apps/audit/constants.py:66
+#: bkuser/apps/audit/constants.py:65
 msgid "删除数据源用户"
 msgstr "删除数据源用户"
 
-#: bkuser/apps/audit/constants.py:67
+#: bkuser/apps/audit/constants.py:66
 msgid "删除租户用户"
 msgstr "删除租户用户"
 
-#: bkuser/apps/audit/constants.py:68
+#: bkuser/apps/audit/constants.py:67
 msgid "删除用户-上级关系"
 msgstr "删除用户-上级关系"
 
-#: bkuser/apps/audit/constants.py:69
+#: bkuser/apps/audit/constants.py:68
 msgid "删除用户-部门关系"
 msgstr "删除用户-部门关系"
 
-#: bkuser/apps/audit/constants.py:70
+#: bkuser/apps/audit/constants.py:69
 msgid "删除协同租户用户"
 msgstr "删除协同租户用户"
 
-#: bkuser/apps/audit/constants.py:73
-msgid "创建部门"
-msgstr "创建部门"
+#: bkuser/apps/audit/constants.py:72
+msgid "创建数据源部门"
+msgstr "创建数据源部门"
 
-#: bkuser/apps/audit/constants.py:74
-msgid "修改部门名称"
-msgstr "修改部门名称"
+#: bkuser/apps/audit/constants.py:73
+msgid "创建租户部门"
+msgstr "创建租户部门"
 
 #: bkuser/apps/audit/constants.py:75
-msgid "删除部门"
-msgstr "删除部门"
+msgid "创建协同租户部门"
+msgstr "创建协同租户部门"
 
-#: bkuser/apps/audit/constants.py:76
-msgid "修改上级部门"
-msgstr "修改上级部门"
+#: bkuser/apps/audit/constants.py:77
+msgid "创建部门-父部门关系"
+msgstr "创建部门-父部门关系"
+
+#: bkuser/apps/audit/constants.py:78
+msgid "修改数据源部门"
+msgstr "修改数据源部门"
 
 #: bkuser/apps/audit/constants.py:79
+msgid "修改租户部门"
+msgstr "修改租户部门"
+
+#: bkuser/apps/audit/constants.py:80
+msgid "修改部门-父部门关系"
+msgstr "修改部门-父部门关系"
+
+#: bkuser/apps/audit/constants.py:81
+msgid "删除数据源部门"
+msgstr "删除数据源部门"
+
+#: bkuser/apps/audit/constants.py:82
+msgid "删除租户部门"
+msgstr "删除租户部门"
+
+#: bkuser/apps/audit/constants.py:84
+msgid "删除协同租户部门"
+msgstr "删除协同租户部门"
+
+#: bkuser/apps/audit/constants.py:86
+msgid "删除部门-父部门关系"
+msgstr "删除部门-父部门关系"
+
+#: bkuser/apps/audit/constants.py:89
 msgid "创建租户"
 msgstr "创建租户"
 
-#: bkuser/apps/audit/constants.py:80
+#: bkuser/apps/audit/constants.py:90
 msgid "修改租户信息"
 msgstr "修改租户信息"
 
-#: bkuser/apps/audit/constants.py:81
+#: bkuser/apps/audit/constants.py:91
 msgid "删除租户"
 msgstr "删除租户"
 
-#: bkuser/apps/audit/constants.py:82
+#: bkuser/apps/audit/constants.py:92
 msgid "修改租户状态"
 msgstr "修改租户状态"
 
-#: bkuser/apps/audit/constants.py:83
+#: bkuser/apps/audit/constants.py:93
 msgid "创建租户实名管理员"
 msgstr "创建租户实名管理员"
 
-#: bkuser/apps/audit/constants.py:84
+#: bkuser/apps/audit/constants.py:94
 msgid "删除租户实名管理员"
 msgstr "删除租户实名管理员"
 
-#: bkuser/apps/audit/constants.py:86
+#: bkuser/apps/audit/constants.py:96
 msgid "修改租户账户有效期配置"
 msgstr "修改租户账户有效期配置"
 
-#: bkuser/apps/audit/constants.py:90
+#: bkuser/apps/audit/constants.py:100
 msgid "创建虚拟用户"
 msgstr "创建虚拟用户"
 
-#: bkuser/apps/audit/constants.py:91
+#: bkuser/apps/audit/constants.py:101
 msgid "修改虚拟用户信息"
 msgstr "修改虚拟用户信息"
 
-#: bkuser/apps/audit/constants.py:92
+#: bkuser/apps/audit/constants.py:102
 msgid "删除虚拟用户"
 msgstr "删除虚拟用户"
 

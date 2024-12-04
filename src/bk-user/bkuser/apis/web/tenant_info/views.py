@@ -31,6 +31,7 @@ from bkuser.apps.idp.models import Idp
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
+from bkuser.biz.auditor import TenantAuditor, TenantRealManagerAuditor
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
@@ -75,6 +76,10 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 【审计】创建租户审计对象并记录变更前的数据
+        auditor = TenantAuditor(request.user.username, tenant.id)
+        auditor.pre_record_data_before(tenant)
+
         # 更新
         tenant.name = data["name"]
         tenant.logo = data["logo"]
@@ -82,6 +87,9 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         tenant.user_number_visible = data["user_number_visible"]
         tenant.updater = request.user.username
         tenant.save(update_fields=["name", "logo", "visible", "user_number_visible", "updater", "updated_at"])
+
+        # 【审计】记录变更后的数据
+        auditor.record_update(tenant)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -237,10 +245,17 @@ class TenantRealManagerListCreateDestroyApi(
             ).values_list("tenant_user_id", flat=True)
         )
 
+        # 【审计】创建租户实名管理员审计对象并记录变更前的数据
+        auditor = TenantRealManagerAuditor(request.user.username, tenant_id)
+        auditor.pre_record_data_before()
+
         if waiting_create_ids := set(ids) - set(old_ids):
             TenantManager.objects.bulk_create(
                 [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_ids]
             )
+
+        # 【审计】记录变更后的数据
+        auditor.record_create()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -255,12 +270,19 @@ class TenantRealManagerListCreateDestroyApi(
         slz.is_valid(raise_exception=True)
         ids = slz.validated_data["ids"]
 
+        # 【审计】创建租户实名管理员审计对象并记录变更前的数据
+        auditor = TenantRealManagerAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before()
+
         if ids:
             TenantManager.objects.filter(
                 tenant_id=self.get_current_tenant_id(),
                 tenant_user__data_source__type=DataSourceTypeEnum.REAL,
                 tenant_user_id__in=ids,
             ).delete()
+
+        # 【审计】记录变更后的数据
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
