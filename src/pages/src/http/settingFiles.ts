@@ -10,6 +10,7 @@ import type {
   PutRealManagersParams,
   PutTenantInfoParams,
   PutUserValidityParams,
+  RealUsersData,
   RealUsersParams,
   TenantItem,
   TenantSettingFieldsData,
@@ -72,7 +73,7 @@ export const getRealManagers = () => http.get('/api/v3/web/tenant-info/real-mana
 /**
  * 管理员配置-租户实名用户列表
  */
-export const getRealUsers = (params: RealUsersParams) => http.get('/api/v3/web/tenant-info/real-users/', params);
+export const getRealUsers = (params: RealUsersParams) => http.get<ResponseData<RealUsersData>>('/api/v3/web/tenant-info/real-users/', params);
 
 /**
  * 管理员配置-批量添加租户实名管理员
