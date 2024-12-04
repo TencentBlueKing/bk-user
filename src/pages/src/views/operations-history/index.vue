@@ -26,7 +26,7 @@
               />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
-              <bk-select class="items-select" v-model="formData.operation" @change="handleOperationChange">
+              <bk-select class="items-select" v-model="formData.operation">
                 <bk-option
                   v-for="item in curOperationOptions"
                   :key="item.key"
