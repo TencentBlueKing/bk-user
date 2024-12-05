@@ -26,7 +26,7 @@
               />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
-              <bk-select class="items-select" v-model="formData.operation" @change="handleOperationChange">
+              <bk-select class="items-select" v-model="formData.operation">
                 <bk-option
                   v-for="item in curOperationOptions"
                   :key="item.key"
@@ -35,7 +35,7 @@
               </bk-select>
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
-              <bk-select class="items-select" v-model="formData.object_type" @change="handleOperationTypeChange">
+              <bk-select class="items-select" v-model="formData.object_type">
                 <bk-option
                   v-for="item in curOperationType"
                   :key="item.key"
@@ -54,7 +54,7 @@
                 class="w-[88px] h-[32px]"
                 theme="primary"
                 :loading="isLoading"
-                @click="initAudit"
+                @click="() => handleFetchAudit('search')"
               >
                 {{ $t('查询') }}
               </bk-button>
@@ -107,6 +107,7 @@
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
           :show-overflow-tooltip="true"
+          :max-height="505"
         >
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
@@ -141,7 +142,7 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { getCurrentOperationOptions, operationType } from './operations';
 
@@ -172,13 +173,30 @@ const isFold = reactive({
 const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
-const formData = reactive({
+
+interface SearchParams {
+  creator: string,
+  operation: string,
+  object_type: string,
+  object_name: string,
+  created_at: string,
+}
+
+const formData = reactive<SearchParams>({
   creator: '',  // 操作人
   operation: '', // 操作类型
   object_type: '', // 操作对象
   object_name: '', // 操作实例
   created_at: '', // 操作时间
 });
+const curSearchParams: SearchParams = {
+  creator: '',  // 操作人
+  operation: '', // 操作类型
+  object_type: '', // 操作对象
+  object_name: '', // 操作实例
+  created_at: '', // 操作时间
+};
+
 const pagination = reactive({
   current: 1,
   count: 0,
@@ -214,18 +232,24 @@ const fetchRealUsers = (value: string) => {
   });
 };
 
+
 // 获取audit数据
-const initAudit = async () => {
+const handleFetchAudit = async (type = '') => {
   try {
     isLoading.value = true;
+    if (type === 'search') {
+      pagination.count = 0;
+      pagination.current = 1;
+      curSearchParams.operation = formData.operation;
+      curSearchParams.object_type = formData.object_type;
+      curSearchParams.object_name = formData.object_name;
+      curSearchParams.creator = formData.creator;
+      curSearchParams.created_at = formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '';
+    }
     const params = {
       page: pagination.current,
       pageSize: pagination.limit,
-      operation: formData.operation,
-      object_type: formData.object_type,
-      object_name: formData.object_name,
-      creator: formData.creator,
-      created_at: formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '',
+      ...curSearchParams,
     };
     const res = await getAudit(params);
     pagination.count = res.data?.count;
@@ -240,13 +264,13 @@ const initAudit = async () => {
 // pageSize更改回调方法
 const pageLimitChange = (pageSize: number) => {
   pagination.limit = pageSize;
-  initAudit();
+  handleFetchAudit();
 };
 
 // page更改回调方法
 const pageCurrentChange = (page: number) => {
   pagination.current = page;
-  initAudit();
+  handleFetchAudit();
 };
 
 // 折叠button处理
@@ -281,9 +305,9 @@ const curOperationOptions = computed(() => {
   return operationOptions;
 });
 
-// 基于relyKey筛选后的操作对象
+// 基于relyKey筛选后的操作对象，操作对象选项不完全被relyKey限制，除非操作类型有数据
 const curOperationType = computed(() => {
-  if (relyKey.value) {
+  if (relyKey.value && formData.operation !== '') {
     return operationType.filter((type: {key: string, label: string}) => type.key === relyKey.value);
   }
   return operationType;
@@ -301,30 +325,32 @@ const getOperationLabel = (key: string) => {
   return curOperation ? curOperation.label : '--';
 };
 
-// 操作类型选择回调方法
-const handleOperationChange = (value: string) => {
-  const curRelyKey = (curOperationOptions.value.find(option => option.key === value))?.relyKey;
-  if (curRelyKey) {
-    // 更新relyKey
-    relyKey.value = curRelyKey;
-    // 同步操作对象数据
-    formData.object_type = curRelyKey;
-  } else if (formData.object_type === '') {
-    // 若操作对象此时未选择，可以清空relyKey
-    relyKey.value = null;
+// 监听操作类型，若操作对象此时未选择，可以清空relyKey
+watch(() => formData.operation, (value) => {
+  if (value === '' && formData.object_type === '') {
+    relyKey.value = '';
+  } else {
+    const curRelyKey = (curOperationOptions.value.find(option => option.key === value))?.relyKey;
+    if (curRelyKey) {
+      // 更新relyKey
+      relyKey.value = curRelyKey;
+      // 同步操作对象数据
+      formData.object_type = curRelyKey;
+    }
   }
-};
+});
 
-// 操作对象选择回调方法
-const handleOperationTypeChange = (value: string) => {
-  if (formData.operation === '') {
-    // 若操作类型此时未选择，可以清空relyKey
+// 监听操作对象，若操作类型此时未选择，可以清空relyKey
+watch(() => formData.object_type, (value) => {
+  if (value === '' && formData.operation === '') {
+    relyKey.value = '';
+  } else if (value) {
     relyKey.value = value;
   }
-};
+});
 
 onMounted(() => {
-  initAudit();
+  handleFetchAudit();
   initCreator();
 });
 
