@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-30 16:39+0800\n"
+"POT-Creation-Date: 2024-12-05 10:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -734,10 +734,9 @@ msgstr "认证源"
 msgid "数据源用户"
 msgstr "数据源用户"
 
-#: bkuser/apps/audit/constants.py:29 bkuser/apps/idp/constants.py:39
-#: bkuser/apps/sync/constants.py:80 bkuser/apps/sync/constants.py:90
-msgid "部门"
-msgstr "部门"
+#: bkuser/apps/audit/constants.py:29
+msgid "数据源部门"
+msgstr "数据源部门"
 
 #: bkuser/apps/audit/constants.py:30
 msgid "租户部门"
@@ -928,8 +927,8 @@ msgid "创建虚拟用户"
 msgstr "创建虚拟用户"
 
 #: bkuser/apps/audit/constants.py:101
-msgid "修改虚拟用户信息"
-msgstr "修改虚拟用户信息"
+msgid "修改虚拟用户"
+msgstr "修改虚拟用户"
 
 #: bkuser/apps/audit/constants.py:102
 msgid "删除虚拟用户"
@@ -976,6 +975,11 @@ msgstr "未启用"
 #: bkuser/apps/sync/constants.py:89
 msgid "用户"
 msgstr "用户"
+
+#: bkuser/apps/idp/constants.py:39 bkuser/apps/sync/constants.py:80
+#: bkuser/apps/sync/constants.py:90
+msgid "部门"
+msgstr "部门"
 
 #: bkuser/apps/idp/constants.py:42
 msgid "任意"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-29 15:36+0800\n"
+"POT-Creation-Date: 2024-12-05 10:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -792,10 +792,9 @@ msgstr "IDP"
 msgid "数据源用户"
 msgstr "Data Source User"
 
-#: bkuser/apps/audit/constants.py:29 bkuser/apps/idp/constants.py:39
-#: bkuser/apps/sync/constants.py:80 bkuser/apps/sync/constants.py:90
-msgid "部门"
-msgstr "Department"
+#: bkuser/apps/audit/constants.py:29
+msgid "数据源部门"
+msgstr "Data Source Department"
 
 #: bkuser/apps/audit/constants.py:30
 msgid "租户部门"
@@ -986,7 +985,7 @@ msgid "创建虚拟用户"
 msgstr "Create virtual user"
 
 #: bkuser/apps/audit/constants.py:101
-msgid "修改虚拟用户信息"
+msgid "修改虚拟用户"
 msgstr "Modify virtual user"
 
 #: bkuser/apps/audit/constants.py:102
@@ -1034,6 +1033,11 @@ msgstr "Disabled"
 #: bkuser/apps/sync/constants.py:89
 msgid "用户"
 msgstr "User"
+
+#: bkuser/apps/idp/constants.py:39 bkuser/apps/sync/constants.py:80
+#: bkuser/apps/sync/constants.py:90
+msgid "部门"
+msgstr "Department"
 
 #: bkuser/apps/idp/constants.py:42
 msgid "任意"
@@ -1925,7 +1929,9 @@ msgstr "The number of user Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:88
 msgid "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr "The user Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+msgstr ""
+"The user Base DN cannot be repeated or the ancestor node (suffix) of other "
+"DNs."
 
 #: bkuser/plugins/ldap/models.py:91
 msgid "需要提供部门对象类"
@@ -1941,7 +1947,9 @@ msgstr "The number of department Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:100
 msgid "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr "The department Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+msgstr ""
+"The department Base DN cannot be repeated or the ancestor node (suffix) of "
+"other DNs."
 
 #: bkuser/plugins/ldap/models.py:123
 msgid "需要提供用户组对象类"
@@ -1957,7 +1965,9 @@ msgstr "The number of user group Base DNs cannot exceed {}"
 
 #: bkuser/plugins/ldap/models.py:132
 msgid "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
-msgstr "The user group Base DN cannot be repeated or the ancestor node (suffix) of other DNs."
+msgstr ""
+"The user group Base DN cannot be repeated or the ancestor node (suffix) of "
+"other DNs."
 
 #: bkuser/plugins/ldap/models.py:135
 msgid "用户组对象类为 groupOfNames 时，成员字段应为 member"
