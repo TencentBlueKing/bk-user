@@ -41,6 +41,41 @@ export const operationMap = {
     delete_tenant_user: t('删除租户用户'),
     delete_collaboration_tenant_user: t('删除协同租户用户'),
   },
+  data_source_department: {
+    create_data_source_department: t('创建数据源部门'),
+    create_parent_department: t('创建部门-父部门关系'),
+
+    modify_data_source_department: t('修改数据源部门'),
+    modify_parent_department: t('修改部门-父部门关系'),
+
+    delete_data_source_department: t('删除数据源部门'),
+    delete_parent_department: t('删除部门-父部门关系'),
+  },
+  tenant_department: {
+    create_tenant_department: t('创建租户部门'),
+    create_collaboration_tenant_department: t('创建协同租户部门'),
+
+    modify_tenant_department: t('修改租户部门'),
+    delete_tenant_department: t('删除租户部门'),
+
+    delete_collaboration_tenant_department: t('删除协同租户部门'),
+  },
+  tenant: {
+    create_tenant: t('创建租户'),
+    create_tenant_real_manager: t('创建租户实名管理员'),
+
+    modify_tenant: t('修改租户信息'),
+    modify_tenant_status: t('修改租户状态'),
+    modify_tenant_account_validity_period_config: t('修改租户账户有效期配置'),
+
+    delete_tenant: t('删除租户'),
+    delete_tenant_real_manager: t('删除租户实名管理员'),
+  },
+  virtual_user: {
+    create_virtual_user: t('创建虚拟用户'),
+    modify_virtual_user: t('修改虚拟用户'),
+    delete_virtual_user: t('删除虚拟用户'),
+  },
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -60,6 +95,22 @@ export const operationType = [
   {
     key: 'tenant_user',
     label: t('租户用户'),
+  },
+  {
+    key: 'data_source_department',
+    label: t('数据源部门'),
+  },
+  {
+    key: 'tenant_department',
+    label: t('租户部门'),
+  },
+  {
+    key: 'tenant',
+    label: t('租户'),
+  },
+  {
+    key: 'virtual_user',
+    label: t('虚拟用户'),
   },
 ];
 
