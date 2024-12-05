@@ -26,7 +26,7 @@ class ObjectTypeEnum(StrStructuredEnum):
     IDP = EnumField("idp", label=_("认证源"))
     DATA_SOURCE_USER = EnumField("data_source_user", label=_("数据源用户"))
     TENANT_USER = EnumField("tenant_user", label=_("租户用户"))
-    DATA_SOURCE_DEPARTMENT = EnumField("data_source_department", label=_("部门"))
+    DATA_SOURCE_DEPARTMENT = EnumField("data_source_department", label=_("数据源部门"))
     TENANT_DEPARTMENT = EnumField("tenant_department", label=_("租户部门"))
     TENANT = EnumField("tenant", label=_("租户"))
     VIRTUAL_USER = EnumField("virtual_user", label=_("虚拟用户"))
@@ -98,5 +98,5 @@ class OperationEnum(StrStructuredEnum):
 
     # 虚拟用户
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
-    MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户信息"))
+    MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户"))
     DELETE_VIRTUAL_USER = EnumField("delete_virtual_user", label=_("删除虚拟用户"))
