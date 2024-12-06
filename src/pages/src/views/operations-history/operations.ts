@@ -27,6 +27,8 @@ export const operationMap = {
     delete_data_source_user: t('删除数据源用户'),
     delete_user_leader: t('删除用户-上级关系'),
     delete_user_department: t('删除用户-部门关系'),
+
+    modify_virtual_user: t('修改虚拟用户'),
   },
   tenant_user: {
     create_tenant_user: t('创建租户用户'),
@@ -40,6 +42,9 @@ export const operationMap = {
 
     delete_tenant_user: t('删除租户用户'),
     delete_collaboration_tenant_user: t('删除协同租户用户'),
+
+    create_virtual_user: t('创建虚拟用户'),
+    delete_virtual_user: t('删除虚拟用户'),
   },
   data_source_department: {
     create_data_source_department: t('创建数据源部门'),
@@ -70,11 +75,6 @@ export const operationMap = {
 
     delete_tenant: t('删除租户'),
     delete_tenant_real_manager: t('删除租户实名管理员'),
-  },
-  virtual_user: {
-    create_virtual_user: t('创建虚拟用户'),
-    modify_virtual_user: t('修改虚拟用户'),
-    delete_virtual_user: t('删除虚拟用户'),
   },
 };
 
@@ -107,10 +107,6 @@ export const operationType = [
   {
     key: 'tenant',
     label: t('租户'),
-  },
-  {
-    key: 'virtual_user',
-    label: t('虚拟用户'),
   },
 ];
 

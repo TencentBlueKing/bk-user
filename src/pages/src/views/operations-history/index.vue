@@ -108,13 +108,18 @@
           @page-value-change="pageCurrentChange"
           :show-overflow-tooltip="true"
           :max-height="505"
+          @column-sort="handleSortBy"
         >
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
               <span>{{ row.creator || '--' }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('操作时间')" sort prop="created_at" width="100">
+          <bk-table-column
+            :label="$t('操作时间')"
+            :sort="sortConfig"
+            prop="created_at"
+            width="100">
             <template #default="{ row }">
               <span>{{ row.created_at || '--' }}</span>
             </template>
@@ -197,6 +202,8 @@ const curSearchParams: SearchParams = {
   created_at: '', // 操作时间
 };
 
+const sortType = ref('null');
+const sortConfig = computed(() => ({ SortScope: 'all', value: sortType.value }));
 const pagination = reactive({
   current: 1,
   count: 0,
@@ -271,6 +278,10 @@ const pageLimitChange = (pageSize: number) => {
 const pageCurrentChange = (page: number) => {
   pagination.current = page;
   handleFetchAudit();
+};
+
+const handleSortBy = (curSort: any) => {
+  sortType.value = curSort.type;
 };
 
 // 折叠button处理
