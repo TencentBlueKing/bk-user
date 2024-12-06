@@ -107,7 +107,7 @@
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
           :show-overflow-tooltip="true"
-          :max-height="505"
+          :max-height="tableMaxHeight"
           @column-sort="handleSortBy"
         >
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
@@ -152,6 +152,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { getCurrentOperationOptions, operationType } from './operations';
 
 import MemberSelector from '@/components/MemberSelector.vue';
+import { useTableMaxHeight } from '@/hooks';
 import { getAudit } from '@/http/operationHistoryFiles';
 import { getRealUsers } from '@/http/settingFiles';
 
@@ -178,6 +179,7 @@ const isFold = reactive({
 const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
+const tableMaxHeight = useTableMaxHeight(454);
 
 interface SearchParams {
   creator: string,
