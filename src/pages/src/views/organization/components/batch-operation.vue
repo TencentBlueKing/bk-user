@@ -104,7 +104,7 @@
         ref="infoFormRef"
         :model="infoFormData"
         :rules="rules">
-        <bk-form-item v-if="selectedOption === 'date'" :label="$t('续期')">
+        <bk-form-item v-if="selectedOption === 'date'" :label="$t('账号过期时间')">
           <bk-date-picker
             v-model="infoFormData.dateTime"
             type="date"
@@ -255,7 +255,7 @@ const dropdownList = ref<any[]>([
 ]);
 
 const userInfoOptions = ref([
-  { text: t('续期'), type: 'date', selected: false, disabled: false },
+  { text: t('账号过期时间'), type: 'date', selected: false, disabled: false },
   { text: t('直属上级'), type: 'leader', selected: false, disabled: !isLocalDataSource.value },
 ]);
 
