@@ -14,7 +14,7 @@
           hover-theme="primary"
           :loading="resetLoading"
           @click="handleReset"
-          :disabled="RUNNING_FIELDS.includes(syncStatus?.status)"
+          :disabled="disabledSyncBtn"
         >
           {{ $t('重置') }}
         </bk-button>
@@ -34,7 +34,7 @@
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
               <span
-                v-if="!RUNNING_FIELDS.includes(syncStatus?.status)"
+                v-if="!disabledSyncBtn"
                 :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
               </span>
@@ -42,7 +42,7 @@
                 <img :src="dataRecordStatus[syncStatus?.status]?.icon" class="h-[19.25px] w-[19.25px] mr-[9.37px]" />
                 <span>{{ dataRecordStatus[syncStatus?.status]?.text }}</span>
               </span>
-              <span v-if="!RUNNING_FIELDS.includes(syncStatus?.status)">
+              <span v-if="!disabledSyncBtn">
                 {{ syncStatus?.start_at }}
               </span>
             </div>
@@ -68,6 +68,7 @@
                     class="min-w-[64px]"
                     theme="primary"
                     @click.stop
+                    :disabled="disabledSyncBtn"
                   >
                     {{ $t('同步') }}
                   </bk-button>
@@ -214,6 +215,7 @@ const route = useRoute();
 const userStore = useUser();
 const syncStatusStore = useSyncStatus();
 const syncStatus = computed(() => syncStatusStore.syncStatus);
+const disabledSyncBtn = computed(() => RUNNING_FIELDS.includes(syncStatus.value?.status));
 const {
   dataSourcePlugins,
   dataSource,
