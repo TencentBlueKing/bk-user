@@ -28,7 +28,7 @@ from .http import http_get
 logger = logging.getLogger("component")
 
 
-# FIXME: 后续登录OpenAPI接入APIGateway需重新调整
+# FIXME: 后续登录 OpenAPI 接入 APIGateway 需重新调整
 def _call_login_api(http_func, url_path, **kwargs):
     request_id = local.request_id
 
@@ -59,31 +59,12 @@ def _call_login_api(http_func, url_path, **kwargs):
             f"error={resp_data['error']}"
         )
 
-    code = resp_data.get("bk_error_code", -1)
-    message = resp_data.get("bk_error_msg", "unknown")
-    if code == 0:
-        return resp_data["data"]
-
-    logger.error(
-        "login api error! %s %s, kwargs: %s, request_id: %s, code: %s, message: %s",
-        http_func.__name__,
-        url,
-        kwargs,
-        request_id,
-        code,
-        message,
-    )
-
-    raise error_codes.REMOTE_REQUEST_ERROR.format(
-        f"request login error! "
-        f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}] "
-        f"Response[code={code}, message={message}]"
-    )
+    return resp_data["data"]
 
 
 def verify_bk_token(bk_token: str):
-    """验证bk_token"""
-    url_path = "/api/v2/is_login/"
+    """验证 bk_token"""
+    url_path = "api/v3/bkuser/bk-tokens/introspect/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})
 
 
@@ -91,5 +72,5 @@ def get_user_info(bk_token: str):
     """
     获取用户信息
     """
-    url_path = "/api/v2/get_user/"
+    url_path = "api/v3/bkuser/bk-tokens/userinfo-introspect/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})

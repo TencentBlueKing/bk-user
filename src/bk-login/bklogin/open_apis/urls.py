@@ -16,16 +16,25 @@
 # to the current version of the project delivered to anyone in the future.
 from django.urls import path
 
+from . import views
 from .compatibility import views as compatibility_views
 
 urlpatterns = [
-    # 兼容API, 兼容原有通过 ESB 和直接调用的两种方式
+    # 兼容 API, 兼容原有通过 ESB 和直接调用的两种方式
     path("accounts/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v1")),
     path("accounts/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v1")),
     path("api/v2/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v2")),
     path("api/v2/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v2")),
     path("api/v3/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v3")),
     path("api/v3/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v3")),
-    # TODO: 新的 OpenAPI 后面统一接入 APIGateway，不支持直接调用，
+    # Note: 新的 OpenAPI 后面统一接入 APIGateway，不支持直接调用
     #  同时只提供给 APIGateway 做用户认证的接口与通用 OpenAPI 区分开
+    path("api/v3/open/bk-tokens/introspect/", views.TokenIntrospect.as_view()),
+    path("api/v3/open/bk-tokens/userinfo-introspect/", views.TokenUserInfoIntrospect.as_view()),
+    path("api/v3/apigw/bk-tokens/introspect/", views.TokenIntrospect.as_view(skip_app_verified=True)),
+    # FIXME (nan): 临时兼容用户管理 SaaS 本地开发的登录
+    path("api/v3/bkuser/bk-tokens/introspect/", views.TokenIntrospect.as_view(skip_app_verified=True)),
+    path(
+        "api/v3/bkuser/bk-tokens/userinfo-introspect/", views.TokenUserInfoIntrospect.as_view(skip_app_verified=True)
+    ),
 ]
