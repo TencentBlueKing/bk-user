@@ -124,7 +124,7 @@ class APIGatewayJWTMiddleware:
         return self.get_response(request)
 
     @staticmethod
-    def _get_public_key():
+    def _get_public_key() -> str:
         """
         获取 APIGW 的 Public Key
         由于配置文件里的 public key 是来自环境变量，且使用 base64 编码，因此需要解码
@@ -169,5 +169,5 @@ class APIGatewayJWTMiddleware:
 
         return None
 
-    def _make_app(self, bk_app_code=None, verified=False):
+    def _make_app(self, bk_app_code: str | None = None, verified: bool = False):
         return self.App(bk_app_code=bk_app_code, verified=verified)
