@@ -25,7 +25,7 @@ from bklogin.component.bk_user import api as bk_user_api
 from .mixins import APIGatewayAppVerifiedMixin
 
 
-class TokenIntrospect(APIGatewayAppVerifiedMixin, View):
+class TokenIntrospectApi(APIGatewayAppVerifiedMixin, View):
     """Token 解析"""
 
     def get(self, request, *args, **kwargs):
@@ -42,7 +42,7 @@ class TokenIntrospect(APIGatewayAppVerifiedMixin, View):
         return APISuccessResponse(data={"bk_username": user.id, "tenant_id": user.tenant_id})
 
 
-class TokenUserInfoIntrospect(APIGatewayAppVerifiedMixin, View):
+class TokenUserInfoIntrospectApi(APIGatewayAppVerifiedMixin, View):
     """Token 用户信息解析"""
 
     def get(self, request, *args, **kwargs):
