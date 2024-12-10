@@ -51,6 +51,7 @@
                 class="min-w-[64px]"
                 theme="primary"
                 @click="handleImport"
+                :disabled="disabledSyncBtn || resetLoading"
               >
                 <Upload class="mr-[8px] text-[16px]" />
                 {{ $t('导入') }}
