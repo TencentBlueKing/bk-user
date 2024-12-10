@@ -64,7 +64,7 @@ def _call_login_api(http_func, url_path, **kwargs):
 
 def verify_bk_token(bk_token: str):
     """验证 bk_token"""
-    url_path = "api/v3/bkuser/bk-tokens/introspect/"
+    url_path = "api/v3/bkuser/bk-tokens/verify/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})
 
 
@@ -72,5 +72,5 @@ def get_user_info(bk_token: str):
     """
     获取用户信息
     """
-    url_path = "api/v3/bkuser/bk-tokens/userinfo-introspect/"
+    url_path = "api/v3/bkuser/bk-tokens/userinfo/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})

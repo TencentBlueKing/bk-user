@@ -49,7 +49,7 @@ class TestTokenIntrospect:
             yield
 
     def test_standard(self, open_api_client, bk_token):
-        resp = open_api_client.get(reverse("v3_open.bk_token.introspect"), data={"bk_token": bk_token})
+        resp = open_api_client.get(reverse("v3_open.bk_token.verify"), data={"bk_token": bk_token})
 
         assert resp.status_code == 200
 
@@ -58,12 +58,12 @@ class TestTokenIntrospect:
         assert data["tenant_id"] == "test_tenant_id"
 
     def test_invalid(self, open_api_client, bk_token):
-        resp = open_api_client.get(reverse("v3_open.bk_token.introspect"), data={"bk_token": f"invalid_{bk_token}"})
+        resp = open_api_client.get(reverse("v3_open.bk_token.verify"), data={"bk_token": f"invalid_{bk_token}"})
 
         assert resp.status_code == 400
 
     def test_userinfo_standard(self, open_api_client, bk_token):
-        resp = open_api_client.get(reverse("v3_open.bk_token.user_introspect"), data={"bk_token": bk_token})
+        resp = open_api_client.get(reverse("v3_open.bk_token.userinfo_retrieve"), data={"bk_token": bk_token})
 
         assert resp.status_code == 200
 
@@ -76,7 +76,7 @@ class TestTokenIntrospect:
 
     def test_userinfo_invalid(self, open_api_client, bk_token):
         resp = open_api_client.get(
-            reverse("v3_open.bk_token.user_introspect"), data={"bk_token": f"invalid_{bk_token}"}
+            reverse("v3_open.bk_token.userinfo_retrieve"), data={"bk_token": f"invalid_{bk_token}"}
         )
 
         assert resp.status_code == 400
