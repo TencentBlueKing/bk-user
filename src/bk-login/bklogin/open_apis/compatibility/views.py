@@ -64,11 +64,11 @@ class UserRetrieveCompatibilityApi(View, CompatibilityApiMixin):
             "language": user.language,
             "time_zone": user.time_zone,
             # 多租户版本新增
-            "tenant_id": user.tenant_id,
-            "full_name": user.full_name,  # 姓名
-            "display_name": user.display_name,  # 统一展示名
+            # 规范所有 SaaS 统一展示名
+            "display_name": user.display_name,
             # ----- 兼容 ------
             # 兼容数据
+            # 姓名
             "chname": user.full_name,
             # 【兼容】固定或空值返回
             "qq": "",

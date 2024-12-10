@@ -20,7 +20,7 @@ from django.http import JsonResponse
 
 
 class APISuccessResponse(JsonResponse):
-    """遵循蓝鲸Http API协议返回"""
+    """遵循蓝鲸 Http API 协议返回"""
 
     def __init__(self, data: Any = None, status: Optional[int] = None):
         wrapped_data = {"data": data}

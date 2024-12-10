@@ -57,7 +57,7 @@ def _call_bk_user_api(http_func, url_path: str, allow_error_status_func: Callabl
 
 
 def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
-    """只允许20x的用户管理接口"""
+    """只允许 20x 的用户管理接口"""
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
 
 
@@ -86,13 +86,13 @@ def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
 
 
 def get_idp(idp_id: str) -> IdpDetail:
-    """获取IDP信息"""
+    """获取 IDP 信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v3/login/idps/{idp_id}/")
     return IdpDetail(**data)
 
 
 def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
-    """根据IDP用户查询匹配的租户用户"""
+    """根据 IDP 用户查询匹配的租户用户"""
     data = _call_bk_user_api_20x(
         http_post,
         f"/api/v3/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
@@ -102,6 +102,6 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
 
 
 def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
-    """通过租户用户ID获取租户用户信息"""
+    """通过租户用户 ID 获取租户用户信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v3/login/tenant-users/{tenant_user_id}/")
     return TenantUserDetailInfo(**data)

@@ -24,14 +24,14 @@ from .constants import CompatibilityApiErrorCodeEnum, CompatibilityApiErrorCodeM
 
 
 class CompatibilityApiMixin:
-    """兼容API Mixin"""
+    """兼容 API Mixin"""
 
     api_version = "v1"
 
     @staticmethod
     def is_request_from_esb(request):
         """
-        请求是否来自ESB
+        请求是否来自 ESB
         """
         x_app_token = request.META.get("HTTP_X_APP_TOKEN")
         x_app_code = request.META.get("HTTP_X_APP_CODE")

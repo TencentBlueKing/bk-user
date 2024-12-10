@@ -68,6 +68,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bklogin.common.middlewares.ExceptionHandlerMiddleware",
+    "bklogin.common.middlewares.APIGatewayJWTMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -123,7 +124,7 @@ SITE_URL = env.str("SITE_URL", default="/login/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
-# STATIC_URL 也可以是CDN地址
+# STATIC_URL 也可以是 CDN 地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
 # 登录服务的AppCode/AppSecret
@@ -142,17 +143,17 @@ BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
 BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
 ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
-# 蓝鲸统一的基础域和对外SCHEME
+# 蓝鲸统一的基础域和对外 SCHEME
 BK_DOMAIN = env.str("BK_DOMAIN", "")
 BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
-# 统一登录的外部访问地址，不包括http(s)协议
+# 统一登录的外部访问地址，不包括 http(s) 协议
 BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", "")
 BK_LOGIN_URL = f"{BK_DOMAIN_SCHEME}://{BK_LOGIN_ADDR}{SITE_URL}"
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
-# 蓝鲸公共的Cookie的Domain(比如 bk_token和blueking_language)
+# 蓝鲸公共的 Cookie 的 Domain(比如 bk_token 和 blueking_language)
 BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
-# 登录完成后允许重定向的HOST
-# 支持匹配:
+# 登录完成后允许重定向的 HOST
+# 支持匹配：
 #  (1) * 匹配任意域名
 #  (2) 泛域名匹配，比如 .example.com 可匹配 foo.example.com、example.com、foo.example.com:8000、example.com:8080
 #  (3) 精确域名匹配，比如 example.com 可匹配 example.com、example.com:8000
@@ -160,7 +161,7 @@ BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
 # 默认蓝鲸体系域名都可以匹配
 ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[BK_COOKIE_DOMAIN])
 REDIRECT_URL_REQUIRE_HTTPS = env.bool("BK_LOGIN_REDIRECT_URL_REQUIRE_HTTPS", default=bool(BK_DOMAIN_SCHEME == "https"))
-# 语言Cookie（蓝鲸体系共享）
+# 语言 Cookie（蓝鲸体系共享）
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
 
 # session & csrf
@@ -170,11 +171,11 @@ _BK_LOGIN_NETLOC = _BK_LOGIN_URL_PARSE_URL.netloc  # 若有端口，则会带上
 _BK_LOGIN_IS_SPECIAL_PORT = _BK_LOGIN_URL_PARSE_URL.port in [None, 80, 443]
 _BK_LOGIN_SCHEME = _BK_LOGIN_URL_PARSE_URL.scheme
 _BK_LOGIN_URL_MD5_16BIT = hashlib.md5(BK_LOGIN_URL.encode("utf-8")).hexdigest()[8:-8]
-# 注意：Cookie Domain是不支持端口的
+# 注意：Cookie Domain 是不支持端口的
 SESSION_COOKIE_DOMAIN = _BK_LOGIN_HOSTNAME
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 SESSION_COOKIE_NAME = f"bklogin_sessionid_{_BK_LOGIN_URL_MD5_16BIT}"
-SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
+SESSION_COOKIE_AGE = 60 * 60 * 24  # 1 天
 CSRF_COOKIE_NAME = f"bklogin_csrftoken_{_BK_LOGIN_URL_MD5_16BIT}"
 # 对于特殊端口，带端口和不带端口都得添加，其他只需要添加默认原生的即可
 # Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme (http:// 或 https://) 开头
@@ -192,13 +193,13 @@ CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", 
 CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # 登录票据
-# 登录票据Cookie名称
+# 登录票据 Cookie 名称
 BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
-# 登录票据Cookie有效期，默认1天
+# 登录票据 Cookie 有效期，默认 1 天
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
-# 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步,默认1分钟
+# 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
-# 无操作的失效期，默认2个小时. 长时间无操作, BkToken自动过期（Note: 调整为）
+# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
 
 # 用户管理相关信息
@@ -208,6 +209,9 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
+# Open API 接入 BK APIGateway 后，需要对 APIGW 请求来源认证，使用公钥解开 jwt
+# Note: 格式必须是 base64 字符串
+BK_APIGW_PUBLIC_KEY = env.str("BK_APIGW_PUBLIC_KEY", default="")
 
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")

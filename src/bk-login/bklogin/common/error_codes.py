@@ -80,8 +80,8 @@ class ErrorCodes:
     )
     NOT_SUPPORTED = ErrorCode(_("不支持"))
 
-    # 调用系统API异常
-    REMOTE_REQUEST_ERROR = ErrorCode(_("调用系统API异常"))
+    # 调用系统 API 异常
+    REMOTE_REQUEST_ERROR = ErrorCode(_("调用系统 API 异常"))
 
 
 # 实例化一个全局对象

@@ -49,7 +49,7 @@ from .utils import url_has_allowed_host_and_scheme
 logger = logging.getLogger(__name__)
 
 
-# 确保无论何时，响应必然有CSRFToken Cookie
+# 确保无论何时，响应必然有 CSRFToken Cookie
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(View):
     """
@@ -61,11 +61,11 @@ class LoginView(View):
     template_name = "index.html"
 
     def _get_redirect_url(self, request):
-        """如果安全的话，返回用户发起的重定向URL"""
-        # 重定向URL
+        """如果安全的话，返回用户发起的重定向 URL"""
+        # 重定向 URL
         redirect_to = request.GET.get(REDIRECT_FIELD_NAME) or self.default_redirect_to
 
-        # 检查回调URL是否安全，防钓鱼
+        # 检查回调 URL 是否安全，防钓鱼
         url_is_safe = url_has_allowed_host_and_scheme(
             url=redirect_to,
             allowed_hosts={*settings.ALLOWED_REDIRECT_HOSTS},
@@ -77,7 +77,7 @@ class LoginView(View):
         """登录页面"""
         # 回调到业务系统的地址
         redirect_url = self._get_redirect_url(request)
-        # 存储到当前session里，待认证成功后取出后重定向
+        # 存储到当前 session 里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
         # 返回登录页面
@@ -159,19 +159,19 @@ class PluginErrorContext(pydantic.BaseModel):
     http_method: str
 
 
-# 先对所有请求豁免CSRF校验，由dispatch里根据需要手动执行CSRF校验
+# 先对所有请求豁免 CSRF 校验，由 dispatch 里根据需要手动执行 CSRF 校验
 @method_decorator(csrf_exempt, name="dispatch")
 class IdpPluginDispatchView(View):
     def dispatch(self, request, *args, **kwargs):
         """
         根据路径参数 idp_id 和 action 将请求路由调度到各个插件
         """
-        # Session里获取当前登录的租户
+        # Session 里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         # 路径优先
         if kwargs.get("tenant_id"):
             sign_in_tenant_id = kwargs.get("tenant_id")
-            # session记录登录的租户
+            # session 记录登录的租户
             request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
         if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
@@ -191,7 +191,7 @@ class IdpPluginDispatchView(View):
             plugin_cls = get_plugin_cls(idp.plugin.id)
         except NotImplementedError as error:
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]获取插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
+                _("认证源 [{}] 获取插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
             )
 
         # （2）初始化插件
@@ -200,19 +200,19 @@ class IdpPluginDispatchView(View):
             plugin = plugin_cls(cfg=plugin_cfg)
         except pydantic.ValidationError:
             logger.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
-            # Note: 不可将error对外，因为配置信息比较敏感
+            # Note: 不可将 error 对外，因为配置信息比较敏感
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]初始化插件配置[{}]失败").format(idp.name, idp.plugin.name),
+                _("认证源 [{}] 初始化插件配置 [{}] 失败").format(idp.name, idp.plugin.name),
             )
         except Exception as error:
             logger.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
+                _("认证源 [{}] 加载插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
             )
 
         idp_info = IdpBasicInfo(id=idp.id, name=idp.name, plugin_id=idp.plugin.id, plugin_name=idp.plugin.name)
         # （3）dispatch
-        # FIXME: 如何对身份凭证类的认证进行手动csrf校验，或者如何添加csrf_protect装饰器
+        # FIXME: 如何对身份凭证类的认证进行手动 csrf 校验，或者如何添加 csrf_protect 装饰器
         # 身份凭证类型
         if isinstance(plugin, BaseCredentialIdpPlugin):
             return self._dispatch_credential_idp_plugin(
@@ -246,7 +246,7 @@ class IdpPluginDispatchView(View):
                 context.idp.plugin_id,
             )
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]执行插件[{}]失败").format(context.idp.name, context.idp.plugin_name),
+                _("认证源 [{}] 执行插件 [{}] 失败").format(context.idp.name, context.idp.plugin_name),
             )
 
     def _dispatch_credential_idp_plugin(
@@ -303,8 +303,8 @@ class IdpPluginDispatchView(View):
             return HttpResponseRedirect(redirect_uri)
 
         # 第三方登录成功后回调回蓝鲸
-        # Note: 大部分都是GET重定向，对于某些第三方登录，可能存在POST请求，
-        #  比如SAML的传输绑定有3种: HTTP Artifact、HTTP POST、和 HTTP Redirect
+        # Note: 大部分都是 GET 重定向，对于某些第三方登录，可能存在 POST 请求，
+        #  比如 SAML 的传输绑定有 3 种：HTTP Artifact、HTTP POST、和 HTTP Redirect
         if dispatch_cfs in [
             (BuiltinActionEnum.CALLBACK, AllowedHttpMethodEnum.GET),
             (BuiltinActionEnum.CALLBACK, AllowedHttpMethodEnum.POST),
@@ -337,7 +337,7 @@ class IdpPluginDispatchView(View):
         tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp_id, user_infos)
         if not tenant_users:
             raise error_codes.OBJECT_NOT_FOUND.f(
-                _("认证成功，但用户在租户({})下未有对应账号").format(sign_in_tenant_id),
+                _("认证成功，但用户在租户 ({}) 下未有对应账号").format(sign_in_tenant_id),
             )
 
         return [i.model_dump(include={"id", "username", "full_name"}) for i in tenant_users]
@@ -361,9 +361,9 @@ class PageUserView(View):
         user_id = tenant_users[0]["id"]
 
         response = HttpResponseRedirect(redirect_to=request.session.get("redirect_uri"))
-        # 生成Cookie
+        # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
-        # 设置Cookie
+        # 设置 Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
             bk_token,
@@ -373,7 +373,7 @@ class PageUserView(View):
             secure=False,
         )
 
-        # 删除Session
+        # 删除 Session
         request.session.clear()
 
         return response
@@ -384,12 +384,12 @@ class TenantUserListApi(View):
         """
         用户认证后，获取认证成功后的租户用户列表
         """
-        # Session里获取当前登录的租户
+        # Session 里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
-        # Session里获取已认证过的租户用户
+        # Session 里获取已认证过的租户用户
         tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY)
         if not tenant_users:
             raise error_codes.NO_PERMISSION.f(_("未经过用户认证步骤"))
@@ -402,7 +402,7 @@ class TenantUserListApi(View):
 class SignInTenantUserCreateApi(View):
     def post(self, request, *args, **kwargs):
         """
-        确认登录的用户，生成bk_token Cookie, 返回重定向业务系统的地址
+        确认登录的用户，生成 bk_token Cookie, 返回重定向业务系统的地址
         """
         request_body = parse_request_body_json(request.body)
         user_id = request_body.get("user_id")
@@ -416,13 +416,13 @@ class SignInTenantUserCreateApi(View):
         if user_id not in tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("该用户不可登录"))
 
-        # TODO：支持MFA、首次登录强制修改密码登录操作
-        # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如bk_token_for_force_change_password
+        # TODO：支持 MFA、首次登录强制修改密码登录操作
+        # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如 bk_token_for_force_change_password
 
         response = APISuccessResponse({"redirect_uri": request.session.get("redirect_uri")})
-        # 生成Cookie
+        # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
-        # 设置Cookie
+        # 设置 Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
             bk_token,
@@ -432,7 +432,7 @@ class SignInTenantUserCreateApi(View):
             secure=False,
         )
 
-        # 删除Session
+        # 删除 Session
         request.session.clear()
 
         return response

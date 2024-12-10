@@ -29,12 +29,12 @@ logger = logging.getLogger("app")
 class TokenBackend(BaseBackend):
     def authenticate(self, request=None, bk_token=None):
         logger.debug("Enter in TokenBackend")
-        # 判断是否传入验证所需的bk_token,没传入则返回None
+        # 判断是否传入验证所需的 bk_token，没传入则返回 None
         if not bk_token:
             return None
 
         verify_result, username = self.verify_bk_token(bk_token)
-        # 判断bk_token是否验证通过,不通过则返回None
+        # 判断 bk_token 是否验证通过，不通过则返回 None
         if not verify_result:
             return None
 
@@ -43,7 +43,7 @@ class TokenBackend(BaseBackend):
         try:
             user, _ = user_model.objects.get_or_create(username=username)
             get_user_info_result, user_info = self.get_user_info(bk_token)
-            # 判断是否获取到用户信息,获取不到则返回None
+            # 判断是否获取到用户信息，获取不到则返回 None
             if not get_user_info_result:
                 return None
             user.set_property(key="language", value=user_info.get("language", ""))
@@ -65,7 +65,7 @@ class TokenBackend(BaseBackend):
     @staticmethod
     def get_user_info(bk_token):
         """
-        请求平台ESB接口获取用户信息
+        请求平台 ESB 接口获取用户信息
         @param bk_token: bk_token
         @type bk_token: str
         @return:True, {
@@ -93,7 +93,7 @@ class TokenBackend(BaseBackend):
     @staticmethod
     def verify_bk_token(bk_token):
         """
-        请求VERIFY_URL,认证bk_token是否正确
+        请求 VERIFY_URL，认证 bk_token 是否正确
         @param bk_token: "_FrcQiMNevOD05f8AY0tCynWmubZbWz86HslzmOqnhk"
         @type bk_token: str
         @return: False,None True,username
