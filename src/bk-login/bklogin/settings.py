@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "django_prometheus",
+    "apigw_manager.apigw",
     "bklogin.authentication",
 ]
 
@@ -68,7 +69,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bklogin.common.middlewares.ExceptionHandlerMiddleware",
-    "bklogin.common.middlewares.APIGatewayJWTMiddleware",
+    "apigw_manager.apigw.authentication.ApiGatewayJWTGenericMiddleware",
+    "apigw_manager.apigw.authentication.ApiGatewayJWTAppMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -209,9 +211,7 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
-# Open API 接入 BK APIGateway 后，需要对 APIGW 请求来源认证，使用公钥解开 jwt
-# Note: 格式必须是 base64 字符串
-BK_APIGW_PUBLIC_KEY = env.str("BK_APIGW_PUBLIC_KEY", default="")
+BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-login")
 
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
