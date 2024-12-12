@@ -16,7 +16,7 @@ from builtins import str
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from bklogin.common.exceptions import LoginErrorCodes
 

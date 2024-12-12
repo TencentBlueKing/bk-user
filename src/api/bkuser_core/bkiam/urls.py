@@ -8,25 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
+from django.urls import re_path
 
 from . import views
 
 urlpatterns = [
     # ============ Category ==============
-    url(
+    re_path(
         r"^api/iam/v1/categories/$",
         views.CategoryIAMViewSet.as_view({"post": "distribution"}),
         name="iam_categories",
     ),
     # ============ Field ==============
-    url(
+    re_path(
         r"^api/iam/v1/fields/$",
         views.DynamicFieldIAMViewSet.as_view({"post": "distribution"}),
         name="iam_fields",
     ),
     # ============ Department ==============
-    url(
+    re_path(
         r"^api/iam/v1/departments/$",
         views.DepartmentIAMViewSet.as_view({"post": "distribution"}),
         name="iam_departments",

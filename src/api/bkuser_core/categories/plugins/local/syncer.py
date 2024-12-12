@@ -17,7 +17,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import translation
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .client import ExcelHelper
 from .exceptions import ColumnNotFound, DataFormatError, ParseFailedException

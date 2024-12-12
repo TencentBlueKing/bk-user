@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from datetime import timedelta
 from enum import auto
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.common.enum import AutoLowerEnum
 

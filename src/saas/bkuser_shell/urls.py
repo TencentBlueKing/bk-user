@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include,re_path
 from django.conf.urls.static import static
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
@@ -18,20 +18,20 @@ from django.views.i18n import JavaScriptCatalog
 from bkuser_shell.proxy.views import WebPageViewSet
 
 urlpatterns = [
-    url(r"^", include("bkuser_shell.account.urls")),
-    url("", include("bkuser_shell.proxy.urls")),
+    re_path(r"^", include("bkuser_shell.account.urls")),
+    re_path("", include("bkuser_shell.proxy.urls")),
     # TODO: version should be change to a different impl
-    url(r"^", include("bkuser_shell.version_log.urls")),
-    url(
+    re_path(r"^", include("bkuser_shell.version_log.urls")),
+    re_path(
         r"^favicon.ico$",
         RedirectView.as_view(url=staticfiles_storage.url("img/favicon.ico")),
     ),
-    url(
+    re_path(
         r"^jsi18n/(?P<packages>\S+?)/$",
         JavaScriptCatalog.as_view(),
         name="javascript-catalog",
     ),
-    url(r"^", include("django_prometheus.urls")),
+    re_path(r"^", include("django_prometheus.urls")),
 ]
 
 # 当且仅当前端独立部署时托管 STATIC_URL 路由
@@ -40,6 +40,6 @@ if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
 
 # 其余path交由前端处理
 urlpatterns += [
-    url(r"^login_success/", WebPageViewSet.as_view({"get": "login_success"}), name="login_success"),
-    url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index"),
+    re_path(r"^login_success/", WebPageViewSet.as_view({"get": "login_success"}), name="login_success"),
+    re_path(r"^", WebPageViewSet.as_view({"get": "index"}), name="index"),
 ]

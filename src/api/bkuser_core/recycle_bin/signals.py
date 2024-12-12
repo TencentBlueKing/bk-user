@@ -10,6 +10,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import django
-
-post_category_revert = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_hard_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+# providing_args=["instance", "operator", "extra_values"]
+post_category_revert = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_category_hard_delete = django.dispatch.Signal()

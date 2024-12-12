@@ -13,7 +13,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.audit import models as log_models_module
 from bkuser_core.audit.constants import OperationStatus, OperationType

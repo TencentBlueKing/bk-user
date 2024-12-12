@@ -13,8 +13,8 @@ import logging
 from typing import List
 
 from django.conf import settings
-from django.utils.encoding import force_text
-from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import force_str
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 
@@ -47,7 +47,7 @@ def send_mail(receivers: List[str], message: str, sender: str = None, title: str
 
     client = get_client_by_raw_username(user=sender or DEFAULT_EMAIL_SENDER)
 
-    message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
+    message_encoded = force_str(base64.b64encode(message.encode("utf-8")))
     logger.debug(
         "going to send email to %s, title: %s, via %s",
         receivers_str,
@@ -87,7 +87,7 @@ def send_sms(receivers: List[str], message: str, sender: str = None):
 
     client = get_client_by_raw_username(user=sender or DEFAULT_SMS_SENDER)
 
-    message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
+    message_encoded = force_str(base64.b64encode(message.encode("utf-8")))
     logger.debug(
         "going to send sms to %s, via %s",
         receivers_str,
