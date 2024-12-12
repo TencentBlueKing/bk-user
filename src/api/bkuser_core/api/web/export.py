@@ -102,7 +102,7 @@ class ProfileExcelExporter:
             for cell in columns:
                 cell.number_format = FORMAT_TEXT
 
-    def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
+    def update_profiles(self, profiles: List[dict], extra_infos: dict | None = None):
         field_col_map = self.update_sheet_titles()
 
         for p_index, p in enumerate(profiles):

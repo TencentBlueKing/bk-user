@@ -238,7 +238,9 @@ class ExcelSyncer(Syncer):
                 # NOTE: 解析后, 非必填的字段 status=NORMAL, staff_status=IN, position=0
             except ParseFailedException as e:
                 # 同步上级解析字段 <username> 失败: u123456 不符合格式要求. [user_raw_info=()]
-                logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
+                logger.exception(
+                    f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]"
+                )
                 failed_records.append(
                     {
                         "index": index,
@@ -357,7 +359,9 @@ class ExcelSyncer(Syncer):
                     parser_set.get_cell_data("leader", user_raw_info)
                 )
             except ParseFailedException as e:
-                logger.exception(f"同步上级解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
+                logger.exception(
+                    f"同步上级解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]"
+                )
                 continue
             except Exception:  # pylint: disable=broad-except
                 logger.exception("同步上级解析字段异常. [user_raw_info=%s]", user_raw_info)

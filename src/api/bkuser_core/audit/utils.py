@@ -51,7 +51,7 @@ def create_general_log(
     operate_type: str,
     operator_obj: Any,
     status: str = OperationStatus.SUCCEED.value,
-    extra_info: Dict = None,
+    extra_info: Dict | None = None,
     request=None,
 ) -> Optional[GeneralLog]:
     """记录操作日志 快捷函数"""
@@ -89,7 +89,7 @@ def create_general_log(
 
 
 def create_profile_log(
-    profile: "Profile", operation: str, params: dict = None, request: "Request" = None
+    profile: "Profile", operation: str, params: dict | None = None, request: "Request" = None
 ) -> ProfileRelatedLog:
     create_params = params or {}
     if request:

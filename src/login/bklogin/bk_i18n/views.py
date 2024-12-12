@@ -19,13 +19,10 @@ from django.utils.translation import check_for_language
 
 def set_language(request):
     next_url = request.POST.get('next', request.GET.get('next'))
-    if (
-        (next_url or request.accepts('text/html')) and
-        not url_has_allowed_host_and_scheme(
-            url=next_url,
-            allowed_hosts={request.get_host()},
-            require_https=request.is_secure(),
-        )
+    if (next_url or request.accepts('text/html')) and not url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
     ):
         next_url = request.META.get('HTTP_REFERER')
         if not url_has_allowed_host_and_scheme(
@@ -47,7 +44,8 @@ def set_language(request):
                 # (RemovedInDjango40Warning)
                 request.session[settings.LANGUAGE_SESSION_KEY] = lang_code
             response.set_cookie(
-                settings.LANGUAGE_COOKIE_NAME, lang_code,
+                settings.LANGUAGE_COOKIE_NAME,
+                lang_code,
                 max_age=settings.LANGUAGE_COOKIE_AGE,
                 path=settings.LANGUAGE_COOKIE_PATH,
                 domain=settings.LANGUAGE_COOKIE_DOMAIN,

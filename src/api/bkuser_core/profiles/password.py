@@ -78,7 +78,9 @@ class SeqElement(PasswordElement):
         for sub_regex in cls.make_sub_regex_list(max_seq_len):
             result = regex.findall(regex.compile(regex.escape(sub_regex)), value)
             if result:
-                raise ValidationError(_("密码不能包含超过 {} 位的{}: {}").format(max_seq_len, cls.display_name, str(sub_regex)))
+                raise ValidationError(
+                    _("密码不能包含超过 {} 位的{}: {}").format(max_seq_len, cls.display_name, str(sub_regex))
+                )
 
 
 class KeyboardSeq(SeqElement):

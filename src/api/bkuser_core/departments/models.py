@@ -84,7 +84,7 @@ class Department(TimestampMPTTModel):
         return Profile.objects.filter(id__in=ids, enabled=True).count()
 
     # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
-    def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
+    def get_profiles(self, recursive: bool = False, wildcard_search: str | None = None) -> models.QuerySet:
         if not recursive:
             # FIXME: 为什么滤掉了 status.DELETE? 而不是通过 enabled=False过滤?
             target = self.profiles.exclude(status=ProfileStatus.DELETED.value)

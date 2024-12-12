@@ -36,7 +36,7 @@ class SendSmsFailed(Exception):
     """发送短信失败"""
 
 
-def send_mail(receivers: List[str], message: str, sender: str = None, title: str = None):
+def send_mail(receivers: List[str], message: str, sender: str | None = None, title: str | None = None):
     """发邮件"""
     if not receivers:
         raise ReceiversCouldNotBeEmpty(_("收件人不能为空"))
@@ -78,7 +78,7 @@ def send_mail(receivers: List[str], message: str, sender: str = None, title: str
         raise SendMailFailed(ret.get("message", "unknown error"))
 
 
-def send_sms(receivers: List[str], message: str, sender: str = None):
+def send_sms(receivers: List[str], message: str, sender: str | None = None):
     """发短信"""
     if not receivers:
         raise ReceiversCouldNotBeEmpty(_("收件人不能为空"))

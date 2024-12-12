@@ -10,14 +10,15 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
-from django.urls import include, re_path
 from django.http import HttpResponse
+from django.urls import include, re_path
 from django.views.i18n import JavaScriptCatalog
 
 from bklogin.api import views as views_api
+from bklogin.bk_i18n import views as i18n_views
 from bklogin.bkauth import views as auth_views
 from bklogin.healthz import views as healthz_views
-from bklogin.bk_i18n import views as i18n_views
+
 urlpatterns = [
     # 登录页面
     re_path(r"^$", auth_views.LoginView.as_view()),
@@ -99,7 +100,7 @@ urlpatterns = [
     re_path(r"", include("django_prometheus.urls")),
     # ========================= i18n =========================
     # 无登录态下切换语言
-    re_path(r"^i18n/setlang/$", i18n_views.set_language , name="set_language"),
+    re_path(r"^i18n/setlang/$", i18n_views.set_language, name="set_language"),
     # 处理JS翻译
     re_path(r"^jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
 ]
