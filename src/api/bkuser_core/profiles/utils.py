@@ -43,7 +43,7 @@ def gen_password(length):
     chars = string.ascii_letters + string.digits
 
     random_chars = [random.choice(chars) for _ in range(length)]
-    if any([c.isdigit() for c in random_chars]):
+    if any(c.isdigit() for c in random_chars):
         return "".join(random_chars)
 
     random_chars[0] = random.choice(string.digits)
@@ -54,7 +54,7 @@ def gen_password(length):
 USERNAME_DOMAIN_REGEX = re.compile(f"(?P<username>{USERNAME_REGEX})(@(?P<domain>{DOMAIN_PART_REGEX}))?$")
 
 
-def parse_username_domain(username_with_domain, known_domain: str = None) -> tuple:
+def parse_username_domain(username_with_domain, known_domain: str | None = None) -> tuple:
     """拆分用户名和登陆域"""
 
     # 当 domain 已知

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TimeContext:
     start_time: float = field(default_factory=time.time)
-    start_clock: float = field(default_factory=time.clock)  # type: ignore[attr-defined]
+    start_clock: float = field(default_factory=time.perf_counter)  # type: ignore[attr-defined]
     end_time: Optional[float] = None
     end_clock: Optional[float] = None
 
@@ -37,12 +37,12 @@ class TimeContext:
     def clock_delta(self):
         """消耗的 CPU 时钟"""
         if self.end_clock is None:
-            return time.clock() - self.start_clock
+            return time.perf_counter() - self.start_clock
         return self.end_clock - self.start_clock
 
     def close(self):
         self.end_time = time.time()
-        self.end_clock = time.clock()
+        self.end_clock = time.perf_counter()
 
 
 def __catch_time__() -> Iterator[TimeContext]:

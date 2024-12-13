@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from bkuser_core.profiles.constants import PositionEnum, ProfileStatus, StaffStatus
 from django.db import migrations
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 def forwards_func(apps, schema_editor):

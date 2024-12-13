@@ -53,8 +53,8 @@ class LDAPClient:
     def initialize(
         cls,
         connection_url: str,
-        user: str = None,
-        password: str = None,
+        user: str | None = None,
+        password: str | None = None,
         timeout_setting: int = 120,
         use_ssl: bool = False,
     ) -> Connection:
@@ -95,8 +95,8 @@ class LDAPClient:
         self,
         object_class: str = "",
         force_filter_str: str = "",
-        start_root: str = None,
-        attributes: list = None,
+        start_root: str | None = None,
+        attributes: list | None = None,
     ) -> List[Dict]:
         """搜索"""
         if not start_root:

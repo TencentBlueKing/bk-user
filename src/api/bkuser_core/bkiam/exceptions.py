@@ -12,7 +12,7 @@ from rest_framework import exceptions
 
 
 class IAMPermissionDenied(exceptions.PermissionDenied):
-    def __init__(self, detail=None, code=None, extra_info: dict = None):
+    def __init__(self, detail=None, code=None, extra_info: dict | None = None):
         super().__init__(detail=detail, code=code)
 
         self.extra_info = extra_info

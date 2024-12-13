@@ -16,7 +16,7 @@ from typing import Any, ClassVar, Dict, Generator, List
 import phonenumbers
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.validators import EmailValidator
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .exceptions import ParseFailedException
 from bkuser_core.departments.models import Department

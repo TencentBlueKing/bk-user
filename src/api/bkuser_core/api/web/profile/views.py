@@ -131,7 +131,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
 
-        extras = {key: value for key, value in extra_fields.items()}
+        extras = dict(extra_fields)
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -272,7 +272,7 @@ class ProfileCreateApi(generics.CreateAPIView):
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
 
-        slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
+        slz.validated_data["extras"] = dict(extra_fields)
 
         # NOTE: 其他字段, 自行放入extras
 
@@ -356,7 +356,10 @@ class ProfileCreateApi(generics.CreateAPIView):
 
         # 对齐 country code
         try:
-            (slz.validated_data["country_code"], slz.validated_data["iso_code"],) = align_country_iso_code(
+            (
+                slz.validated_data["country_code"],
+                slz.validated_data["iso_code"],
+            ) = align_country_iso_code(
                 country_code=validated_data.get("country_code", ""),
                 iso_code=validated_data.get("iso_code", ""),
             )

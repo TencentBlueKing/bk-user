@@ -10,6 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_category_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_dynamic_field_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+# providing_args=["instance", "operator", "extra_values"]
+post_category_create = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_category_delete = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_dynamic_field_delete = django.dispatch.Signal()

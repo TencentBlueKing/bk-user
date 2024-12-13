@@ -19,7 +19,7 @@ from urllib.parse import urlparse, urlunparse
 import requests
 from django.http import QueryDict
 from django.shortcuts import resolve_url
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_shell.common.exceptions import ApiNetworkError, ApiResultError
 

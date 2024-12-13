@@ -132,6 +132,7 @@ LANGUAGE_CODE = "zh-hans"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LANGUAGE_COOKIE_PATH = "/"
 LOCALE_PATHS = (os.path.join(PROJECT_ROOT, "locale"),)
+LANGUAGE_SESSION_KEY = "blueking_language"
 
 # ===============================================================================
 # 静态资源设置

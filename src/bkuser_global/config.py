@@ -23,8 +23,6 @@ def init_patch():
     # Patching
     # ==============================================================================
     pymysql.install_as_MySQLdb()
-    # Patch version info to forcely pass Django client check
-    setattr(pymysql, "version_info", (1, 4, 6, "final", 0))
 
 
 def get_db_config(env: environ.Env, db_prefix: str) -> dict:

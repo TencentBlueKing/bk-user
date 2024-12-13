@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from enum import auto
 from typing import Any, Callable, Dict, List
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory, SyncTask
