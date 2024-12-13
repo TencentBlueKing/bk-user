@@ -2,7 +2,7 @@
   <div class="h-[100vh]">
     <div class="grid place-items-center">
       <!-- 筛选表单 -->
-      <transition>
+      <Transition>
         <div
           v-if="!isFold.curFold"
           :class="['filter-operation-history-container', isFold.preFold ? 'overflow-hidden' : '']">
@@ -18,6 +18,7 @@
                 :params="params"
                 :show-on-init="false"
                 v-model:modelValue="curMember"
+                :disabled="true"
                 :multiple="false"
                 :clearable="true"
                 @change-select-list="changeSelectList"
@@ -25,19 +26,19 @@
                 @scroll-change="scrollChange"
               />
             </bk-form-item>
-            <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
-              <bk-select class="items-select" v-model="formData.operation">
+            <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
+              <bk-select class="items-select" v-model="formData.object_type">
                 <bk-option
-                  v-for="item in curOperationOptions"
+                  v-for="item in curOperationType"
                   :key="item.key"
                   :id="item.key"
                   :name="item.label" />
               </bk-select>
             </bk-form-item>
-            <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
-              <bk-select class="items-select" v-model="formData.object_type">
+            <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
+              <bk-select class="items-select" v-model="formData.operation">
                 <bk-option
-                  v-for="item in curOperationType"
+                  v-for="item in curOperationOptions"
                   :key="item.key"
                   :id="item.key"
                   :name="item.label" />
@@ -67,22 +68,22 @@
             </bk-form-item>
           </bk-form>
         </div>
-      </transition>
+      </Transition>
       <!-- 折叠按钮 -->
-      <div class="flex justify-center w-full">
+      <div class="flex justify-center w-full h-[24px]">
         <div @mouseover="handleHoverFoldBtn" @mouseleave="handleLeaveFoldBtn" v-if="!isFold.curFold">
           <bk-button
             v-if="isHover" theme="primary"
             @click="toggleFold"
             @mousedown="togglePreFold"
-            class="w-[120px] h-[24px] text-bold border-none">
+            class="w-[120px] !h-[24px] text-bold !border-none">
             <i class="user-icon icon-angle-up text-[30px]"></i>
           </bk-button>
           <bk-button
             v-else
             @click="toggleFold"
             @mousedown="togglePreFold"
-            class="w-[120px] h-[24px] !bg-[#DCDEE5] !text-[#ffffff] text-bold border-none">
+            class="w-[120px] !h-[24px] !bg-[#DCDEE5] !text-[#ffffff] text-bold !border-none">
             <i class="user-icon icon-angle-up text-[30px]"></i>
           </bk-button>
         </div>
@@ -91,7 +92,7 @@
             theme="primary"
             @click="toggleFold"
             @mousedown="togglePreFold"
-            class="w-[120px] h-[24px] text-bold border-none">
+            class="w-[120px] !h-[24px] text-bold !border-none">
             <i class="user-icon icon-angle-down text-[30px]"></i>
           </bk-button>
         </div>
@@ -103,25 +104,18 @@
           :pagination="pagination"
           remote-pagination
           :data="tableData"
-          settings
+          :settings="settings"
+          class="operation-history-table"
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
           :show-overflow-tooltip="true"
           :max-height="tableMaxHeight"
+          :height="tableCurHeight"
           @column-sort="handleSortBy"
         >
-          <bk-table-column :label="$t('操作人')" prop="creator" width="100">
+          <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
             <template #default="{ row }">
-              <span>{{ row.creator || '--' }}</span>
-            </template>
-          </bk-table-column>
-          <bk-table-column
-            :label="$t('操作时间')"
-            :sort="sortConfig"
-            prop="created_at"
-            width="100">
-            <template #default="{ row }">
-              <span>{{ row.created_at || '--' }}</span>
+              <span>{{ getOperationLabel(row.operation) }}</span>
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('操作对象')" prop="object_type" width="100">
@@ -134,9 +128,18 @@
               <span>{{ row.object_name || '--' }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
+          <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
-              <span>{{ getOperationLabel(row.operation) }}</span>
+              <span>{{ row.creator || '--' }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column
+            :label="$t('操作时间')"
+            :sort="sortConfig"
+            prop="created_at"
+            width="100">
+            <template #default="{ row }">
+              <span>{{ row.created_at || '--' }}</span>
             </template>
           </bk-table-column>
         </bk-table>
@@ -155,6 +158,7 @@ import MemberSelector from '@/components/MemberSelector.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getAudit } from '@/http/operationHistoryFiles';
 import { getRealUsers } from '@/http/settingFiles';
+import { t } from '@/language';
 
 // 人员选择器
 const curMember = ref('');
@@ -179,7 +183,21 @@ const isFold = reactive({
 const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
-const tableMaxHeight = useTableMaxHeight(454);
+// header(52) + form-height(248) + button-height(24) + margin-bottom(24)
+const curRedundantHeight = computed(() => {
+  const redundantHeight = {
+    unfold: 348,
+    fold: 100,
+  };
+  if (isFold.curFold) {
+    return redundantHeight.fold;
+  }
+  return redundantHeight.unfold;
+});
+
+// header(52) + button-height(24) + margin-bottom(24) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
+const tableMaxHeight = window.innerHeight - 100;
+const tableCurHeight = useTableMaxHeight(curRedundantHeight);
 
 interface SearchParams {
   creator: string,
@@ -206,6 +224,30 @@ const curSearchParams: SearchParams = {
 
 const sortType = ref('null');
 const sortConfig = computed(() => ({ SortScope: 'all', value: sortType.value }));
+const settings = {
+  fields: [
+    {
+      label: t('操作类型'),
+      field: 'operation',
+    },
+    {
+      label: t('操作对象'),
+      field: 'object_type',
+    },
+    {
+      label: t('操作实例'),
+      field: 'object_name',
+    },
+    {
+      label: t('操作人'),
+      field: 'creator',
+    },
+    {
+      label: t('操作时间'),
+      field: 'created_at',
+    },
+  ],
+};
 const pagination = reactive({
   current: 1,
   count: 0,
@@ -302,6 +344,7 @@ const handleReset = () => {
   formData.object_type = '';
   formData.operation = '';
   curMember.value = '';
+  handleFetchAudit('search');
 };
 
 // 当前关联操作对象，当操作类型或操作对象有数据时，“锁死”操作类型及操作对象的option，当且仅当两者均为空，relyKey才可以为null
@@ -394,6 +437,10 @@ onMounted(() => {
   border-radius: 2px;
   border: 1px solid #DCDEE5;
   box-shadow: 0 2px 4px 0 #1919290d;
+
+  .operation-history-table {
+    transition: height 0.5s ease;
+  }
 }
 
 .v-enter-active,
