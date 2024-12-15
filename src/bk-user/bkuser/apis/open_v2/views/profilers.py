@@ -346,6 +346,10 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
             domain_query = self._convert_domain_lookup_to_query(lookup_values, is_exact)
             return None if domain_query is None else [domain_query]
 
+        if lookup_field == "departments":
+            department_query = self._convert_departments_lookup_to_query(lookup_values, is_exact)
+            return None if department_query is None else [department_query]
+
         # 通用转换处理
         return [Q(**{self._convert_lookup_field(lookup_field, is_exact=is_exact): x}) for x in lookup_values]
 
@@ -379,6 +383,29 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
             raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
         return lookup_field_map[lookup_field] if is_exact else f"{lookup_field_map[lookup_field]}__icontains"
+
+    @staticmethod
+    def _convert_departments_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
+        """对于部门字段的转换查询"""
+        # 不支持模糊查询
+        if not is_exact:
+            raise error_codes.VALIDATION_ERROR.f("unsupported fuzzy lookup field: departments")
+
+        # 租户部门 ID 列表
+        department_ids = [int(v) for v in values if v.isdigit()]
+        # 根据租户部门 ID 查询 3.x 版本中的数据源部门 ID
+        data_source_department_ids = TenantDepartment.objects.filter(id__in=department_ids).values_list(
+            "data_source_department_id", flat=True
+        )
+        # 根据数据源部门 ID 查询 3.x 版本中的数据源用户 ID
+        data_source_user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id__in=data_source_department_ids
+        ).values_list("user_id", flat=True)
+        # 不存在，则说明查询不到任何用户
+        if not data_source_user_ids:
+            return None
+
+        return Q(data_source_user_id__in=data_source_user_ids)
 
     @staticmethod
     def _convert_status_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:

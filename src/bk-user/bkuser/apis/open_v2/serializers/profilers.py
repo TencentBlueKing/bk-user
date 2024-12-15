@@ -77,6 +77,7 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
             "id",
             "username",
             "display_name",
+            "departments",
             "email",
             "telephone",
             # 微信消息通知相关
