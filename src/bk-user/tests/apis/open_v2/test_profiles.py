@@ -27,8 +27,8 @@ class TestListProfiles:
     def test_standard(self, api_client, local_data_source, collaboration_data_source):
         resp = api_client.get(reverse("open_v2.list_profiles"), data={"page": 1, "page_size": 10})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 22  # noqa: PLR2004
-        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+        assert resp.data["count"] == 22
+        assert len(resp.data["results"]) == 10
 
     def test_list_with_exist_departments(self, api_client, local_data_source, collaboration_data_source):
         department_ids = TenantDepartment.objects.values_list("id", flat=True)
