@@ -77,7 +77,6 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
             "id",
             "username",
             "display_name",
-            "departments",
             "email",
             "telephone",
             # 微信消息通知相关
@@ -90,6 +89,8 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
             "staff_status",
             # IAM 特有
             "create_time",
+            # 关联关系
+            "departments",
         ],
         required=False,
         default="username",

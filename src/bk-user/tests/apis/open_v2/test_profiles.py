@@ -46,3 +46,11 @@ class TestListProfiles:
         )
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 0
+
+    def test_list_with_invalid_fuzzy_lookups(self, api_client, local_data_source, collaboration_data_source):
+        resp = api_client.get(
+            reverse("open_v2.list_profiles"),
+            data={"lookup_field": "departments", "fuzzy_lookups": "1"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "unsupported fuzzy lookup field: departments" in resp.data["message"]

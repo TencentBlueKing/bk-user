@@ -348,7 +348,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 先将部门（3.x 版本中的租户部门）转换为 3.x 版本中的数据源部门 ID，再查询出对应的数据源用户 ID
         if lookup_field == "departments":
-            department_query = self._convert_departments_lookup_to_query(lookup_values, is_exact)
+            department_query = self._convert_department_lookup_to_query(lookup_values, is_exact)
             return None if department_query is None else [department_query]
 
         # 通用转换处理
@@ -386,7 +386,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         return lookup_field_map[lookup_field] if is_exact else f"{lookup_field_map[lookup_field]}__icontains"
 
     @staticmethod
-    def _convert_departments_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
+    def _convert_department_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
         """对于部门字段的转换查询"""
         # 不支持模糊查询
         if not is_exact:
