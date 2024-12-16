@@ -368,7 +368,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, gen
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         lookup_filter = {}
         if params["lookup_field"] == "username":
-            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
+            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4 / nanoid
             lookup_filter["id"] = kwargs["lookup_value"]
         else:
             # 用户 ID 即为数据源用户 ID

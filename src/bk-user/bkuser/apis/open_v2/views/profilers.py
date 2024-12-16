@@ -489,7 +489,7 @@ class ProfileRetrieveApi(
 
         lookup_filter = {}
         if params["lookup_field"] == "username":
-            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
+            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4 / nanoid
             lookup_filter["id"] = kwargs["lookup_value"]
         else:
             lookup_filter["data_source_user__id"] = kwargs["lookup_value"]
