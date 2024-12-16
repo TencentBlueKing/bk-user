@@ -31,8 +31,7 @@ def is_username_frozen(data_source: DataSource) -> bool:
     """数据源用户名是否不可变更"""
     return (
         TenantUserIDGenerateConfig.objects.filter(data_source=data_source)
-        .exclude(rule=TenantUserIdRuleEnum.UUID4_HEX)
-        .exclude(rule=TenantUserIdRuleEnum.NANOID)
+        .exclude(rule__in=[TenantUserIdRuleEnum.UUID4_HEX, TenantUserIdRuleEnum.NANOID])
         .exists()
     )
 
