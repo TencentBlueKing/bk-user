@@ -90,18 +90,15 @@ class TenantUserIDGenerator:
             if record and record.tenant_user_id:
                 return record.tenant_user_id
 
-        if rule == TenantUserIdRuleEnum.NANOID:
-            tenant_user_id = generate_nanoid()
-        else:
-            tenant_user_id = generate_uuid()
+        generated_id = generate_nanoid() if rule == TenantUserIdRuleEnum.NANOID else generate_uuid()
 
         TenantUserIDRecord.objects.create(
             tenant_id=self.target_tenant_id,
             data_source_id=self.data_source.id,
             code=user.code,
-            tenant_user_id=tenant_user_id,
+            tenant_user_id=generated_id,
         )
-        return tenant_user_id
+        return generated_id
 
 
 class TenantDeptIDGenerator:
