@@ -20,6 +20,7 @@ from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantDepartmentIDRecord, TenantUserIDGenerateConfig, TenantUserIDRecord
 from bkuser.apps.tenant.utils import TenantDeptIDGenerator, TenantUserIDGenerator
+from bkuser.utils.nanoid import generate_nanoid
 from bkuser.utils.uuid import generate_uuid
 
 pytestmark = pytest.mark.django_db
@@ -33,6 +34,13 @@ def zhangsan(full_local_data_source) -> DataSourceUser:
 @pytest.fixture
 def lisi(full_local_data_source) -> DataSourceUser:
     return DataSourceUser.objects.filter(data_source=full_local_data_source, username="lisi").first()
+
+
+@pytest.fixture
+def uuid_config(random_tenant, full_local_data_source):
+    return TenantUserIDGenerateConfig.objects.create(
+        data_source=full_local_data_source, target_tenant=random_tenant, rule=TenantUserIdRuleEnum.UUID4_HEX
+    )
 
 
 class TestTenantUserIdGenerator:
@@ -55,7 +63,7 @@ class TestTenantUserIdGenerator:
         user_id = TenantUserIDGenerator(random_tenant.id, full_local_data_source).gen(zhangsan)
         assert user_id == "zhangsan@bk.example.com"
 
-    def test_gen_single_uuid_with_record(self, random_tenant, full_local_data_source, zhangsan):
+    def test_gen_single_uuid_with_record(self, random_tenant, full_local_data_source, zhangsan, uuid_config):
         uuid = generate_uuid()
         TenantUserIDRecord.objects.create(
             tenant_id=random_tenant.id, data_source=full_local_data_source, code=zhangsan.code, tenant_user_id=uuid
@@ -65,12 +73,27 @@ class TestTenantUserIdGenerator:
         assert generator.gen(zhangsan) == uuid
         assert generator.tenant_user_id_map == {}
 
-    def test_gen_single_uuid_without_record(self, random_tenant, full_local_data_source, zhangsan):
+    def test_gen_single_nanoid_with_record(self, random_tenant, full_local_data_source, zhangsan):
+        nanoid = generate_nanoid()
+        TenantUserIDRecord.objects.create(
+            tenant_id=random_tenant.id, data_source=full_local_data_source, code=zhangsan.code, tenant_user_id=nanoid
+        )
+
+        generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source)
+        assert generator.gen(zhangsan) == nanoid
+        assert generator.tenant_user_id_map == {}
+
+    def test_gen_single_uuid_without_record(self, random_tenant, full_local_data_source, zhangsan, uuid_config):
         generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source)
         assert len(generator.gen(zhangsan)) == 32
         assert generator.tenant_user_id_map == {}
 
-    def test_gen_multi_uuid_with_records(self, random_tenant, full_local_data_source, zhangsan, lisi):
+    def test_gen_single_nanoid_without_record(self, random_tenant, full_local_data_source, zhangsan):
+        generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source)
+        assert len(generator.gen(zhangsan)) == 21
+        assert generator.tenant_user_id_map == {}
+
+    def test_gen_multi_uuid_with_records(self, random_tenant, full_local_data_source, zhangsan, lisi, uuid_config):
         uuid = generate_uuid()
         TenantUserIDRecord.objects.create(
             tenant_id=random_tenant.id, data_source=full_local_data_source, code=zhangsan.code, tenant_user_id=uuid
@@ -82,10 +105,29 @@ class TestTenantUserIdGenerator:
         assert len(generator.tenant_user_id_map) == 1
         assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
 
-    def test_gen_multi_uuid_without_records(self, random_tenant, full_local_data_source, zhangsan, lisi):
+    def test_gen_multi_nanoid_with_records(self, random_tenant, full_local_data_source, zhangsan, lisi):
+        nanoid = generate_nanoid()
+        TenantUserIDRecord.objects.create(
+            tenant_id=random_tenant.id, data_source=full_local_data_source, code=zhangsan.code, tenant_user_id=nanoid
+        )
+
+        generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source, prepare_batch=True)
+        assert generator.gen(zhangsan) == nanoid
+        assert len(generator.gen(lisi)) == 21
+        assert len(generator.tenant_user_id_map) == 1
+        assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
+
+    def test_gen_multi_uuid_without_records(self, random_tenant, full_local_data_source, zhangsan, lisi, uuid_config):
         generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source, prepare_batch=True)
         assert len(generator.gen(zhangsan)) == 32
         assert len(generator.gen(lisi)) == 32
+        assert len(generator.tenant_user_id_map) == 0
+        assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
+
+    def test_gen_multi_nanoid_without_records(self, random_tenant, full_local_data_source, zhangsan, lisi):
+        generator = TenantUserIDGenerator(random_tenant.id, full_local_data_source, prepare_batch=True)
+        assert len(generator.gen(zhangsan)) == 21
+        assert len(generator.gen(lisi)) == 21
         assert len(generator.tenant_user_id_map) == 0
         assert TenantUserIDRecord.objects.filter(data_source=full_local_data_source).count() == 2
 

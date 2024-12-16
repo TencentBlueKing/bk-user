@@ -53,6 +53,7 @@ opentelemetry-instrumentation-celery = "0.46b0"
 opentelemetry-instrumentation-logging = "0.46b0"
 django-modeltranslation = "0.18.11"
 ldap3 = "2.9.1"
+nanoid = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"

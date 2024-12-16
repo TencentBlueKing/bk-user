@@ -81,7 +81,7 @@ class TenantUser(AuditedModel):
     # 冗余字段
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
-    # Note: 值：对于新用户则为uuid，对于迁移则兼容旧版本 username@domain或username
+    # Note: 值：对于新用户则为 nanoid 或 uuid，对于迁移则兼容旧版本 username@domain或username
     # 兼容旧版本：对外 id/username/bk_username 这3个字段，值是一样的
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
     status = models.CharField(
@@ -253,7 +253,7 @@ class TenantUserIDGenerateConfig(TimestampedModel):
         "租户用户 ID 生成规则",
         max_length=64,
         choices=TenantUserIdRuleEnum.get_choices(),
-        default=TenantUserIdRuleEnum.UUID4_HEX.value,
+        default=TenantUserIdRuleEnum.NANOID.value,
     )
     domain = models.CharField("目标租户域名", max_length=128, unique=True, blank=True, null=True)
 
