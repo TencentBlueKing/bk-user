@@ -62,6 +62,7 @@
               <bk-button
                 class="w-[88px] h-[32px] ml-[8px]"
                 @click="handleReset"
+                :loading="isLoading"
               >
                 {{ $t('重置') }}
               </bk-button>
