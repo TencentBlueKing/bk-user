@@ -19,8 +19,9 @@ import string
 from nanoid import generate
 
 
-# 生成默认长度为 16 的 nanoid，字符集为小写字母 + 数字
 def generate_nanoid(size: int = 16) -> str:
+    """生成默认长度为 16 的 nanoid，字符集为小写字母 + 数字"""
+
     # Q：为什么 nanoid 的长度选择 16，而不是默认的 21？
     # A：16 字符长度的 nanoid 冲突概率能够满足大部分场景，且长度更短更易于存储，以及提升 DB 查询性能
     # Q：为什么 nanoid 字符集选择小写字母 + 数字？

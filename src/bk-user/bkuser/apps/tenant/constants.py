@@ -172,6 +172,3 @@ class TenantUserIdRuleEnum(StrStructuredEnum):
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
     USERNAME = EnumField("username", label=_("用户名"))
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
-
-
-MUTABLE_USER_ID_RULES = [TenantUserIdRuleEnum.NANOID, TenantUserIdRuleEnum.UUID4_HEX]

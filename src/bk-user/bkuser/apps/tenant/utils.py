@@ -19,7 +19,7 @@ import logging
 from typing import Dict, Tuple
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import MUTABLE_USER_ID_RULES, TenantUserIdRuleEnum
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantDepartmentIDRecord, TenantUserIDGenerateConfig, TenantUserIDRecord
 from bkuser.utils.nanoid import generate_nanoid
 from bkuser.utils.uuid import generate_uuid
@@ -31,7 +31,7 @@ def is_username_frozen(data_source: DataSource) -> bool:
     """数据源用户名是否不可变更"""
     return (
         TenantUserIDGenerateConfig.objects.filter(data_source=data_source)
-        .exclude(rule__in=MUTABLE_USER_ID_RULES)
+        .exclude(rule__in=[TenantUserIdRuleEnum.UUID4_HEX, TenantUserIdRuleEnum.NANOID])
         .exists()
     )
 
