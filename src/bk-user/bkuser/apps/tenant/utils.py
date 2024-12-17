@@ -19,7 +19,7 @@ import logging
 from typing import Dict, Tuple
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
+from bkuser.apps.tenant.constants import MUTABLE_USER_ID_RULES, TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantDepartmentIDRecord, TenantUserIDGenerateConfig, TenantUserIDRecord
 from bkuser.utils.nanoid import generate_nanoid
 from bkuser.utils.uuid import generate_uuid
@@ -31,7 +31,7 @@ def is_username_frozen(data_source: DataSource) -> bool:
     """数据源用户名是否不可变更"""
     return (
         TenantUserIDGenerateConfig.objects.filter(data_source=data_source)
-        .exclude(rule__in=[TenantUserIdRuleEnum.NANOID, TenantUserIdRuleEnum.UUID4_HEX])
+        .exclude(rule__in=MUTABLE_USER_ID_RULES)
         .exists()
     )
 
@@ -76,6 +76,10 @@ class TenantUserIDGenerator:
     def _reuse_or_generate_id(
         self, user: DataSourceUser, rule: TenantUserIdRuleEnum = TenantUserIdRuleEnum.NANOID
     ) -> str:
+        """复用或生成租户用户 ID"""
+        if rule not in [TenantUserIdRuleEnum.NANOID, TenantUserIdRuleEnum.UUID4_HEX]:
+            logger.info("Unsupported rule %s, fallback to nanoid", rule)
+
         if self.prepare_batch:
             # 有准备的，直接从映射表里面查询
             if user_id := self.tenant_user_id_map.get((self.target_tenant_id, self.data_source.id, user.code)):

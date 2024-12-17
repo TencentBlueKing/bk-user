@@ -14,10 +14,15 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import string
 
 from nanoid import generate
 
 
+# 生成默认长度为 16 的 nanoid，字符集为小写字母 + 数字
 def generate_nanoid(size: int = 16) -> str:
-    # 字符集由 0-9 的阿拉伯数字与小写字母组成，默认长度为 16
-    return generate(alphabet="0123456789abcdefghijklmnopqrstuvwxyz", size=size)
+    # Q：为什么 nanoid 字符集选择小写字母 + 数字？
+    # A：避免 DB 大小写字母敏感引起冲突
+    # Q：为什么 nanoid 的长度选择 16，而不是默认的 21？
+    # A：16 字符长度的 nanoid 冲突概率能够满足大部分场景，且长度更短更易于存储，以及提升 DB 查询性能
+    return generate(alphabet=string.digits + string.ascii_lowercase, size=size)
