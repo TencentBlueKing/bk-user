@@ -79,6 +79,7 @@ class TenantUserIDGenerator:
         """复用或生成租户用户 ID"""
         if rule not in [TenantUserIdRuleEnum.NANOID, TenantUserIdRuleEnum.UUID4_HEX]:
             logger.info("Unsupported rule %s, fallback to nanoid", rule)
+            rule = TenantUserIdRuleEnum.NANOID
 
         if self.prepare_batch:
             # 有准备的，直接从映射表里面查询
