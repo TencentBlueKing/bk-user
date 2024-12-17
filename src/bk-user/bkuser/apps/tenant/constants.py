@@ -168,6 +168,7 @@ class FieldMappingOperation(StrStructuredEnum):
 class TenantUserIdRuleEnum(StrStructuredEnum):
     """租户用户 ID 生成规则"""
 
+    NANOID = EnumField("nanoid", label=_("nanoid"))
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
     USERNAME = EnumField("username", label=_("用户名"))
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
