@@ -110,8 +110,12 @@
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
           :show-overflow-tooltip="true"
-          :max-height="tableMaxHeight"
-          :height="tableCurHeight"
+          :max-height="curTableMaxHeight"
+          :height="curTableHeight"
+          :pagination-height="paginationHeight"
+          :thead="{ height: headHeight }"
+          :row-height="lineHeight"
+          @setting-change="handleSettingChange"
           @column-sort="handleSortBy"
         >
           <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
@@ -184,6 +188,21 @@ const isFold = reactive({
 const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
+
+// 固定表头行高分页器高度，便于切换行高时计算高度
+const paginationHeight = 60;
+const headHeight = 42;
+const lineHeight = ref(42);
+// 使用max-height来限制表格高度
+const curTableMaxHeight = computed(() => {
+  // header(52) + button-height(24) + margin-bottom(24) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
+  const tableMaxHeight = window.innerHeight - 100;
+  // 计算当前分页下table高度
+  const targetTableHeight = headHeight + lineHeight.value * pagination.limit + paginationHeight;
+  // 若超出页面允许的最大高度，返回最大高度，否则返回数据铺满高度，防止出现空白区域未铺满数据的情况
+  if (targetTableHeight < tableMaxHeight) return targetTableHeight;
+  return tableMaxHeight;
+});
 // header(52) + form-height(248) + button-height(24) + margin-bottom(24)
 const curRedundantHeight = computed(() => {
   const redundantHeight = {
@@ -195,10 +214,13 @@ const curRedundantHeight = computed(() => {
   }
   return redundantHeight.unfold;
 });
+// table height继续采用响应式hook，用于处理window resize以及折叠功能高度的计算(curRedundantHeight is ref data)
+const curTableHeight = useTableMaxHeight(curRedundantHeight);
 
-// header(52) + button-height(24) + margin-bottom(24) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
-const tableMaxHeight = window.innerHeight - 100;
-const tableCurHeight = useTableMaxHeight(curRedundantHeight);
+// 更改表格设置时，更新当前行高
+const handleSettingChange = (data: { height: number; }) => {
+  lineHeight.value = data.height;
+};
 
 interface SearchParams {
   creator: string,
@@ -248,11 +270,13 @@ const settings = {
       field: 'created_at',
     },
   ],
+  checked: ['operation', 'object_type', 'object_name', 'creator', 'created_at'],
 };
 const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
+  limitList: [10, 20, 50],
 });
 
 // 获取人员选择器数据
@@ -283,7 +307,6 @@ const fetchRealUsers = (value: string) => {
     realUsers.value = res.data;
   });
 };
-
 
 // 获取audit数据
 const handleFetchAudit = async (type = '') => {
