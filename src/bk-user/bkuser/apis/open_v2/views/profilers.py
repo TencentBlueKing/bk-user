@@ -22,7 +22,7 @@ from functools import reduce
 from typing import Any, Dict, List, Tuple
 
 import phonenumbers
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.db.models import Q, QuerySet
 from django.http import Http404
 from rest_framework import generics
@@ -49,7 +49,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
 
 
-class ProfileStatusEnum(str, StructuredEnum):
+class ProfileStatusEnum(StrStructuredEnum):
     """2.x 版本 用户状态"""
 
     NORMAL = EnumField("NORMAL", label="正常")
