@@ -13,8 +13,8 @@ import logging
 import time
 import urllib.parse
 
+from blueapps.contrib.celery_tools.periodic import periodic_task
 from celery.schedules import crontab
-from celery.task import periodic_task
 from django.conf import settings
 from django.utils.timezone import now
 
@@ -41,7 +41,9 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-def send_password_by_email(profile_id: int, raw_password: str = None, init: bool = True, token: str = None):
+def send_password_by_email(
+    profile_id: int, raw_password: str | None = None, init: bool = True, token: str | None = None
+):
     """发送密码到邮箱，支持初始化 & 重置"""
     logger.info(
         "--------- going to send password of Profile(%s) via email ----------",

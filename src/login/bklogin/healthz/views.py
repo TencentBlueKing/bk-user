@@ -16,7 +16,7 @@ from builtins import str
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from bklogin.common.exceptions import LoginErrorCodes
 
@@ -57,7 +57,11 @@ def _check_settings():
             },
         }
     except Exception as e:
-        return False, _(u"配置文件不正确, 缺失对应配置: %s") % str(e), LoginErrorCodes.E1302001_BASE_SETTINGS_ERROR.value
+        return (
+            False,
+            _(u"配置文件不正确, 缺失对应配置: %s") % str(e),
+            LoginErrorCodes.E1302001_BASE_SETTINGS_ERROR.value,
+        )
 
     return True, "ok", 0
 

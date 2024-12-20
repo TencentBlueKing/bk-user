@@ -61,7 +61,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
                 return None
 
         handler = ResponseHandler(ConfFixture, settings)
-        if request.is_ajax():
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return handler.build_401_response(request)
 
         return handler.build_302_response(request)
