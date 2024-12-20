@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import json
 
 import pytest
+from django.http import HttpResponse
 
 from bkuser_core.common.middlewares import MethodOverrideMiddleware
 from bkuser_core.tests.apis.utils import get_api_factory
@@ -33,7 +34,11 @@ class TestMethodOverrideMW:
         request = factory.post("/", data=post_data)
         request._body = json.dumps(post_data)
 
-        method_override_middleware = MethodOverrideMiddleware()
+        # Django 4.0 中 MiddlewareMixin 必须传入 get_response 参数
+        def dummy_get_response(request):
+            return HttpResponse("Dummy response")
+
+        method_override_middleware = MethodOverrideMiddleware(get_response=dummy_get_response(request))
         method_override_middleware.process_request(request)
 
         assert request.method == request.META["HTTP_X_HTTP_METHOD_OVERRIDE"]

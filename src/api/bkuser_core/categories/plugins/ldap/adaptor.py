@@ -152,7 +152,7 @@ class RDN(NamedTuple):
     separator: str
 
 
-def parse_dn_tree(dn: str, restrict_types: List[str] = None) -> List[RDN]:
+def parse_dn_tree(dn: str, restrict_types: List[str] | None = None) -> List[RDN]:
     """A DN is a sequence of relative distinguished names (RDN) connected by commas, For examples:
 
     we have a dn = "CN=Jeff Smith,OU=Sales,DC=Fabrikam,DC=COM", this method will parse the dn to:
@@ -183,7 +183,7 @@ def parse_dn_tree(dn: str, restrict_types: List[str] = None) -> List[RDN]:
     return parts
 
 
-def parse_dn_value_list(dn: str, restrict_types: List[str] = None) -> List[str]:
+def parse_dn_value_list(dn: str, restrict_types: List[str] | None = None) -> List[str]:
     """this method work like parse_dn_tree, be only return values of those attributes, For examples:
 
     >>> parse_dn_value_list("CN=Jeff Smith,OU=Sales,DC=Fabrikam,DC=COM")

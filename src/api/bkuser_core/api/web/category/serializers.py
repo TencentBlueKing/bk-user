@@ -92,7 +92,6 @@ class CategoryCreateInputSLZ(serializers.Serializer):
     def validate(self, data):
         if ProfileCategory.objects.filter(domain=data["domain"]).exists():
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
-
         return data
 
     def create(self, validated_data):

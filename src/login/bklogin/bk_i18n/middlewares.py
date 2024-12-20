@@ -28,7 +28,7 @@ class TimezoneMiddleware(MiddlewareMixin):
 
 class LanguageMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        language = request.session.get(translation.LANGUAGE_SESSION_KEY)
+        language = request.session.get(settings.LANGUAGE_SESSION_KEY)
         if language:
             translation.activate(language)
             request.LANGUAGE_CODE = translation.get_language()

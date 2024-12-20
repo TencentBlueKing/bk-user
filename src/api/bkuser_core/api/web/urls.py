@@ -8,21 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import include, url
+from django.urls import include, re_path
 
 # prefix: /api/v1/web
 urlpatterns = [
-    url(r"^categories/", include("bkuser_core.api.web.category.urls")),
-    url(r"^settings/", include("bkuser_core.api.web.setting.urls")),
-    url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
-    url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
-    url(r"^fields/", include("bkuser_core.api.web.field.urls")),
-    url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
-    url(r"^site/", include("bkuser_core.api.web.site.urls")),
-    url(r"^departments/", include("bkuser_core.api.web.department.urls")),
-    url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
+    re_path(r"^categories/", include("bkuser_core.api.web.category.urls")),
+    re_path(r"^settings/", include("bkuser_core.api.web.setting.urls")),
+    re_path(r"^global_settings/", include("bkuser_core.api.web.global_settings.urls")),
+    re_path(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
+    re_path(r"^audits/", include("bkuser_core.api.web.audit.urls")),
+    re_path(r"^fields/", include("bkuser_core.api.web.field.urls")),
+    re_path(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
+    re_path(r"^site/", include("bkuser_core.api.web.site.urls")),
+    re_path(r"^departments/", include("bkuser_core.api.web.department.urls")),
+    re_path(r"^passwords/", include("bkuser_core.api.web.password.urls")),
+    re_path(r"^recycle_bin/", include("bkuser_core.api.web.recycle_bin.urls")),
     # 通用检索
-    url(r"^search/", include("bkuser_core.api.web.search.urls")),
+    re_path(r"^search/", include("bkuser_core.api.web.search.urls")),
     # 首页
-    url(r"^home/", include("bkuser_core.api.web.home.urls")),
+    re_path(r"^home/", include("bkuser_core.api.web.home.urls")),
 ]

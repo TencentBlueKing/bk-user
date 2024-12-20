@@ -33,18 +33,18 @@ class ResetPasswordVerificationCodeHandler:
         self.config_loader = None
         self.cache = caches["verification_code"]
 
-    def _set_into_cache(self, key: str, data: Any, timeout: int, prefix: str = None):
+    def _set_into_cache(self, key: str, data: Any, timeout: int, prefix: str | None = None):
         if prefix:
             key = f"{prefix}_{key}"
         self.cache.set(key=key, timeout=timeout, value=data)
 
-    def _get_from_cache(self, key: str, prefix: str = None):
+    def _get_from_cache(self, key: str, prefix: str | None = None):
         if prefix:
             key = f"{prefix}_{key}"
         data = self.cache.get(key=key)
         return data
 
-    def _delete_from_cache(self, key: str, prefix: str = None):
+    def _delete_from_cache(self, key: str, prefix: str | None = None):
         if prefix:
             key = f"{prefix}_{key}"
         self.cache.delete(key=key)

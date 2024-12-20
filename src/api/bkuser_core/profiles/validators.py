@@ -27,15 +27,21 @@ DOMAIN_PART_REGEX = r"(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
 
 def validate_username(value):
     if not re.fullmatch(re.compile(USERNAME_REGEX), value):
-        raise ValidationError(_("{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头").format(value))
+        raise ValidationError(
+            _(
+                "{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头"
+            ).format(value)
+        )
 
 
 def validate_domain(value):
     if not re.fullmatch(re.compile(DOMAIN_REGEX), value):
-        raise ValidationError(_("{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母或数字开头").format(value))
+        raise ValidationError(
+            _("{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母或数字开头").format(value)
+        )
 
 
-def validate_extras_value_unique(value: dict, category_id: int, profile_id: int = None):
+def validate_extras_value_unique(value: dict, category_id: int, profile_id: int | None = None):
     """
     检测 extras 中 value 是否是目录级别唯一
     非标准 validator，需要额外传入 category_id，且需要在 DB 实例创建前调用（若已创建，则必定抛出 ValidationError
@@ -76,7 +82,9 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
 
             if s.extras[f.name] == target_value:
                 raise ValidationError(
-                    _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(f.display_name, category_id, target_value)
+                    _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(
+                        f.display_name, category_id, target_value
+                    )
                 )
 
 

@@ -183,7 +183,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
     def filter_queryset(self, request, queryset, view):
         # 首先筛选字段
         serializer = self.serializer_class(data=request.query_params)
-        serializer.is_valid(True)
+        serializer.is_valid(raise_exception=True)
         query_data = serializer.validated_data
 
         if queryset.model.__name__ in self.SOFT_DELETE_MODELNAMES and not force_str_2_bool(
@@ -308,7 +308,7 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
         """获取对象列表"""
         self.check_permissions(request)
         _query_slz = AdvancedListSerializer(data=request.query_params)
-        _query_slz.is_valid(True)
+        _query_slz.is_valid(raise_exception=True)
         query_data = _query_slz.validated_data
 
         fields = query_data.get("fields", None)
