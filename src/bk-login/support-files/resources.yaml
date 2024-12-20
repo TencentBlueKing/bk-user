@@ -1,0 +1,57 @@
+swagger: '2.0'
+basePath: /
+info:
+  version: '2.0'
+  title: API Gateway Resources
+  description: ''
+schemes:
+- http
+paths:
+  /login/api/v3/open/bk-tokens/verify/:
+    get:
+      operationId: verify_bk_token
+      description: 校验 bk_token
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /login/api/v3/open/bk-tokens/verify/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: false
+        descriptionEn: Verify bk_token
+  /login/api/v3/open/bk-tokens/userinfo/:
+    get:
+      operationId: get_bk_token_userinfo
+      description: 查询 bk_token 对应的用户信息
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /login/api/v3/open/bk-tokens/userinfo/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: false
+        descriptionEn: Query user's information corresponding to bk_token
