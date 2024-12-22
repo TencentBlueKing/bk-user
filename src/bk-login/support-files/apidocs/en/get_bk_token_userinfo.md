@@ -2,16 +2,26 @@
 
 Query user's information corresponding to bk_token
 
-### Input Parameters
+### Parameters
 
-| Parameter Name | Parameter Type | Required | Description                                                                                     |
-|----------------|----------------|----------|-------------------------------------------------------------------------------------------------|
-| bk_token       | string         | Yes      | bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D |
+| Name | Type | Required | Description                                                       |
+|------|------|----------|-------------------------------------------------------------------|
+| bk_token | string | Yes      | User login state ticket, which needs to be retrieved from Cookies |
 
+### Request Example
 
-### Example Response for Status Code 200
+``` python
+from bkapi.bk_apigateway.shortcuts import get_client_by_request
+client = get_client_by_request(request)
 
-```json
+result = client.api.get_bk_token_userinfo(
+    {"bk_token": "bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"}
+)
+```
+
+### Response Example for Status Code 200
+
+```json5
 {
     "data": {
         "bk_username": "nteuuhzxlh0jcanw",
@@ -24,19 +34,19 @@ Query user's information corresponding to bk_token
 
 ```
 
-### Response Parameter Description
+### Response Parameters Description
 
-| Parameter Name  | Parameter Type | Description                                         |
-|------------------|----------------|-----------------------------------------------------|
-| bk_username       | string         | User unique identifier, globally unique             |
-| tenant_id         | string         | User's tenant ID                                   |
-| display_name      | string         | User display name                                   |
-| language          | string         | User language, enumerated values: zh-cn / en      |
-| time_zone         | string         | User's time zone                                   |
+| Name  | Type | Description                                         |
+|--------|------|-----------------------------------------------------|
+| bk_username | string | User unique identifier, globally unique             |
+| tenant_id | string | User's tenant ID                                   |
+| display_name | string | User display name                                   |
+| language | string | User language, enumerated values: zh-cn / en      |
+| time_zone | string | User's time zone                                   |
 
-### Example Response for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
-```json
+```json5
 // status_code = 400
 {
     "error": {

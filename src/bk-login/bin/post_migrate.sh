@@ -7,7 +7,11 @@ set -e
 chmod +x ./support-files/bin/sync-apigateway.sh
 
 # 自动化同步网关
-sh ./support-files/bin/sync-apigateway.sh
+if [ "$ENABLE_SYNC_APIGW" = "True" ]; then
+  sh ./support-files/bin/sync-apigateway.sh
+fi
 
 # 注册到蓝鲸通知中心
-python manage.py register_application
+if [ "$ENABLE_BK_NOTICE" = "True" ]; then
+  python manage.py register_application
+fi
