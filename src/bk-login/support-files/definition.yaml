@@ -8,7 +8,7 @@ release:
 
 apigateway:
   description: "登录 OpenAPI 网关"
-  description_en: "User Management Login OpenAPI Gateway"
+  description_en: "Login OpenAPI Gateway"
   allow_delete_sensitive_params: false
   is_public: true
   maintainers:
