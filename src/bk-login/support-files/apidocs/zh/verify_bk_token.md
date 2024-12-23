@@ -11,7 +11,7 @@
 ### 调用示例
 示例：使用 curl 命令，请求时携带认证请求头：
 ```shell
-curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.bk-tenant-dev.woa.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/?bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"
+curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.example.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/?bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"
 ```
 示例：使用 Python 语言和 **requests** 模块：
 ``` python
@@ -19,7 +19,7 @@ import json
 import requests
 
 result = requests.get(
-    "https://bkapi.bk-tenant-dev.woa.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/",
+    "https://bkapi.example.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/",
     headers={
         "X-Bkapi-Authorization": json.dumps(
             {"bk_app_code": "x", "bk_app_secret": "y"})
