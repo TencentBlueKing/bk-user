@@ -213,9 +213,6 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-login")
 
-# 是否开启自动同步网关功能
-ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
-
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 

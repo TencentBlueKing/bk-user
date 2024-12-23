@@ -7,7 +7,7 @@ release:
   comment: "bk-login"
 
 apigateway:
-  description: "用户管理登陆 OpenAPI 网关"
+  description: "登录 OpenAPI 网关"
   description_en: "User Management Login OpenAPI Gateway"
   allow_delete_sensitive_params: false
   is_public: true
@@ -39,6 +39,6 @@ resource_docs:
   basedir: "support-files/apidocs/"
 
 # 主动授权，网关主动给应用，添加访问网关所有资源的权限
-grant_permissions:
-  - bk_app_code: "{{ settings.BK_APP_CODE }}"
-    grant_dimension: "gateway"
+#grant_permissions:
+#  - bk_app_code: "{{ settings.BK_APP_CODE }}"
+#    grant_dimension: "gateway"

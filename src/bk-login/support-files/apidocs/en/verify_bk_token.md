@@ -9,13 +9,23 @@ Verify bk_token
 | bk_token | string | Yes      | User login state ticket, which needs to be retrieved from Cookies |
 
 ### Request Example
-
+Example: Use curl to carry the authorization header:
+```shell
+curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.bk-tenant-dev.woa.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/?bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"
+```
+Example: Use Python and the **requests** module:
 ``` python
-from bkapi.bk_apigateway.shortcuts import get_client_by_request
-client = get_client_by_request(request)
+import json
+import requests
 
-result = client.api.verify_bk_token(
-    {"bk_token": "bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"}
+result = requests.get(
+    "https://bkapi.bk-tenant-dev.woa.com/api/bk-login/prod/login/api/v3/open/bk-tokens/verify/",
+    headers={
+        "X-Bkapi-Authorization": json.dumps(
+            {"bk_app_code": "x", "bk_app_secret": "y"})
+    },
+    params={
+        "bk_token": "bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"},
 )
 ```
 
