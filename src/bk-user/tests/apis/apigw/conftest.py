@@ -17,7 +17,7 @@
 from unittest import mock
 
 import pytest
-from bkuser.apis.apigw.authentications import InterBearerToken
+from bkuser.apis.apigw.authentications import InnerBearerToken
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
@@ -31,7 +31,7 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 
 def mock_token_authenticate(self, request):
-    request.inter_bearer_token = InterBearerToken(verified=True)
+    request.inner_bearer_token = InnerBearerToken(verified=True)
     return AnonymousUser(), None
 
 
