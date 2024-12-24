@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "django_prometheus",
     "drf_yasg",
     "bkuser.auth",
+    "apigw_manager.apigw",
     "bkuser.apps.audit",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",
@@ -232,6 +233,7 @@ BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
+BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 
