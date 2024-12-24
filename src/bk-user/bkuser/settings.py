@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "django_prometheus",
     "drf_yasg",
     "bkuser.auth",
+    "apigw_manager.apigw",
     "bkuser.apps.audit",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",

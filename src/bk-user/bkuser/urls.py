@@ -32,7 +32,7 @@ urlpatterns = [
     # 提供给网关使用的内部 API
     path("api/v3/apigw/", include("bkuser.apis.apigw.urls")),
     # 对外开放的 API
-    # path("api/v3/open/", include("bkuser.apis.open_v3.urls")),
+    path("api/v3/open/", include("bkuser.apis.open_v3.urls")),
     # 兼容旧版本用户管理 OpenAPI
     # Q: 这里使用 api/v1、api/v2 而非 api/v1/open、api/v2/open
     # A: 为了保证 ESB 调用的兼容，只需修改 ESB 配置 bk_user host，不需要依赖 ESB 的版本发布
