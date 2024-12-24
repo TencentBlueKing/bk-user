@@ -148,14 +148,14 @@ SITE_URL = "/"
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
-# STATIC_URL 也可以是CDN地址
+# STATIC_URL 也可以是 CDN 地址
 STATIC_URL = env.str("STATIC_URL", SITE_URL + "staticfiles/")
 # Media files (excel, pdf, ...)
 MEDIA_ROOT = BASE_DIR / "media"
 
 # cookie
 SESSION_COOKIE_NAME = "bkuser_sessionid"
-SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
+SESSION_COOKIE_AGE = 60 * 60 * 24  # 1 天
 
 # rest_framework
 REST_FRAMEWORK = {
@@ -198,7 +198,7 @@ _BK_USER_NETLOC = _BK_USER_URL_PARSE_URL.netloc  # 若有端口，则会带上�
 _BK_USER_IS_SPECIAL_PORT = _BK_USER_URL_PARSE_URL.port in [None, 80, 443]
 _BK_USER_SCHEME = _BK_USER_URL_PARSE_URL.scheme
 _BK_USER_URL_MD5_16BIT = hashlib.md5(BK_USER_URL.encode("utf-8")).hexdigest()[8:-8]
-# 注意：Cookie Domain是不支持端口的
+# 注意：Cookie Domain 是不支持端口的
 SESSION_COOKIE_DOMAIN = _BK_USER_HOSTNAME
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = f"bkuser_csrftoken_{_BK_USER_URL_MD5_16BIT}"
@@ -223,15 +223,17 @@ BK_LOGIN_URL = env.str("BK_LOGIN_URL", default="/")
 BK_LOGIN_PLAIN_URL = env.str("BK_LOGIN_PLAIN_URL", default=BK_LOGIN_URL.rstrip("/") + "/plain/")
 BK_LOGIN_PLAIN_WINDOW_WIDTH = env.int("BK_LOGIN_PLAIN_WINDOW_WIDTH", default=510)
 BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=510)
-# 登录回调地址参数Key
+# 登录回调地址参数 Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
-# 登录API URL
+# 登录 API URL
 BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
+# 与网关内部调用的认证 Token
+BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
@@ -249,11 +251,11 @@ BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
 # 连接 BROKER 超时时间
 CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY 与 RabbitMQ 增加60秒心跳设置项
+# CELERY 与 RabbitMQ 增加 60 秒心跳设置项
 CELERY_BROKER_HEARTBEAT = 60
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
 CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
-# 与周期任务配置的定时相关UTC
+# 与周期任务配置的定时相关 UTC
 CELERY_ENABLE_UTC = False
 # 任务结果存储
 CELERY_RESULT_BACKEND = "django-db"
@@ -355,7 +357,7 @@ CACHES: Dict[str, Any] = {
             # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
             # Redis 连接池配置
             "CONNECTION_POOL_KWARGS": {
-                # redis-py 默认不会关闭连接, 可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
+                # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
                 "max_connections": REDIS_MAX_CONNECTIONS
             },
         },
@@ -606,14 +608,14 @@ ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 是否启用新建租户页面功能
 ENABLE_CREATE_TENANT = env.bool("ENABLE_CREATE_TENANT", default=False)
 
-# logo文件大小限制，单位为: KB
+# logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
 
-# 数据源插件默认Logo，值为base64格式图片数据
+# 数据源插件默认 Logo，值为 base64 格式图片数据
 DEFAULT_DATA_SOURCE_PLUGIN_LOGO = ""
-# 租户默认Logo，值为base64格式图片数据
+# 租户默认 Logo，值为 base64 格式图片数据
 DEFAULT_TENANT_LOGO = ""
-# 数据源用户默认Logo，值为base64格式图片数据
+# 数据源用户默认 Logo，值为 base64 格式图片数据
 DEFAULT_DATA_SOURCE_USER_LOGO = ""
 # 默认手机国际区号
 DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")

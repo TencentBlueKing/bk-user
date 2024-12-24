@@ -25,16 +25,20 @@ from rest_framework import permissions
 from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
-    # 产品功能API
+    # 产品功能 API
     path("api/v3/web/", include("bkuser.apis.web.urls")),
     # 提供给登录服务使用的内部 API
     path("api/v3/login/", include("bkuser.apis.login.urls")),
+    # 提供给网关使用的内部 API
+    path("api/v3/apigw/", include("bkuser.apis.apigw.urls")),
+    # 对外开放的 API
+    # path("api/v3/open/", include("bkuser.apis.open_v3.urls")),
     # 兼容旧版本用户管理 OpenAPI
     # Q: 这里使用 api/v1、api/v2 而非 api/v1/open、api/v2/open
     # A: 为了保证 ESB 调用的兼容，只需修改 ESB 配置 bk_user host，不需要依赖 ESB 的版本发布
     path("api/v1/", include("bkuser.apis.open_v1.urls")),
     path("api/v2/", include("bkuser.apis.open_v2.urls")),
-    # 用于监控相关的，比如ping/healthz/sentry/metrics/otel等等
+    # 用于监控相关的，比如 ping/healthz/sentry/metrics/otel 等等
     path("", include("bkuser.monitoring.urls")),
 ]
 
