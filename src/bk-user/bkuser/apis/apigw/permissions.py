@@ -17,6 +17,6 @@
 from rest_framework.permissions import BasePermission
 
 
-class IsInterBearerTokenAuthenticated(BasePermission):
+class IsInnerBearerTokenAuthenticated(BasePermission):
     def has_permission(self, request, view):
-        return hasattr(request, "inter_bearer_token") and request.inter_bearer_token.verified
+        return hasattr(request, "inner_bearer_token") and request.inner_bearer_token.verified

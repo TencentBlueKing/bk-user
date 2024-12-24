@@ -21,7 +21,7 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
 from .authentications import InnerBearerTokenAuthentication
-from .permissions import IsInterBearerTokenAuthenticated
+from .permissions import IsInnerBearerTokenAuthenticated
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
@@ -32,7 +32,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     """
 
     authentication_classes = [InnerBearerTokenAuthentication]
-    permission_classes = [IsInterBearerTokenAuthenticated]
+    permission_classes = [IsInnerBearerTokenAuthenticated]
 
     def get(self, request, *args, **kwargs):
         tenant_user_id = kwargs["tenant_user_id"]

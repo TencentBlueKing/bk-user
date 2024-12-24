@@ -21,7 +21,7 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 
-InterBearerToken = namedtuple("InterBearerToken", ["verified"])
+InnerBearerToken = namedtuple("InnerBearerToken", ["verified"])
 
 
 class InnerBearerTokenAuthentication(BaseAuthentication):
@@ -52,6 +52,6 @@ class InnerBearerTokenAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed("Invalid token.")
 
         # Mark Verified Bearer Token
-        request.inter_bearer_token = InterBearerToken(verified=True)
+        request.inner_bearer_token = InnerBearerToken(verified=True)
 
         return AnonymousUser(), None
