@@ -14,7 +14,7 @@ Query the tenant list by pagination
 Example: Use curl to carry the authorization header:
 
 ```shell
-curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/"
+curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/?page=1&page_size=10"
 ```
 
 Example: Use Python and the **requests** module:
@@ -24,10 +24,14 @@ import json
 import requests
 
 result = requests.get(
-    "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/"
+    "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/",
     headers={
         "X-Bkapi-Authorization": json.dumps(
             {"bk_app_code": "x", "bk_app_secret": "y"})
+    },
+    params={
+        "page": 1,
+        "page_size": 10
     },
 )
 ```
@@ -36,18 +40,21 @@ result = requests.get(
 
 ```json5
 {
-  "data": [
-    {
-      "id": "default",
-      "name": "Default",
-      "status": "enabled"
-    },
-    {
-      "id": "test",
-      "name": "Test",
-      "status": "disabled"
-    }
-  ]
+  "data": {
+    "count": 2,
+    "results": [
+      {
+        "id": "default",
+        "name": "Default",
+        "status": "enabled"
+      },
+      {
+        "id": "test",
+        "name": "Test",
+        "status": "disabled"
+      }
+    ]
+  }
 }
 ```
 
