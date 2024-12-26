@@ -63,6 +63,7 @@ result = requests.get(
 
 | 参数名称   | 参数类型   | 描述                              |
 |--------|--------|---------------------------------|
+| count  | int    | 租户总数                            |
 | id     | string | 租户 ID                           |
 | name   | string | 租户名                             |
 | status | string | 租户状态，enabled 表示启用，disabled 表示禁用 |

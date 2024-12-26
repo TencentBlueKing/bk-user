@@ -63,6 +63,7 @@ result = requests.get(
 
 | Name   | Type   | Description                                                |
 |--------|--------|------------------------------------------------------------|
+| count  | int    | the total number of tenants                                |
 | id     | string | tenant ID                                                  |
 | name   | string | the name of tenant                                         |
 | status | string | the status of tenant, which can be `enabled` or `disabled` |
