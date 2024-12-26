@@ -9,33 +9,10 @@
 | page      | int  | 否  | 页数, 默认为 1   |
 | page_size | int  | 否  | 每页数量，默认为 10 |
 
-### 调用示例
+### 请求示例
 
-示例：使用 curl 命令，请求时携带认证请求头和租户头：
-
-```shell
-curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' -H 'X-Bk-Tenant-Id: your_app_tenant_id' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/?page=1&page_size=10"
-```
-
-示例：使用 Python 语言和 **requests** 模块：
-
-``` python
-import json
-import requests
-
-result = requests.get(
-    "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/",
-    headers={
-        "X-Bkapi-Authorization": json.dumps(
-            {"bk_app_code": "x", "bk_app_secret": "y"}),
-        "X-Bk-Tenant-Id" : "your_app_tenant_id"
-    },
-    params={
-        "page": 1,
-        "page_size": 10
-    },
-)
-```
+// URL Query 参数
+page=1&page_size=10
 
 ### 响应示例
 

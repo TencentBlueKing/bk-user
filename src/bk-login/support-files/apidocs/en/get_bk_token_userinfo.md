@@ -10,29 +10,8 @@ Query user's information corresponding to bk_token
 
 ### Request Example
 
-Example: Use curl to carry the authorization header and tenant header to request:
-
-```shell
-curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' -H 'X-Bk-Tenant-Id: your_app_tenant_id' "https://bkapi.example.com/api/bk-login/prod/login/api/v3/open/bk-tokens/userinfo/?bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"
-```
-
-Example: Use Python and the **requests** module:
-
-``` python
-import json
-import requests
-
-result = requests.get(
-    "https://bkapi.example.com/api/bk-login/prod/login/api/v3/open/bk-tokens/userinfo/",
-    headers={
-        "X-Bkapi-Authorization": json.dumps(
-            {"bk_app_code": "x", "bk_app_secret": "y"}),
-        "X-Bk-Tenant-Id": "your_app_tenant_id"
-    },
-    params={
-        "bk_token": "bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D"},
-)
-```
+// URL Query Parameter
+bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAzEDHGvPSjshkK-lqgUnqkDSNao58xTrbtCrDIQFrPlDmKXfXPvu2aLOVGz1mrzftygyAEHQ0G1HFXEexfn3CjkwedW5j2-Yu-GU5XA%3D%3D
 
 ### Response Example for Status Code 200
 
