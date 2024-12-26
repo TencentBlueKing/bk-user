@@ -14,7 +14,7 @@ Query the tenant list by pagination
 Example: Use curl to carry the authorization header:
 
 ```shell
-curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/?page=1&page_size=10"
+curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' -H 'X-Bk-Tenant-Id: your_app_tenant_id' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/?page=1&page_size=10"
 ```
 
 Example: Use Python and the **requests** module:
@@ -27,7 +27,8 @@ result = requests.get(
     "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/",
     headers={
         "X-Bkapi-Authorization": json.dumps(
-            {"bk_app_code": "x", "bk_app_secret": "y"})
+            {"bk_app_code": "x", "bk_app_secret": "y"}),
+        "X-Bk-Tenant-Id": "your_app_tenant_id"
     },
     params={
         "page": 1,
