@@ -86,8 +86,6 @@ MIDDLEWARE = [
     "bkuser.auth.middlewares.LoginMiddleware",
     "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
-    "apigw_manager.apigw.authentication.ApiGatewayJWTGenericMiddleware",
-    "apigw_manager.apigw.authentication.ApiGatewayJWTAppMiddleware",
 ]
 
 ROOT_URLCONF = "bkuser.urls"

@@ -4,15 +4,23 @@
 
 ### 输入参数
 
-暂无
+接口为分页接口，支持传入 page 和 page_size 参数，分别表示页数和每页数量，不传入时默认为 page=1, page_size=10
+
+| 参数名称      | 参数类型 | 必选 | 描述          |
+|-----------|------|----|-------------|
+| page      | int  | 否  | 页数, 默认为 1   |
+| page_size | int  | 否  | 每页数量，默认为 10 |
 
 ### 调用示例
 
 示例：使用 curl 命令，请求时携带认证请求头：
+
 ```shell
 curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/"
 ```
+
 示例：使用 Python 语言和 **requests** 模块：
+
 ``` python
 import json
 import requests
@@ -30,27 +38,26 @@ result = requests.get(
 
 ```json5
 {
-  "data":
-    [
-      {
-        "id": "default",
-        "name": "Default",
-        "status": "enabled"
-      },
-      {
-        "id": "test",
-        "name": "Test",
-        "status": "disabled"
-      }
-    ]
+  "data": [
+    {
+      "id": "default",
+      "name": "Default",
+      "status": "enabled"
+    },
+    {
+      "id": "test",
+      "name": "Test",
+      "status": "disabled"
+    }
+  ]
 }
 
 ```
 
 ### 响应参数说明
 
-| 参数名称 | 参数类型 | 描述                              |
-|------| -------- |---------------------------------|
-| id   | string   | 租户 ID                           |
-| name | string   | 租户名                             |
+| 参数名称   | 参数类型   | 描述                              |
+|--------|--------|---------------------------------|
+| id     | string | 租户 ID                           |
+| name   | string | 租户名                             |
 | status | string | 租户状态，enabled 表示启用，disabled 表示禁用 |
