@@ -11,8 +11,10 @@ Query the tenant list by pagination
 
 ### Request Example
 
+```json5
 // URL Query Parameters
 page=1&page_size=10
+```
 
 ### Response Example
 

@@ -11,8 +11,10 @@
 
 ### 请求示例
 
+```json5
 // URL Query 参数
 page=1&page_size=10
+```
 
 ### 响应示例
 
