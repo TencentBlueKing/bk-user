@@ -174,6 +174,9 @@ class UserBuiltinField(TimestampedModel):
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
 
+    class Meta:
+        ordering = ["id"]
+
 
 class TenantUserCustomField(TimestampedModel):
     """租户用户自定义字段"""
