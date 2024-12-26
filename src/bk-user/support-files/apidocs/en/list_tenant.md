@@ -11,7 +11,7 @@ Query the tenant list by pagination
 
 ### Request Example
 
-Example: Use curl to carry the authorization header:
+Example: Use curl to carry the authorization header and tenant header to request:
 
 ```shell
 curl -X GET -H 'X-Bkapi-Authorization: {"bk_app_code": "x", "bk_app_secret": "y"}' -H 'X-Bk-Tenant-Id: your_app_tenant_id' "https://bkapi.example.com/api/bk-user/prod/api/v3/open/tenants/?page=1&page_size=10"
