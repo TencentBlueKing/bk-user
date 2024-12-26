@@ -10,6 +10,7 @@ apigateway:
   description: "用户管理 OpenAPI 网关"
   description_en: "User Management OpenAPI Gateway"
   is_public: true
+  api_type: 1
   maintainers:
     - "admin"
 

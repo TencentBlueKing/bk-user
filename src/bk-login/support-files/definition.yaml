@@ -11,6 +11,7 @@ apigateway:
   description_en: "Login OpenAPI Gateway"
   allow_delete_sensitive_params: false
   is_public: true
+  api_type: 1
   maintainers:
     - "admin"
 

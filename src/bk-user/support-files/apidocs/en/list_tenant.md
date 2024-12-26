@@ -1,11 +1,8 @@
 ### Description
 
-Query the list of tenants
+Query the tenant list by pagination
 
 ### Parameters
-
-The interface is a paging interface, which supports the input of page and page_size parameters, which represent the
-number of pages and the number of pages per page respectively. If not input, the default is page=1, page_size=10.
 
 | Name      | Type | Required | Description                             |
 |-----------|------|----------|-----------------------------------------|
