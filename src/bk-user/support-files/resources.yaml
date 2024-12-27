@@ -32,7 +32,7 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Query the list of tenants
 
-  /api/v3/open/tenants/users/display_name/:
+  /api/v3/open/tenant/users/display_name/:
     get:
       operationId: list_display_name
       description: 批量查询租户用户展示名
@@ -47,7 +47,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenants/users/display_name/
+          path: /api/v3/open/tenant/users/display_name/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []

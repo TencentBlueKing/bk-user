@@ -21,7 +21,7 @@ from . import views
 urlpatterns = [
     path("tenants/", views.TenantListApi.as_view(), name="open_v3.tenant.list"),
     path(
-        "tenants/users/display_name/",
+        "tenant/users/display_name/",
         views.TenantUserDisplayNameListApi.as_view(),
         name="open_v3.tenant_user.display_name.list",
     ),
