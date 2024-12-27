@@ -38,6 +38,7 @@ COPY src/bk-user/version_log /app/version_log
 COPY src/bk-user/locale /app/locale
 COPY src/bk-user/manage.py /app
 COPY src/idp-plugins/idp_plugins /app/bkuser/idp_plugins
+COPY src/bk-user/support-files /app/support-files
 
 COPY --from=StaticBuilding /dist /app/staticfiles
 COPY --from=StaticBuilding /dist/index.html /app/templates/index.html

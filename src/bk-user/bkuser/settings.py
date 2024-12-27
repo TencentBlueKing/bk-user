@@ -236,6 +236,8 @@ BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
+# 是否自动同步网关
+ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
