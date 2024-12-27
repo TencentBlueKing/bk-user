@@ -12,7 +12,7 @@
 
 ```
 // URL Query 参数
-bk_usernames=7idwx3b7nzk6xigs, 0wngfim3uzhadh1w
+bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 ```
 
 ### 状态码 200 的响应示例

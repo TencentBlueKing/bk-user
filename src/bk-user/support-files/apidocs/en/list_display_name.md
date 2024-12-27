@@ -12,7 +12,7 @@ Batch query tenant user's display_name
 
 ```
 // URL Query Parameters
-bk_usernames=7idwx3b7nzk6xigs, 0wngfim3uzhadh1w
+bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 ```
 
 ### Response Example for Status Code 200
