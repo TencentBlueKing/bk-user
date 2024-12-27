@@ -5,13 +5,13 @@ info:
   title: API Gateway Resources
   description: ''
 schemes:
-  - http
+- http
 paths:
   /api/v3/open/tenants/:
     get:
       operationId: list_tenant
       description: 查询租户列表
-      tags: [ ]
+      tags: []
       responses:
         default:
           description: ''
@@ -36,7 +36,7 @@ paths:
     get:
       operationId: list_display_name
       description: 批量查询租户用户展示名
-      tags: [ ]
+      tags: []
       responses:
         default:
           description: ''
@@ -50,7 +50,7 @@ paths:
           path: /api/v3/open/tenants/users/display_name/
           matchSubpath: false
           timeout: 0
-        pluginConfigs: [ ]
+        pluginConfigs: []
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true

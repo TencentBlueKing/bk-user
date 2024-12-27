@@ -50,7 +50,7 @@ class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
 
 
 class TenantUserDisplayNameListOutputSLZ(serializers.Serializer):
-    bk_username = serializers.CharField(help_text="用户名", source="id")
+    bk_username = serializers.CharField(help_text="蓝鲸唯一标识", source="id")
     display_name = serializers.CharField(help_text="用户展示名称", source="data_source_user.full_name")
 
     class Meta:

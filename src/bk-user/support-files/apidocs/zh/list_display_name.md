@@ -10,7 +10,7 @@
 
 ### 请求示例
 
-```json5
+```json
 // URL Query 参数
 bk_usernames=7idwx3b7nzk6xigs, 0wngfim3uzhadh1w
 ```

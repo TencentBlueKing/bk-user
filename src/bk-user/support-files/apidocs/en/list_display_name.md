@@ -10,7 +10,7 @@ Batch query tenant user's display_name
 
 ### Request Example
 
-```json5
+```
 // URL Query Parameters
 bk_usernames=7idwx3b7nzk6xigs, 0wngfim3uzhadh1w
 ```
