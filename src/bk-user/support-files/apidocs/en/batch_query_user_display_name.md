@@ -4,9 +4,9 @@ Batch query user's display_name
 
 ### Parameters
 
-| Name         | Type   | Required | Description                                                                                   |
-|--------------|--------|----------|-----------------------------------------------------------------------------------------------|
-| bk_usernames | string | Yes      | Blueking unique identifier, multiple identifiers are separated by commas, and the limit is 50 |
+| Name         | Type   | Required | Description                                                                                    |
+|--------------|--------|----------|------------------------------------------------------------------------------------------------|
+| bk_usernames | string | Yes      | Blueking unique identifier, multiple identifiers are separated by commas, and the limit is 100 |
 
 ### Request Example
 
@@ -56,7 +56,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 {
   "error": {
     "code": "INVALID_ARGUMENT",
-    "message": "Arguments Validation Failed: bk_usernames: This field must contain at most 50 objects."
+    "message": "Arguments Validation Failed: bk_usernames: This field must contain at most 100 objects."
   }
 }
 ```

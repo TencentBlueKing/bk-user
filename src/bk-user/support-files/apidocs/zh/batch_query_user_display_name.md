@@ -4,9 +4,9 @@
 
 ### 输入参数
 
-| 参数名称         | 参数类型   | 必选 | 描述                      |
-|--------------|--------|----|-------------------------|
-| bk_usernames | string | 是  | 蓝鲸唯一标识，多个以逗号分隔，限制数量为 50 |
+| 参数名称         | 参数类型   | 必选 | 描述                       |
+|--------------|--------|----|--------------------------|
+| bk_usernames | string | 是  | 蓝鲸唯一标识，多个以逗号分隔，限制数量为 100 |
 
 ### 请求示例
 
@@ -46,7 +46,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 {
   "error": {
     "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过: bk_usernames: 该字段不能为空。"
+    "message": "参数校验不通过：bk_usernames: 该字段不能为空。"
   }
 }
 ```
@@ -56,7 +56,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 {
   "error": {
     "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过: bk_usernames: 至多包含 50 个对象。"
+    "message": "参数校验不通过：bk_usernames: 至多包含 100 个对象。"
   }
 }
 ```
