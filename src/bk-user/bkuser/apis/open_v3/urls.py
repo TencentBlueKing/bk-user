@@ -20,6 +20,7 @@ from . import views
 
 urlpatterns = [
     path("tenants/", views.TenantListApi.as_view(), name="open_v3.tenant.list"),
+    # 租户级别 API
     path(
         "tenant/",
         include(
