@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
+from django.conf import settings
 from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantStatus
@@ -32,7 +32,9 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
-    bk_usernames = StringArrayField(help_text="蓝鲸唯一标识，多个使用逗号分隔", max_items=50)
+    bk_usernames = StringArrayField(
+        help_text="蓝鲸唯一标识，多个使用逗号分隔", max_items=settings.BK_USERNAME_BATCH_QUERY_DISPLAY_NAME_LIMIT
+    )
 
 
 class TenantUserDisplayNameListOutputSLZ(serializers.Serializer):
