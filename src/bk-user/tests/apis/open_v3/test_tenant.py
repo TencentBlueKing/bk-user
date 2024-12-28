@@ -31,8 +31,8 @@ class TestTenantList:
         assert set(resp.data["results"][0].keys()) == {"id", "name", "status"}
 
 
+@pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDisplayNameList:
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_standard(self, api_client):
         zhangsan_id = TenantUser.objects.get(data_source_user__code="zhangsan").id
         lisi_id = TenantUser.objects.get(data_source_user__code="lisi").id
@@ -45,7 +45,6 @@ class TestTenantUserDisplayNameList:
         assert {t["bk_username"] for t in resp.data} == {zhangsan_id, lisi_id}
         assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
 
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan_id = TenantUser.objects.get(data_source_user__code="zhangsan").id
         resp = api_client.get(

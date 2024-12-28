@@ -47,7 +47,7 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
 class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     批量根据用户 bk_username 获取用户展示名
-    TODO：性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
+    TODO: 性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
     """
 
     pagination_class = None
@@ -59,6 +59,8 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
+        # 后续支持表达式，则需要查询表达式可配置的所有字段
         return (
             TenantUser.objects.filter(id__in=data["bk_usernames"])
             .select_related("data_source_user")
@@ -69,6 +71,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         tags=["open_v3.tenant"],
         operation_id="batch_query_user_display_name",
         operation_description="批量查询用户展示名",
+        query_serializer=TenantUserDisplayNameListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
