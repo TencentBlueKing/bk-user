@@ -100,7 +100,7 @@ class InnerBearerTokenMiddleware:
         # 从请求头中获取 InnerBearerToken
         auth = request.META.get("HTTP_AUTHORIZATION", "").split()
 
-        if not auth or auth[0].lower() == self.keyword.lower() or len(auth) != 2:  # noqa: PLR2004
+        if not auth or auth[0].lower() != self.keyword.lower() or len(auth) != 2:  # noqa: PLR2004
             return self.get_response(request)
 
         token = auth[1]
