@@ -33,7 +33,8 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
-        help_text="蓝鲸唯一标识，多个使用逗号分隔", max_items=settings.BK_USERNAME_BATCH_QUERY_DISPLAY_NAME_LIMIT
+        help_text="蓝鲸唯一标识，多个使用逗号分隔",
+        max_items=settings.BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT,
     )
 
 
