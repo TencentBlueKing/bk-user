@@ -15,11 +15,10 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-import traceback
+from typing import Dict, Tuple
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
-from django.db import IntegrityError
 
 from bkuser.component import login
 
@@ -33,47 +32,28 @@ class TokenBackend(BaseBackend):
         if not bk_token:
             return None
 
-        verify_result, username = self.verify_bk_token(bk_token)
+        result, user_info = self.get_user_info(bk_token)
         # 判断 bk_token 是否验证通过，不通过则返回 None
-        if not verify_result:
+        if not result:
             return None
 
         user_model = get_user_model()
+        username = user_info["username"]
 
-        try:
-            user, _ = user_model.objects.get_or_create(username=username)
-            get_user_info_result, user_info = self.get_user_info(bk_token)
-            # 判断是否获取到用户信息，获取不到则返回 None
-            if not get_user_info_result:
-                return None
-            user.set_property(key="language", value=user_info.get("language", ""))
-            user.set_property(key="time_zone", value=user_info.get("time_zone", ""))
-            user.set_property(key="tenant_id", value=user_info.get("tenant_id", ""))
-            user.set_property(key="display_name", value=user_info.get("display_name", ""))
+        user, _ = user_model.objects.get_or_create(username=username)
+        user.set_property(key="language", value=user_info["language"])
+        user.set_property(key="time_zone", value=user_info["time_zone"])
+        user.set_property(key="tenant_id", value=user_info["tenant_id"])
+        user.set_property(key="display_name", value=user_info["display_name"])
 
-            return user
-
-        except IntegrityError:
-            logger.exception(traceback.format_exc())
-            logger.exception("get_or_create UserModel fail or update_or_create UserProperty")
-            return None
-        except Exception:  # pylint: disable=broad-except
-            logger.exception(traceback.format_exc())
-            logger.exception("Auto create & update UserModel fail")
-            return None
+        return user
 
     @staticmethod
-    def get_user_info(bk_token):
+    def get_user_info(bk_token: str) -> Tuple[bool, Dict]:
         """
         请求平台 ESB 接口获取用户信息
-        @param bk_token: bk_token
-        @type bk_token: str
-        @return:True, {
-            'username': 'test',
-            'language': 'zh-cn',
-            'time_zone': 'Asia/Shanghai',
-        }
-        @rtype: bool,dict
+        :param bk_token: 用户登录凭证
+        :return: 是否获取成功，用户信息
         """
         try:
             data = login.get_user_info(bk_token)
@@ -82,27 +62,10 @@ class TokenBackend(BaseBackend):
             return False, {}
 
         user_info = {
-            "username": data.get("bk_username", ""),
+            "username": data["bk_username"],
             "language": data.get("language", ""),
             "time_zone": data.get("time_zone", ""),
             "tenant_id": data.get("tenant_id", ""),
             "display_name": data.get("display_name", ""),
         }
         return True, user_info
-
-    @staticmethod
-    def verify_bk_token(bk_token):
-        """
-        请求 VERIFY_URL，认证 bk_token 是否正确
-        @param bk_token: "_FrcQiMNevOD05f8AY0tCynWmubZbWz86HslzmOqnhk"
-        @type bk_token: str
-        @return: False,None True,username
-        @rtype: bool,None/str
-        """
-        try:
-            data = login.verify_bk_token(bk_token)
-        except Exception:  # pylint: disable=broad-except
-            logger.warning("Abnormal error in verify_bk_token...", exc_info=True)
-            return False, None
-
-        return True, data["bk_username"]

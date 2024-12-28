@@ -20,15 +20,31 @@ from bklogin.common.error_codes import error_codes
 class APIGatewayAppVerifiedMixin:
     """校验来源 APIGateway JWT 的应用是否认证"""
 
-    # FIXME (nan): 待讨论清楚网关本身的用户认证与登录如何认证后再去除
-    skip_app_verified = False
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.skip_app_verified:
-            return super().dispatch(request, *args, **kwargs)  # type: ignore
-
+    def dispatch(self, request, *args, **kwargs):  # type: ignore
         app = getattr(request, "app", None)
         if app and app.verified:
             return super().dispatch(request, *args, **kwargs)  # type: ignore
 
         raise error_codes.UNAUTHENTICATED.f("the api must be verify app from api gateway")
+
+
+class InnerBearerTokenVerifiedMixin:
+    """校验来源内部请求的 Bearer Token 是否认证"""
+
+    def dispatch(self, request, *args, **kwargs):
+        token = getattr(request, "inner_bearer_token", None)
+        if token and token.verified:
+            return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+        raise error_codes.UNAUTHENTICATED.f("the api must be verify inner bearer token")
+
+
+class BkUserAppVerifiedMixin:
+    """校验来源内部 Bk User App 的请求"""
+
+    def dispatch(self, request, *args, **kwargs):
+        bk_user_app_verified = getattr(request, "bk_user_app_verified", False)
+        if bk_user_app_verified:
+            return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+        raise error_codes.UNAUTHENTICATED.f("the api must be verify from bk user app")
