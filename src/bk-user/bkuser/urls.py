@@ -52,7 +52,7 @@ if settings.ENABLE_BK_NOTICE:
 if settings.SWAGGER_ENABLE:
     schema_view = get_schema_view(
         openapi.Info(
-            title="BK-User API",
+            title="BK-User Web API",
             default_version="vx",
             description="BK-User API Document",
             terms_of_service="http://bk-user.bking.com",
@@ -61,11 +61,31 @@ if settings.SWAGGER_ENABLE:
         ),
         public=False,
         permission_classes=[permissions.IsAuthenticated],
+        urlconf="bkuser.apis.web.urls",
     )
     urlpatterns += [
         path("swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"),
         path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
         path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    ]
+
+    open_schema_view = get_schema_view(
+        openapi.Info(
+            title="BK-User Open API",
+            default_version="vx",
+            description="BK-User API Document",
+            terms_of_service="http://bk-user.bking.com",
+            contact=openapi.Contact(email="blueking@tencent.com"),
+            license=openapi.License(name="BSD License"),
+        ),
+        public=True,
+        permission_classes=[permissions.AllowAny],
+        urlconf="bkuser.apis.open_v3.urls",
+    )
+    urlpatterns += [
+        path("open/swagger<format>/", open_schema_view.without_ui(cache_timeout=0), name="open-schema-json"),
+        path("open/swagger/", open_schema_view.with_ui("swagger", cache_timeout=0), name="open-schema-swagger-ui"),
+        path("open/redoc/", open_schema_view.with_ui("redoc", cache_timeout=0), name="open-schema-redoc"),
     ]
 
 

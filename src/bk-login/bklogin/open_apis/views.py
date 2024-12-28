@@ -22,10 +22,10 @@ from bklogin.common.error_codes import error_codes
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
 
-from .mixins import APIGatewayAppVerifiedMixin
+from .mixins import APIGatewayAppVerifiedMixin, BkUserAppVerifiedMixin, InnerBearerTokenVerifiedMixin
 
 
-class TokenVerifyApi(APIGatewayAppVerifiedMixin, View):
+class TokenVerifyApiBase(View):
     """Token 解析"""
 
     def get(self, request, *args, **kwargs):
@@ -42,7 +42,15 @@ class TokenVerifyApi(APIGatewayAppVerifiedMixin, View):
         return APISuccessResponse(data={"bk_username": user.id, "tenant_id": user.tenant_id})
 
 
-class TokenUserInfoRetrieveApi(APIGatewayAppVerifiedMixin, View):
+class TokenVerifyApi(APIGatewayAppVerifiedMixin, TokenVerifyApiBase):
+    """Token 解析，请求需经过验证 网关 JWT App 认证"""
+
+
+class TokenVerifyApiByBearerAuth(InnerBearerTokenVerifiedMixin, TokenVerifyApiBase):
+    """Token 解析，请求需经过验证 内部 Bearer Token 认证"""
+
+
+class TokenUserInfoRetrieveApiBase(View):
     """Token 用户信息解析"""
 
     def get(self, request, *args, **kwargs):
@@ -65,3 +73,11 @@ class TokenUserInfoRetrieveApi(APIGatewayAppVerifiedMixin, View):
                 "time_zone": user.time_zone,
             }
         )
+
+
+class TokenUserInfoRetrieveApi(APIGatewayAppVerifiedMixin, TokenUserInfoRetrieveApiBase):
+    """Token 用户信息解析，请求需经过验证 网关 JWT App 认证"""
+
+
+class TokenUserInfoRetrieveApiByBkUserAppAuth(BkUserAppVerifiedMixin, TokenUserInfoRetrieveApiBase):
+    """Token 用户信息解析，请求需来着用户管理的 App 认证"""

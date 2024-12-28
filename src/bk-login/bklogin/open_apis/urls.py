@@ -28,18 +28,21 @@ urlpatterns = [
     path("api/v3/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v3")),
     path("api/v3/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v3")),
     # Note: 新的 OpenAPI 后面统一接入 APIGateway，不支持直接调用
-    #  同时只提供给 APIGateway 做用户认证的接口与通用 OpenAPI 区分开
+    # 通用 OpenAPI
     path("api/v3/open/bk-tokens/verify/", views.TokenVerifyApi.as_view(), name="v3_open.bk_token.verify"),
     path(
         "api/v3/open/bk-tokens/userinfo/",
         views.TokenUserInfoRetrieveApi.as_view(),
         name="v3_open.bk_token.userinfo_retrieve",
     ),
-    path("api/v3/apigw/bk-tokens/verify/", views.TokenVerifyApi.as_view(skip_app_verified=True)),
-    # FIXME (nan): 临时兼容用户管理 SaaS 本地开发的登录
-    path("api/v3/bkuser/bk-tokens/verify/", views.TokenVerifyApi.as_view(skip_app_verified=True)),
+    # 提供给 apigw 的内部 API
+    path(
+        "api/v3/apigw/bk-tokens/verify/", views.TokenVerifyApiByBearerAuth.as_view(), name="v3_apigw.bk_token.verify"
+    ),
+    # 提供给 bkuser 的内部 API
     path(
         "api/v3/bkuser/bk-tokens/userinfo/",
-        views.TokenUserInfoRetrieveApi.as_view(skip_app_verified=True),
+        views.TokenUserInfoRetrieveApiByBkUserAppAuth.as_view(),
+        name="v3_bkuser.bk_token.userinfo_retrieve",
     ),
 ]

@@ -28,7 +28,7 @@ from .http import http_get
 logger = logging.getLogger("component")
 
 
-# FIXME: 后续登录 OpenAPI 接入 APIGateway 需重新调整
+# Note: 用户管理模块的调用登录接口，不经过 APIGateway，避免循环依赖
 def _call_login_api(http_func, url_path, **kwargs):
     request_id = local.request_id
 
@@ -38,6 +38,8 @@ def _call_login_api(http_func, url_path, **kwargs):
         {
             "Content-Type": "application/json",
             "X-Request-Id": request_id,
+            "X-Bk-App-Code": settings.BK_APP_CODE,
+            "X-Bk-App-Secret": settings.BK_APP_SECRET,
         }
     )
 
@@ -60,12 +62,6 @@ def _call_login_api(http_func, url_path, **kwargs):
         )
 
     return resp_data["data"]
-
-
-def verify_bk_token(bk_token: str):
-    """验证 bk_token"""
-    url_path = "api/v3/bkuser/bk-tokens/verify/"
-    return _call_login_api(http_get, url_path, params={"bk_token": bk_token})
 
 
 def get_user_info(bk_token: str):

@@ -71,6 +71,8 @@ MIDDLEWARE = [
     "bklogin.common.middlewares.ExceptionHandlerMiddleware",
     "apigw_manager.apigw.authentication.ApiGatewayJWTGenericMiddleware",
     "apigw_manager.apigw.authentication.ApiGatewayJWTAppMiddleware",
+    "bklogin.common.middlewares.InnerBearerTokenMiddleware",
+    "bklogin.common.middlewares.BkUserAppMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -212,7 +214,9 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-login")
+# 是否开启同步网关 API
 ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
+BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
