@@ -20,6 +20,8 @@ import pytest
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from rest_framework.test import APIClient
 
+from tests.test_utils.tenant import sync_users_depts_to_tenant
+
 
 @pytest.fixture
 def api_client():
@@ -28,3 +30,9 @@ def api_client():
         OpenApiCommonMixin, "permission_classes", []
     ):
         yield client
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)

@@ -14,10 +14,23 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
 urlpatterns = [
     path("tenants/", views.TenantListApi.as_view(), name="open_v3.tenant.list"),
+    # 租户级别 API
+    path(
+        "tenant/",
+        include(
+            [
+                path(
+                    "users/-/display_name/",
+                    views.TenantUserDisplayNameListApi.as_view(),
+                    name="open_v3.tenant_user.display_name.list",
+                )
+            ]
+        ),
+    ),
 ]
