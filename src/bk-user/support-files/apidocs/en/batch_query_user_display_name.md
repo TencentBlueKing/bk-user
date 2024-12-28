@@ -1,6 +1,6 @@
 ### Description
 
-Batch query tenant user's display_name
+Batch query user's display_name
 
 ### Parameters
 
@@ -56,7 +56,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 {
   "error": {
     "code": "INVALID_ARGUMENT",
-    "message": "Arguments Validation Failed: bk_usernames: Length cannot exceed 50"
+    "message": "Arguments Validation Failed: bk_usernames: This field must contain at most 50 objects."
   }
 }
 ```

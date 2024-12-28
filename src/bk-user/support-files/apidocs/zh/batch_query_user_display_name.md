@@ -1,6 +1,6 @@
 ### 描述
 
-批量查询租户用户展示名
+批量查询用户展示名
 
 ### 输入参数
 
@@ -56,7 +56,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 {
   "error": {
     "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过: bk_usernames: 长度不能超过 50"
+    "message": "参数校验不通过: bk_usernames: 至多包含 50 个对象。"
   }
 }
 ```

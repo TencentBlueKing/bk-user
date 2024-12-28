@@ -47,34 +47,28 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
 class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     批量根据用户 bk_username 获取用户展示名
-    Note：性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
+    TODO：性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
     """
 
-    serializer_class = TenantUserDisplayNameListOutputSLZ
-
     pagination_class = None
+
+    serializer_class = TenantUserDisplayNameListOutputSLZ
 
     def get_queryset(self):
         slz = TenantUserDisplayNameListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_users = (
+        return (
             TenantUser.objects.filter(id__in=data["bk_usernames"])
             .select_related("data_source_user")
             .only("id", "data_source_user__full_name")
         )
 
-        # 可能存在部分用户的 bk_username 非法，无法查询到对应的 display_name
-        if tenant_users.count() != len(data["bk_usernames"]):
-            logger.info("%d users' display_name not found", len(data["bk_usernames"]) - tenant_users.count())
-
-        return tenant_users
-
     @swagger_auto_schema(
         tags=["open_v3.tenant"],
-        operation_id="list_display_name",
-        operation_description="批量获取用户展示名",
+        operation_id="batch_query_user_display_name",
+        operation_description="批量查询用户展示名",
         responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
