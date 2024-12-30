@@ -84,6 +84,8 @@ class TenantUserInfoRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserInfoRetrieveOutputSLZ
 
     def get_queryset(self):
+        # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
+        # 后续支持表达式，则需要查询表达式可配置的所有字段
         return TenantUser.objects.select_related("data_source_user").only(
             "id", "data_source_user__full_name", "time_zone", "language", "tenant_id"
         )
