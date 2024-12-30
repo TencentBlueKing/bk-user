@@ -24,6 +24,7 @@ from bkuser.apis.open_v3.serializers.tenant import (
     TenantListOutputSLZ,
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
+    TenantUserInfoRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
 
@@ -76,3 +77,22 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class TenantUserInfoRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
+    lookup_url_kwarg = "tenant_user_id"
+    serializer_class = TenantUserInfoRetrieveOutputSLZ
+
+    def get_queryset(self):
+        return TenantUser.objects.select_related("data_source_user").only(
+            "id", "data_source_user__full_name", "time_zone", "language", "tenant_id"
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.tenant"],
+        operation_id="query_user_info",
+        operation_description="查询用户详情",
+        responses={status.HTTP_200_OK: TenantUserInfoRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)

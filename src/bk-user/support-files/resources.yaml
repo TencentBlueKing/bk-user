@@ -56,3 +56,27 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display_name
+  /api/v3/open/tenant/users/{bk_username}/:
+    get:
+      operationId: query_user_info
+      description: 查询用户详情
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/users/{bk_username}/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: false
+        descriptionEn: Query user's detailed information
