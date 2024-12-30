@@ -56,6 +56,7 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display_name
+
   /api/v3/open/tenant/users/{bk_username}/:
     get:
       operationId: query_user_info
