@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
+    pagination_class = None
     serializer_class = TenantListOutputSLZ
     queryset = Tenant.objects.all()
 
