@@ -14,14 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.conf import settings
 from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantStatus
-from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
-from bkuser.common.serializers import StringArrayField
 
 
 class TenantListOutputSLZ(serializers.Serializer):
@@ -31,29 +26,3 @@ class TenantListOutputSLZ(serializers.Serializer):
 
     class Meta:
         ref_name = "open_v3.TenantListOutputSLZ"
-
-
-class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
-    bk_usernames = StringArrayField(
-        help_text="蓝鲸唯一标识，多个使用逗号分隔",
-        max_items=settings.BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT,
-    )
-
-
-class TenantUserDisplayNameListOutputSLZ(serializers.Serializer):
-    bk_username = serializers.CharField(help_text="蓝鲸唯一标识", source="id")
-    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-
-    def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
-
-
-class TenantUserInfoRetrieveOutputSLZ(serializers.Serializer):
-    tenant_id = serializers.CharField(help_text="租户 ID")
-    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
-    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
-
-    def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)

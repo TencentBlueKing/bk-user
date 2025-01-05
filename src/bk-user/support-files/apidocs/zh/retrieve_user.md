@@ -4,9 +4,9 @@
 
 ### 输入参数
 
-| 参数名称        | 参数类型   | 必选 | 描述     |
-|-------------|--------|----|--------|
-| bk_username | string | 是  | 蓝鲸唯一标识 |
+| 参数名称        | 参数类型   | 必选 | 描述       |
+|-------------|--------|----|----------|
+| bk_username | string | 是  | 蓝鲸用户唯一标识 |
 
 ### 请求示例
 
@@ -31,13 +31,13 @@
 
 ### 响应参数说明
 
-| 参数名称         | 参数类型   | 描述     |
-|--------------|--------|--------|
-| tenant_id    | string | 租户 ID  |
-| bk_username  | string | 蓝鲸唯一标识 |
-| display_name | string | 用户展示名  |
-| time_zone    | string | 时区     |
-| language     | string | 语言     |
+| 参数名称         | 参数类型   | 描述       |
+|--------------|--------|----------|
+| tenant_id    | string | 租户 ID    |
+| bk_username  | string | 蓝鲸用户唯一标识 |
+| display_name | string | 用户展示名    |
+| time_zone    | string | 时区       |
+| language     | string | 语言       |
 
 ### 状态码非 200 的响应示例
 

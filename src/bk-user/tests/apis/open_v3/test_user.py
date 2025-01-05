@@ -65,17 +65,17 @@ class TestTenantUserDisplayNameList:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserInfoRetrieveApi:
-    def test_standard(self, api_client):
+class TestTenantUserRetrieveApi:
+    def test_standard(self, api_client, random_tenant):
         zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
-        resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"tenant_user_id": zhangsan.id}))
+        resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["bk_username"] == zhangsan.id
         assert resp.data["display_name"] == "张三"
         assert resp.data["language"] == "zh-cn"
         assert resp.data["time_zone"] == "Asia/Shanghai"
-        assert resp.data["tenant_id"] == zhangsan.tenant_id
+        assert resp.data["tenant_id"] == random_tenant.id
 
     def test_tenant_not_found(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"tenant_user_id": "not_exist"}))
+        resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": "not_exist"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
