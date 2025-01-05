@@ -1,6 +1,6 @@
 ### Description
 
-Query user's detailed information
+Query user's information
 
 ### Parameters
 
