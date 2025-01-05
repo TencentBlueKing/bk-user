@@ -54,7 +54,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         )
 
     @swagger_auto_schema(
-        tags=["open_v3.tenant"],
+        tags=["open_v3.user"],
         operation_id="batch_query_user_display_name",
         operation_description="批量查询用户展示名",
         query_serializer=TenantUserDisplayNameListInputSLZ(),
@@ -75,7 +75,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     @swagger_auto_schema(
-        tags=["open_v3.tenant"],
+        tags=["open_v3.user"],
         operation_id="retrieve_user",
         operation_description="查询用户信息",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
