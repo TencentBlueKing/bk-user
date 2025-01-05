@@ -47,3 +47,6 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+    class Meta:
+        ref_name = "open_v3.TenantUserRetrieveOutputSLZ"
