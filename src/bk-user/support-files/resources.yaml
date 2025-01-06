@@ -57,7 +57,7 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display_name
 
-  /api/v3/open/tenant/user/{bk_username}/:
+  /api/v3/open/tenant/users/{bk_username}/:
     get:
       operationId: retrieve_user
       description: 查询用户信息
@@ -72,7 +72,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenant/user/{bk_username}/
+          path: /api/v3/open/tenant/users/{bk_username}/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []

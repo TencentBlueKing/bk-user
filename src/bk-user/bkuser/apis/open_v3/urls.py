@@ -31,7 +31,7 @@ urlpatterns = [
                     name="open_v3.tenant_user.display_name.list",
                 ),
                 path(
-                    "user/<str:id>/",
+                    "users/<str:id>/",
                     views.TenantUserRetrieveApi.as_view(),
                     name="open_v3.tenant_user.retrieve",
                 ),

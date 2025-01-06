@@ -69,10 +69,9 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     根据用户 bk_username 获取用户信息
     """
 
-    serializer_class = TenantUserRetrieveOutputSLZ
     queryset = TenantUser.objects.all()
-
     lookup_url_kwarg = "id"
+    serializer_class = TenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
