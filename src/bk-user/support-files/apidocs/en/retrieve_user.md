@@ -12,7 +12,7 @@ Query user's information
 
 ```
 // URL Path Parameter
-/api/open/v3/tenant/users/{bk_username}/
+/api/open/v3/tenant/users/7idwx3b7nzk6xigs/
 ```
 
 ### Response Example for Status Code 200
