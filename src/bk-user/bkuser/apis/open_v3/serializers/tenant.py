@@ -23,6 +23,3 @@ class TenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
-
-    class Meta:
-        ref_name = "open_v3.TenantListOutputSLZ"
