@@ -50,7 +50,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class AncestorSerializer(serializers.Serializer):
-    id = serializers.IntegerField(help_text="祖先部门ID", source="department_id")
+    id = serializers.IntegerField(help_text="祖先部门 ID", source="department_id")
     name = serializers.CharField(help_text="祖先部门名称", source="department__name")
 
 
@@ -59,6 +59,6 @@ class TenantUserDepartmentListInputSLZ(serializers.Serializer):
 
 
 class TenantUserDepartmentListOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="部门ID")
+    id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     ancestors = serializers.ListField(help_text="祖先部门列表", child=AncestorSerializer())
