@@ -4,9 +4,9 @@ Batch query user's display_name
 
 ### Parameters
 
-| Name         | Type   | Required | Description                                                                                    |
-|--------------|--------|----------|------------------------------------------------------------------------------------------------|
-| bk_usernames | string | Yes      | Blueking unique identifier, multiple identifiers are separated by commas, and the limit is 100 |
+| Name         | Type   | Required | Description                                                                                           |
+|--------------|--------|----------|-------------------------------------------------------------------------------------------------------|
+| bk_usernames | string | Yes      | Blueking user's unique identifier, multiple identifiers are separated by commas, and the limit is 100 |
 
 ### Request Example
 
@@ -34,10 +34,10 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 
 ### Response Parameters Description
 
-| Name         | Type   | Description                |
-|--------------|--------|----------------------------|
-| bk_username  | string | Blueking unique identifier |
-| display_name | string | User's display_name        |
+| Name         | Type   | Description                       |
+|--------------|--------|-----------------------------------|
+| bk_username  | string | Blueking user's unique identifier |
+| display_name | string | User's display_name               |
 
 # Response Example for Non-200 Status Code
 
