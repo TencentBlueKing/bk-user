@@ -16,6 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 from .tenant import TenantListApi
-from .user import TenantUserDisplayNameListApi, TenantUserRetrieveApi
+from .user import TenantUserDepartmentListApi, TenantUserDisplayNameListApi, TenantUserRetrieveApi
 
-__all__ = ["TenantListApi", "TenantUserDisplayNameListApi", "TenantUserRetrieveApi"]
+__all__ = ["TenantListApi", "TenantUserDisplayNameListApi", "TenantUserRetrieveApi", "TenantUserDepartmentListApi"]

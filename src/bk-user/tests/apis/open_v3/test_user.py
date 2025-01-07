@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -79,3 +79,42 @@ class TestTenantUserRetrieveApi:
     def test_tenant_not_found(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": "not_exist"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserDepartmentList:
+    def test_with_no_ancestors(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": zhangsan.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data[0]["id"] == company.id
+        assert resp.data[0]["name"] == "公司"
+
+    def test_with_ancestors(self, api_client):
+        lisi = TenantUser.objects.get(data_source_user__code="lisi")
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        dept_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.department.list", kwargs={"id": lisi.id}), data={"with_ancestors": True}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data[0]["id"] == dept_a.id
+        assert resp.data[0]["name"] == "部门A"
+        assert resp.data[0]["ancestors"] == [{"id": company.id, "name": "公司"}]
+        assert resp.data[1]["id"] == dept_aa.id
+        assert resp.data[1]["name"] == "中心AA"
+        assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门A"}]
+
+    def test_with_invalid_id(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_with_no_department(self, api_client):
+        freedom = TenantUser.objects.get(data_source_user__code="freedom")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.department.list", kwargs={"id": freedom.id}), data={"with_ancestors": True}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0

@@ -15,17 +15,24 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
+from typing import Dict, List
 
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.user import (
+    TenantUserDepartmentListInputSLZ,
+    TenantUserDepartmentListOutputSLZ,
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -81,3 +88,79 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
+
+
+class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据用户 bk_username 获取用户部门信息（支持是否包括祖先部门）
+    """
+
+    serializer_class = TenantUserDepartmentListOutputSLZ
+
+    pagination_class = None
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="query_user_department",
+        operation_description="查询用户部门信息",
+        query_serializer=TenantUserDepartmentListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserDepartmentListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantUserDepartmentListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user = TenantUser.objects.select_related("data_source_user").filter(id=self.kwargs["id"]).first()
+
+        if not tenant_user:
+            raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+
+        return Response(
+            TenantUserDepartmentListOutputSLZ(self._get_dept_info(tenant_user, data["with_ancestors"]), many=True).data
+        )
+
+    def _get_dept_info(self, tenant_user: TenantUser, with_ancestors: bool) -> List[Dict]:
+        """
+        获取用户部门信息
+        """
+        dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(
+            user=tenant_user.data_source_user
+        ).select_related("department")
+
+        # 如果该用户没有部门关系，则返回空列表
+        if not dept_user_relations:
+            return []
+
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=[relation.department_id for relation in dept_user_relations],
+                tenant_id=tenant_user.tenant_id,
+            ).values_list("data_source_department_id", "id")
+        )
+
+        dept_info_map = {
+            relation.department_id: {
+                "id": dept_id_map[relation.department_id],
+                "name": relation.department.name,
+                "ancestors": self._get_dept_ancestors(relation.department_id) if with_ancestors else [],
+            }
+            # 考虑协同中部分同步的情况，部门数据源部门对应的租户部门不一定存在于用户本身租户部门中
+            for relation in dept_user_relations
+            if relation.department_id in dept_id_map
+        }
+
+        return list(dept_info_map.values())
+
+    @staticmethod
+    def _get_dept_ancestors(dept_id: int) -> List[Dict]:
+        """
+        获取某个部门的祖先部门列表
+        """
+        relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
+        # 若该部门不存在祖先节点，则返回空列表
+        if not relation:
+            return []
+        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 直接祖先部门
+        ancestors = relation.get_ancestors().select_related("department").values("department_id", "department__name")
+        return list(ancestors)
