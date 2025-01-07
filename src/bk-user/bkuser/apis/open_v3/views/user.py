@@ -92,7 +92,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
 
 class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    根据用户 bk_username 获取用户部门信息（支持是否包括祖先部门）
+    根据用户 bk_username 获取用户所在部门列表信息（支持是否包括祖先部门）
     """
 
     pagination_class = None
@@ -102,7 +102,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="query_user_department",
-        operation_description="查询用户部门信息",
+        operation_description="查询用户所在部门列表",
         query_serializer=TenantUserDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserDepartmentListOutputSLZ(many=True)},
     )
@@ -122,7 +122,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def _get_dept_info(self, tenant_user: TenantUser, with_ancestors: bool) -> List[Dict]:
         """
-        获取用户部门信息
+        获取用户所在部门列表信息
         """
         dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(
             user=tenant_user.data_source_user

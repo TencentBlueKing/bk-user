@@ -1,6 +1,6 @@
 ### Description
 
-Query user's information of departments(supports whether to include ancestor departments)
+Query user's list of departments(supports whether to include ancestor departments)
 
 ### Parameters
 

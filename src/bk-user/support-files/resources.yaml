@@ -85,7 +85,7 @@ paths:
   /api/v3/open/tenant/users/{bk_username}/departments/:
     get:
       operationId: query_user_department
-      description: 查询用户部门信息
+      description: 查询用户所在部门列表
       tags: []
       responses:
         default:
@@ -105,4 +105,4 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: false
-        descriptionEn: query user's information of departments
+        descriptionEn: query user's list of departments
