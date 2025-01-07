@@ -55,10 +55,10 @@ class AncestorSerializer(serializers.Serializer):
 
 
 class TenantUserDepartmentListInputSLZ(serializers.Serializer):
-    with_ancestors = serializers.BooleanField(help_text="是否包括祖先节点", default=False)
+    with_ancestors = serializers.BooleanField(help_text="是否包括祖先部门", default=False)
 
 
 class TenantUserDepartmentListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
-    ancestors = serializers.ListField(help_text="祖先节点", child=AncestorSerializer())
+    ancestors = serializers.ListField(help_text="祖先部门列表", child=AncestorSerializer())

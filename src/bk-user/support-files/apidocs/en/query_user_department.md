@@ -1,6 +1,6 @@
 ### Description
 
-Query user's information of department
+Query user's information of department(supports whether to include ancestor departments)
 
 ### Parameters
 
@@ -63,18 +63,20 @@ Query user's information of department
 |-----------|--------|------------------------------|
 | id        | int    | Tenant department ID         |
 | name      | string | Tenant department name       |
-| ancestors | list   | List of ancestry departments |
+| ancestors | list   | List of ancestor departments |
 
 #### Ancestors Parameters Description
 
-Ancestors is a list of ancestral departments. Each element in the list is the ancestry department information of the
-corresponding department, arranged in descending order (from root ancestry department -> direct ancestry department).
-Each element contains the following parameters:
+**Ancestors** is a list of ancestor departments. Each element in the list is the ancestor department information of the
+user's department, arranged in descending order (from root ancestor department -> parent department), for
+example: If the user department is **team AAA** and the parent department is **center AA**, then the order in the
+ancestor department list could be `company -> department A -> center AA`. Each ancestor department contains the
+following parameters:
 
-| Name | Type   | Description            |
-|------|--------|------------------------|
-| id   | int    | Tenant department ID   |
-| name | string | Tenant department name |
+| Name | Type   | Description              |
+|------|--------|--------------------------|
+| id   | int    | Ancestor department ID   |
+| name | string | Ancestor department name |
 
 # Response Example for Non-200 Status Code
 
