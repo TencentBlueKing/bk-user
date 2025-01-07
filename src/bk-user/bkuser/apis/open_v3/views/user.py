@@ -95,9 +95,9 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     根据用户 bk_username 获取用户部门信息（支持是否包括祖先部门）
     """
 
-    serializer_class = TenantUserDepartmentListOutputSLZ
-
     pagination_class = None
+
+    serializer_class = TenantUserDepartmentListOutputSLZ
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
