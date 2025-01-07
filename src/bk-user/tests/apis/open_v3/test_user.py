@@ -100,11 +100,9 @@ class TestTenantUserDepartmentList:
             reverse("open_v3.tenant_user.department.list", kwargs={"id": lisi.id}), data={"with_ancestors": True}
         )
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data[0]["id"] == dept_a.id
-        assert resp.data[0]["name"] == "部门A"
+        assert {d["id"] for d in resp.data} == {dept_a.id, dept_aa.id}
+        assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
         assert resp.data[0]["ancestors"] == [{"id": company.id, "name": "公司"}]
-        assert resp.data[1]["id"] == dept_aa.id
-        assert resp.data[1]["name"] == "中心AA"
         assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门A"}]
 
     def test_with_invalid_id(self, api_client):
