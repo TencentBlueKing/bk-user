@@ -105,4 +105,4 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: false
-        descriptionEn: query user's information of department
+        descriptionEn: query user's information of departments
