@@ -11,7 +11,7 @@ Query user's list of leaders
 ### Request Example
 
 ```
-// URL Path Parameters
+// URL Path Parameter
 /api/v3/open/tenant/users/mzmwjffhhbjg4fxz/leaders/
 ```
 
