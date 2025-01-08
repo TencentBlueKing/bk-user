@@ -79,7 +79,7 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: Query user's information
 
   /api/v3/open/tenant/users/{bk_username}/departments/:
@@ -104,5 +104,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: query user's list of departments
