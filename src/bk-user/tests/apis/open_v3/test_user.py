@@ -83,10 +83,22 @@ class TestTenantUserRetrieveApi:
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDepartmentListApi:
-    def test_with_no_ancestors(self, api_client):
+    def test_with_not_ancestors(self, api_client):
+        # with_ancestors = False
         zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": zhangsan.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data[0]["id"] == company.id
+        assert resp.data[0]["name"] == "公司"
+        assert "ancestors" not in resp.data[0]
+
+    def test_with_no_ancestors(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.department.list", kwargs={"id": zhangsan.id}), data={"with_ancestors": True}
+        )
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["id"] == company.id
         assert resp.data[0]["name"] == "公司"
@@ -108,7 +120,7 @@ class TestTenantUserDepartmentListApi:
 
     def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_with_no_department(self, api_client):
         freedom = TenantUser.objects.get(data_source_user__code="freedom")

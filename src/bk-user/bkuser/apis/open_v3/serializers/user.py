@@ -49,16 +49,16 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
 
-class AncestorSerializer(serializers.Serializer):
-    id = serializers.IntegerField(help_text="祖先部门 ID", source="department_id")
-    name = serializers.CharField(help_text="祖先部门名称", source="department__name")
+class AncestorSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="祖先部门 ID")
+    name = serializers.CharField(help_text="祖先部门名称")
 
 
 class TenantUserDepartmentListInputSLZ(serializers.Serializer):
-    with_ancestors = serializers.BooleanField(help_text="是否包括祖先部门", default=False)
+    with_ancestors = serializers.BooleanField(help_text="是否包括祖先部门", required=False, default=False)
 
 
 class TenantUserDepartmentListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
-    ancestors = serializers.ListField(help_text="祖先部门列表", child=AncestorSerializer())
+    ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)

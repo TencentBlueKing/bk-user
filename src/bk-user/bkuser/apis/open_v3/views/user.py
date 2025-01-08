@@ -17,9 +17,9 @@
 import logging
 from typing import Dict, List
 
-from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
@@ -30,9 +30,11 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayNameListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
+from bkuser.apps.data_source.models import (
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -111,10 +113,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user = TenantUser.objects.select_related("data_source_user").filter(id=self.kwargs["id"]).first()
-
-        if not tenant_user:
-            raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+        tenant_user = get_object_or_404(TenantUser.objects.all(), id=kwargs["id"])
 
         return Response(
             TenantUserDepartmentListOutputSLZ(self._get_dept_info(tenant_user, data["with_ancestors"]), many=True).data
@@ -124,6 +123,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         """
         获取用户所在部门列表信息
         """
+        # 根据 data_source_user 查询用户所属的数据源部门
         dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(
             user=tenant_user.data_source_user
         ).select_related("department")
@@ -132,35 +132,48 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         if not dept_user_relations:
             return []
 
-        dept_id_map = dict(
-            TenantDepartment.objects.filter(
-                data_source_department_id__in=[relation.department_id for relation in dept_user_relations],
-                tenant_id=tenant_user.tenant_id,
-            ).values_list("data_source_department_id", "id")
-        )
+        # 根据数据源部门 ID 查询用户所属的租户部门
+        tenant_departments = TenantDepartment.objects.filter(
+            data_source_department_id__in=[relation.department_id for relation in dept_user_relations],
+            tenant_id=tenant_user.tenant_id,
+        ).select_related("data_source_department")
 
-        dept_info_map = {
-            relation.department_id: {
-                "id": dept_id_map[relation.department_id],
-                "name": relation.department.name,
-                "ancestors": self._get_dept_ancestors(relation.department_id) if with_ancestors else [],
-            }
-            # 考虑协同中部分同步的情况，部门数据源部门对应的租户部门不一定存在于用户本身租户部门中
-            for relation in dept_user_relations
-            if relation.department_id in dept_id_map
-        }
+        dept_info_map = {}
+        for dept in tenant_departments:
+            # 获取租户部门的 ID 与对应的部门名称
+            dept_info = {"id": dept.id, "name": dept.data_source_department.name}
+            # 若 with_ancestors 为 True，则获取部门的祖先部门列表信息
+            if with_ancestors:
+                dept_info["ancestors"] = self._get_dept_ancestors(
+                    dept.data_source_department_id, tenant_user.tenant_id
+                )
+            dept_info_map[dept.data_source_department_id] = dept_info
 
         return list(dept_info_map.values())
 
     @staticmethod
-    def _get_dept_ancestors(dept_id: int) -> List[Dict]:
+    def _get_dept_ancestors(dept_id: int, tenant_id: str) -> List[Dict]:
         """
-        获取某个部门的祖先部门列表
+        获取某个部门的祖先部门列表信息（包含租户部门 ID 与 部门名称）
         """
         relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
         # 若该部门不存在祖先节点，则返回空列表
         if not relation:
             return []
-        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 直接祖先部门
-        ancestors = relation.get_ancestors().select_related("department").values("department_id", "department__name")
-        return list(ancestors)
+        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
+        ancestors = relation.get_ancestors().select_related("department")
+
+        # 根据祖先数据源部门 ID 查询祖先租户部门
+        ancestor_departments = TenantDepartment.objects.filter(
+            data_source_department_id__in=[ancestor.department_id for ancestor in ancestors],
+            tenant_id=tenant_id,
+        ).select_related("data_source_department")
+
+        return [
+            # 获取祖先租户部门的 ID 与对应的部门名称
+            {
+                "id": ancestor_department.id,
+                "name": ancestor_department.data_source_department.name,
+            }
+            for ancestor_department in ancestor_departments
+        ]
