@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
@@ -23,9 +24,12 @@ from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
+    TenantUserLeaderListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
+from bkuser.apps.data_source.models import DataSourceUserLeaderRelation
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -81,3 +85,42 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
+
+
+class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据用户 bk_username 获取用户 Leader 列表信息
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserLeaderListOutputSLZ
+
+    def get_queryset(self):
+        tenant_user = TenantUser.objects.select_related("data_source_user").filter(id=self.kwargs["id"]).first()
+
+        if not tenant_user:
+            raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+
+        return self._get_user_leader(tenant_user)
+
+    @staticmethod
+    def _get_user_leader(tenant_user: TenantUser):
+        user_leader_relation = DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user)
+
+        if not user_leader_relation:
+            return []
+
+        return TenantUser.objects.filter(
+            data_source_user_id__in=[relation.leader_id for relation in user_leader_relation],
+            tenant_id=tenant_user.tenant_id,
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="query_user_leader",
+        operation_description="查询用户 Leader 列表",
+        responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

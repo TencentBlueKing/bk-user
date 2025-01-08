@@ -79,3 +79,33 @@ class TestTenantUserRetrieveApi:
     def test_tenant_not_found(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": "not_exist"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserLeaderListApi:
+    def test_with_single_leader(self, api_client):
+        lisi = TenantUser.objects.get(data_source_user__code="lisi")
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": lisi.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["display_name"] == "张三"
+
+    def test_with_multiple_leader(self, api_client):
+        lisi = TenantUser.objects.get(data_source_user__code="lisi")
+        wangwu = TenantUser.objects.get(data_source_user__code="wangwu")
+        maiba = TenantUser.objects.get(data_source_user__code="maiba")
+        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": maiba.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert {t["bk_username"] for t in resp.data} == {wangwu.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"王五", "李四"}
+
+    def test_with_no_leader(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": zhangsan.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
+
+    def test_with_invalid_user(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
