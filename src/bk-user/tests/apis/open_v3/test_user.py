@@ -90,6 +90,7 @@ class TestTenantUserDepartmentListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["id"] == company.id
         assert resp.data[0]["name"] == "公司"
+        assert resp.data[0]["ancestors"] == []
 
     def test_with_ancestors(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__code="lisi")
