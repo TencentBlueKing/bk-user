@@ -106,7 +106,7 @@ class TestTenantUserDepartmentListApi:
         assert resp.data[0]["ancestors"] == [{"id": company.id, "name": "公司"}]
         assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门A"}]
 
-    def test_with_invalid_id(self, api_client):
+    def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
