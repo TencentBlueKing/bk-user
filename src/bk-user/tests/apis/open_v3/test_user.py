@@ -24,7 +24,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDisplayNameList:
+class TestTenantUserDisplayNameListApi:
     def test_standard(self, api_client):
         zhangsan_id = TenantUser.objects.get(data_source_user__code="zhangsan").id
         lisi_id = TenantUser.objects.get(data_source_user__code="lisi").id
@@ -82,7 +82,7 @@ class TestTenantUserRetrieveApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDepartmentList:
+class TestTenantUserDepartmentListApi:
     def test_with_no_ancestors(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
