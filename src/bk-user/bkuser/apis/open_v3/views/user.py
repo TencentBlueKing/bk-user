@@ -16,9 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
-from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.user import (
@@ -29,7 +29,6 @@ from bkuser.apis.open_v3.serializers.user import (
 )
 from bkuser.apps.data_source.models import DataSourceUserLeaderRelation
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -97,10 +96,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserLeaderListOutputSLZ
 
     def get_queryset(self):
-        tenant_user = TenantUser.objects.select_related("data_source_user").filter(id=self.kwargs["id"]).first()
-
-        if not tenant_user:
-            raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+        tenant_user = get_object_or_404(TenantUser.objects.all(), id=self.kwargs["id"])
 
         return self._get_user_leader(tenant_user)
 

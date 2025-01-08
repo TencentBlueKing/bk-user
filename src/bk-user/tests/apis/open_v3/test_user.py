@@ -108,4 +108,4 @@ class TestTenantUserLeaderListApi:
 
     def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.status_code == status.HTTP_404_NOT_FOUND

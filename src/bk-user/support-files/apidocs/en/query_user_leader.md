@@ -43,11 +43,11 @@ Query user's list of leaders
 # Response Example for Non-200 Status Code
 
 ```json5
-// status_code = 400
+// status_code = 404
 {
   "error": {
-    "code": "INVALID_ARGUMENT",
-    "message": "Cannot find the corresponding tenant user"
+    "code": "NOT_FOUND",
+    "message": "Object not found"
   }
 }
 ```

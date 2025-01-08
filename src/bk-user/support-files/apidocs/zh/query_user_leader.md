@@ -43,11 +43,11 @@
 ### 状态码非 200 的响应示例
 
 ```json5
-// status_code = 400
+// status_code = 404
 {
-    "error": {
-        "code": "INVALID_ARGUMENT",
-        "message": "无法找到对应租户用户"
-    }
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "对象未找到"
+  }
 }
 ```
