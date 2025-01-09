@@ -81,3 +81,28 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: false
         descriptionEn: Query user's information
+
+  /api/v3/open/tenant/departments/{department_id}/:
+    get:
+      operationId: retrieve_department
+      description: 查询部门信息
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/departments/{department_id}/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: Query information of the department

@@ -14,8 +14,20 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from .department import TenantDepartmentRetrieveApi
-from .tenant import TenantListApi
-from .user import TenantUserDisplayNameListApi, TenantUserRetrieveApi
 
-__all__ = ["TenantListApi", "TenantUserDisplayNameListApi", "TenantUserRetrieveApi", "TenantDepartmentRetrieveApi"]
+from rest_framework import serializers
+
+
+class AncestorSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="祖先部门 ID")
+    name = serializers.CharField(help_text="祖先部门名称")
+
+
+class TenantDepartmentRetrieveInputSLZ(serializers.Serializer):
+    with_ancestors = serializers.BooleanField(label="是否包括祖先部门", required=False, default=False)
+
+
+class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    name = serializers.CharField(help_text="部门名称")
+    ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)

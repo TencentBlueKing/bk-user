@@ -35,6 +35,11 @@ urlpatterns = [
                     views.TenantUserRetrieveApi.as_view(),
                     name="open_v3.tenant_user.retrieve",
                 ),
+                path(
+                    "departments/<int:id>/",
+                    views.TenantDepartmentRetrieveApi.as_view(),
+                    name="open_v3.tenant_department.retrieve",
+                ),
             ]
         ),
     ),
