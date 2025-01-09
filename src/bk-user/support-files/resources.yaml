@@ -84,7 +84,7 @@ paths:
 
   /api/v3/open/tenant/users/{bk_username}/leaders/:
     get:
-      operationId: query_user_leader
+      operationId: list_user_leader
       description: 查询用户 Leader 列表
       tags: []
       responses:

@@ -114,7 +114,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="query_user_leader",
+        operation_id="list_user_leader",
         operation_description="查询用户 Leader 列表",
         responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
     )
