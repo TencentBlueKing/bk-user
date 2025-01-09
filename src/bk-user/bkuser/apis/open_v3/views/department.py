@@ -81,5 +81,5 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
         # 若该部门不存在祖先节点，则返回空列表
         if not relation:
             return []
-        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 直接祖先部门
+        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
         return list(relation.get_ancestors().values_list("department_id", flat=True))
