@@ -31,6 +31,7 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
 )
@@ -134,55 +135,46 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         if not dept_ids:
             return []
 
-        ancestor_id_map = {}
-
-        # 若 with_ancestors 为 True，则获取所有部门的祖先部门列表信息
+        # 根据 with_ancestor 需要，获取祖先部门
+        ancestors_map: Dict[int, List[int]] = {}
         if with_ancestors:
-            ancestor_id_map = {dept_id: self._get_dept_ancestors(dept_id) for dept_id in dept_ids}
+            # 查询每个部门的祖先部门列表
+            ancestors_map = {dept_id: self._get_dept_ancestors(dept_id) for dept_id in dept_ids}
 
-        # 拼接所有部门 ID 与祖先部门 ID
-        dept_ids_with_ancestor = dept_ids + [
-            ancestor_id for dept_id in dept_ids for ancestor_id in ancestor_id_map.get(dept_id, [])
-        ]
+        # 记录所有涉及的部门 ID，用于查询 租户部门 ID 和 部门 Name
+        all_dept_ids = set(dept_ids)
+        all_dept_ids.update({d for ancestor_ids in ancestors_map.values() for d in ancestor_ids})
 
-        # 一次性根据所有数据源部门 ID 查询用户所属的租户部门（包括祖先部门）
-        tenant_departments = TenantDepartment.objects.filter(
-            data_source_department_id__in=dept_ids_with_ancestor,
-            tenant_id=tenant_user.tenant_id,
+        # 预加载部门对应的名称
+        dept_name_map = dict(DataSourceDepartment.objects.filter(id__in=all_dept_ids).values_list("id", "name"))
+        # 预加载部门对应的租户部门
+        tenant_dept_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=all_dept_ids, tenant_id=tenant_user.tenant_id
+            ).values_list("data_source_department_id", "id")
         )
 
-        # 获取用户的租户部门 ID 与对应的部门名称
-        dept_id_map = {
-            dept.data_source_department_id: {"id": dept.id, "name": dept.data_source_department.name}
-            for dept in tenant_departments
-        }
-
-        dept_info_map = {}
-        # 遍历所有的部门 ID，组装数据
+        # 组装数据
+        depts = []
         for dept_id in dept_ids:
             # 若该部门不存在于租户部门中，则跳过
-            if dept_id not in dept_id_map:
+            if dept_id not in tenant_dept_map:
                 continue
 
-            dept_info = {
-                "id": dept_id_map[dept_id]["id"],
-                "name": dept_id_map[dept_id]["name"],
-            }
-
+            dept = {"id": tenant_dept_map[dept_id], "name": dept_name_map[dept_id]}
             if with_ancestors:
-                dept_info["ancestors"] = [
+                dept["ancestors"] = [
                     {
-                        "id": dept_id_map[ancestor_id]["id"],
-                        "name": dept_id_map[ancestor_id]["name"],
+                        "id": tenant_dept_map[d],
+                        "name": dept_name_map[d],
                     }
-                    # 保持每个部门对应的祖先部门列表顺序
-                    for ancestor_id in ancestor_id_map.get(dept_id, [])
-                    # 过滤掉不存在于租户部门中的祖先部门
-                    if ancestor_id in dept_id_map
+                    for d in ancestors_map.get(dept_id, [])
+                    if d in tenant_dept_map
                 ]
-            dept_info_map[dept_id] = dept_info
 
-        return list(dept_info_map.values())
+            depts.append(dept)
+
+        return depts
 
     @staticmethod
     def _get_dept_ancestors(dept_id: int) -> List[int]:
