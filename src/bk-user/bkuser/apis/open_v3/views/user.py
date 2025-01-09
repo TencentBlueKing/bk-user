@@ -187,7 +187,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     @staticmethod
     def _get_dept_ancestors(dept_id: int) -> List[int]:
         """
-        获取某个部门的祖先部门列表信息（包含租户部门 ID 与 部门名称）
+        获取某个部门的祖先部门 ID 列表
         """
         relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
         # 若该部门不存在祖先节点，则返回空列表
