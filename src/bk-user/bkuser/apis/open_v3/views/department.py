@@ -59,7 +59,7 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
 
         if data["with_ancestors"]:
             ancestor_ids = self._get_ancestors(tenant_department.data_source_department.id)
-            ancestor_tenant_dept = TenantDepartment.objects.filter(
+            ancestor_tenant_depts = TenantDepartment.objects.filter(
                 data_source_department_id__in=ancestor_ids, tenant_id=tenant_department.tenant_id
             )
             department_info["ancestors"] = [
@@ -67,7 +67,7 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
                     "id": ancestor_tenant_dept.id,
                     "name": ancestor_tenant_dept.data_source_department.name,
                 }
-                for ancestor_tenant_dept in ancestor_tenant_dept
+                for ancestor_tenant_dept in ancestor_tenant_depts
             ]
 
         return Response(TenantDepartmentRetrieveOutputSLZ(department_info).data)
