@@ -26,8 +26,8 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDisplayNameListApi:
     def test_standard(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__code="zhangsan").id
-        lisi_id = TenantUser.objects.get(data_source_user__code="lisi").id
+        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
+        lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
         resp = api_client.get(
             reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, lisi_id])}
         )
@@ -38,7 +38,7 @@ class TestTenantUserDisplayNameListApi:
         assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
 
     def test_with_invalid_bk_usernames(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__code="zhangsan").id
+        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
         resp = api_client.get(
             reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, "invalid"])}
         )
@@ -67,7 +67,7 @@ class TestTenantUserDisplayNameListApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserRetrieveApi:
     def test_standard(self, api_client, random_tenant):
-        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["bk_username"] == zhangsan.id
@@ -85,7 +85,7 @@ class TestTenantUserRetrieveApi:
 class TestTenantUserDepartmentListApi:
     def test_with_not_ancestors(self, api_client):
         # with_ancestors = False
-        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
@@ -94,7 +94,7 @@ class TestTenantUserDepartmentListApi:
         assert "ancestors" not in resp.data[0]
 
     def test_with_no_ancestors(self, api_client):
-        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
             reverse("open_v3.tenant_user.department.list", kwargs={"id": zhangsan.id}), data={"with_ancestors": True}
@@ -105,7 +105,7 @@ class TestTenantUserDepartmentListApi:
         assert resp.data[0]["ancestors"] == []
 
     def test_with_ancestors(self, api_client):
-        lisi = TenantUser.objects.get(data_source_user__code="lisi")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
         dept_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
@@ -123,7 +123,7 @@ class TestTenantUserDepartmentListApi:
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_with_no_department(self, api_client):
-        freedom = TenantUser.objects.get(data_source_user__code="freedom")
+        freedom = TenantUser.objects.get(data_source_user__username="freedom")
         resp = api_client.get(
             reverse("open_v3.tenant_user.department.list", kwargs={"id": freedom.id}), data={"with_ancestors": True}
         )
@@ -134,24 +134,24 @@ class TestTenantUserDepartmentListApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserLeaderListApi:
     def test_with_single_leader(self, api_client):
-        lisi = TenantUser.objects.get(data_source_user__code="lisi")
-        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": lisi.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["bk_username"] == zhangsan.id
         assert resp.data[0]["display_name"] == "张三"
 
     def test_with_multiple_leader(self, api_client):
-        lisi = TenantUser.objects.get(data_source_user__code="lisi")
-        wangwu = TenantUser.objects.get(data_source_user__code="wangwu")
-        maiba = TenantUser.objects.get(data_source_user__code="maiba")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu")
+        maiba = TenantUser.objects.get(data_source_user__username="maiba")
         resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": maiba.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {wangwu.id, lisi.id}
         assert {t["display_name"] for t in resp.data} == {"王五", "李四"}
 
     def test_with_no_leader(self, api_client):
-        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan")
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0

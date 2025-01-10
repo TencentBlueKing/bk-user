@@ -210,16 +210,13 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
             )
         )
 
-        return TenantUser.objects.filter(
-            data_source_user_id__in=leader_ids,
-            tenant_id=tenant_user.tenant_id,
-        )
+        return TenantUser.objects.filter(data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id)
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="list_user_leader",
         operation_description="查询用户 Leader 列表",
-        responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantUserLeaderListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
