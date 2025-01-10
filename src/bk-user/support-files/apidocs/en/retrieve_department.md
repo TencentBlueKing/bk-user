@@ -4,10 +4,10 @@ Query information of the department(supports whether to include ancestor departm
 
 ### Parameters
 
-| Name           | Type    | Required | Description                                    |
-|----------------|---------|----------|------------------------------------------------|
-| department_id  | int     | Yes      | Tenant department ID                           |
-| with_ancestors | boolean | No       | Whether to include ancestors, default is false |
+| Name           | Type    | Required | Location    | Description                                    |
+|----------------|---------|----------|-------------|------------------------------------------------|
+| department_id  | int     | Yes      | path        | Tenant department ID                           |
+| with_ancestors | boolean | No       | query param | Whether to include ancestors, default is false |
 
 ### Request Example
 
@@ -20,18 +20,18 @@ Query information of the department(supports whether to include ancestor departm
 
 ```json5
 {
-    "id": 3,
-    "name": "部门C",
-    "ancestors": [
-        {
-            "id": 1,
-            "name": "部门A"
-        },
-        {
-            "id": 2,
-            "name": "部门B"
-        }
-    ]
+  "id": 3,
+  "name": "部门C",
+  "ancestors": [
+    {
+      "id": 1,
+      "name": "部门A"
+    },
+    {
+      "id": 2,
+      "name": "部门B"
+    }
+  ]
 }
 ```
 
