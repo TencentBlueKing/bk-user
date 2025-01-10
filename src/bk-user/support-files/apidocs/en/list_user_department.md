@@ -4,10 +4,10 @@ Query user's list of departments(supports whether to include ancestor department
 
 ### Parameters
 
-| Name           | Type    | Required | Description                                    | Location    |
-|----------------|---------|----------|------------------------------------------------|-------------|
-| bk_username    | string  | Yes      | Blueking user's unique identifier              | path        |
-| with_ancestors | boolean | No       | Whether to include ancestors, default is false | query param |
+| Name           | Type    | Required | Location    | Description                                    |
+|----------------|---------|----------|-------------|------------------------------------------------|
+| bk_username    | string  | Yes      | path        | Blueking user's unique identifier              |
+| with_ancestors | boolean | No       | query param | Whether to include ancestors, default is false |
 
 ### Request Example
 
