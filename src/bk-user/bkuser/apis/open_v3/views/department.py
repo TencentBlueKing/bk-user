@@ -66,10 +66,10 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
 
             department_info["ancestors"] = [
                 {
-                    "id": ancestor_tenant_dept.id,
-                    "name": ancestor_tenant_dept.data_source_department.name,
+                    "id": dept.id,
+                    "name": dept.data_source_department.name,
                 }
-                for ancestor_tenant_dept in ancestor_tenant_depts
+                for dept in ancestor_tenant_depts
             ]
 
         return Response(TenantDepartmentRetrieveOutputSLZ(department_info).data)

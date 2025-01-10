@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantDepartmentRetrieveApi:
     def test_with_no_ancestors(self, api_client):
-        company = TenantDepartment.objects.get(data_source_department__code="company")
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
             reverse("open_v3.tenant_department.retrieve", kwargs={"id": company.id}), data={"with_ancestors": True}
         )
@@ -37,7 +37,7 @@ class TestTenantDepartmentRetrieveApi:
         assert resp.data["ancestors"] == []
 
     def test_with_not_ancestors(self, api_client):
-        center_aa = TenantDepartment.objects.get(data_source_department__code="center_aa")
+        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         resp = api_client.get(reverse("open_v3.tenant_department.retrieve", kwargs={"id": center_aa.id}))
 
         assert resp.status_code == status.HTTP_200_OK
@@ -46,9 +46,9 @@ class TestTenantDepartmentRetrieveApi:
         assert "ancestors" not in resp.data
 
     def test_with_ancestors(self, api_client):
-        company = TenantDepartment.objects.get(data_source_department__code="company")
-        dept_a = TenantDepartment.objects.get(data_source_department__code="dept_a")
-        center_aa = TenantDepartment.objects.get(data_source_department__code="center_aa")
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         resp = api_client.get(
             reverse("open_v3.tenant_department.retrieve", kwargs={"id": center_aa.id}), data={"with_ancestors": True}
         )
