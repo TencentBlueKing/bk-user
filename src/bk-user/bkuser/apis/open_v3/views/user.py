@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
@@ -95,20 +96,17 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     serializer_class = TenantUserLeaderListOutputSLZ
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[TenantUser]:
         tenant_user = get_object_or_404(TenantUser.objects.all(), id=self.kwargs["id"])
 
-        return self._get_user_leader(tenant_user)
-
-    @staticmethod
-    def _get_user_leader(tenant_user: TenantUser):
-        user_leader_relation = DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user)
-
-        if not user_leader_relation:
-            return []
+        leader_ids = list(
+            DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user).values_list(
+                "leader_id", flat=True
+            )
+        )
 
         return TenantUser.objects.filter(
-            data_source_user_id__in=[relation.leader_id for relation in user_leader_relation],
+            data_source_user_id__in=leader_ids,
             tenant_id=tenant_user.tenant_id,
         )
 
