@@ -58,10 +58,12 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
         }
 
         if data["with_ancestors"]:
+            # 查询部门对应的祖先部门列表
             ancestor_ids = self._get_ancestors(tenant_department.data_source_department_id)
             ancestor_tenant_depts = TenantDepartment.objects.filter(
                 data_source_department_id__in=ancestor_ids, tenant_id=tenant_department.tenant_id
             ).select_related("data_source_department")
+
             department_info["ancestors"] = [
                 {
                     "id": ancestor_tenant_dept.id,
