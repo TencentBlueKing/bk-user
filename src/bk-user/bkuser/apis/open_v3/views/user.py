@@ -17,6 +17,7 @@
 import logging
 from typing import Dict, List
 
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
@@ -28,12 +29,14 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListOutputSLZ,
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
+    TenantUserLeaderListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
+    DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
@@ -187,3 +190,33 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
             return []
         # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
         return list(relation.get_ancestors().values_list("department_id", flat=True))
+
+
+class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据用户 bk_username 获取用户 Leader 列表信息
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserLeaderListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        tenant_user = get_object_or_404(TenantUser.objects.all(), id=self.kwargs["id"])
+
+        leader_ids = list(
+            DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user).values_list(
+                "leader_id", flat=True
+            )
+        )
+
+        return TenantUser.objects.filter(data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id)
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_user_leader",
+        operation_description="查询用户 Leader 列表",
+        responses={status.HTTP_200_OK: TenantUserLeaderListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
