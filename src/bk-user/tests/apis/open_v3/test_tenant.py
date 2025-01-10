@@ -21,7 +21,7 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-class TestTenantList:
+class TestTenantListApi:
     def test_standard(self, api_client, default_tenant, random_tenant):
         resp = api_client.get(reverse("open_v3.tenant.list"))
         assert resp.status_code == status.HTTP_200_OK
