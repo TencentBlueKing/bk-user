@@ -23,7 +23,7 @@ from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apis.open_v3.mixins import OpenApiCommonMixin, OpenApiTenantIDMixin
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
@@ -43,7 +43,7 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 logger = logging.getLogger(__name__)
 
 
-class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantUserDisplayNameListApi(OpenApiCommonMixin, OpenApiTenantIDMixin, generics.ListAPIView):
     """
     批量根据用户 bk_username 获取用户展示名
     TODO: 性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
@@ -54,6 +54,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserDisplayNameListOutputSLZ
 
     def get_queryset(self):
+        tenant_id = self.get_tenant_id()
         slz = TenantUserDisplayNameListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -61,7 +62,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         return (
-            TenantUser.objects.filter(id__in=data["bk_usernames"])
+            TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=tenant_id)
             .select_related("data_source_user")
             .only("id", "data_source_user__full_name")
         )
@@ -77,7 +78,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
+class TenantUserRetrieveApi(OpenApiCommonMixin, OpenApiTenantIDMixin, generics.RetrieveAPIView):
     """
     根据用户 bk_username 获取用户信息
     """
@@ -93,10 +94,12 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        tenant_id = self.get_tenant_id()
+        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=tenant_id), id=kwargs["id"])
+        return Response(TenantUserRetrieveOutputSLZ(tenant_user).data)
 
 
-class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantUserDepartmentListApi(OpenApiCommonMixin, OpenApiTenantIDMixin, generics.ListAPIView):
     """
     根据用户 bk_username 获取用户所在部门列表信息（支持是否包括祖先部门）
     """
@@ -113,11 +116,12 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
+        tenant_id = self.get_tenant_id()
         slz = TenantUserDepartmentListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user = get_object_or_404(TenantUser.objects.all(), id=kwargs["id"])
+        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=tenant_id), id=kwargs["id"])
 
         return Response(
             TenantUserDepartmentListOutputSLZ(self._get_dept_info(tenant_user, data["with_ancestors"]), many=True).data
@@ -192,7 +196,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         return list(relation.get_ancestors().values_list("department_id", flat=True))
 
 
-class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantUserLeaderListApi(OpenApiCommonMixin, OpenApiTenantIDMixin, generics.ListAPIView):
     """
     根据用户 bk_username 获取用户 Leader 列表信息
     """
@@ -202,7 +206,8 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserLeaderListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        tenant_user = get_object_or_404(TenantUser.objects.all(), id=self.kwargs["id"])
+        tenant_id = self.get_tenant_id()
+        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=tenant_id), id=self.kwargs["id"])
 
         leader_ids = list(
             DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user).values_list(

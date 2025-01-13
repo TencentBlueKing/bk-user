@@ -15,6 +15,8 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
+from rest_framework.exceptions import ValidationError
+from rest_framework.request import Request
 
 from .permissions import ApiGatewayAppVerifiedPermission
 
@@ -22,3 +24,15 @@ from .permissions import ApiGatewayAppVerifiedPermission
 class OpenApiCommonMixin:
     authentication_classes = [ApiGatewayJWTAuthentication]
     permission_classes = [ApiGatewayAppVerifiedPermission]
+
+
+class OpenApiTenantIDMixin:
+    request: Request
+
+    def get_tenant_id(self):
+        tenant_id = self.request.headers.get("X-Bk-Tenant-Id")
+
+        if not tenant_id:
+            raise ValidationError("X-Bk-Tenant-Id header is required")
+
+        return tenant_id
