@@ -14,6 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from functools import cached_property
+
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
@@ -25,11 +27,10 @@ class OpenApiCommonMixin:
     authentication_classes = [ApiGatewayJWTAuthentication]
     permission_classes = [ApiGatewayAppVerifiedPermission]
 
-
-class OpenApiTenantIDMixin:
     request: Request
 
-    def get_tenant_id(self):
+    @cached_property
+    def tenant_id(self) -> str:
         tenant_id = self.request.headers.get("X-Bk-Tenant-Id")
 
         if not tenant_id:
