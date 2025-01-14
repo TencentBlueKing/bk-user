@@ -56,7 +56,7 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
         # 从 Header 中获取当前租户 ID
         cur_tenant_id = self.request.META.get("HTTP_X_BK_TENANT_ID")
         if not cur_tenant_id:
-            raise error_codes.INVALID_ARGUMENT.f("X-BK-TENANT-ID header is required", replace=True)
+            raise error_codes.INVALID_ARGUMENT.f("X-Bk-Tenant-Id header is required", replace=True)
 
         slz = TenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
