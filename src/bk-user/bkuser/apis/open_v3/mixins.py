@@ -29,9 +29,11 @@ class OpenApiCommonMixin:
 
     request: Request
 
+    TenantHeaderKey = "HTTP_X_BK_TENANT_ID"
+
     @cached_property
     def tenant_id(self) -> str:
-        tenant_id = self.request.headers.get("X-Bk-Tenant-Id")
+        tenant_id = self.request.META.get(self.TenantHeaderKey)
 
         if not tenant_id:
             raise ValidationError("X-Bk-Tenant-Id header is required")
