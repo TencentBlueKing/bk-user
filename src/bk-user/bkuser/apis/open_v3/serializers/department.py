@@ -22,6 +22,9 @@ class AncestorSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="祖先部门 ID")
     name = serializers.CharField(help_text="祖先部门名称")
 
+    class Meta:
+        ref_name = "department.AncestorSLZ"
+
 
 class TenantDepartmentRetrieveInputSLZ(serializers.Serializer):
     with_ancestors = serializers.BooleanField(label="是否包括祖先部门", required=False, default=False)

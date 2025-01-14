@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -25,8 +24,8 @@ from bkuser.apis.open_v3.serializers.department import (
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
 from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.biz.organization import DataSourceDepartmentHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -52,36 +51,18 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
 
         tenant_department = self.get_object()
 
-        department_info = {
+        info = {
             "id": tenant_department.id,
             "name": tenant_department.data_source_department.name,
         }
 
         if data["with_ancestors"]:
             # 查询部门对应的祖先部门列表
-            ancestor_ids = self._get_ancestors(tenant_department.data_source_department_id)
-            ancestor_tenant_depts = TenantDepartment.objects.filter(
+            ancestor_ids = DataSourceDepartmentHandler.get_dept_ancestors(tenant_department.data_source_department_id)
+            tenant_depts = TenantDepartment.objects.filter(
                 data_source_department_id__in=ancestor_ids, tenant_id=tenant_department.tenant_id
             ).select_related("data_source_department")
 
-            department_info["ancestors"] = [
-                {
-                    "id": dept.id,
-                    "name": dept.data_source_department.name,
-                }
-                for dept in ancestor_tenant_depts
-            ]
+            info["ancestors"] = [{"id": d.id, "name": d.data_source_department.name} for d in tenant_depts]
 
-        return Response(TenantDepartmentRetrieveOutputSLZ(department_info).data)
-
-    @staticmethod
-    def _get_ancestors(dept_id: int) -> List[int]:
-        """
-        获取某个部门的祖先部门 ID 列表
-        """
-        relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
-        # 若该部门不存在祖先节点，则返回空列表
-        if not relation:
-            return []
-        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
-        return list(relation.get_ancestors().values_list("department_id", flat=True))
+        return Response(TenantDepartmentRetrieveOutputSLZ(info).data)
