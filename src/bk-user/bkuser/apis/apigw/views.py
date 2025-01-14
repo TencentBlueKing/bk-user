@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.db.models import QuerySet
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -22,6 +23,7 @@ from bkuser.common.error_codes import error_codes
 
 from .authentications import InnerBearerTokenAuthentication
 from .permissions import IsInnerBearerTokenAuthenticated
+from .serializers import TenantUserListInputSLZ, TenantUserListOutputSLZ
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
@@ -43,3 +45,37 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
             raise error_codes.OBJECT_NOT_FOUND.f(f"user({tenant_user_id}) not found", replace=True)
 
         return Response({"tenant_id": tenant_user.tenant_id})
+
+
+class TenantUserListApi(generics.ListAPIView):
+    """
+    根据 bk_username 批量查询用户信息
+    """
+
+    authentication_classes = [InnerBearerTokenAuthentication]
+    permission_classes = [IsInnerBearerTokenAuthenticated]
+
+    pagination_class = None
+
+    serializer_class = TenantUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # [only] 用于减少查询字段，仅查询必要字段
+        return (
+            TenantUser.objects.filter(id__in=data["bk_usernames"])
+            .select_related("data_source_user")
+            .only(
+                "id",
+                "tenant_id",
+                "data_source_user__phone_country_code",
+                "data_source_user__phone",
+                "data_source_user__email",
+            )
+        )
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
