@@ -14,7 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from functools import cached_property
+
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
+from rest_framework.exceptions import ValidationError
+from rest_framework.request import Request
 
 from .permissions import ApiGatewayAppVerifiedPermission
 
@@ -22,3 +26,16 @@ from .permissions import ApiGatewayAppVerifiedPermission
 class OpenApiCommonMixin:
     authentication_classes = [ApiGatewayJWTAuthentication]
     permission_classes = [ApiGatewayAppVerifiedPermission]
+
+    request: Request
+
+    TenantHeaderKey = "HTTP_X_BK_TENANT_ID"
+
+    @cached_property
+    def tenant_id(self) -> str:
+        tenant_id = self.request.META.get(self.TenantHeaderKey)
+
+        if not tenant_id:
+            raise ValidationError("X-Bk-Tenant-Id header is required")
+
+        return tenant_id
