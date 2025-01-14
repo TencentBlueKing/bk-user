@@ -14,17 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.urls import path
+from bkuser.apis.apigw.authentications import InnerBearerTokenAuthentication
+from bkuser.apis.apigw.permissions import IsInnerBearerTokenAuthenticated
 
-from . import views
 
-urlpatterns = [
-    path(
-        "tenant-users/<str:tenant_user_id>/", views.TenantUserRetrieveApi.as_view(), name="apigw.tenant_user.retrieve"
-    ),
-    path(
-        "tenant-users/-/contact-infos/",
-        views.TenantUserContactInfoListApi.as_view(),
-        name="apigw.tenant_user.contact_info.list",
-    ),
-]
+class InnerApiCommonMixin:
+    authentication_classes = [InnerBearerTokenAuthentication]
+    permission_classes = [IsInnerBearerTokenAuthenticated]

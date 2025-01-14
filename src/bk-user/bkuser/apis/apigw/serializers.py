@@ -14,22 +14,27 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.conf import settings
 from rest_framework import serializers
 
+from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
 class TenantUserListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
         help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
-        max_items=settings.BATCH_QUERY_USER_INFO_BY_BK_USERNAME_LIMIT,
+        max_items=100,
     )
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     tenant_id = serializers.CharField(help_text="租户 ID")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
