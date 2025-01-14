@@ -58,11 +58,11 @@ class TestTenantUserListApi:
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"
 
-    def test_with_no_bk_usernames(self, apigw_api_client, default_tenant_user_data, default_tenant):
+    def test_with_no_bk_usernames(self, apigw_api_client):
         resp = apigw_api_client.get(reverse("apigw.tenant_user.list"), data={"bk_usernames": ""})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_with_invalid_length(self, apigw_api_client, default_tenant_user_data, default_tenant):
+    def test_with_invalid_length(self, apigw_api_client):
         resp = apigw_api_client.get(
             reverse("apigw.tenant_user.list"),
             data={
