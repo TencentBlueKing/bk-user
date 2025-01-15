@@ -61,11 +61,7 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
         return (
             TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id)
             .select_related("data_source_user")
-            .only(
-                "id",
-                "tenant_id",
-                "data_source_user__full_name",
-            )
+            .only("id", "tenant_id", "data_source_user__full_name")
         )
 
     def get(self, request, *args, **kwargs):
