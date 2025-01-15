@@ -38,11 +38,11 @@ from bkuser.apis.open_v3.serializers.user import (
 )
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
-    DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.organization import DataSourceDepartmentHandler
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         ancestors_map: Dict[int, List[int]] = {}
         if with_ancestors:
             # 查询每个部门的祖先部门列表
-            ancestors_map = {dept_id: self._get_dept_ancestors(dept_id) for dept_id in dept_ids}
+            ancestors_map = {dept_id: DataSourceDepartmentHandler.get_dept_ancestors(dept_id) for dept_id in dept_ids}
 
         # 记录所有涉及的部门 ID，用于查询 租户部门 ID 和 部门 Name
         all_dept_ids = set(dept_ids)
@@ -183,18 +183,6 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
             depts.append(dept)
 
         return depts
-
-    @staticmethod
-    def _get_dept_ancestors(dept_id: int) -> List[int]:
-        """
-        获取某个部门的祖先部门 ID 列表
-        """
-        relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
-        # 若该部门不存在祖先节点，则返回空列表
-        if not relation:
-            return []
-        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
-        return list(relation.get_ancestors().values_list("department_id", flat=True))
 
 
 class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):

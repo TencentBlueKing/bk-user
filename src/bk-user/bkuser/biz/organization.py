@@ -22,6 +22,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
+    DataSourceDepartmentRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
@@ -101,3 +102,17 @@ class DataSourceUserHandler:
                 fields=["password", "password_updated_at", "updated_at"],
                 batch_size=250,
             )
+
+
+class DataSourceDepartmentHandler:
+    @staticmethod
+    def get_dept_ancestors(dept_id: int) -> List[int]:
+        """
+        获取某个部门的祖先部门 ID 列表
+        """
+        relation = DataSourceDepartmentRelation.objects.filter(department_id=dept_id).first()
+        # 若该部门不存在祖先节点，则返回空列表
+        if not relation:
+            return []
+        # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
+        return list(relation.get_ancestors().values_list("department_id", flat=True))
