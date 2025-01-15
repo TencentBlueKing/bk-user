@@ -136,7 +136,7 @@ class TestTenantUserLeaderListApi:
     def test_with_single_leader(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
-        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": lisi.id}))
+        resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": lisi.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["bk_username"] == zhangsan.id
         assert resp.data[0]["display_name"] == "张三"
@@ -145,17 +145,17 @@ class TestTenantUserLeaderListApi:
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu")
         maiba = TenantUser.objects.get(data_source_user__username="maiba")
-        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": maiba.id}))
+        resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": maiba.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {wangwu.id, lisi.id}
         assert {t["display_name"] for t in resp.data} == {"王五", "李四"}
 
     def test_with_no_leader(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
-        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": zhangsan.id}))
+        resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
     def test_with_invalid_user(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
+        resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
