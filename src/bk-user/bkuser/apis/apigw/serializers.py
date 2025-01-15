@@ -21,14 +21,14 @@ from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
-class TenantUserListInputSLZ(serializers.Serializer):
+class TenantUserContactInfoListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
         help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
         max_items=100,
     )
 
 
-class TenantUserListOutputSLZ(serializers.Serializer):
+class TenantUserContactInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     tenant_id = serializers.CharField(help_text="租户 ID")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")

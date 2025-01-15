@@ -22,7 +22,7 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
 from .mixins import InnerApiCommonMixin
-from .serializers import TenantUserListInputSLZ, TenantUserListOutputSLZ
+from .serializers import TenantUserContactInfoListInputSLZ, TenantUserContactInfoListOutputSLZ
 
 
 class TenantUserRetrieveApi(InnerApiCommonMixin, generics.RetrieveAPIView):
@@ -50,7 +50,7 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
 
     pagination_class = None
 
-    serializer_class = TenantUserListOutputSLZ
+    serializer_class = TenantUserContactInfoListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 从 Header 中获取当前租户 ID
@@ -58,7 +58,7 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
         if not cur_tenant_id:
             raise error_codes.INVALID_ARGUMENT.f("X-Bk-Tenant-Id header is required", replace=True)
 
-        slz = TenantUserListInputSLZ(data=self.request.query_params)
+        slz = TenantUserContactInfoListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
