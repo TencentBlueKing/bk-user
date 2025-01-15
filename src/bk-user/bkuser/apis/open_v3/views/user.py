@@ -256,21 +256,19 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
             return queryset
 
         if lookup_field == "bk_username":
-            filter_lookup = (
-                [Q(id__in=lookup_values)] if is_exact else [Q(id__icontains=value) for value in lookup_values]
-            )
+            filters = [Q(id__in=lookup_values)] if is_exact else [Q(id__icontains=value) for value in lookup_values]
         elif lookup_field == "display_name":
             # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只通过 full_name 过滤
             # 后续支持表达式，则需要查询表达式可配置的所有字段
-            filter_lookup = (
+            filters = (
                 [Q(data_source_user__full_name__in=lookup_values)]
                 if is_exact
                 else [Q(data_source_user__full_name__icontains=value) for value in lookup_values]
             )
         else:
-            filter_lookup = self._get_phone_or_email_filters(lookup_field, lookup_values, is_exact)
+            filters = self._get_phone_or_email_filters(lookup_field, lookup_values, is_exact)
 
-        return queryset.filter(reduce(operator.or_, filter_lookup))
+        return queryset.filter(reduce(operator.or_, filters))
 
     @staticmethod
     def _get_phone_or_email_filters(lookup_field: str, lookup_values: List[str], is_exact: bool) -> List[Q]:
