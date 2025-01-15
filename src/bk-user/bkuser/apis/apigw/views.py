@@ -53,26 +53,18 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserContactInfoListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        # 从 Header 中获取当前租户 ID
-        cur_tenant_id = self.request.META.get("HTTP_X_BK_TENANT_ID")
-        if not cur_tenant_id:
-            raise error_codes.INVALID_ARGUMENT.f("X-Bk-Tenant-Id header is required", replace=True)
-
         slz = TenantUserContactInfoListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         # [only] 用于减少查询字段，仅查询必要字段
         return (
-            TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=cur_tenant_id)
+            TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id)
             .select_related("data_source_user")
             .only(
                 "id",
                 "tenant_id",
                 "data_source_user__full_name",
-                "data_source_user__phone_country_code",
-                "data_source_user__phone",
-                "data_source_user__email",
             )
         )
 

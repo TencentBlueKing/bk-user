@@ -32,9 +32,15 @@ class TenantUserContactInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     tenant_id = serializers.CharField(help_text="租户 ID")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-    phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
-    phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
-    email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
+    phone = serializers.SerializerMethodField(help_text="手机号")
+    phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")
+    email = serializers.CharField(help_text="邮箱")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+    def get_phone(self, obj: TenantUser) -> str:
+        return obj.phone_info[0]
+
+    def get_phone_country_code(self, obj: TenantUser) -> str:
+        return obj.phone_info[1]
