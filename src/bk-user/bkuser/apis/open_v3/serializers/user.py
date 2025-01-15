@@ -70,3 +70,22 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class TenantUserListInputSLZ(serializers.Serializer):
+    lookup_field = serializers.ChoiceField(
+        help_text="查询字段", choices=["bk_username", "display_name", "email", "phone"], required=False
+    )
+    exact_lookups = StringArrayField(help_text="精确查询字段列表", required=False)
+    fuzzy_lookups = StringArrayField(help_text="模糊搜索字段列表", required=False)
+
+
+class TenantUserListOutputSLZ(serializers.Serializer):
+    tenant_id = serializers.CharField(help_text="租户 ID")
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
+    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)

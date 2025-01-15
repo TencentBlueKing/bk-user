@@ -159,3 +159,161 @@ class TestTenantUserLeaderListApi:
     def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.leaders.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserListApi:
+    def test_standard(self, api_client, random_tenant):
+        resp = api_client.get(reverse("open_v3.tenant_user.list"), data={"page": 1, "page_size": 5})
+        print(resp.data["results"])
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 11
+        assert len(resp.data["results"]) == 5
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_exact_filter_by_bk_username(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"),
+            data={"lookup_field": "bk_username", "exact_lookups": ",".join([zhangsan.id, lisi.id])},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_fuzzy_filter_by_bk_username(self, api_client, random_tenant):
+        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
+        lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"),
+            data={"lookup_field": "bk_username", "fuzzy_lookups": ",".join([zhangsan_id[1:], lisi_id[1:]])},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan_id, lisi_id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_exact_filter_by_display_name(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"), data={"lookup_field": "display_name", "exact_lookups": "张三,李四"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_fuzzy_filter_by_display_name(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"), data={"lookup_field": "display_name", "fuzzy_lookups": "张,李"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_exact_filter_by_phone(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"),
+            data={"lookup_field": "phone", "exact_lookups": "13512345671,13512345672"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_fuzzy_filter_by_phone(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"), data={"lookup_field": "phone", "fuzzy_lookups": "45671,45672"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_exact_filter_by_email(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"),
+            data={"lookup_field": "email", "exact_lookups": "zhangsan@m.com,lisi@m.com"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_fuzzy_filter_by_email(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"), data={"lookup_field": "email", "fuzzy_lookups": "zhangsan,lisi"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_with_no_lookups(self, api_client, random_tenant):
+        resp = api_client.get(reverse("open_v3.tenant_user.list"), data={"lookup_field": "email"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 11
+        assert len(resp.data["results"]) == 10
+        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
+        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
+        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+
+    def test_with_invalid_field(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_user.list"), data={"lookup_field": "status"})
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_with_invalid_lookups(self, api_client):
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.list"), data={"lookup_field": "display_name", "exact_lookups": "111,222"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 0
+        assert len(resp.data["results"]) == 0

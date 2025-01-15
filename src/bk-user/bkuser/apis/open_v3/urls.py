@@ -45,6 +45,11 @@ urlpatterns = [
                     views.TenantUserLeaderListApi.as_view(),
                     name="open_v3.tenant_user.leaders.list",
                 ),
+                path(
+                    "users/",
+                    views.TenantUserListApi.as_view(),
+                    name="open_v3.tenant_user.list",
+                ),
             ]
         ),
     ),
