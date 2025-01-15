@@ -12,7 +12,8 @@
 | page          | int    | No       | Page number, default is 1                                           |
 | page_size     | int    | No       | The number of pages per page, default is 10                         |
 
-***Note***: If both exact_lookups and fuzzy_lookups fields are provided, only the exact_lookups field will be used for the query.
+***Note***: If both exact_lookups and fuzzy_lookups fields are provided, only the exact_lookups field will be used for
+the query.
 
 ### Request Example
 
@@ -57,10 +58,10 @@ lookup_field=bk_username&exact_lookups=q9k6bhqks0ckl5ew,er0ugcammqwf1q5w
 | time_zone    | string | Time Zone                         |
 | language     | string | Language                          |
 
-The returned user list is sorted in ascending order by bk_username according to the query conditions. If there is no query condition, all user lists are returned.
+The returned user list is sorted in ascending order by bk_username according to the query conditions. If there is no
+query condition, all user lists are returned.
 
 # Response Example for Non-200 Status Code
-
 
 ```json5
 // status_code = 400
