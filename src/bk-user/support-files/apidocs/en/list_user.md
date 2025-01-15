@@ -1,6 +1,6 @@
 ### Description
 
-Query user's list
+(Pagination)Query user's list
 
 ### Parameters
 
