@@ -57,7 +57,6 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # [only] 用于减少查询字段，仅查询必要字段
         return TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id).select_related(
             "data_source_user"
         )
