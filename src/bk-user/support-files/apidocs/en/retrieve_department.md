@@ -37,11 +37,11 @@ Query information of the department(supports whether to include ancestor departm
 
 ### Response Parameters Description
 
-| Name      | Type          | Description                                                                                                                                                             |
-|-----------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| id        | int           | Unique identifier of the department                                                                                                                                     |
-| name      | string        | The name of the department                                                                                                                                              |
-| ancestors | array(string) | List of ancestor departments, the order is from the root department to the immediate parent department, for example: ["company", "department A", "center B", "group C"] |
+| Name      | Type   | Description                                                                                                                                                                 |
+|-----------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id        | int    | Unique identifier of the department                                                                                                                                         |
+| name      | string | The name of the department                                                                                                                                                  |
+| ancestors | array  | List of ancestor departments, the order is from the root department to the immediate parent department, for example: "company" -> "department A" -> "center B" -> "group C" |
 
 **Ancestors** is a list of ancestor departments. Each element in the list is the ancestor department information of the
 user's department, arranged in descending order (from root department -> immediate parent department), for
