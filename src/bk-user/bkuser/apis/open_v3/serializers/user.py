@@ -54,7 +54,7 @@ class AncestorSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="祖先部门名称")
 
     class Meta:
-        ref_name = "user.AncestorSLZ"
+        ref_name = "open_v3.user.AncestorSLZ"
 
 
 class TenantUserDepartmentListInputSLZ(serializers.Serializer):
