@@ -22,10 +22,7 @@ from bkuser.common.serializers import StringArrayField
 
 
 class TenantUserContactInfoListInputSLZ(serializers.Serializer):
-    bk_usernames = StringArrayField(
-        help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
-        max_items=100,
-    )
+    bk_usernames = StringArrayField(help_text="蓝鲸用户唯一标识，多个使用逗号分隔", max_items=100)
 
 
 class TenantUserContactInfoListOutputSLZ(serializers.Serializer):
