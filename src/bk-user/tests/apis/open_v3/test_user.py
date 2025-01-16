@@ -182,3 +182,16 @@ class TestTenantUserListApi:
             "白十二",
             "自由人",
         }
+        assert {t["display_name"] for t in resp.data["results"]} == {
+            "张三",
+            "李四",
+            "王五",
+            "赵六",
+            "柳七",
+            "麦八",
+            "杨九",
+            "鲁十",
+            "林十一",
+            "白十二",
+            "自由人",
+        }

@@ -26,10 +26,12 @@ page=1&page_size=5
       {
         "bk_username": "q9k6bhqks0ckl5ew",
         "full_name": "张三",
+        "display_name": "张三",
       },
       {
         "bk_username": "er0ugcammqwf1q5w",
         "full_name": "李四",
+        "display_name": "李四",
       }
     ],
   }
@@ -38,10 +40,11 @@ page=1&page_size=5
 
 ### 响应参数说明
 
-| 参数名称        | 参数类型   | 描述       |
-|-------------|--------|----------|
-| bk_username | string | 蓝鲸用户唯一标识 |
-| full_name   | string | 用户姓名     |
+| 参数名称         | 参数类型   | 描述       |
+|--------------|--------|----------|
+| bk_username  | string | 蓝鲸用户唯一标识 |
+| full_name    | string | 用户姓名     |
+| display_name | string | 用户展示名    |
 
 ### 状态码非 200 的响应示例
 
