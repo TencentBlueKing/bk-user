@@ -36,8 +36,9 @@ def mock_token_authenticate(self, request):
 
 
 @pytest.fixture
-def apigw_api_client() -> APIClient:
+def apigw_api_client(default_tenant) -> APIClient:
     client = APIClient()
+    client.defaults["HTTP_X_BK_TENANT_ID"] = default_tenant.id
 
     with mock.patch(
         "bkuser.apis.apigw.authentications.InnerBearerTokenAuthentication.authenticate", new=mock_token_authenticate

@@ -14,17 +14,28 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.urls import path
+from functools import cached_property
 
-from . import views
+from rest_framework.exceptions import ValidationError
+from rest_framework.request import Request
 
-urlpatterns = [
-    path(
-        "tenant-users/<str:tenant_user_id>/", views.TenantUserRetrieveApi.as_view(), name="apigw.tenant_user.retrieve"
-    ),
-    path(
-        "tenant-users/-/contact-infos/",
-        views.TenantUserContactInfoListApi.as_view(),
-        name="apigw.tenant_user.contact_info.list",
-    ),
-]
+from bkuser.apis.apigw.authentications import InnerBearerTokenAuthentication
+from bkuser.apis.apigw.permissions import IsInnerBearerTokenAuthenticated
+
+
+class InnerApiCommonMixin:
+    authentication_classes = [InnerBearerTokenAuthentication]
+    permission_classes = [IsInnerBearerTokenAuthenticated]
+
+    request: Request
+
+    TenantHeaderKey = "HTTP_X_BK_TENANT_ID"
+
+    @cached_property
+    def tenant_id(self) -> str:
+        tenant_id = self.request.META.get(self.TenantHeaderKey)
+
+        if not tenant_id:
+            raise ValidationError("X-Bk-Tenant-Id header is required")
+
+        return tenant_id
