@@ -252,7 +252,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         self, queryset: QuerySet, lookup_field: str, lookup_values: List[str], is_exact: bool
     ) -> QuerySet[TenantUser]:
         # 若没有字段名或查询、搜索的值，则直接返回原 queryset
-        if not lookup_field or not lookup_values:
+        if not (lookup_field and lookup_values):
             return queryset
 
         if lookup_field == "bk_username":
