@@ -24,6 +24,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apis.open_v3.pagination import OpenApiPagination
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
@@ -217,13 +218,15 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询用户列表
     """
 
+    pagination_class = OpenApiPagination
+
     serializer_class = TenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
             .filter(tenant_id=self.tenant_id)
-            .only("id", "tenant_id", "data_source_user__full_name", "time_zone", "language")
+            .only("id", "data_source_user__full_name")
         )
 
     @swagger_auto_schema(

@@ -164,10 +164,21 @@ class TestTenantUserLeaderListApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserListApi:
     def test_standard(self, api_client, random_tenant):
-        resp = api_client.get(reverse("open_v3.tenant_user.list"), data={"page": 1, "page_size": 10})
+        resp = api_client.get(reverse("open_v3.tenant_user.list"), data={"page": 1, "page_size": 11})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 11
-        assert len(resp.data["results"]) == 10
-        assert {t["tenant_id"] for t in resp.data["results"]} == {random_tenant.id}
-        assert {t["language"] for t in resp.data["results"]} == {"zh-cn"}
-        assert {t["time_zone"] for t in resp.data["results"]} == {"Asia/Shanghai"}
+        assert len(resp.data["results"]) == 11
+        assert all("bk_username" in t for t in resp.data["results"])
+        assert {t["full_name"] for t in resp.data["results"]} == {
+            "张三",
+            "李四",
+            "王五",
+            "赵六",
+            "柳七",
+            "麦八",
+            "杨九",
+            "鲁十",
+            "林十一",
+            "白十二",
+            "自由人",
+        }
