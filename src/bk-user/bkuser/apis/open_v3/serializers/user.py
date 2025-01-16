@@ -75,14 +75,6 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
 
-class TenantUserListInputSLZ(serializers.Serializer):
-    lookup_field = serializers.ChoiceField(
-        help_text="查询字段", choices=["bk_username", "display_name", "email", "phone"], required=False
-    )
-    exact_lookups = StringArrayField(help_text="精确查询字段列表", required=False)
-    fuzzy_lookups = StringArrayField(help_text="模糊搜索字段列表", required=False)
-
-
 class TenantUserListOutputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")

@@ -15,11 +15,9 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-import operator
-from functools import reduce
 from typing import Dict, List
 
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
@@ -32,7 +30,6 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
-    TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
@@ -223,74 +220,16 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = TenantUserListInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        queryset = (
+        return (
             TenantUser.objects.select_related("data_source_user")
             .filter(tenant_id=self.tenant_id)
-            .only(
-                "id",
-                "tenant_id",
-                "data_source_user__full_name",
-                "time_zone",
-                "language",
-            )
-        )
-
-        lookup_field = data.get("lookup_field")
-        exact_lookups = data.get("exact_lookups")
-        fuzzy_lookups = data.get("fuzzy_lookups")
-
-        # 获取具体查询或搜索的值，若 exact_lookups 与 fuzzy_lookups 同时存在，则以 exact_lookups 为准
-        lookup_values = exact_lookups or fuzzy_lookups or []
-
-        return self._apply_lookups(queryset, lookup_field, lookup_values, bool(exact_lookups)).order_by("id")
-
-    def _apply_lookups(
-        self, queryset: QuerySet, lookup_field: str, lookup_values: List[str], is_exact: bool
-    ) -> QuerySet[TenantUser]:
-        # 若没有字段名或查询、搜索的值，则直接返回原 queryset
-        if not (lookup_field and lookup_values):
-            return queryset
-
-        if lookup_field == "bk_username":
-            filters = [Q(id__in=lookup_values)] if is_exact else [Q(id__icontains=value) for value in lookup_values]
-        elif lookup_field == "display_name":
-            # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只通过 full_name 过滤
-            # 后续支持表达式，则需要查询表达式可配置的所有字段
-            filters = (
-                [Q(data_source_user__full_name__in=lookup_values)]
-                if is_exact
-                else [Q(data_source_user__full_name__icontains=value) for value in lookup_values]
-            )
-        else:
-            filters = self._get_phone_or_email_filters(lookup_field, lookup_values, is_exact)
-
-        return queryset.filter(reduce(operator.or_, filters))
-
-    @staticmethod
-    def _get_phone_or_email_filters(lookup_field: str, lookup_values: List[str], is_exact: bool) -> List[Q]:
-        return (
-            [
-                Q(**{f"is_inherited_{lookup_field}": True, f"data_source_user__{lookup_field}": value})
-                | Q(**{f"is_inherited_{lookup_field}": False, f"custom_{lookup_field}": value})
-                for value in lookup_values
-            ]
-            if is_exact
-            else [
-                Q(**{f"is_inherited_{lookup_field}": True, f"data_source_user__{lookup_field}__icontains": value})
-                | Q(**{f"is_inherited_{lookup_field}": False, f"custom_{lookup_field}__icontains": value})
-                for value in lookup_values
-            ]
+            .only("id", "tenant_id", "data_source_user__full_name", "time_zone", "language")
         )
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="list_user",
         operation_description="查询用户列表",
-        query_serializer=TenantUserListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
