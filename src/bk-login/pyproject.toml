@@ -12,7 +12,7 @@ priority = "default"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-django = "4.2.17"
+django = "4.2.18"
 pymysql = "1.1.1"
 requests = "2.32.3"
 gunicorn = "23.0.0"
