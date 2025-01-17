@@ -66,12 +66,32 @@ class TestTenantDepartmentRetrieveApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantDepartmentListApi:
     def test_standard(self, api_client):
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        dept_b = TenantDepartment.objects.get(data_source_department__name="部门B")
+        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
+        center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB")
+        center_ba = TenantDepartment.objects.get(data_source_department__name="中心BA")
+        group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
+        group_aba = TenantDepartment.objects.get(data_source_department__name="小组ABA")
+        group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA")
+
         resp = api_client.get(reverse("open_v3.tenant_department.list"))
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 9
         assert len(resp.data["results"]) == 9
-        assert [x["id"] for x in resp.data["results"]] == [37, 38, 39, 40, 41, 42, 43, 44, 45]
+        assert [x["id"] for x in resp.data["results"]] == [
+            company.id,
+            dept_a.id,
+            dept_b.id,
+            center_aa.id,
+            center_ab.id,
+            center_ba.id,
+            group_aaa.id,
+            group_aba.id,
+            group_baa.id,
+        ]
         assert [x["name"] for x in resp.data["results"]] == [
             "公司",
             "部门A",
@@ -83,7 +103,17 @@ class TestTenantDepartmentListApi:
             "小组ABA",
             "小组BAA",
         ]
-        assert [x["parent_id"] for x in resp.data["results"]] == [None, 37, 37, 38, 38, 39, 40, 41, 42]
+        assert [x["parent_id"] for x in resp.data["results"]] == [
+            None,
+            company.id,
+            company.id,
+            dept_a.id,
+            dept_a.id,
+            dept_b.id,
+            center_aa.id,
+            center_ab.id,
+            center_ba.id,
+        ]
 
     def test_with_pagination(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"page": 2, "page_size": 2})
@@ -94,13 +124,14 @@ class TestTenantDepartmentListApi:
         assert [x["name"] for x in resp.data["results"]] == ["部门B", "中心AA"]
 
     def test_with_parent(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": 56})
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": dept_a.id})
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 2
         assert len(resp.data["results"]) == 2
         assert [x["name"] for x in resp.data["results"]] == ["中心AA", "中心AB"]
-        assert [x["parent_id"] for x in resp.data["results"]] == [56, 56]
+        assert [x["parent_id"] for x in resp.data["results"]] == [dept_a.id, dept_a.id]
 
     def test_with_invalid_parent(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": 9999})
