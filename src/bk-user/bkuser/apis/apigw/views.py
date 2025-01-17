@@ -14,25 +14,23 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.db.models import QuerySet
 from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
-from .authentications import InnerBearerTokenAuthentication
-from .permissions import IsInnerBearerTokenAuthenticated
+from .mixins import InnerApiCommonMixin
+from .serializers import TenantUserContactInfoListInputSLZ, TenantUserContactInfoListOutputSLZ
 
 
-class TenantUserRetrieveApi(generics.RetrieveAPIView):
+class TenantUserRetrieveApi(InnerApiCommonMixin, generics.RetrieveAPIView):
     """
     查询用户信息
     Note: 网关内部接口对性能要求较高，所以不进行序列化，且查询必须按字段
     TODO：后续根据耗时统计进行 Cache 优化
     """
-
-    authentication_classes = [InnerBearerTokenAuthentication]
-    permission_classes = [IsInnerBearerTokenAuthenticated]
 
     def get(self, request, *args, **kwargs):
         tenant_user_id = kwargs["tenant_user_id"]
@@ -43,3 +41,25 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
             raise error_codes.OBJECT_NOT_FOUND.f(f"user({tenant_user_id}) not found", replace=True)
 
         return Response({"tenant_id": tenant_user.tenant_id})
+
+
+class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
+    """
+    根据 bk_username 批量查询用户联系方式
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserContactInfoListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserContactInfoListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id).select_related(
+            "data_source_user"
+        )
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

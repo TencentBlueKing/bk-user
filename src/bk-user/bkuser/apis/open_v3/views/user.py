@@ -30,6 +30,7 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
+    TenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.data_source.models import (
@@ -39,6 +40,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
+from bkuser.common.pagination import CustomPageNumberPagination
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +208,33 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_id="list_user_leader",
         operation_description="查询用户 Leader 列表",
         responses={status.HTTP_200_OK: TenantUserLeaderListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询用户列表
+    """
+
+    pagination_class = CustomPageNumberPagination
+    pagination_class.max_page_size = 1000
+
+    serializer_class = TenantUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(tenant_id=self.tenant_id)
+            .only("id", "data_source_user__full_name")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_user",
+        operation_description="查询用户列表",
+        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
