@@ -101,12 +101,14 @@ class TenantDepartmentChildrenListApi(OpenApiCommonMixin, generics.ListAPIView):
             department_id=tenant_department.data_source_department_id
         ).first()
 
+        # 若选择递归查询，则按层级 Level 递归查询该部门所有子部门
         if data["is_recursive"]:
             child_ids = relation.get_descendants().values_list("department_id", flat=True)
-
+        # 否则只查询直接子部门
         else:
             child_ids = relation.get_children().values_list("department_id", flat=True)
 
+        # 获取子部门列表信息
         dept_info_list = self.get_dept_info_list(child_ids)
 
         return self.get_paginated_response(
