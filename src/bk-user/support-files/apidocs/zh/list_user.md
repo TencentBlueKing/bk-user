@@ -45,7 +45,3 @@ page=1&page_size=5
 | bk_username  | string | 蓝鲸用户唯一标识 |
 | full_name    | string | 用户姓名     |
 | display_name | string | 用户展示名    |
-
-### 状态码非 200 的响应示例
-
-暂无
