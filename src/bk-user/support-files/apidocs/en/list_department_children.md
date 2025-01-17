@@ -55,8 +55,8 @@
 
 If ***is_recursive*** is true, all sub-departments are returned recursively by level. For example, the sub-departments
 of department A are center AA and center AB, the sub-department of center AA is group AAA, and the sub-department of
-center AB is group ABA. Then the sub-department list of department A is returned in the following order: center AA->
-group AAA->center AB->group ABA.
+center AB is group ABA. Then the sub-department list of department A is returned in the following order: center AA ->
+group AAA -> center AB -> group ABA.
 
 # Response Example for Non-200 Status Code
 
