@@ -205,4 +205,4 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: true
-        descriptionEn: Query sub-department list information based on department ID
+        descriptionEn: Query the list of sub-departments information based on department ID
