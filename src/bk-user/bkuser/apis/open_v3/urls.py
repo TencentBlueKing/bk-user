@@ -50,6 +50,11 @@ urlpatterns = [
                     views.TenantDepartmentRetrieveApi.as_view(),
                     name="open_v3.tenant_department.retrieve",
                 ),
+                path(
+                    "departments/",
+                    views.TenantDepartmentListApi.as_view(),
+                    name="open_v3.tenant_department.list",
+                ),
             ]
         ),
     ),

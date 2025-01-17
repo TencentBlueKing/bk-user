@@ -61,3 +61,48 @@ class TestTenantDepartmentRetrieveApi:
     def test_with_not_found(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_department.retrieve", kwargs={"id": 9999}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantDepartmentListApi:
+    def test_standard(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_department.list"))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 9
+        assert len(resp.data["results"]) == 9
+        assert [x["id"] for x in resp.data["results"]] == [37, 38, 39, 40, 41, 42, 43, 44, 45]
+        assert [x["name"] for x in resp.data["results"]] == [
+            "公司",
+            "部门A",
+            "部门B",
+            "中心AA",
+            "中心AB",
+            "中心BA",
+            "小组AAA",
+            "小组ABA",
+            "小组BAA",
+        ]
+        assert [x["parent_id"] for x in resp.data["results"]] == [None, 37, 37, 38, 38, 39, 40, 41, 42]
+
+    def test_with_pagination(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"page": 2, "page_size": 2})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 9
+        assert len(resp.data["results"]) == 2
+        assert [x["name"] for x in resp.data["results"]] == ["部门B", "中心AA"]
+
+    def test_with_parent(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": 56})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert [x["name"] for x in resp.data["results"]] == ["中心AA", "中心AB"]
+        assert [x["parent_id"] for x in resp.data["results"]] == [56, 56]
+
+    def test_with_invalid_parent(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": 9999})
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
