@@ -34,3 +34,12 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)
+
+
+class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
+    is_recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
+
+
+class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    name = serializers.CharField(help_text="部门名称")

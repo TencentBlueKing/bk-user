@@ -14,16 +14,22 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import Any, Dict, List
 
 from drf_yasg.utils import swagger_auto_schema
+from mptt.querysets import TreeQuerySet
 from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.department import (
+    TenantDepartmentChildrenListInputSLZ,
+    TenantDepartmentChildrenListOutputSLZ,
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
 )
+from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepartmentRelation
 from bkuser.apps.tenant.models import TenantDepartment
 from bkuser.biz.organization import DataSourceDepartmentHandler
 
@@ -66,3 +72,65 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
             info["ancestors"] = [{"id": d.id, "name": d.data_source_department.name} for d in tenant_depts]
 
         return Response(TenantDepartmentRetrieveOutputSLZ(info).data)
+
+
+class TenantDepartmentChildrenListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取部门下的子部门列表信息（支持递归）
+    """
+
+    serializer_class = TenantDepartmentChildrenListOutputSLZ
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="list_department_children",
+        operation_description="查询部门下的子部门列表",
+        query_serializer=TenantDepartmentChildrenListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentChildrenListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_department = get_object_or_404(
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id), id=kwargs["id"]
+        )
+
+        relation = DataSourceDepartmentRelation.objects.filter(
+            department_id=tenant_department.data_source_department_id
+        ).first()
+
+        if data["is_recursive"]:
+            child_ids = relation.get_descendants().values_list("department_id", flat=True)
+
+        else:
+            child_ids = relation.get_children().values_list("department_id", flat=True)
+
+        dept_info_list = self.get_dept_info_list(child_ids)
+
+        return self.get_paginated_response(
+            TenantDepartmentChildrenListOutputSLZ(self.paginate_queryset(dept_info_list), many=True).data
+        )
+
+    def get_dept_info_list(self, child_ids: TreeQuerySet[int]) -> List[Dict[str, Any]]:
+        """
+        获取子部门列表信息
+        """
+
+        # 预加载部门对应的租户部门
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=child_ids, tenant_id=self.tenant_id
+            ).values_list("data_source_department_id", "id")
+        )
+
+        # 预加载部门对应的名称
+        dept_name_map = dict(DataSourceDepartment.objects.filter(id__in=child_ids).values_list("id", "name"))
+
+        # 组装数据
+        return [
+            {"id": dept_id_map[dept_id], "name": dept_name_map[dept_id]}
+            for dept_id in child_ids
+            if dept_id in dept_id_map
+        ]

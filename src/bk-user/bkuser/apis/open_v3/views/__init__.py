@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from .department import TenantDepartmentRetrieveApi
+from .department import TenantDepartmentChildrenListApi, TenantDepartmentRetrieveApi
 from .tenant import TenantListApi
 from .user import (
     TenantUserDepartmentListApi,
@@ -30,4 +30,5 @@ __all__ = [
     "TenantUserDepartmentListApi",
     "TenantUserLeaderListApi",
     "TenantDepartmentRetrieveApi",
+    "TenantDepartmentChildrenListApi",
 ]
