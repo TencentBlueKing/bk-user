@@ -15,7 +15,7 @@
 
 ```
 // URL Path & Query 参数
-/api/v3/open/tenant/departments/2/childrens/?level=2&page=1&page_size=5
+/api/v3/open/tenant/departments/2/descendants/?level=2&page=1&page_size=5
 ```
 
 ### 状态码 200 的响应示例
