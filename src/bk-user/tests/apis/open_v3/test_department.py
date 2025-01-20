@@ -114,26 +114,3 @@ class TestTenantDepartmentListApi:
             center_ab.id,
             center_ba.id,
         ]
-
-    def test_with_pagination(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"page": 2, "page_size": 2})
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 9
-        assert len(resp.data["results"]) == 2
-        assert [x["name"] for x in resp.data["results"]] == ["部门B", "中心AA"]
-
-    def test_with_parent(self, api_client):
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
-        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": dept_a.id})
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert len(resp.data["results"]) == 2
-        assert [x["name"] for x in resp.data["results"]] == ["中心AA", "中心AB"]
-        assert [x["parent_id"] for x in resp.data["results"]] == [dept_a.id, dept_a.id]
-
-    def test_with_invalid_parent(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_department.list"), data={"parent_id": 9999})
-
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST

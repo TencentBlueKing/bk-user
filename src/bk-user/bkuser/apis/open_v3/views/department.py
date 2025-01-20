@@ -21,7 +21,6 @@ from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.department import (
-    TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
@@ -81,30 +80,12 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         tags=["open_v3.department"],
         operation_id="list_department",
         operation_description="查询部门列表",
-        query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        slz = TenantDepartmentListInputSLZ(data=self.request.query_params, context={"tenant_id": self.tenant_id})
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
         tenant_depts = TenantDepartment.objects.select_related("data_source_department__department_relation").filter(
             tenant=self.tenant_id
         )
-
-        if parent_id := data.get("parent_id"):
-            # 若根据父部门 ID 进行精确查询，则需要先获取到对应的数据源部门 ID，然后通过部门关系表定位子部门
-            ds_parent_id = (
-                TenantDepartment.objects.filter(id=parent_id, tenant_id=self.tenant_id)
-                .values_list("data_source_department_id", flat=True)
-                .first()
-            )
-            queryset = tenant_depts.filter(data_source_department__department_relation__parent=ds_parent_id)
-        else:
-            queryset = tenant_depts
-
         # 处理部门信息
-        dept_info = DataSourceDepartmentHandler.list_dept_infos_with_parent(self.paginate_queryset(queryset))
-
+        dept_info = DataSourceDepartmentHandler.list_dept_infos_with_parent(self.paginate_queryset(tenant_depts))
         return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)

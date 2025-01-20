@@ -15,11 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-
-from bkuser.apps.tenant.models import TenantDepartment
 
 
 class AncestorSLZ(serializers.Serializer):
@@ -38,16 +34,6 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)
-
-
-class TenantDepartmentListInputSLZ(serializers.Serializer):
-    parent_id = serializers.IntegerField(help_text="父部门 ID", required=False)
-
-    def validate_parent_id(self, parent_id: int) -> int:
-        if not TenantDepartment.objects.filter(id=parent_id, tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("指定的父部门在当前租户中不存在"))
-
-        return parent_id
 
 
 class TenantDepartmentListOutputSLZ(serializers.Serializer):
