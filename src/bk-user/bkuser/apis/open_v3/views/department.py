@@ -87,5 +87,5 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
             tenant=self.tenant_id
         )
         # 处理部门信息
-        dept_info = DataSourceDepartmentHandler.list_dept_infos_with_parent(self.paginate_queryset(tenant_depts))
+        dept_info = DataSourceDepartmentHandler.list_dept_infos(self.paginate_queryset(tenant_depts))
         return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)

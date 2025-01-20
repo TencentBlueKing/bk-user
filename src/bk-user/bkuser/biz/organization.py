@@ -120,7 +120,7 @@ class DataSourceDepartmentHandler:
         return list(relation.get_ancestors().values_list("department_id", flat=True))
 
     @staticmethod
-    def list_dept_infos_with_parent(tenant_depts: List[TenantDepartment]) -> List[Dict[str, Any]]:
+    def list_dept_infos(tenant_depts: List[TenantDepartment]) -> List[Dict[str, Any]]:
         """
         获取部门信息（包含 parent_id）
         """
