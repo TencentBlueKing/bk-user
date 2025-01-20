@@ -37,7 +37,12 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
-    is_recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
+    level = serializers.IntegerField(help_text="递归子部门的相对 Level 层级", required=False, default=1)
+
+    def validate_level(self, level: int) -> int:
+        if level < 1:
+            raise serializers.ValidationError("level 必须大于等于 1")
+        return level
 
 
 class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
