@@ -110,7 +110,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         page = self.paginate_queryset(depts)
 
         # 查询 parent
-        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(page)
+        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(self.tenant_id, page)
 
         return self.get_paginated_response(
             TenantDepartmentDescendantListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
