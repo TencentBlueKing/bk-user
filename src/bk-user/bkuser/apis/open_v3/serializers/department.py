@@ -36,15 +36,11 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
     ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)
 
 
-class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
-    level = serializers.IntegerField(help_text="递归子部门的相对 Level 层级", required=False, default=1)
-
-    def validate_level(self, level: int) -> int:
-        if level < 1:
-            raise serializers.ValidationError("level 必须大于等于 1")
-        return level
+class TenantDepartmentDescendantListInputSLZ(serializers.Serializer):
+    level = serializers.IntegerField(help_text="递归子部门的相对 Level 层级", required=False, default=1, min_value=1)
 
 
-class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
+class TenantDepartmentDescendantListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
+    parent_id = serializers.IntegerField(help_text="父部门 ID")

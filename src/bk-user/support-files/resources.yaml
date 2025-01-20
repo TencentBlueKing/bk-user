@@ -182,9 +182,9 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: (Pagination) Query user's list
 
-  /api/v3/open/tenant/departments/{department_id}/childrens/:
+  /api/v3/open/tenant/departments/{department_id}/descendants/:
     get:
-      operationId: list_department_children
+      operationId: list_department_descendant
       description: 根据部门 ID 查询子部门列表信息
       tags: []
       responses:
@@ -197,7 +197,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenant/departments/{department_id}/childrens/
+          path: /api/v3/open/tenant/departments/{department_id}/descendants/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []

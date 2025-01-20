@@ -64,55 +64,49 @@ class TestTenantDepartmentRetrieveApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantDepartmentChildrenListApi:
+class TestTenantDepartmentDescendantListApi:
     def test_with_not_level(self, api_client):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
         dept_b = TenantDepartment.objects.get(data_source_department__name="部门B")
-        resp = api_client.get(reverse("open_v3.tenant_department.children.list", kwargs={"id": company.id}))
+        resp = api_client.get(reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}))
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 2
         assert [t["id"] for t in resp.data["results"]] == [dept_a.id, dept_b.id]
         assert [t["name"] for t in resp.data["results"]] == ["部门A", "部门B"]
+        assert [t["parent_id"] for t in resp.data["results"]] == [company.id, company.id]
 
     def test_with_level(self, api_client):
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
+        center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB")
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
         group_aba = TenantDepartment.objects.get(data_source_department__name="小组ABA")
         resp = api_client.get(
-            reverse("open_v3.tenant_department.children.list", kwargs={"id": dept_a.id}), data={"level": 2}
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": dept_a.id}), data={"level": 2}
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert [t["id"] for t in resp.data["results"]] == [group_aaa.id, group_aba.id]
-        assert [t["name"] for t in resp.data["results"]] == ["小组AAA", "小组ABA"]
+        assert resp.data["count"] == 4
+        assert [t["id"] for t in resp.data["results"]] == [center_aa.id, center_ab.id, group_aaa.id, group_aba.id]
+        assert [t["name"] for t in resp.data["results"]] == ["中心AA", "中心AB", "小组AAA", "小组ABA"]
+        assert [t["parent_id"] for t in resp.data["results"]] == [dept_a.id, dept_a.id, center_aa.id, center_ab.id]
 
     def test_with_pagination(self, api_client):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
-            reverse("open_v3.tenant_department.children.list", kwargs={"id": company.id}),
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}),
             data={"level": 2, "page": 1, "page_size": 2},
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 3
+        assert resp.data["count"] == 5
         assert len(resp.data["results"]) == 2
 
-    def test_with_not_children(self, api_client):
+    def test_with_not_descendant(self, api_client):
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
-        resp = api_client.get(reverse("open_v3.tenant_department.children.list", kwargs={"id": group_aaa.id}))
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 0
-        assert len(resp.data["results"]) == 0
-
-    def test_with_not_level_children(self, api_client):
-        company = TenantDepartment.objects.get(data_source_department__name="公司")
-        resp = api_client.get(
-            reverse("open_v3.tenant_department.children.list", kwargs={"id": company.id}), data={"level": 4}
-        )
+        resp = api_client.get(reverse("open_v3.tenant_department.descendant.list", kwargs={"id": group_aaa.id}))
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 0
@@ -121,11 +115,11 @@ class TestTenantDepartmentChildrenListApi:
     def test_with_invalid_level(self, api_client):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
-            reverse("open_v3.tenant_department.children.list", kwargs={"id": company.id}), data={"level": -1}
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}), data={"level": -1}
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_with_department_not_found(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_department.children.list", kwargs={"id": 9999}))
+        resp = api_client.get(reverse("open_v3.tenant_department.descendant.list", kwargs={"id": 9999}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
