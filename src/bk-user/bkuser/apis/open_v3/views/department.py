@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Any, Dict, List
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -27,7 +26,6 @@ from bkuser.apis.open_v3.serializers.department import (
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceDepartment
 from bkuser.apps.tenant.models import TenantDepartment
 from bkuser.biz.organization import DataSourceDepartmentHandler
 
@@ -107,40 +105,6 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
             queryset = tenant_depts
 
         # 处理部门信息
-        dept_info = self._list_dept_infos_with_parent(self.paginate_queryset(queryset))
+        dept_info = DataSourceDepartmentHandler.list_dept_infos_with_parent(self.paginate_queryset(queryset))
 
         return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)
-
-    @staticmethod
-    def _list_dept_infos_with_parent(tenant_depts: List[TenantDepartment]) -> List[Dict[str, Any]]:
-        """
-        获取部门信息（包含 parent_id）
-        """
-
-        # 预加载部门对应的租户部门
-        tenant_dept_id_map = {
-            (data_source_dept_id, tenant_id): dept_id
-            for (data_source_dept_id, tenant_id, dept_id) in TenantDepartment.objects.values_list(
-                "data_source_department_id", "tenant_id", "id"
-            )
-        }
-
-        # 获取数据源部门 ID
-        data_source_dept_ids = {dept.data_source_department_id for dept in tenant_depts}
-
-        # 预加载部门对应的名称
-        dept_name_map = dict(
-            DataSourceDepartment.objects.filter(id__in=data_source_dept_ids).values_list("id", "name")
-        )
-
-        # 组装数据
-        return [
-            {
-                "id": dept.id,
-                "name": dept_name_map[dept.data_source_department_id],
-                "parent_id": tenant_dept_id_map.get(
-                    (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
-                ),
-            }
-            for dept in tenant_depts
-        ]
