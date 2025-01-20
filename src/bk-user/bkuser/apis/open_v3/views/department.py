@@ -29,7 +29,7 @@ from bkuser.apis.open_v3.serializers.department import (
 )
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation
 from bkuser.apps.tenant.models import TenantDepartment
-from bkuser.biz.organization import DataSourceDepartmentHandler
+from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -102,11 +102,16 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         # 按层级 Level 递归查询该部门的子部门
         descendant_ids = relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
 
-        tenant_depts = TenantDepartment.objects.filter(
+        depts = TenantDepartment.objects.filter(
             data_source_department_id__in=descendant_ids, tenant_id=self.tenant_id
-        ).select_related("data_source_department__department_relation")
+        ).select_related("data_source_department")
 
-        # 先分页，再获取子部门列表信息
-        dept_infos = DataSourceDepartmentHandler.list_dept_infos(self.paginate_queryset(tenant_depts))
+        # 分页
+        page = self.paginate_queryset(depts)
 
-        return self.get_paginated_response(TenantDepartmentDescendantListOutputSLZ(dept_infos, many=True).data)
+        # 查询 parent
+        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(page)
+
+        return self.get_paginated_response(
+            TenantDepartmentDescendantListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
+        )
