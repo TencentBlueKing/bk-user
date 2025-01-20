@@ -121,7 +121,7 @@ class DataSourceDepartmentHandler:
 
 class TenantDepartmentHandler:
     @staticmethod
-    def get_tenant_department_parent_id_map(tenant_depts: List[TenantDepartment]) -> Dict[int, int | None]:
+    def get_tenant_department_parent_id_map(tenant_departments: List[TenantDepartment]) -> Dict[int, int | None]:
         """
         批量获取指定租户部门的父部门映射
         """
@@ -138,5 +138,5 @@ class TenantDepartmentHandler:
             dept.id: tenant_dept_id_map.get(
                 (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
             )
-            for dept in tenant_depts
+            for dept in tenant_departments
         }
