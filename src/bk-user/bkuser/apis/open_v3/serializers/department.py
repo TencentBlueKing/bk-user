@@ -38,5 +38,8 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
 
 class TenantDepartmentListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
-    name = serializers.CharField(help_text="部门名称")
-    parent_id = serializers.IntegerField(help_text="父部门 ID", allow_null=True)
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    parent_id = serializers.SerializerMethodField(help_text="父部门 ID", allow_null=True)
+
+    def get_parent_id(self, obj):
+        return self.context["parent_id_map"].get(obj.id)

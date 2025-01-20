@@ -26,7 +26,7 @@ from bkuser.apis.open_v3.serializers.department import (
     TenantDepartmentRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantDepartment
-from bkuser.biz.organization import DataSourceDepartmentHandler
+from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -74,8 +74,6 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     获取部门列表
     """
 
-    serializer_class = TenantDepartmentListOutputSLZ
-
     @swagger_auto_schema(
         tags=["open_v3.department"],
         operation_id="list_department",
@@ -83,9 +81,14 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_depts = TenantDepartment.objects.select_related("data_source_department__department_relation").filter(
-            tenant=self.tenant_id
+        depts = TenantDepartment.objects.select_related("data_source_department").filter(tenant=self.tenant_id)
+
+        # 分页
+        page = self.paginate_queryset(depts)
+
+        # 查询 parent
+        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(page)
+
+        return self.get_paginated_response(
+            TenantDepartmentListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
         )
-        # 处理部门信息
-        dept_info = DataSourceDepartmentHandler.list_dept_infos(self.paginate_queryset(tenant_depts))
-        return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)
