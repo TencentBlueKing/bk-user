@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 from typing import Any, Dict, List
 
-from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -92,40 +91,30 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 获取过滤后的查询集并进行分页
-        tenant_depts = self.paginate_queryset(self.get_filter_queryset(data))
-
-        # 处理部门信息
-        dept_info = self._get_depts_info(tenant_depts)
-
-        return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)
-
-    def get_filter_queryset(self, data: Dict[str, Any]) -> QuerySet:
-        """
-        根据查询参数过滤部门
-        """
         tenant_depts = TenantDepartment.objects.select_related("data_source_department__department_relation").filter(
             tenant=self.tenant_id
         )
 
-        parent_id = data.get("parent_id")
-        # 若没有指定查询字段，则直接返回
-        if not parent_id:
-            return tenant_depts
+        if parent_id := data.get("parent_id"):
+            # 若根据父部门 ID 进行精确查询，则需要先获取到对应的数据源部门 ID，然后通过部门关系表定位子部门
+            ds_parent_id = (
+                TenantDepartment.objects.filter(id=parent_id, tenant_id=self.tenant_id)
+                .values_list("data_source_department_id", flat=True)
+                .first()
+            )
+            queryset = tenant_depts.filter(data_source_department__department_relation__parent=ds_parent_id)
+        else:
+            queryset = tenant_depts
 
-        # 若根据父部门 ID 进行精确查询，则需要先获取到对应的数据源部门 ID，然后通过部门关系表定位子部门
-        ds_parent_id = (
-            TenantDepartment.objects.filter(id=parent_id, tenant_id=self.tenant_id)
-            .values_list("data_source_department_id", flat=True)
-            .first()
-        )
+        # 处理部门信息
+        dept_info = self._list_dept_infos_with_parent(self.paginate_queryset(queryset))
 
-        return tenant_depts.filter(data_source_department__department_relation__parent=ds_parent_id)
+        return self.get_paginated_response(TenantDepartmentListOutputSLZ(dept_info, many=True).data)
 
     @staticmethod
-    def _get_depts_info(tenant_depts: List[TenantDepartment]) -> List[Dict[str, Any]]:
+    def _list_dept_infos_with_parent(tenant_depts: List[TenantDepartment]) -> List[Dict[str, Any]]:
         """
-        根据过滤后的数据获取部门信息
+        获取部门信息（包含 parent_id）
         """
 
         # 预加载部门对应的租户部门
