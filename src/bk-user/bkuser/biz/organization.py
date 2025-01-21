@@ -132,21 +132,21 @@ class TenantDepartmentHandler:
         dept_ids = [dept.data_source_department_id for dept in tenant_departments]
 
         # 获取部门的数据源部门关系
-        dept_parent_id_map = dict(
+        parent_id_map = dict(
             DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids).values_list(
                 "department_id", "parent_id"
             )
         )
         # 获取父部门数据源 ID 到租户父部门 ID 的映射
-        parent_ids = list(dept_parent_id_map.values())
-        parent_id_map = dict(
+        parent_ids = list(parent_id_map.values())
+        tenant_dept_id_map = dict(
             TenantDepartment.objects.filter(tenant_id=tenant_id, data_source_department_id__in=parent_ids).values_list(
                 "data_source_department_id", "id"
             )
         )
 
         return {
-            dept.id: parent_id_map[dept_parent_id_map[dept.data_source_department_id]]
+            dept.id: tenant_dept_id_map[parent_id_map[dept.data_source_department_id]]
             for dept in tenant_departments
-            if dept_parent_id_map[dept.data_source_department_id] in parent_id_map
+            if parent_id_map[dept.data_source_department_id] in tenant_dept_id_map
         }
