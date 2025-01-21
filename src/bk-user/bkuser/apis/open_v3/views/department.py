@@ -119,9 +119,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
             TenantDepartment.objects.filter(tenant_id=self.tenant_id), id=kwargs["id"]
         )
 
-        relation = DataSourceDepartmentRelation.objects.filter(
-            department_id=tenant_department.data_source_department_id
-        ).first()
+        relation = DataSourceDepartmentRelation.objects.get(department_id=tenant_department.data_source_department_id)
 
         # 计算绝对层级 Level
         level = relation.level + data["max_level"]
