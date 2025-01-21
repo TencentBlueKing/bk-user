@@ -52,6 +52,11 @@ urlpatterns = [
                 ),
                 path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
+                    "departments/",
+                    views.TenantDepartmentListApi.as_view(),
+                    name="open_v3.tenant_department.list",
+                ),
+                path(
                     "departments/<int:id>/descendants/",
                     views.TenantDepartmentDescendantListApi.as_view(),
                     name="open_v3.tenant_department.descendant.list",

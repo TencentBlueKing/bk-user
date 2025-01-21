@@ -38,6 +38,15 @@ class TenantDepartmentRetrieveOutputSLZ(serializers.Serializer):
     ancestors = serializers.ListField(help_text="祖先部门列表", required=False, child=AncestorSLZ(), allow_empty=True)
 
 
+class TenantDepartmentListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    parent_id = serializers.SerializerMethodField(help_text="父部门 ID", allow_null=True)
+
+    def get_parent_id(self, obj: TenantDepartment) -> int | None:
+        return self.context["parent_id_map"].get(obj.id)
+
+
 class TenantDepartmentDescendantListInputSLZ(serializers.Serializer):
     level = serializers.IntegerField(help_text="递归子部门的相对 Level 层级", required=False, default=1, min_value=1)
 

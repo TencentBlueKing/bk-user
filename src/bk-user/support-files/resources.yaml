@@ -182,6 +182,31 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: (Pagination) Query user's list
 
+  /api/v3/open/tenant/departments/:
+    get:
+      operationId: list_department
+      description: 查询部门列表
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/departments/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: Query list of the departments
+
   /api/v3/open/tenant/departments/{department_id}/descendants/:
     get:
       operationId: list_department_descendant
