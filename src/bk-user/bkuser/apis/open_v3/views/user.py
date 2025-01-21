@@ -32,6 +32,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserLeaderListOutputSLZ,
     TenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
+    TenantUserSensitiveInfoListInputSLZ,
+    TenantUserSensitiveInfoListOutputSLZ,
 )
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
@@ -235,6 +237,35 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_id="list_user",
         operation_description="查询用户列表",
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据 bk_username 批量查询用户敏感信息
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserSensitiveInfoListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserSensitiveInfoListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id).select_related(
+            "data_source_user"
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_user_sensitive_info.md",
+        operation_description="批量查询用户敏感信息",
+        query_serializer=TenantUserSensitiveInfoListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
