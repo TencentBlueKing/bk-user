@@ -18,5 +18,5 @@
 from bkuser.common.pagination import CustomPageNumberPagination
 
 
-def get_pagination(max_page_size: int) -> type:
+def get_custom_page_number_pagination(max_page_size: int) -> type:
     return type("Pagination", (CustomPageNumberPagination,), {"max_page_size": max_page_size})
