@@ -17,6 +17,8 @@
 
 from rest_framework import serializers
 
+from bkuser.apps.tenant.models import TenantDepartment
+
 
 class AncestorSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="祖先部门 ID")
@@ -45,5 +47,5 @@ class TenantDepartmentDescendantListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
     parent_id = serializers.SerializerMethodField(help_text="父部门 ID")
 
-    def get_parent_id(self, obj):
+    def get_parent_id(self, obj: TenantDepartment) -> int:
         return self.context["parent_id_map"].get(obj.id)
