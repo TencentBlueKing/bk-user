@@ -48,7 +48,9 @@ class TenantDepartmentListOutputSLZ(serializers.Serializer):
 
 
 class TenantDepartmentDescendantListInputSLZ(serializers.Serializer):
-    level = serializers.IntegerField(help_text="递归子部门的相对 Level 层级", required=False, default=1, min_value=1)
+    max_level = serializers.IntegerField(
+        help_text="递归子部门的最大相对 Level 层级", required=False, default=1, min_value=1
+    )
 
 
 class TenantDepartmentDescendantListOutputSLZ(serializers.Serializer):

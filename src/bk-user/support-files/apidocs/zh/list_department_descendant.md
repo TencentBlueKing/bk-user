@@ -4,18 +4,18 @@
 
 ### 输入参数
 
-| 参数名称          | 参数类型 | 必选 | 参数位置        | 描述                             |
-|---------------|------|----|-------------|--------------------------------|
-| page          | int  | 否  | query param | 页码，从 1 开始                      |
-| page_size     | int  | 否  | query param | 每页数量，默认为 10                    |
-| department_id | int  | 是  | path        | 部门唯一标识                         |
-| level         | int  | 否  | query_param | 递归子部门的相对 Level 层级，默认为 1，即直接子部门 |
+| 参数名称          | 参数类型 | 必选 | 参数位置        | 描述                               |
+|---------------|------|----|-------------|----------------------------------|
+| page          | int  | 否  | query param | 页码，从 1 开始                        |
+| page_size     | int  | 否  | query param | 每页数量，默认为 10                      |
+| department_id | int  | 是  | path        | 部门唯一标识                           |
+| max_level     | int  | 否  | query_param | 递归子部门的最大相对 Level 层级，默认为 1，即直接子部门 |
 
 ### 请求示例
 
 ```
 // URL Path & Query 参数
-/api/v3/open/tenant/departments/2/descendants/?level=2&page=1&page_size=5
+/api/v3/open/tenant/departments/2/descendants/?max_level=2&page=1&page_size=5
 ```
 
 ### 状态码 200 的响应示例

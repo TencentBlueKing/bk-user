@@ -137,7 +137,7 @@ class TestTenantDepartmentDescendantListApi:
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
         group_aba = TenantDepartment.objects.get(data_source_department__name="小组ABA")
         resp = api_client.get(
-            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": dept_a.id}), data={"level": 2}
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": dept_a.id}), data={"max_level": 2}
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -150,7 +150,7 @@ class TestTenantDepartmentDescendantListApi:
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
             reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}),
-            data={"level": 2, "page": 1, "page_size": 2},
+            data={"max_level": 2, "page": 1, "page_size": 2},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -168,7 +168,7 @@ class TestTenantDepartmentDescendantListApi:
     def test_with_invalid_level(self, api_client):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
-            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}), data={"level": -1}
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": company.id}), data={"max_level": -1}
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST

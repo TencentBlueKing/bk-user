@@ -4,18 +4,18 @@
 
 ### Parameters
 
-| Name          | Type | Required | Location    | Description                                                                                                 |
-|---------------|------|----------|-------------|-------------------------------------------------------------------------------------------------------------|
-| page          | int  | No       | query param | Page number, default is 1                                                                                   |
-| page_size     | int  | No       | query param | The number of pages per page, default is 10                                                                 |
-| department_id | int  | Yes      | path        | Unique identifier of the department                                                                         |
-| level         | int  | No       | query param | The relative level of the recursive sub-department. The default is 1, which means the direct sub-department |
+| Name          | Type | Required | Location    | Description                                                                                                         |
+|---------------|------|----------|-------------|---------------------------------------------------------------------------------------------------------------------|
+| page          | int  | No       | query param | Page number, default is 1                                                                                           |
+| page_size     | int  | No       | query param | The number of pages per page, default is 10                                                                         |
+| department_id | int  | Yes      | path        | Unique identifier of the department                                                                                 |
+| max_level     | int  | No       | query param | The maximum relative level of the recursive sub-department. The default is 1, which means the direct sub-department |
 
 ### Request Example
 
 ```
 // URL Path & Query Parameters
-/api/v3/open/tenant/departments/2/descendants/?level=2&page=1&page_size=5
+/api/v3/open/tenant/departments/2/descendants/?max_level=2&page=1&page_size=5
 ```
 
 ### Response Example for Status Code 200

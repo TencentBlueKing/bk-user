@@ -124,7 +124,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         ).first()
 
         # 计算绝对层级 Level
-        level = relation.level + data["level"]
+        level = relation.level + data["max_level"]
         # 按层级 Level 递归查询该部门的子部门
         descendant_ids = relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
 
