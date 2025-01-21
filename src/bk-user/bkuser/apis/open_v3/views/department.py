@@ -38,8 +38,6 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     获取部门信息（支持是否包括祖先部门）
     """
 
-    serializer_class = TenantDepartmentRetrieveOutputSLZ
-
     @swagger_auto_schema(
         tags=["open_v3.department"],
         operation_id="retrieve_department",
