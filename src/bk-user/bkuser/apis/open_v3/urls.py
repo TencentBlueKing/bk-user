@@ -61,6 +61,11 @@ urlpatterns = [
                     views.TenantDepartmentDescendantListApi.as_view(),
                     name="open_v3.tenant_department.descendant.list",
                 ),
+                path(
+                    "departments/<int:id>/users/",
+                    views.TenantDepartmentUserListApi.as_view(),
+                    name="open_v3.tenant_department.user.list",
+                ),
             ]
         ),
     ),

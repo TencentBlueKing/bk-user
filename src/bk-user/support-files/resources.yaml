@@ -231,3 +231,28 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: true
         descriptionEn: Query the list of sub-departments information based on department ID
+
+  /api/v3/open/tenant/departments/{department_id}/users/:
+    get:
+      operationId: list_department_user
+      description: 根据部门 ID 查询部门下的用户列表
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/departments/{department_id}/users/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: Query the user list under the department according to the department ID
