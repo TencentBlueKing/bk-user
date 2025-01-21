@@ -17,8 +17,13 @@
 from functools import cached_property
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
+from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource
+from bkuser.common.error_codes import error_codes
 
 from .permissions import ApiGatewayAppVerifiedPermission
 
@@ -39,3 +44,10 @@ class OpenApiCommonMixin:
             raise ValidationError("X-Bk-Tenant-Id header is required")
 
         return tenant_id
+
+    def get_current_tenant_real_data_source(self) -> DataSource:
+        data_source = DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
+
+        return data_source
