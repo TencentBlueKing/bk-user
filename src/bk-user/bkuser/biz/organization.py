@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import datetime
-from typing import List
+from typing import Dict, List
 
 from django.db import transaction
 from django.utils import timezone
@@ -27,6 +27,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
+from bkuser.apps.tenant.models import TenantDepartment
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 
@@ -116,3 +117,36 @@ class DataSourceDepartmentHandler:
             return []
         # 返回的祖先部门默认以降序排列，从根祖先部门 -> 父部门
         return list(relation.get_ancestors().values_list("department_id", flat=True))
+
+
+class TenantDepartmentHandler:
+    @staticmethod
+    def get_tenant_department_parent_id_map(
+        tenant_id: str, tenant_departments: List[TenantDepartment]
+    ) -> Dict[int, int]:
+        """
+        获取部门的父部门 ID 映射
+        """
+
+        # 获取部门的数据源部门 ID 列表
+        dept_ids = [dept.data_source_department_id for dept in tenant_departments]
+
+        # 获取部门的数据源部门关系
+        parent_id_map = dict(
+            DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids).values_list(
+                "department_id", "parent_id"
+            )
+        )
+        # 获取父部门数据源 ID 到租户父部门 ID 的映射
+        parent_ids = list(parent_id_map.values())
+        tenant_dept_id_map = dict(
+            TenantDepartment.objects.filter(tenant_id=tenant_id, data_source_department_id__in=parent_ids).values_list(
+                "data_source_department_id", "id"
+            )
+        )
+
+        return {
+            dept.id: tenant_dept_id_map[parent_id_map[dept.data_source_department_id]]
+            for dept in tenant_departments
+            if parent_id_map[dept.data_source_department_id] in tenant_dept_id_map
+        }
