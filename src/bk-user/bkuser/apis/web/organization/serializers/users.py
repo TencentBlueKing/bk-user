@@ -642,9 +642,20 @@ class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):
         return attrs
 
 
-class TenantUserAccountExpiredAtBatchUpdateInputSLZ(
-    TenantUserIDBatchSLZ, TenantUserAccountExpiredAtUpdateInputSLZ
-): ...
+class TenantUserAccountExpiredAtBatchUpdateInputSLZ(TenantUserIDBatchSLZ, TenantUserAccountExpiredAtUpdateInputSLZ):
+    account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
+    extension_period = serializers.IntegerField(help_text="需要延长的天数", required=False, min_value=1)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        account_expired_at = attrs.get("account_expired_at")
+        extension_period = attrs.get("extension_period")
+
+        if not account_expired_at and not extension_period:
+            raise ValidationError(_("必须传入账号过期时间或需要延长的天数"))
+        if account_expired_at and extension_period:
+            raise ValidationError(_("账号过期时间和需要延长的天数不能同时传入"))
+
+        return attrs
 
 
 class TenantUserStatusBatchUpdateInputSLZ(TenantUserIDBatchSLZ):

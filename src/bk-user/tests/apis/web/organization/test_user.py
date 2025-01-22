@@ -28,6 +28,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
+from bkuser.common.constants import PERMANENT_TIME
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -451,7 +452,7 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantUserAccountExpiredAtUpdateApii:
+class TestTenantUserAccountExpiredAtUpdateApi:
     @pytest.mark.parametrize(
         ("time_diff"),
         [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
@@ -775,10 +776,10 @@ class TestTenantUserBatchDeleteApi:
         assert not DataSourceUserLeaderRelation.objects.filter(leader__code__in=user_codes).exists()
 
 
+@pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserBatchUpdateAccountExpiredAtApi:
     """测试批量修改租户用户账号过期时间"""
 
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_update_valid_expired_at(self, api_client, random_tenant):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
         user_ids = TenantUser.objects.filter(
@@ -802,7 +803,52 @@ class TestTenantUserBatchUpdateAccountExpiredAtApi:
             for tenant_user in TenantUser.objects.filter(id__in=user_ids)
         )
 
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_update_valid_extension_period(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan", tenant=random_tenant)
+        lisi = TenantUser.objects.get(data_source_user__code="lisi", tenant=random_tenant)
+
+        now = datetime.datetime.now(pytz.utc)
+        zhangsan.account_expired_at = now
+        lisi.account_expired_at = now + datetime.timedelta(days=1)
+        zhangsan.save(update_fields=["account_expired_at"])
+        lisi.save(update_fields=["account_expired_at"])
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": [zhangsan.id, lisi.id], "extension_period": 365},
+        )
+
+        zhangsan.refresh_from_db()
+        lisi.refresh_from_db()
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert zhangsan.account_expired_at == now + datetime.timedelta(days=365)
+        assert lisi.account_expired_at == now + datetime.timedelta(days=366)
+
+    def test_update_extension_period_exceeds_permanent_time(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__code="zhangsan", tenant=random_tenant)
+        lisi = TenantUser.objects.get(data_source_user__code="lisi", tenant=random_tenant)
+
+        now = datetime.datetime.now(pytz.utc)
+        zhangsan.account_expired_at = now
+        lisi.account_expired_at = now + datetime.timedelta(days=1)
+        zhangsan.save(update_fields=["account_expired_at"])
+        lisi.save(update_fields=["account_expired_at"])
+
+        extension_period = (PERMANENT_TIME - now).days + 1
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": [zhangsan.id, lisi.id], "extension_period": extension_period},
+        )
+
+        zhangsan.refresh_from_db()
+        lisi.refresh_from_db()
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert zhangsan.account_expired_at == PERMANENT_TIME
+        assert lisi.account_expired_at == PERMANENT_TIME
+
     def test_update_invalid_expired_at(self, api_client, random_tenant):
         user_codes = ["zhangsan", "lisi"]
         user_ids = TenantUser.objects.filter(
@@ -819,6 +865,34 @@ class TestTenantUserBatchUpdateAccountExpiredAtApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "账号有效期时间不能早于当前时间" in resp.data["message"]
+
+    def test_update_without_input(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": user_ids},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_with_both_input(self, api_client, random_tenant):
+        user_codes = ["zhangsan", "lisi"]
+        user_ids = TenantUser.objects.filter(
+            tenant=random_tenant,
+            data_source_user__code__in=user_codes,
+        ).values_list("id", flat=True)
+
+        new_account_expired_at = datetime.datetime.now() + datetime.timedelta(days=365)
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.account_expired_at.batch_update"),
+            data={"user_ids": user_ids, "account_expired_at": new_account_expired_at, "extension_period": 365},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestTenantUserStatusBatchUpdateApi:

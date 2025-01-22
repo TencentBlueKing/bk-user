@@ -1043,11 +1043,20 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
                 id__in=data["user_ids"], tenant_id=cur_tenant_id, status=TenantUserStatus.EXPIRED
             ).update(status=TenantUserStatus.ENABLED)
 
-            TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
-                account_expired_at=data["account_expired_at"],
-                updater=request.user.username,
-                updated_at=timezone.now(),
-            )
+            if data.get("account_expired_at"):
+                TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).update(
+                    account_expired_at=data["account_expired_at"],
+                    updater=request.user.username,
+                    updated_at=timezone.now(),
+                )
+            else:
+                tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id)
+                for user in tenant_users:
+                    expired_at = user.account_expired_at + timedelta(days=data["extension_period"])
+                    expired_at = min(PERMANENT_TIME, expired_at)
+                    user.account_expired_at = expired_at
+                    user.updater = request.user.username
+                    user.save(update_fields=["account_expired_at", "updater"])
 
         # 【审计】记录变更后的租户用户数据
         data_after_tenant_users = list(TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id))
