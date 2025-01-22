@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-05 10:25+0800\n"
+"POT-Creation-Date: 2025-01-22 17:54+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -367,23 +367,31 @@ msgstr "Username: {} custom field {} value {} is not in the options {}"
 msgid "用户名 {} 重复"
 msgstr "Username {} is duplicated"
 
-#: bkuser/apis/web/organization/serializers/users.py:671
+#: bkuser/apis/web/organization/serializers/users.py:654
+msgid "必须传入账号过期时间或需要延长的天数"
+msgstr "Have to provide account expired time or the number of days to extend"
+
+#: bkuser/apis/web/organization/serializers/users.py:656
+msgid "账号过期时间和需要延长的天数不能同时传入"
+msgstr "The account expired time and the number of days to be extended can't be provided at the same time"
+
+#: bkuser/apis/web/organization/serializers/users.py:682
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "Unable to set user {} as their direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:682
+#: bkuser/apis/web/organization/serializers/users.py:693
 msgid "一次只能批量更新一个自定义字段"
 msgstr "Only one custom field can be updated in a batch update"
 
-#: bkuser/apis/web/organization/serializers/users.py:690
+#: bkuser/apis/web/organization/serializers/users.py:701
 msgid "请提供自定义字段 {} 的值"
 msgstr "Please provide the value of the custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:698
+#: bkuser/apis/web/organization/serializers/users.py:709
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "The current tenant has no admin editable custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:702
+#: bkuser/apis/web/organization/serializers/users.py:713
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr ""
 "Cannot modify custom field {} that is set to be unique in batch operations"
@@ -485,7 +493,7 @@ msgstr ""
 msgid "指定的租户部门不存在"
 msgstr "The specified tenant department does not exist"
 
-#: bkuser/apis/web/organization/views/users.py:1203
+#: bkuser/apis/web/organization/views/users.py:1212
 msgid "当前数据源未启用密码功能"
 msgstr "Current data source has not enabled password functionality"
 
