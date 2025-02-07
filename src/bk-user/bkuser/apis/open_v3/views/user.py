@@ -24,7 +24,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apis.open_v3.pagination import get_pagination_class
+from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
@@ -227,7 +227,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询用户列表
     """
 
-    pagination_class = get_pagination_class(max_page_size=1000)
+    pagination_class = gen_pagination_class(max_page_size=1000)
 
     serializer_class = TenantUserListOutputSLZ
 
