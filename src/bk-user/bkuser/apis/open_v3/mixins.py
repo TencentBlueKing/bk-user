@@ -45,7 +45,7 @@ class OpenApiCommonMixin:
         return tenant_id
 
     @cached_property
-    def get_real_data_source_id(self) -> int:
+    def real_data_source_id(self) -> int:
         data_source = (
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )

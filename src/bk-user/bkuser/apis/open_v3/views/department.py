@@ -41,7 +41,7 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id)
+        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
@@ -87,7 +87,7 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         depts = TenantDepartment.objects.select_related("data_source_department").filter(
-            tenant=self.tenant_id, data_source_id=self.get_real_data_source_id
+            tenant=self.tenant_id, data_source_id=self.real_data_source_id
         )
 
         # 分页
@@ -119,7 +119,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         data = slz.validated_data
 
         tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id),
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
             id=kwargs["id"],
         )
 

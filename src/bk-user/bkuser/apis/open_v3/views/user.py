@@ -66,7 +66,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
             TenantUser.objects.filter(
                 id__in=data["bk_usernames"],
                 tenant_id=self.tenant_id,
-                data_source_id=self.get_real_data_source_id,
+                data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
             .only("id", "data_source_user__full_name")
@@ -92,7 +92,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
 
     def get_queryset(self):
-        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id)
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -124,7 +124,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
             id=kwargs["id"],
         )
 
@@ -200,7 +200,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
             id=self.kwargs["id"],
         )
 
@@ -234,7 +234,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id)
+            .filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
             .only("id", "data_source_user__full_name")
         )
 
