@@ -46,10 +46,10 @@ class OpenApiCommonMixin:
 
     @cached_property
     def get_real_data_source_id(self) -> int:
-        data_source_id = (
+        data_source = (
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )
-        if not data_source_id:
+        if not data_source:
             raise ValidationError(_("当前租户不存在实名用户数据源"))
 
-        return data_source_id
+        return data_source.id
