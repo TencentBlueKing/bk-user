@@ -24,7 +24,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apis.open_v3.pagination import get_custom_page_number_pagination
+from bkuser.apis.open_v3.pagination import get_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
@@ -66,7 +66,7 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
             TenantUser.objects.filter(
                 id__in=data["bk_usernames"],
                 tenant_id=self.tenant_id,
-                data_source=self.get_current_tenant_real_data_source(),
+                data_source_id=self.get_real_data_source_id,
             )
             .select_related("data_source_user")
             .only("id", "data_source_user__full_name")
@@ -88,6 +88,12 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     根据用户 bk_username 获取用户信息
     """
 
+    lookup_url_kwarg = "id"
+    serializer_class = TenantUserRetrieveOutputSLZ
+
+    def get_queryset(self):
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id)
+
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="retrieve_user",
@@ -95,13 +101,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        tenant_user = get_object_or_404(
-            TenantUser.objects.filter(
-                tenant_id=self.tenant_id, data_source=self.get_current_tenant_real_data_source()
-            ),
-            id=kwargs["id"],
-        )
-        return Response(TenantUserRetrieveOutputSLZ(tenant_user).data)
+        return self.retrieve(request, *args, **kwargs)
 
 
 class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -124,9 +124,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(
-                tenant_id=self.tenant_id, data_source=self.get_current_tenant_real_data_source()
-            ),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id),
             id=kwargs["id"],
         )
 
@@ -202,9 +200,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(
-                tenant_id=self.tenant_id, data_source=self.get_current_tenant_real_data_source()
-            ),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id),
             id=self.kwargs["id"],
         )
 
@@ -231,14 +227,14 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询用户列表
     """
 
-    pagination_class = get_custom_page_number_pagination(max_page_size=1000)
+    pagination_class = get_pagination_class(max_page_size=1000)
 
     serializer_class = TenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source=self.get_current_tenant_real_data_source())
+            .filter(tenant_id=self.tenant_id, data_source_id=self.get_real_data_source_id)
             .only("id", "data_source_user__full_name")
         )
 

@@ -23,7 +23,6 @@ from rest_framework.request import Request
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.common.error_codes import error_codes
 
 from .permissions import ApiGatewayAppVerifiedPermission
 
@@ -45,9 +44,10 @@ class OpenApiCommonMixin:
 
         return tenant_id
 
-    def get_current_tenant_real_data_source(self) -> DataSource:
+    @cached_property
+    def get_real_data_source_id(self) -> int:
         data_source = DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
+            raise ValidationError(_("当前租户不存在实名用户数据源"))
 
-        return data_source
+        return data_source.id
