@@ -38,9 +38,10 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     获取部门信息（支持是否包括祖先部门）
     """
 
-    queryset = TenantDepartment.objects.all()
     lookup_url_kwarg = "id"
-    serializer_class = TenantDepartmentRetrieveOutputSLZ
+
+    def get_queryset(self):
+        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
@@ -85,7 +86,9 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        depts = TenantDepartment.objects.select_related("data_source_department").filter(tenant=self.tenant_id)
+        depts = TenantDepartment.objects.select_related("data_source_department").filter(
+            tenant=self.tenant_id, data_source_id=self.real_data_source_id
+        )
 
         # 分页
         page = self.paginate_queryset(depts)
@@ -116,7 +119,8 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         data = slz.validated_data
 
         tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id), id=kwargs["id"]
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            id=kwargs["id"],
         )
 
         relation = DataSourceDepartmentRelation.objects.get(department_id=tenant_department.data_source_department_id)
