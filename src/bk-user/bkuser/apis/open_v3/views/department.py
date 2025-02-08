@@ -151,7 +151,8 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self):
         tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id), id=self.kwargs["id"]
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            id=self.kwargs["id"],
         )
         user_ids = DataSourceDepartmentUserRelation.objects.filter(
             department_id=tenant_department.data_source_department_id
