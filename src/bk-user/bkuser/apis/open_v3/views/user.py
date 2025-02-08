@@ -264,9 +264,9 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        return TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id).select_related(
-            "data_source_user"
-        )
+        return TenantUser.objects.filter(
+            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        ).select_related("data_source_user")
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
