@@ -21,21 +21,21 @@
 
 ```json5
 {
-  "data": {
-    "count": 2,
-    "results": [
-      {
-        "bk_username": "q9k6bhqks0ckl5ew",
-        "full_name": "张三",
-        "display_name": "张三",
-      },
-      {
-        "bk_username": "er0ugcammqwf1q5w",
-        "full_name": "李四",
-        "display_name": "李四",
-      }
-    ],
-  }
+    "data": {
+        "count": 2,
+        "results": [
+            {
+                "bk_username": "q9k6bhqks0ckl5ew",
+                "full_name": "张三",
+                "display_name": "张三"
+            },
+            {
+                "bk_username": "er0ugcammqwf1q5w",
+                "full_name": "李四",
+                "display_name": "李四"
+            }
+        ]
+    }
 }
 ```
 
@@ -46,15 +46,3 @@
 | bk_username  | string | 蓝鲸用户唯一标识 |
 | full_name    | string | 用户姓名     |
 | display_name | string | 用户展示名    |
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "对象未找到"
-  }
-}
-```

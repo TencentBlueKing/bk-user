@@ -38,16 +38,3 @@
 |--------------|--------|----------|
 | bk_username  | string | 蓝鲸用户唯一标识 |
 | display_name | string | 用户展示名称   |
-
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "对象未找到"
-  }
-}
-```

@@ -6,18 +6,18 @@ Query the tenant list
 
 ```json5
 {
-  "data": [
-    {
-      "id": "default",
-      "name": "Default",
-      "status": "enabled"
-    },
-    {
-      "id": "test",
-      "name": "Test",
-      "status": "disabled"
-    }
-  ]
+    "data": [
+        {
+            "id": "default",
+            "name": "Default",
+            "status": "enabled"
+        },
+        {
+            "id": "test",
+            "name": "Test",
+            "status": "disabled"
+        }
+    ]
 }
 ```
 

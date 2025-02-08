@@ -19,16 +19,16 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 
 ```json5
 {
-  "data": [
-    {
-      "bk_username": "7idwx3b7nzk6xigs",
-      "display_name": "张三",
-    },
-    {
-      "bk_username": "0wngfim3uzhadh1w",
-      "display_name": "李四",
-    }
-  ]
+    "data": [
+        {
+            "bk_username": "7idwx3b7nzk6xigs",
+            "display_name": "张三"
+        },
+        {
+            "bk_username": "0wngfim3uzhadh1w",
+            "display_name": "李四"
+        }
+    ]
 }
 ```
 
@@ -38,25 +38,3 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 |--------------|--------|----------|
 | bk_username  | string | 蓝鲸用户唯一标识 |
 | display_name | string | 用户展示名    |
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 400
-{
-  "error": {
-    "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过：bk_usernames: 该字段不能为空。"
-  }
-}
-```
-
-```json5
-// status_code = 400
-{
-  "error": {
-    "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过：bk_usernames: 至多包含 100 个对象。"
-  }
-}
-```

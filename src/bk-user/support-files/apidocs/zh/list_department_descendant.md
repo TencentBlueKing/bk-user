@@ -22,27 +22,31 @@
 
 ```json5
 {
-  "data": {
-    "count": 4,
-    "results": [
-      {
-        "id": 4,
-        "name": "中心AA",
-      },
-      {
-        "id": 5,
-        "name": "中心AB",
-      },
-      {
-        "id": 6,
-        "name": "小组AAA",
-      },
-      {
-        "id": 7,
-        "name": "小组ABA",
-      }
-    ],
-  }
+    "data": {
+        "count": 4,
+        "results": [
+            {
+                "id": 4,
+                "name": "中心AA",
+                "parent_id": 2
+            },
+            {
+                "id": 5,
+                "name": "中心AB",
+                "parent_id": 2
+            },
+            {
+                "id": 6,
+                "name": "小组AAA",
+                "parent_id": 4
+            },
+            {
+                "id": 7,
+                "name": "小组ABA",
+                "parent_id": 5
+            }
+        ]
+    }
 }
 ```
 
@@ -56,24 +60,3 @@
 
 例如：部门A的子部门为中心AA、中心AB，中心AA的子部门为小组AAA，中心AB的子部门为小组ABA，则部门A的相对层级 level 为 2
 的子部门为：中心AA -> 中心AB -> 小组AAA -> 小组ABA
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "对象未找到"
-  }
-}
-```
-```json5
-// status_code = 400
-{
-  "error": {
-    "code": "INVALID_ARGUMENT",
-    "message": "参数校验不通过: level: level 必须大于等于 1"
-  }
-}
-```

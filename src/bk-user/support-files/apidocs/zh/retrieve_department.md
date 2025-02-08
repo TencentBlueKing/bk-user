@@ -20,18 +20,20 @@
 
 ```json5
 {
-  "id": 3,
-  "name": "部门C",
-  "ancestors": [
-    {
-      "id": 1,
-      "name": "部门A"
-    },
-    {
-      "id": 2,
-      "name": "部门B"
+    "data": {
+        "id": 3,
+        "name": "部门C",
+        "ancestors": [
+            {
+                "id": 1,
+                "name": "部门A"
+            },
+            {
+                "id": 2,
+                "name": "部门B"
+            }
+        ]
     }
-  ]
 }
 ```
 
@@ -50,15 +52,3 @@
 |------|--------|--------|
 | id   | int    | 部门唯一标识 |
 | name | string | 部门名称   |
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "对象未找到"
-  }
-}
-```

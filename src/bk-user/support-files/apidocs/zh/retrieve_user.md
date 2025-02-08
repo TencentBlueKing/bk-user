@@ -19,13 +19,13 @@
 
 ```json5
 {
-  "data": {
-    "tenant_id": "default",
-    "bk_username": "7idwx3b7nzk6xigs",
-    "display_name": "张三",
-    "time_zone": "Asia/Shanghai",
-    "language": "zh-cn",
-  }
+    "data": {
+        "tenant_id": "default",
+        "bk_username": "7idwx3b7nzk6xigs",
+        "display_name": "张三",
+        "time_zone": "Asia/Shanghai",
+        "language": "zh-cn"
+    }
 }
 ```
 
@@ -38,15 +38,3 @@
 | display_name | string | 用户展示名    |
 | time_zone    | string | 时区       |
 | language     | string | 语言       |
-
-### 状态码非 200 的响应示例
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "对象未找到"
-  }
-}
-```
