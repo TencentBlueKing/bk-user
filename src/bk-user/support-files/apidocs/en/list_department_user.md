@@ -48,7 +48,7 @@
 | display_name | string | User's display name               |
 
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 404

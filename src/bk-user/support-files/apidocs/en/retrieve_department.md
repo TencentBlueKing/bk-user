@@ -54,7 +54,7 @@ following parameters:
 | id   | int    | Unique identifier of the department |
 | name | string | The name of the department          |
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 404

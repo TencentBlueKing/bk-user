@@ -39,7 +39,7 @@ Query user's information
 | time_zone    | string | Time Zone                         |
 | language     | string | Language                          |
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 404

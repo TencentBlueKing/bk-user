@@ -40,7 +40,7 @@ Query user's list of leaders
 | display_name | string | User's display_name               |
 
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 404

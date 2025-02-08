@@ -58,7 +58,7 @@ For example, if the sub-departments of Department A are Center AA and Center AB,
 Group AAA, and the sub-department of Center AB is Group ABA, then the sub-department of Department A with a relative
 level of level 2 is: Center AA -> Center AB -> Group AAA -> Group ABA
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 404

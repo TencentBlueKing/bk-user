@@ -39,7 +39,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | bk_username  | string | Blueking user's unique identifier |
 | display_name | string | User's display_name               |
 
-# Response Example for Non-200 Status Code
+### Response Example for Non-200 Status Code
 
 ```json5
 // status_code = 400
