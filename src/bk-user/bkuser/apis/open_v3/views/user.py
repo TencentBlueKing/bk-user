@@ -24,6 +24,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
@@ -40,7 +41,6 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
-from bkuser.common.pagination import CustomPageNumberPagination
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,11 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
         # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         return (
-            TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id)
+            TenantUser.objects.filter(
+                id__in=data["bk_usernames"],
+                tenant_id=self.tenant_id,
+                data_source_id=self.real_data_source_id,
+            )
             .select_related("data_source_user")
             .only("id", "data_source_user__full_name")
         )
@@ -84,9 +88,11 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     根据用户 bk_username 获取用户信息
     """
 
-    queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     serializer_class = TenantUserRetrieveOutputSLZ
+
+    def get_queryset(self):
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -95,8 +101,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=self.tenant_id), id=kwargs["id"])
-        return Response(TenantUserRetrieveOutputSLZ(tenant_user).data)
+        return self.retrieve(request, *args, **kwargs)
 
 
 class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -105,8 +110,6 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
 
     pagination_class = None
-
-    serializer_class = TenantUserDepartmentListOutputSLZ
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -120,7 +123,10 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=self.tenant_id), id=kwargs["id"])
+        tenant_user = get_object_or_404(
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            id=kwargs["id"],
+        )
 
         return Response(
             TenantUserDepartmentListOutputSLZ(self._get_dept_info(tenant_user, data["with_ancestors"]), many=True).data
@@ -193,7 +199,10 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = TenantUserLeaderListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        tenant_user = get_object_or_404(TenantUser.objects.filter(tenant_id=self.tenant_id), id=self.kwargs["id"])
+        tenant_user = get_object_or_404(
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            id=self.kwargs["id"],
+        )
 
         leader_ids = list(
             DataSourceUserLeaderRelation.objects.filter(user=tenant_user.data_source_user).values_list(
@@ -218,15 +227,14 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询用户列表
     """
 
-    pagination_class = CustomPageNumberPagination
-    pagination_class.max_page_size = 1000
+    pagination_class = gen_pagination_class(max_page_size=1000)
 
     serializer_class = TenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id)
+            .filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
             .only("id", "data_source_user__full_name")
         )
 
