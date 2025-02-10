@@ -46,11 +46,16 @@ urlpatterns = [
                     name="open_v3.tenant_user.leader.list",
                 ),
                 path(
+                    "users/-/sensitive-infos/",
+                    views.TenantUserSensitiveInfoListApi.as_view(),
+                    name="open_v3.tenant_user.sensitive_info.list",
+                ),
+                path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
+                path(
                     "departments/<int:id>/",
                     views.TenantDepartmentRetrieveApi.as_view(),
                     name="open_v3.tenant_department.retrieve",
                 ),
-                path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
                     "departments/",
                     views.TenantDepartmentListApi.as_view(),

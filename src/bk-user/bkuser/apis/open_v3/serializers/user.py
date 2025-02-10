@@ -82,3 +82,20 @@ class TenantUserListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class TenantUserSensitiveInfoListInputSLZ(serializers.Serializer):
+    bk_usernames = StringArrayField(help_text="蓝鲸用户唯一标识，多个使用逗号分隔", max_items=100)
+
+
+class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    phone = serializers.SerializerMethodField(help_text="手机号")
+    phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")
+    email = serializers.CharField(help_text="邮箱")
+
+    def get_phone(self, obj: TenantUser) -> str:
+        return obj.phone_info[0]
+
+    def get_phone_country_code(self, obj: TenantUser) -> str:
+        return obj.phone_info[1]

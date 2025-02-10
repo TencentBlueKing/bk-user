@@ -27,6 +27,7 @@ from .user import (
     TenantUserLeaderListApi,
     TenantUserListApi,
     TenantUserRetrieveApi,
+    TenantUserSensitiveInfoListApi,
 )
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "TenantDepartmentDescendantListApi",
     "TenantDepartmentListApi",
     "TenantDepartmentUserListApi",
+    "TenantUserSensitiveInfoListApi",
 ]
