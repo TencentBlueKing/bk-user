@@ -20,40 +20,40 @@ Query user's list of departments(supports whether to include ancestor department
 
 ```json5
 {
-  "data": [
-    {
-      "id": 3,
-      "name": "部门C",
-      "ancestors": [
+    "data": [
         {
-          "id": 1,
-          "name": "部门A"
+            "id": 3,
+            "name": "部门C",
+            "ancestors": [
+                {
+                    "id": 1,
+                    "name": "部门A"
+                },
+                {
+                    "id": 2,
+                    "name": "部门B"
+                }
+            ]
         },
         {
-          "id": 2,
-          "name": "部门B"
+            "id": 6,
+            "name": "部门F",
+            "ancestors": [
+                {
+                    "id": 1,
+                    "name": "部门A"
+                },
+                {
+                    "id": 4,
+                    "name": "部门D"
+                },
+                {
+                    "id": 5,
+                    "name": "部门E"
+                }
+            ]
         }
-      ]
-    },
-    {
-      "id": 6,
-      "name": "部门F",
-      "ancestors": [
-        {
-          "id": 1,
-          "name": "部门A"
-        },
-        {
-          "id": 4,
-          "name": "部门D"
-        },
-        {
-          "id": 5,
-          "name": "部门E"
-        }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
@@ -75,15 +75,3 @@ following parameters:
 |------|--------|-------------------------------------|
 | id   | int    | Unique identifier of the department |
 | name | string | The name of the department          |
-
-# Response Example for Non-200 Status Code
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Object not found"
-  }
-}
-```

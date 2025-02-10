@@ -19,13 +19,13 @@ Query user's information
 
 ```json5
 {
-  "data": {
-    "tenant_id": "default",
-    "bk_username": "7idwx3b7nzk6xigs",
-    "display_name": "张三",
-    "time_zone": "Asia/Shanghai",
-    "language": "zh-cn",
-  }
+    "data": {
+        "tenant_id": "default",
+        "bk_username": "7idwx3b7nzk6xigs",
+        "display_name": "张三",
+        "time_zone": "Asia/Shanghai",
+        "language": "zh-cn"
+    }
 }
 ```
 
@@ -38,15 +38,3 @@ Query user's information
 | display_name | string | User's display_name               |
 | time_zone    | string | Time Zone                         |
 | language     | string | Language                          |
-
-# Response Example for Non-200 Status Code
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Object not found"
-  }
-}
-```

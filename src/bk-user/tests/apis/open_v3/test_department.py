@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from django.urls import reverse
 from rest_framework import status
 
@@ -175,4 +175,24 @@ class TestTenantDepartmentDescendantListApi:
 
     def test_with_department_not_found(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_department.descendant.list", kwargs={"id": 9999}))
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantDepartmentUserListApi:
+    def test_with_standard(self, api_client):
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu")
+
+        resp = api_client.get(reverse("open_v3.tenant_department.user.list", kwargs={"id": dept_a.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"李四", "王五"}
+        assert {t["full_name"] for t in resp.data["results"]} == {"李四", "王五"}
+
+    def test_with_department_not_found(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_department.user.list", kwargs={"id": 9999}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND

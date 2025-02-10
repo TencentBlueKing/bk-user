@@ -22,27 +22,31 @@
 
 ```json5
 {
-  "data": {
-    "count": 4,
-    "results": [
-      {
-        "id": 4,
-        "name": "中心AA",
-      },
-      {
-        "id": 5,
-        "name": "中心AB",
-      },
-      {
-        "id": 6,
-        "name": "小组AAA",
-      },
-      {
-        "id": 7,
-        "name": "小组ABA",
-      }
-    ],
-  }
+    "data": {
+        "count": 4,
+        "results": [
+            {
+                "id": 4,
+                "name": "中心AA",
+                "parent_id": 2
+            },
+            {
+                "id": 5,
+                "name": "中心AB",
+                "parent_id": 2
+            },
+            {
+                "id": 6,
+                "name": "小组AAA",
+                "parent_id": 4
+            },
+            {
+                "id": 7,
+                "name": "小组ABA",
+                "parent_id": 5
+            }
+        ]
+    }
 }
 ```
 
@@ -57,25 +61,3 @@
 For example, if the sub-departments of Department A are Center AA and Center AB, the sub-department of Center AA is
 Group AAA, and the sub-department of Center AB is Group ABA, then the sub-department of Department A with a relative
 level of level 2 is: Center AA -> Center AB -> Group AAA -> Group ABA
-
-# Response Example for Non-200 Status Code
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Object not found"
-  }
-}
-```
-
-```json5
-// status_code = 400
-{
-  "error": {
-    "code": "INVALID_ARGUMENT",
-    "message": "Parameter validation failed: level: level must be greater than or equal to 1"
-  }
-}
-```

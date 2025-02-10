@@ -38,16 +38,3 @@ Query user's list of leaders
 |--------------|--------|-----------------------------------|
 | bk_username  | string | Blueking user's unique identifier |
 | display_name | string | User's display_name               |
-
-
-# Response Example for Non-200 Status Code
-
-```json5
-// status_code = 404
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Object not found"
-  }
-}
-```

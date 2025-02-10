@@ -20,21 +20,21 @@ page=2&page_size=2
 
 ```json5
 {
-  "data": {
-    "count": 2,
-    "results": [
-      {
-        "id": 3,
-        "name": "部门B",
-        "parent_id": 1,
-      },
-      {
-        "id": 4,
-        "name": "中心AA",
-        "parent_id": 2,
-      }
-    ],
-  }
+    "data": {
+        "count": 2,
+        "results": [
+            {
+                "id": 3,
+                "name": "部门B",
+                "parent_id": 1
+            },
+            {
+                "id": 4,
+                "name": "中心AA",
+                "parent_id": 2
+            }
+        ]
+    }
 }
 ```
 
