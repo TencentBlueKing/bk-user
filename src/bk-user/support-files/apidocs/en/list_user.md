@@ -20,21 +20,21 @@ page=1&page_size=5
 
 ```json5
 {
-  "data": {
-    "count": 2,
-    "results": [
-      {
-        "bk_username": "q9k6bhqks0ckl5ew",
-        "full_name": "张三",
-        "display_name": "张三",
-      },
-      {
-        "bk_username": "er0ugcammqwf1q5w",
-        "full_name": "李四",
-        "display_name": "李四",
-      }
-    ],
-  }
+    "data": {
+        "count": 2,
+        "results": [
+            {
+                "bk_username": "q9k6bhqks0ckl5ew",
+                "full_name": "张三",
+                "display_name": "张三"
+            },
+            {
+                "bk_username": "er0ugcammqwf1q5w",
+                "full_name": "李四",
+                "display_name": "李四"
+            }
+        ]
+    }
 }
 ```
 

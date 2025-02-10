@@ -27,9 +27,10 @@ from bkuser.apis.open_v3.serializers.department import (
     TenantDepartmentListOutputSLZ,
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
+    TenantDepartmentUserListOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler
 
 
@@ -143,3 +144,31 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         return self.get_paginated_response(
             TenantDepartmentDescendantListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
         )
+
+
+class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    serializer_class = TenantDepartmentUserListOutputSLZ
+
+    def get_queryset(self):
+        tenant_department = get_object_or_404(
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            id=self.kwargs["id"],
+        )
+        user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id=tenant_department.data_source_department_id
+        ).values_list("user_id", flat=True)
+
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(data_source_user_id__in=user_ids, tenant_id=self.tenant_id)
+            .only("id", "data_source_user__full_name")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="list_department_user",
+        operation_description="查询部门的用户列表",
+        responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
