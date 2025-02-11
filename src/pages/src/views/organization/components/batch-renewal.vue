@@ -1,42 +1,41 @@
 <template>
   <bk-dialog
     :is-show="isShowRenewal"
+    render-directive="if"
     :title="$t('账号续期')"
     quick-close
     @closed="isShowRenewal = false"
     @confirm="confirmRenewal"
   >
-    <div>
-      <bk-form class="example" ref="formRef" form-type="vertical" :model="formData">
-        <bk-form-item :label="$t('续期时长')" property="dateTime" required>
-          <bk-select v-model="formData.dateTime" input-search>
-            <bk-option
-              v-for="(option, i) in dateOptions"
-              :key="i"
-              :id="option.id"
-              :name="option.name"
-              :disabled="option.id !== '-2'">
-            </bk-option>
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item :label="$t('账号过期时间')" property="custom" required>
-          <bk-date-picker
-            v-model="formData.custom"
-            :disabled-date="disabledDate"
-            :placeholder="$t('自定义')"
-            type="datetime"
-            format="yyyy-MM-dd HH:mm:ss"
-            append-to-body>
-          </bk-date-picker>
-        </bk-form-item>
-      </bk-form>
-    </div>
+    <bk-form ref="formRef" form-type="vertical" :model="formData">
+      <bk-form-item :label="$t('续期时长')" property="dateTime" required>
+        <bk-select v-model="formData.dateTime" input-search disabled>
+          <bk-option
+            v-for="(option, i) in dateOptions"
+            :key="i"
+            :id="option.id"
+            :name="option.name">
+          </bk-option>
+        </bk-select>
+      </bk-form-item>
+      <bk-form-item :label="$t('账号过期时间')" property="custom" required>
+        <bk-date-picker
+          v-model="formData.custom"
+          :disabled-date="disabledDate"
+          :placeholder="$t('自定义')"
+          type="datetime"
+          format="yyyy-MM-dd HH:mm:ss"
+          :with-validate="false"
+          append-to-body>
+        </bk-date-picker>
+      </bk-form-item>
+    </bk-form>
   </bk-dialog>
 </template>
 
 <script setup lang="ts">
 import dayjs, { ManipulateType } from 'dayjs';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import { batchAccountExpired } from '@/http/organizationFiles';
 import { t } from '@/language/index';
@@ -54,6 +53,7 @@ const formData = reactive({
   dateTime: '-2',
   custom: '',
 });
+const formRef = ref(null);
 
 const disabledDate = (date: Date) => date.valueOf() < Date.now();
 const defineDateTime = (num: number, unit: ManipulateType) => dayjs(new Date()).add(num, unit)
@@ -81,9 +81,11 @@ const dateOptions = computed(() => {
 });
 
 const confirmRenewal = async () => {
+  await formRef.value.validate();
   const params = { user_ids: props.userIds, account_expired_at: '' };
   params.account_expired_at = dayjs(formData.custom).format('YYYY-MM-DD HH:mm:ss');
   await batchAccountExpired(params);
+  isShowRenewal.value = false;
   formData.custom = '';
   emits('batchRenewal');
 };
