@@ -57,69 +57,109 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRING,
-            "title": "蓝鲸智云 - 账号即将到期提醒!",
-            "sender": "蓝鲸智云",
+            "title": "蓝鲸智云 - 账号即将到期提醒! BlueKing - Account Expiration Reminder!",
+            "sender": "蓝鲸智云 BlueKing",
             "content": (
                 "{{ username }}, 您好：\n "
                 + "您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
                 + "此邮件为系统自动发送，请勿回复。\n "
+                + "\n"
+                + "Dear {{ username }},\n "
+                + "Your BlueKing platform account will expire in {{ valid_days }} days. "
+                + "To avoid any disruption, please contact the platform administrator for renewal.\n "
+                + "This email is automatically sent by the system, please do not reply.\n "
             ),
             "content_html": (
                 "<p>{{ username }}, 您好：</p>"
                 + "<p>您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
                 + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                + "<br>"
+                + "<p>Dear {{ username }},</p>"
+                + "<p>Your BlueKing platform account will expire in {{ valid_days }} days. "
+                + "To avoid any disruption, please contact the platform administrator for renewal.</p>"
+                + "<p>This email is automatically sent by the system, please do not reply.</p>"
             ),
         },
         {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRED,
-            "title": "蓝鲸智云 - 账号到期提醒!",
-            "sender": "蓝鲸智云",
+            "title": "蓝鲸智云 - 账号到期提醒! BlueKing - Account Expired Reminder!",
+            "sender": "蓝鲸智云 BlueKing",
             "content": (
                 "{{ username }}，您好：\n "
                 + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501
                 + "该邮件为系统自动发送，请勿回复。"  # noqa: E501
+                + "\n"
+                + "Dear {{ username }},\n "
+                + "Your BlueKing platform account has expired. "
+                + "To avoid any disruption, please contact the platform administrator for renewal.\n "
+                + "This email is automatically sent by the system, please do not reply.\n "
             ),
             "content_html": (
                 "<p>{{ username }}，您好：</p>"
                 + "<p>您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。</p>"  # noqa: E501
                 + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                + "<br>"
+                + "<p>Dear {{ username }},</p>"
+                + "<p>Your BlueKing platform account has expired. "
+                + "If you wish to continue using it, please contact the platform administrator for renewal.</p>"
+                + "<p>This email is automatically sent by the system, please do not reply.</p>"
             ),
         },
         {
             "method": NotificationMethod.SMS,
             "scene": NotificationScene.TENANT_USER_EXPIRING,
             "title": None,
-            "sender": "蓝鲸智云",
+            "sender": "蓝鲸智云 BlueKing",
             "content": (
                 "{{ username }}，您好：\n "
                 + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
                 + "该短信为系统自动发送，请勿回复。"
+                + "\n"
+                + "Dear {{ username }},\n "
+                + "Your BlueKing platform account will expire in {{ remind_before_expire_days }} days. "
+                + "To avoid any disruption, please contact the platform administrator for renewal.\n "
+                + "This SMS is automatically sent by the system, please do not reply.\n "
             ),
             "content_html": (
                 "<p>{{ username }}，您好：</p>"
                 + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
                 + "<p>该短信为系统自动发送，请勿回复。</p>"
+                + "<br>"
+                + "<p>Dear {{ username }},</p>"
+                + "<p>Your BlueKing platform account will expire in {{ remind_before_expire_days }} days. "
+                + "To avoid any disruption, please contact the platform administrator for renewal.</p>"
+                + "<p>This SMS is automatically sent by the system, please do not reply.</p>"
             ),
         },
         {
             "method": NotificationMethod.SMS,
             "scene": NotificationScene.TENANT_USER_EXPIRED,
             "title": None,
-            "sender": "蓝鲸智云",
+            "sender": "蓝鲸智云 BlueKing",
             "content": (
                 "{{ username }}您好：\n "
                 + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501
                 + "该短信为系统自动发送，请勿回复。"  # noqa: E501
+                + "\n"
+                + "Dear {{ username }},\n "
+                + "Your BlueKing platform account has expired. "
+                + "If you wish to continue using it, please contact the platform administrator for renewal.\n "
+                + "This SMS is automatically sent by the system, please do not reply.\n "
             ),
             "content_html": (
                 "<p>{{ username }}您好：</p>"
                 + "<p>您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。</p>"  # noqa: E501
                 + "<p>该短信为系统自动发送，请勿回复。</p>"
+                + "<br>"
+                + "<p>Dear {{ username }},</p>"
+                + "<p>Your BlueKing platform account has expired. "
+                + "If you wish to continue using it, please contact the platform administrator for renewal.</p>"
+                + "<p>This SMS is automatically sent by the system, please do not reply.</p>"
             ),
         },
     ],
