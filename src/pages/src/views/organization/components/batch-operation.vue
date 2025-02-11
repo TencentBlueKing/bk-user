@@ -136,7 +136,6 @@
     </bk-dialog>
     <!-- 批量续期弹窗 -->
     <batchRenewal
-      render-directive="v-if"
       v-model:is-show-renewal="isShowRenewal"
       @batch-renewal="handleRenewal"
       :user-ids="userIds" />
@@ -448,7 +447,6 @@ const confirmBatchAction = (actionType: string) => {
 };
 
 const handleRenewal = () => {
-  isShowRenewal.value = false;
   selectedOption.value = '';
   userInfoOptions.value.forEach(item => item.selected = false);
   Message({ theme: 'success', message: t('更新成功') });
