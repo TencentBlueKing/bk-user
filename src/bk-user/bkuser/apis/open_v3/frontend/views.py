@@ -44,7 +44,7 @@ class TenantUserDisplayNameRetrieveApi(FrontApiCommonMixin, generics.RetrieveAPI
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("id", "data_source_user__full_name")
+            .only("data_source_user__full_name")
         )
 
     @swagger_auto_schema(
