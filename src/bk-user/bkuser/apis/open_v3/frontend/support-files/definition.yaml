@@ -36,7 +36,7 @@ stages:
           allow_origins:
           allow_origins_by_regex: ['^http://.*\.woa\.com$']
           allow_methods: 'GET,OPTIONS'
-          allow_headers: 'Accept,Content-Type,Content-Length,Accept-Encoding,Accept-Language,X-Csrftoken,X-Bkapi-Authorization,X-Requested-With,Cookie'
+          allow_headers: 'Accept,Content-Type,Content-Length,Accept-Encoding,Accept-Language,X-Csrftoken,X-Bk-Tenant-Id,X-Requested-With,Cookie'
           expose_headers: ''
           max_age: 86400
           allow_credential: true
