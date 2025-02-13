@@ -17,7 +17,7 @@
 from unittest import mock
 
 import pytest
-from bkuser.apis.open_v3.frontend.mixins import FrontApiCommonMixin
+from bkuser.apis.open_v3.frontend.mixins import FrontendApiMixin
 from rest_framework.test import APIClient
 
 
@@ -25,7 +25,7 @@ from rest_framework.test import APIClient
 def api_client(random_tenant):
     client = APIClient()
     client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-    with mock.patch.object(FrontApiCommonMixin, "authentication_classes", []), mock.patch.object(
-        FrontApiCommonMixin, "permission_classes", []
+    with mock.patch.object(FrontendApiMixin, "authentication_classes", []), mock.patch.object(
+        FrontendApiMixin, "permission_classes", []
     ):
         yield client

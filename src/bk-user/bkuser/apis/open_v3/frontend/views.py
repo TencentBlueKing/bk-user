@@ -17,7 +17,7 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
-from bkuser.apis.open_v3.frontend.mixins import FrontApiCommonMixin
+from bkuser.apis.open_v3.frontend.mixins import FrontendApiMixin
 from bkuser.apis.open_v3.frontend.serializers import (
     TenantUserDisplayNameListInputSLZ,
     TenantUserDisplayNameListOutputSLZ,
@@ -26,7 +26,7 @@ from bkuser.apis.open_v3.frontend.serializers import (
 from bkuser.apps.tenant.models import TenantUser
 
 
-class TenantUserDisplayNameRetrieveApi(FrontApiCommonMixin, generics.RetrieveAPIView):
+class TenantUserDisplayNameRetrieveApi(FrontendApiMixin, generics.RetrieveAPIView):
     """
     查询用户展示名
     Note: 前端服务专用 API 接口
@@ -57,7 +57,7 @@ class TenantUserDisplayNameRetrieveApi(FrontApiCommonMixin, generics.RetrieveAPI
         return self.retrieve(request, *args, **kwargs)
 
 
-class TenantUserDisplayNameListApi(FrontApiCommonMixin, generics.ListAPIView):
+class TenantUserDisplayNameListApi(FrontendApiMixin, generics.ListAPIView):
     """
     批量查询用户展示名
     Note: 前端服务专用 API 接口

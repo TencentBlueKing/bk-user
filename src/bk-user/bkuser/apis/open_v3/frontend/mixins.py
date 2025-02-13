@@ -20,5 +20,5 @@ from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from .permissions import ApiGatewayUserVerifiedPermission
 
 
-class FrontApiCommonMixin(OpenApiCommonMixin):
+class FrontendApiMixin(OpenApiCommonMixin):
     permission_classes = [ApiGatewayUserVerifiedPermission]
