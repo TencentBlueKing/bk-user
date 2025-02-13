@@ -34,7 +34,7 @@ stages:
       - type: bk-cors
         yaml: |-
           allow_origins:
-          allow_origins_by_regex: ['^http://.*\.woa\.com$']
+          allow_origins_by_regex: ['^http://.*\.oa\.com$','^http://.*\.woa\.com$','^https://.*\.oa\.com$','^https://.*\.woa\.com$']
           allow_methods: 'GET,OPTIONS'
           allow_headers: 'Accept,Content-Type,Content-Length,Accept-Encoding,Accept-Language,X-Csrftoken,X-Bk-Tenant-Id,X-Requested-With,Cookie'
           expose_headers: ''
