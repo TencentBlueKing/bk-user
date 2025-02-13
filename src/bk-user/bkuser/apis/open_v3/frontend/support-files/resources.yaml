@@ -56,3 +56,28 @@ paths:
           appVerifiedRequired: false
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display_name
+
+  /:
+    options:
+      operationId: cors_options
+      description: CORS 预检请求
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: true
+        backend:
+          name: default
+          method: options
+          path: /
+          matchSubpath: true
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: CORS preflight request
