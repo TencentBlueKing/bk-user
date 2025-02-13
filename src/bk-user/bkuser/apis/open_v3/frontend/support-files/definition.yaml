@@ -33,8 +33,7 @@ stages:
     plugin_configs:
       - type: bk-cors
         yaml: |-
-          allow_origins:
-          allow_origins_by_regex: ['^http://.*\.oa\.com$','^http://.*\.woa\.com$','^https://.*\.oa\.com$','^https://.*\.woa\.com$']
+          allow_origins: "{{ settings.CORS_ALLOW_APIGW_ORIGINS }}"
           allow_methods: 'GET,OPTIONS'
           allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,Content-Length,Content-Type,X-Bk-Tenant-Id,X-Csrftoken,X-Requested-With'
           expose_headers: ''
