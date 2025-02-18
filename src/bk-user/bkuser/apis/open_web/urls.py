@@ -14,11 +14,27 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from rest_framework import permissions
 
+from django.urls import include, path
 
-class ApiGatewayUserVerifiedPermission(permissions.BasePermission):
-    """校验来源 APIGateway JWT 的用户是否认证"""
+from . import views
 
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
+urlpatterns = [
+    path(
+        "tenant/",
+        include(
+            [
+                path(
+                    "users/<str:id>/display_info/",
+                    views.TenantUserDisplayInfoRetrieveApi.as_view(),
+                    name="open_web.tenant_user.display_info.retrieve",
+                ),
+                path(
+                    "users/-/display_infos/",
+                    views.TenantUserDisplayInfoListApi.as_view(),
+                    name="open_web.tenant_user.display_info.list",
+                ),
+            ]
+        ),
+    )
+]

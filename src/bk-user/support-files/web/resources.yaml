@@ -7,10 +7,10 @@ info:
 schemes:
   - http
 paths:
-  /api/v3/open/frontend/tenant/users/{bk_username}/display_name/:
+  /api/v3/open-web/tenant/users/{bk_username}/display_info/:
     get:
-      operationId: retrieve_user_display_name
-      description: 查询用户展示名
+      operationId: retrieve_user_display_info
+      description: 查询用户展示信息
       tags: []
       responses:
         default:
@@ -22,7 +22,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/frontend/tenant/users/{bk_username}/display_name/
+          path: /api/v3/open-web/tenant/users/{bk_username}/display_info/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -30,12 +30,12 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Query user's display_name
+        descriptionEn: Query user's display_info
 
-  /api/v3/open/frontend/tenant/users/-/display_names/:
+  /api/v3/open-web/tenant/users/-/display_infos/:
     get:
-      operationId: batch_query_user_display_name
-      description: 批量查询用户展示名
+      operationId: batch_query_user_display_info
+      description: 批量查询用户展示信息
       tags: []
       responses:
         default:
@@ -47,7 +47,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/frontend/tenant/users/-/display_names/
+          path: /api/v3/open-web/tenant/users/-/display_infos/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -55,7 +55,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Batch query user's display_name
+        descriptionEn: Batch query user's display_info
 
   /:
     options:
@@ -78,6 +78,6 @@ paths:
         pluginConfigs: []
         authConfig:
           userVerifiedRequired: false
-          appVerifiedRequired: true
-          resourcePermissionRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
         descriptionEn: CORS preflight request

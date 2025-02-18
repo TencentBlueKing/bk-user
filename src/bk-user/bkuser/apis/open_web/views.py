@@ -14,61 +14,70 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
+from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.response import Response
 
-from bkuser.apis.open_v3.frontend.mixins import FrontendApiMixin
-from bkuser.apis.open_v3.frontend.serializers import (
-    TenantUserDisplayNameListInputSLZ,
-    TenantUserDisplayNameListOutputSLZ,
-    TenantUserDisplayNameRetrieveOutputSLZ,
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
+from bkuser.apis.open_web.serializers import (
+    TenantUserDisplayInfoListInputSLZ,
+    TenantUserDisplayInfoListOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-class TenantUserDisplayNameRetrieveApi(FrontendApiMixin, generics.RetrieveAPIView):
+class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveAPIView):
     """
-    查询用户展示名
-    Note: 前端服务专用 API 接口
+    查询用户展示信息
+    Note: 前端服务专用 API 接口，该接口对性能要求较高，所以不进行序列化，且查询必须按字段
     """
 
-    lookup_url_kwarg = "id"
-    serializer_class = TenantUserDisplayNameRetrieveOutputSLZ
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DISPLAY_NAME)
+    cache_timeout = 60 * 10
 
-    def get_queryset(self):
+    @method_decorator(cache_control(public=True, max_age=60 * 5))
+    def get(self, request, *args, **kwargs):
+        # 优先从缓存中获取 display_name
+        cached_key = f"{kwargs['id']}:display_name"
+        if cached_display_name := self.cache.get(cached_key):
+            return Response({"display_name": cached_display_name})
+
         # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
-        return (
+        tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("data_source_user__full_name")
+            .only("data_source_user__full_name"),
+            id=kwargs["id"],
         )
 
-    @swagger_auto_schema(
-        tags=["open_v3.frontend.user"],
-        operation_id="retrieve_user_display_name",
-        operation_description="查询用户展示名",
-        responses={status.HTTP_200_OK: TenantUserDisplayNameRetrieveOutputSLZ()},
-    )
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        display_name = TenantUserHandler.generate_tenant_user_display_name(tenant_user)
+        self.cache.set(cached_key, display_name, self.cache_timeout)
+
+        return Response({"display_name": display_name})
 
 
-class TenantUserDisplayNameListApi(FrontendApiMixin, generics.ListAPIView):
+class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    批量查询用户展示名
+    批量查询用户展示信息
     Note: 前端服务专用 API 接口
     """
 
     pagination_class = None
 
-    serializer_class = TenantUserDisplayNameListOutputSLZ
+    serializer_class = TenantUserDisplayInfoListOutputSLZ
 
     def get_queryset(self):
-        slz = TenantUserDisplayNameListInputSLZ(data=self.request.query_params)
+        slz = TenantUserDisplayInfoListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -86,10 +95,10 @@ class TenantUserDisplayNameListApi(FrontendApiMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.frontend.user"],
-        operation_id="batch_query_user_display_name",
-        operation_description="批量查询用户展示名",
-        query_serializer=TenantUserDisplayNameListInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
+        operation_id="batch_query_user_display_info",
+        operation_description="批量查询用户展示信息",
+        query_serializer=TenantUserDisplayInfoListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserDisplayInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

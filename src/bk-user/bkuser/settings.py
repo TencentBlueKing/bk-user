@@ -126,7 +126,10 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Auth
-AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
+AUTHENTICATION_BACKENDS = [
+    "bkuser.auth.backends.TokenBackend",
+    "apigw_manager.apigw.authentication.UserModelBackend",
+]
 AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
@@ -236,6 +239,8 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
+# 用于前端服务的网关跨域插件域名
+BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 # 是否自动同步网关

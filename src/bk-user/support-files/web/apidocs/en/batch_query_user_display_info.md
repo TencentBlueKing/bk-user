@@ -1,11 +1,11 @@
 ### Description
 
-Batch query user's display_name
+Batch query user's display_info
 
 ### Parameters
 
 | Name         | Type   | Required | Description                                                                                           |
-|--------------|--------|----------|-------------------------------------------------------------------------------------------------------|
+| ------------ | ------ | -------- | ----------------------------------------------------------------------------------------------------- |
 | bk_usernames | string | Yes      | Blueking user's unique identifier, multiple identifiers are separated by commas, and the limit is 100 |
 
 ### Request Example
@@ -35,6 +35,6 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 ### Response Parameters Description
 
 | Name         | Type   | Description                       |
-|--------------|--------|-----------------------------------|
+| ------------ | ------ | --------------------------------- |
 | bk_username  | string | Blueking user's unique identifier |
 | display_name | string | User's display_name               |

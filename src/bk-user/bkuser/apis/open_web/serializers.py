@@ -14,11 +14,24 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.conf import settings
+from rest_framework import serializers
 
-from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.serializers import StringArrayField
 
-from .permissions import ApiGatewayUserVerifiedPermission
+
+class TenantUserDisplayInfoListInputSLZ(serializers.Serializer):
+    bk_usernames = StringArrayField(
+        help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
+        max_items=settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT,
+    )
 
 
-class FrontendApiMixin(OpenApiCommonMixin):
-    permission_classes = [ApiGatewayUserVerifiedPermission]
+class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)

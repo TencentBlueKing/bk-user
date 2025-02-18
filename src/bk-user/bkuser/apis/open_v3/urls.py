@@ -74,9 +74,4 @@ urlpatterns = [
             ]
         ),
     ),
-    # 提供给前端服务 API
-    path(
-        "frontend/",
-        include("bkuser.apis.open_v3.frontend.urls"),
-    ),
 ]

@@ -3,8 +3,8 @@ spec_version: 2
 release:
   # 发布版本号
   version: 0.0.1
-  title: "bk-user-frontend-api"
-  comment: "bk-user-frontend-api"
+  title: "bk-user-web"
+  comment: "bk-user-web"
 
 apigateway:
   description: "用户管理前端服务 API 网关"
@@ -33,7 +33,7 @@ stages:
     plugin_configs:
       - type: bk-cors
         yaml: |-
-          allow_origins: "{{ settings.CORS_ALLOW_APIGW_ORIGINS }}"
+          allow_origins: "{{ settings.BK_APIGW_CORS_ALLOW_ORIGINS }}"
           allow_methods: 'GET,OPTIONS'
           allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,Content-Length,Content-Type,X-Bk-Tenant-Id,X-Csrftoken,X-Requested-With'
           expose_headers: ''
@@ -48,7 +48,7 @@ stages:
 # - zh
 #   - anything.md
 resource_docs:
-  basedir: "bkuser/apis/open_v3/frontend/support-files/docs"
+  basedir: "support-files/web/apidocs/"
 # 主动授权，网关主动给应用，添加访问网关所有资源的权限
 #grant_permissions:
 #  - bk_app_code: "{{ settings.BK_APP_CODE }}"
