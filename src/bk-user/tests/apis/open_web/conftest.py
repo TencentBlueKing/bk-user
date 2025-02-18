@@ -17,15 +17,23 @@
 from unittest import mock
 
 import pytest
-from bkuser.apis.open_v3.frontend.mixins import FrontendApiMixin
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from rest_framework.test import APIClient
+
+from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 
 @pytest.fixture
 def api_client(random_tenant):
     client = APIClient()
     client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-    with mock.patch.object(FrontendApiMixin, "authentication_classes", []), mock.patch.object(
-        FrontendApiMixin, "permission_classes", []
+    with mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []), mock.patch.object(
+        OpenWebApiCommonMixin, "permission_classes", []
     ):
         yield client
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
