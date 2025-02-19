@@ -26,7 +26,7 @@ from bkuser.common.serializers import StringArrayField
 class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
         help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
-        max_items=settings.BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT,
+        max_items=settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT,
     )
 
 

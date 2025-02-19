@@ -57,7 +57,7 @@ class TestTenantUserDisplayNameListApi:
             reverse("open_v3.tenant_user.display_name.list"),
             data={
                 "bk_usernames": ",".join(
-                    map(str, range(1, settings.BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT + 2))
+                    map(str, range(1, settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT + 2))
                 )
             },
         )
