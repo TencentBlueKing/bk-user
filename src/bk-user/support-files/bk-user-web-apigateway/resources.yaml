@@ -30,9 +30,9 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Query user's display_info
+        descriptionEn: Query user's display information
 
-  /api/v3/open-web/tenant/users/-/display_infos/:
+  /api/v3/open-web/tenant/users/-/display_info/:
     get:
       operationId: batch_query_user_display_info
       description: 批量查询用户展示信息
@@ -47,7 +47,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open-web/tenant/users/-/display_infos/
+          path: /api/v3/open-web/tenant/users/-/display_info/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -55,7 +55,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Batch query user's display_info
+        descriptionEn: Batch query user's display information
 
   /:
     options:

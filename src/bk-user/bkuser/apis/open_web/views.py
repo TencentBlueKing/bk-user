@@ -26,10 +26,10 @@ from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
+    TenantUserDisplayInfoRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
 class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveAPIView):
@@ -38,16 +38,14 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
     Note: 前端服务专用 API 接口，该接口对性能要求较高，所以不进行序列化，且查询必须按字段
     """
 
-    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DISPLAY_NAME)
-    cache_timeout = 60 * 10
-
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="query_user_display_info",
+        operation_description="查询用户展示信息",
+        responses={status.HTTP_200_OK: TenantUserDisplayInfoRetrieveOutputSLZ()},
+    )
     @method_decorator(cache_control(public=True, max_age=60 * 5))
     def get(self, request, *args, **kwargs):
-        # 优先从缓存中获取 display_name
-        cached_key = f"{kwargs['id']}:display_name"
-        if cached_display_name := self.cache.get(cached_key):
-            return Response({"display_name": cached_display_name})
-
         # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         tenant_user = get_object_or_404(
@@ -60,10 +58,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
             id=kwargs["id"],
         )
 
-        display_name = TenantUserHandler.generate_tenant_user_display_name(tenant_user)
-        self.cache.set(cached_key, display_name, self.cache_timeout)
-
-        return Response({"display_name": display_name})
+        return Response({"display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user)})
 
 
 class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):

@@ -12,7 +12,7 @@
 
 ```
 // URL Path 参数
-/api/v3/open-web/tenant/users/7idwx3b7nzk6xigs/display_info
+/api/v3/open-web/tenant/users/7idwx3b7nzk6xigs/display_info/
 ```
 
 ### 状态码 200 的响应示例

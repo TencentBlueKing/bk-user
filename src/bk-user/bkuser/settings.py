@@ -220,8 +220,6 @@ CORS_ORIGIN_WHITELIST = CSRF_TRUSTED_ORIGINS
 # debug/联调测试时需要允许额外的域名跨域请求
 CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", default=[])
 CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
-# 用于前端服务的网关跨域插件域名
-CORS_ALLOW_APIGW_ORIGINS = env.list("CORS_ALLOW_APIGW_ORIGINS", default=[])
 
 # Login
 BK_LOGIN_URL = env.str("BK_LOGIN_URL", default="/")
@@ -240,11 +238,13 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # 用于前端服务的网关跨域插件域名
-BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
+BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default=BK_DOMAIN)
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 # 是否自动同步网关
 ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
+# 是否自动同步 Web 网关
+ENABLE_SYNC_WEB_APIGW = env.bool("ENABLE_SYNC_WEB_APIGW", default=False)
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"

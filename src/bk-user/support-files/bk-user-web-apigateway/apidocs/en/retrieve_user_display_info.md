@@ -12,7 +12,7 @@ Query user's display information
 
 ```
 // URL Path Parameters
-/api/v3/open/frontend/tenant/users/7idwx3b7nzk6xigs/display_info
+/api/v3/open/frontend/tenant/users/7idwx3b7nzk6xigs/display_info/
 ```
 
 ### Response Example for Status Code 200

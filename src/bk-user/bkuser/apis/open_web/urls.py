@@ -25,14 +25,14 @@ urlpatterns = [
         include(
             [
                 path(
+                    "users/-/display_info/",
+                    views.TenantUserDisplayInfoListApi.as_view(),
+                    name="open_web.tenant_user.display_info.list",
+                ),
+                path(
                     "users/<str:id>/display_info/",
                     views.TenantUserDisplayInfoRetrieveApi.as_view(),
                     name="open_web.tenant_user.display_info.retrieve",
-                ),
-                path(
-                    "users/-/display_infos/",
-                    views.TenantUserDisplayInfoListApi.as_view(),
-                    name="open_web.tenant_user.display_info.list",
                 ),
             ]
         ),

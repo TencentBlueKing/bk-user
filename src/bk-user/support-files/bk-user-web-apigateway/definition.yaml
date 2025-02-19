@@ -1,0 +1,55 @@
+spec_version: 2
+
+release:
+  # 发布版本号
+  version: 0.0.1
+  title: "bk-user-web"
+  comment: "bk-user-web"
+
+apigateway:
+  description: "用户管理前端服务 API 网关"
+  description_en: "User Management API Gateway for Frontend Service"
+  is_public: true
+  api_type: 1
+  user_config:
+    from_bk_token: true
+  maintainers:
+    - "admin"
+
+stages:
+  - name: "prod"
+    description: "生产环境"
+    description_en: "environment of production"
+    backends:
+      - name: "default"
+        config:
+          timeout: 30
+          loadbalance: "roundrobin"
+          hosts:
+            # 网关调用后端服务的默认域名或IP，不包含Path，比如：http://api.example.com
+            - host: "http://bkuser"
+              weight: 100
+
+    plugin_configs:
+      - type: bk-cors
+        yaml: |-
+          allow_origins: "{{ settings.BK_APIGW_CORS_ALLOW_ORIGINS }}"
+          allow_methods: 'GET,OPTIONS'
+          allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,Content-Length,Content-Type,X-Bk-Tenant-Id,X-Csrftoken,X-Requested-With'
+          expose_headers: ''
+          max_age: 86400
+          allow_credential: true
+
+# 资源文档
+# 资源文档的目录格式样例如下，en 为英文文档，zh 为中文文档：
+# ./
+# - en
+#   - anything.md
+# - zh
+#   - anything.md
+resource_docs:
+  basedir: "support-files/bk-user-web-apigateway/apidocs/"
+# 主动授权，网关主动给应用，添加访问网关所有资源的权限
+#grant_permissions:
+#  - bk_app_code: "{{ settings.BK_APP_CODE }}"
+#    grant_dimension: "gateway"
