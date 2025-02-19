@@ -94,7 +94,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         )
 
     @swagger_auto_schema(
-        tags=["open_v3.frontend.user"],
+        tags=["open_web.user"],
         operation_id="batch_query_user_display_info",
         operation_description="批量查询用户展示信息",
         query_serializer=TenantUserDisplayInfoListInputSLZ(),
