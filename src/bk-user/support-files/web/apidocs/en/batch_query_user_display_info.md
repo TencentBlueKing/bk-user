@@ -1,6 +1,6 @@
 ### Description
 
-Batch query user's display_info
+Batch query user's display information
 
 ### Parameters
 
