@@ -40,7 +40,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
 
     @swagger_auto_schema(
         tags=["open_web.user"],
-        operation_id="query_user_display_info",
+        operation_id="retrieve_user_display_info",
         operation_description="查询用户展示信息",
         responses={status.HTTP_200_OK: TenantUserDisplayInfoRetrieveOutputSLZ()},
     )
