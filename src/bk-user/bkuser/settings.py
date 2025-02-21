@@ -191,6 +191,7 @@ SECRET_KEY = BK_APP_SECRET
 
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
+BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
@@ -238,7 +239,7 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # 用于前端服务的网关跨域插件域名
-BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default=BK_DOMAIN)
+BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default=f"{BK_DOMAIN_SCHEME}://{BK_DOMAIN}")
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 # 是否自动同步网关
