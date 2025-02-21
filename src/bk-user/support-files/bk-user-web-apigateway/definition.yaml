@@ -34,6 +34,10 @@ stages:
       - type: bk-cors
         yaml: |-
           allow_origins: "{{ settings.BK_APIGW_CORS_ALLOW_ORIGINS }}"
+          allow_origins_by_regex:
+          {% for pattern in settings.BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX %}
+            - '{{ pattern }}'
+          {% endfor %}
           allow_methods: 'GET,OPTIONS'
           allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,Content-Length,Content-Type,X-Bk-Tenant-Id,X-Csrftoken,X-Requested-With'
           expose_headers: ''
