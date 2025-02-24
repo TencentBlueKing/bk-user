@@ -142,26 +142,19 @@ const updateStatusFilters = [
   { text: t('失败'), value: 'failed' },
 ];
 
+const interval = ref(null);
 onMounted(() => {
   getSyncRecordsList();
+  interval.value =  setInterval(() => {
+    handleSyncRecords();
+  }, 5000);
 });
 
 const getSyncRecordsList = async () => {
   try {
     dataRecordConfig.loading = true;
-    dataRecordConfig.isDataEmpty = false;
-    dataRecordConfig.isDataError = false;
-    const params = {
-      page: pagination.current,
-      page_size: pagination.limit,
-      status: dataRecordConfig.status,
-      id: props.dataSource?.id,
-    };
-    const res = await getSyncRecords(params);
-    dataRecordConfig.list = res.data.results;
-    dataRecordConfig.isDataEmpty = res.data.count === 0;
-    pagination.count = res.data.count;
-    const record = dataRecordConfig.list[0];
+    const { list } = await handleSyncRecords();
+    const record = list[0];
     if (route.params.type && (record.status === 'failed' || (record.status === 'success' && record.has_warning))) {
       handleLogDetails(record);
     }
@@ -182,12 +175,12 @@ const dataRecordFilter = ({ checked }) => {
   getSyncRecordsList();
 };
 
-const pageLimitChange = (limit) => {
+const pageLimitChange = (limit: number) => {
   pagination.limit = limit;
   pagination.current = 1;
   getSyncRecordsList();
 };
-const pageCurrentChange = (current) => {
+const pageCurrentChange = (current: number) => {
   pagination.current = current;
   getSyncRecordsList();
 };
@@ -202,7 +195,7 @@ const beforeClose = () => {
   logConfig.value.isShow = false;
 };
 
-const interval = setInterval(() => {
+const handleSyncRecords = async () => {
   dataRecordConfig.isDataEmpty = false;
   dataRecordConfig.isDataError = false;
   const params = {
@@ -211,18 +204,28 @@ const interval = setInterval(() => {
     status: dataRecordConfig.status,
     id: props.dataSource?.id,
   };
-  getSyncRecords(params).then((res) => {
+  try {
+    const res = await getSyncRecords(params);
     dataRecordConfig.list = res.data.results;
     dataRecordConfig.isDataEmpty = res.data.count === 0;
     pagination.count = res.data.count;
-  })
-    .catch(() => {
-      dataRecordConfig.isDataError = true;
-    });
-}, 5000);
+    // stop time polling
+    const curStatus = res.data.results[0].status;
+    if (curStatus === 'success' || curStatus === 'failed') {
+      clearInterval(interval.value);
+    }
+
+    return {
+      list: res.data.results,
+    };
+  } catch (e) {
+    dataRecordConfig.isDataError = true;
+    console.warn(e);
+  }
+};
 
 onBeforeUnmount(() => {
-  clearInterval(interval);
+  clearInterval(interval.value);
 });
 </script>
 
