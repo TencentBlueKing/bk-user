@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import hashlib
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -191,9 +192,6 @@ SECRET_KEY = BK_APP_SECRET
 
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
-# 用于跨域正则化匹配的 bk_domain
-escaped_bk_domain = BK_DOMAIN.replace(".", r"\.")
-
 BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
@@ -241,12 +239,14 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
-# 用于前端服务的网关跨域插件域名
+# bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
+# Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写
+# 例如：allow_origins: "http://demo.example.com,https://demo.example.com"
+# allow_origins_by_regex: ["^http://.*\.example\.com$", "^https://.*\.example\.com$"]
 BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
-# 用于前端服务的网关跨域插件泛域名（支持正则）
 BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX = env.list(
     "BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX",
-    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{escaped_bk_domain}$"],
+    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$"],
 )
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
