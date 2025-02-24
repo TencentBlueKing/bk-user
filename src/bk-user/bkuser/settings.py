@@ -246,7 +246,7 @@ BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
 # 用于前端服务的网关跨域插件泛域名（支持正则）
 BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX = env.list(
     "BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX",
-    default=[f"^{BK_DOMAIN_SCHEME}://.*\\.{escaped_bk_domain}$"],
+    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{escaped_bk_domain}$"],
 )
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
