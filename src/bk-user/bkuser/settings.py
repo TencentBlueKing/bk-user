@@ -246,7 +246,7 @@ BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
 BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX = env.list(
     "BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX",
-    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$"],
+    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$", rf"^{BK_DOMAIN_SCHEME}://{re.escape(BK_DOMAIN)}$"],
 )
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
