@@ -241,12 +241,15 @@ BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
 # Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
-# 例如：allow_origins: "http://demo.example.com,https://demo.example.com"
-# allow_origins_by_regex: ["^http://.*\.example\.com$", "^https://.*\.example\.com$"]
+# 例如：BK_APIGW_CORS_ALLOW_ORIGINS=http://demo.example.com,https://demo.example.com
+# BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX=^http://.*\.example\.com$,^https://.*\.example\.com$
 BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
 BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX = env.list(
     "BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX",
-    default=[rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$", rf"^{BK_DOMAIN_SCHEME}://{re.escape(BK_DOMAIN)}$"],
+    default=[
+        rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$",
+        rf"^{BK_DOMAIN_SCHEME}://{re.escape(BK_DOMAIN)}$",
+    ],
 )
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
