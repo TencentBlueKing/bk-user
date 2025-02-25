@@ -1,0 +1,83 @@
+swagger: "2.0"
+basePath: /
+info:
+  version: "2.0"
+  title: API Gateway Resources
+  description: ""
+schemes:
+  - http
+paths:
+  /api/v3/open-web/tenant/users/{bk_username}/display_info/:
+    get:
+      operationId: retrieve_user_display_info
+      description: 查询用户展示信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/{bk_username}/display_info/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Query user's display information
+
+  /api/v3/open-web/tenant/users/-/display_info/:
+    get:
+      operationId: batch_query_user_display_info
+      description: 批量查询用户展示信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/-/display_info/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Batch query user's display information
+
+  /:
+    options:
+      operationId: cors_options
+      description: CORS 预检请求
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: true
+        backend:
+          name: default
+          method: options
+          path: /
+          matchSubpath: true
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: CORS preflight request

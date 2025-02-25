@@ -5,7 +5,11 @@ set -e
 
 # 自动化同步网关
 if [ "$ENABLE_SYNC_APIGW" = true ]; then
-  sh ./support-files/bin/sync-apigateway.sh
+  sh ./support-files/bin/sync-bk-user-apigateway.sh
+fi
+
+if [ "$ENABLE_SYNC_WEB_APIGW" = true ]; then
+  sh ./support-files/bin/sync-bk-user-web-apigateway.sh
 fi
 
 # 注册到蓝鲸通知中心

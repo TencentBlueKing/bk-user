@@ -5,8 +5,8 @@ set -e
 gateway_name="bk-user"
 
 # 待同步网关、资源定义文件，需调整为实际的配置文件地址
-definition_file="support-files/definition.yaml"
-resources_file="support-files/resources.yaml"
+definition_file="support-files/bk-user-apigateway/definition.yaml"
+resources_file="support-files/bk-user-apigateway/resources.yaml"
 
 echo "gateway sync definition start ..."
 

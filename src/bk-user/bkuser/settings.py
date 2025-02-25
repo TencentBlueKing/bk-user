@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import hashlib
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -126,7 +127,10 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Auth
-AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
+AUTHENTICATION_BACKENDS = [
+    "bkuser.auth.backends.TokenBackend",
+    "apigw_manager.apigw.authentication.UserModelBackend",
+]
 AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
@@ -188,6 +192,7 @@ SECRET_KEY = BK_APP_SECRET
 
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
+BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
@@ -234,10 +239,24 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
+# bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
+# Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
+# 例如：BK_APIGW_CORS_ALLOW_ORIGINS=http://demo.example.com,https://demo.example.com
+# BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX=^http://.*\.example\.com$,^https://.*\.example\.com$
+BK_APIGW_CORS_ALLOW_ORIGINS = env.str("BK_APIGW_CORS_ALLOW_ORIGINS", default="")
+BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX = env.list(
+    "BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX",
+    default=[
+        rf"^{BK_DOMAIN_SCHEME}://.*\.{re.escape(BK_DOMAIN)}$",
+        rf"^{BK_DOMAIN_SCHEME}://{re.escape(BK_DOMAIN)}$",
+    ],
+)
 # 与网关内部调用的认证 Token
 BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 # 是否自动同步网关
 ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
+# 是否自动同步 Web 网关
+ENABLE_SYNC_WEB_APIGW = env.bool("ENABLE_SYNC_WEB_APIGW", default=False)
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
@@ -683,5 +702,5 @@ ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)
 # 限制批量操作数量上限，避免性能问题 / 误操作（目前不支持跨页全选，最大单页 100 条数据）
 ORGANIZATION_BATCH_OPERATION_API_LIMIT = env.int("ORGANIZATION_BATCH_OPERATION_API_LIMIT", 100)
 
-# 限制 bk_username 批量查询 display_name 的数量上限，避免性能问题
-BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT = env.int("BATCH_QUERY_USER_DISPLAY_NAME_BY_BK_USERNAME_LIMIT", 100)
+# 限制 bk_username 批量查询 display_info 的数量上限，避免性能问题
+BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT = env.int("BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT", 100)
