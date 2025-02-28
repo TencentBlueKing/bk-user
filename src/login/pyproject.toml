@@ -54,4 +54,3 @@ pytest-django = "^4.9.0"
 pytest-cov = "^6.0.0"
 # mypy
 mypy = "^1.10.1"
-

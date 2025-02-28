@@ -85,8 +85,3 @@ types-cachetools = "^5.5.0.20240820"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "bkuser_core.config.overlays.dev"
 addopts = "--disable-pytest-warnings --reuse-db"
-
-
-[[tool.poetry.source]]
-name = "default"
-url = "https://mirrors.tencent.com/pypi/simple/"

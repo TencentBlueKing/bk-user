@@ -15,8 +15,7 @@ def init_patch():
     import pymysql
     import urllib3
 
-    # no more useless warning
-
+    # 禁用不必要的警告
     urllib3.disable_warnings()
 
     # ==============================================================================

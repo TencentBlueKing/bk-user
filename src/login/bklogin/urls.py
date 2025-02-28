@@ -110,10 +110,10 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
 urlpatterns += staticfiles_urlpatterns()
 
 # 启用IAM，配置回调地址
-if settings.ENABLE_IAM:
-    from bklogin.bkiam.resource_providers import dispatcher
+#if settings.ENABLE_IAM:
+#    from bklogin.bkiam.resource_providers import dispatcher
 
     # IAM 回调资源
-    urlpatterns += [
-        re_path(r'^api/v1/iam/resource/$', dispatcher.as_view()),
-    ]
+#    urlpatterns += [
+#        re_path(r'^api/v1/iam/resource/$', dispatcher.as_view()),
+#    ]

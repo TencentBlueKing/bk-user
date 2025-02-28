@@ -14,7 +14,7 @@ from django.urls import include, re_path
 urlpatterns = [
     re_path(r"^categories/", include("bkuser_core.api.web.category.urls")),
     re_path(r"^settings/", include("bkuser_core.api.web.setting.urls")),
-    re_path(r"^global_settings/", include("bkuser_core.api.web.global_settings.urls")),
+ #   re_path(r"^global_settings/", include("bkuser_core.api.web.global_settings.urls")),
     re_path(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
     re_path(r"^audits/", include("bkuser_core.api.web.audit.urls")),
     re_path(r"^fields/", include("bkuser_core.api.web.field.urls")),
@@ -22,7 +22,7 @@ urlpatterns = [
     re_path(r"^site/", include("bkuser_core.api.web.site.urls")),
     re_path(r"^departments/", include("bkuser_core.api.web.department.urls")),
     re_path(r"^passwords/", include("bkuser_core.api.web.password.urls")),
-    re_path(r"^recycle_bin/", include("bkuser_core.api.web.recycle_bin.urls")),
+ #   re_path(r"^recycle_bin/", include("bkuser_core.api.web.recycle_bin.urls")),
     # 通用检索
     re_path(r"^search/", include("bkuser_core.api.web.search.urls")),
     # 首页

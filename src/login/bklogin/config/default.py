@@ -148,7 +148,9 @@ JS_SUFFIX = "min.js"
 
 # ************************************ storage settings ************************************
 # 数据库
-DATABASES = get_db_config(env, "DATABASE")
+DB_PREFIX = env("DB_PREFIX", default="DB")
+# 数据库
+DATABASES = get_db_config(env, DB_PREFIX)
 
 # 缓存
 CACHES = {
@@ -218,7 +220,8 @@ BK_LOGIN_API_AUTH_ENABLED = env.bool("BK_LOGIN_API_AUTH_ENABLED", default=False)
 BK_LOGIN_PUBLIC_ADDR = env.str("BK_LOGIN_PUBLIC_ADDR")
 # schema = http/https, default http
 HTTP_SCHEMA = env.str("BK_LOGIN_HTTP_SCHEMA", "http")
-
+CSRF_TRUSTED_ORIGINS =  ["http://"+BK_LOGIN_PUBLIC_ADDR,"https://"+BK_LOGIN_PUBLIC_ADDR]
+CORS_ORIGIN_WHITELIST = (CSRF_TRUSTED_ORIGINS)
 # session in cookie secure
 IS_SESSION_COOKIE_SECURE = env.bool("IS_SESSION_COOKIE_SECURE", False)
 if HTTP_SCHEMA == "https" and IS_SESSION_COOKIE_SECURE:
