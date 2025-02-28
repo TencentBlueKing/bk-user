@@ -842,7 +842,9 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             DataSourceUser.objects.bulk_create(data_source_users, batch_size=self.bulk_create_batch_size)
 
             # 重新从 DB 查询以获取带 ID 的数据源用户
-            data_source_users = DataSourceUser.objects.filter(code__in=[u["username"] for u in data["user_infos"]])
+            data_source_users = DataSourceUser.objects.filter(
+                data_source=data_source, code__in=[u["username"] for u in data["user_infos"]]
+            )
 
             # 绑定数据源部门 - 用户
             relations = [
