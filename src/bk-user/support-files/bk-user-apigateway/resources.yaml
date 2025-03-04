@@ -17,7 +17,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -29,7 +29,7 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: Query the list of tenants
 
   /api/v3/open/tenant/users/-/display_name/:
@@ -42,7 +42,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -54,7 +54,7 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: Batch query user's display_name
 
   /api/v3/open/tenant/users/{bk_username}/:
@@ -67,7 +67,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -92,7 +92,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -117,7 +117,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -142,7 +142,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -167,7 +167,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -192,7 +192,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -217,7 +217,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -242,7 +242,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
@@ -267,7 +267,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: false
+        allowApplyPermission: true
         matchSubpath: false
         backend:
           name: default
