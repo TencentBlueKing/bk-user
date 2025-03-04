@@ -201,6 +201,9 @@ class VueTemplateView(TemplateView):
                 "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
                 # 是否启用新建租户功能
                 "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
+                # FIXME: 用于 display_name 测试，测试完毕后删除
+                # 前端服务 API 网关（bk-user-web）URL
+                "BK_USER_WEB_APIGW_URL": settings.BK_API_URL_TMPL.format(api_name="bk-user-web/prod"),
             }
 
         except Exception:  # pylint: disable=broad-except
