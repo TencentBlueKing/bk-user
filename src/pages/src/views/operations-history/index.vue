@@ -112,7 +112,7 @@
         >
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
-              <span>{{ row.creator || '--' }}</span>
+              <bk-user-display-name :user-id="row.creator" />
             </template>
           </bk-table-column>
           <bk-table-column
