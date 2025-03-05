@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
+from django.urls import re_path
 
 from . import views
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
@@ -17,7 +17,7 @@ PVAR_PROFILE_ID = r"(?P<%s>[\w\-\@\.\$]+)" % LOOKUP_FIELD_NAME
 PVAR_TOKEN = r"(?P<token>[\w]+)"
 
 urlpatterns = [
-    url(
+    re_path(
         r"^api/v2/profiles/$",
         views.ProfileViewSet.as_view(
             {
@@ -29,7 +29,7 @@ urlpatterns = [
         ),
         name="profiles",
     ),
-    url(
+    re_path(
         r"^api/v2/profiles/%s/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
@@ -45,7 +45,7 @@ urlpatterns = [
         ),
         name="profiles.action",
     ),
-    url(
+    re_path(
         r"^api/v2/profiles/%s/languages/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
@@ -55,7 +55,7 @@ urlpatterns = [
         ),
         name="profiles.language",
     ),
-    url(
+    re_path(
         r"^api/v2/profiles/%s/departments/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
@@ -65,7 +65,7 @@ urlpatterns = [
         ),
         name="profiles.departments",
     ),
-    url(
+    re_path(
         r"^api/v2/profiles/%s/leaders/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
@@ -78,7 +78,7 @@ urlpatterns = [
     ########
     # Edge #
     ########
-    url(
+    re_path(
         r"^api/v2/edges/leader/$",
         # NOTE: login used
         views.LeaderEdgeViewSet.as_view({"get": "list"}),

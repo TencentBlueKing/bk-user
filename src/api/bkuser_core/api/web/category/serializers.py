@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
@@ -92,7 +92,6 @@ class CategoryCreateInputSLZ(serializers.Serializer):
     def validate(self, data):
         if ProfileCategory.objects.filter(domain=data["domain"]).exists():
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
-
         return data
 
     def create(self, validated_data):

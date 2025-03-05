@@ -10,8 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_profile_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_profile_update = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_profile_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+# providing_args=["instance", "operator", "extra_values"]
+post_profile_create = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_profile_update = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_profile_delete = django.dispatch.Signal()
 
-post_field_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+# providing_args=["instance", "operator", "extra_values"]
+post_field_create = django.dispatch.Signal()

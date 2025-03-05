@@ -9,7 +9,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import urllib3
 
-# Patch the SSL module for compatibility with legacy CA credentials.
-urllib3.util.ssl_.DEFAULT_CIPHERS = "ALL:@SECLEVEL=0"
+
+from django.urls import re_path
+
+from . import views
+
+urlpatterns = [re_path("^set_language/$", views.set_language, name="set_language")]

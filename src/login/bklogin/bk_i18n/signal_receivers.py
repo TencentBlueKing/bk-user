@@ -32,7 +32,7 @@ def _get_language_from_request(request, user):
     """从请求中获取需要同步到用户个人信息的语言"""
     supported_lang_codes = get_languages()
     # session 有language，说明在登录页面有进行修改或设置，则需要同步到用户个人信息中
-    lang_code = request.session.get(translation.LANGUAGE_SESSION_KEY)
+    lang_code = request.session.get(settings.LANGUAGE_SESSION_KEY)
     if lang_code in supported_lang_codes and lang_code is not None and check_for_language(lang_code):
         logger.debug(
             "user %s's request lang_code is %s. supported_lang_codes: %s",
@@ -112,7 +112,7 @@ def update_user_i18n_info(sender, request, user, *args, **kwargs):
     lang_code = BK_LANG_TO_DJANGO_LANG[bk_lang_code]
     # set session for render html when logged in not redirect
     logger.debug("session.set language code to %s, timezone to %s", lang_code, time_zone)
-    request.session[translation.LANGUAGE_SESSION_KEY] = lang_code
+    request.session[settings.LANGUAGE_SESSION_KEY] = lang_code
     translation.activate(lang_code)
     request.LANGUAGE_CODE = translation.get_language()
     request.session[settings.TIMEZONE_SESSION_KEY] = time_zone

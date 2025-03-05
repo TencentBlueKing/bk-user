@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict, List
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from bkuser_core.apis.v2.serializers import (

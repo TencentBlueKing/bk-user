@@ -89,9 +89,11 @@ class DepartmentSyncHelper:
             "enabled": True,
             "parent_id": getattr(parent_dept, "pk", None),
             "extras": {
-                "type": self.config_loader["user_group_class"]
-                if dept_info.is_group
-                else self.config_loader["organization_class"],
+                "type": (
+                    self.config_loader["user_group_class"]
+                    if dept_info.is_group
+                    else self.config_loader["organization_class"]
+                ),
             },
             **self._MPTT_INIT_PARAMS,
         }

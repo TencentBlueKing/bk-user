@@ -83,7 +83,7 @@ class SyncModelManager:
 
         return getattr(db_obj, self.meta.unique_key_field) in self._action_map_cache
 
-    def add(self, db_obj: models.Model, operation: SyncOperation = None) -> None:
+    def add(self, db_obj: models.Model, operation: SyncOperation | None = None) -> None:
         """增加一个行为(Action)缓存到队列
 
         一个 DB 对象，加一个操作，组成一个行为 Action
@@ -105,7 +105,7 @@ class SyncModelManager:
 
         self._append(db_obj, operation, _cache_key)
 
-    def _append(self, item: models.Model, operation: SyncOperation = None, cache_key: str = None):
+    def _append(self, item: models.Model, operation: SyncOperation | None = None, cache_key: str | None = None):
         operation = operation or self._default_sync_operation
         with self._lock:
             if operation == SyncOperation.ADD.value:

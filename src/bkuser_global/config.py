@@ -15,16 +15,13 @@ def init_patch():
     import pymysql
     import urllib3
 
-    # no more useless warning
-
+    # 禁用不必要的警告
     urllib3.disable_warnings()
 
     # ==============================================================================
     # Patching
     # ==============================================================================
     pymysql.install_as_MySQLdb()
-    # Patch version info to forcely pass Django client check
-    setattr(pymysql, "version_info", (1, 4, 6, "final", 0))
 
 
 def get_db_config(env: environ.Env, db_prefix: str) -> dict:
