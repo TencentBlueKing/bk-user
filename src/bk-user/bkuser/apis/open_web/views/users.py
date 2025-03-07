@@ -64,6 +64,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
             .only("data_source_user__full_name"),
             id=kwargs["id"],
         )
+
         return Response({"display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user)})
 
 
@@ -125,9 +126,11 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "tenant_id": self.tenant_id,
         }
 
+        # 如果不开启协同租户用户搜索，则只搜索当前租户用户
         if not settings.ENABLE_SEARCH_COLLABORATION_TENANT:
             filters["data_source__owner_tenant_id"] = self.tenant_id
 
+        # 如果不开启虚拟用户搜索，则只搜索实名用户
         if not settings.ENABLE_SEARCH_VIRTUAL_USER:
             filters["data_source_id"] = self.real_data_source_id
 
