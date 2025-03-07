@@ -57,6 +57,31 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display information
 
+  /api/v3/open-web/tenant/users/:
+    get:
+      operationId: search_user
+      description: 搜索用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Search user
+
   /:
     options:
       operationId: cors_options

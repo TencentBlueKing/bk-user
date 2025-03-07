@@ -24,7 +24,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
-from tests.test_utils.data_source import init_data_source_users_depts_and_relations
+from tests.test_utils.data_source import init_data_source_users_depts_and_relations, init_virtual_data_source_users
 
 
 @pytest.fixture
@@ -145,6 +145,24 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
     )
+
+
+@pytest.fixture
+def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
+    """裸虚拟数据源（没有用户数据）"""
+    return DataSource.objects.create(
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.VIRTUAL,
+        plugin=local_ds_plugin,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+    )
+
+
+@pytest.fixture
+def full_virtual_data_source(bare_virtual_data_source) -> DataSource:
+    """携带用户信息的虚拟数据源"""
+    init_virtual_data_source_users(bare_virtual_data_source)
+    return bare_virtual_data_source
 
 
 @pytest.fixture

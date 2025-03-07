@@ -229,3 +229,23 @@ def init_local_data_source_identity_infos(ds: DataSource) -> None:
                 "password": passwd_generator.generate(),
             },
         )
+
+
+def init_virtual_data_source_users(ds: DataSource) -> None:
+    """初始化虚拟数据源用户"""
+    DataSourceUser.objects.create(
+        code="zhangsan",
+        username="zhangsan",
+        full_name="张三",
+        email="zhangsan@m.com",
+        phone="13512345671",
+        data_source=ds,
+    )
+    DataSourceUser.objects.create(
+        code="lisi",
+        username="lisi",
+        full_name="李四",
+        email="lisi@m.com",
+        phone="13512345672",
+        data_source=ds,
+    )

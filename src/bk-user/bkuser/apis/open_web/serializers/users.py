@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from django.conf import settings
 from rest_framework import serializers
 
@@ -42,3 +43,30 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class TenantUserSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
+
+
+class TenantUserSearchOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    # 用 login_name 对外暴露 username 字段，作为企业内用户唯一标识
+    login_name = serializers.CharField(help_text="登录名", source="data_source_user.username")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+    type = serializers.CharField(help_text="用户类型", source="data_source.type")
+    tenant_id = serializers.SerializerMethodField(help_text="租户 ID")
+    tenant_name = serializers.SerializerMethodField(help_text="租户名称")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+    def get_tenant_id(self, obj: TenantUser) -> str:
+        return (
+            obj.data_source.owner_tenant_id
+            if obj.data_source.owner_tenant_id in self.context["collab_user_tenant_name_map"]
+            else ""
+        )
+
+    def get_tenant_name(self, obj: TenantUser) -> str:
+        return self.context["collab_user_tenant_name_map"].get(obj.data_source.owner_tenant_id, "")

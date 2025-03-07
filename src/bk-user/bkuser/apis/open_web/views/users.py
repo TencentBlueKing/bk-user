@@ -15,6 +15,10 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from typing import Any, Dict
+
+from django.conf import settings
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -23,12 +27,15 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
-from bkuser.apis.open_web.serializers import (
+from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserDisplayInfoRetrieveOutputSLZ,
+    TenantUserSearchInputSLZ,
+    TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 
 
@@ -57,7 +64,6 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
             .only("data_source_user__full_name"),
             id=kwargs["id"],
         )
-
         return Response({"display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user)})
 
 
@@ -94,6 +100,68 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户展示信息",
         query_serializer=TenantUserDisplayInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserDisplayInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
+    """
+    搜索用户（包括协同用户与虚拟用户）
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserSearchOutputSLZ
+
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
+
+    def get_queryset(self):
+        slz = TenantUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        filters: Dict[str, Any] = {
+            "tenant_id": self.tenant_id,
+        }
+
+        if not settings.ENABLE_SEARCH_COLLABORATION_TENANT:
+            filters["data_source__owner_tenant_id"] = self.tenant_id
+
+        if not settings.ENABLE_SEARCH_VIRTUAL_USER:
+            filters["data_source_id"] = self.real_data_source_id
+
+        queryset = (
+            TenantUser.objects.filter(**filters)
+            .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+            .select_related("data_source_user", "data_source")
+        )
+
+        if keyword := data.get("keyword"):
+            # TODO: 后续支持更多搜索条件（例如 phone、email 等）
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+
+        return queryset[: self.search_limit]
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        # 只有协同租户用户需要提供原始租户 ID 与 租户名称
+        collab_tenant_ids = set(self.get_queryset().values_list("data_source__owner_tenant_id", flat=True)) - {
+            self.tenant_id
+        }
+        return {
+            "collab_user_tenant_name_map": dict(
+                Tenant.objects.filter(id__in=collab_tenant_ids).values_list("id", "name")
+            )
+        }
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="search_user",
+        operation_description="搜索用户",
+        query_serializer=TenantUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

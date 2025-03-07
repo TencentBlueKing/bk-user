@@ -15,31 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from django.urls import include, path
+from .users import (
+    TenantUserDisplayInfoListApi,
+    TenantUserDisplayInfoRetrieveApi,
+    TenantUserSearchApi,
+)
 
-from . import views
-
-urlpatterns = [
-    path(
-        "tenant/",
-        include(
-            [
-                path(
-                    "users/-/display_info/",
-                    views.TenantUserDisplayInfoListApi.as_view(),
-                    name="open_web.tenant_user.display_info.list",
-                ),
-                path(
-                    "users/<str:id>/display_info/",
-                    views.TenantUserDisplayInfoRetrieveApi.as_view(),
-                    name="open_web.tenant_user.display_info.retrieve",
-                ),
-                path(
-                    "users/",
-                    views.TenantUserSearchApi.as_view(),
-                    name="open_web.tenant_user.search",
-                ),
-            ]
-        ),
-    ),
+__all__ = [
+    "TenantUserDisplayInfoRetrieveApi",
+    "TenantUserDisplayInfoListApi",
+    "TenantUserSearchApi",
 ]

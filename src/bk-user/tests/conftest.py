@@ -28,8 +28,10 @@ from django.db.models.signals import post_save
 from tests.fixtures.data_source import (  # noqa: F401
     bare_general_data_source,
     bare_local_data_source,
+    bare_virtual_data_source,
     full_general_data_source,
     full_local_data_source,
+    full_virtual_data_source,
     general_ds_plugin,
     general_ds_plugin_cfg,
     ldap_ds_plugin_cfg,
