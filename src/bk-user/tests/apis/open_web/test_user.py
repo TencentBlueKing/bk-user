@@ -83,36 +83,45 @@ class TestTenantUserDisplayInfoListApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+@pytest.mark.usefixtures("_init_collaboration_users_depts")
+@pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestTenantUserSearchApi:
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_full_name(self, api_client):
-        lisi = TenantUser.objects.get(data_source_user__username="lisi")
-        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "李"})
+    def test_with_full_name(self, api_client, random_tenant):
+        with override_settings(ENABLE_SEARCH_COLLABORATION_TENANT=False, ENABLE_SEARCH_VIRTUAL_USER=False):
+            wangwu = TenantUser.objects.get(
+                data_source_user__username="wangwu",
+                data_source__type="real",
+                data_source__owner_tenant_id=random_tenant.id,
+            )
 
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data[0]["bk_username"] == lisi.id
-        assert resp.data[0]["login_name"] == "lisi"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
-        assert resp.data[0]["type"] == "real"
-        assert resp.data[0]["tenant_id"] == ""
-        assert resp.data[0]["tenant_name"] == ""
+            resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "王"})
 
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_login_name(self, api_client):
-        lisi = TenantUser.objects.get(data_source_user__username="lisi")
-        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "lis"})
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data[0]["bk_username"] == wangwu.id
+            assert resp.data[0]["login_name"] == "wangwu"
+            assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(wangwu)
+            assert resp.data[0]["type"] == "real"
+            assert resp.data[0]["tenant_id"] == ""
+            assert resp.data[0]["tenant_name"] == ""
 
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data[0]["bk_username"] == lisi.id
-        assert resp.data[0]["login_name"] == "lisi"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
-        assert resp.data[0]["type"] == "real"
-        assert resp.data[0]["tenant_id"] == ""
-        assert resp.data[0]["tenant_name"] == ""
+    def test_with_login_name(self, api_client, random_tenant):
+        with override_settings(ENABLE_SEARCH_COLLABORATION_TENANT=False, ENABLE_SEARCH_VIRTUAL_USER=False):
+            lisi = TenantUser.objects.get(
+                data_source_user__username="lisi",
+                data_source__type="real",
+                data_source__owner_tenant_id=random_tenant.id,
+            )
+            resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "lis"})
 
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    @pytest.mark.usefixtures("_init_collaboration_users_depts")
-    @pytest.mark.usefixtures("_init_virtual_tenant_users")
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data[0]["bk_username"] == lisi.id
+            assert resp.data[0]["login_name"] == "lisi"
+            assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
+            assert resp.data[0]["type"] == "real"
+            assert resp.data[0]["tenant_id"] == ""
+            assert resp.data[0]["tenant_name"] == ""
+
     def test_with_all_users(self, api_client, random_tenant, collaboration_tenant):
         with override_settings(ENABLE_COLLABORATION_TENANT=True, ENABLE_VIRTUAL_USER=True):
             real_zhangsan = TenantUser.objects.get(

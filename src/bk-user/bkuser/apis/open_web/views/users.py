@@ -18,7 +18,7 @@
 from typing import Any, Dict
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -118,7 +118,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = settings.SELECTOR_SEARCH_API_LIMIT
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
