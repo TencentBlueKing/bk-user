@@ -88,7 +88,7 @@ class TestTenantUserDisplayInfoListApi:
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestTenantUserSearchApi:
     def test_with_full_name(self, api_client, random_tenant):
-        with override_settings(ENABLE_SEARCH_COLLABORATION_TENANT=False, ENABLE_SEARCH_VIRTUAL_USER=False):
+        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=False, ENABLE_DISPLAY_VIRTUAL_USER=False):
             wangwu = TenantUser.objects.get(
                 data_source_user__username="wangwu",
                 data_source__type="real",
@@ -106,7 +106,7 @@ class TestTenantUserSearchApi:
             assert resp.data[0]["tenant_name"] == ""
 
     def test_with_login_name(self, api_client, random_tenant):
-        with override_settings(ENABLE_SEARCH_COLLABORATION_TENANT=False, ENABLE_SEARCH_VIRTUAL_USER=False):
+        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=False, ENABLE_DISPLAY_VIRTUAL_USER=False):
             lisi = TenantUser.objects.get(
                 data_source_user__username="lisi",
                 data_source__type="real",
@@ -123,7 +123,7 @@ class TestTenantUserSearchApi:
             assert resp.data[0]["tenant_name"] == ""
 
     def test_with_all_users(self, api_client, random_tenant, collaboration_tenant):
-        with override_settings(ENABLE_COLLABORATION_TENANT=True, ENABLE_VIRTUAL_USER=True):
+        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=True, ENABLE_DISPLAY_VIRTUAL_USER=True):
             real_zhangsan = TenantUser.objects.get(
                 data_source_user__username="zhangsan",
                 data_source__type="real",
