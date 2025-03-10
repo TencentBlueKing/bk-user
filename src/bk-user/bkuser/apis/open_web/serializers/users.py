@@ -53,6 +53,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     # 用 login_name 对外暴露 username 字段，作为企业内用户唯一标识
     login_name = serializers.CharField(help_text="登录名", source="data_source_user.username")
+    # TODO: 虚拟帐号先暂时使用 display_name 展示，后续根据虚拟帐号方案再进行更改
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     type = serializers.CharField(help_text="用户类型", source="data_source.type")
     tenant_id = serializers.SerializerMethodField(help_text="租户 ID")
