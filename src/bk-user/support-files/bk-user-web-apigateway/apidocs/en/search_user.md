@@ -1,6 +1,6 @@
 ### Description
 
-Search user(including collaborative users and virtual users). The search results return the first 100 data by default(If you need more search results, you need to refine the search conditions).
+Search user (including collaborative users and virtual users). The search results return the first 100 data by default(If you need more search results, you need to refine the search conditions).
 
 ### Parameters
 
@@ -50,11 +50,11 @@ keyword=张
 
 ### Response Parameters Description
 
-| Name         | Type   | Description                                                                          |
-|--------------|--------|--------------------------------------------------------------------------------------|
-| bk_username  | string | Blueking user's unique identifier                                                    |
-| login_name   | string | Unique ID of the user within the enterprise                                          |
-| display_name | string | User's display_name                                                                  |
-| type         | string | User type, where `real` indicates a real user and `virtual` indicates a virtual user |
-| tenant_id    | string | Tenant ID, which is empty for real users and filled for virtual users                |
-| tenant_name  | string | Tenant name, which is empty for real users and filled for virtual users              |
+| Name         | Type   | Description                                                                                                |
+|--------------|--------|------------------------------------------------------------------------------------------------------------|
+| bk_username  | string | Blueking user's unique identifier                                                                          |
+| login_name   | string | Unique ID of the user within the enterprise                                                                |
+| display_name | string | User's display_name                                                                                        |
+| type         | string | User type, where `real` indicates a real user and `virtual` indicates a virtual user                       |
+| tenant_id    | string | Tenant ID, which is empty for current users (including virtual users) and filled for collaborative users   |
+| tenant_name  | string | Tenant name, which is empty for current users (including virtual users) and filled for collaborative users |
