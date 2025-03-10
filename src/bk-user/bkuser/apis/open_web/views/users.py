@@ -138,6 +138,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             TenantUser.objects.filter(**filters)
             .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
             .select_related("data_source_user", "data_source")
+            .only("id", "data_source_user__username", "data_source_user__full_name", "data_source__owner_tenant_id")
         )
 
         if keyword := data.get("keyword"):
@@ -148,17 +149,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         return queryset[: self.search_limit]
 
-    def get_serializer_context(self) -> Dict[str, Any]:
-        # 只有协同租户用户需要提供原始租户 ID 与 租户名称
-        collab_tenant_ids = set(self.get_queryset().values_list("data_source__owner_tenant_id", flat=True)) - {
-            self.tenant_id
-        }
-        return {
-            "collab_user_tenant_name_map": dict(
-                Tenant.objects.filter(id__in=collab_tenant_ids).values_list("id", "name")
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="search_user",
@@ -167,4 +157,12 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_depts = self.get_queryset()
+        # 只有协同租户用户需要提供原始租户 ID 与 租户名称
+        collab_tenant_ids = set(tenant_depts.values_list("data_source__owner_tenant_id", flat=True)) - {self.tenant_id}
+        context = {
+            "collab_user_tenant_name_map": dict(
+                Tenant.objects.filter(id__in=collab_tenant_ids).values_list("id", "name")
+            )
+        }
+        return Response(TenantUserSearchOutputSLZ(tenant_depts, many=True, context=context).data)
