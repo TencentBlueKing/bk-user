@@ -26,6 +26,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_web.constants import MemberSelectorExactMatchFieldEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
@@ -184,7 +185,6 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         filters: Dict[str, Any] = {
             "tenant_id": self.tenant_id,
-            "data_source_user__username__in": data["login_names"],
         }
 
         # 若指定了数据源类型，则只查询该类型的用户；否则查询所有数据源类型（除内置管理）的用户
@@ -195,7 +195,7 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filters["data_source__owner_tenant_id"] = tenant_id
 
-        return (
+        queryset = (
             TenantUser.objects.filter(**filters)
             .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
             .select_related("data_source_user", "data_source")
@@ -207,6 +207,16 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 "data_source__owner_tenant_id",
             )
         )
+
+        field_mapping = MemberSelectorExactMatchFieldEnum.get_field_mapping()
+
+        conditions = Q()
+        # 遍历匹配字段列表，构造查询条件
+        for field in data["match_fields"]:
+            if field in field_mapping:
+                conditions |= Q(**{field_mapping[field]: data["match_values"]})
+
+        return queryset.filter(conditions)
 
     @swagger_auto_schema(
         tags=["open_web.user"],

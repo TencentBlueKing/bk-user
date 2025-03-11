@@ -18,6 +18,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
+from bkuser.apis.open_web.constants import MemberSelectorExactMatchFieldEnum
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
@@ -69,7 +70,13 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
 
 class TenantUserListInputSLZ(serializers.Serializer):
-    login_names = StringArrayField(help_text="企业内用户唯一标识，多个使用逗号分隔", max_items=100)
+    match_values = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
+    match_fields = serializers.ListField(
+        help_text="匹配字段列表",
+        child=serializers.ChoiceField(help_text="匹配字段", choices=MemberSelectorExactMatchFieldEnum.get_choices()),
+        required=False,
+        default=[MemberSelectorExactMatchFieldEnum.LOGIN_NAME],
+    )
     data_source_type = serializers.ChoiceField(
         help_text="数据源类型", choices=DataSourceTypeEnum.get_choices(), required=False, allow_blank=True, default=""
     )

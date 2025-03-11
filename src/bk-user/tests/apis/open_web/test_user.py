@@ -96,7 +96,7 @@ class TestTenantUserSearchApi:
 
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "王", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+            data={"keyword": "wang", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -134,7 +134,7 @@ class TestTenantUserSearchApi:
         )
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "王", "data_source_type": "real", "owner_tenant_id": collaboration_tenant.id},
+            data={"keyword": "wang", "data_source_type": "real", "owner_tenant_id": collaboration_tenant.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -149,7 +149,7 @@ class TestTenantUserSearchApi:
     def test_with_virtual_user(self, api_client, random_tenant):
         virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant_user.search"), data={"keyword": "张", "data_source_type": "virtual"}
+            reverse("open_web.tenant_user.search"), data={"keyword": "zhan", "data_source_type": "virtual"}
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -171,7 +171,7 @@ class TestTenantUserSearchApi:
         collab_zhangsan = TenantUser.objects.get(
             data_source_user__username="zhangsan", data_source__owner_tenant_id=collaboration_tenant.id
         )
-        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "张"})
+        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "zhang"})
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 3
@@ -187,7 +187,7 @@ class TestTenantUserSearchApi:
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
 
     def test_with_not_match(self, api_client):
-        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "陈"})
+        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "chen"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
@@ -216,7 +216,7 @@ class TestTenantUserListApi:
             data_source_user__username="lisi", data_source__owner_tenant_id=collaboration_tenant.id
         )
 
-        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"login_names": "zhangsan,lisi"})
+        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"match_values": "zhangsan,lisi"})
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 6
@@ -252,7 +252,7 @@ class TestTenantUserListApi:
         )
         resp = api_client.get(
             reverse("open_web.tenant_user.list"),
-            data={"login_names": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "real"},
+            data={"match_values": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "real"},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -281,7 +281,7 @@ class TestTenantUserListApi:
         resp = api_client.get(
             reverse("open_web.tenant_user.list"),
             data={
-                "login_names": "zhangsan,lisi",
+                "match_values": "zhangsan,lisi",
                 "owner_tenant_id": collaboration_tenant.id,
                 "data_source_type": "real",
             },
@@ -304,7 +304,7 @@ class TestTenantUserListApi:
         lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
             reverse("open_web.tenant_user.list"),
-            data={"login_names": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "virtual"},
+            data={"match_values": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "virtual"},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -319,7 +319,38 @@ class TestTenantUserListApi:
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.VIRTUAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
+    def test_with_filter_by_bk_username(self, api_client, random_tenant):
+        lisi = TenantUser.objects.get(
+            data_source_user__username="lisi", data_source__type="real", data_source__owner_tenant_id=random_tenant.id
+        )
+        zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.list"),
+            data={
+                "match_values": ",".join([zhangsan.id, lisi.id]),
+                "match_fields": ["bk_username", "login_name"],
+                "owner_tenant_id": random_tenant.id,
+                "data_source_type": "real",
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
+
     def test_with_not_match(self, api_client):
-        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"login_names": "zhangsan123,lisi123"})
+        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"match_values": "zhangsan123,lisi123"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
