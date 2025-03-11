@@ -31,11 +31,13 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserDisplayInfoRetrieveOutputSLZ,
+    TenantUserListInputSLZ,
+    TenantUserListOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 
 
@@ -111,6 +113,8 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     搜索用户（包括协同用户与虚拟用户）
     """
 
+    serializer_class = TenantUserSearchOutputSLZ
+
     pagination_class = None
 
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
@@ -124,26 +128,32 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "tenant_id": self.tenant_id,
         }
 
-        # 如果不开启协同租户用户搜索，则只搜索当前租户用户
-        if not settings.ENABLE_DISPLAY_COLLABORATION_TENANT:
-            filters["data_source__owner_tenant_id"] = self.tenant_id
+        # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
+        if data_source_type := data.get("data_source_type"):
+            filters["data_source__type"] = data_source_type
 
-        # 如果不开启虚拟用户搜索，则只搜索实名用户
-        if not settings.ENABLE_DISPLAY_VIRTUAL_USER:
-            filters["data_source_id"] = self.real_data_source_id
+        # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
+        if tenant_id := data.get("owner_tenant_id"):
+            filters["data_source__owner_tenant_id"] = tenant_id
 
         queryset = (
             TenantUser.objects.filter(**filters)
             .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
             .select_related("data_source_user", "data_source")
-            .only("id", "data_source_user__username", "data_source_user__full_name", "data_source__owner_tenant_id")
+            .only(
+                "id",
+                "data_source_user__username",
+                "data_source_user__full_name",
+                "data_source__type",
+                "data_source__owner_tenant_id",
+            )
         )
 
-        if keyword := data.get("keyword"):
-            # TODO: 后续支持更多搜索条件（例如 phone、email 等）
-            queryset = queryset.filter(
-                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
-            )
+        keyword = data["keyword"]
+        # TODO: 后续支持更多搜索条件（例如 phone、email 等）
+        queryset = queryset.filter(
+            Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+        )
 
         return queryset[: self.search_limit]
 
@@ -155,12 +165,55 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_depts = self.get_queryset()
-        # 只有协同租户用户需要提供原始租户 ID 与 租户名称
-        collab_tenant_ids = set(tenant_depts.values_list("data_source__owner_tenant_id", flat=True)) - {self.tenant_id}
-        context = {
-            "collab_user_tenant_name_map": dict(
-                Tenant.objects.filter(id__in=collab_tenant_ids).values_list("id", "name")
-            )
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询用户
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        filters: Dict[str, Any] = {
+            "tenant_id": self.tenant_id,
+            "data_source_user__username__in": data["login_names"],
         }
-        return Response(TenantUserSearchOutputSLZ(tenant_depts, many=True, context=context).data)
+
+        # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
+        if data_source_type := data.get("data_source_type"):
+            filters["data_source__type"] = data_source_type
+
+        # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
+        if tenant_id := data.get("owner_tenant_id"):
+            filters["data_source__owner_tenant_id"] = tenant_id
+
+        return (
+            TenantUser.objects.filter(**filters)
+            .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+            .select_related("data_source_user", "data_source")
+            .only(
+                "id",
+                "data_source_user__username",
+                "data_source_user__full_name",
+                "data_source__type",
+                "data_source__owner_tenant_id",
+            )
+        )
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="list_user",
+        operation_description="批量查询用户",
+        query_serializer=TenantUserListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

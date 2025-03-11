@@ -57,10 +57,35 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display information
 
-  /api/v3/open-web/tenant/users/:
+  /api/v3/open-web/tenant/users/search/:
     get:
       operationId: search_user
       description: 搜索用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/search/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Search user
+
+  /api/v3/open-web/tenant/users/:
+    get:
+      operationId: list_user
+      description: 查询用户列表
       tags: []
       responses:
         default:
@@ -80,7 +105,32 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Search user
+        descriptionEn: Query user's list
+
+  /api/v3/open-web/tenants/:
+    get:
+      operationId: retrieve_tenant
+      description: 查询租户信息（包括协同租户）
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenants/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Query information of tenant (including collaborative tenant)
 
   /:
     options:

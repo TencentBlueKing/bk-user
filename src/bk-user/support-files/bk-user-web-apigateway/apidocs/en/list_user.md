@@ -1,12 +1,12 @@
 ### Description
 
-Search user (including collaborative users and virtual users). The search results return the first 100 data by default (If you need more search results, you need to refine the search conditions)
+Query the user's list (including collaborative users and virtual users)
 
 ### Parameters
 
 | Name             | Type   | Required | Description                                                                                                                                                                                                              |
 |------------------|--------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| keyword          | string | Yes      | Search keywords (you can enter the values of login_name (unique ID of user in the enterprise) or full_name (name))                                                                                                       |
+| login_names      | string | Yes      | Unique ID of the user within the enterprise. Multiple IDs are separated by commas. The maximum number is 100                                                                                                             |
 | data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                       |
 | owner_tenant_id  | string | No       | The tenant to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
 
@@ -14,7 +14,7 @@ Search user (including collaborative users and virtual users). The search result
 
 ```
 // URL Query Parameters
-keyword=张
+login_names=zhangsan,lisi
 ```
 
 ### Response Example for Status Code 200

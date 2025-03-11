@@ -15,18 +15,15 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from .tenants import TenantRetrieveApi
-from .users import (
-    TenantUserDisplayInfoListApi,
-    TenantUserDisplayInfoRetrieveApi,
-    TenantUserListApi,
-    TenantUserSearchApi,
-)
+from rest_framework import serializers
 
-__all__ = [
-    "TenantRetrieveApi",
-    "TenantUserDisplayInfoRetrieveApi",
-    "TenantUserDisplayInfoListApi",
-    "TenantUserSearchApi",
-    "TenantUserListApi",
-]
+
+class CollabTenantSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID")
+    name = serializers.CharField(help_text="租户名称")
+
+
+class TenantRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID")
+    name = serializers.CharField(help_text="租户名称")
+    collab_tenants = serializers.ListField(help_text="协作租户列表", child=CollabTenantSLZ(), allow_empty=True)

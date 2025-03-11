@@ -16,10 +16,10 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 from django.conf import settings
-from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -88,68 +88,238 @@ class TestTenantUserDisplayInfoListApi:
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestTenantUserSearchApi:
     def test_with_full_name(self, api_client, random_tenant):
-        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=False, ENABLE_DISPLAY_VIRTUAL_USER=False):
-            wangwu = TenantUser.objects.get(
-                data_source_user__username="wangwu",
-                data_source__type="real",
-                data_source__owner_tenant_id=random_tenant.id,
-            )
+        wangwu = TenantUser.objects.get(
+            data_source_user__username="wangwu",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
 
-            resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "王"})
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "王", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+        )
 
-            assert resp.status_code == status.HTTP_200_OK
-            assert resp.data[0]["bk_username"] == wangwu.id
-            assert resp.data[0]["login_name"] == "wangwu"
-            assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(wangwu)
-            assert resp.data[0]["type"] == "real"
-            assert resp.data[0]["tenant_id"] == ""
-            assert resp.data[0]["tenant_name"] == ""
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == wangwu.id
+        assert resp.data[0]["login_name"] == "wangwu"
+        assert resp.data[0]["full_name"] == "王五"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(wangwu)
+        assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
+        assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
     def test_with_login_name(self, api_client, random_tenant):
-        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=False, ENABLE_DISPLAY_VIRTUAL_USER=False):
-            lisi = TenantUser.objects.get(
-                data_source_user__username="lisi",
-                data_source__type="real",
-                data_source__owner_tenant_id=random_tenant.id,
-            )
-            resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "lis"})
+        lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "lis", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+        )
 
-            assert resp.status_code == status.HTTP_200_OK
-            assert resp.data[0]["bk_username"] == lisi.id
-            assert resp.data[0]["login_name"] == "lisi"
-            assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
-            assert resp.data[0]["type"] == "real"
-            assert resp.data[0]["tenant_id"] == ""
-            assert resp.data[0]["tenant_name"] == ""
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == lisi.id
+        assert resp.data[0]["login_name"] == "lisi"
+        assert resp.data[0]["full_name"] == "李四"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
+        assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
+        assert resp.data[0]["owner_tenant_id"] == random_tenant.id
+
+    def test_with_collaborative_tenant(self, api_client, collaboration_tenant):
+        collab_wangwu = TenantUser.objects.get(
+            data_source_user__username="wangwu", data_source__owner_tenant_id=collaboration_tenant.id
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "王", "data_source_type": "real", "owner_tenant_id": collaboration_tenant.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == collab_wangwu.id
+        assert resp.data[0]["login_name"] == "wangwu"
+        assert resp.data[0]["full_name"] == "王五"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(collab_wangwu)
+        assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
+        assert resp.data[0]["owner_tenant_id"] == collaboration_tenant.id
+
+    def test_with_virtual_user(self, api_client, random_tenant):
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"), data={"keyword": "张", "data_source_type": "virtual"}
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == virtual_zhangsan.id
+        assert resp.data[0]["login_name"] == "zhangsan"
+        assert resp.data[0]["full_name"] == "张三"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan)
+        assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.VIRTUAL
+        assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
     def test_with_all_users(self, api_client, random_tenant, collaboration_tenant):
-        with override_settings(ENABLE_DISPLAY_COLLABORATION_TENANT=True, ENABLE_DISPLAY_VIRTUAL_USER=True):
-            real_zhangsan = TenantUser.objects.get(
-                data_source_user__username="zhangsan",
-                data_source__type="real",
-                data_source__owner_tenant_id=random_tenant.id,
-            )
-            virtual_zhangsan = TenantUser.objects.get(
-                data_source_user__username="zhangsan", data_source__type="virtual"
-            )
-            collab_zhangsan = TenantUser.objects.get(
-                data_source_user__username="zhangsan", data_source__owner_tenant_id=collaboration_tenant.id
-            )
-            resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "张"})
+        real_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        collab_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan", data_source__owner_tenant_id=collaboration_tenant.id
+        )
+        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "张"})
 
-            assert resp.status_code == status.HTTP_200_OK
-            assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id, collab_zhangsan.id}
-            assert {t["login_name"] for t in resp.data} == {"zhangsan"}
-            assert {t["display_name"] for t in resp.data} == {
-                TenantUserHandler.generate_tenant_user_display_name(real_zhangsan),
-                TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan),
-                TenantUserHandler.generate_tenant_user_display_name(collab_zhangsan),
-            }
-            assert {t["type"] for t in resp.data} == {"real", "virtual"}
-            assert {t["tenant_id"] for t in resp.data} == {"", collaboration_tenant.id}
-            assert {t["tenant_name"] for t in resp.data} == {"", collaboration_tenant.name}
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 3
+        assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id, collab_zhangsan.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan"}
+        assert {t["full_name"] for t in resp.data} == {"张三"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(real_zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(collab_zhangsan),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "陈"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+@pytest.mark.usefixtures("_init_collaboration_users_depts")
+@pytest.mark.usefixtures("_init_virtual_tenant_users")
+class TestTenantUserListApi:
+    def test_all_users(self, api_client, random_tenant, collaboration_tenant):
+        real_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        collab_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan", data_source__owner_tenant_id=collaboration_tenant.id
+        )
+        real_lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
+        collab_lisi = TenantUser.objects.get(
+            data_source_user__username="lisi", data_source__owner_tenant_id=collaboration_tenant.id
+        )
+
+        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"login_names": "zhangsan,lisi"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 6
+        assert {t["bk_username"] for t in resp.data} == {
+            real_zhangsan.id,
+            virtual_zhangsan.id,
+            collab_zhangsan.id,
+            real_lisi.id,
+            virtual_lisi.id,
+            collab_lisi.id,
+        }
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(real_zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(collab_zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(real_lisi),
+            TenantUserHandler.generate_tenant_user_display_name(virtual_lisi),
+            TenantUserHandler.generate_tenant_user_display_name(collab_lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
+
+    def test_with_current_tenant(self, api_client, random_tenant):
+        lisi = TenantUser.objects.get(
+            data_source_user__username="lisi", data_source__type="real", data_source__owner_tenant_id=random_tenant.id
+        )
+        zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.list"),
+            data={"login_names": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "real"},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
+
+    def test_with_collaborative_tenant(self, api_client, collaboration_tenant):
+        lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="real",
+            data_source__owner_tenant_id=collaboration_tenant.id,
+        )
+        zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=collaboration_tenant.id,
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.list"),
+            data={
+                "login_names": "zhangsan,lisi",
+                "owner_tenant_id": collaboration_tenant.id,
+                "data_source_type": "real",
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {collaboration_tenant.id}
+
+    def test_with_virtual_user(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
+        resp = api_client.get(
+            reverse("open_web.tenant_user.list"),
+            data={"login_names": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "virtual"},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.VIRTUAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
+
+    def test_with_not_match(self, api_client):
+        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"login_names": "zhangsan123,lisi123"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0

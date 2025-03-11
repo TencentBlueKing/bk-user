@@ -21,6 +21,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "tenants/",
+        views.TenantRetrieveApi.as_view(),
+        name="open_web.tenant.retrieve",
+    ),
+    path(
         "tenant/",
         include(
             [
@@ -35,9 +40,14 @@ urlpatterns = [
                     name="open_web.tenant_user.display_info.retrieve",
                 ),
                 path(
-                    "users/",
+                    "users/search/",
                     views.TenantUserSearchApi.as_view(),
                     name="open_web.tenant_user.search",
+                ),
+                path(
+                    "users/",
+                    views.TenantUserListApi.as_view(),
+                    name="open_web.tenant_user.list",
                 ),
             ]
         ),
