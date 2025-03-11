@@ -110,7 +110,7 @@ paths:
   /api/v3/open-web/tenants/:
     get:
       operationId: retrieve_tenant
-      description: 查询租户信息（包括协同租户）
+      description: 查询租户信息
       tags: []
       responses:
         default:
@@ -130,7 +130,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Query information of tenant (including collaborative tenant)
+        descriptionEn: Query information of tenant
 
   /:
     options:

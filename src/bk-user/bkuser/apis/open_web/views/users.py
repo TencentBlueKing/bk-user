@@ -170,7 +170,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
 class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    批量查询用户
+    批量查询用户（包括协同用户与虚拟用户）
     """
 
     pagination_class = None
@@ -187,11 +187,11 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "data_source_user__username__in": data["login_names"],
         }
 
-        # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
+        # 若指定了数据源类型，则只查询该类型的用户；否则查询所有数据源类型（除内置管理）的用户
         if data_source_type := data.get("data_source_type"):
             filters["data_source__type"] = data_source_type
 
-        # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
+        # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
             filters["data_source__owner_tenant_id"] = tenant_id
 
@@ -211,7 +211,7 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="list_user",
-        operation_description="批量查询用户",
+        operation_description="批量查询用户（包括协同用户与虚拟用户）",
         query_serializer=TenantUserListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
