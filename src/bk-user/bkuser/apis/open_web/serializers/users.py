@@ -47,7 +47,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
     data_source_type = serializers.ChoiceField(
         help_text="数据源类型", choices=DataSourceTypeEnum.get_choices(), required=False, allow_blank=True, default=""
     )

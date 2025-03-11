@@ -90,7 +90,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
     department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
 
     def validate_department_id(self, department_id: int) -> int:
         if (
