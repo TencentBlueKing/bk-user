@@ -113,9 +113,9 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     搜索用户（包括协同用户与虚拟用户）
     """
 
-    serializer_class = TenantUserSearchOutputSLZ
-
     pagination_class = None
+
+    serializer_class = TenantUserSearchOutputSLZ
 
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = settings.SELECTOR_SEARCH_API_LIMIT
