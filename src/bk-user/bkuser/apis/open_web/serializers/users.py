@@ -63,7 +63,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     # TODO: 虚拟帐号先暂时使用 display_name 展示，后续根据虚拟帐号方案再进行更改
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="数据源用户类型", source="data_source.type")
-    owner_tenant_id = serializers.CharField(help_text="数据源租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
@@ -89,7 +89,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="用户类型", source="data_source.type")
-    owner_tenant_id = serializers.CharField(help_text="数据源租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)

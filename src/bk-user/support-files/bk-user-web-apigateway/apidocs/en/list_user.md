@@ -4,12 +4,12 @@ Query the user's list (including collaborative users and virtual users)
 
 ### Parameters
 
-| Name             | Type   | Required | Description                                                                                                                                                                                                              |
-|------------------|--------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| match_values     | string | Yes      | Exact matching value (can be bk_username or login_name), multiple separated by separator, limit number is 100                                                                                                            |
-| match_fields     | array  | No       | The list of matching fields. The optional values of each element in the list are `bk_username` and `login_name`. The default value is `["login_name"]`                                                                   |
-| data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                       |
-| owner_tenant_id  | string | No       | The tenant to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
+| Name             | Type   | Required | Description                                                                                                                                                                                                                 |
+|------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| match_values     | string | Yes      | Exact matching value (can be bk_username or login_name), multiple separated by separator, limit number is 100                                                                                                               |
+| match_fields     | array  | No       | The list of matching fields. The optional values of each element in the list are `bk_username` and `login_name`. The default value is `["login_name"]`                                                                      |
+| data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                          |
+| owner_tenant_id  | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
 
 ### Request Example
 

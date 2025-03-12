@@ -4,11 +4,11 @@ Search user (including collaborative users and virtual users). The search result
 
 ### Parameters
 
-| Name             | Type   | Required | Description                                                                                                                                                                                                                |
-|------------------|--------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| keyword          | string | Yes      | Search keywords (you can enter the values of login_name (unique ID of user in the enterprise) or full_name (name)). The minimum input length is 2 and the maximum input length is 64                                       |
-| data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (search real & virtual users)                                        |
-| owner_tenant_id  | string | No       | The tenant to which the data source belongs. You can specify the tenant ID to search the corresponding tenant users. The default value is empty (search the users of this tenant and the users of the cooperating tenants) |
+| Name             | Type   | Required | Description                                                                                                                                                                                                                   |
+|------------------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| keyword          | string | Yes      | Search keywords (you can enter the values of login_name (unique ID of user in the enterprise) or full_name (name)). The minimum input length is 2 and the maximum input length is 64                                          |
+| data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (search real & virtual users)                                           |
+| owner_tenant_id  | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to search the corresponding tenant users. The default value is empty (search the users of this tenant and the users of the cooperating tenants) |
 
 ### Request Example
 
