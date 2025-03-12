@@ -14,7 +14,7 @@ Search user (including collaborative users and virtual users). The search result
 
 ```
 // URL Query Parameters
-keyword=张
+keyword=zhang
 ```
 
 ### Response Example for Status Code 200

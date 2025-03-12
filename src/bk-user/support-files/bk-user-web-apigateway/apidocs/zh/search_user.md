@@ -14,7 +14,7 @@
 
 ```
 // URL Query 参数
-keyword=张
+keyword=zhang
 ```
 
 ### 状态码 200 的响应示例
