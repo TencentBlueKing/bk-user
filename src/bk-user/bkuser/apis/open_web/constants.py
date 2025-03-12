@@ -22,10 +22,12 @@ from django.utils.translation import gettext_lazy as _
 class MemberSelectorExactMatchFieldEnum(StrStructuredEnum):
     LOGIN_NAME = EnumField("login_name", label=_("企业内用户唯一标识"))
     BK_USERNAME = EnumField("bk_username", label=_("蓝鲸用户唯一标识"))
+    FULL_NAME = EnumField("full_name", label=_("用户姓名"))
 
     @classmethod
     def get_field_mapping(cls):
         return {
             cls.LOGIN_NAME: "data_source_user__username__in",
             cls.BK_USERNAME: "id__in",
+            cls.FULL_NAME: "data_source_user__full_name__in",
         }

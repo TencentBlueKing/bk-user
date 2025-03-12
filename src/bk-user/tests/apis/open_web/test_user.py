@@ -350,6 +350,37 @@ class TestTenantUserListApi:
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
+    def test_with_filter_by_full_name(self, api_client, random_tenant):
+        lisi = TenantUser.objects.get(
+            data_source_user__username="lisi", data_source__type="real", data_source__owner_tenant_id=random_tenant.id
+        )
+        zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.list"),
+            data={
+                "match_values": "张三,李四",
+                "match_fields": ["bk_username", "login_name", "full_name"],
+                "owner_tenant_id": random_tenant.id,
+                "data_source_type": "real",
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
+        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
+        assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
+
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.list"), data={"match_values": "zhangsan123,lisi123"})
         assert resp.status_code == status.HTTP_200_OK
