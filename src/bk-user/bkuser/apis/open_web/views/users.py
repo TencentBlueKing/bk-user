@@ -221,7 +221,7 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="list_user",
-        operation_description="批量查询用户（包括协同用户与虚拟用户）",
+        operation_description="批量查询用户",
         query_serializer=TenantUserListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
