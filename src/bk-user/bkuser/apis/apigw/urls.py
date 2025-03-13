@@ -19,9 +19,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path(
-        "tenant-users/<str:tenant_user_id>/", views.TenantUserRetrieveApi.as_view(), name="apigw.tenant_user.retrieve"
-    ),
+    path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="apigw.tenant_user.retrieve"),
     path(
         "tenant-users/-/contact-infos/",
         views.TenantUserContactInfoListApi.as_view(),

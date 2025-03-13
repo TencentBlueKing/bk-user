@@ -42,6 +42,7 @@ class TestTokenIntrospect:
                 full_name="test_fullname",
                 display_name="test_display_name",
                 tenant_id="test_tenant_id",
+                data_source_type="real",
                 language="zh-CN",
                 time_zone="Asia/Shanghai",
             ),

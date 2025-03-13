@@ -42,14 +42,14 @@ class GlobalSettingOutputSLZ(serializers.Serializer):
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
-    data_source_ids = serializers.ListField(help_text="指定查询的数据源ID列表", child=serializers.IntegerField())
+    data_source_ids = serializers.ListField(help_text="指定查询的数据源 ID 列表", child=serializers.IntegerField())
     username = serializers.CharField(help_text="用户名")
     password = serializers.CharField(help_text="密码")
 
     def validate_username(self, value: str) -> str:
         # Q: 为什么不使用 biz.validators.py 封装的 validate_data_source_user_username
         # A: 这里是登录验证用户名密码，虽然用户名规则不符合，
-        #    但由于安全原因(避免攻击者知道规则)，只能告知用户名或密码错误
+        #    但由于安全原因 (避免攻击者知道规则)，只能告知用户名或密码错误
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
             raise ValidationError(_("用户名或密码错误"))
 
@@ -57,13 +57,13 @@ class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
 
 
 class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
-    data_source_id = serializers.IntegerField(help_text="数据源ID")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
     id = serializers.IntegerField(help_text="用户 ID", source="user_id")
     username = serializers.CharField(help_text="用户名")
 
 
 class TenantListInputSLZ(serializers.Serializer):
-    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+    tenant_ids = StringArrayField(help_text="指定查询的租户，多个使用英文逗号分隔", required=False, default="")
 
 
 class CollaborationTenantSLZ(serializers.Serializer):
@@ -145,6 +145,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
+    data_source_type = serializers.CharField(help_text="数据源类型", source="data_source.type")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)

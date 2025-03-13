@@ -23,14 +23,12 @@ pytestmark = pytest.mark.django_db
 
 class TestTenantUserRetrieveApi:
     def test_retrieve_tenant_user(self, apigw_api_client, default_tenant_user_data, default_tenant):
-        resp = apigw_api_client.get(reverse("apigw.tenant_user.retrieve", kwargs={"tenant_user_id": "zhangsan"}))
+        resp = apigw_api_client.get(reverse("apigw.tenant_user.retrieve", kwargs={"id": "zhangsan"}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["tenant_id"] == default_tenant.id
 
     def test_retrieve_tenant_user_not_found(self, apigw_api_client, default_tenant_user_data):
-        resp = apigw_api_client.get(
-            reverse("apigw.tenant_user.retrieve", kwargs={"tenant_user_id": "zhangsan_not_found"})
-        )
+        resp = apigw_api_client.get(reverse("apigw.tenant_user.retrieve", kwargs={"id": "zhangsan_not_found"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 

@@ -21,12 +21,15 @@ from bklogin.authentication.manager import BkTokenManager
 from bklogin.common.error_codes import error_codes
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
+from bklogin.component.bk_user.constants import DataSourceTypeEnum
 
 from .mixins import APIGatewayAppVerifiedMixin, BkUserAppVerifiedMixin, InnerBearerTokenVerifiedMixin
 
 
 class TokenVerifyApiBase(View):
     """Token 解析"""
+
+    allow_builtin_manager = False
 
     def get(self, request, *args, **kwargs):
         bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
@@ -38,6 +41,8 @@ class TokenVerifyApiBase(View):
         # FIXME (nan): 调整 bk_token 签发逻辑，DB BKToken 表额外添加 tenant_id / idp_id 等信息，
         #  避免需频繁查询用户管理接口
         user = bk_user_api.get_tenant_user(username)
+        if not self.allow_builtin_manager and user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
+            raise error_codes.VALIDATION_ERROR.f("builtin management user is not allowed", replace=True)
 
         return APISuccessResponse(data={"bk_username": user.id, "tenant_id": user.tenant_id})
 
@@ -53,6 +58,8 @@ class TokenVerifyApiByBearerAuth(InnerBearerTokenVerifiedMixin, TokenVerifyApiBa
 class TokenUserInfoRetrieveApiBase(View):
     """Token 用户信息解析"""
 
+    allow_builtin_manager = False
+
     def get(self, request, *args, **kwargs):
         bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
 
@@ -62,6 +69,8 @@ class TokenUserInfoRetrieveApiBase(View):
 
         # 通过用户管理查询用户信息
         user = bk_user_api.get_tenant_user(username)
+        if not self.allow_builtin_manager and user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
+            raise error_codes.VALIDATION_ERROR.f("builtin management user is not allowed", replace=True)
 
         return APISuccessResponse(
             data={
