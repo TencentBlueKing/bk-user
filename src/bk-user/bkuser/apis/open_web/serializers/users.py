@@ -14,9 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import List
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
@@ -80,9 +83,25 @@ class TenantUserListInputSLZ(serializers.Serializer):
         default=["login_name"],
     )
     data_source_type = serializers.ChoiceField(
-        help_text="数据源类型", choices=DataSourceTypeEnum.get_choices(), required=False, allow_blank=True, default=""
+        help_text="数据源类型",
+        choices=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL],
+        required=False,
+        allow_blank=True,
+        default="",
     )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
+
+    def validate_lookups(self, lookups: List[str]) -> List[str]:
+        for lookup in lookups:
+            if len(lookup) > 64:  # noqa: PLR2004
+                raise ValidationError(_("精确匹配值长度不能超过 64"))
+        return lookups
+
+    def validate_lookup_fields(self, lookup_fields: List[str]) -> List[str]:
+        for field in lookup_fields:
+            if field not in {"login_name", "full_name", "bk_username"}:
+                raise ValidationError(_("精确匹配字段目前只支持 login_name、full_name 和 bk_username"))
+        return lookup_fields
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
