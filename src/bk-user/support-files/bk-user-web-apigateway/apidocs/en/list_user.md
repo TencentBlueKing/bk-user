@@ -6,8 +6,8 @@ Query the user's list (including collaborative users and virtual users)
 
 | Name             | Type   | Required | Description                                                                                                                                                                                                                 |
 |------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| match_values     | string | Yes      | Exact matching value (can be bk_username、login_name or full_name), multiple separated by separator, limit number is 100                                                                                                     |
-| match_fields     | array  | No       | The list of matching fields. The optional values of each element in the list are `bk_username`、`login_name` and `full_name`. The default value is `["login_name"]`                                                          |
+| lookups          | string | Yes      | Exact matching value (can be bk_username、login_name or full_name), multiple separated by separator, limit number is 100                                                                                                     |
+| lookup_fields    | string | No       | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`, the default value is `login_name`                                                          |
 | data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                          |
 | owner_tenant_id  | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
 
@@ -15,7 +15,7 @@ Query the user's list (including collaborative users and virtual users)
 
 ```
 // URL Query Parameters
-match_values=zhangsan,lisi&match_fields=["login_name", "bk_username"]
+lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
 ```
 
 ### Response Example for Status Code 200

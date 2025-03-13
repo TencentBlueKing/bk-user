@@ -57,7 +57,7 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display information
 
-  /api/v3/open-web/tenant/users/search/:
+  /api/v3/open-web/tenant/users/-/search/:
     get:
       operationId: search_user
       description: 搜索用户
@@ -72,7 +72,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open-web/tenant/users/search/
+          path: /api/v3/open-web/tenant/users/-/search/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -82,7 +82,7 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Search user
 
-  /api/v3/open-web/tenant/users/:
+  /api/v3/open-web/tenant/users/-/lookup/:
     get:
       operationId: list_user
       description: 查询用户列表
@@ -97,7 +97,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open-web/tenant/users/
+          path: /api/v3/open-web/tenant/users/-/lookup/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -107,10 +107,10 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Query user's list
 
-  /api/v3/open-web/tenants/:
+  /api/v3/open-web/tenant/data-source-owner-tenants/:
     get:
-      operationId: retrieve_tenant
-      description: 查询租户信息
+      operationId: list_data_source_owner_tenant
+      description: 获取本租户所有数据来源的租户列表
       tags: []
       responses:
         default:
@@ -122,7 +122,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open-web/tenants/
+          path: /api/v3/open-web/tenant/data-source-owner-tenants/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -130,7 +130,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Query information of tenant
+        descriptionEn: Get the tenant list of all data sources in this tenant
 
   /:
     options:

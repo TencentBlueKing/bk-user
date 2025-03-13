@@ -21,14 +21,14 @@ from . import views
 
 urlpatterns = [
     path(
-        "tenants/",
-        views.TenantRetrieveApi.as_view(),
-        name="open_web.tenant.retrieve",
-    ),
-    path(
         "tenant/",
         include(
             [
+                path(
+                    "data-source-owner-tenants/",
+                    views.DataSourceOwnerTenantListApi.as_view(),
+                    name="open_web.data_source_owner_tenant.list",
+                ),
                 path(
                     "users/-/display_info/",
                     views.TenantUserDisplayInfoListApi.as_view(),
@@ -40,12 +40,12 @@ urlpatterns = [
                     name="open_web.tenant_user.display_info.retrieve",
                 ),
                 path(
-                    "users/search/",
+                    "users/-/search/",
                     views.TenantUserSearchApi.as_view(),
                     name="open_web.tenant_user.search",
                 ),
                 path(
-                    "users/",
+                    "users/-/lookup/",
                     views.TenantUserListApi.as_view(),
                     name="open_web.tenant_user.list",
                 ),

@@ -22,20 +22,20 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-class TestTenantRetrieveApi:
+class TestDataSourceOwnerTenantListApi:
     def test_with_current_tenant(self, api_client, random_tenant):
-        resp = api_client.get(reverse("open_web.tenant.retrieve"))
+        resp = api_client.get(reverse("open_web.data_source_owner_tenant.list"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["id"] == random_tenant.id
-        assert resp.data["name"] == random_tenant.name
-        assert resp.data["collab_tenants"] == []
+        assert len(resp.data) == 1
+        assert resp.data[0]["id"] == random_tenant.id
+        assert resp.data[0]["name"] == random_tenant.name
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
-    def test_with_all_data(self, api_client, random_tenant, collaboration_tenant):
-        resp = api_client.get(reverse("open_web.tenant.retrieve"))
+    def test_with_collaboration_tenants(self, api_client, random_tenant, collaboration_tenant):
+        resp = api_client.get(reverse("open_web.data_source_owner_tenant.list"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["id"] == random_tenant.id
-        assert resp.data["name"] == random_tenant.name
-        assert resp.data["collab_tenants"] == [{"id": collaboration_tenant.id, "name": collaboration_tenant.name}]
+        assert len(resp.data) == 2
+        assert {t["id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
+        assert {t["name"] for t in resp.data} == {random_tenant.name, collaboration_tenant.name}

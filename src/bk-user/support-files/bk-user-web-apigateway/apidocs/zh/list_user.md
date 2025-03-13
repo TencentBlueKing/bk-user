@@ -4,18 +4,18 @@
 
 ### 输入参数
 
-| 参数名称             | 参数类型   | 必选 | 描述                                                                              |
-|------------------|--------|----|---------------------------------------------------------------------------------|
-| match_values     | string | 是  | 精确匹配的值（可以为 bk_username、login_name 或 full_name），多个以逗号分隔，限制数量为 100                |
-| match_fields     | array  | 否  | 匹配字段的列表，列表中每个元素可选值为`bk_username`、`login_name`、`full_name`，默认值为 `["login_name"]` |
-| data_source_type | string | 否  | 数据源类型，可选值为`real`（对应实名用户）、`virtual`（对应虚拟用户），默认为空（查询实名 & 虚拟用户）                    |
-| owner_tenant_id  | string | 否  | 数据源所属租户 ID，可指定租户 ID 查询对应租户用户，默认为空（查询本租户用户与协同租户用户）                               |
+| 参数名称             | 参数类型   | 必选 | 描述                                                                            |
+|------------------|--------|----|-------------------------------------------------------------------------------|
+| lookups          | string | 是  | 精确匹配的值（可以为 bk_username、login_name 或 full_name），多个以逗号分隔，限制数量为 100              |
+| lookup_fields    | string | 否  | 匹配字段，多个以逗号分隔，每个元素可选值为`bk_username`、`login_name`、`full_name`，默认值为 `login_name` |
+| data_source_type | string | 否  | 数据源类型，可选值为`real`（对应实名用户）、`virtual`（对应虚拟用户），默认为空（查询实名 & 虚拟用户）                  |
+| owner_tenant_id  | string | 否  | 数据源所属租户 ID，可指定租户 ID 查询对应租户用户，默认为空（查询本租户用户与协同租户用户）                             |
 
 ### 请求示例
 
 ```
 // URL Query 参数
-match_values=zhangsan,lisi&match_fields=["login_name", "bk_username"]
+lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
 ```
 
 ### 状态码 200 的响应示例

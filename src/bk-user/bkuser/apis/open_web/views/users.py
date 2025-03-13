@@ -26,7 +26,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_web.constants import MemberSelectorExactMatchFieldEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
@@ -125,21 +124,27 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        filters: Dict[str, Any] = {
+        filter_kwargs: Dict[str, Any] = {
             "tenant_id": self.tenant_id,
         }
 
         # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
         if data_source_type := data.get("data_source_type"):
-            filters["data_source__type"] = data_source_type
+            filter_kwargs["data_source__type"] = data_source_type
+        else:
+            filter_kwargs["data_source__type__in"] = [DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL]
 
         # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
-            filters["data_source__owner_tenant_id"] = tenant_id
+            filter_kwargs["data_source__owner_tenant_id"] = tenant_id
 
+        keyword = data["keyword"]
+        # TODO: 后续支持更多搜索条件（例如 phone、email 等）
         queryset = (
-            TenantUser.objects.filter(**filters)
-            .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+            TenantUser.objects.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword),
+                **filter_kwargs,
+            )
             .select_related("data_source_user", "data_source")
             .only(
                 "id",
@@ -148,12 +153,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 "data_source__type",
                 "data_source__owner_tenant_id",
             )
-        )
-
-        keyword = data["keyword"]
-        # TODO: 后续支持更多搜索条件（例如 phone、email 等）
-        queryset = queryset.filter(
-            Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
         )
 
         return queryset[: self.search_limit]
@@ -183,21 +182,33 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        filters: Dict[str, Any] = {
+        filter_kwargs: Dict[str, Any] = {
             "tenant_id": self.tenant_id,
         }
 
         # 若指定了数据源类型，则只查询该类型的用户；否则查询所有数据源类型（除内置管理）的用户
         if data_source_type := data.get("data_source_type"):
-            filters["data_source__type"] = data_source_type
+            filter_kwargs["data_source__type"] = data_source_type
+        else:
+            filter_kwargs["data_source__type__in"] = [DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL]
 
         # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
-            filters["data_source__owner_tenant_id"] = tenant_id
+            filter_kwargs["data_source__owner_tenant_id"] = tenant_id
 
-        queryset = (
-            TenantUser.objects.filter(**filters)
-            .exclude(data_source__type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+        lookups = data["lookups"]
+        conditions = Q()
+        # 遍历匹配字段列表，构造查询条件
+        for field in data["lookup_fields"]:
+            if field == "login_name":
+                conditions |= Q(data_source_user__username__in=lookups)
+            elif field == "full_name":
+                conditions |= Q(data_source_user__full_name__in=lookups)
+            elif field == "bk_username":
+                conditions |= Q(id__in=lookups)
+
+        return (
+            TenantUser.objects.filter(conditions, **filter_kwargs)
             .select_related("data_source_user", "data_source")
             .only(
                 "id",
@@ -207,16 +218,6 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 "data_source__owner_tenant_id",
             )
         )
-
-        field_mapping = MemberSelectorExactMatchFieldEnum.get_field_mapping()
-
-        conditions = Q()
-        # 遍历匹配字段列表，构造查询条件
-        for field in data["match_fields"]:
-            if field in field_mapping:
-                conditions |= Q(**{field_mapping[field]: data["match_values"]})
-
-        return queryset.filter(conditions)
 
     @swagger_auto_schema(
         tags=["open_web.user"],

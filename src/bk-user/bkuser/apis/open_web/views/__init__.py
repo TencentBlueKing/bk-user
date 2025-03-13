@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from .tenants import TenantRetrieveApi
+from .tenants import DataSourceOwnerTenantListApi
 from .users import (
     TenantUserDisplayInfoListApi,
     TenantUserDisplayInfoRetrieveApi,
@@ -24,7 +24,7 @@ from .users import (
 )
 
 __all__ = [
-    "TenantRetrieveApi",
+    "DataSourceOwnerTenantListApi",
     "TenantUserDisplayInfoRetrieveApi",
     "TenantUserDisplayInfoListApi",
     "TenantUserSearchApi",

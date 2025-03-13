@@ -18,12 +18,6 @@
 from rest_framework import serializers
 
 
-class CollabTenantSLZ(serializers.Serializer):
+class DataSourceOwnerTenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
-
-
-class TenantRetrieveOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户 ID")
-    name = serializers.CharField(help_text="租户名称")
-    collab_tenants = serializers.ListField(help_text="协作租户列表", child=CollabTenantSLZ(), allow_empty=True)
