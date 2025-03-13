@@ -200,12 +200,12 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         conditions = Q()
         # 遍历匹配字段列表，构造查询条件
         for field in data["lookup_fields"]:
-            if field == "login_name":
-                conditions |= Q(data_source_user__username__in=lookups)
-            elif field == "full_name":
+            if field == "full_name":
                 conditions |= Q(data_source_user__full_name__in=lookups)
             elif field == "bk_username":
                 conditions |= Q(id__in=lookups)
+            else:
+                conditions |= Q(data_source_user__username__in=lookups)
 
         return (
             TenantUser.objects.filter(conditions, **filter_kwargs)
