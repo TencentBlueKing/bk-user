@@ -23,14 +23,14 @@ from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
-class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
+class TenantUserDisplayInfoListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
         help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
         max_items=settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT,
     )
 
 
-class TenantUserDisplayNameListOutputSLZ(serializers.Serializer):
+class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
