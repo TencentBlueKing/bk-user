@@ -19,7 +19,7 @@ from .tenants import DataSourceOwnerTenantListApi
 from .users import (
     TenantUserDisplayInfoListApi,
     TenantUserDisplayInfoRetrieveApi,
-    TenantUserListApi,
+    TenantUserLookupApi,
     TenantUserSearchApi,
 )
 
@@ -28,5 +28,5 @@ __all__ = [
     "TenantUserDisplayInfoRetrieveApi",
     "TenantUserDisplayInfoListApi",
     "TenantUserSearchApi",
-    "TenantUserListApi",
+    "TenantUserLookupApi",
 ]

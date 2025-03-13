@@ -75,7 +75,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
 
-class TenantUserListInputSLZ(serializers.Serializer):
+class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
     lookup_fields = StringArrayField(
         help_text="匹配字段，多个使用逗号分隔",
@@ -104,7 +104,7 @@ class TenantUserListInputSLZ(serializers.Serializer):
         return lookup_fields
 
 
-class TenantUserListOutputSLZ(serializers.Serializer):
+class TenantUserLookupOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")

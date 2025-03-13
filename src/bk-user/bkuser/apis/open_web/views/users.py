@@ -31,8 +31,8 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserDisplayInfoRetrieveOutputSLZ,
-    TenantUserListInputSLZ,
-    TenantUserListOutputSLZ,
+    TenantUserLookupInputSLZ,
+    TenantUserLookupOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
@@ -168,17 +168,17 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
+class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     批量查询用户（包括协同用户与虚拟用户）
     """
 
     pagination_class = None
 
-    serializer_class = TenantUserListOutputSLZ
+    serializer_class = TenantUserLookupOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = TenantUserListInputSLZ(data=self.request.query_params)
+        slz = TenantUserLookupInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -221,10 +221,10 @@ class TenantUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_web.user"],
-        operation_id="list_user",
+        operation_id="batch_lookup_user",
         operation_description="批量查询用户",
-        query_serializer=TenantUserListInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
+        query_serializer=TenantUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

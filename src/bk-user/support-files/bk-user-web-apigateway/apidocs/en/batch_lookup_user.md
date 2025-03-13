@@ -1,6 +1,6 @@
 ### Description
 
-Query the user's list (including collaborative users and virtual users)
+Batch query the users (including collaborative users and virtual users)
 
 ### Parameters
 

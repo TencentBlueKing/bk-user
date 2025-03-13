@@ -84,8 +84,8 @@ paths:
 
   /api/v3/open-web/tenant/users/-/lookup/:
     get:
-      operationId: list_user
-      description: 查询用户列表
+      operationId: batch_lookup_user
+      description: 批量查询用户
       tags: []
       responses:
         default:
@@ -105,7 +105,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Query user's list
+        descriptionEn: Batch lookup users
 
   /api/v3/open-web/tenant/data-source-owner-tenants/:
     get:

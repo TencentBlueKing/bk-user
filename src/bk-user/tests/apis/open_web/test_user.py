@@ -195,7 +195,7 @@ class TestTenantUserSearchApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 @pytest.mark.usefixtures("_init_collaboration_users_depts")
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
-class TestTenantUserListApi:
+class TestTenantUserLookupApi:
     def test_all_users(self, api_client, random_tenant, collaboration_tenant):
         real_zhangsan = TenantUser.objects.get(
             data_source_user__username="zhangsan",
@@ -216,7 +216,7 @@ class TestTenantUserListApi:
             data_source_user__username="lisi", data_source__owner_tenant_id=collaboration_tenant.id
         )
 
-        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"lookups": "zhangsan,lisi"})
+        resp = api_client.get(reverse("open_web.tenant_user.lookup"), data={"lookups": "zhangsan,lisi"})
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 6
@@ -251,7 +251,7 @@ class TestTenantUserListApi:
             data_source__owner_tenant_id=random_tenant.id,
         )
         resp = api_client.get(
-            reverse("open_web.tenant_user.list"),
+            reverse("open_web.tenant_user.lookup"),
             data={"lookups": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "real"},
         )
 
@@ -279,7 +279,7 @@ class TestTenantUserListApi:
             data_source__owner_tenant_id=collaboration_tenant.id,
         )
         resp = api_client.get(
-            reverse("open_web.tenant_user.list"),
+            reverse("open_web.tenant_user.lookup"),
             data={
                 "lookups": "zhangsan,lisi",
                 "owner_tenant_id": collaboration_tenant.id,
@@ -303,7 +303,7 @@ class TestTenantUserListApi:
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant_user.list"),
+            reverse("open_web.tenant_user.lookup"),
             data={"lookups": "zhangsan,lisi", "owner_tenant_id": random_tenant.id, "data_source_type": "virtual"},
         )
 
@@ -329,7 +329,7 @@ class TestTenantUserListApi:
             data_source__owner_tenant_id=random_tenant.id,
         )
         resp = api_client.get(
-            reverse("open_web.tenant_user.list"),
+            reverse("open_web.tenant_user.lookup"),
             data={
                 "lookups": ",".join([zhangsan.id, lisi.id]),
                 "lookup_fields": "bk_username,login_name",
@@ -360,7 +360,7 @@ class TestTenantUserListApi:
             data_source__owner_tenant_id=random_tenant.id,
         )
         resp = api_client.get(
-            reverse("open_web.tenant_user.list"),
+            reverse("open_web.tenant_user.lookup"),
             data={
                 "lookups": "张三,李四",
                 "lookup_fields": "bk_username,login_name,full_name",
@@ -382,6 +382,6 @@ class TestTenantUserListApi:
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
     def test_with_not_match(self, api_client):
-        resp = api_client.get(reverse("open_web.tenant_user.list"), data={"lookups": "zhangsan123,lisi123"})
+        resp = api_client.get(reverse("open_web.tenant_user.lookup"), data={"lookups": "zhangsan123,lisi123"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0

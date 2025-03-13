@@ -46,8 +46,8 @@ urlpatterns = [
                 ),
                 path(
                     "users/-/lookup/",
-                    views.TenantUserListApi.as_view(),
-                    name="open_web.tenant_user.list",
+                    views.TenantUserLookupApi.as_view(),
+                    name="open_web.tenant_user.lookup",
                 ),
             ]
         ),
