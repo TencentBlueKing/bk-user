@@ -7,7 +7,7 @@
 | Name          | Type | Required | Location    | Description                                                                                                         |
 |---------------|------|----------|-------------|---------------------------------------------------------------------------------------------------------------------|
 | page          | int  | No       | query param | Page number, default is 1                                                                                           |
-| page_size     | int  | No       | query param | The number of pages per page, default is 10                                                                         |
+| page_size     | int  | No       | query param | The number of pages per page, default is 10, maximum is 500                                                         |
 | department_id | int  | Yes      | path        | Unique identifier of the department                                                                                 |
 | max_level     | int  | No       | query param | The maximum relative level of the recursive sub-department. The default is 1, which means the direct sub-department |
 
