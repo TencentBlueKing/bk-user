@@ -43,7 +43,7 @@ class DataSourceOwnerTenantListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_web.tenant"],
         operation_id="list_data_source_owner_tenant",
-        operation_description="获取本租户下所有数据来源的租户列表（包括协同）",
+        operation_description="获取本租户下所有数据来源的租户信息（包括协同）",
         responses={status.HTTP_200_OK: DataSourceOwnerTenantListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):

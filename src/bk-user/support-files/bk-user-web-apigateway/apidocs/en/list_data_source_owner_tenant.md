@@ -1,6 +1,6 @@
 ### Description
 
-Get the tenant list of all data sources in this tenant (including collaborative tenants)
+Get the information of the tenant of all data sources in this tenant (including collaborative tenants)
 
 
 ### Response Example for Status Code 200
