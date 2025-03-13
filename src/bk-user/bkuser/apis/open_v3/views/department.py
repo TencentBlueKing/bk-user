@@ -119,21 +119,39 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
-            id=kwargs["id"],
-        )
+        # 若传入的 department_id 为 0，则获取根部门
+        if not kwargs["id"]:
+            data_source_dept_ids = (
+                DataSourceDepartmentRelation.objects.root_nodes()
+                .filter(data_source_id=self.real_data_source_id)
+                .values_list("department_id", flat=True)
+            )
 
-        relation = DataSourceDepartmentRelation.objects.get(department_id=tenant_department.data_source_department_id)
+            depts = TenantDepartment.objects.filter(
+                tenant_id=self.tenant_id,
+                data_source_department_id__in=data_source_dept_ids,
+            ).select_related("data_source_department")
 
-        # 计算绝对层级 Level
-        level = relation.level + data["max_level"]
-        # 按层级 Level 递归查询该部门的子部门
-        descendant_ids = relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
+        else:
+            tenant_department = get_object_or_404(
+                TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+                id=kwargs["id"],
+            )
 
-        depts = TenantDepartment.objects.filter(
-            data_source_department_id__in=descendant_ids, tenant_id=self.tenant_id
-        ).select_related("data_source_department")
+            relation = DataSourceDepartmentRelation.objects.get(
+                department_id=tenant_department.data_source_department_id
+            )
+
+            # 计算绝对层级 Level
+            level = relation.level + data["max_level"]
+            # 按层级 Level 递归查询该部门的子部门
+            descendant_ids = (
+                relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
+            )
+
+            depts = TenantDepartment.objects.filter(
+                data_source_department_id__in=descendant_ids, tenant_id=self.tenant_id
+            ).select_related("data_source_department")
 
         # 分页
         page = self.paginate_queryset(depts)
