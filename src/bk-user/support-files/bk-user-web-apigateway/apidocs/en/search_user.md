@@ -59,4 +59,4 @@ keyword=zhang
 | full_name        | string | User's name                                                                                                                                                                              |
 | display_name     | string | User's display_name                                                                                                                                                                      |
 | data_source_type | string | Data source type, where `real` corresponds to real-name data source (user), and `virtual` corresponds to virtual data source (user)                                                      |
-| owner_tenant_id  | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID | |
+| owner_tenant_id  | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |

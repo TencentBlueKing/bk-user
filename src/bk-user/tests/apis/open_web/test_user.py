@@ -88,23 +88,23 @@ class TestTenantUserDisplayInfoListApi:
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestTenantUserSearchApi:
     def test_with_full_name(self, api_client, random_tenant):
-        wangwu = TenantUser.objects.get(
-            data_source_user__username="wangwu",
+        baishier = TenantUser.objects.get(
+            data_source_user__username="baishier",
             data_source__type="real",
             data_source__owner_tenant_id=random_tenant.id,
         )
 
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "wang", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+            data={"keyword": "白十", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
-        assert resp.data[0]["bk_username"] == wangwu.id
-        assert resp.data[0]["login_name"] == "wangwu"
-        assert resp.data[0]["full_name"] == "王五"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(wangwu)
+        assert resp.data[0]["bk_username"] == baishier.id
+        assert resp.data[0]["login_name"] == "baishier"
+        assert resp.data[0]["full_name"] == "白十二"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(baishier)
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
