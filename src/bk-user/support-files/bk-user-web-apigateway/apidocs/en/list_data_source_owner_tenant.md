@@ -7,34 +7,26 @@ Get the tenant list of all data sources in this tenant (including collaborative 
 
 ```json5
 {
-    "data": {
-        "id": "default",
-        "name": "默认租户",
-        "collab_tenants": [
-          {
-            "id": "collab_tenant_1",
-            "name": "协同租户1"
-          },
-          {
-            "id": "collab_tenant_2",
-            "name": "协同租户2"
-          }
-        ],
+  "data": [
+    {
+      "id": "default",
+      "name": "默认租户"
+    },
+    {
+      "id": "collab_tenant_1",
+      "name": "协同租户1"
+    },
+    {
+      "id": "collab_tenant_2",
+      "name": "协同租户2"
     }
+  ]
 }
 ```
 
 ### Response Parameters Description
 
-| Name                | Type   | Description                          |
-|---------------------|--------|--------------------------------------|
-| id                  | string | Tenant ID                            |
-| name                | string | Tenant name                          |
-| collab_tenants      | array  | Information of Collaborative tenants |
-
-**collab_tenants** is a list of collaborative tenants. Each element in the list contains the information of the collaborative tenant (including tenant ID and tenant name). Each collaborative tenant contains the following parameters:
-
-| Name | Type   | Description                         |
-|------|--------|-------------------------------------|
-| id   | string | Unique identifier of the department |
-| name | string | The name of the department          |
+| 参数名称                | 参数类型   | 描述       |
+|---------------------|--------|----------|
+| id                  | string | 租户 ID    |
+| name                | string | 租户名称     |
