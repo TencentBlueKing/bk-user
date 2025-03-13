@@ -31,7 +31,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
-from bklogin.component.bk_user.constants import IdpStatus
+from bklogin.component.bk_user.constants import DataSourceTypeEnum, IdpStatus
 from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls, get_plugin_type
 from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum, PluginTypeEnum
 from bklogin.idp_plugins.exceptions import (
@@ -56,14 +56,12 @@ class LoginView(View):
     登录页面
     """
 
-    # 登录成功后默认重定向到蓝鲸桌面
-    default_redirect_to = "/console/"
     template_name = "index.html"
 
-    def _get_redirect_url(self, request):
+    def _get_redirect_url(self, request, default_redirect_to: str) -> str:
         """如果安全的话，返回用户发起的重定向 URL"""
         # 重定向 URL
-        redirect_to = request.GET.get(REDIRECT_FIELD_NAME) or self.default_redirect_to
+        redirect_to = request.GET.get(REDIRECT_FIELD_NAME) or default_redirect_to
 
         # 检查回调 URL 是否安全，防钓鱼
         url_is_safe = url_has_allowed_host_and_scheme(
@@ -71,12 +69,14 @@ class LoginView(View):
             allowed_hosts={*settings.ALLOWED_REDIRECT_HOSTS},
             require_https=settings.REDIRECT_URL_REQUIRE_HTTPS,
         )
-        return redirect_to if url_is_safe else self.default_redirect_to
+        return redirect_to if url_is_safe else default_redirect_to
 
     def get(self, request, *args, **kwargs):
         """登录页面"""
+        global_setting = bk_user_api.get_global_setting()
         # 回调到业务系统的地址
-        redirect_url = self._get_redirect_url(request)
+        # Note: 如果业务系统回调地址不安全，则重定向到蓝鲸用户管理个人中心
+        redirect_url = self._get_redirect_url(request, global_setting.bk_user_url)
         # 存储到当前 session 里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
@@ -85,7 +85,7 @@ class LoginView(View):
 
         # 查询全局配置，判断是否唯一的第三方登录
         # TODO: 考虑是否 Cache 唯一第三方登录的判断
-        idp = bk_user_api.get_global_setting().unique_enabled_tenant_idp
+        idp = global_setting.unique_enabled_tenant_idp
         if idp and get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
             # 直接重定向到第三方登录
             response = HttpResponseRedirect(
@@ -346,8 +346,6 @@ class IdpPluginDispatchView(View):
 class PageUserView(View):
     """用户选择账号页面"""
 
-    # 登录成功后默认重定向到蓝鲸桌面
-    default_redirect_to = "/console/"
     template_name = "index.html"
 
     def get(self, request, *args, **kwargs):
@@ -359,8 +357,14 @@ class PageUserView(View):
 
         # 单一用户，则直接登录成功，并重定向到业务系统
         user_id = tenant_users[0]["id"]
+        # FIXME (nan): 重构认证后查询用户信息或状态等，跳转会业务系统逻辑
+        user = bk_user_api.get_tenant_user(user_id)
+        redirect_to = request.session.get("redirect_uri")
+        # Note: 内置管理账号只在用户管理内使用，直接跳转到用户管理个人中心
+        if user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
+            redirect_to = bk_user_api.get_global_setting().bk_user_url
 
-        response = HttpResponseRedirect(redirect_to=request.session.get("redirect_uri"))
+        response = HttpResponseRedirect(redirect_to=redirect_to)
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
         # 设置 Cookie
@@ -416,10 +420,16 @@ class SignInTenantUserCreateApi(View):
         if user_id not in tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("该用户不可登录"))
 
+        # FIXME (nan): 重构认证后查询用户信息或状态等，跳转会业务系统逻辑
+        user = bk_user_api.get_tenant_user(user_id)
+        redirect_to = request.session.get("redirect_uri")
+        # Note: 内置管理账号只在用户管理内使用，直接跳转到用户管理个人中心
+        if user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
+            redirect_to = bk_user_api.get_global_setting().bk_user_url
         # TODO：支持 MFA、首次登录强制修改密码登录操作
         # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如 bk_token_for_force_change_password
 
-        response = APISuccessResponse({"redirect_uri": request.session.get("redirect_uri")})
+        response = APISuccessResponse({"redirect_uri": redirect_to})
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
         # 设置 Cookie

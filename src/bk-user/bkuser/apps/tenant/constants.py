@@ -25,6 +25,13 @@ TENANT_ID_REGEX = re.compile(r"^[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
+class BuiltInTenantIDEnum(StrStructuredEnum):
+    """内置租户 ID 枚举"""
+
+    DEFAULT = EnumField("default", label="Default")
+    SYSTEM = EnumField("system", label="BleuKing Op")
+
+
 class UserFieldDataType(StrStructuredEnum):
     """租户用户自定义字段数据类型"""
 
@@ -57,7 +64,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRING,
-            "title": "蓝鲸智云 - 账号即将到期提醒!",
+            "title": "蓝鲸智云 - 账号即将到期提醒！",
             "sender": "蓝鲸智云",
             "content": (
                 "{{ username }}, 您好：\n "
@@ -75,7 +82,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRED,
-            "title": "蓝鲸智云 - 账号到期提醒!",
+            "title": "蓝鲸智云 - 账号到期提醒！",
             "sender": "蓝鲸智云",
             "content": (
                 "{{ username }}，您好：\n "

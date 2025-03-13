@@ -88,5 +88,6 @@ class TenantUserInfo(BaseModel):
 class TenantUserDetailInfo(TenantUserInfo):
     display_name: str
     tenant_id: str
+    data_source_type: str
     language: str
     time_zone: str

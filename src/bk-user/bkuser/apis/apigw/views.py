@@ -19,7 +19,6 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.common.error_codes import error_codes
 
 from .mixins import InnerApiCommonMixin
 from .serializers import TenantUserContactInfoListInputSLZ, TenantUserContactInfoListOutputSLZ
@@ -32,14 +31,12 @@ class TenantUserRetrieveApi(InnerApiCommonMixin, generics.RetrieveAPIView):
     TODO：后续根据耗时统计进行 Cache 优化
     """
 
+    # [only] 用于减少查询字段，仅查询必要字段
+    queryset = TenantUser.objects.all().only("tenant_id")
+    lookup_url_kwarg = "id"
+
     def get(self, request, *args, **kwargs):
-        tenant_user_id = kwargs["tenant_user_id"]
-
-        # [only] 用于减少查询字段，仅查询必要字段
-        tenant_user = TenantUser.objects.filter(id=tenant_user_id).only("tenant_id").first()
-        if not tenant_user:
-            raise error_codes.OBJECT_NOT_FOUND.f(f"user({tenant_user_id}) not found", replace=True)
-
+        tenant_user = self.get_object()
         return Response({"tenant_id": tenant_user.tenant_id})
 
 

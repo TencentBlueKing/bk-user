@@ -626,10 +626,12 @@ if ENABLE_BK_NOTICE:
     }
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
+# 是否开启多租户模式
+ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
 # 是否启用虚拟账号页面功能
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
-# 是否启用新建租户页面功能
-ENABLE_CREATE_TENANT = env.bool("ENABLE_CREATE_TENANT", default=False)
+# 开启多租户模式后，才支持是否启用页面新建租户功能
+ENABLE_CREATE_TENANT = ENABLE_MUTIL_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
 
 # logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)

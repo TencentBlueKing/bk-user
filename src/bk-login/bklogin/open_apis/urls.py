@@ -14,20 +14,14 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.conf import settings
 from django.urls import path
 
 from . import views
 from .compatibility import views as compatibility_views
 
 urlpatterns = [
-    # 兼容 API, 兼容原有通过 ESB 和直接调用的两种方式
-    path("accounts/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v1")),
-    path("accounts/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v1")),
-    path("api/v2/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v2")),
-    path("api/v2/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v2")),
-    path("api/v3/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v3")),
-    path("api/v3/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v3")),
-    # Note: 新的 OpenAPI 后面统一接入 APIGateway，不支持直接调用
+    # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
     path("api/v3/open/bk-tokens/verify/", views.TokenVerifyApi.as_view(), name="v3_open.bk_token.verify"),
     path(
@@ -42,7 +36,19 @@ urlpatterns = [
     # 提供给 bkuser 的内部 API
     path(
         "api/v3/bkuser/bk-tokens/userinfo/",
-        views.TokenUserInfoRetrieveApiByBkUserAppAuth.as_view(),
+        views.TokenUserInfoRetrieveApiByBkUserAppAuth.as_view(allow_builtin_manager=True),
         name="v3_bkuser.bk_token.userinfo_retrieve",
     ),
 ]
+
+# 如果不是多租户模式，则需要兼容 ESB 和直调的方式
+if not settings.ENABLE_MUTIL_TENANT_MODE:
+    urlpatterns += [
+        # 兼容 API, 兼容原有通过 ESB 和直接调用的两种方式
+        path("accounts/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v1")),
+        path("accounts/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v1")),
+        path("api/v2/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v2")),
+        path("api/v2/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v2")),
+        path("api/v3/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v3")),
+        path("api/v3/get_user/", compatibility_views.UserRetrieveCompatibilityApi.as_view(api_version="v3")),
+    ]
