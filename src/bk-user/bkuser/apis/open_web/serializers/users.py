@@ -89,7 +89,7 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
-        if [i for i in lookups if len(i) > max_length]:
+        if any(len(i) > max_length for i in lookups):
             raise ValidationError(_("精确匹配值长度不能超过 64"))
         return lookups
 
