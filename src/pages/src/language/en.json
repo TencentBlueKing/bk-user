@@ -443,7 +443,7 @@
   "内置管理员": "Built-in administrator",
   "去停用": "Disable",
   "去启用": "Enable",
-  "实名管理员": "Real name administrator",
+  "租户管理员": "Tenant Administrator",
   "密码重置成功": "Password Reset Successfully",
   "登录限制": "Login Restrictions",
   "密码有效期设置": "Password Expiry Settings",
