@@ -24,12 +24,12 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDisplayNameListApi:
+class TestTenantUserDisplayInfoListApi:
     def test_standard(self, api_client):
         zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
         lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, lisi_id])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan_id, lisi_id])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -40,7 +40,7 @@ class TestTenantUserDisplayNameListApi:
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, "invalid"])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan_id, "invalid"])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -49,12 +49,12 @@ class TestTenantUserDisplayNameListApi:
         assert resp.data[0]["display_name"] == "张三"
 
     def test_with_no_bk_usernames(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ""})
+        resp = api_client.get(reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ""})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_with_invalid_length(self, api_client):
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"),
+            reverse("open_v3.tenant_user.display_info.list"),
             data={
                 "bk_usernames": ",".join(
                     map(str, range(1, settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT + 2))
