@@ -77,11 +77,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_fields = StringArrayField(
-        help_text="匹配字段，多个使用逗号分隔",
-        required=False,
-        default=["login_name"],
-    )
+    lookup_fields = StringArrayField(help_text="匹配字段，多个使用逗号分隔")
     data_source_type = serializers.ChoiceField(
         help_text="数据源类型",
         choices=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL],
@@ -92,15 +88,14 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
-        for lookup in lookups:
-            if len(lookup) > 64:  # noqa: PLR2004
-                raise ValidationError(_("精确匹配值长度不能超过 64"))
+        max_length = 64
+        if [i for i in lookups if len(i) > max_length]:
+            raise ValidationError(_("精确匹配值长度不能超过 64"))
         return lookups
 
     def validate_lookup_fields(self, lookup_fields: List[str]) -> List[str]:
-        for field in lookup_fields:
-            if field not in {"login_name", "full_name", "bk_username"}:
-                raise ValidationError(_("精确匹配字段目前只支持 login_name、full_name 和 bk_username"))
+        if set(lookup_fields) - {"login_name", "full_name", "bk_username"}:
+            raise ValidationError(_("精确匹配字段目前只支持 login_name、full_name 和 bk_username"))
         return lookup_fields
 
 
