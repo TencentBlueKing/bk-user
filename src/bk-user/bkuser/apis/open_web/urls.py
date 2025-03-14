@@ -25,6 +25,11 @@ urlpatterns = [
         include(
             [
                 path(
+                    "data-source-owner-tenants/",
+                    views.DataSourceOwnerTenantListApi.as_view(),
+                    name="open_web.data_source_owner_tenant.list",
+                ),
+                path(
                     "users/-/display_info/",
                     views.TenantUserDisplayInfoListApi.as_view(),
                     name="open_web.tenant_user.display_info.list",
@@ -34,7 +39,17 @@ urlpatterns = [
                     views.TenantUserDisplayInfoRetrieveApi.as_view(),
                     name="open_web.tenant_user.display_info.retrieve",
                 ),
+                path(
+                    "users/-/search/",
+                    views.TenantUserSearchApi.as_view(),
+                    name="open_web.tenant_user.search",
+                ),
+                path(
+                    "users/-/lookup/",
+                    views.TenantUserLookupApi.as_view(),
+                    name="open_web.tenant_user.lookup",
+                ),
             ]
         ),
-    )
+    ),
 ]
