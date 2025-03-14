@@ -215,8 +215,10 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
         if field == "full_name":
             return Q(data_source_user__full_name__in=lookups)
+
         if field == "bk_username":
             return Q(id__in=lookups)
+
         return Q(data_source_user__username__in=lookups)
 
     @swagger_auto_schema(

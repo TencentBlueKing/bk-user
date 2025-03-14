@@ -89,13 +89,21 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
-        if any(len(i) > max_length for i in lookups):
-            raise ValidationError(_("精确匹配值长度不能超过 64"))
+        if invalid_lookups := [i for i in lookups if len(i) > max_length]:
+            raise ValidationError(
+                _("精确匹配值长度不能超过 64 字符，以下值超过限制：{invalid_lookups}").format(
+                    invalid_lookups=", ".join(invalid_lookups)
+                )
+            )
         return lookups
 
     def validate_lookup_fields(self, lookup_fields: List[str]) -> List[str]:
-        if set(lookup_fields) - {"login_name", "full_name", "bk_username"}:
-            raise ValidationError(_("精确匹配字段目前只支持 login_name、full_name 和 bk_username"))
+        if invalid_fields := set(lookup_fields) - {"login_name", "full_name", "bk_username"}:
+            raise ValidationError(
+                _(
+                    "精确匹配字段目前只支持 login_name、full_name 和 bk_username，以下字段不支持：{invalid_fields}"
+                ).format(invalid_fields=", ".join(invalid_fields))
+            )
         return lookup_fields
 
 
