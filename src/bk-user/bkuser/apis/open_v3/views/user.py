@@ -28,8 +28,8 @@ from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
-    TenantUserDisplayNameListInputSLZ,
-    TenantUserDisplayNameListOutputSLZ,
+    TenantUserDisplayInfoListInputSLZ,
+    TenantUserDisplayInfoListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
     TenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
@@ -47,18 +47,18 @@ from bkuser.biz.organization import DataSourceDepartmentHandler
 logger = logging.getLogger(__name__)
 
 
-class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    批量根据用户 bk_username 获取用户展示名
+    批量根据用户 bk_username 获取用户展示信息
     TODO: 性能较高，只查询所需字段，后续开发 DisplayName 支持表达式配置时添加 Cache 方案
     """
 
     pagination_class = None
 
-    serializer_class = TenantUserDisplayNameListOutputSLZ
+    serializer_class = TenantUserDisplayInfoListOutputSLZ
 
     def get_queryset(self):
-        slz = TenantUserDisplayNameListInputSLZ(data=self.request.query_params)
+        slz = TenantUserDisplayInfoListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -76,10 +76,10 @@ class TenantUserDisplayNameListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="batch_query_user_display_name",
-        operation_description="批量查询用户展示名",
-        query_serializer=TenantUserDisplayNameListInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserDisplayNameListOutputSLZ(many=True)},
+        operation_id="batch_query_user_display_info",
+        operation_description="批量查询用户展示信息",
+        query_serializer=TenantUserDisplayInfoListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserDisplayInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
