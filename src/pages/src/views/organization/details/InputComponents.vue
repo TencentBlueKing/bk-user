@@ -28,19 +28,16 @@
           :item="item"
           :edit-status="editStatus"
           @phone="(val) => item.isError = val" />
-        <bk-select
-          v-else-if="item.key.includes(dateKey)"
-          v-model="item.value"
-          :clearable="!item.require"
-          :disabled="editStatus && !item.editable"
-          @change="changSelect">
-          <bk-option
-            v-for="option in accountValidDaysList"
-            :key="option.date"
-            :id="option.date"
-            :name="option.time ? `${option.text}（${option.time}）` : option.text">
-          </bk-option>
-        </bk-select>
+        <template v-else-if="item.key.includes(dateKey)">
+          <bk-date-picker
+            v-model="item.value"
+            @change="changSelect"
+            format="yyyy-MM-dd"
+            :placeholder="'选择日期时间'"
+            :shortcuts="shortcuts"
+            :type="'date'">
+          </bk-date-picker>
+        </template>
         <InputDate
           v-else-if="item.type === 'timer'"
           :item="item" :edit-status="editStatus" />
@@ -64,7 +61,6 @@ import InputString from './InputString';
 import InputSelect from './InputSelect';
 import InputDate from './InputDate';
 import InputPhone from './InputPhone';
-import { expireDays } from '@/common/util';
 export default {
   components: {
     InputString,
@@ -100,16 +96,28 @@ export default {
     };
   },
   computed: {
+    shortcuts() {
+      console.log(this.$store.state.passwordValidDaysList);
+      const dayTime = 24 * 60 * 60 * 1000;
+      const nowTime = new Date().getTime();
+      return this.$store.state.passwordValidDaysList.map((item) => {
+        const date = item.days > 0 ? new Date(nowTime + dayTime * item.days) : '2100-01-01';
+        return {
+          text: item.text,
+          value: () => new Date(date),
+        };
+      });
+    },
+
     profileInfoData() {
       const obj = {};
       this.profileInfoList.forEach((item) => {
+        if (item.key.includes(this.dateKey)) {
+          item.value = (item.value && new Date(item.value)) || new Date();
+        }
         this.$set(obj, item.key, item.value);
       });
       return obj;
-    },
-    accountValidDaysList() {
-      const date = (this.expireDate && this.expireDate.account_expiration_date) || null;
-      return expireDays(date, this.$store.state.passwordValidDaysList);
     },
   },
   mounted() {
