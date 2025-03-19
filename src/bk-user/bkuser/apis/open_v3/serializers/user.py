@@ -93,6 +93,7 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
     phone = serializers.SerializerMethodField(help_text="手机号")
     phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")
     email = serializers.CharField(help_text="邮箱")
+    wx_userid = serializers.CharField(help_text="微信 ID")
 
     def get_phone(self, obj: TenantUser) -> str:
         return obj.phone_info[0]
