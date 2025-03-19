@@ -37,7 +37,10 @@ stages:
 #   - anything.md
 resource_docs:
   basedir: "support-files/bk-user-apigateway/apidocs/"
+
 # 主动授权，网关主动给应用，添加访问网关所有资源的权限
-#grant_permissions:
-#  - bk_app_code: "{{ settings.BK_APP_CODE }}"
-#    grant_dimension: "gateway"
+grant_permissions:
+ - bk_app_code: "bk-cmsi"
+   grant_dimension: "resource"
+   resource_names:
+     - "list_user_sensitive_info"
