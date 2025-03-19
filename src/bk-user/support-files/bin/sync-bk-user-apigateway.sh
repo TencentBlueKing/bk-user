@@ -26,8 +26,8 @@ python manage.py sync_resource_docs_by_archive --gateway-name=${gateway_name} --
 # 创建资源版本、发布
 python manage.py create_version_and_release_apigw --gateway-name=${gateway_name} --file="${definition_file}"
 
-## 为应用主动授权
-#python manage.py grant_apigw_permissions --gateway-name=${gateway_name} --file="${definition_file}"
+# 为应用主动授权
+python manage.py grant_apigw_permissions --gateway-name=${gateway_name} --file="${definition_file}"
 
 # 获取网关公钥
 python manage.py fetch_apigw_public_key --gateway-name=${gateway_name}
