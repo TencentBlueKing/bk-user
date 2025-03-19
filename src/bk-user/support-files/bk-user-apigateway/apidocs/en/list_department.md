@@ -4,10 +4,10 @@
 
 ### Parameters
 
-| Name      | Type | Required | Description                                 |
-|-----------|------|----------|---------------------------------------------|
-| page      | int  | No       | Page number, default is 1                   |
-| page_size | int  | No       | The number of pages per page, default is 10 |
+| Name      | Type | Required | Description                                                 |
+|-----------|------|----------|-------------------------------------------------------------|
+| page      | int  | No       | Page number, default is 1                                   |
+| page_size | int  | No       | The number of pages per page, default is 10, maximum is 500 |
 
 ### Request Example
 

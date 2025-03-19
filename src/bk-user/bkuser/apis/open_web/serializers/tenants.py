@@ -14,32 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from .department import (
-    TenantDepartmentDescendantListApi,
-    TenantDepartmentListApi,
-    TenantDepartmentRetrieveApi,
-    TenantDepartmentUserListApi,
-)
-from .tenant import TenantListApi
-from .user import (
-    TenantUserDepartmentListApi,
-    TenantUserDisplayInfoListApi,
-    TenantUserLeaderListApi,
-    TenantUserListApi,
-    TenantUserRetrieveApi,
-    TenantUserSensitiveInfoListApi,
-)
 
-__all__ = [
-    "TenantListApi",
-    "TenantUserDisplayInfoListApi",
-    "TenantUserRetrieveApi",
-    "TenantUserDepartmentListApi",
-    "TenantUserLeaderListApi",
-    "TenantUserListApi",
-    "TenantDepartmentRetrieveApi",
-    "TenantDepartmentDescendantListApi",
-    "TenantDepartmentListApi",
-    "TenantDepartmentUserListApi",
-    "TenantUserSensitiveInfoListApi",
-]
+from rest_framework import serializers
+
+
+class DataSourceOwnerTenantListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID")
+    name = serializers.CharField(help_text="租户名称")

@@ -7,8 +7,8 @@
 | 参数名称          | 参数类型 | 必选 | 参数位置        | 描述                               |
 |---------------|------|----|-------------|----------------------------------|
 | page          | int  | 否  | query param | 页码，从 1 开始                        |
-| page_size     | int  | 否  | query param | 每页数量，默认为 10                      |
-| department_id | int  | 是  | path        | 部门唯一标识，若为 0 则获取根部门               |
+| page_size     | int  | 否  | query param | 每页数量，默认为 10，最大 500               |
+| department_id | int  | 是  | path        | 部门唯一标识，若为 0 则查询根部门               |
 | max_level     | int  | 否  | query_param | 递归子部门的最大相对 Level 层级，默认为 1，即直接子部门 |
 
 ### 请求示例

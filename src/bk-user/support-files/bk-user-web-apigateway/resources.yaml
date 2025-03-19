@@ -57,6 +57,81 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Batch query user's display information
 
+  /api/v3/open-web/tenant/users/-/search/:
+    get:
+      operationId: search_user
+      description: 搜索用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/-/search/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Search user
+
+  /api/v3/open-web/tenant/users/-/lookup/:
+    get:
+      operationId: batch_lookup_user
+      description: 批量查询用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/users/-/lookup/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Batch lookup users
+
+  /api/v3/open-web/tenant/data-source-owner-tenants/:
+    get:
+      operationId: list_data_source_owner_tenant
+      description: 获取本租户所有数据来源的租户信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/data-source-owner-tenants/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Get the tenant list of all data sources in this tenant
+
   /:
     options:
       operationId: cors_options
