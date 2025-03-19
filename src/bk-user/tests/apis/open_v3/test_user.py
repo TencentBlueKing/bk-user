@@ -212,6 +212,7 @@ class TestTenantUserSensitiveInfoListApi:
         assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
         assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
         assert {t["phone_country_code"] for t in resp.data} == {"86"}
+        assert all("wx_userid" in t for t in resp.data)
 
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -226,6 +227,7 @@ class TestTenantUserSensitiveInfoListApi:
         assert resp.data[0]["phone"] == "13512345671"
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"
+        assert all("wx_userid" in t for t in resp.data)
 
     def test_with_no_bk_usernames(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.sensitive_info.list"), data={"bk_usernames": ""})
