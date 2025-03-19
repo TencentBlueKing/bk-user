@@ -119,7 +119,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 若传入的 department_id 为 0，则获取根部门
+        # 若传入的部门 ID 为 0，则获取根部门
         if not kwargs["id"]:
             data_source_dept_ids = (
                 DataSourceDepartmentRelation.objects.root_nodes()
