@@ -30,6 +30,7 @@
           @phone="(val) => item.isError = val" />
         <template v-else-if="item.key.includes(dateKey)">
           <bk-date-picker
+            ext-cls="ext-cls"
             v-model="item.value"
             @change="changSelect"
             format="yyyy-MM-dd"
@@ -97,7 +98,6 @@ export default {
   },
   computed: {
     shortcuts() {
-      console.log(this.$store.state.passwordValidDaysList);
       const dayTime = 24 * 60 * 60 * 1000;
       const nowTime = new Date().getTime();
       return this.$store.state.passwordValidDaysList.map((item) => {
@@ -209,5 +209,8 @@ export default {
 }
 .tips-style {
   color: #ea3636;
+}
+.ext-cls {
+  width: 100%;
 }
 </style>

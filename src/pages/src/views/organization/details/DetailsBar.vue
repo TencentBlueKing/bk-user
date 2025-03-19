@@ -514,7 +514,6 @@ export default {
             console.warn(e);
             this.$emit('showBar');
           });
-        // 编辑
       });
     },
     isUserInfo() {
