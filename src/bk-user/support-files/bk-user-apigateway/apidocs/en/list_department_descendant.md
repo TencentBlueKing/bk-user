@@ -8,7 +8,7 @@
 |---------------|------|----------|-------------|---------------------------------------------------------------------------------------------------------------------|
 | page          | int  | No       | query param | Page number, default is 1                                                                                           |
 | page_size     | int  | No       | query param | The number of pages per page, default is 10, maximum is 500                                                         |
-| department_id | int  | Yes      | path        | Unique identifier of the department                                                                                 |
+| department_id | int  | Yes      | path        | Unique identifier of the department, if it is 0, then query the root department                                     |
 | max_level     | int  | No       | query param | The maximum relative level of the recursive sub-department. The default is 1, which means the direct sub-department |
 
 ### Request Example
@@ -52,11 +52,11 @@
 
 ### Response Parameters Description
 
-| Name      | Type   | Description                         |
-|-----------|--------|-------------------------------------|
-| id        | int    | Unique identifier of the department |
-| name      | string | The name of the department          |
-| parent_id | int    | The parent department ID            |
+| Name      | Type   | Description                                                                       |
+|-----------|--------|-----------------------------------------------------------------------------------|
+| id        | int    | Unique identifier of the department                                               |
+| name      | string | The name of the department                                                        |
+| parent_id | int    | The parent department ID, the parent department ID of the root department is None |
 
 For example, if the sub-departments of Department A are Center AA and Center AB, the sub-department of Center AA is
 Group AAA, and the sub-department of Center AB is Group ABA, then the sub-department of Department A with a relative
