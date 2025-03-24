@@ -65,7 +65,7 @@ urlpatterns = [
                     name="open_web.tenant_department.children.list",
                 ),
                 path(
-                    "departments/<int:id>/users",
+                    "departments/<int:id>/users/",
                     views.TenantDepartmentUserListApi.as_view(),
                     name="open_web.tenant_department.user.list",
                 ),
