@@ -444,10 +444,10 @@ class TestVirtualUserListApi:
         resp = api_client.get(reverse("open_web.tenant.virtual_user.list"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
-        assert {t["login_name"] for t in resp.data["results"]} == {"zhangsan", "lisi"}
-        assert {t["display_name"] for t in resp.data["results"]} == {
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["display_name"] for t in resp.data} == {
             TenantUserHandler.generate_tenant_user_display_name(zhangsan),
             TenantUserHandler.generate_tenant_user_display_name(lisi),
         }
