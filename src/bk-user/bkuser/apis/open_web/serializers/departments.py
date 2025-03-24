@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -38,8 +38,8 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     has_child = serializers.SerializerMethodField(help_text="是否有子部门")
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
 
-    def get_organization_path(self, obj: TenantDepartment) -> List[str]:
-        return self.context["org_path_map"].get(obj.id, [])
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
 
     def get_has_child(self, obj: TenantDepartment) -> bool:
         return self.context["has_children_users_map"][obj.id].get("has_child", False)
@@ -101,5 +101,5 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="所属租户 ID", source="data_source.owner_tenant_id")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
-    def get_organization_path(self, obj: TenantDepartment) -> List[str]:
-        return self.context["org_path_map"].get(obj.id, [])
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
