@@ -16,13 +16,16 @@
 # to the current version of the project delivered to anyone in the future.
 
 import datetime
+from collections import defaultdict
 from typing import Dict, List
 
 from django.db import transaction
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
@@ -149,4 +152,30 @@ class TenantDepartmentHandler:
             dept.id: tenant_dept_id_map[parent_id_map[dept.data_source_department_id]]
             for dept in tenant_departments
             if parent_id_map[dept.data_source_department_id] in tenant_dept_id_map
+        }
+
+    @staticmethod
+    def get_dept_has_children_users_map(tenant_depts: QuerySet[TenantDepartment]) -> dict[int, dict[str, bool]]:
+        """获取部门是否有子部门与所属用户的信息"""
+        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+
+        dept_child_relations = DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids)
+        dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(
+            department_id__in=parent_data_source_dept_ids
+        )
+
+        child_data_source_dept_ids_map = defaultdict(list)
+        for rel in dept_child_relations:
+            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
+
+        dept_user_ids_map = defaultdict(list)
+        for rel in dept_user_relations:
+            dept_user_ids_map[rel.department_id].append(rel.user_id)
+
+        return {
+            tenant_dept.id: {
+                "has_child": bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id)),
+                "has_user": bool(dept_user_ids_map.get(tenant_dept.data_source_department_id)),
+            }
+            for tenant_dept in tenant_depts
         }

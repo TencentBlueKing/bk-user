@@ -132,6 +132,131 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Get the tenant list of all data sources in this tenant
 
+  /api/v3/open-web/tenant/departments/-/search/:
+    get:
+      operationId: search_department
+      description: 搜索部门
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/departments/-/search/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Search department
+
+  /api/v3/open-web/tenant/departments/-/lookup/:
+    get:
+      operationId: batch_lookup_department
+      description: 批量查询部门
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/departments/-/lookup/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Batch lookup departments
+
+  /api/v3/open-web/tenant/departments/{department_id}/children/:
+    get:
+      operationId: list_department_child
+      description: 查询部门子部门信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/departments/{department_id}/children/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Query sub-departments information of the department
+
+  /api/v3/open-web/tenant/departments/{department_id}/users/:
+    get:
+      operationId: list_department_user
+      description: 查询部门所属用户信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/departments/{department_id}/users/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Query users information of the department
+
+  /api/v3/open-web/tenant/virtual-users/:
+    get:
+      operationId: list_virtual_user
+      description: 查询虚拟用户信息
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/virtual-users/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Query virtual users' information
+
   /:
     options:
       operationId: cors_options

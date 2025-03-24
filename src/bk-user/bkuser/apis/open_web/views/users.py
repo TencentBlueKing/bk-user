@@ -27,7 +27,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin
 from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
@@ -36,6 +36,7 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserLookupOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
+    VirtualUserListOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
@@ -109,14 +110,12 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
+class TenantUserSearchApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
     """
     搜索用户（包括协同用户与虚拟用户）
     """
 
     pagination_class = None
-
-    serializer_class = TenantUserSearchOutputSLZ
 
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = settings.SELECTOR_SEARCH_API_LIMIT
@@ -165,17 +164,17 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        context = {"user_dept_org_path_map": self._get_user_organization_paths_map(tenant_users)}
+        return Response(TenantUserSearchOutputSLZ(tenant_users, context=context, many=True).data)
 
 
-class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
+class TenantUserLookupApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
     """
     批量查询用户（包括协同用户与虚拟用户）
     """
 
     pagination_class = None
-
-    serializer_class = TenantUserLookupOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantUserLookupInputSLZ(data=self.request.query_params)
@@ -227,6 +226,34 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户",
         query_serializer=TenantUserLookupInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_users = self.get_queryset()
+        context = {"user_dept_org_path_map": self._get_user_organization_paths_map(tenant_users)}
+        return Response(TenantUserLookupOutputSLZ(tenant_users, context=context, many=True).data)
+
+
+class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
+    """
+    查询虚拟用户列表
+    """
+
+    pagination_class = None
+
+    serializer_class = VirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
+            .only("id", "data_source_user__username", "data_source_user__full_name")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="list_virtual_user",
+        operation_description="查询虚拟用户列表",
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

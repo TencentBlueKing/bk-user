@@ -15,7 +15,7 @@ Batch query the users (including collaborative users and virtual users)
 
 ```
 // URL Query Parameters
-lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
+lookups=zhangsan,lisi&lookup_fields=login_name,bk_username
 ```
 
 ### Response Example for Status Code 200
@@ -30,22 +30,25 @@ lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
             "display_name": "张三",
             "data_source_type": "real",
             "owner_tenant_id": "default",
+            "organization_paths": ["公司/部门A/中心AA"],
         },
         {
             "bk_username": "frywzyv2n0bilwgb",
-            "login_name": "zhangsi",
-            "full_name": "张四",
-            "display_name": "张四",
+            "login_name": "lisi",
+            "full_name": "李四",
+            "display_name": "李四",
             "data_source_type": "real",
             "owner_tenant_id": "collaborative_tenant",
+            "organization_paths": ["公司/部门A/中心AB", "公司/部门B/中心BA"],
         },
         {
             "bk_username": "uvatls6netj2jmck",
-            "login_name": "zhangwu",
-            "full_name": "张五",
-            "display_name": "张五",
+            "login_name": "zhangsan",
+            "full_name": "张三",
+            "display_name": "张三",
             "data_source_type": "virtual",
             "owner_tenant_id": "default",
+            "organization_paths": [],
         },
     ]
 }
@@ -53,11 +56,12 @@ lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
 
 ### Response Parameters Description
 
-| Name             | Type   | Description                                                                                                                                                                              |
-|------------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| bk_username      | string | Blueking user's unique identifier                                                                                                                                                        |
-| login_name       | string | Unique ID of the user within the enterprise                                                                                                                                              |
-| full_name        | string | User's name                                                                                                                                                                              |
-| display_name     | string | User's display_name                                                                                                                                                                      |
-| data_source_type | string | Data source type, where `real` corresponds to real-name data source (user), and `virtual` corresponds to virtual data source (user)                                                      |
-| owner_tenant_id  | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
+| Name               | Type   | Description                                                                                                                                                                              |
+|--------------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| bk_username        | string | Blueking user's unique identifier                                                                                                                                                        |
+| login_name         | string | Unique ID of the user within the enterprise                                                                                                                                              |
+| full_name          | string | User's name                                                                                                                                                                              |
+| display_name       | string | User's display_name                                                                                                                                                                      |
+| data_source_type   | string | Data source type, where `real` corresponds to real-name data source (user), and `virtual` corresponds to virtual data source (user)                                                      |
+| owner_tenant_id    | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
+| organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`; virtual users have no organization path          |

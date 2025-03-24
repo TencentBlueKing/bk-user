@@ -49,6 +49,31 @@ urlpatterns = [
                     views.TenantUserLookupApi.as_view(),
                     name="open_web.tenant_user.lookup",
                 ),
+                path(
+                    "departments/-/search/",
+                    views.TenantDepartmentSearchApi.as_view(),
+                    name="open_web.tenant_department.search",
+                ),
+                path(
+                    "departments/-/lookup/",
+                    views.TenantDepartmentLookupApi.as_view(),
+                    name="open_web.tenant_department.lookup",
+                ),
+                path(
+                    "departments/<int:id>/children/",
+                    views.TenantDepartmentChildrenListApi.as_view(),
+                    name="open_web.tenant_department.children.list",
+                ),
+                path(
+                    "departments/<int:id>/users",
+                    views.TenantDepartmentUserListApi.as_view(),
+                    name="open_web.tenant_department.user.list",
+                ),
+                path(
+                    "virtual-users/",
+                    views.VirtualUserListApi.as_view(),
+                    name="open_web.tenant.virtual_user.list",
+                ),
             ]
         ),
     ),
