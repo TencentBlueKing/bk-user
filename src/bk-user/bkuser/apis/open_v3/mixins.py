@@ -17,7 +17,6 @@
 from functools import cached_property
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
-from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
@@ -50,6 +49,6 @@ class OpenApiCommonMixin:
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )
         if not data_source:
-            raise ValidationError(_("当前租户不存在实名用户数据源"))
+            raise ValidationError("There is no real-name user data source in the current tenant")
 
         return data_source.id
