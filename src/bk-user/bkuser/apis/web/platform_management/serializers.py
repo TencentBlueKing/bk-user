@@ -108,7 +108,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
                 _(
-                    "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小写字母开头，小写字母或数字结尾",  # noqa: E501
+                    "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)",  # noqa: E501
                 ).format(id),
             )
 

@@ -57,7 +57,7 @@ class Command(BaseCommand):
             raise ValueError(
                 f"{tenant_id} does not meet the naming requirements for Tenant ID: must be composed of "
                 "3-32 lowercase letters, digits, or hyphens (-), starting with a lowercase "
-                "letter and ending with a lowercase letter or digit"
+                "letter and ending with a lowercase letter or digit, and cannot contain two consecutive hyphens(--)"
             )
 
         if Tenant.objects.filter(id=tenant_id).exists():
