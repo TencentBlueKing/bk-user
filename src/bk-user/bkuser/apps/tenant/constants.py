@@ -19,6 +19,7 @@ import re
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
+# (?!.*--) 为 negative lookahead（否定前瞻断言），表示若任意位置出现了连续两个连字符(--)，则会匹配失败
 TENANT_ID_REGEX = re.compile(r"^(?!.*--)[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 
 # 自定义字段英文标识命名规则
