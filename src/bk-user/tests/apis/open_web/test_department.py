@@ -119,7 +119,7 @@ class TestTenantDepartmentChildrenListApi:
         center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB")
 
-        resp = api_client.get(reverse("open_web.tenant_department.children.list", kwargs={"id": dept_a.id}))
+        resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": dept_a.id}))
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
@@ -133,7 +133,7 @@ class TestTenantDepartmentChildrenListApi:
         center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
 
-        resp = api_client.get(reverse("open_web.tenant_department.children.list", kwargs={"id": center_aa.id}))
+        resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": center_aa.id}))
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
@@ -157,7 +157,7 @@ class TestTenantDepartmentChildrenListApi:
             data_source__owner_tenant_id=collaboration_tenant.id,
         )
 
-        resp = api_client.get(reverse("open_web.tenant_department.children.list", kwargs={"id": dept_a.id}))
+        resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": dept_a.id}))
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
@@ -170,7 +170,7 @@ class TestTenantDepartmentChildrenListApi:
     def test_with_root_department(self, api_client, random_tenant):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
-            reverse("open_web.tenant_department.children.list", kwargs={"id": 0}),
+            reverse("open_web.tenant_department.child.list", kwargs={"id": 0}),
             data={"owner_tenant_id": random_tenant.id},
         )
 
@@ -183,14 +183,14 @@ class TestTenantDepartmentChildrenListApi:
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_owner_tenant_id(self, api_client, random_tenant):
-        resp = api_client.get(reverse("open_web.tenant_department.children.list", kwargs={"id": 0}))
+        resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": 0}))
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_department(self, api_client, random_tenant):
         resp = api_client.get(
-            reverse("open_web.tenant_department.children.list", kwargs={"id": 123456}),
+            reverse("open_web.tenant_department.child.list", kwargs={"id": 123456}),
             data={"owner_tenant_id": random_tenant.id},
         )
 
