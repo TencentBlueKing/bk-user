@@ -607,10 +607,10 @@ msgstr "租户 ID {} 已被使用"
 #: bkuser/apis/web/platform_management/serializers.py:111
 msgid ""
 "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
 msgstr ""
 "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
 
 #: bkuser/apis/web/platform_management/serializers.py:124
 msgid "密码不符合密码规则：{}"
