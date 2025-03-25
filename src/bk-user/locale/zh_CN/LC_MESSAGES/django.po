@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 19:18+0800\n"
+"POT-Creation-Date: 2025-03-25 20:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgstr "租户 {} 不存在"
 msgid "认证源 {} 不存在"
 msgstr "认证源 {} 不存在"
 
-#: bkuser/apis/open_v3/mixins.py:55 bkuser/apis/open_web/mixins.py:53
+#: bkuser/apis/open_web/mixins.py:53
 #: bkuser/apis/web/organization/views/mixins.py:33
 msgid "当前租户不存在实名用户数据源"
 msgstr "当前租户不存在实名用户数据源"

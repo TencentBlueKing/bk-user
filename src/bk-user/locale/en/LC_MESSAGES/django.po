@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 19:18+0800\n"
+"POT-Creation-Date: 2025-03-25 20:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,18 +29,21 @@ msgstr "Tenant {} does not exist"
 msgid "认证源 {} 不存在"
 msgstr "Auth source {} does not exist"
 
-#: bkuser/apis/open_v3/mixins.py:55 bkuser/apis/open_web/mixins.py:53
+#: bkuser/apis/open_web/mixins.py:53
 #: bkuser/apis/web/organization/views/mixins.py:33
 msgid "当前租户不存在实名用户数据源"
 msgstr "There is no real-name user data source in the current tenant"
 
 #: bkuser/apis/open_web/serializers/users.py:93
 msgid "指定查询的值 {} 长度超过 64 个字符限制"
-msgstr "The length of the specified lookup value {} exceeds the 64-character limit."
+msgstr ""
+"The length of the specified lookup value {} exceeds the 64-character limit."
 
 #: bkuser/apis/open_web/serializers/users.py:99
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
-msgstr "The specified lookup field {} is not supported. Only login_name, full_name, and bk_username are supported."
+msgstr ""
+"The specified lookup field {} is not supported. Only login_name, full_name, "
+"and bk_username are supported."
 
 #: bkuser/apis/web/collaboration/serializers.py:75
 #: bkuser/apis/web/collaboration/serializers.py:118
