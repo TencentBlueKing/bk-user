@@ -49,6 +49,6 @@ class OpenApiCommonMixin:
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )
         if not data_source:
-            raise ValidationError("There is no real-name user data source in the current tenant")
+            raise ValidationError("there is no real-name user data source in the current tenant")
 
         return data_source.id
