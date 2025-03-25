@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from functools import cached_property
 
-from django.utils.decorators import method_decorator
+from django.conf import settings
 from django.utils.translation import override
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
@@ -42,7 +42,9 @@ class InnerApiCommonMixin:
 
         return tenant_id
 
-    # 将 API 响应内容的默认语言设置为英文
-    @method_decorator(override("en-us"))
     def dispatch(self, request, *args, **kwargs):
+        # 若请求未携带语言信息，则默认使用英文
+        if not request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME):
+            with override("en-us"):
+                return super().dispatch(request, *args, **kwargs)  # type: ignore
         return super().dispatch(request, *args, **kwargs)  # type: ignore

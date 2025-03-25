@@ -17,7 +17,8 @@
 from functools import cached_property
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
-from django.utils.decorators import method_decorator
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
@@ -51,11 +52,13 @@ class OpenApiCommonMixin:
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )
         if not data_source:
-            raise ValidationError("there is no real data source in the current tenant, please create first")
+            raise ValidationError(_("当前租户不存在实名用户数据源"))
 
         return data_source.id
 
-    # 将 API 响应内容的默认语言设置为英文
-    @method_decorator(override("en-us"))
     def dispatch(self, request, *args, **kwargs):
+        # 若请求未携带语言信息，则默认使用英文
+        if not request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME):
+            with override("en-us"):
+                return super().dispatch(request, *args, **kwargs)  # type: ignore
         return super().dispatch(request, *args, **kwargs)  # type: ignore
