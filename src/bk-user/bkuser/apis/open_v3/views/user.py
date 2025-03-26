@@ -35,7 +35,9 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    VirtualUserBkUsernameRetrieveOutputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
@@ -277,3 +279,26 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class VirtualUserBkUsernameRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
+    """
+    根据 login_name (username) 查询虚拟用户 bk_username
+    """
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="retrieve_virtual_user_bk_username",
+        operation_description="查询虚拟用户 bk_username",
+        responses={status.HTTP_200_OK: VirtualUserBkUsernameRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        virtual_user = get_object_or_404(
+            TenantUser.objects.filter(
+                tenant_id=self.tenant_id,
+                data_source__type=DataSourceTypeEnum.VIRTUAL,
+                data_source_user__username=kwargs["id"],
+            ).only("id")
+        )
+
+        return Response(VirtualUserBkUsernameRetrieveOutputSLZ(virtual_user).data)

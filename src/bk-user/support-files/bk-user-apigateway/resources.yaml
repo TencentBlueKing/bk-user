@@ -281,3 +281,28 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
+
+  /api/v3/open/tenant/virtual-users/{login_name}/bk_username/:
+    get:
+      operationId: retrieve_virtual_user_bk_username
+      description: 查询虚拟用户 bk_username
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: true
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/virtual-users/{login_name}/bk_username/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: Query virtual user's bk_username

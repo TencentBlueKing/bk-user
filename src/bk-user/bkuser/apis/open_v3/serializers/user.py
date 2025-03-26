@@ -100,3 +100,7 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
 
     def get_phone_country_code(self, obj: TenantUser) -> str:
         return obj.phone_info[1]
+
+
+class VirtualUserBkUsernameRetrieveOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")

@@ -239,3 +239,16 @@ class TestTenantUserSensitiveInfoListApi:
             data={"bk_usernames": ",".join(map(str, range(1, 102)))},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.usefixtures("_init_virtual_tenant_users")
+class TestVirtualUserRetrieveApi:
+    def test_standard(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.get(reverse("open_v3.virtual_user.bk_username.retrieve", kwargs={"id": "zhangsan"}))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["bk_username"] == zhangsan.id
+
+    def test_tenant_not_found(self, api_client):
+        resp = api_client.get(reverse("open_v3.virtual_user.bk_username.retrieve", kwargs={"id": "abcd"}))
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
