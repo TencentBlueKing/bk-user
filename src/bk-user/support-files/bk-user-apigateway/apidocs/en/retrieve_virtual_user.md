@@ -1,6 +1,6 @@
 ### Description
 
-Query virtual user's information of bk_username
+Query virtual user's information
 
 ### Parameters
 
@@ -12,7 +12,7 @@ Query virtual user's information of bk_username
 
 ```
 // URL Path Parameter
-/api/v3/open/tenant/virtual-users/{login_name}/bk_username/
+/api/v3/open/tenant/virtual-users/bk_admin/
 ```
 
 ### Response Example for Status Code 200
@@ -20,7 +20,8 @@ Query virtual user's information of bk_username
 ```json5
 {
     "data": {
-        "bk_username": "7idwx3b7nzk6xigs"
+        "bk_username": "7idwx3b7nzk6xigs",
+        "display_name": "bk_admin"
     }
 }
 ```
@@ -30,3 +31,4 @@ Query virtual user's information of bk_username
 | Name         | Type   | Description                       |
 |--------------|--------|-----------------------------------|
 | bk_username  | string | Blueking user's unique identifier |
+| display_name | string | User's display_name               |

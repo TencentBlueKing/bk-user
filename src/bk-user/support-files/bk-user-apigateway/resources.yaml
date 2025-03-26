@@ -282,10 +282,10 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
 
-  /api/v3/open/tenant/virtual-users/{login_name}/bk_username/:
+  /api/v3/open/tenant/virtual-users/{login_name}/:
     get:
-      operationId: retrieve_virtual_user_bk_username
-      description: 查询虚拟用户 bk_username
+      operationId: retrieve_virtual_user
+      description: 查询虚拟用户信息
       tags: []
       responses:
         default:
@@ -297,7 +297,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenant/virtual-users/{login_name}/bk_username/
+          path: /api/v3/open/tenant/virtual-users/{login_name}/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -305,4 +305,4 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: true
-        descriptionEn: Query virtual user's bk_username
+        descriptionEn: Query virtual user's information
