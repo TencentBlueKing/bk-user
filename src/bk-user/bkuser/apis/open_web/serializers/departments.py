@@ -56,7 +56,7 @@ class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
         owner_tenant_id = attrs.get("owner_tenant_id")
 
         if not department_id and not owner_tenant_id:
-            raise ValidationError(_("获取根部门时，必须传入 owner_tenant_id 的值"))
+            raise ValidationError(_("当 department_id 未提供时，必须指定 owner_tenant_id"))
 
         return attrs
 
@@ -76,7 +76,7 @@ class TenantDepartmentUserListInputSLZ(serializers.Serializer):
         owner_tenant_id = attrs.get("owner_tenant_id")
 
         if not department_id and not owner_tenant_id:
-            raise ValidationError(_("获取无组织用户时，必须传入 owner_tenant_id 的值"))
+            raise ValidationError(_("当 department_id 未提供时，必须指定 owner_tenant_id"))
 
         return attrs
 
