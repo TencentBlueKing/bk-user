@@ -20,7 +20,7 @@ from functools import cached_property
 from typing import Dict, List, Set
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
-from django.db.models import Max, Min, Prefetch, Q, QuerySet
+from django.db.models import Prefetch, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -110,20 +110,21 @@ class TenantDeptOrgPathMapMixin:
     def _get_relations_with_ancestors(data_source_dept_ids: Set[int]) -> QuerySet[DataSourceDepartmentRelation]:
         """获取部门关系及预取所有需要的祖先节点"""
         # 按照左值排序，确保祖先节点在后续查询中已经加载
-        relations = (
-            DataSourceDepartmentRelation.objects.select_related("department")
-            .filter(department_id__in=data_source_dept_ids)
-            .order_by("tree_id", "lft")
+        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
+            department_id__in=data_source_dept_ids
         )
 
-        # 按 tree_id 分组，获取每个树的最大左值和最小右值
-        agg_results = relations.values("tree_id").annotate(max_lft=Max("lft"), min_rght=Min("rght"))
+        # 按照 tree_id 分组，获取每个 tree 的最大左值和最小右值
+        tree_groups: Dict[int, Dict[str, float]] = defaultdict(lambda: {"max_lft": 0, "min_rght": float("inf")})
+        for rel in relations:
+            tree_groups[rel.tree_id]["max_lft"] = max(tree_groups[rel.tree_id]["max_lft"], rel.lft)
+            tree_groups[rel.tree_id]["min_rght"] = min(tree_groups[rel.tree_id]["min_rght"], rel.rght)
 
         # 构造组合查询条件
         # 覆盖每个树中节点所涉及到的所有祖先节点（左值小于等于当前节点左值，右值大于等于当前节点右值）
         combined_query = Q()
-        for tree in agg_results:
-            combined_query |= Q(lft__lte=tree["max_lft"], rght__gte=tree["min_rght"], tree_id=tree["tree_id"])
+        for tree_id, group in tree_groups.items():
+            combined_query |= Q(lft__lte=group["max_lft"], rght__gte=group["min_rght"], tree_id=tree_id)
 
         # 批量预取父部门（单次查询完成所有祖先部门的获取）
         return relations.prefetch_related(
