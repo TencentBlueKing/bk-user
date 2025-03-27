@@ -158,13 +158,13 @@ class TenantDepartmentHandler:
         """获取部门是否有子部门与所属用户的信息"""
         parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
 
-        has_child_ids = set(
+        dept_has_child_ids = set(
             DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids)
             .values_list("parent_id", flat=True)
             .distinct()
         )
 
-        has_user_ids = set(
+        dept_has_user_ids = set(
             DataSourceDepartmentUserRelation.objects.filter(department_id__in=parent_data_source_dept_ids)
             .values_list("department_id", flat=True)
             .distinct()
@@ -172,8 +172,8 @@ class TenantDepartmentHandler:
 
         return {
             tenant_dept.id: {
-                "has_child": tenant_dept.data_source_department_id in has_child_ids,
-                "has_user": tenant_dept.data_source_department_id in has_user_ids,
+                "has_child": tenant_dept.data_source_department_id in dept_has_child_ids,
+                "has_user": tenant_dept.data_source_department_id in dept_has_user_ids,
             }
             for tenant_dept in tenant_depts
         }
