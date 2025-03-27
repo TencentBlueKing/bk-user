@@ -24,9 +24,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import (
-    DataSource,
-)
+from bkuser.apps.data_source.models import DataSource
 
 
 class OpenWebApiCommonMixin:
