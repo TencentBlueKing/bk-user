@@ -42,10 +42,10 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
         return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
 
     def get_has_child(self, obj: TenantDepartment) -> bool:
-        return self.context["has_children_users_map"][obj.id].get("has_child", False)
+        return self.context["has_children_users_map"][obj.id]["has_child"]
 
     def get_has_user(self, obj: TenantDepartment) -> bool:
-        return self.context["has_children_users_map"][obj.id].get("has_user", False)
+        return self.context["has_children_users_map"][obj.id]["has_user"]
 
 
 class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):

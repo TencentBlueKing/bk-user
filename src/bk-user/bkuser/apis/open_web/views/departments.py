@@ -113,26 +113,24 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
                 department_id=tenant_department.data_source_department_id,
             )
 
-            dept_ids = relation.get_children().values_list("department_id", flat=True)
+            data_source_dept_ids = relation.get_children().values_list("department_id", flat=True)
 
-            return TenantDepartment.objects.filter(
-                data_source_department_id__in=dept_ids, tenant_id=self.tenant_id
-            ).select_related("data_source_department")
+        else:
+            # 若未指定则获取根部门
+            data_source = get_object_or_404(
+                DataSource, owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL
+            )
 
-        # 若未指定则获取根部门
-        owner_tenant_id = data["owner_tenant_id"]
-        data_source = get_object_or_404(DataSource, owner_tenant_id=owner_tenant_id, type=DataSourceTypeEnum.REAL)
+            data_source_dept_ids = (
+                DataSourceDepartmentRelation.objects.root_nodes()
+                .filter(data_source=data_source)
+                .values_list("department_id", flat=True)
+            )
 
-        data_source_dept_ids = (
-            DataSourceDepartmentRelation.objects.root_nodes()
-            .filter(data_source=data_source)
-            .values_list("department_id", flat=True)
-        )
         return TenantDepartment.objects.filter(
             tenant_id=self.tenant_id,
-            data_source__owner_tenant_id=owner_tenant_id,
             data_source_department_id__in=data_source_dept_ids,
-        )
+        ).select_related("data_source_department")
 
     @swagger_auto_schema(
         tags=["open_web.department"],
@@ -148,8 +146,8 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
             {
                 "id": tenant_dept.id,
                 "name": tenant_dept.data_source_department.name,
-                "has_child": has_children_users_map[tenant_dept.id].get("has_child", False),
-                "has_user": has_children_users_map[tenant_dept.id].get("has_user", False),
+                "has_child": has_children_users_map[tenant_dept.id]["has_child"],
+                "has_user": has_children_users_map[tenant_dept.id]["has_user"],
             }
             for tenant_dept in tenant_depts
         ]
@@ -193,11 +191,13 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 否则返回无部门的用户
         else:
-            owner_tenant_id = data["owner_tenant_id"]
-            data_source = get_object_or_404(DataSource, owner_tenant_id=owner_tenant_id, type=DataSourceTypeEnum.REAL)
-
-            relations = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source)
-            queryset = queryset.exclude(data_source_user_id__in=relations.values_list("user_id", flat=True))
+            data_source = get_object_or_404(
+                DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
+            )
+            user_ids = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source).values_list(
+                "user_id", flat=True
+            )
+            queryset = queryset.exclude(data_source_user_id__in=user_ids)
 
         return queryset
 

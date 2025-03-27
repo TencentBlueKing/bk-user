@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 import datetime
-from collections import defaultdict
 from typing import Dict, List
 
 from django.db import transaction
@@ -159,23 +158,22 @@ class TenantDepartmentHandler:
         """获取部门是否有子部门与所属用户的信息"""
         parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
 
-        dept_child_relations = DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids)
-        dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(
-            department_id__in=parent_data_source_dept_ids
+        has_child_ids = set(
+            DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids)
+            .values_list("parent_id", flat=True)
+            .distinct()
         )
 
-        child_data_source_dept_ids_map = defaultdict(list)
-        for rel in dept_child_relations:
-            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
-
-        dept_user_ids_map = defaultdict(list)
-        for rel in dept_user_relations:
-            dept_user_ids_map[rel.department_id].append(rel.user_id)
+        has_user_ids = set(
+            DataSourceDepartmentUserRelation.objects.filter(department_id__in=parent_data_source_dept_ids)
+            .values_list("department_id", flat=True)
+            .distinct()
+        )
 
         return {
             tenant_dept.id: {
-                "has_child": bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id)),
-                "has_user": bool(dept_user_ids_map.get(tenant_dept.data_source_department_id)),
+                "has_child": tenant_dept.data_source_department_id in has_child_ids,
+                "has_user": tenant_dept.data_source_department_id in has_user_ids,
             }
             for tenant_dept in tenant_depts
         }

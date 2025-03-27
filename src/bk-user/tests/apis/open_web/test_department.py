@@ -129,7 +129,7 @@ class TestTenantDepartmentChildrenListApi:
         assert {d["has_user"] for d in resp.data} == {True}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_not_child(self, api_client, random_tenant):
+    def test_sub_dept_with_not_child(self, api_client, random_tenant):
         center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
 
@@ -141,6 +141,15 @@ class TestTenantDepartmentChildrenListApi:
         assert resp.data[0]["name"] == "小组AAA"
         assert not resp.data[0]["has_child"]
         assert resp.data[0]["has_user"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_with_not_child(self, api_client, random_tenant):
+        group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA")
+
+        resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": group_aaa.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_tenant(self, api_client, collaboration_tenant):
