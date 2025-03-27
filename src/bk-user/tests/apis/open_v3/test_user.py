@@ -245,11 +245,19 @@ class TestTenantUserSensitiveInfoListApi:
 class TestVirtualUserRetrieveApi:
     def test_standard(self, api_client, random_tenant):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
-        resp = api_client.get(reverse("open_v3.virtual_user.retrieve", kwargs={"id": "zhangsan"}))
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(reverse("open_v3.virtual_user.list"))
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["bk_username"] == zhangsan.id
-        assert resp.data["display_name"] == "张三"
+        assert resp.data["count"] == 2
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["login_name"] for t in resp.data["results"]} == {"zhangsan", "lisi"}
 
-    def test_not_found(self, api_client):
-        resp = api_client.get(reverse("open_v3.virtual_user.retrieve", kwargs={"id": "abcd"}))
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
+    def test_with_login_name(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.get(reverse("open_v3.virtual_user.list"), data={"login_name": "zhangsan"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1
+        assert resp.data["results"][0]["bk_username"] == zhangsan.id
+        assert resp.data["results"][0]["display_name"] == "张三"
+        assert resp.data["results"][0]["login_name"] == "zhangsan"

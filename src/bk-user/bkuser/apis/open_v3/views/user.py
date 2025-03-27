@@ -35,7 +35,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
-    VirtualUserRetrieveOutputSLZ,
+    VirtualUserListInputSLZ,
+    VirtualUserListOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -281,26 +282,35 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class VirtualUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
+class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    根据 login_name (username) 查询虚拟用户信息
+    查询虚拟用户信息列表
     """
+
+    serializer_class = VirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = VirtualUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        filters = {"tenant_id": self.tenant_id, "data_source__type": DataSourceTypeEnum.VIRTUAL}
+
+        if login_name := data.get("login_name"):
+            filters["data_source_user__username"] = login_name
+
+        return (
+            TenantUser.objects.filter(**filters)
+            .select_related("data_source_user")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
+        )
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="retrieve_virtual_user",
-        operation_description="查询虚拟用户信息",
-        responses={status.HTTP_200_OK: VirtualUserRetrieveOutputSLZ()},
+        operation_id="list_virtual_user",
+        operation_description="查询虚拟用户信息列表",
+        query_serializer=VirtualUserListInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        virtual_user = get_object_or_404(
-            TenantUser.objects.filter(
-                tenant_id=self.tenant_id,
-                data_source__type=DataSourceTypeEnum.VIRTUAL,
-                data_source_user__username=kwargs["id"],
-            )
-            .select_related("data_source_user")
-            .only("id", "data_source_user__full_name")
-        )
-
-        return Response(VirtualUserRetrieveOutputSLZ(virtual_user).data)
+        return self.list(request, *args, **kwargs)

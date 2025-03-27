@@ -102,8 +102,13 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
         return obj.phone_info[1]
 
 
-class VirtualUserRetrieveOutputSLZ(serializers.Serializer):
+class VirtualUserListInputSLZ(serializers.Serializer):
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", required=False)
+
+
+class VirtualUserListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
