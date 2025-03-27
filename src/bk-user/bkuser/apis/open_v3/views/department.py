@@ -129,7 +129,7 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
             level = parent_level + max_level
             # 按层级 Level 递归查询子部门
             descendant_ids = DataSourceDepartmentRelation.objects.filter(
-                data_source=self.real_data_source_id, level__lte=level
+                data_source_id=self.real_data_source_id, level__lte=level
             ).values_list("department_id", flat=True)
         else:
             tenant_department = get_object_or_404(
