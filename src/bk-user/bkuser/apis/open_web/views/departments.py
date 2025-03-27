@@ -23,7 +23,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentChildrenListInputSLZ,
     TenantDepartmentChildrenListOutputSLZ,
@@ -41,12 +41,12 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.organization import TenantDepartmentHandler
+from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 
 
-class TenantDepartmentSearchApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    搜素部门
+    搜索部门
     """
 
     pagination_class = None
@@ -83,7 +83,7 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin
         tenant_depts = self.get_queryset()
         has_children_users_map = TenantDepartmentHandler.get_dept_has_children_users_map(tenant_depts)
         context = {
-            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(tenant_depts),
             "has_children_users_map": has_children_users_map,
         }
         return Response(TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data)
@@ -212,7 +212,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantDepartmentLookupApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     批量查询部门（包括协同部门）
     """
@@ -241,6 +241,6 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
         context = {
-            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(tenant_depts),
         }
         return Response(TenantDepartmentLookupOutputSLZ(tenant_depts, many=True, context=context).data)

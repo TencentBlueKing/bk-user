@@ -27,7 +27,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
@@ -40,6 +40,7 @@ from bkuser.apis.open_web.serializers.users import (
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserHandler
 
 
@@ -110,7 +111,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserSearchApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     搜索用户（包括协同用户与虚拟用户）
     """
@@ -165,11 +166,11 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, gene
     )
     def get(self, request, *args, **kwargs):
         tenant_users = self.get_queryset()
-        context = {"user_dept_org_path_map": self._get_user_organization_paths_map(tenant_users)}
+        context = {"user_dept_org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(tenant_users)}
         return Response(TenantUserSearchOutputSLZ(tenant_users, context=context, many=True).data)
 
 
-class TenantUserLookupApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     批量查询用户（包括协同用户与虚拟用户）
     """
@@ -229,7 +230,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, TenantDeptOrgPathMapMixin, gene
     )
     def get(self, request, *args, **kwargs):
         tenant_users = self.get_queryset()
-        context = {"user_dept_org_path_map": self._get_user_organization_paths_map(tenant_users)}
+        context = {"user_dept_org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(tenant_users)}
         return Response(TenantUserLookupOutputSLZ(tenant_users, context=context, many=True).data)
 
 
