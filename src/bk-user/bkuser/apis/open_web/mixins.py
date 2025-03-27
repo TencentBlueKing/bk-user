@@ -20,7 +20,7 @@ from functools import cached_property
 from typing import Dict, List, Set
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
-from django.db.models import Prefetch, Q, QuerySet
+from django.db.models import Max, Min, Prefetch, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -116,19 +116,14 @@ class TenantDeptOrgPathMapMixin:
             .order_by("tree_id", "lft")
         )
 
-        # 按tree_id分组处理不同树结构
-        tree_groups = defaultdict(list)
-        for rel in relations:
-            tree_groups[rel.tree_id].append(rel)
+        # 按 tree_id 分组，获取每个树的最大左值和最小右值
+        agg_results = relations.values("tree_id").annotate(max_lft=Max("lft"), min_rght=Min("rght"))
 
-        # 构造组合查询条件：对每个tree_id生成范围条件
+        # 构造组合查询条件
+        # 覆盖每个树中节点所涉及到的所有祖先节点（左值小于等于当前节点左值，右值大于等于当前节点右值）
         combined_query = Q()
-        for tree_id, group in tree_groups.items():
-            # 计算当前 tree 中需要覆盖的左右值范围
-            max_lft = max(rel.lft for rel in group)
-            min_rght = min(rel.rght for rel in group)
-            # 组合查询条件：覆盖这些节点的所有祖先（左值小于等于当前最大左值，右值大于等于当前最小右值）
-            combined_query |= Q(lft__lte=max_lft, rght__gte=min_rght, tree_id=tree_id)
+        for tree in agg_results:
+            combined_query |= Q(lft__lte=tree["max_lft"], rght__gte=tree["min_rght"], tree_id=tree["tree_id"])
 
         # 批量预取父部门（单次查询完成所有祖先部门的获取）
         return relations.prefetch_related(
