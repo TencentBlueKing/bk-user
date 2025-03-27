@@ -118,7 +118,7 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         else:
             # 若未指定则获取根部门
             data_source = get_object_or_404(
-                DataSource, owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL
+                DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
             )
 
             data_source_dept_ids = (
