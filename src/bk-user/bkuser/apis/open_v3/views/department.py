@@ -119,20 +119,38 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
-            id=kwargs["id"],
-        )
+        max_level = data["max_level"]
 
-        relation = DataSourceDepartmentRelation.objects.get(department_id=tenant_department.data_source_department_id)
+        # 若传入的部门 ID 为 0，表示为根部门的 Parent
+        if not kwargs["id"]:
+            # 根部门在 MPTT 树中的 level = 0，那么父部门则为 -1
+            parent_level = -1
+            # 计算要查询的绝对层级
+            level = parent_level + max_level
+            # 按层级 Level 递归查询子部门
+            descendant_ids = DataSourceDepartmentRelation.objects.filter(
+                data_source_id=self.real_data_source_id, level__lte=level
+            ).values_list("department_id", flat=True)
+        else:
+            tenant_department = get_object_or_404(
+                TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+                id=kwargs["id"],
+            )
 
-        # 计算绝对层级 Level
-        level = relation.level + data["max_level"]
-        # 按层级 Level 递归查询该部门的子部门
-        descendant_ids = relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
+            relation = DataSourceDepartmentRelation.objects.get(
+                department_id=tenant_department.data_source_department_id
+            )
+
+            # 计算绝对层级 Level
+            level = relation.level + max_level
+            # 按层级 Level 递归查询该部门的子部门
+            descendant_ids = (
+                relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
+            )
 
         depts = TenantDepartment.objects.filter(
-            data_source_department_id__in=descendant_ids, tenant_id=self.tenant_id
+            tenant_id=self.tenant_id,
+            data_source_department_id__in=descendant_ids,
         ).select_related("data_source_department")
 
         # 分页

@@ -147,6 +147,30 @@ class TestTenantDepartmentDescendantListApi:
         assert [t["name"] for t in resp.data["results"]] == ["中心AA", "中心AB", "小组AAA", "小组ABA"]
         assert [t["parent_id"] for t in resp.data["results"]] == [dept_a.id, dept_a.id, center_aa.id, center_ab.id]
 
+    def test_with_root_department(self, api_client):
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        resp = api_client.get(reverse("open_v3.tenant_department.descendant.list", kwargs={"id": 0}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1
+        assert [t["id"] for t in resp.data["results"]] == [company.id]
+        assert [t["name"] for t in resp.data["results"]] == ["公司"]
+        assert [t["parent_id"] for t in resp.data["results"]] == [None]
+
+    def test_root_department_with_level(self, api_client):
+        company = TenantDepartment.objects.get(data_source_department__name="公司")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        dept_b = TenantDepartment.objects.get(data_source_department__name="部门B")
+        resp = api_client.get(
+            reverse("open_v3.tenant_department.descendant.list", kwargs={"id": 0}), data={"max_level": 2}
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 3
+        assert {t["id"] for t in resp.data["results"]} == {company.id, dept_a.id, dept_b.id}
+        assert {t["name"] for t in resp.data["results"]} == {"公司", "部门A", "部门B"}
+        assert {t["parent_id"] for t in resp.data["results"]} == {None, company.id}
+
     def test_with_pagination(self, api_client):
         company = TenantDepartment.objects.get(data_source_department__name="公司")
         resp = api_client.get(
