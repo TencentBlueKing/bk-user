@@ -15,7 +15,7 @@ Batch query the users (including collaborative users and virtual users)
 
 ```
 // URL Query Parameters
-lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
+lookups=zhangsan,lisi&lookup_fields=login_name,bk_username
 ```
 
 ### Response Example for Status Code 200
@@ -27,23 +27,23 @@ lookups=zhangsan,lisi&lookup_fields="login_name,bk_username"
             "bk_username": "hc6n2ydjxtxef4cw",
             "login_name": "zhangsan",
             "full_name": "张三",
-            "display_name": "张三",
+            "display_name": "zhangsan(张三)",
             "data_source_type": "real",
             "owner_tenant_id": "default",
         },
         {
             "bk_username": "frywzyv2n0bilwgb",
-            "login_name": "zhangsi",
-            "full_name": "张四",
-            "display_name": "张四",
+            "login_name": "lisi",
+            "full_name": "李四",
+            "display_name": "lisi(李四)",
             "data_source_type": "real",
             "owner_tenant_id": "collaborative_tenant",
         },
         {
             "bk_username": "uvatls6netj2jmck",
-            "login_name": "zhangwu",
-            "full_name": "张五",
-            "display_name": "张五",
+            "login_name": "zhangsan",
+            "full_name": "张三",
+            "display_name": "zhangsan(张三)",
             "data_source_type": "virtual",
             "owner_tenant_id": "default",
         },

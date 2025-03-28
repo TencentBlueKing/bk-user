@@ -214,7 +214,7 @@ class TestTenantDepartmentUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 2
         assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id}
-        assert {t["display_name"] for t in resp.data["results"]} == {"李四", "王五"}
+        assert {t["display_name"] for t in resp.data["results"]} == {"lisi(李四)", "wangwu(王五)"}
         assert {t["full_name"] for t in resp.data["results"]} == {"李四", "王五"}
 
     def test_with_department_not_found(self, api_client):
