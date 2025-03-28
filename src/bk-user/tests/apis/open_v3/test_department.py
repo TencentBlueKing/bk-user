@@ -17,7 +17,6 @@
 
 import pytest
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from django.urls import reverse
 from rest_framework import status
 
@@ -215,10 +214,7 @@ class TestTenantDepartmentUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 2
         assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id}
-        assert {t["display_name"] for t in resp.data["results"]} == {
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-            TenantUserHandler.generate_tenant_user_display_name(wangwu),
-        }
+        assert {t["display_name"] for t in resp.data["results"]} == {"lisi(李四)", "wangwu(王五)"}
         assert {t["full_name"] for t in resp.data["results"]} == {"李四", "王五"}
 
     def test_with_department_not_found(self, api_client):

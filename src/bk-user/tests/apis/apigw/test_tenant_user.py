@@ -15,8 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from django.urls import reverse
 from rest_framework import status
 
@@ -36,8 +34,6 @@ class TestTenantUserRetrieveApi:
 
 class TestTenantUserContactInfoListApi:
     def test_list_tenant_user(self, apigw_api_client, default_tenant_user_data, default_tenant):
-        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
-        lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = apigw_api_client.get(
             reverse("apigw.tenant_user.contact_info.list"), data={"bk_usernames": "zhangsan,lisi"}
         )
@@ -46,16 +42,12 @@ class TestTenantUserContactInfoListApi:
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["tenant_id"] for t in resp.data} == {default_tenant.id, default_tenant.id}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
         assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
         assert {t["phone_country_code"] for t in resp.data} == {"86"}
 
     def test_with_invalid_bk_usernames(self, apigw_api_client, default_tenant_user_data, default_tenant):
-        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = apigw_api_client.get(
             reverse("apigw.tenant_user.contact_info.list"), data={"bk_usernames": "zhangsan,not_exist"}
         )
@@ -64,7 +56,7 @@ class TestTenantUserContactInfoListApi:
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == "zhangsan"
         assert resp.data[0]["tenant_id"] == default_tenant.id
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
         assert resp.data[0]["phone"] == "13512345671"
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"

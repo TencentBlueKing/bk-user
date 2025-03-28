@@ -18,7 +18,6 @@
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -33,7 +32,7 @@ class TestTenantUserDisplayInfoRetrieveApi:
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
+        assert resp.data["display_name"] == "zhangsan(张三)"
         assert resp.data["login_name"] == "zhangsan"
         assert resp.data["full_name"] == "张三"
 
@@ -55,10 +54,7 @@ class TestTenantUserDisplayInfoListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
 
@@ -72,7 +68,7 @@ class TestTenantUserDisplayInfoListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == zhangsan.id
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
         assert resp.data[0]["login_name"] == "zhangsan"
         assert resp.data[0]["full_name"] == "张三"
 
@@ -113,7 +109,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["bk_username"] == baishier.id
         assert resp.data[0]["login_name"] == "baishier"
         assert resp.data[0]["full_name"] == "白十二"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(baishier)
+        assert resp.data[0]["display_name"] == "baishier(白十二)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
@@ -133,7 +129,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["bk_username"] == lisi.id
         assert resp.data[0]["login_name"] == "lisi"
         assert resp.data[0]["full_name"] == "李四"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(lisi)
+        assert resp.data[0]["display_name"] == "lisi(李四)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
@@ -151,7 +147,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["bk_username"] == collab_wangwu.id
         assert resp.data[0]["login_name"] == "wangwu"
         assert resp.data[0]["full_name"] == "王五"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(collab_wangwu)
+        assert resp.data[0]["display_name"] == "wangwu(王五)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == collaboration_tenant.id
 
@@ -166,7 +162,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["bk_username"] == virtual_zhangsan.id
         assert resp.data[0]["login_name"] == "zhangsan"
         assert resp.data[0]["full_name"] == "张三"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan)
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.VIRTUAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
 
@@ -187,11 +183,7 @@ class TestTenantUserSearchApi:
         assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id, collab_zhangsan.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan"}
         assert {t["full_name"] for t in resp.data} == {"张三"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(real_zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(collab_zhangsan),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
 
@@ -241,14 +233,7 @@ class TestTenantUserLookupApi:
         }
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(real_zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(virtual_zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(collab_zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(real_lisi),
-            TenantUserHandler.generate_tenant_user_display_name(virtual_lisi),
-            TenantUserHandler.generate_tenant_user_display_name(collab_lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
 
@@ -276,10 +261,7 @@ class TestTenantUserLookupApi:
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
@@ -309,10 +291,7 @@ class TestTenantUserLookupApi:
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {collaboration_tenant.id}
 
@@ -334,10 +313,7 @@ class TestTenantUserLookupApi:
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.VIRTUAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
@@ -365,10 +341,7 @@ class TestTenantUserLookupApi:
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
@@ -396,10 +369,7 @@ class TestTenantUserLookupApi:
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
-        assert {t["display_name"] for t in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-        }
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
