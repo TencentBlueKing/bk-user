@@ -63,11 +63,17 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("data_source_user__username, data_source_user__full_name"),
+            .only("data_source_user__username", "data_source_user__full_name"),
             id=kwargs["id"],
         )
 
-        return Response({"display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user)})
+        return Response(
+            {
+                "login_name": tenant_user.data_source_user.username,
+                "full_name": tenant_user.data_source_user.full_name,
+                "display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user),
+            }
+        )
 
 
 class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):

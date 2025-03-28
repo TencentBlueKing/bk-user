@@ -20,6 +20,8 @@
 ```json5
 {
     "data": {
+        "login_name": "zhangsan",
+        "full_name": "张三",
         "display_name": "zhangsan(张三)"
     }
 }
@@ -28,6 +30,8 @@
 
 ### 响应参数说明
 
-| 参数名称     | 参数类型 | 描述       |
-| ------------ | -------- | ---------- |
-| display_name | string   | 用户展示名 |
+| 参数名称         | 参数类型   | 描述        |
+|--------------|--------|-----------|
+| login_name   | string | 企业内用户唯一标识 |
+| full_name    | string | 用户姓名      |
+| display_name | string | 用户展示名     |

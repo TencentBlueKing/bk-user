@@ -22,10 +22,14 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
+            "login_name": "zhangsan",
+            "full_name": "张三",
             "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
+            "login_name": "lisi",
+            "full_name": "李四",
             "display_name": "lisi(李四)"
         }
     ]

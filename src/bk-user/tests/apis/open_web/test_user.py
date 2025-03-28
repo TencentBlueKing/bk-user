@@ -34,6 +34,8 @@ class TestTenantUserDisplayInfoRetrieveApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
+        assert resp.data["login_name"] == "zhangsan"
+        assert resp.data["full_name"] == "张三"
 
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
@@ -57,6 +59,8 @@ class TestTenantUserDisplayInfoListApi:
             TenantUserHandler.generate_tenant_user_display_name(zhangsan),
             TenantUserHandler.generate_tenant_user_display_name(lisi),
         }
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
 
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -69,6 +73,8 @@ class TestTenantUserDisplayInfoListApi:
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == zhangsan.id
         assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
+        assert resp.data[0]["login_name"] == "zhangsan"
+        assert resp.data[0]["full_name"] == "张三"
 
     def test_with_no_bk_usernames(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.list"), data={"bk_usernames": ""})
