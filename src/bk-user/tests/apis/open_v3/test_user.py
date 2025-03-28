@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import pytest
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -26,27 +27,30 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDisplayInfoListApi:
     def test_standard(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
-        lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan_id, lisi_id])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
-        assert {t["bk_username"] for t in resp.data} == {zhangsan_id, lisi_id}
-        assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
 
     def test_with_invalid_bk_usernames(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan_id, "invalid"])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan.id, "invalid"])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
-        assert resp.data[0]["bk_username"] == zhangsan_id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
 
     def test_with_no_bk_usernames(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ""})
@@ -71,7 +75,7 @@ class TestTenantUserRetrieveApi:
         resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["bk_username"] == zhangsan.id
-        assert resp.data["display_name"] == "张三"
+        assert resp.data["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
         assert resp.data["language"] == "zh-cn"
         assert resp.data["time_zone"] == "Asia/Shanghai"
         assert resp.data["tenant_id"] == random_tenant.id
@@ -139,7 +143,7 @@ class TestTenantUserLeaderListApi:
         resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": lisi.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["bk_username"] == zhangsan.id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
 
     def test_with_multiple_leader(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
@@ -148,7 +152,10 @@ class TestTenantUserLeaderListApi:
         resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": maiba.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {wangwu.id, lisi.id}
-        assert {t["display_name"] for t in resp.data} == {"王五", "李四"}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(wangwu),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
 
     def test_with_no_leader(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -183,17 +190,39 @@ class TestTenantUserListApi:
             "自由人",
         }
         assert {t["display_name"] for t in resp.data["results"]} == {
-            "张三",
-            "李四",
-            "王五",
-            "赵六",
-            "柳七",
-            "麦八",
-            "杨九",
-            "鲁十",
-            "林十一",
-            "白十二",
-            "自由人",
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="zhangsan")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="lisi")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="wangwu")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="zhaoliu")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="liuqi")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="maiba")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="yangjiu")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="lushi")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="linshiyi")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="baishier")
+            ),
+            TenantUserHandler.generate_tenant_user_display_name(
+                TenantUser.objects.get(data_source_user__username="freedom")
+            ),
         }
 
 

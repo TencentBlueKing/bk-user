@@ -62,7 +62,6 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         return (
             TenantUser.objects.filter(
@@ -71,7 +70,7 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("id", "data_source_user__full_name")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
         )
 
     @swagger_auto_schema(
@@ -94,7 +93,9 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
 
     def get_queryset(self):
-        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+        return TenantUser.objects.filter(
+            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        ).select_related("data_source_user")
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -212,7 +213,11 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
             )
         )
 
-        return TenantUser.objects.filter(data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id)
+        return (
+            TenantUser.objects.filter(data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id)
+            .select_related("data_source_user")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
+        )
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -237,7 +242,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         return (
             TenantUser.objects.select_related("data_source_user")
             .filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
-            .only("id", "data_source_user__full_name")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
         )
 
     @swagger_auto_schema(

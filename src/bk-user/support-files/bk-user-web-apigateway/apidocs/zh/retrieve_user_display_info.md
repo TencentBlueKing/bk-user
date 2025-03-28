@@ -20,7 +20,7 @@
 ```json5
 {
     "data": {
-        "display_name": "张三"
+        "display_name": "zhangsan(张三)"
     }
 }
 ```

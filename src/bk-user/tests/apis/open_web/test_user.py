@@ -29,11 +29,11 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDisplayInfoRetrieveApi:
     def test_standard(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
-        resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan_id}))
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["display_name"] == "张三"
+        assert resp.data["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
 
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
@@ -43,29 +43,32 @@ class TestTenantUserDisplayInfoRetrieveApi:
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserDisplayInfoListApi:
     def test_standard(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
-        lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.list"),
-            data={"bk_usernames": ",".join([zhangsan_id, lisi_id])},
+            data={"bk_usernames": ",".join([zhangsan.id, lisi.id])},
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
-        assert {t["bk_username"] for t in resp.data} == {zhangsan_id, lisi_id}
-        assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {
+            TenantUserHandler.generate_tenant_user_display_name(zhangsan),
+            TenantUserHandler.generate_tenant_user_display_name(lisi),
+        }
 
     def test_with_invalid_bk_usernames(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.list"),
-            data={"bk_usernames": ",".join([zhangsan_id, "invalid"])},
+            data={"bk_usernames": ",".join([zhangsan.id, "invalid"])},
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
-        assert resp.data[0]["bk_username"] == zhangsan_id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(zhangsan)
 
     def test_with_no_bk_usernames(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.list"), data={"bk_usernames": ""})
