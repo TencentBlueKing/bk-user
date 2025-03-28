@@ -35,7 +35,10 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    VirtualUserListInputSLZ,
+    VirtualUserListOutputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
@@ -279,6 +282,40 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询虚拟用户信息列表
+    """
+
+    serializer_class = VirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = VirtualUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        filters = {"tenant_id": self.tenant_id, "data_source__type": DataSourceTypeEnum.VIRTUAL}
+
+        if login_name := data.get("login_name"):
+            filters["data_source_user__username"] = login_name
+
+        return (
+            TenantUser.objects.filter(**filters)
+            .select_related("data_source_user")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_virtual_user",
+        operation_description="查询虚拟用户信息列表",
+        query_serializer=VirtualUserListInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

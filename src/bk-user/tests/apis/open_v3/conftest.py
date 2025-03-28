@@ -37,3 +37,9 @@ def api_client(random_tenant):
 def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
     """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
+    """初始化租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_virtual_data_source)
