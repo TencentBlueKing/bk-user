@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 import pytest
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from django.urls import reverse
 from rest_framework import status
 
@@ -219,10 +218,7 @@ class TestTenantDepartmentUserListApi:
         assert len(resp.data) == 2
         assert {d["bk_username"] for d in resp.data} == {lisi.id, wangwu.id}
         assert {d["login_name"] for d in resp.data} == {"lisi", "wangwu"}
-        assert {d["display_name"] for d in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-            TenantUserHandler.generate_tenant_user_display_name(wangwu),
-        }
+        assert {d["display_name"] for d in resp.data} == {"lisi(李四)", "wangwu(王五)"}
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_tenant(self, api_client, collaboration_tenant):
@@ -236,10 +232,7 @@ class TestTenantDepartmentUserListApi:
         assert len(resp.data) == 2
         assert {d["bk_username"] for d in resp.data} == {lisi.id, wangwu.id}
         assert {d["login_name"] for d in resp.data} == {"lisi", "wangwu"}
-        assert {d["display_name"] for d in resp.data} == {
-            TenantUserHandler.generate_tenant_user_display_name(lisi),
-            TenantUserHandler.generate_tenant_user_display_name(wangwu),
-        }
+        assert {d["display_name"] for d in resp.data} == {"lisi(李四)", "wangwu(王五)"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_no_department(self, api_client, random_tenant):
@@ -253,7 +246,7 @@ class TestTenantDepartmentUserListApi:
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == freedom.id
         assert resp.data[0]["login_name"] == "freedom"
-        assert resp.data[0]["display_name"] == TenantUserHandler.generate_tenant_user_display_name(freedom)
+        assert resp.data[0]["display_name"] == "freedom(自由人)"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_owner_tenant_id(self, api_client, random_tenant):
