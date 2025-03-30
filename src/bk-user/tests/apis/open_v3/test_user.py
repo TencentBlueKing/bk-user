@@ -24,37 +24,37 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDisplayNameListApi:
+class TestTenantUserDisplayInfoListApi:
     def test_standard(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
-        lisi_id = TenantUser.objects.get(data_source_user__username="lisi").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, lisi_id])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
-        assert {t["bk_username"] for t in resp.data} == {zhangsan_id, lisi_id}
-        assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
 
     def test_with_invalid_bk_usernames(self, api_client):
-        zhangsan_id = TenantUser.objects.get(data_source_user__username="zhangsan").id
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ",".join([zhangsan_id, "invalid"])}
+            reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ",".join([zhangsan.id, "invalid"])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
-        assert resp.data[0]["bk_username"] == zhangsan_id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
 
     def test_with_no_bk_usernames(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_user.display_name.list"), data={"bk_usernames": ""})
+        resp = api_client.get(reverse("open_v3.tenant_user.display_info.list"), data={"bk_usernames": ""})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_with_invalid_length(self, api_client):
         resp = api_client.get(
-            reverse("open_v3.tenant_user.display_name.list"),
+            reverse("open_v3.tenant_user.display_info.list"),
             data={
                 "bk_usernames": ",".join(
                     map(str, range(1, settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT + 2))
@@ -71,7 +71,7 @@ class TestTenantUserRetrieveApi:
         resp = api_client.get(reverse("open_v3.tenant_user.retrieve", kwargs={"id": zhangsan.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["bk_username"] == zhangsan.id
-        assert resp.data["display_name"] == "张三"
+        assert resp.data["display_name"] == "zhangsan(张三)"
         assert resp.data["language"] == "zh-cn"
         assert resp.data["time_zone"] == "Asia/Shanghai"
         assert resp.data["tenant_id"] == random_tenant.id
@@ -139,7 +139,7 @@ class TestTenantUserLeaderListApi:
         resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": lisi.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data[0]["bk_username"] == zhangsan.id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
 
     def test_with_multiple_leader(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
@@ -148,7 +148,7 @@ class TestTenantUserLeaderListApi:
         resp = api_client.get(reverse("open_v3.tenant_user.leader.list", kwargs={"id": maiba.id}))
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {wangwu.id, lisi.id}
-        assert {t["display_name"] for t in resp.data} == {"王五", "李四"}
+        assert {t["display_name"] for t in resp.data} == {"lisi(李四)", "wangwu(王五)"}
 
     def test_with_no_leader(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -183,17 +183,17 @@ class TestTenantUserListApi:
             "自由人",
         }
         assert {t["display_name"] for t in resp.data["results"]} == {
-            "张三",
-            "李四",
-            "王五",
-            "赵六",
-            "柳七",
-            "麦八",
-            "杨九",
-            "鲁十",
-            "林十一",
-            "白十二",
-            "自由人",
+            "zhangsan(张三)",
+            "lisi(李四)",
+            "wangwu(王五)",
+            "zhaoliu(赵六)",
+            "liuqi(柳七)",
+            "maiba(麦八)",
+            "yangjiu(杨九)",
+            "lushi(鲁十)",
+            "linshiyi(林十一)",
+            "baishier(白十二)",
+            "freedom(自由人)",
         }
 
 
@@ -212,6 +212,7 @@ class TestTenantUserSensitiveInfoListApi:
         assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
         assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
         assert {t["phone_country_code"] for t in resp.data} == {"86"}
+        assert all("wx_userid" in t for t in resp.data)
 
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -226,6 +227,7 @@ class TestTenantUserSensitiveInfoListApi:
         assert resp.data[0]["phone"] == "13512345671"
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"
+        assert all("wx_userid" in t for t in resp.data)
 
     def test_with_no_bk_usernames(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.sensitive_info.list"), data={"bk_usernames": ""})

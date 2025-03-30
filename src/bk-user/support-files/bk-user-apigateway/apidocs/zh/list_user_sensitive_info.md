@@ -24,13 +24,15 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
             "bk_username": "7idwx3b7nzk6xigs",
             "phone": "17712341234",
             "phone_country_code": "86",
-            "email": "zhangsan@qq.com"
+            "email": "zhangsan@qq.com",
+            "wx_userid": "wxid123456"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
             "phone": "18712341234",
             "phone_country_code": "86",
-            "email": "lisi@qq.com"
+            "email": "lisi@qq.com",
+            "wx_userid": "wxid654321"
         }
     ]
 }
@@ -44,3 +46,4 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | phone              | string | 电话号码     |
 | phone_country_code | string | 电话号码区号   |
 | email              | string | 邮箱       |
+| wx_userid          | string | 微信用户唯一标识 |

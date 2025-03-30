@@ -4,11 +4,11 @@
 
 ### 输入参数
 
-| 参数名称          | 参数类型 | 必选 | 参数位置        | 描述                               |
-|---------------|------|----|-------------|----------------------------------|
-| page          | int  | 否  | query param | 页码，从 1 开始                        |
-| page_size     | int  | 否  | query param | 每页数量，默认为 10                      |
-| department_id | int  | 是  | path        | 部门唯一标识                           |
+| 参数名称          | 参数类型 | 必选 | 参数位置        | 描述                 |
+|---------------|------|----|-------------|--------------------|
+| page          | int  | 否  | query param | 页码，从 1 开始          |
+| page_size     | int  | 否  | query param | 每页数量，默认为 10，最大 500 |
+| department_id | int  | 是  | path        | 部门唯一标识             |
 
 ### 请求示例
 
@@ -27,12 +27,12 @@
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
                 "full_name": "张三",
-                "display_name": "张三"
+                "display_name": "zhangsan(张三)"
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
                 "full_name": "李四",
-                "display_name": "李四"
+                "display_name": "lisi(李四)"
             }
         ]
     }

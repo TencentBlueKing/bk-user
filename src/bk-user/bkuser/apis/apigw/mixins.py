@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 from functools import cached_property
 
+from django.utils.decorators import method_decorator
+from django.utils.translation import override
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
@@ -39,3 +41,8 @@ class InnerApiCommonMixin:
             raise ValidationError("X-Bk-Tenant-Id header is required")
 
         return tenant_id
+
+    # 将 API 响应内容的默认语言设置为英文
+    @method_decorator(override("en-us"))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)  # type: ignore

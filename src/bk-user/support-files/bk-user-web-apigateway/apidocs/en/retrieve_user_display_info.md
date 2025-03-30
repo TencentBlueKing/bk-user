@@ -20,13 +20,17 @@ Query user's display information
 ```json5
 {
     "data": {
-        "display_name": "张三"
+        "login_name": "zhangsan",
+        "full_name": "张三",
+        "display_name": "zhangsan(张三)"
     }
 }
 ```
 
 ### Response Parameters Description
 
-| Name         | Type   | Description         |
-| ------------ | ------ | ------------------- |
-| display_name | string | User's display_name |
+| Name         | Type   | Description                                 |
+|--------------|--------|---------------------------------------------|
+| login_name   | string | Unique ID of the user within the enterprise |
+| full_name    | string | User's name                                 |
+| display_name | string | User's display_name                         |

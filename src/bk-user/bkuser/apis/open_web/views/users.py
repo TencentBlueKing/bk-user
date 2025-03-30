@@ -58,7 +58,6 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
     )
     @method_decorator(cache_control(public=True, max_age=60 * 5))
     def get(self, request, *args, **kwargs):
-        # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
@@ -66,11 +65,17 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("data_source_user__full_name"),
+            .only("data_source_user__username", "data_source_user__full_name"),
             id=kwargs["id"],
         )
 
-        return Response({"display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user)})
+        return Response(
+            {
+                "login_name": tenant_user.data_source_user.username,
+                "full_name": tenant_user.data_source_user.full_name,
+                "display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user),
+            }
+        )
 
 
 class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
@@ -88,7 +93,6 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # TODO: 由于目前 DisplayName 渲染只与 full_name 相关，所以只查询 full_name
         # 后续支持表达式，则需要查询表达式可配置的所有字段
         return (
             TenantUser.objects.filter(
@@ -97,7 +101,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 data_source_id=self.real_data_source_id,
             )
             .select_related("data_source_user")
-            .only("id", "data_source_user__full_name")
+            .only("id", "data_source_user__username", "data_source_user__full_name")
         )
 
     @swagger_auto_schema(

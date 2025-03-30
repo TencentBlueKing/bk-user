@@ -4,11 +4,11 @@
 
 ### Parameters
 
-| Name          | Type | Required | Location    | Description                                                                                                         |
-|---------------|------|----------|-------------|---------------------------------------------------------------------------------------------------------------------|
-| page          | int  | No       | query param | Page number, default is 1                                                                                           |
-| page_size     | int  | No       | query param | The number of pages per page, default is 10                                                                         |
-| department_id | int  | Yes      | path        | Unique identifier of the department                                                                                 |
+| Name          | Type | Required | Location    | Description                                                 |
+|---------------|------|----------|-------------|-------------------------------------------------------------|
+| page          | int  | No       | query param | Page number, default is 1                                   |
+| page_size     | int  | No       | query param | The number of pages per page, default is 10, maximum is 500 |
+| department_id | int  | Yes      | path        | Unique identifier of the department                         |
 
 ### Request Example
 
@@ -27,12 +27,12 @@
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
                 "full_name": "张三",
-                "display_name": "张三"
+                "display_name": "zhangsan(张三)"
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
                 "full_name": "李四",
-                "display_name": "李四"
+                "display_name": "lisi(李四)"
             }
         ]
     }

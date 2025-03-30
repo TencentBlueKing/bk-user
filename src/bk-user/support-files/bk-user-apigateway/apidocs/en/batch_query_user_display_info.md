@@ -1,6 +1,6 @@
 ### Description
 
-Batch query user's display_name
+Batch query user's display information
 
 ### Parameters
 
@@ -22,11 +22,11 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
-            "display_name": "张三"
+            "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
-            "display_name": "李四"
+            "display_name": "lisi(李四)"
         }
     ]
 }

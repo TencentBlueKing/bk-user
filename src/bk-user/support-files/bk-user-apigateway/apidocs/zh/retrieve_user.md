@@ -22,7 +22,7 @@
     "data": {
         "tenant_id": "default",
         "bk_username": "7idwx3b7nzk6xigs",
-        "display_name": "张三",
+        "display_name": "zhangsan(张三)",
         "time_zone": "Asia/Shanghai",
         "language": "zh-cn"
     }

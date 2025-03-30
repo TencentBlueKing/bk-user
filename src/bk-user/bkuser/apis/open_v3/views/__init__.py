@@ -23,7 +23,7 @@ from .department import (
 from .tenant import TenantListApi
 from .user import (
     TenantUserDepartmentListApi,
-    TenantUserDisplayNameListApi,
+    TenantUserDisplayInfoListApi,
     TenantUserLeaderListApi,
     TenantUserListApi,
     TenantUserRetrieveApi,
@@ -32,7 +32,7 @@ from .user import (
 
 __all__ = [
     "TenantListApi",
-    "TenantUserDisplayNameListApi",
+    "TenantUserDisplayInfoListApi",
     "TenantUserRetrieveApi",
     "TenantUserDepartmentListApi",
     "TenantUserLeaderListApi",

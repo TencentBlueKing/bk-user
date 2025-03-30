@@ -23,14 +23,14 @@ from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
-class TenantUserDisplayNameListInputSLZ(serializers.Serializer):
+class TenantUserDisplayInfoListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(
         help_text="蓝鲸用户唯一标识，多个使用逗号分隔",
         max_items=settings.BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT,
     )
 
 
-class TenantUserDisplayNameListOutputSLZ(serializers.Serializer):
+class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
@@ -93,6 +93,7 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
     phone = serializers.SerializerMethodField(help_text="手机号")
     phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")
     email = serializers.CharField(help_text="邮箱")
+    wx_userid = serializers.CharField(help_text="微信 ID")
 
     def get_phone(self, obj: TenantUser) -> str:
         return obj.phone_info[0]
