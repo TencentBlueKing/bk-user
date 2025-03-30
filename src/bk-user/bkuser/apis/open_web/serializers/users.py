@@ -76,7 +76,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["user_dept_org_path_map"].get(obj.id, [])
+        return self.context["org_path_map"][obj.data_source_user_id]
 
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
@@ -120,13 +120,13 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["user_dept_org_path_map"].get(obj.id, [])
+        return self.context["org_path_map"][obj.data_source_user_id]
 
 
 class VirtualUserListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
-    display_name = serializers.CharField(help_text="用户展示名称", source="data_source_user.full_name")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)

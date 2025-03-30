@@ -166,7 +166,8 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_users = self.get_queryset()
-        context = {"user_dept_org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(tenant_users)}
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
+        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
         return Response(TenantUserSearchOutputSLZ(tenant_users, context=context, many=True).data)
 
 
@@ -230,7 +231,8 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_users = self.get_queryset()
-        context = {"user_dept_org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(tenant_users)}
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
+        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
         return Response(TenantUserLookupOutputSLZ(tenant_users, context=context, many=True).data)
 
 
@@ -238,8 +240,6 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     查询虚拟用户列表
     """
-
-    pagination_class = None
 
     serializer_class = VirtualUserListOutputSLZ
 

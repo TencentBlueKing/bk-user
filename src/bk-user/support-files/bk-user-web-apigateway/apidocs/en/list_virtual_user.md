@@ -1,24 +1,27 @@
 ### Description
 
-Query virtual user's list
+(Pagination) Query virtual user's list
 
 
 ### Response Example for Status Code 200
 
 ```json5
 {
-    "data": [
-        {
-            "bk_username": "klzwge6k69ly0rjt",
-            "login_name": "virtual_user_1",
-            "display_name": "虚拟用户1"
-        },
-        {
-            "bk_username": "soxteugr5ymfi3w1",
-            "login_name": "virtual_user_2",
-            "display_name": "虚拟用户2"
-        }
-    ]
+    "data": {
+        "count": 2,
+        "results": [
+             {
+                "bk_username": "klzwge6k69ly0rjt",
+                "login_name": "virtual_user_1",
+                "display_name": "虚拟用户1"
+             },
+             {
+                "bk_username": "soxteugr5ymfi3w1",
+                "login_name": "virtual_user_2",
+                "display_name": "虚拟用户2"
+            }
+        ]
+    }
 }
 ```
 

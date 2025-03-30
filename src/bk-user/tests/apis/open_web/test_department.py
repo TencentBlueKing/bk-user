@@ -268,49 +268,9 @@ class TestTenantDepartmentUserListApi:
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+@pytest.mark.usefixtures("_init_collaboration_users_depts")
 class TestTenantDepartmentLookupApi:
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_current_tenant(self, api_client, random_tenant):
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
-        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
-
-        resp = api_client.get(
-            reverse("open_web.tenant_department.lookup"),
-            data={
-                "department_ids": ",".join([str(dept_a.id), str(center_aa.id)]),
-                "owner_tenant_id": random_tenant.id,
-            },
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 2
-        assert {d["id"] for d in resp.data} == {dept_a.id, center_aa.id}
-        assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
-        assert {d["owner_tenant_id"] for d in resp.data} == {random_tenant.id}
-        assert {d["organization_path"] for d in resp.data} == {"公司", "公司/部门A"}
-
-    @pytest.mark.usefixtures("_init_collaboration_users_depts")
-    def test_with_collaboration_tenant(self, api_client, collaboration_tenant):
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
-        center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
-
-        resp = api_client.get(
-            reverse("open_web.tenant_department.lookup"),
-            data={
-                "department_ids": ",".join([str(dept_a.id), str(center_aa.id)]),
-                "owner_tenant_id": collaboration_tenant.id,
-            },
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 2
-        assert {d["id"] for d in resp.data} == {dept_a.id, center_aa.id}
-        assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
-        assert {d["owner_tenant_id"] for d in resp.data} == {collaboration_tenant.id}
-        assert {d["organization_path"] for d in resp.data} == {"公司", "公司/部门A"}
-
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_all_depts(self, api_client, random_tenant, collaboration_tenant):
         dept_a = TenantDepartment.objects.get(
             data_source_department__name="部门A", data_source__owner_tenant_id=random_tenant.id

@@ -7,7 +7,6 @@ Batch query the departments (including collaborative departments)
 | Name            | Type   | Required | Description                                                                                                                                                                                                                                       |
 |-----------------|--------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | department_ids  | string | Yes      | Unique ID of the department, multiple separated by separator, limit number is 100                                                                                                                                                                 |
-| owner_tenant_id | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to search the corresponding tenant departments. The default value is empty (search the departments of this tenant and the departments of the collaborative tenants) |
 
 ### Request Example
 

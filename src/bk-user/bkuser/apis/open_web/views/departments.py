@@ -81,10 +81,11 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
-        has_children_users_map = TenantDepartmentHandler.get_dept_has_children_users_map(tenant_depts)
+        data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
-            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(tenant_depts),
-            "has_children_users_map": has_children_users_map,
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
+            "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
+            "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
         }
         return Response(TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -103,7 +104,7 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 如果指定了部门，则获取其子部门
+        # 如果指定部门 ID 不为 0，则获取其子部门
         if parent_department_id := self.kwargs["id"]:
             tenant_department = get_object_or_404(
                 TenantDepartment.objects.filter(tenant_id=self.tenant_id), id=parent_department_id
@@ -116,7 +117,7 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
             data_source_dept_ids = relation.get_children().values_list("department_id", flat=True)
 
         else:
-            # 若未指定则获取根部门
+            # 若指定部门 ID 为 0，则其子部门即为根部门
             data_source = get_object_or_404(
                 DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
             )
@@ -141,17 +142,12 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
-        has_children_users_map = TenantDepartmentHandler.get_dept_has_children_users_map(tenant_depts)
-        tenant_dept_infos = [
-            {
-                "id": tenant_dept.id,
-                "name": tenant_dept.data_source_department.name,
-                "has_child": has_children_users_map[tenant_dept.id]["has_child"],
-                "has_user": has_children_users_map[tenant_dept.id]["has_user"],
-            }
-            for tenant_dept in tenant_depts
-        ]
-        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_infos, many=True).data)
+        data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
+        context = {
+            "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
+            "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
+        }
+        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_depts, many=True, context=context).data)
 
 
 class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
@@ -176,7 +172,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             .only("id", "data_source_user__username", "data_source_user__full_name")
         )
 
-        # 若指定了部门，则获取部门下的用户
+        # 若指定部门 ID 不为 0，则获取部门下的用户
         if department_id := self.kwargs["id"]:
             tenant_department = get_object_or_404(
                 TenantDepartment.objects.filter(tenant_id=self.tenant_id),
@@ -189,7 +185,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
             queryset = queryset.filter(data_source_user_id__in=user_ids)
 
-        # 否则返回无部门的用户
+        # 若指定部门 ID 为 0，则返回无部门的用户
         else:
             data_source = get_object_or_404(
                 DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
@@ -197,6 +193,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             user_ids = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source).values_list(
                 "user_id", flat=True
             )
+            # TODO: 这里存在比较大的性能问题，如何快速获取无归属部门的用户？
             queryset = queryset.exclude(data_source_user_id__in=user_ids)
 
         return queryset
@@ -224,12 +221,9 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        filters: Dict[str, Any] = {"tenant_id": self.tenant_id, "id__in": data["department_ids"]}
-
-        if owner_tenant_id := data.get("owner_tenant_id"):
-            filters["data_source__owner_tenant_id"] = owner_tenant_id
-
-        return TenantDepartment.objects.filter(**filters).select_related("data_source_department", "data_source")
+        return TenantDepartment.objects.filter(id__in=data["department_ids"], tenant_id=self.tenant_id).select_related(
+            "data_source_department", "data_source"
+        )
 
     @swagger_auto_schema(
         tags=["open_web.department"],
@@ -240,7 +234,8 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
+        data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
-            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(tenant_depts),
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
         }
         return Response(TenantDepartmentLookupOutputSLZ(tenant_depts, many=True, context=context).data)

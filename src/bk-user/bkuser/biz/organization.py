@@ -20,7 +20,6 @@ from collections import defaultdict
 from typing import Dict, List, Set
 
 from django.db import transaction
-from django.db.models import Prefetch, Q, QuerySet
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
@@ -30,7 +29,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import TenantDepartment
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 
@@ -155,52 +154,44 @@ class TenantDepartmentHandler:
         }
 
     @staticmethod
-    def get_dept_has_children_users_map(tenant_depts: QuerySet[TenantDepartment]) -> dict[int, dict[str, bool]]:
-        """获取部门是否有子部门与所属用户的信息"""
-        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
-
+    def get_has_child_map(data_source_department_ids: List[int]) -> dict[int, bool]:
+        """获取部门是否有子部门的信息"""
+        # TODO: 这里存在性能问题，后续添加缓存优化
         dept_has_child_ids = set(
-            DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids)
+            DataSourceDepartmentRelation.objects.filter(parent_id__in=data_source_department_ids)
             .values_list("parent_id", flat=True)
             .distinct()
         )
 
+        return {dept_id: dept_id in dept_has_child_ids for dept_id in data_source_department_ids}
+
+    @staticmethod
+    def get_has_user_map(data_source_department_ids: List[int]) -> dict[int, bool]:
+        """获取部门是否有所属用户的信息"""
+        # TODO: 这里存在性能问题，后续添加缓存优化
         dept_has_user_ids = set(
-            DataSourceDepartmentUserRelation.objects.filter(department_id__in=parent_data_source_dept_ids)
+            DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_department_ids)
             .values_list("department_id", flat=True)
             .distinct()
         )
 
-        return {
-            tenant_dept.id: {
-                "has_child": tenant_dept.data_source_department_id in dept_has_child_ids,
-                "has_user": tenant_dept.data_source_department_id in dept_has_user_ids,
-            }
-            for tenant_dept in tenant_depts
-        }
+        return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
 
 class TenantOrgPathHandler:
     @staticmethod
-    def get_dept_organization_path_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
+    def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
         """获取租户部门的组织路径信息"""
-        data_source_dept_ids = {dept.data_source_department_id for dept in tenant_depts}
 
-        # 获取部门关系及所有需要的祖先节点
-        relations = TenantOrgPathHandler._get_relations_with_ancestors(data_source_dept_ids)
         # 数据源部门 ID -> 组织路径
-        org_path_map = TenantOrgPathHandler._build_org_path_map(relations, include_self=False)
+        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
 
-        # 租户部门 ID -> 组织路径
-        return {
-            dept.id: org_path_map.get(dept.data_source_department_id, dept.data_source_department.name)
-            for dept in tenant_depts
-        }
+        # 部门 ID -> 组织路径
+        return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
     @staticmethod
-    def get_user_organization_paths_map(tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
+    def get_user_organization_paths_map(data_source_user_ids: List[int]) -> dict[int, List[str]]:
         """获取租户用户的组织路径信息"""
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
 
         # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
         user_dept_id_map = defaultdict(list)
@@ -210,79 +201,24 @@ class TenantOrgPathHandler:
         # 数据源部门 ID 集合
         data_source_dept_ids: Set[int] = set().union(*user_dept_id_map.values())
 
-        # 获取部门关系及所有需要的祖先节点
-        relations = TenantOrgPathHandler._get_relations_with_ancestors(data_source_dept_ids)
         # 数据源部门 ID -> 组织路径
-        org_path_map = TenantOrgPathHandler._build_org_path_map(relations)
+        org_path_map = TenantOrgPathHandler._query_org_path(list(data_source_dept_ids), include_self=True)
 
-        # 租户用户 ID -> 组织路径列表
+        # 用户 ID -> 组织路径列表
         return {
-            user.id: [
-                org_path_map[dept_id]
-                for dept_id in user_dept_id_map[user.data_source_user_id]
-                if dept_id in org_path_map
-            ]
-            for user in tenant_users
+            user_id: [org_path_map[dept_id] for dept_id in user_dept_id_map[user_id] if dept_id in org_path_map]
+            for user_id in data_source_user_ids
         }
 
     @staticmethod
-    def _get_relations_with_ancestors(data_source_dept_ids: Set[int]) -> QuerySet[DataSourceDepartmentRelation]:
-        """获取部门关系及预取所有需要的祖先节点"""
-        # 按照左值排序，确保祖先节点在后续查询中已经加载
-        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
-            department_id__in=data_source_dept_ids
-        )
-
-        # 按照 tree_id 分组，获取每个 tree 的最大左值和最小右值
-        tree_groups: Dict[int, Dict[str, float]] = defaultdict(lambda: {"max_lft": 0, "min_rght": float("inf")})
-        for rel in relations:
-            tree_groups[rel.tree_id]["max_lft"] = max(tree_groups[rel.tree_id]["max_lft"], rel.lft)
-            tree_groups[rel.tree_id]["min_rght"] = min(tree_groups[rel.tree_id]["min_rght"], rel.rght)
-
-        # 构造组合查询条件
-        # 覆盖每个树中节点所涉及到的所有祖先节点（左值小于等于当前节点左值，右值大于等于当前节点右值）
-        combined_query = Q()
-        for tree_id, group in tree_groups.items():
-            combined_query |= Q(lft__lte=group["max_lft"], rght__gte=group["min_rght"], tree_id=tree_id)
-
-        # 批量预取父部门（单次查询完成所有祖先部门的获取）
-        return relations.prefetch_related(
-            Prefetch(
-                "parent",
-                queryset=DataSourceDepartmentRelation.objects.select_related("department").filter(combined_query),
-            )
-        )
-
-    @staticmethod
-    def _build_org_path_map(
-        relations: QuerySet[DataSourceDepartmentRelation], include_self: bool = True
-    ) -> Dict[int, str]:
+    def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """构建部门 ID -> 组织路径映射"""
-        # 数据源部门 ID -> 路径片段
-        path_cache: Dict[int, List] = {}
-        # 数据源部门 ID -> 组织路径
-        org_path_map: Dict[int, str] = {}
-
+        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
+            department_id__in=data_source_department_ids
+        )
+        org_path_map = {}
+        # TODO: 这里存在 N + 1 问题，后续添加缓存优化或其他方式优化祖先路径的批量快速获取
         for rel in relations:
-            # 如果父部门已经计算过路径，直接拼接
-            if rel.parent and rel.parent.department_id in path_cache:
-                current_path = path_cache[rel.parent.department_id] + [rel.department.name]
-            else:
-                current_path = [rel.department.name]
-                current_parent = rel.parent
-                # 递归获取所有祖先节点
-                while current_parent:
-                    current_path.append(current_parent.department.name)
-                    current_parent = current_parent.parent
-
-                # 反转路径，使得路径从根节点到当前节点
-                current_path = list(reversed(current_path))
-
-            path_cache[rel.department_id] = current_path
-
-            # 若 include_self 为 False，则不包含当前节点
-            org_path_map[rel.department_id] = "/".join(
-                current_path[: None if include_self else -1] if current_path else []
-            )
-
+            dept_names = list(rel.get_ancestors(include_self=include_self).values_list("department__name", flat=True))
+            org_path_map[rel.department_id] = "/".join(dept_names)
         return org_path_map

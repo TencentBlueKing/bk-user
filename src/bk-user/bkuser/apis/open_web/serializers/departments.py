@@ -39,13 +39,13 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
-        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
+        return self.context["org_path_map"][obj.data_source_department_id]
 
     def get_has_child(self, obj: TenantDepartment) -> bool:
-        return self.context["has_children_users_map"][obj.id]["has_child"]
+        return self.context["has_child_map"][obj.data_source_department_id]
 
     def get_has_user(self, obj: TenantDepartment) -> bool:
-        return self.context["has_children_users_map"][obj.id]["has_user"]
+        return self.context["has_user_map"][obj.data_source_department_id]
 
 
 class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
@@ -63,9 +63,15 @@ class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
 
 class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门ID")
-    name = serializers.CharField(help_text="部门名称")
-    has_child = serializers.BooleanField(help_text="是否有子部门")
-    has_user = serializers.BooleanField(help_text="是否有用户")
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    has_child = serializers.SerializerMethodField(help_text="是否有子部门")
+    has_user = serializers.SerializerMethodField(help_text="是否有用户")
+
+    def get_has_child(self, obj: TenantDepartment) -> bool:
+        return self.context["has_child_map"][obj.data_source_department_id]
+
+    def get_has_user(self, obj: TenantDepartment) -> bool:
+        return self.context["has_user_map"][obj.data_source_department_id]
 
 
 class TenantDepartmentUserListInputSLZ(serializers.Serializer):
@@ -92,7 +98,6 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):
     department_ids = StringArrayField(help_text="部门ID，多个使用逗号分隔", max_items=100)
-    owner_tenant_id = serializers.CharField(help_text="所属租户 ID", required=False, allow_blank=True, default="")
 
 
 class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
@@ -102,4 +107,4 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
-        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
+        return self.context["org_path_map"][obj.data_source_department_id]
