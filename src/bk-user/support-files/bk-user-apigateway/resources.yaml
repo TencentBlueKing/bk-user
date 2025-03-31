@@ -281,3 +281,28 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
+
+  /api/v3/open/tenant/departments/-/lookup/:
+    get:
+      operationId: lookup_department
+      description: 批量查询部门信息
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: true
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open/tenant/departments/-/lookup/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: Batch query the information of the departments

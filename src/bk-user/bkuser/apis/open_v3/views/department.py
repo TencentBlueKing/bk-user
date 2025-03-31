@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import Dict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -25,13 +26,15 @@ from bkuser.apis.open_v3.serializers.department import (
     TenantDepartmentDescendantListInputSLZ,
     TenantDepartmentDescendantListOutputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentLookupInputSLZ,
+    TenantDepartmentLookupOutputSLZ,
     TenantDepartmentRetrieveInputSLZ,
     TenantDepartmentRetrieveOutputSLZ,
     TenantDepartmentUserListOutputSLZ,
 )
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler
+from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler, TenantOrgPathHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -190,3 +193,46 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询部门信息列表
+    """
+
+    pagination_class = None
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="lookup_department",
+        operation_description="批量查询部门信息",
+        query_serializer=TenantDepartmentLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_depts = TenantDepartment.objects.select_related("data_source_department").filter(
+            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        )
+
+        with_org_path = data["with_org_path"]
+        # 根据 with_org_path 需要，获取部门的组织路径
+        org_path_map: Dict[int, str] = {}
+        if with_org_path:
+            # 根据数据源部门 ID 获取部门的组织路径
+            data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
+            org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)
+
+        # 组装数据
+        infos = []
+        for dept in tenant_depts:
+            info = {"id": dept.id, "name": dept.data_source_department.name}
+            if with_org_path:
+                info["organization_path"] = org_path_map[dept.data_source_department_id]
+
+            infos.append(info)
+
+        return Response(TenantDepartmentLookupOutputSLZ(infos, many=True).data)
