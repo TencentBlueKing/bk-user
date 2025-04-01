@@ -19,6 +19,7 @@ from rest_framework import serializers
 
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.serializers import StringArrayField
 
 
 class AncestorSLZ(serializers.Serializer):
@@ -70,3 +71,26 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class TenantDepartmentLookupInputSLZ(serializers.Serializer):
+    department_ids = StringArrayField(
+        help_text="部门唯一标识，多个使用逗号分隔",
+        max_items=50,
+    )
+    with_organization_path = serializers.BooleanField(help_text="是否返回组织路径", required=False, default=False)
+
+
+class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    organization_path = serializers.SerializerMethodField(help_text="组织路径")
+
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.data_source_department_id, "")
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_path"]:
+            data.pop("organization_path")
+        return data

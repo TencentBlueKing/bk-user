@@ -16,13 +16,15 @@
 # to the current version of the project delivered to anyone in the future.
 
 import datetime
-from typing import Dict, List
+from collections import defaultdict
+from typing import Dict, List, Set
 
 from django.db import transaction
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
@@ -150,3 +152,72 @@ class TenantDepartmentHandler:
             for dept in tenant_departments
             if parent_id_map[dept.data_source_department_id] in tenant_dept_id_map
         }
+
+    @staticmethod
+    def get_has_child_map(data_source_department_ids: List[int]) -> Dict[int, bool]:
+        """获取部门是否有子部门的信息"""
+        # TODO: 这里存在性能问题，后续添加缓存优化
+        dept_has_child_ids = set(
+            DataSourceDepartmentRelation.objects.filter(parent_id__in=data_source_department_ids)
+            .values_list("parent_id", flat=True)
+            .distinct()
+        )
+
+        return {dept_id: dept_id in dept_has_child_ids for dept_id in data_source_department_ids}
+
+    @staticmethod
+    def get_has_user_map(data_source_department_ids: List[int]) -> Dict[int, bool]:
+        """获取部门是否有所属用户的信息"""
+        # TODO: 这里存在性能问题，后续添加缓存优化
+        dept_has_user_ids = set(
+            DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_department_ids)
+            .values_list("department_id", flat=True)
+            .distinct()
+        )
+
+        return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
+
+
+class TenantOrgPathHandler:
+    @staticmethod
+    def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
+        """获取部门的组织路径信息"""
+
+        # 数据源部门 ID -> 组织路径
+        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
+
+        return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
+
+    @staticmethod
+    def get_user_organization_paths_map(data_source_user_ids: List[int]) -> Dict[int, List[str]]:
+        """获取用户的组织路径信息"""
+
+        # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
+        user_dept_id_map = defaultdict(list)
+        for relation in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
+            user_dept_id_map[relation.user_id].append(relation.department_id)
+
+        # 数据源部门 ID 集合
+        data_source_dept_ids: Set[int] = set().union(*user_dept_id_map.values())
+
+        # 数据源部门 ID -> 组织路径
+        org_path_map = TenantOrgPathHandler._query_org_path(list(data_source_dept_ids), include_self=True)
+
+        # 数据源用户 ID -> 组织路径列表
+        return {
+            user_id: [org_path_map[dept_id] for dept_id in user_dept_id_map[user_id] if dept_id in org_path_map]
+            for user_id in data_source_user_ids
+        }
+
+    @staticmethod
+    def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
+        """构建数据源部门 ID -> 组织路径映射"""
+        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
+            department_id__in=data_source_department_ids
+        )
+        org_path_map = {}
+        # TODO: 这里存在 N + 1 问题，后续添加缓存优化或其他方式优化祖先路径的批量快速获取
+        for rel in relations:
+            dept_names = list(rel.get_ancestors(include_self=include_self).values_list("department__name", flat=True))
+            org_path_map[rel.department_id] = "/".join(dept_names)
+        return org_path_map

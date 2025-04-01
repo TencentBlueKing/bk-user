@@ -17,6 +17,7 @@
 from .department import (
     TenantDepartmentDescendantListApi,
     TenantDepartmentListApi,
+    TenantDepartmentLookupListApi,
     TenantDepartmentRetrieveApi,
     TenantDepartmentUserListApi,
 )
@@ -43,5 +44,6 @@ __all__ = [
     "TenantDepartmentListApi",
     "TenantDepartmentUserListApi",
     "TenantUserSensitiveInfoListApi",
+    "TenantDepartmentLookupListApi",
     "VirtualUserLookupApi",
 ]

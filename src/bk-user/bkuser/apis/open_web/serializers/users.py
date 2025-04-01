@@ -63,6 +63,9 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
         default="",
     )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
+    with_organization_paths = serializers.BooleanField(
+        help_text="是否返回用户所属部门路径", required=False, default=False
+    )
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -74,9 +77,19 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="数据源用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+    def get_organization_paths(self, obj: TenantUser) -> List[str]:
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_paths"]:
+            data.pop("organization_paths")
+        return data
 
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
@@ -90,6 +103,9 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
         default="",
     )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
+    with_organization_paths = serializers.BooleanField(
+        help_text="是否返回用户所属部门路径", required=False, default=False
+    )
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
@@ -114,6 +130,25 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+    def get_organization_paths(self, obj: TenantUser) -> List[str]:
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_paths"]:
+            data.pop("organization_paths")
+        return data
+
+
+class VirtualUserListOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
