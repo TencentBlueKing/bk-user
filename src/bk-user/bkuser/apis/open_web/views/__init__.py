@@ -15,18 +15,30 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from .departments import (
+    TenantDepartmentChildrenListApi,
+    TenantDepartmentLookupApi,
+    TenantDepartmentSearchApi,
+    TenantDepartmentUserListApi,
+)
 from .tenants import DataSourceOwnerTenantListApi
 from .users import (
     TenantUserDisplayInfoListApi,
     TenantUserDisplayInfoRetrieveApi,
     TenantUserLookupApi,
     TenantUserSearchApi,
+    VirtualUserListApi,
 )
 
 __all__ = [
     "DataSourceOwnerTenantListApi",
+    "TenantDepartmentSearchApi",
+    "TenantDepartmentLookupApi",
     "TenantUserDisplayInfoRetrieveApi",
     "TenantUserDisplayInfoListApi",
     "TenantUserSearchApi",
     "TenantUserLookupApi",
+    "TenantDepartmentChildrenListApi",
+    "TenantDepartmentUserListApi",
+    "VirtualUserListApi",
 ]
