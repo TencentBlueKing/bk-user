@@ -87,4 +87,4 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
-        return self.context["org_path_map"].get(obj.data_source_department.id, "")
+        return self.context["org_path_map"].get(obj.data_source_department_id, "")
