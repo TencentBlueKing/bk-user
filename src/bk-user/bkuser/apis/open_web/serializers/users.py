@@ -63,6 +63,9 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
         default="",
     )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
+    with_organization_paths = serializers.BooleanField(
+        help_text="是否返回用户所属部门路径", required=False, default=False
+    )
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -80,7 +83,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"][obj.data_source_user_id]
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
@@ -94,6 +97,9 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
         default="",
     )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
+    with_organization_paths = serializers.BooleanField(
+        help_text="是否返回用户所属部门路径", required=False, default=False
+    )
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
@@ -124,7 +130,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"][obj.data_source_user_id]
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
 
 class VirtualUserListOutputSLZ(serializers.Serializer):

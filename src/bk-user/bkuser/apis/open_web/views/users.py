@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import operator
 from functools import reduce
-from typing import List
+from typing import Dict, List
 
 from django.conf import settings
 from django.db.models import Q, QuerySet
@@ -125,7 +125,14 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = settings.SELECTOR_SEARCH_API_LIMIT
 
-    def get_queryset(self) -> QuerySet[TenantUser]:
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="search_user",
+        operation_description="搜索用户",
+        query_serializer=TenantUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -156,23 +163,17 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 "data_source_user__full_name",
                 "data_source__type",
                 "data_source__owner_tenant_id",
-            )
+            )[: self.search_limit]
         )
 
-        return queryset[: self.search_limit]
+        # 若指定了 with_organization_paths，则返回用户的组织路径
+        with_organization_paths = data["with_organization_paths"]
+        context: Dict[str, Dict] = {"org_path_map": {}}
+        if with_organization_paths:
+            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
+            context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
 
-    @swagger_auto_schema(
-        tags=["open_web.user"],
-        operation_id="search_user",
-        operation_description="搜索用户",
-        query_serializer=TenantUserSearchInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        tenant_users = self.get_queryset()
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
-        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
-        return Response(TenantUserSearchOutputSLZ(tenant_users, context=context, many=True).data)
+        return Response(TenantUserSearchOutputSLZ(queryset, context=context, many=True).data)
 
 
 class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
@@ -182,7 +183,24 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     pagination_class = None
 
-    def get_queryset(self) -> QuerySet[TenantUser]:
+    @staticmethod
+    def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
+        if field == "full_name":
+            return Q(data_source_user__full_name__in=lookups)
+
+        if field == "bk_username":
+            return Q(id__in=lookups)
+
+        return Q(data_source_user__username__in=lookups)
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="batch_lookup_user",
+        operation_description="批量查询用户",
+        query_serializer=TenantUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
         slz = TenantUserLookupInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -204,7 +222,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
 
-        return (
+        queryset = (
             TenantUser.objects.filter(*filter_args)
             .select_related("data_source_user", "data_source")
             .only(
@@ -216,28 +234,13 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             )
         )
 
-    @staticmethod
-    def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
-        if field == "full_name":
-            return Q(data_source_user__full_name__in=lookups)
-
-        if field == "bk_username":
-            return Q(id__in=lookups)
-
-        return Q(data_source_user__username__in=lookups)
-
-    @swagger_auto_schema(
-        tags=["open_web.user"],
-        operation_id="batch_lookup_user",
-        operation_description="批量查询用户",
-        query_serializer=TenantUserLookupInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        tenant_users = self.get_queryset()
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
-        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
-        return Response(TenantUserLookupOutputSLZ(tenant_users, context=context, many=True).data)
+        # 若指定了 with_organization_paths，则返回用户的组织路径
+        with_organization_paths = data["with_organization_paths"]
+        context: Dict[str, Dict] = {"org_path_map": {}}
+        if with_organization_paths:
+            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
+            context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
+        return Response(TenantUserLookupOutputSLZ(queryset, context=context, many=True).data)
 
 
 class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):

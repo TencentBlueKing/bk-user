@@ -112,7 +112,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["display_name"] == "baishier(白十二)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
-        assert resp.data[0]["organization_paths"] == ["公司/部门B/中心BA/小组BAA"]
+        assert resp.data[0]["organization_paths"] == []
 
     def test_with_login_name(self, api_client, random_tenant):
         lisi = TenantUser.objects.get(
@@ -122,7 +122,12 @@ class TestTenantUserSearchApi:
         )
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "lis", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+            data={
+                "keyword": "lis",
+                "data_source_type": "real",
+                "owner_tenant_id": random_tenant.id,
+                "with_organization_paths": True,
+            },
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -141,7 +146,12 @@ class TestTenantUserSearchApi:
         )
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "wang", "data_source_type": "real", "owner_tenant_id": collaboration_tenant.id},
+            data={
+                "keyword": "wang",
+                "data_source_type": "real",
+                "owner_tenant_id": collaboration_tenant.id,
+                "with_organization_paths": True,
+            },
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -157,7 +167,8 @@ class TestTenantUserSearchApi:
     def test_with_virtual_user(self, api_client, random_tenant):
         virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant_user.search"), data={"keyword": "zhan", "data_source_type": "virtual"}
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "zhan", "data_source_type": "virtual", "with_organization_paths": True},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -180,7 +191,9 @@ class TestTenantUserSearchApi:
         collab_zhangsan = TenantUser.objects.get(
             data_source_user__username="zhangsan", data_source__owner_tenant_id=collaboration_tenant.id
         )
-        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "zhang"})
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"), data={"keyword": "zhang", "with_organization_paths": True}
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 3
@@ -225,7 +238,8 @@ class TestTenantUserLookupApi:
         )
 
         resp = api_client.get(
-            reverse("open_web.tenant_user.lookup"), data={"lookups": "zhangsan,lisi", "lookup_fields": "login_name"}
+            reverse("open_web.tenant_user.lookup"),
+            data={"lookups": "zhangsan,lisi", "lookup_fields": "login_name", "with_organization_paths": True},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -276,11 +290,7 @@ class TestTenantUserLookupApi:
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
-        assert {p for t in resp.data for p in t["organization_paths"]} == {
-            "公司",
-            "公司/部门A/中心AA",
-            "公司/部门A",
-        }
+        assert {p for t in resp.data for p in t["organization_paths"]} == set()
 
     def test_with_collaborative_tenant(self, api_client, collaboration_tenant):
         lisi = TenantUser.objects.get(
@@ -300,6 +310,7 @@ class TestTenantUserLookupApi:
                 "lookup_fields": "login_name",
                 "owner_tenant_id": collaboration_tenant.id,
                 "data_source_type": "real",
+                "with_organization_paths": True,
             },
         )
 
@@ -356,6 +367,7 @@ class TestTenantUserLookupApi:
                 "lookup_fields": "bk_username,login_name",
                 "owner_tenant_id": random_tenant.id,
                 "data_source_type": "real",
+                "with_organization_paths": True,
             },
         )
 
@@ -389,6 +401,7 @@ class TestTenantUserLookupApi:
                 "lookup_fields": "bk_username,login_name,full_name",
                 "owner_tenant_id": random_tenant.id,
                 "data_source_type": "real",
+                "with_organization_paths": True,
             },
         )
 

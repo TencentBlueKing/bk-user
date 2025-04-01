@@ -4,18 +4,19 @@ Batch query the users (including collaborative users and virtual users)
 
 ### Parameters
 
-| Name             | Type   | Required | Description                                                                                                                                                                                                                 |
-|------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| lookups          | string | Yes      | Exact matching value (can be bk_username、login_name or full_name), multiple separated by separator, limit number is 100, maximum input length per value is 64                                                               |
-| lookup_fields    | string | Yes      | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`                                                                                             |
-| data_source_type | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                          |
-| owner_tenant_id  | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
+| Name                    | Type   | Required | Description                                                                                                                                                                                                                 |
+|-------------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| lookups                 | string | Yes      | Exact matching value (can be bk_username、login_name or full_name), multiple separated by separator, limit number is 100, maximum input length per value is 64                                                               |
+| lookup_fields           | string | Yes      | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`                                                                                             |
+| data_source_type        | string | No       | Data source type, optional values are `real` (corresponding to real users) and `virtual` (corresponding to virtual users). The default value is empty (query real & virtual users)                                          |
+| owner_tenant_id         | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
+| with_organization_paths | bool   | No       | Whether to return the organization paths of the user. The default value is `false`                                                                                                                                          |
 
 ### Request Example
 
 ```
 // URL Query Parameters
-lookups=zhangsan,lisi&lookup_fields=login_name,bk_username
+lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_paths=true
 ```
 
 ### Response Example for Status Code 200

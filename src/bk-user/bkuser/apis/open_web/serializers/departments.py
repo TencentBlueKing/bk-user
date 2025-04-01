@@ -26,7 +26,7 @@ from bkuser.common.serializers import StringArrayField
 
 
 class TenantDepartmentSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64)
     owner_tenant_id = serializers.CharField(help_text="所属租户 ID", required=False, allow_blank=True, default="")
 
 

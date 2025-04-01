@@ -6,7 +6,7 @@ Search departments (including collaborative departments). The search results wil
 
 | Name            | Type   | Required | Description                                                                                                                                                                                                                                       |
 |-----------------|--------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| keyword         | string | Yes      | Search keywords (you can enter the name of department)                                                                                                                                                                                            |
+| keyword         | string | Yes      | Search keywords (you can enter the name of department). The minimum input length is 1 and the maximum input length is 64                                                                                                                          |
 | owner_tenant_id | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to search the corresponding tenant departments. The default value is empty (search the departments of this tenant and the departments of the collaborative tenants) |
 
 ### Request Example

@@ -181,17 +181,16 @@ class TenantDepartmentHandler:
 class TenantOrgPathHandler:
     @staticmethod
     def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
-        """获取租户部门的组织路径信息"""
+        """获取部门的组织路径信息"""
 
         # 数据源部门 ID -> 组织路径
         org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
 
-        # 部门 ID -> 组织路径
         return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
     @staticmethod
     def get_user_organization_paths_map(data_source_user_ids: List[int]) -> dict[int, List[str]]:
-        """获取租户用户的组织路径信息"""
+        """获取用户的组织路径信息"""
 
         # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
         user_dept_id_map = defaultdict(list)
@@ -204,7 +203,7 @@ class TenantOrgPathHandler:
         # 数据源部门 ID -> 组织路径
         org_path_map = TenantOrgPathHandler._query_org_path(list(data_source_dept_ids), include_self=True)
 
-        # 用户 ID -> 组织路径列表
+        # 数据源用户 ID -> 组织路径列表
         return {
             user_id: [org_path_map[dept_id] for dept_id in user_dept_id_map[user_id] if dept_id in org_path_map]
             for user_id in data_source_user_ids
@@ -212,7 +211,7 @@ class TenantOrgPathHandler:
 
     @staticmethod
     def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
-        """构建部门 ID -> 组织路径映射"""
+        """构建数据源部门 ID -> 组织路径映射"""
         relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
             department_id__in=data_source_department_ids
         )
