@@ -72,9 +72,9 @@ urlpatterns = [
                     name="open_v3.tenant_department.user.list",
                 ),
                 path(
-                    "virtual-users/",
-                    views.VirtualUserListApi.as_view(),
-                    name="open_v3.virtual_user.list",
+                    "virtual-users/-/login_name_lookup/",
+                    views.VirtualUserLoginNameLookupApi.as_view(),
+                    name="open_v3.virtual_user.login_name_lookup",
                 ),
             ]
         ),

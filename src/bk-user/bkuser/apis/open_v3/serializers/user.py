@@ -102,11 +102,11 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
         return obj.phone_info[1]
 
 
-class VirtualUserListInputSLZ(serializers.Serializer):
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", required=False)
+class VirtualUserLoginNameLookupInputSLZ(serializers.Serializer):
+    login_names = StringArrayField(help_text="企业内用户唯一标识，多个使用逗号分隔", max_items=100)
 
 
-class VirtualUserListOutputSLZ(serializers.Serializer):
+class VirtualUserLoginNameLookupOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")

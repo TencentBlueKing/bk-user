@@ -35,8 +35,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
-    VirtualUserListInputSLZ,
-    VirtualUserListOutputSLZ,
+    VirtualUserLoginNameLookupInputSLZ,
+    VirtualUserLoginNameLookupOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -282,35 +282,36 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+class VirtualUserLoginNameLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    查询虚拟用户信息列表
+    根据 login_name 批量查询虚拟用户信息
     """
 
-    serializer_class = VirtualUserListOutputSLZ
+    pagination_class = None
+
+    serializer_class = VirtualUserLoginNameLookupOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = VirtualUserListInputSLZ(data=self.request.query_params)
+        slz = VirtualUserLoginNameLookupInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        filters = {"tenant_id": self.tenant_id, "data_source__type": DataSourceTypeEnum.VIRTUAL}
-
-        if login_name := data.get("login_name"):
-            filters["data_source_user__username"] = login_name
-
         return (
-            TenantUser.objects.filter(**filters)
+            TenantUser.objects.filter(
+                tenant_id=self.tenant_id,
+                data_source__type=DataSourceTypeEnum.VIRTUAL,
+                data_source_user__username__in=data["login_names"],
+            )
             .select_related("data_source_user")
             .only("id", "data_source_user__username", "data_source_user__full_name")
         )
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="list_virtual_user",
-        operation_description="查询虚拟用户信息列表",
-        query_serializer=VirtualUserListInputSLZ(),
-        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
+        operation_id="batch_login_name_lookup_virtual_user",
+        operation_description="根据 login_name 批量查询虚拟用户信息",
+        query_serializer=VirtualUserLoginNameLookupInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserLoginNameLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
