@@ -12,12 +12,12 @@
              {
                 "bk_username": "klzwge6k69ly0rjt",
                 "login_name": "virtual_user_1",
-                "display_name": "虚拟用户1"
+                "display_name": "virtual_user_1(虚拟用户1)"
              },
              {
                 "bk_username": "soxteugr5ymfi3w1",
                 "login_name": "virtual_user_2",
-                "display_name": "虚拟用户2"
+                "display_name": "virtual_user_2(虚拟用户2)"
             }
         ]
     }
