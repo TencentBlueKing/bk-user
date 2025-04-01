@@ -304,10 +304,10 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
             "tenant_id": self.tenant_id,
         }
 
-        if data["lookup_field"] == "bk_username":
-            filter_args["id__in"] = data["lookups"]
-        else:
+        if data["lookup_field"] == "login_name":
             filter_args["data_source_user__username__in"] = data["lookups"]
+        else:
+            filter_args["id__in"] = data["lookups"]
 
         return (
             TenantUser.objects.filter(**filter_args)
