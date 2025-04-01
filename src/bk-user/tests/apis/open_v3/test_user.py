@@ -249,7 +249,7 @@ class TestVirtualUserLoginNameLookupApi:
         resp = api_client.get(reverse("open_v3.virtual_user.login_name_lookup"), data={"login_names": "zhangsan,lisi"})
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
-        assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
 
     def test_with_no_login_names(self, api_client):
