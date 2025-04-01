@@ -42,7 +42,7 @@ class TestTenantUserContactInfoListApi:
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["tenant_id"] for t in resp.data} == {default_tenant.id, default_tenant.id}
-        assert {t["display_name"] for t in resp.data} == {"张三", "李四"}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
         assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
         assert {t["phone_country_code"] for t in resp.data} == {"86"}
@@ -56,7 +56,7 @@ class TestTenantUserContactInfoListApi:
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == "zhangsan"
         assert resp.data[0]["tenant_id"] == default_tenant.id
-        assert resp.data[0]["display_name"] == "张三"
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"
         assert resp.data[0]["phone"] == "13512345671"
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"
