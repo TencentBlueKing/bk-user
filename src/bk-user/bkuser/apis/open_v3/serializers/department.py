@@ -78,10 +78,13 @@ class TenantDepartmentLookupInputSLZ(serializers.Serializer):
         help_text="部门唯一标识，多个使用逗号分隔",
         max_items=50,
     )
-    with_org_path = serializers.BooleanField(help_text="是否返回组织路径", required=False, default=False)
+    with_organization_path = serializers.BooleanField(help_text="是否返回组织路径", required=False, default=False)
 
 
 class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
-    name = serializers.CharField(help_text="部门名称")
-    organization_path = serializers.CharField(help_text="组织路径", required=False)
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    organization_path = serializers.SerializerMethodField(help_text="组织路径")
+
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.data_source_department.id, "")

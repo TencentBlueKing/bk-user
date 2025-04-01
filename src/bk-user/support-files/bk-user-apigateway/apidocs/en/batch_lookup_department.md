@@ -4,16 +4,16 @@ Batch query the information of the departments
 
 ### Parameters
 
-| Name           | Type   | Required | Description                                                                      |
-|----------------|--------|----------|----------------------------------------------------------------------------------|
-| department_ids | string | Yes      | Unique ID of the department, multiple separated by separator, limit number is 50 |
-| with_org_path  | bool   | No       | Whether to return the organizational path of the department, default is `false`  |
+| Name                   | Type   | Required | Description                                                                      |
+|------------------------|--------|----------|----------------------------------------------------------------------------------|
+| department_ids         | string | Yes      | Unique ID of the department, multiple separated by separator, limit number is 50 |
+| with_organization_path | bool   | No       | Whether to return the organizational path of the department, default is `false`  |
 
 ### Request Example
 
 ```
 // URL Query Parameters
-department_ids=4,5&with_org_path=true
+department_ids=4,5&with_organization_path=true
 ```
 
 ### Response Example for Status Code 200

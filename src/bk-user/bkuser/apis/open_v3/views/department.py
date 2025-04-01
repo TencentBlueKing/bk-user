@@ -204,7 +204,7 @@ class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
-        operation_id="lookup_department",
+        operation_id="batch_lookup_department",
         operation_description="批量查询部门信息",
         query_serializer=TenantDepartmentLookupInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentLookupOutputSLZ(many=True)},
@@ -214,25 +214,16 @@ class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_depts = TenantDepartment.objects.select_related("data_source_department").filter(
+        queryset = TenantDepartment.objects.select_related("data_source_department").filter(
             id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
         )
 
-        with_org_path = data["with_org_path"]
+        with_organization_path = data["with_organization_path"]
         # 根据 with_org_path 需要，获取部门的组织路径
-        org_path_map: Dict[int, str] = {}
-        if with_org_path:
+        context: Dict[str, Dict] = {"org_path_map": {}}
+        if with_organization_path:
             # 根据数据源部门 ID 获取部门的组织路径
-            data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
-            org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)
+            data_source_department_ids = [dept.data_source_department_id for dept in queryset]
+            context = {"org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)}
 
-        # 组装数据
-        infos = []
-        for dept in tenant_depts:
-            info = {"id": dept.id, "name": dept.data_source_department.name}
-            if with_org_path:
-                info["organization_path"] = org_path_map[dept.data_source_department_id]
-
-            infos.append(info)
-
-        return Response(TenantDepartmentLookupOutputSLZ(infos, many=True).data)
+        return Response(TenantDepartmentLookupOutputSLZ(queryset, context=context, many=True).data)

@@ -237,6 +237,7 @@ class TestTenantDepartmentLookupApi:
         assert len(resp.data) == 2
         assert {t["id"] for t in resp.data} == {dept_a.id, center_aa.id}
         assert {t["name"] for t in resp.data} == {"部门A", "中心AA"}
+        assert {t["organization_path"] for t in resp.data} == {""}
 
     def test_with_org_path(self, api_client, random_tenant):
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
@@ -244,7 +245,7 @@ class TestTenantDepartmentLookupApi:
 
         resp = api_client.get(
             reverse("open_v3.tenant_department.lookup"),
-            data={"department_ids": ",".join([str(dept_a.id), str(center_aa.id)]), "with_org_path": True},
+            data={"department_ids": ",".join([str(dept_a.id), str(center_aa.id)]), "with_organization_path": True},
         )
 
         assert resp.status_code == status.HTTP_200_OK

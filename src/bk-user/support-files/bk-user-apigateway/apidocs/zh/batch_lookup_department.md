@@ -4,16 +4,16 @@
 
 ### 输入参数
 
-| 参数名称           | 参数类型   | 必选 | 描述                      |
-|----------------|--------|----|-------------------------|
-| department_ids | string | 是  | 部门 ID，多个以逗号分隔，限制数量为 50  |
-| with_org_path  | bool   | 否  | 是否返回部门的组织路径，默认为 `false` |
+| 参数名称                   | 参数类型   | 必选 | 描述                      |
+|------------------------|--------|----|-------------------------|
+| department_ids         | string | 是  | 部门 ID，多个以逗号分隔，限制数量为 50  |
+| with_organization_path | bool   | 否  | 是否返回部门的组织路径，默认为 `false` |
 
 ### 请求示例
 
 ```
 // URL Query 参数
-department_ids=4,5&with_org_path=true
+department_ids=4,5&with_organization_path=true
 ```
 
 ### 状态码 200 的响应示例

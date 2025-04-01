@@ -284,7 +284,7 @@ paths:
 
   /api/v3/open/tenant/departments/-/lookup/:
     get:
-      operationId: lookup_department
+      operationId: batch_lookup_department
       description: 批量查询部门信息
       tags: []
       responses:
