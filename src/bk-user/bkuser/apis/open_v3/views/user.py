@@ -35,6 +35,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    VirtualUserLookupInputSLZ,
+    VirtualUserLookupOutputSLZ,
 )
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
@@ -279,6 +281,50 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询虚拟用户信息
+    """
+
+    pagination_class = None
+
+    serializer_class = VirtualUserLookupOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = VirtualUserLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        filter_args = {
+            "tenant_id": self.tenant_id,
+        }
+
+        if data["lookup_field"] == "login_name":
+            filter_args["data_source_user__username__in"] = data["lookups"]
+        else:
+            filter_args["id__in"] = data["lookups"]
+
+        return (
+            TenantUser.objects.filter(**filter_args)
+            .select_related("data_source_user")
+            .only(
+                "id",
+                "data_source_user__username",
+                "data_source_user__full_name",
+            )
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="batch_lookup_virtual_user",
+        operation_description="批量查询虚拟用户信息",
+        query_serializer=VirtualUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
