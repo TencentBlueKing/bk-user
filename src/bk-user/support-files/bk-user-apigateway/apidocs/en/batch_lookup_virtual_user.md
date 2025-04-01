@@ -1,18 +1,19 @@
 ### Description
 
-Batch query virtual user's information by login_names
+Batch query virtual user's information
 
 ### Parameters
 
-| Name        | Type   | Required | Description                                                                                                     |
-|-------------|--------|----------|-----------------------------------------------------------------------------------------------------------------|
-| login_names | string | Yes      | Unique ID of the user within the enterprise, multiple identifiers are separated by commas, and the limit is 100 |
+| Name         | Type   | Required | Description                                                                                                                                     |
+|--------------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| lookups      | string | Yes      | Exact lookup values (can be bk_username、login_name), multiple separated by separator, limit number is 100, maximum input length per value is 64 |
+| lookup_field | string | Yes      | Lookup field, can be selected from the value of `bk_username`, `login_name`                                                                     |
 
 ### Request Example
 
 ```
 // URL Query Parameter
-login_names=zhangsan,lisi
+lookups=zhangsan,lisi&lookup_field=login_name
 ```
 
 ### Response Example for Status Code 200

@@ -242,16 +242,33 @@ class TestTenantUserSensitiveInfoListApi:
 
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
-class TestVirtualUserLoginNameLookupApi:
-    def test_standard(self, api_client, random_tenant):
+class TestVirtualUserLookupApi:
+    def test_with_login_names(self, api_client, random_tenant):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
-        resp = api_client.get(reverse("open_v3.virtual_user.login_name_lookup"), data={"login_names": "zhangsan,lisi"})
+        resp = api_client.get(
+            reverse("open_v3.virtual_user.lookup"), data={"lookups": "zhangsan,lisi", "lookup_field": "login_name"}
+        )
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
 
-    def test_with_no_login_names(self, api_client):
-        resp = api_client.get(reverse("open_v3.virtual_user.login_name_lookup"), data={"login_names": ""})
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+    def test_with_bk_usernames(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.virtual_user.lookup"),
+            data={"lookups": ",".join([zhangsan.id, lisi.id]), "lookup_field": "bk_username"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+
+    def test_with_not_match(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("open_v3.virtual_user.lookup"), data={"lookups": "not_exist", "lookup_field": "login_name"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0

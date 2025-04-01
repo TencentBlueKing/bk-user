@@ -35,10 +35,9 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
-    VirtualUserLoginNameLookupInputSLZ,
-    VirtualUserLoginNameLookupOutputSLZ,
+    VirtualUserLookupInputSLZ,
+    VirtualUserLookupOutputSLZ,
 )
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
@@ -287,36 +286,45 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class VirtualUserLoginNameLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    根据 login_name 批量查询虚拟用户信息
+    批量查询虚拟用户信息
     """
 
     pagination_class = None
 
-    serializer_class = VirtualUserLoginNameLookupOutputSLZ
+    serializer_class = VirtualUserLookupOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = VirtualUserLoginNameLookupInputSLZ(data=self.request.query_params)
+        slz = VirtualUserLookupInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        filter_args = {
+            "tenant_id": self.tenant_id,
+        }
+
+        if data["lookup_field"] == "bk_username":
+            filter_args["id__in"] = data["lookups"]
+        else:
+            filter_args["data_source_user__username__in"] = data["lookups"]
+
         return (
-            TenantUser.objects.filter(
-                tenant_id=self.tenant_id,
-                data_source__type=DataSourceTypeEnum.VIRTUAL,
-                data_source_user__username__in=data["login_names"],
-            )
+            TenantUser.objects.filter(**filter_args)
             .select_related("data_source_user")
-            .only("id", "data_source_user__username", "data_source_user__full_name")
+            .only(
+                "id",
+                "data_source_user__username",
+                "data_source_user__full_name",
+            )
         )
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="batch_login_name_lookup_virtual_user",
-        operation_description="根据 login_name 批量查询虚拟用户信息",
-        query_serializer=VirtualUserLoginNameLookupInputSLZ(),
-        responses={status.HTTP_200_OK: VirtualUserLoginNameLookupOutputSLZ(many=True)},
+        operation_id="batch_lookup_virtual_user",
+        operation_description="批量查询虚拟用户信息",
+        query_serializer=VirtualUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
