@@ -166,10 +166,9 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             )[: self.search_limit]
         )
 
-        # 若指定了 with_organization_paths，则返回用户的组织路径
-        with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Dict] = {"org_path_map": {}}
-        if with_organization_paths:
+        # 若指定了 with_organization_paths，则返回用户的组织路径
+        if data["with_organization_paths"]:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
 
@@ -234,10 +233,9 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             )
         )
 
-        # 若指定了 with_organization_paths，则返回用户的组织路径
-        with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Dict] = {"org_path_map": {}}
-        if with_organization_paths:
+        # 若指定了 with_organization_paths，则返回用户的组织路径
+        if data["with_organization_paths"]:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
         return Response(TenantUserLookupOutputSLZ(queryset, context=context, many=True).data)
