@@ -317,7 +317,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: true
+        allowApplyPermission: false
         matchSubpath: false
         backend:
           name: default
@@ -329,5 +329,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: true
+          resourcePermissionRequired: false
         descriptionEn: Batch query the virtual user's information
