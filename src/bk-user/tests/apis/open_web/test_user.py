@@ -112,7 +112,6 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["display_name"] == "baishier(白十二)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
-        assert resp.data[0]["organization_paths"] == []
 
     def test_with_login_name(self, api_client, random_tenant):
         lisi = TenantUser.objects.get(
@@ -290,7 +289,6 @@ class TestTenantUserLookupApi:
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
-        assert {p for t in resp.data for p in t["organization_paths"]} == set()
 
     def test_with_collaborative_tenant(self, api_client, collaboration_tenant):
         lisi = TenantUser.objects.get(
@@ -338,6 +336,7 @@ class TestTenantUserLookupApi:
                 "lookup_fields": "login_name",
                 "owner_tenant_id": random_tenant.id,
                 "data_source_type": "virtual",
+                "with_organization_paths": True,
             },
         )
 

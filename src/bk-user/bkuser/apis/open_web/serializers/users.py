@@ -85,6 +85,12 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_paths"]:
+            data.pop("organization_paths")
+        return data
+
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
@@ -131,6 +137,12 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return self.context["org_path_map"].get(obj.data_source_user_id, [])
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_paths"]:
+            data.pop("organization_paths")
+        return data
 
 
 class VirtualUserListOutputSLZ(serializers.Serializer):

@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import operator
 from functools import reduce
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.db.models import Q, QuerySet
@@ -166,9 +166,10 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             )[: self.search_limit]
         )
 
-        context: Dict[str, Dict] = {"org_path_map": {}}
+        with_organization_paths = data["with_organization_paths"]
+        context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
         # 若指定了 with_organization_paths，则返回用户的组织路径
-        if data["with_organization_paths"]:
+        if with_organization_paths:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
 
@@ -233,11 +234,12 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             )
         )
 
-        context: Dict[str, Dict] = {"org_path_map": {}}
+        with_organization_paths = data["with_organization_paths"]
+        context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
         # 若指定了 with_organization_paths，则返回用户的组织路径
-        if data["with_organization_paths"]:
+        if with_organization_paths:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
-            context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
+            context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
         return Response(TenantUserLookupOutputSLZ(queryset, context=context, many=True).data)
 
 

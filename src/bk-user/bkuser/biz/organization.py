@@ -154,7 +154,7 @@ class TenantDepartmentHandler:
         }
 
     @staticmethod
-    def get_has_child_map(data_source_department_ids: List[int]) -> dict[int, bool]:
+    def get_has_child_map(data_source_department_ids: List[int]) -> Dict[int, bool]:
         """获取部门是否有子部门的信息"""
         # TODO: 这里存在性能问题，后续添加缓存优化
         dept_has_child_ids = set(
@@ -166,7 +166,7 @@ class TenantDepartmentHandler:
         return {dept_id: dept_id in dept_has_child_ids for dept_id in data_source_department_ids}
 
     @staticmethod
-    def get_has_user_map(data_source_department_ids: List[int]) -> dict[int, bool]:
+    def get_has_user_map(data_source_department_ids: List[int]) -> Dict[int, bool]:
         """获取部门是否有所属用户的信息"""
         # TODO: 这里存在性能问题，后续添加缓存优化
         dept_has_user_ids = set(
@@ -189,7 +189,7 @@ class TenantOrgPathHandler:
         return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
     @staticmethod
-    def get_user_organization_paths_map(data_source_user_ids: List[int]) -> dict[int, List[str]]:
+    def get_user_organization_paths_map(data_source_user_ids: List[int]) -> Dict[int, List[str]]:
         """获取用户的组织路径信息"""
 
         # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
