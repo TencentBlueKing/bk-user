@@ -71,6 +71,11 @@ urlpatterns = [
                     views.TenantDepartmentUserListApi.as_view(),
                     name="open_v3.tenant_department.user.list",
                 ),
+                path(
+                    "departments/-/lookup/",
+                    views.TenantDepartmentLookupListApi.as_view(),
+                    name="open_v3.tenant_department.lookup",
+                ),
             ]
         ),
     ),
