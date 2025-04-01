@@ -88,3 +88,9 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"].get(obj.data_source_department_id, "")
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context["with_organization_path"]:
+            data.pop("organization_path")
+        return data

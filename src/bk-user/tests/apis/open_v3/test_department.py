@@ -237,7 +237,6 @@ class TestTenantDepartmentLookupApi:
         assert len(resp.data) == 2
         assert {t["id"] for t in resp.data} == {dept_a.id, center_aa.id}
         assert {t["name"] for t in resp.data} == {"部门A", "中心AA"}
-        assert {t["organization_path"] for t in resp.data} == {""}
 
     def test_with_org_path(self, api_client, random_tenant):
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")

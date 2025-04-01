@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Dict
+from typing import Any, Dict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -218,11 +218,12 @@ class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
             id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
         )
 
-        context: Dict[str, Dict] = {"org_path_map": {}}
+        with_organization_path = data["with_organization_path"]
+        context: Dict[str, Any] = {"with_organization_path": with_organization_path, "org_path_map": {}}
         # 若指定 with_organization_path 参数，则需要获取部门的组织路径
-        if data["with_organization_path"]:
+        if with_organization_path:
             # 根据数据源部门 ID 获取部门的组织路径
             data_source_department_ids = [dept.data_source_department_id for dept in queryset]
-            context = {"org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)}
+            context["org_path_map"] = TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)
 
         return Response(TenantDepartmentLookupOutputSLZ(queryset, context=context, many=True).data)
