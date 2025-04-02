@@ -87,6 +87,7 @@ class TenantPropertyLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         tags=["open_v3.tenant"],
         operation_id="batch_lookup_tenant_property",
         operation_description="批量查询租户的公共属性",
+        query_serializer=TenantPropertyLookupInputSLZ(),
         responses={status.HTTP_200_OK: TenantPropertyLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
