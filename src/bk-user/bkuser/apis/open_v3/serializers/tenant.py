@@ -30,8 +30,8 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 
 class TenantPropertyListOutputSLZ(serializers.Serializer):
-    key = serializers.CharField(help_text="变量名")
-    value = serializers.CharField(help_text="变量值")
+    key = serializers.CharField(help_text="租户公共属性名")
+    value = serializers.CharField(help_text="租户公共属性值")
 
 
 class TenantPropertyLookupInputSLZ(serializers.Serializer):
@@ -49,5 +49,5 @@ class TenantPropertyLookupInputSLZ(serializers.Serializer):
 
 
 class TenantPropertyLookupOutputSLZ(serializers.Serializer):
-    key = serializers.CharField(help_text="变量名")
-    value = serializers.CharField(help_text="变量值")
+    key = serializers.CharField(help_text="租户公共属性名")
+    value = serializers.CharField(help_text="租户公共属性值")

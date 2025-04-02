@@ -49,7 +49,7 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
 
 class TenantPropertyListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    获取租户的公共变量
+    获取租户的公共属性
     """
 
     serializer_class = TenantPropertyListOutputSLZ
