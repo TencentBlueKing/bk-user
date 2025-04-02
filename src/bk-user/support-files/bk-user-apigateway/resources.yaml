@@ -259,7 +259,7 @@ paths:
 
   /api/v3/open/tenant/users/-/sensitive-infos/:
     get:
-      operationId: list_user_sensitive_info
+      operationId: batch_query_user_sensitive_info
       description: 批量查询用户敏感信息
       tags: []
       responses:
