@@ -43,4 +43,4 @@ grant_permissions:
  - bk_app_code: "bk-cmsi"
    grant_dimension: "resource"
    resource_names:
-     - "list_user_sensitive_info"
+     - "batch_query_user_sensitive_info"
