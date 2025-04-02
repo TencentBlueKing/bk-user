@@ -427,7 +427,7 @@ onMounted(() => {
     .then((res) => {
       if (res.data.role === 'tenant_manager') {
         router.push({ name: 'organization' });
-      } else {
+      } else if (res.data.role === 'super_manager') {
         fetchTenantsList();
       }
     })
