@@ -16,12 +16,18 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apis.open_v3.serializers.tenant import TenantListOutputSLZ
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apis.open_v3.serializers.tenant import (
+    TenantListOutputSLZ,
+    TenantPropertyListOutputSLZ,
+    TenantPropertyLookupInputSLZ,
+    TenantPropertyLookupOutputSLZ,
+)
+from bkuser.apps.tenant.models import Tenant, TenantProperty
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,52 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_id="list_tenant",
         operation_description="获取租户列表",
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantPropertyListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取租户的公共变量
+    """
+
+    serializer_class = TenantPropertyListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantProperty]:
+        return TenantProperty.objects.filter(tenant_id=self.tenant_id)
+
+    @swagger_auto_schema(
+        tags=["open_v3.tenant"],
+        operation_id="list_tenant_property.md",
+        operation_description="获取租户的公共属性",
+        responses={status.HTTP_200_OK: TenantPropertyListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantPropertyLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询租户公共属性
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantPropertyLookupOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantProperty]:
+        slz = TenantPropertyLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return TenantProperty.objects.filter(tenant_id=self.tenant_id, key__in=data["lookups"])
+
+    @swagger_auto_schema(
+        tags=["open_v3.tenant"],
+        operation_id="batch_lookup_tenant_property",
+        operation_description="批量查询租户的公共属性",
+        responses={status.HTTP_200_OK: TenantPropertyLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
