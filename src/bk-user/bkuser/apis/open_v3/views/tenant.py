@@ -59,7 +59,7 @@ class TenantPropertyListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.tenant"],
-        operation_id="list_tenant_property.md",
+        operation_id="list_tenant_property",
         operation_description="获取租户的公共属性",
         responses={status.HTTP_200_OK: TenantPropertyListOutputSLZ(many=True)},
     )
