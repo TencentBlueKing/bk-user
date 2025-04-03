@@ -46,6 +46,12 @@ class Tenant(AuditedModel):
     class Meta:
         ordering = ["created_at"]
 
+    def set_property(self, key, value):
+        key_property, _ = self.properties.get_or_create(key=key)
+        if key_property.value != value:
+            key_property.value = value
+            key_property.save()
+
 
 class TenantUserManager(models.Manager):
     """TenantUser DB 模型管理器"""

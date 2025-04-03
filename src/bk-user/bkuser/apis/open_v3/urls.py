@@ -82,11 +82,6 @@ urlpatterns = [
                     name="open_v3.virtual_user.lookup",
                 ),
                 path(
-                    "properties/",
-                    views.TenantPropertyListApi.as_view(),
-                    name="open_v3.tenant_property.list",
-                ),
-                path(
                     "properties/-/lookup/",
                     views.TenantPropertyLookupApi.as_view(),
                     name="open_v3.tenant_property.lookup",

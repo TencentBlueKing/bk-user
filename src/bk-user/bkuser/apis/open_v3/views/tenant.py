@@ -23,7 +23,6 @@ from rest_framework import generics, status
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.tenant import (
     TenantListOutputSLZ,
-    TenantPropertyListOutputSLZ,
     TenantPropertyLookupInputSLZ,
     TenantPropertyLookupOutputSLZ,
 )
@@ -47,26 +46,6 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantPropertyListApi(OpenApiCommonMixin, generics.ListAPIView):
-    """
-    获取租户的公共属性
-    """
-
-    serializer_class = TenantPropertyListOutputSLZ
-
-    def get_queryset(self) -> QuerySet[TenantProperty]:
-        return TenantProperty.objects.filter(tenant_id=self.tenant_id)
-
-    @swagger_auto_schema(
-        tags=["open_v3.tenant"],
-        operation_id="list_tenant_property",
-        operation_description="获取租户的公共属性",
-        responses={status.HTTP_200_OK: TenantPropertyListOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
 class TenantPropertyLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     批量查询租户公共属性
@@ -81,7 +60,9 @@ class TenantPropertyLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        return TenantProperty.objects.filter(tenant_id=self.tenant_id, key__in=data["lookups"])
+        tenant = Tenant.objects.get(id=self.tenant_id)
+
+        return tenant.properties.filter(key__in=data["lookups"])
 
     @swagger_auto_schema(
         tags=["open_v3.tenant"],

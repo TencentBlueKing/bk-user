@@ -30,15 +30,6 @@ class TestTenantListApi:
         assert set(resp.data[0].keys()) == {"id", "name", "status"}
 
 
-class TestTenantPropertyListApi:
-    def test_standard(self, api_client, tenant_property):
-        resp = api_client.get(reverse("open_v3.tenant_property.list"))
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert {t["key"] for t in resp.data["results"]} == {"key_1", "key_2"}
-        assert {t["value"] for t in resp.data["results"]} == {"value_1", "value_2"}
-
-
 class TestTenantPropertyLookupApi:
     def test_standard(self, api_client, tenant_property):
         resp = api_client.get(reverse("open_v3.tenant_property.lookup"), data={"lookups": "key_1,key_2"})

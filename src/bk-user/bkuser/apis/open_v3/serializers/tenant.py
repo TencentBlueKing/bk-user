@@ -29,11 +29,6 @@ class TenantListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
 
 
-class TenantPropertyListOutputSLZ(serializers.Serializer):
-    key = serializers.CharField(help_text="租户公共属性名")
-    value = serializers.CharField(help_text="租户公共属性值")
-
-
 class TenantPropertyLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="租户公共属性名, 多个使用逗号分隔", max_items=100)
 
