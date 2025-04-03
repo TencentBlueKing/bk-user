@@ -289,3 +289,14 @@ class TenantDepartmentIDRecord(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "data_source", "code")]
+
+
+class TenantCommonVariable(TimestampedModel):
+    """租户公共变量"""
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
+    name = models.CharField("变量名", max_length=64)
+    value = models.CharField("变量值", max_length=255)
+
+    class Meta:
+        unique_together = [("tenant", "name")]

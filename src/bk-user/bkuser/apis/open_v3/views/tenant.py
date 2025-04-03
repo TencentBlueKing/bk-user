@@ -16,12 +16,16 @@
 # to the current version of the project delivered to anyone in the future.
 import logging
 
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apis.open_v3.serializers.tenant import TenantListOutputSLZ
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apis.open_v3.serializers.tenant import (
+    TenantCommonVariableListOutputSLZ,
+    TenantListOutputSLZ,
+)
+from bkuser.apps.tenant.models import Tenant, TenantCommonVariable
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,28 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_id="list_tenant",
         operation_description="获取租户列表",
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantCommonVariableListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取租户的公共变量
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantCommonVariableListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantCommonVariable]:
+        return TenantCommonVariable.objects.filter(tenant_id=self.tenant_id)
+
+    @swagger_auto_schema(
+        tags=["open_v3.tenant"],
+        operation_id="list_common_variable",
+        operation_description="查询租户公共变量信息",
+        responses={status.HTTP_200_OK: TenantCommonVariableListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
