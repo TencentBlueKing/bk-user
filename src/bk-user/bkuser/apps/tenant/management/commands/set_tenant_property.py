@@ -46,4 +46,4 @@ class Command(BaseCommand):
         tenant = Tenant.objects.get(id=tenant_id)
         tenant.set_property(key, value)
 
-        self.stdout.write(f"Set tenant {tenant_id} property {key} = {value} successfully")
+        self.stdout.write(f"Set tenant {tenant_id} property {key} : {value} successfully")

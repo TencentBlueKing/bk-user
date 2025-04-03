@@ -45,6 +45,6 @@ class Command(BaseCommand):
         deleted_count, _ = tenant.properties.filter(key=key).delete()
 
         if deleted_count == 0:
-            raise ValueError(f"Key {key} is not exist in tenant {tenant.id} properties")
+            raise ValueError(f"Key {key} is not exist in tenant {tenant_id} properties")
 
-        self.stdout.write(f"Key {key} deleted from tenant {tenant.id} properties")
+        self.stdout.write(f"Key {key} deleted from tenant {tenant_id} properties")
