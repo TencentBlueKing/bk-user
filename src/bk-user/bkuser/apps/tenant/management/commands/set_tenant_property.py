@@ -33,7 +33,7 @@ class Command(BaseCommand):
     @staticmethod
     def _check_tenant(tenant_id: str):
         if not Tenant.objects.filter(id=tenant_id).exists():
-            raise ValueError(f"Tenant {tenant_id} does not exist")
+            raise ValueError(f"Tenant {tenant_id} is not existed")
 
     def handle(self, *args, **options):
         tenant_id = options["tenant_id"]

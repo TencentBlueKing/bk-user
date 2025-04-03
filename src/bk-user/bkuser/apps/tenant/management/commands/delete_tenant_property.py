@@ -33,7 +33,7 @@ class Command(BaseCommand):
     @staticmethod
     def _check_tenant(tenant_id: str):
         if not Tenant.objects.filter(id=tenant_id).exists():
-            raise ValueError(f"Tenant {tenant_id} does not exist")
+            raise ValueError(f"Tenant {tenant_id} is not existed")
 
     def handle(self, *args, **options):
         tenant_id = options["tenant_id"]
@@ -45,6 +45,6 @@ class Command(BaseCommand):
         deleted_count, _ = tenant.properties.filter(key=key).delete()
 
         if deleted_count == 0:
-            raise ValueError(f"Key {key} is not exist in tenant {tenant_id} properties")
+            raise ValueError(f"Key {key} is not existed in tenant {tenant_id} properties")
 
-        self.stdout.write(f"Key {key} deleted from tenant {tenant_id} properties")
+        self.stdout.write(f"Key {key} has been deleted from tenant {tenant_id} properties")
