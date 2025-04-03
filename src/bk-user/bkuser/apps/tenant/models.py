@@ -46,12 +46,6 @@ class Tenant(AuditedModel):
     class Meta:
         ordering = ["created_at"]
 
-    def set_property(self, key, value):
-        key_property, _ = self.properties.get_or_create(key=key)
-        if key_property.value != value:
-            key_property.value = value
-            key_property.save()
-
 
 class TenantUserManager(models.Manager):
     """TenantUser DB 模型管理器"""
@@ -297,15 +291,12 @@ class TenantDepartmentIDRecord(TimestampedModel):
         unique_together = [("tenant", "data_source", "code")]
 
 
-class TenantProperty(TimestampedModel):
-    """租户公共属性"""
+class TenantCommonVariable(TimestampedModel):
+    """租户公共变量"""
 
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False, related_name="properties")
-    key = models.CharField("属性名称", max_length=255)
-    value = models.CharField("属性值", max_length=255)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
+    name = models.CharField("变量名", max_length=64)
+    value = models.CharField("变量值", max_length=255)
 
     class Meta:
-        unique_together = [("tenant", "key")]
-
-    def __str__(self):
-        return f"{self.tenant_id}| {self.key}: {self.value}"
+        unique_together = [("tenant", "name")]

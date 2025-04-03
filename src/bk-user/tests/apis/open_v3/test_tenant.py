@@ -30,15 +30,10 @@ class TestTenantListApi:
         assert set(resp.data[0].keys()) == {"id", "name", "status"}
 
 
-class TestTenantPropertyLookupApi:
-    def test_standard(self, api_client, tenant_property):
-        resp = api_client.get(reverse("open_v3.tenant_property.lookup"), data={"lookups": "key_1,key_2"})
+class TestTenantCommonVariableListApi:
+    def test_standard(self, api_client, tenant_common_variable):
+        resp = api_client.get(reverse("open_v3.tenant_common_variable.list"))
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
-        assert {t["key"] for t in resp.data} == {"key_1", "key_2"}
+        assert {t["name"] for t in resp.data} == {"key_1", "key_2"}
         assert {t["value"] for t in resp.data} == {"value_1", "value_2"}
-
-    def test_with_not_match(self, api_client, tenant_property):
-        resp = api_client.get(reverse("open_v3.tenant_property.lookup"), data={"lookups": "not_exist_1,not_exist_2"})
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 0

@@ -82,9 +82,9 @@ urlpatterns = [
                     name="open_v3.virtual_user.lookup",
                 ),
                 path(
-                    "properties/-/lookup/",
-                    views.TenantPropertyLookupApi.as_view(),
-                    name="open_v3.tenant_property.lookup",
+                    "common-variables/",
+                    views.TenantCommonVariableListApi.as_view(),
+                    name="open_v3.tenant_common_variable.list",
                 ),
             ]
         ),

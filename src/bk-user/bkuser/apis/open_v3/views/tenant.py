@@ -22,11 +22,10 @@ from rest_framework import generics, status
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.tenant import (
+    TenantCommonVariableListOutputSLZ,
     TenantListOutputSLZ,
-    TenantPropertyLookupInputSLZ,
-    TenantPropertyLookupOutputSLZ,
 )
-from bkuser.apps.tenant.models import Tenant, TenantProperty
+from bkuser.apps.tenant.models import Tenant, TenantCommonVariable
 
 logger = logging.getLogger(__name__)
 
@@ -46,30 +45,23 @@ class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantPropertyLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantCommonVariableListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    批量查询租户公共属性
+    获取租户的公共变量
     """
 
     pagination_class = None
 
-    serializer_class = TenantPropertyLookupOutputSLZ
+    serializer_class = TenantCommonVariableListOutputSLZ
 
-    def get_queryset(self) -> QuerySet[TenantProperty]:
-        slz = TenantPropertyLookupInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        tenant = Tenant.objects.get(id=self.tenant_id)
-
-        return tenant.properties.filter(key__in=data["lookups"])
+    def get_queryset(self) -> QuerySet[TenantCommonVariable]:
+        return TenantCommonVariable.objects.filter(tenant_id=self.tenant_id)
 
     @swagger_auto_schema(
         tags=["open_v3.tenant"],
-        operation_id="batch_lookup_tenant_property",
-        operation_description="批量查询租户的公共属性",
-        query_serializer=TenantPropertyLookupInputSLZ(),
-        responses={status.HTTP_200_OK: TenantPropertyLookupOutputSLZ(many=True)},
+        operation_id="list_common_variable",
+        operation_description="查询租户公共变量信息",
+        responses={status.HTTP_200_OK: TenantCommonVariableListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
