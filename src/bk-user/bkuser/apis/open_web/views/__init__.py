@@ -25,6 +25,7 @@ from .tenants import DataSourceOwnerTenantListApi
 from .users import (
     TenantUserDisplayInfoListApi,
     TenantUserDisplayInfoRetrieveApi,
+    TenantUserLanguageUpdateApi,
     TenantUserLookupApi,
     TenantUserSearchApi,
     VirtualUserListApi,
@@ -41,4 +42,5 @@ __all__ = [
     "TenantDepartmentChildrenListApi",
     "TenantDepartmentUserListApi",
     "VirtualUserListApi",
+    "TenantUserLanguageUpdateApi",
 ]

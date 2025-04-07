@@ -32,6 +32,7 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserDisplayInfoRetrieveOutputSLZ,
+    TenantUserLanguageUpdateInputSLZ,
     TenantUserLookupInputSLZ,
     TenantUserLookupOutputSLZ,
     TenantUserSearchInputSLZ,
@@ -265,3 +266,32 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class TenantUserLanguageUpdateApi(OpenWebApiCommonMixin, generics.UpdateAPIView):
+    """
+    更新用户语言
+    """
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="update_user_language",
+        operation_description="更新用户语言",
+        query_serializer=TenantUserLanguageUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        slz = TenantUserLanguageUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user = self.get_object()
+        tenant_user.language = data["language"]
+        tenant_user.save(update_fields=["language", "updated_at"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

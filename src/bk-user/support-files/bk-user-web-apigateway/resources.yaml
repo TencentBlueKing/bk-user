@@ -257,6 +257,31 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Query virtual users' information
 
+  /api/v3/open-web/tenant/users/{bk_username}/language/:
+    get:
+      operationId: update_user_language
+      description: 更新用户语言
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: true
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: put
+          path: /api/v3/open-web/tenant/users/{bk_username}/language/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Update user's language
+
   /:
     options:
       operationId: cors_options

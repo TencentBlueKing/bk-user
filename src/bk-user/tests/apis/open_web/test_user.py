@@ -442,3 +442,24 @@ class TestVirtualUserListApi:
             "zhangsan(张三)",
             "lisi(李四)",
         }
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserLanguageUpdateApi:
+    def test_update_language(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.put(
+            reverse("open_web.tenant_user.language.update", kwargs={"id": zhangsan.id}),
+            data={"language": "en"},
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_invalid_language(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.put(
+            reverse("open_web.tenant_user.language.update", kwargs={"id": zhangsan.id}),
+            data={"language": "invalid"},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST

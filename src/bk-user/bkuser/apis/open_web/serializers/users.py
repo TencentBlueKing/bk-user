@@ -24,6 +24,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -152,3 +153,7 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())

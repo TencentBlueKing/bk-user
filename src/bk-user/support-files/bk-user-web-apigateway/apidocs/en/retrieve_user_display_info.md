@@ -5,7 +5,7 @@ Query user's display information
 ### Parameters
 
 | Name        | Type   | Required | Description                       |
-| ----------- | ------ | -------- | --------------------------------- |
+|-------------|--------|----------|-----------------------------------|
 | bk_username | string | Yes      | Blueking user's unique identifier |
 
 ### Request Example

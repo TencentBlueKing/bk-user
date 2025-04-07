@@ -74,6 +74,11 @@ urlpatterns = [
                     views.VirtualUserListApi.as_view(),
                     name="open_web.tenant.virtual_user.list",
                 ),
+                path(
+                    "users/<str:id>/language/",
+                    views.TenantUserLanguageUpdateApi.as_view(),
+                    name="open_web.tenant_user.language.update",
+                ),
             ]
         ),
     ),

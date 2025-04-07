@@ -5,7 +5,7 @@ Batch query user's display information
 ### Parameters
 
 | Name         | Type   | Required | Description                                                                                           |
-| ------------ | ------ | -------- | ----------------------------------------------------------------------------------------------------- |
+|--------------|--------|----------|-------------------------------------------------------------------------------------------------------|
 | bk_usernames | string | Yes      | Blueking user's unique identifier, multiple identifiers are separated by commas, and the limit is 100 |
 
 ### Request Example
