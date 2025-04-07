@@ -43,6 +43,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveAPIView):
@@ -268,7 +269,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserLanguageUpdateApi(OpenWebApiCommonMixin, generics.UpdateAPIView):
+class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMixin, generics.UpdateAPIView):
     """
     更新用户语言
     """

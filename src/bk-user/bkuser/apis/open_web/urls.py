@@ -50,6 +50,11 @@ urlpatterns = [
                     name="open_web.tenant_user.lookup",
                 ),
                 path(
+                    "users/<str:id>/language/",
+                    views.TenantUserLanguageUpdateApi.as_view(),
+                    name="open_web.tenant_user.language.update",
+                ),
+                path(
                     "departments/-/search/",
                     views.TenantDepartmentSearchApi.as_view(),
                     name="open_web.tenant_department.search",
@@ -73,11 +78,6 @@ urlpatterns = [
                     "virtual-users/",
                     views.VirtualUserListApi.as_view(),
                     name="open_web.tenant.virtual_user.list",
-                ),
-                path(
-                    "users/<str:id>/language/",
-                    views.TenantUserLanguageUpdateApi.as_view(),
-                    name="open_web.tenant_user.language.update",
                 ),
             ]
         ),
