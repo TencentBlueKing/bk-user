@@ -342,7 +342,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: true
+        allowApplyPermission: false
         matchSubpath: false
         backend:
           name: default
@@ -354,5 +354,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: true
+          resourcePermissionRequired: false
         descriptionEn: Query the list of common variables of the tenant

@@ -8,11 +8,11 @@ Query the list of common variables of the tenant
 {
     "data": [
         {
-            "name": "key_1",
+            "name": "name_1",
             "value": "value_1",
         },
         {
-            "name": "key_2",
+            "name": "name_2",
             "value": "value_2"
         }
     ]
