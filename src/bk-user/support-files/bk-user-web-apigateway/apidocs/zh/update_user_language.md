@@ -17,7 +17,7 @@
 ```
 
 ```json5
-// Request Body
+// 请求体
 {
     "language": "zh-cn"
 }
