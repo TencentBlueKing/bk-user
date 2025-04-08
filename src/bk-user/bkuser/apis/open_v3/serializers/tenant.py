@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantStatus
@@ -23,3 +24,8 @@ class TenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
+
+
+class TenantCommonVariableListOutputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="变量名")
+    value = serializers.CharField(help_text="变量值")

@@ -81,6 +81,11 @@ urlpatterns = [
                     views.VirtualUserLookupApi.as_view(),
                     name="open_v3.virtual_user.lookup",
                 ),
+                path(
+                    "common-variables/",
+                    views.TenantCommonVariableListApi.as_view(),
+                    name="open_v3.tenant_common_variable.list",
+                ),
             ]
         ),
     ),

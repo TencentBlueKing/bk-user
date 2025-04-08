@@ -14,10 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import List
 from unittest import mock
 
 import pytest
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apps.tenant.models import TenantCommonVariable
 from rest_framework.test import APIClient
 
 from tests.test_utils.tenant import sync_users_depts_to_tenant
@@ -43,3 +45,10 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
     """初始化租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_virtual_data_source)
+
+
+@pytest.fixture
+def tenant_common_variable(random_tenant) -> List[TenantCommonVariable]:
+    property_1 = TenantCommonVariable.objects.create(tenant=random_tenant, name="key_1", value="value_1")
+    property_2 = TenantCommonVariable.objects.create(tenant=random_tenant, name="key_2", value="value_2")
+    return [property_1, property_2]

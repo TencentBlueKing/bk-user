@@ -28,3 +28,12 @@ class TestTenantListApi:
         assert len(resp.data) == 2
         assert {t["id"] for t in resp.data} == {default_tenant.id, random_tenant.id}
         assert set(resp.data[0].keys()) == {"id", "name", "status"}
+
+
+class TestTenantCommonVariableListApi:
+    def test_standard(self, api_client, tenant_common_variable):
+        resp = api_client.get(reverse("open_v3.tenant_common_variable.list"))
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["name"] for t in resp.data} == {"key_1", "key_2"}
+        assert {t["value"] for t in resp.data} == {"value_1", "value_2"}
