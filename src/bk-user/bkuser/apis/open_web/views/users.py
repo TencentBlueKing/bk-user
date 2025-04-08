@@ -274,8 +274,6 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMixi
     更新用户语言
     """
 
-    lookup_url_kwarg = "id"
-
     def get_queryset(self) -> QuerySet[TenantUser]:
         return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
 
@@ -291,7 +289,7 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMixi
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user = self.get_object()
+        tenant_user = get_object_or_404(self.get_queryset(), id=request.user.username)
         tenant_user.language = data["language"]
         tenant_user.save(update_fields=["language", "updated_at"])
 
