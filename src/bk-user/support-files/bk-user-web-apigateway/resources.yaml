@@ -258,7 +258,7 @@ paths:
         descriptionEn: Query virtual users' information
 
   /api/v3/open-web/tenant/current-user/language/:
-    get:
+    put:
       operationId: update_current_user_language
       description: 更新当前用户语言
       tags: []
