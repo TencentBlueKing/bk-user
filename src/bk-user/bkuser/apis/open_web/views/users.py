@@ -280,7 +280,7 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="update_current_user_language",
-        operation_description="更新用户语言",
+        operation_description="更新当前用户语言",
         query_serializer=CurrentUserLanguageUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
