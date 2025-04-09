@@ -43,7 +43,7 @@ def validate_data_source_user_username(value: str):
     if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾",  # noqa: E501
+                "{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾",  # noqa: E501
             ).format(value),
         )
 
