@@ -1,6 +1,6 @@
 ### Description
 
-Update user's language information
+Update current user's language information
 
 ### Parameters
 

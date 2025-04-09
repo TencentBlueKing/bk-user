@@ -444,20 +444,31 @@ class TestVirtualUserListApi:
         }
 
 
+@pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserLanguageUpdateApi:
     def test_update_language(self, api_client, auth_user):
         api_client.force_authenticate(user=auth_user)
         resp = api_client.put(
-            reverse("open_web.tenant_user.language.update"),
+            reverse("open_web.tenant.current_user.language.update"),
             data={"language": "en"},
         )
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert zhangsan.language == "en"
+
+        resp = api_client.put(
+            reverse("open_web.tenant.current_user.language.update"),
+            data={"language": "zh-cn"},
+        )
+        zhangsan.refresh_from_db()
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert zhangsan.language == "zh-cn"
 
     def test_update_invalid_language(self, api_client, auth_user):
         api_client.force_authenticate(user=auth_user)
         resp = api_client.put(
-            reverse("open_web.tenant_user.language.update"),
+            reverse("open_web.tenant.current_user.language.update"),
             data={"language": "invalid"},
         )
 

@@ -257,10 +257,10 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Query virtual users' information
 
-  /api/v3/open-web/tenant/users/{bk_username}/language/:
+  /api/v3/open-web/tenant/current-user/language/:
     get:
-      operationId: update_user_language
-      description: 更新用户语言
+      operationId: update_current_user_language
+      description: 更新当前用户语言
       tags: []
       responses:
         default:
@@ -272,7 +272,7 @@ paths:
         backend:
           name: default
           method: put
-          path: /api/v3/open-web/tenant/users/{bk_username}/language/
+          path: /api/v3/open-web/tenant/current-user/language/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -280,7 +280,7 @@ paths:
           userVerifiedRequired: true
           appVerifiedRequired: false
           resourcePermissionRequired: false
-        descriptionEn: Update user's language
+        descriptionEn: Update current user's language
 
   /:
     options:

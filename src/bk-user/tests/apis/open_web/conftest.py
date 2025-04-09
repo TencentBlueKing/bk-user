@@ -20,7 +20,7 @@ from unittest import mock
 import pytest
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.auth.models import User
@@ -105,25 +105,7 @@ def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
 
 
 @pytest.fixture
-def auth_user(bare_local_data_source: DataSource, random_tenant: Tenant) -> User:
+def auth_user() -> User:
     """用户认证后的 user 对象"""
-    username = generate_random_string(16)
-    user = User.objects.create(username=username)
-    data_source_user, _ = DataSourceUser.objects.get_or_create(
-        username=username,
-        data_source=bare_local_data_source,
-        defaults={
-            "full_name": username,
-            "email": f"{username}@qq.com",
-            "phone": "13123456789",
-        },
-    )
-
-    tenant_user, _ = TenantUser.objects.get_or_create(
-        tenant=random_tenant,
-        id=username,
-        data_source=bare_local_data_source,
-        data_source_user=data_source_user,
-    )
-
-    return user
+    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+    return User.objects.create(username=zhangsan.id)

@@ -155,5 +155,5 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
         return TenantUserHandler.generate_tenant_user_display_name(obj)
 
 
-class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
+class CurrentUserLanguageUpdateInputSLZ(serializers.Serializer):
     language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
