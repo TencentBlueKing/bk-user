@@ -144,9 +144,16 @@ class DataSourceUserConverter:
             if f.name not in mapping:
                 continue
 
-            opt_ids = [opt["id"] for opt in f.options]
-            value = props.get(mapping[f.name], f.default)
+            opt_values = [opt["value"] for opt in f.options]
+            value_map = {opt["value"]: opt["id"] for opt in f.options}
 
+            if not props.get(mapping[f.name]):
+                # 如果没有提供该字段，则使用默认值，无需校验
+                value = f.default
+                extras[f.name] = value
+                continue
+
+            value = props[mapping[f.name]]
             # 数字类型，转换成整型不丢精度就转，不行就浮点数
             if f.data_type == UserFieldDataType.NUMBER:
                 try:
@@ -158,21 +165,23 @@ class DataSourceUserConverter:
                     )
             # 枚举类型，值（id）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
-                if value not in opt_ids:
+                if value not in opt_values:
                     raise ValueError(
-                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_ids}"
+                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_values}"
                     )
+                value = value_map[value]
+
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 兼容 xlsx 导入，统一所有插件输出的多选枚举，都是通过 "," 分隔的字符串表示列表
-                # 但是，默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
-                if isinstance(value, str):
-                    value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
+                value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
 
-                if set(value) - set(opt_ids):
+                if set(value) - set(opt_values):
                     raise ValueError(
-                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_ids}"
+                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_values}"
                     )
+                value = [value_map[v] for v in value]
+
             # 必填字段检查仅适用于字符串类型字段，因为数字类型即使是 0 也不能判断是空，枚举类型都有值检查
             elif f.data_type == UserFieldDataType.STRING and f.required and not value:
                 raise ValueError(f"username: {username}, field {f.name} is required")

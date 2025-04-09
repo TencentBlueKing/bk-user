@@ -595,11 +595,11 @@ class TestTenantUserBatchCreateAndPreviewApi:
     def raw_user_infos(self) -> List[str]:
         # username full_name email phone age gender region hobbies
         return [
-            "star, Star, trailblazer@railway.com, +8613612345671, 1, female, Nameless, dancing/collecting/traveling",
-            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, female, StarCoreHunter, shopping/hunting",
-            "sam, FireFly, sam@railway.com, +447700123456, 23, female, StarCoreHunter, singing/eating/sleeping",
-            "404, SilverWolf, 404@railway.com, +79123456789, 16, female, StarCoreHunter, gaming/hacking",
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving",
+            "star, Star, trailblazer@railway.com, +8613612345671, 1, 女, Nameless, 跳舞/采集/旅游",
+            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, 女, StarCoreHunter, 购物/狩猎",
+            "sam, FireFly, sam@railway.com, +447700123456, 23, 女, StarCoreHunter, 唱歌/吃饭/睡觉",
+            "404, SilverWolf, 404@railway.com, +79123456789, 16, 女, StarCoreHunter, 游戏/骇入",
+            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶",
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -713,38 +713,38 @@ class TestTenantUserBatchCreateAndPreviewApi:
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
         raw_user_infos.append(
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving"
+            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶"
         )
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 dotknifeboy 重复" in resp.data["message"]
 
-        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 lisi 已存在" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, male, shenzhen"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, 男, shenzhen"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "第 6 行，用户信息格式不正确，预期 8 个字段，实际 7 个字段" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "第 6 行，手机号 +x-xxxx 格式不正确" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "helicopter 不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, male, shenzhen, jumping/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, 男, shenzhen, 跳跃/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]

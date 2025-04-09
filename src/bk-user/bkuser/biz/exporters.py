@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from itertools import groupby
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from openpyxl.reader.excel import load_workbook
@@ -53,8 +53,15 @@ class DataSourceUserExporter:
         self._load_template()
 
     def get_template(self) -> Workbook:
+        # 构建每个自定义枚举字段 opt_id 到 opt_value 的映射
+        id_to_value_maps = {}
+        for f in self.custom_fields:
+            id_to_value_maps[f.name] = {opt["id"]: opt["value"] for opt in f.options}
+
+        # 转换默认值为 opt_value
+        extras = [self._process_custom_field_value(id_to_value_maps, f.name, f.default) for f in self.custom_fields]
+
         # 填充自定义字段默认值以供参考
-        extras = [",".join(f.default) if isinstance(f.default, list) else str(f.default) for f in self.custom_fields]
         self.sheet.append(  # noqa: PERF401 sheet isn't a list
             ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
         )
@@ -67,13 +74,17 @@ class DataSourceUserExporter:
         user_username_map = self._build_user_username_map()
 
         for u in self.users:
+            # 导出的场景下，对于枚举字段需要将 DB 中存储的值（id）转换为用户更为可读的值（value）
+            id_to_value_maps = {}
+            for f in self.custom_fields:
+                id_to_value_maps[f.name] = {opt["id"]: opt["value"] for opt in f.options}
+
             extras = []
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
                 # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
                 value = u.extras.get(field.name) or ""
-                value = ",".join(value) if isinstance(value, list) else str(value)  # type: ignore
-                extras.append(value)
+                extras.append(self._process_custom_field_value(id_to_value_maps, field.name, value))
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
                 (
@@ -96,6 +107,21 @@ class DataSourceUserExporter:
 
         self._set_all_columns_to_text_format()
         return self.workbook
+
+    @staticmethod
+    def _process_custom_field_value(
+        id_to_value_maps: Dict[str, Dict[str, str]], field_name: str, value: List | Any
+    ) -> str:
+        if isinstance(value, list):
+            # 处理多枚举类型的情况
+            value_list = []
+            for opt_id in value:
+                opt_value = id_to_value_maps[field_name][opt_id]
+                value_list.append(opt_value)
+            return ",".join(value_list)
+        # 处理单枚举或其他类型的情况
+        value = id_to_value_maps[field_name].get(value, value)
+        return str(value)
 
     def _load_template(self):
         self.workbook = load_workbook(settings.EXPORT_ORG_TEMPLATE)
@@ -122,7 +148,7 @@ class DataSourceUserExporter:
 
             # 自定义字段提示信息（位置是字段名的上一行）
             tips_cell = self.sheet.cell(row=self.col_name_row_idx - 1, column=col_idx + 1)
-            opts = ", ".join(opt["id"] for opt in field.options)
+            opts = ", ".join(opt["value"] for opt in field.options)
             if field.data_type == UserFieldDataType.ENUM:
                 tips_cell.value = f"单选枚举（One of {opts}）"
             elif field.data_type == UserFieldDataType.MULTI_ENUM:
