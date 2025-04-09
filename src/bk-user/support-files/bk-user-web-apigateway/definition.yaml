@@ -38,7 +38,7 @@ stages:
           {% for pattern in settings.BK_APIGW_CORS_ALLOW_ORIGINS_BY_REGEX %}
             - '{{ pattern }}'
           {% endfor %}
-          allow_methods: 'GET,OPTIONS'
+          allow_methods: 'GET,PUT,OPTIONS'
           allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,X-Bk-Tenant-Id,X-Bkapi-Authorization,X-Csrftoken,X-Requested-With'
           expose_headers: ''
           max_age: 86400

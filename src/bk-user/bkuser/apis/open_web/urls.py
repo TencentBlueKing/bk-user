@@ -50,6 +50,11 @@ urlpatterns = [
                     name="open_web.tenant_user.lookup",
                 ),
                 path(
+                    "current-user/language/",
+                    views.CurrentUserLanguageUpdateApi.as_view(),
+                    name="open_web.tenant.current_user.language.update",
+                ),
+                path(
                     "departments/-/search/",
                     views.TenantDepartmentSearchApi.as_view(),
                     name="open_web.tenant_department.search",

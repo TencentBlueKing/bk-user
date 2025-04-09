@@ -22,7 +22,8 @@ from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
+from bkuser.auth.models import User
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from rest_framework.test import APIClient
 
@@ -101,3 +102,10 @@ def _init_collaboration_users_depts(
 def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
     """初始化租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_virtual_data_source)
+
+
+@pytest.fixture
+def auth_user() -> User:
+    """用户认证后的 user 对象"""
+    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+    return User.objects.create(username=zhangsan.id)
