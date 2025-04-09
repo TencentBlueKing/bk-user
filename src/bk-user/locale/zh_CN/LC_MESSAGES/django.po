@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 20:25+0800\n"
+"POT-Creation-Date: 2025-04-10 02:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,11 +34,16 @@ msgstr "认证源 {} 不存在"
 msgid "当前租户不存在实名用户数据源"
 msgstr "当前租户不存在实名用户数据源"
 
-#: bkuser/apis/open_web/serializers/users.py:93
+#: bkuser/apis/open_web/serializers/departments.py:59
+#: bkuser/apis/open_web/serializers/departments.py:85
+msgid "当 department_id 未提供时，必须指定 owner_tenant_id"
+msgstr "当 department_id 未提供时，必须指定 owner_tenant_id"
+
+#: bkuser/apis/open_web/serializers/users.py:114
 msgid "指定查询的值 {} 长度超过 64 个字符限制"
 msgstr "指定查询的值 {} 长度超过 64 个字符限制"
 
-#: bkuser/apis/open_web/serializers/users.py:99
+#: bkuser/apis/open_web/serializers/users.py:120
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 msgstr "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 
@@ -943,11 +948,11 @@ msgstr "修改虚拟用户"
 msgid "删除虚拟用户"
 msgstr "删除虚拟用户"
 
-#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:171
+#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:172
 msgid "直接"
 msgstr "直接"
 
-#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:172
+#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:173
 msgid "表达式"
 msgstr "表达式"
 
@@ -971,8 +976,8 @@ msgstr "企业"
 msgid "社交"
 msgstr "社交"
 
-#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:139
-#: bkuser/apps/tenant/constants.py:146 bkuser/apps/tenant/constants.py:154
+#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:140
+#: bkuser/apps/tenant/constants.py:147 bkuser/apps/tenant/constants.py:155
 msgid "启用"
 msgstr "启用"
 
@@ -1030,11 +1035,11 @@ msgstr "管理员重置密码"
 msgid "发送验证码"
 msgstr "发送验证码"
 
-#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:54
+#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:55
 msgid "租户用户即将过期"
 msgstr "租户用户即将过期"
 
-#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:55
+#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:56
 msgid "租户用户已过期"
 msgstr "租户用户已过期"
 
@@ -1174,60 +1179,60 @@ msgstr "数据源导入成功"
 msgid "数据源导入失败"
 msgstr "数据源导入失败"
 
-#: bkuser/apps/tenant/constants.py:38
+#: bkuser/apps/tenant/constants.py:39
 msgid "字符串"
 msgstr "字符串"
 
-#: bkuser/apps/tenant/constants.py:39 bkuser/common/passwd/models.py:119
+#: bkuser/apps/tenant/constants.py:40 bkuser/common/passwd/models.py:119
 msgid "数字"
 msgstr "数字"
 
-#: bkuser/apps/tenant/constants.py:40
+#: bkuser/apps/tenant/constants.py:41
 msgid "枚举"
 msgstr "枚举"
 
-#: bkuser/apps/tenant/constants.py:41
+#: bkuser/apps/tenant/constants.py:42
 msgid "多选枚举"
 msgstr "多选枚举"
 
-#: bkuser/apps/tenant/constants.py:47 bkuser/plugins/local/constants.py:60
+#: bkuser/apps/tenant/constants.py:48 bkuser/plugins/local/constants.py:60
 msgid "邮件通知"
 msgstr "邮件通知"
 
-#: bkuser/apps/tenant/constants.py:48 bkuser/plugins/local/constants.py:61
+#: bkuser/apps/tenant/constants.py:49 bkuser/plugins/local/constants.py:61
 msgid "短信通知"
 msgstr "短信通知"
 
-#: bkuser/apps/tenant/constants.py:140 bkuser/apps/tenant/constants.py:147
-#: bkuser/apps/tenant/constants.py:155
+#: bkuser/apps/tenant/constants.py:141 bkuser/apps/tenant/constants.py:148
+#: bkuser/apps/tenant/constants.py:156
 msgid "禁用"
 msgstr "禁用"
 
-#: bkuser/apps/tenant/constants.py:148
+#: bkuser/apps/tenant/constants.py:149
 msgid "已过期"
 msgstr "已过期"
 
-#: bkuser/apps/tenant/constants.py:157
+#: bkuser/apps/tenant/constants.py:158
 msgid "未确认"
 msgstr "未确认"
 
-#: bkuser/apps/tenant/constants.py:163
+#: bkuser/apps/tenant/constants.py:164
 msgid "全部"
 msgstr "全部"
 
-#: bkuser/apps/tenant/constants.py:178
+#: bkuser/apps/tenant/constants.py:179
 msgid "nanoid"
 msgstr "nanoid"
 
-#: bkuser/apps/tenant/constants.py:179
+#: bkuser/apps/tenant/constants.py:180
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:180
+#: bkuser/apps/tenant/constants.py:181
 msgid "用户名"
 msgstr "用户名"
 
-#: bkuser/apps/tenant/constants.py:181
+#: bkuser/apps/tenant/constants.py:182
 msgid "用户名@域名"
 msgstr "用户名@域名"
 
@@ -1241,10 +1246,10 @@ msgstr "超过发送次数限制"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
 "字符组成，以字母或数字开头及结尾"
 msgstr ""
-"{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
 "字符组成，以字母或数字开头及结尾"
 
 #: bkuser/biz/validators.py:55
@@ -1965,10 +1970,10 @@ msgstr "待导入文件中必填字段 {} 存在空值"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
 "组成，以字母或数字开头及结尾"
 msgstr ""
-"用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
 "组成，以字母或数字开头及结尾"
 
 #: bkuser/plugins/local/parser.py:180
