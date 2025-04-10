@@ -163,7 +163,7 @@ class DataSourceUserConverter:
                     raise ValueError(
                         f"username: {username}, number field {f.name} value `{value}` cannot convert to number"
                     )
-            # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+            # 枚举类型，值（value）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
                 if value not in opt_values:
                     raise ValueError(
