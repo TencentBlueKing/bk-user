@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 20:25+0800\n"
+"POT-Creation-Date: 2025-04-10 02:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,12 +34,17 @@ msgstr "Auth source {} does not exist"
 msgid "当前租户不存在实名用户数据源"
 msgstr "There is no real-name user data source in the current tenant"
 
-#: bkuser/apis/open_web/serializers/users.py:93
+#: bkuser/apis/open_web/serializers/departments.py:59
+#: bkuser/apis/open_web/serializers/departments.py:85
+msgid "当 department_id 未提供时，必须指定 owner_tenant_id"
+msgstr "When the department_id is not provided, the owner_tenant_id must be specified."
+
+#: bkuser/apis/open_web/serializers/users.py:114
 msgid "指定查询的值 {} 长度超过 64 个字符限制"
 msgstr ""
 "The length of the specified lookup value {} exceeds the 64-character limit."
 
-#: bkuser/apis/open_web/serializers/users.py:99
+#: bkuser/apis/open_web/serializers/users.py:120
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 msgstr ""
 "The specified lookup field {} is not supported. Only login_name, full_name, "
@@ -665,7 +670,8 @@ msgid ""
 msgstr ""
 "{} does not meet the naming requirements for Tenant ID: must be composed of "
 "3-32 lowercase letters, digits, or hyphens (-), starting with a lowercase "
-"letter and ending with a lowercase letter or digit, and cannot contain two consecutive hyphens(--)"
+"letter and ending with a lowercase letter or digit, and cannot contain two "
+"consecutive hyphens(--)"
 
 #: bkuser/apis/web/platform_management/serializers.py:124
 msgid "密码不符合密码规则：{}"
@@ -1004,11 +1010,11 @@ msgstr "Modify virtual user"
 msgid "删除虚拟用户"
 msgstr "Delete virtual user"
 
-#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:171
+#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:172
 msgid "直接"
 msgstr "Direct"
 
-#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:172
+#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:173
 msgid "表达式"
 msgstr "Expression"
 
@@ -1032,8 +1038,8 @@ msgstr "Enterprise"
 msgid "社交"
 msgstr "Social"
 
-#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:139
-#: bkuser/apps/tenant/constants.py:146 bkuser/apps/tenant/constants.py:154
+#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:140
+#: bkuser/apps/tenant/constants.py:147 bkuser/apps/tenant/constants.py:155
 msgid "启用"
 msgstr "Enabled"
 
@@ -1091,11 +1097,11 @@ msgstr "Admin Reset Password"
 msgid "发送验证码"
 msgstr "Send Verification Code"
 
-#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:54
+#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:55
 msgid "租户用户即将过期"
 msgstr "Tenant User About to Expire"
 
-#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:55
+#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:56
 msgid "租户用户已过期"
 msgstr "Tenant User Has Expired"
 
@@ -1237,60 +1243,60 @@ msgstr "Data source imported successfully"
 msgid "数据源导入失败"
 msgstr "Data source import failed"
 
-#: bkuser/apps/tenant/constants.py:38
+#: bkuser/apps/tenant/constants.py:39
 msgid "字符串"
 msgstr "String"
 
-#: bkuser/apps/tenant/constants.py:39 bkuser/common/passwd/models.py:119
+#: bkuser/apps/tenant/constants.py:40 bkuser/common/passwd/models.py:119
 msgid "数字"
 msgstr "Number"
 
-#: bkuser/apps/tenant/constants.py:40
+#: bkuser/apps/tenant/constants.py:41
 msgid "枚举"
 msgstr "Enum"
 
-#: bkuser/apps/tenant/constants.py:41
+#: bkuser/apps/tenant/constants.py:42
 msgid "多选枚举"
 msgstr "Multiple-choice Enum"
 
-#: bkuser/apps/tenant/constants.py:47 bkuser/plugins/local/constants.py:60
+#: bkuser/apps/tenant/constants.py:48 bkuser/plugins/local/constants.py:60
 msgid "邮件通知"
 msgstr "Email Notification"
 
-#: bkuser/apps/tenant/constants.py:48 bkuser/plugins/local/constants.py:61
+#: bkuser/apps/tenant/constants.py:49 bkuser/plugins/local/constants.py:61
 msgid "短信通知"
 msgstr "SMS Notification"
 
-#: bkuser/apps/tenant/constants.py:140 bkuser/apps/tenant/constants.py:147
-#: bkuser/apps/tenant/constants.py:155
+#: bkuser/apps/tenant/constants.py:141 bkuser/apps/tenant/constants.py:148
+#: bkuser/apps/tenant/constants.py:156
 msgid "禁用"
 msgstr "Disabled"
 
-#: bkuser/apps/tenant/constants.py:148
+#: bkuser/apps/tenant/constants.py:149
 msgid "已过期"
 msgstr "Expired"
 
-#: bkuser/apps/tenant/constants.py:157
+#: bkuser/apps/tenant/constants.py:158
 msgid "未确认"
 msgstr "Unconfirmed"
 
-#: bkuser/apps/tenant/constants.py:163
+#: bkuser/apps/tenant/constants.py:164
 msgid "全部"
 msgstr "All"
 
-#: bkuser/apps/tenant/constants.py:178
+#: bkuser/apps/tenant/constants.py:179
 msgid "nanoid"
 msgstr "nanoid"
 
-#: bkuser/apps/tenant/constants.py:179
+#: bkuser/apps/tenant/constants.py:180
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:180
+#: bkuser/apps/tenant/constants.py:181
 msgid "用户名"
 msgstr "Username"
 
-#: bkuser/apps/tenant/constants.py:181
+#: bkuser/apps/tenant/constants.py:182
 msgid "用户名@域名"
 msgstr "Username@Domain"
 
@@ -1304,11 +1310,11 @@ msgstr "Exceeded the limit for sending times"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
 "字符组成，以字母或数字开头及结尾"
 msgstr ""
 "{} does not meet the naming requirements for Username: must be composed of "
-"3-32 letters, digits, underscores (_), dots (.), or hyphens (-), starting "
+"2-32 letters, digits, underscores (_), dots (.), or hyphens (-), starting "
 "and ending with a letter or digit"
 
 #: bkuser/biz/validators.py:55
@@ -2094,10 +2100,10 @@ msgstr "Required field {} in the file to be imported has empty values"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
 "组成，以字母或数字开头及结尾"
 msgstr ""
-"Username {} does not meet the naming requirements: must be composed of 3-32 "
+"Username {} does not meet the naming requirements: must be composed of 2-32 "
 "letters, digits, underscores (_), dots (.), or hyphens (-), starting and "
 "ending with a letter or digit"
 

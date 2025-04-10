@@ -171,7 +171,7 @@ class LocalDataSourceDataParser:
             if not USERNAME_REGEX.fullmatch(username):
                 raise InvalidUsername(
                     _(
-                        "用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾",  # noqa: E501
+                        "用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾",  # noqa: E501
                     ).format(username)
                 )
 
