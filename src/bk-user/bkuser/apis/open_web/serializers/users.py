@@ -157,3 +157,7 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
 class CurrentUserLanguageUpdateInputSLZ(serializers.Serializer):
     language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+
+
+class CurrentUserLanguageUpdateOutputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
