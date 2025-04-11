@@ -454,7 +454,8 @@ class TestTenantUserLanguageUpdateApi:
         )
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
 
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["language"] == "en"
         assert zhangsan.language == "en"
 
         resp = api_client.put(
@@ -462,7 +463,8 @@ class TestTenantUserLanguageUpdateApi:
             data={"language": "zh-cn"},
         )
         zhangsan.refresh_from_db()
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["language"] == "zh-cn"
         assert zhangsan.language == "zh-cn"
 
     def test_update_invalid_language(self, api_client, auth_user):

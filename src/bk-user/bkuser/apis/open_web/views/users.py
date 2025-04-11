@@ -30,6 +30,7 @@ from rest_framework.response import Response
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     CurrentUserLanguageUpdateInputSLZ,
+    CurrentUserLanguageUpdateOutputSLZ,
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserDisplayInfoRetrieveOutputSLZ,
@@ -282,7 +283,7 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
         operation_id="update_current_user_language",
         operation_description="更新当前用户语言",
         query_serializer=CurrentUserLanguageUpdateInputSLZ(),
-        responses={status.HTTP_204_NO_CONTENT: ""},
+        responses={status.HTTP_200_OK: CurrentUserLanguageUpdateOutputSLZ()},
     )
     def put(self, request, *args, **kwargs):
         slz = CurrentUserLanguageUpdateInputSLZ(data=request.data)
@@ -293,4 +294,4 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
         tenant_user.language = data["language"]
         tenant_user.save(update_fields=["language", "updated_at"])
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(CurrentUserLanguageUpdateOutputSLZ(tenant_user).data)
