@@ -95,7 +95,7 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
             for f in UserBuiltinField.objects.exclude(name="phone_country_code")
         ]
         for f in TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True):
-            opts = ", ".join(opt["id"] for opt in f.options)
+            opts = ", ".join(opt["value"] for opt in f.options)
 
             if f.data_type == UserFieldDataType.ENUM:
                 tips = _("单选枚举，可选值：{}").format(opts)

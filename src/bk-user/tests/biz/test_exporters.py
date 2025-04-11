@@ -62,7 +62,7 @@ class TestDataSourceExporter:
             assert row[3].value == f"+{exists_users[idx].phone_country_code}{exists_users[idx].phone}"
             # 第四第五列分别是组织，直接上级，不在这个循环做检查
             assert row[6].value == str(20 + idx)
-            assert row[7].value == "male"
+            assert row[7].value == "男"
             assert row[8].value == "region-" + str(idx)
             assert row[9].value == ""
 
