@@ -39,7 +39,7 @@ stages:
             - '{{ pattern }}'
           {% endfor %}
           allow_methods: 'GET,PUT,OPTIONS'
-          allow_headers: 'Accept,Accept-Encoding,Accept-Language,Cookie,X-Bk-Tenant-Id,X-Bkapi-Authorization,X-Csrftoken,X-Requested-With'
+          allow_headers: 'Accept,Accept-Encoding,Accept-Language,Content-Type,Cookie,X-Bk-Tenant-Id,X-Bkapi-Authorization,X-Csrftoken,X-Requested-With'
           expose_headers: ''
           max_age: 86400
           allow_credential: true
