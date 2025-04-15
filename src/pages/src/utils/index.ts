@@ -378,8 +378,8 @@ export const tenantStatus = {
 
 // 语言切换
 export const handleSwitchLocale = async (locale: string, tenant_id: string) => {
-  try {BK_USER_WEB_APIGW_URL
-    const url = `${window.BK_COMPONENT_API_URL}/api/bk-user-web/prod/api/v3/open-web/tenant/current-user/language/`;
+  try {
+    const url = `${window.BK_USER_WEB_APIGW_URL}/api/bk-user-web/prod/api/v3/open-web/tenant/current-user/language/`;
     await fetch(url, {
       method: 'PUT',
       headers: {
