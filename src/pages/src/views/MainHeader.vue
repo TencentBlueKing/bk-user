@@ -60,7 +60,7 @@
                 <div v-for="(item, index) in languageNav" :key="index">
                   <bk-dropdown-item
                     :class="[{ 'active-item': $i18n.locale === item.language }]"
-                    @click="handleSwitchLocale(item.language)">
+                    @click="handleSwitchLocale(item.language, userStore.user.tenant_id)">
                     <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
                     <span>{{ item.name }}</span>
                   </bk-dropdown-item>
