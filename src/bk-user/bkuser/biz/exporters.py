@@ -121,6 +121,7 @@ class DataSourceUserExporter:
                 opt_value = id_to_value_maps[field_name][opt_id]
                 value_list.append(opt_value)
             return ",".join(value_list)
+        # 其他类型的字段值则直接转换为字符串类型
         return str(value)
 
     def _load_template(self):
