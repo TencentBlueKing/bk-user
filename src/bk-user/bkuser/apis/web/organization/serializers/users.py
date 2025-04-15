@@ -512,14 +512,14 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         username = props["username"]
         extras = {}
         for f in custom_fields:
-            opt_values = [opt["value"] for opt in f.options]
-            value_map = {opt["value"]: opt["id"] for opt in f.options}
-
+            # 如果没有提供该字段，则使用默认值
             if not props.get(f.name):
-                # 如果没有提供该字段，则使用默认值，无需校验
-                value = f.default
-                extras[f.name] = value
+                extras[f.name] = f.default
                 continue
+
+            # 提前预取枚举类型的选择项，便于后续校验和取 value 对应的 id
+            opt_values = [opt["value"] for opt in f.options]
+            opt_value_to_id_map = {opt["value"]: opt["id"] for opt in f.options}
 
             value = props[f.name]
             # 数字类型，转换成整型不丢精度就转，不行就浮点数
@@ -542,7 +542,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                             username, f.name, value, opt_values
                         )
                     )
-                value = value_map[value]
+                value = opt_value_to_id_map[value]
 
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
@@ -555,7 +555,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                             username, f.name, value, opt_values
                         )
                     )
-                value = [value_map[v] for v in value]
+                value = [opt_value_to_id_map[v] for v in value]  # type: ignore
 
             extras[f.name] = value
 

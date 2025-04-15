@@ -51,15 +51,14 @@ class DataSourceUserExporter:
         self.users = DataSourceUser.objects.filter(data_source=data_source)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=data_source.owner_tenant_id)
         self._load_template()
+        self.custom_field_option_map = self._build_custom_field_option_map()
 
     def get_template(self) -> Workbook:
-        # 构建每个自定义枚举字段 opt_id 到 opt_value 的映射
-        id_to_value_maps = {}
-        for f in self.custom_fields:
-            id_to_value_maps[f.name] = {opt["id"]: opt["value"] for opt in f.options}
-
         # 转换默认值为 opt_value
-        extras = [self._process_custom_field_value(id_to_value_maps, f.name, f.default) for f in self.custom_fields]
+        extras = [
+            self._process_custom_field_value(self.custom_field_option_map, f.name, f.default, f.data_type)
+            for f in self.custom_fields
+        ]
 
         # 填充自定义字段默认值以供参考
         self.sheet.append(  # noqa: PERF401 sheet isn't a list
@@ -74,17 +73,13 @@ class DataSourceUserExporter:
         user_username_map = self._build_user_username_map()
 
         for u in self.users:
-            # 导出的场景下，对于枚举字段需要将 DB 中存储的值（id）转换为用户更为可读的值（value）
-            id_to_value_maps = {}
-            for f in self.custom_fields:
-                id_to_value_maps[f.name] = {opt["id"]: opt["value"] for opt in f.options}
-
             extras = []
-            # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
                 # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
                 value = u.extras.get(field.name) or ""
-                extras.append(self._process_custom_field_value(id_to_value_maps, field.name, value))
+                extras.append(
+                    self._process_custom_field_value(self.custom_field_option_map, field.name, value, field.data_type)
+                )
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
                 (
@@ -110,17 +105,22 @@ class DataSourceUserExporter:
 
     @staticmethod
     def _process_custom_field_value(
-        id_to_value_maps: Dict[str, Dict[str, str]], field_name: str, value: List | Any
+        id_to_value_maps: Dict[str, Dict[str, str]], field_name: str, value: Any, data_type: UserFieldDataType
     ) -> str:
-        if isinstance(value, list):
+        # 若字段不存在或为空值，则替换为 ""
+        if not value:
+            return ""
+
+        if data_type == UserFieldDataType.ENUM:
+            # 处理单枚举类型的情况
+            return id_to_value_maps[field_name][value]
+        if data_type == UserFieldDataType.MULTI_ENUM:
             # 处理多枚举类型的情况
             value_list = []
             for opt_id in value:
                 opt_value = id_to_value_maps[field_name][opt_id]
                 value_list.append(opt_value)
             return ",".join(value_list)
-        # 处理单枚举或其他类型的情况
-        value = id_to_value_maps[field_name].get(value, value)
         return str(value)
 
     def _load_template(self):
@@ -242,3 +242,7 @@ class DataSourceUserExporter:
     def _build_user_username_map(self) -> Dict[int, str]:
         """获取用户与用户名的映射表"""
         return dict(self.users.values_list("id", "username"))
+
+    def _build_custom_field_option_map(self) -> Dict[str, Dict[str, str]]:
+        """获取每个自定义枚举字段 opt_id 到 opt_value 的映射"""
+        return {field.name: {opt["id"]: opt["value"] for opt in field.options} for field in self.custom_fields}
