@@ -473,6 +473,7 @@ import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE
 const user = useUser();
 const userInfo = ref(user.user);
 
+const userStore = useUser();
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
 const currentNaturalUser = ref({});
@@ -644,7 +645,7 @@ const submitChange  = async (item) => {
     item.isEdit = false;
     Message({ theme: 'success', message: t('保存成功') });
     if (model === 'language') {
-      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language), 100);
+      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language, userStore.user.tenant_id), 100);
     }
     originalValue.value[model] = currentUserInfo.value[model];
   } catch (error) {
