@@ -13,4 +13,5 @@ declare interface Window {
   BK_SHARED_RES_URL: string
   ENABLE_VIRTUAL_USER: string
   ENABLE_CREATE_TENANT:string
+  BK_USER_WEB_APIGW_URL: string
 }
