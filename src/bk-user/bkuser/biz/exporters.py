@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from itertools import groupby
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from django.conf import settings
 from openpyxl.reader.excel import load_workbook
@@ -54,13 +54,9 @@ class DataSourceUserExporter:
         self.custom_field_option_map = self._build_custom_field_option_map()
 
     def get_template(self) -> Workbook:
-        # 转换默认值为 opt_value
-        extras = [
-            self._process_custom_field_value(self.custom_field_option_map, f.name, f.default, f.data_type)
-            for f in self.custom_fields
-        ]
-
         # 填充自定义字段默认值以供参考
+        extras = [self._transform_custom_field_value(f.name, f.data_type, f.default) for f in self.custom_fields]
+
         self.sheet.append(  # noqa: PERF401 sheet isn't a list
             ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
         )
@@ -74,12 +70,11 @@ class DataSourceUserExporter:
 
         for u in self.users:
             extras = []
+            # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
                 # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
                 value = u.extras.get(field.name) or ""
-                extras.append(
-                    self._process_custom_field_value(self.custom_field_option_map, field.name, value, field.data_type)
-                )
+                extras.append(self._transform_custom_field_value(field.name, field.data_type, value))
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
                 (
@@ -103,25 +98,25 @@ class DataSourceUserExporter:
         self._set_all_columns_to_text_format()
         return self.workbook
 
-    @staticmethod
-    def _process_custom_field_value(
-        id_to_value_maps: Dict[str, Dict[str, str]], field_name: str, value: Any, data_type: UserFieldDataType
+    def _transform_custom_field_value(
+        self, name: str, data_type: str, value: List[str | int | float] | str | int | float
     ) -> str:
+        """
+        转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
+        """
         # 若字段不存在或为空值，则替换为 ""
         if not value:
             return ""
 
+        # 单枚举，则选项映射
         if data_type == UserFieldDataType.ENUM:
-            # 处理单枚举类型的情况
-            return id_to_value_maps[field_name][value]
+            return self.custom_field_option_map[name][value]  # type: ignore
+
+        # 多枚举，则选项映射并逗号拼接
         if data_type == UserFieldDataType.MULTI_ENUM:
-            # 处理多枚举类型的情况
-            value_list = []
-            for opt_id in value:
-                opt_value = id_to_value_maps[field_name][opt_id]
-                value_list.append(opt_value)
-            return ",".join(value_list)
-        # 其他类型的字段值则直接转换为字符串类型
+            return ",".join([self.custom_field_option_map[name][opt_id] for opt_id in value])  # type: ignore
+
+        # 非枚举类型，直接转换为字符串
         return str(value)
 
     def _load_template(self):
