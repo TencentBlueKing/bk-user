@@ -104,8 +104,8 @@ class DataSourceUserExporter:
         """
         转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
         """
-        # 若字段值为 ""，则直接返回
-        if value == "":
+        # 若字段值布尔属性判断为假且不为 0，则直接返回 ""
+        if not value and value != 0:
             return ""
 
         # 单枚举，则选项映射
