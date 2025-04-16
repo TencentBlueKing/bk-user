@@ -72,8 +72,8 @@ class DataSourceUserExporter:
             extras = []
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
-                # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
-                value = u.extras.get(field.name) or ""
+                # 导出数据时，若自定义字段不存在时替换为 ""
+                value = u.extras.get(field.name, "")
                 extras.append(self._transform_custom_field_value(field.name, field.data_type, value))
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
@@ -105,7 +105,7 @@ class DataSourceUserExporter:
         转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
         """
         # 若字段值为 ""，则直接返回
-        if not value:
+        if value == "":
             return ""
 
         # 单枚举，则选项映射
