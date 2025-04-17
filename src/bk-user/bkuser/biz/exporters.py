@@ -73,6 +73,8 @@ class DataSourceUserExporter:
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
                 # 导出数据时，若自定义字段不存在时替换为 ""
+                # Q: 为什么不能这样写 value = u.extras.get(field.name) or ""
+                # A: 这会导致部分类型的零值被转为空字符串，不符合预期，比如 类型是NUMBER, 0 应该是 "0"，而非 ""
                 value = u.extras.get(field.name, "")
                 extras.append(self._transform_custom_field_value(field.name, field.data_type, value))
 
@@ -104,8 +106,10 @@ class DataSourceUserExporter:
         """
         转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
         """
-        # 若字段值布尔属性判断为假且不为 0，则直接返回 ""
-        if not value and value != 0:
+        # 对于单枚举（""）、多枚举（[]）、字符串("") 类型，当其为零值时，可提前返回空字符串
+        # 对于数值（0）类型，则需要按照正常处理，即 str(0)，不能返回空字符串
+        # Note: 无值，value 本身就是空字符串
+        if data_type != UserFieldDataType.NUMBER and not value:
             return ""
 
         # 单枚举，则选项映射
