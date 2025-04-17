@@ -17,6 +17,7 @@
 
 import collections
 import datetime
+import re
 from typing import Any, Dict, List
 
 import phonenumbers
@@ -467,10 +468,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             if not raw_info.strip():
                 continue
 
-            # 注：raw_info 格式是以英文逗号 (,) 为分隔符的用户信息字符串，多选枚举以 / 拼接
+            # 注：raw_info 格式是以英文逗号 (,) 或中文逗号 (，) 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email phone gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, female, StarCoreHunter, hunting/burning
-            data: List[str] = [s.strip() for s in raw_info.split(",") if s.strip()]
+            # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, 女, StarCoreHunter, 狩猎/阅读
+            data: List[str] = [s.strip() for s in re.split(r"[,，]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
                     _(
@@ -511,9 +512,16 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         username = props["username"]
         extras = {}
         for f in custom_fields:
-            opt_ids = [opt["id"] for opt in f.options]
-            value = props.get(f.name, f.default)
+            # 如果没有提供该字段，则使用默认值
+            if not props.get(f.name):
+                extras[f.name] = f.default
+                continue
 
+            # 提前预取枚举类型的选择项，便于后续校验和取 value 对应的 id
+            opt_values = [opt["value"] for opt in f.options]
+            opt_value_to_id_map = {opt["value"]: opt["id"] for opt in f.options}
+
+            value = props[f.name]
             # 数字类型，转换成整型不丢精度就转，不行就浮点数
             if f.data_type == UserFieldDataType.NUMBER:
                 try:
@@ -526,23 +534,28 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                         ).format(username, f.name, value)
                     )
 
-            # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+            # 枚举类型，值（value）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
-                if value not in opt_ids:
+                if value not in opt_values:
                     raise ValidationError(
-                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(username, f.name, value, opt_ids)
+                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(
+                            username, f.name, value, opt_values
+                        )
                     )
+                value = opt_value_to_id_map[value]
+
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 快速录入的数据中的的多选枚举，都是通过 "/" 分隔的字符串表示列表
-                # 但是默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
-                if isinstance(value, str):
-                    value = [v.strip() for v in value.split("/") if v.strip()]  # type: ignore
+                value = [v.strip() for v in value.split("/") if v.strip()]  # type: ignore
 
-                if set(value) - set(opt_ids):
+                if set(value) - set(opt_values):
                     raise ValidationError(
-                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(username, f.name, value, opt_ids)
+                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(
+                            username, f.name, value, opt_values
+                        )
                     )
+                value = [opt_value_to_id_map[v] for v in value]  # type: ignore
 
             extras[f.name] = value
 
