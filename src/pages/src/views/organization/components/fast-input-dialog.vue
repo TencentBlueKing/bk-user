@@ -172,7 +172,6 @@ const handleNext = async () => {
     };
     try {
       const res = await batchCreatePreview(param);
-      // todo 把id转成value
       const sourceData = res.data.map(item => Object.assign(item, item.extras));
       const transformData = transformEnumFields(sourceData);
       tableData.value = transformData;
