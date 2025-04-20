@@ -44,3 +44,8 @@ grant_permissions:
    grant_dimension: "resource"
    resource_names:
      - "batch_query_user_sensitive_info"
+
+ - bk_app_code: "bk_iam"
+   grant_dimension: "resource"
+   resource_names:
+     - "list_department_user_relation"
