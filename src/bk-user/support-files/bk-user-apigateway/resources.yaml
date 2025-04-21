@@ -305,7 +305,7 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: true
-        descriptionEn: Batch query the information of the department
+        descriptionEn: Batch query the information of the departments
 
   /api/v3/open/tenant/department-relations/:
     get:
