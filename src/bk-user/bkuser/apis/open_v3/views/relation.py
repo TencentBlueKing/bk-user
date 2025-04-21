@@ -33,6 +33,7 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
 
         dept_ids = {rel.department_id for rel in dept_relations}
 
+        # 获取数据源部门与租户部门之间的映射
         dept_id_map = dict(
             TenantDepartment.objects.filter(
                 data_source_department_id__in=dept_ids, tenant_id=self.tenant_id
