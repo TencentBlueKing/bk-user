@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
@@ -29,9 +28,6 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     查询部门用户关系
     """
 
-    def get_queryset(self) -> QuerySet[DataSourceDepartmentUserRelation]:
-        return DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id).order_by("id")
-
     @swagger_auto_schema(
         tags=["open_v3.relation"],
         operation_id="list_department_user_relation",
@@ -39,10 +35,17 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         responses={status.HTTP_200_OK: TenantDepartmentUserRelationListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
+        # 获取本租户下所有实名数据源用户 ID
+        data_source_user_ids = TenantUser.objects.filter(
+            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        ).values_list("data_source_user_id", flat=True)
 
-        # 获取所有相关的数据源用户 ID 与 部门 ID
+        # 获取数据源用户与部门间关系并分页
+        relations = DataSourceDepartmentUserRelation.objects.filter(
+            data_source_id=self.real_data_source_id, user_id__in=data_source_user_ids
+        ).order_by("id")
+        page = self.paginate_queryset(relations)
+
         user_ids = {rel.user_id for rel in page}
         dept_ids = {rel.department_id for rel in page}
 
@@ -65,12 +68,11 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         for rel in page:
             tenant_user_id = user_id_map.get(rel.user_id)
             tenant_dept_id = dept_id_map.get(rel.department_id)
-            if tenant_user_id:
-                results.append(
-                    {
-                        "bk_username": tenant_user_id,
-                        "department_id": tenant_dept_id,
-                    }
-                )
+            results.append(
+                {
+                    "bk_username": tenant_user_id,
+                    "department_id": tenant_dept_id,
+                }
+            )
 
         return self.get_paginated_response(TenantDepartmentUserRelationListOutputSLZ(results, many=True).data)

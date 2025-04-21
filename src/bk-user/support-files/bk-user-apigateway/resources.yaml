@@ -379,5 +379,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: Query the list of common variables of the tenant
