@@ -28,8 +28,6 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     查询部门用户关系
     """
 
-    serializer_class = TenantDepartmentUserRelationListOutputSLZ
-
     def get_queryset(self):
         dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id)
 
