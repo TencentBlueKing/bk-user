@@ -29,7 +29,7 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     """
 
     def get_queryset(self):
-        return DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id)
+        return DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id).order_by("id")
 
     @swagger_auto_schema(
         tags=["open_v3.relation"],
