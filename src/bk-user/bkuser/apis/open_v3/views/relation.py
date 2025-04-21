@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
@@ -28,26 +29,8 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询部门间关系
     """
 
-    def get_queryset(self):
-        dept_relations = DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
-
-        dept_ids = {rel.department_id for rel in dept_relations}
-
-        # 获取数据源部门与租户部门之间的映射
-        dept_id_map = dict(
-            TenantDepartment.objects.filter(
-                data_source_department_id__in=dept_ids, tenant_id=self.tenant_id
-            ).values_list("data_source_department_id", "id")
-        )
-
-        relations = []
-        for rel in dept_relations:
-            dept_id = dept_id_map.get(rel.department_id)
-            parent_dept_id = dept_id_map.get(rel.parent_id)
-            if dept_id:
-                relations.append({"id": dept_id, "parent_id": parent_dept_id})
-
-        return relations
+    def get_queryset(self) -> QuerySet[DataSourceDepartmentRelation]:
+        return DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
 
     @swagger_auto_schema(
         tags=["open_v3.relation"],
@@ -58,4 +41,22 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
-        return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(page, many=True).data)
+
+        dept_ids = {rel.department_id for rel in page}
+
+        # 获取数据源部门与租户部门之间的映射
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=dept_ids, tenant_id=self.tenant_id
+            ).values_list("data_source_department_id", "id")
+        )
+
+        # 构建当前页的结果
+        results = []
+        for rel in page:
+            tenant_dept_id = dept_id_map.get(rel.department_id)
+            parent_dept_id = dept_id_map.get(rel.parent_id)
+            if tenant_dept_id:
+                results.append({"id": tenant_dept_id, "parent_id": parent_dept_id})
+
+        return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(results, many=True).data)
