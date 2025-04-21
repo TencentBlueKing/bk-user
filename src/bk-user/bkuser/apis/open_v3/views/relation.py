@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
@@ -28,7 +29,7 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     查询部门用户关系
     """
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[DataSourceDepartmentUserRelation]:
         return DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id).order_by("id")
 
     @swagger_auto_schema(
