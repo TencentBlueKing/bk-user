@@ -29,11 +29,21 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     """
 
     def get_queryset(self):
-        dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id)
+        return DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id)
+
+    @swagger_auto_schema(
+        tags=["open_v3.relation"],
+        operation_id="list_department_user_relation",
+        operation_description="查询部门用户关系",
+        responses={status.HTTP_200_OK: TenantDepartmentUserRelationListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
 
         # 获取所有相关的数据源用户 ID 与 部门 ID
-        user_ids = {rel.user_id for rel in dept_user_relations}
-        dept_ids = {rel.department_id for rel in dept_user_relations}
+        user_ids = {rel.user_id for rel in page}
+        dept_ids = {rel.department_id for rel in page}
 
         # 获取数据源用户与租户用户之间的映射
         user_id_map = dict(
@@ -49,27 +59,17 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
             ).values_list("data_source_department_id", "id")
         )
 
-        relations = []
-        for rel in dept_user_relations:
-            user_id = user_id_map.get(rel.user_id)
-            dept_id = dept_id_map.get(rel.department_id)
-            if user_id and dept_id:
-                relations.append(
+        # 构建当前页的结果
+        results = []
+        for rel in page:
+            tenant_user_id = user_id_map.get(rel.user_id)
+            tenant_dept_id = dept_id_map.get(rel.department_id)
+            if tenant_user_id:
+                results.append(
                     {
-                        "bk_username": user_id,
-                        "department_id": dept_id,
+                        "bk_username": tenant_user_id,
+                        "department_id": tenant_dept_id,
                     }
                 )
 
-        return relations
-
-    @swagger_auto_schema(
-        tags=["open_v3.relation"],
-        operation_id="list_department_user_relation",
-        operation_description="查询部门用户关系",
-        responses={status.HTTP_200_OK: TenantDepartmentUserRelationListOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        return self.get_paginated_response(TenantDepartmentUserRelationListOutputSLZ(page, many=True).data)
+        return self.get_paginated_response(TenantDepartmentUserRelationListOutputSLZ(results, many=True).data)
