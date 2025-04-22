@@ -89,7 +89,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_creator_and_object_type(self, api_client, bk_user, audit_records):
@@ -98,7 +98,7 @@ class TestAuditRecordListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 4
         assert all(
-            record["creator"] == bk_user.username and record["object_type"] == "data_source"
+            record["creator"] == f"{bk_user.username}({bk_user.username})" and record["object_type"] == "data_source"
             for record in resp.data["results"]
         )
 
@@ -107,7 +107,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_operation_and_object_name(self, api_client, audit_records):
@@ -128,7 +128,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["operation"] == "create_data_source"
 
@@ -140,7 +140,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
@@ -152,7 +152,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["operation"] == "create_data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
@@ -183,7 +183,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == bk_user.username
+        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["operation"] == "create_data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
