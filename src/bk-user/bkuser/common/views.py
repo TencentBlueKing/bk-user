@@ -39,6 +39,7 @@ from rest_framework.exceptions import (
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 from sentry_sdk import capture_exception
+from utils.url import urljoin
 
 from bkuser.common.error_codes import error_codes
 from bkuser.utils.std_error import APIError
@@ -202,7 +203,7 @@ class VueTemplateView(TemplateView):
                 # 是否启用新建租户功能
                 "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
                 # 前端服务 API 网关（bk-user-web）正式环境（prod) URL
-                "BK_USER_WEB_APIGW_URL": f"{settings.BK_API_URL_TMPL.format(api_name='bk-user-web')}/prod/",
+                "BK_USER_WEB_APIGW_URL": urljoin(settings.BK_API_URL_TMPL.format(api_name="bk-user-web"), "/prod"),
             }
 
         except Exception:  # pylint: disable=broad-except
