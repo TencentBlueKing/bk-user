@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
@@ -29,9 +28,6 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
     查询部门间关系
     """
 
-    def get_queryset(self) -> QuerySet[DataSourceDepartmentRelation]:
-        return DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
-
     @swagger_auto_schema(
         tags=["open_v3.relation"],
         operation_id="list_department_relation",
@@ -39,8 +35,16 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentRelationListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
+        # 获取本租户下所有数据源部门
+        data_source_dept_ids = TenantDepartment.objects.filter(
+            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        ).values_list("data_source_department_id", flat=True)
+
+        # 获取数据源部门间的关系并分页
+        relations = DataSourceDepartmentRelation.objects.filter(
+            data_source_id=self.real_data_source_id, department_id__in=data_source_dept_ids
+        )
+        page = self.paginate_queryset(relations)
 
         dept_ids = {rel.department_id for rel in page}
 
@@ -56,7 +60,6 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         for rel in page:
             tenant_dept_id = dept_id_map.get(rel.department_id)
             parent_dept_id = dept_id_map.get(rel.parent_id)
-            if tenant_dept_id:
-                results.append({"id": tenant_dept_id, "parent_id": parent_dept_id})
+            results.append({"id": tenant_dept_id, "parent_id": parent_dept_id})
 
         return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(results, many=True).data)
