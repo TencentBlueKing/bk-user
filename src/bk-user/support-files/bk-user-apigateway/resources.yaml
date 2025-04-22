@@ -329,7 +329,7 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: false
+          resourcePermissionRequired: true
         descriptionEn: Query the relations between users and departments
 
   /api/v3/open/tenant/virtual-users/-/lookup/:
@@ -379,5 +379,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: true
+          resourcePermissionRequired: false
         descriptionEn: Query the list of common variables of the tenant
