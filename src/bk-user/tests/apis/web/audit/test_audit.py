@@ -34,7 +34,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 4
-        assert all(record["creator"] == bk_user.username for record in resp.data["results"])
+        assert all(record["creator"] == f"{bk_user.username}({bk_user.username})" for record in resp.data["results"])
 
     def test_audit_record_list_filter_by_operation(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"operation": "create_data_source"})
