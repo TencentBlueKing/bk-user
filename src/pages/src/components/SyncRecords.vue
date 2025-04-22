@@ -136,10 +136,10 @@ const triggeMode = {
 };
 
 const updateStatusFilters = [
-  { text: t('待执行'), value: 'pending' },
+  { text: t('同步中'), value: 'pending' },
   { text: t('同步中'), value: 'running' },
-  { text: t('成功'), value: 'success' },
-  { text: t('失败'), value: 'failed' },
+  { text: t('同步成功'), value: 'success' },
+  { text: t('同步失败'), value: 'failed' },
 ];
 
 onMounted(() => {
