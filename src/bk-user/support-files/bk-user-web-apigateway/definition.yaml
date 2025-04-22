@@ -18,8 +18,8 @@ apigateway:
 
 stages:
   - name: "prod"
-    description: "生产环境"
-    description_en: "environment of production"
+    description: "正式环境"
+    description_en: "Production Environment"
     backends:
       - name: "default"
         config:
