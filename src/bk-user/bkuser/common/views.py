@@ -39,10 +39,10 @@ from rest_framework.exceptions import (
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 from sentry_sdk import capture_exception
-from utils.url import urljoin
 
 from bkuser.common.error_codes import error_codes
 from bkuser.utils.std_error import APIError
+from bkuser.utils.url import urljoin
 
 logger = logging.getLogger(__name__)
 
