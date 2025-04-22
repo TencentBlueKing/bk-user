@@ -42,6 +42,7 @@ from sentry_sdk import capture_exception
 
 from bkuser.common.error_codes import error_codes
 from bkuser.utils.std_error import APIError
+from bkuser.utils.url import urljoin
 
 logger = logging.getLogger(__name__)
 
@@ -201,9 +202,8 @@ class VueTemplateView(TemplateView):
                 "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
                 # 是否启用新建租户功能
                 "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
-                # FIXME: 用于 display_name 测试，测试完毕后删除
-                # 前端服务 API 网关（bk-user-web）URL
-                "BK_USER_WEB_APIGW_URL": settings.BK_API_URL_TMPL.format(api_name="bk-user-web/prod"),
+                # 前端服务 API 网关（bk-user-web）正式环境（prod) URL
+                "BK_USER_WEB_APIGW_URL": urljoin(settings.BK_API_URL_TMPL.format(api_name="bk-user-web"), "/prod"),
             }
 
         except Exception:  # pylint: disable=broad-except
