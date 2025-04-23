@@ -35,17 +35,13 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         responses={status.HTTP_200_OK: TenantDepartmentUserRelationListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        # 获取本租户下所有实名数据源用户 ID
-        data_source_user_ids = TenantUser.objects.filter(
-            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
-        ).values_list("data_source_user_id", flat=True)
-
         # 获取数据源用户与部门间关系并分页
-        relations = DataSourceDepartmentUserRelation.objects.filter(
-            data_source_id=self.real_data_source_id, user_id__in=data_source_user_ids
-        ).order_by("id")
+        relations = DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id).order_by(
+            "id"
+        )
         page = self.paginate_queryset(relations)
 
+        # 获取所有相关的数据源用户 ID 和部门 ID
         user_ids = {rel.user_id for rel in page}
         dept_ids = {rel.department_id for rel in page}
 
@@ -66,8 +62,8 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         # 构建当前页的结果
         results = []
         for rel in page:
-            tenant_user_id = user_id_map.get(rel.user_id)
-            tenant_dept_id = dept_id_map.get(rel.department_id)
+            tenant_user_id = user_id_map[rel.user_id]
+            tenant_dept_id = dept_id_map[rel.department_id]
             results.append(
                 {
                     "bk_username": tenant_user_id,
