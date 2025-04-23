@@ -35,15 +35,8 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentRelationListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        # 获取本租户下所有数据源部门
-        data_source_dept_ids = TenantDepartment.objects.filter(
-            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
-        ).values_list("data_source_department_id", flat=True)
-
         # 获取数据源部门间的关系并分页
-        relations = DataSourceDepartmentRelation.objects.filter(
-            data_source_id=self.real_data_source_id, department_id__in=data_source_dept_ids
-        )
+        relations = DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
         page = self.paginate_queryset(relations)
 
         dept_ids = {rel.department_id for rel in page}
@@ -58,7 +51,7 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         # 构建当前页的结果
         results = []
         for rel in page:
-            tenant_dept_id = dept_id_map.get(rel.department_id)
+            tenant_dept_id = dept_id_map[rel.department_id]
             parent_dept_id = dept_id_map.get(rel.parent_id)
             results.append({"id": tenant_dept_id, "parent_id": parent_dept_id})
 
