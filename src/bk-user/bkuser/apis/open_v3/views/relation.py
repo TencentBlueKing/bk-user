@@ -49,10 +49,10 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         )
 
         # 构建当前页的结果
-        results = []
-        for rel in page:
-            tenant_dept_id = dept_id_map[rel.department_id]
-            parent_dept_id = dept_id_map.get(rel.parent_id)
-            results.append({"id": tenant_dept_id, "parent_id": parent_dept_id})
+        # TODO: 由于数据源同步过程存在两阶段：
+        # 1.外部数据源同步到数据源用户（部门）2.数据源用户（部门）同步到租户用户（部门）
+        # 所以可能存在数据源部门存在，而租户部门不存在的情况
+        # 但是出现这种情况概率较低，后续考虑如何处理
+        results = [{"id": dept_id_map[rel.department_id], "parent_id": dept_id_map.get(rel.parent_id)} for rel in page]
 
         return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(results, many=True).data)
