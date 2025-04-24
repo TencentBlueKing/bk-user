@@ -62,7 +62,8 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         # 构建当前页的结果
         # TODO: 由于数据源同步过程存在两阶段：
         # 1.外部数据源同步到数据源用户（部门）2.数据源用户（部门）同步到租户用户（部门）
-        # 所以可能存在数据源用户（部门）在租户用户（部门）表中不存在的情况，出现这种情况概率较低，后续需要考虑如何处理
+        # 所以可能存在数据源用户（部门）存在，而租户用户（部门）不存在的情况
+        # 但是出现这种情况概率较低，后续考虑如何处理
         results = [
             {
                 "bk_username": user_id_map[rel.user_id],
