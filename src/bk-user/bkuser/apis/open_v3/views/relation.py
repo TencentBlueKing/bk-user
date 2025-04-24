@@ -91,6 +91,8 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         # 获取数据源部门间的关系并分页
+        # Note: 这里为什么没有使用 order_by 保证分页稳定？
+        # 因为数据源部门采用 MPTT 模型，Manager 中的 get_queryset 方法已定义按照 tree_id 与 lft 联合排序保证分页稳定性
         relations = DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
         page = self.paginate_queryset(relations)
 
