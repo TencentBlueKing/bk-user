@@ -6,6 +6,7 @@
     @change="$emit('change', inputValue)"
     @focus="$emit('focus', inputValue)"
     @input="$emit('input', inputValue); $emit('update: modelValue', inputValue)"
+    @keydown="handleFastClear"
   >
     <template #suffix>
       <span class="copy-icon">
@@ -14,12 +15,15 @@
           v-bk-tooltips="{ content: $t('复制密码') }"
           @click="copy(inputValue)" />
       </span>
-      <span
+      <bk-button
         v-show="!isPassword"
+        :disabled="isPasswordDisabled"
+        v-bk-tooltips="{ content: $t('不允许查看上次保存的密码'), disabled: !isPasswordDisabled }"
+        text
         class="inline-flex text-[14px] ml-[8px] mr-[8px] text-[#979BA5]"
         @click="isPassword = true">
         <eye />
-      </span>
+      </bk-button>
     </template>
   </bk-input>
 </template>
@@ -34,7 +38,16 @@ import { copy } from '@/utils';
 const props = defineProps({
   modelValue: {
     type: String,
-  } });
+  },
+  isPasswordDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  isFastClearEnable: {
+    type: Boolean,
+    default: false,
+  },
+});
 defineEmits(['change', 'focus', 'input', 'update: modelValue']);
 
 const inputValue = ref('');
@@ -44,6 +57,13 @@ watch(() => props.modelValue, (val) => {
 }, {immediate: true});
 
 const isPassword  = ref(false);
+
+const handleFastClear = (value: any, event: KeyboardEvent) => {
+  const CLEAR_CODE = ['Delete', 'Backspace'];
+  if (props.isFastClearEnable && CLEAR_CODE.includes(event?.code)) {
+    inputValue.value = '';
+  }
+};
 
 </script>
 

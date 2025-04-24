@@ -40,6 +40,4 @@ class AuditRecordListOutputSLZ(serializers.Serializer):
     created_at = serializers.DateTimeField(help_text="操作时间")
 
     def get_creator(self, obj: OperationAuditRecord) -> str:
-        # FIXME: 用于 display_name 测试，返回 bk_username；测试完毕后更改
-        # return self.context["user_display_name_map"].get(obj.creator) or obj.creator
-        return obj.creator
+        return self.context["user_display_name_map"].get(obj.creator) or obj.creator

@@ -134,6 +134,11 @@
         <CustomFields v-if="selectedOption === 'custom'" :extras="infoFormData.customField" :rules="rules" />
       </bk-form>
     </bk-dialog>
+    <!-- 批量续期弹窗 -->
+    <batchRenewal
+      v-model:is-show-renewal="isShowRenewal"
+      @batch-renewal="handleRenewal"
+      :user-ids="userIds" />
   </div>
 </template>
 
@@ -143,6 +148,8 @@ import { clickoutside as vClickoutside, InfoBox, Message } from 'bkui-vue';
 import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+
+import batchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -164,10 +171,8 @@ const props = defineProps({
 });
 
 /** 是否为本地数据源 */
-const isLocalDataSource = computed(() => {
-  return appStore.currentTenant?.data_source?.plugin_id === 'local';
-});
-
+const isLocalDataSource = computed(() => appStore.currentTenant?.data_source?.plugin_id === 'local');
+const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
   newPassword: '',
   confirmPassword: '',
@@ -193,6 +198,7 @@ const infoFormRef = ref();
 const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 'reloadList']);
 
 const dropdownVisible = ref(false);
+const isShowRenewal = ref(false);
 
 const dropdownList = ref<any[]>([
   {
@@ -211,9 +217,8 @@ const dropdownList = ref<any[]>([
     disabled: !props.isEnabledPassword && !isLocalDataSource.value,
     tips: !props.isEnabledPassword ? t('当前租户未启用账密登录，无法修改密码') : !isLocalDataSource.value ? t('非本地数据源，无法重置密码') : '',
     handle: () => {
-      const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
-      passwordRule(userIds[0]).then((res) => {
+      passwordRule(userIds.value[0]).then((res) => {
         passwordTips.value = res.data?.rule_tips;
       });
       formData.value = {
@@ -251,6 +256,12 @@ const dropdownList = ref<any[]>([
     handle: () => {
       confirmBatchAction('delete');
     },
+  },
+  {
+    label: t('续期'),
+    isShow: true,
+    tips: t('非本地数据源或 LDAP 数据源，无法续期'),
+    handle: () => isShowRenewal.value = true,
   },
 ]);
 
@@ -327,9 +338,8 @@ const resetBatchPasswordConfirm = async () => {
     if (formData.value.newPassword !== formData.value.confirmPassword) {
       return isError.value = true;
     }
-    const userIds = props.selectList.map(item => item.id);
     const params = {
-      user_ids: userIds,
+      user_ids: userIds.value,
       password: formData.value.newPassword,
     };
     await batchResetPassword(params);
@@ -350,8 +360,7 @@ const cancelBatchInfo = () => {
  * 修改用户信息
  */
 const confirmBatchInfo = () => {
-  const userIds = props.selectList.map(item => item.id);
-  const params = { user_ids: userIds };
+  const params = { user_ids: userIds.value };
 
   const actions = {
     date: () => {
@@ -387,12 +396,29 @@ const confirmBatchInfo = () => {
 /**
  * 批量启用/停用/删除
  */
-const confirmBatchAction = (actionType) => {
-  const userIds = props.selectList.map(item => item.id);
+const confirmBatchAction = (actionType: string) => {
   const actions = {
-    enable: { title: t('确认批量启用所选用户 ？'), confirmText: t('启用'), params: { user_ids: userIds, status: 'enabled' } },
-    disabled: { title: t('确认批量停用所选用户 ？'),  confirmText: t('停用'), params: { user_ids: userIds, status: 'disabled' } },
-    delete: { title: t('确认批量删除用户？'),  confirmText: t('删除'), params: userIds?.join(',') },
+    enable: {
+      title: t('确认批量启用所选用户 ？'),
+      confirmText: t('启用'),
+      params: {
+        user_ids: userIds.value,
+        status: 'enabled',
+      },
+    },
+    disabled: {
+      title: t('确认批量停用所选用户 ？'),
+      confirmText: t('停用'),
+      params: {
+        user_ids: userIds.value,
+        status: 'disabled',
+      },
+    },
+    delete: {
+      title: t('确认批量删除用户？'),
+      confirmText: t('删除'),
+      params: userIds.value?.join(','),
+    },
   }[actionType];
 
   InfoBox({
@@ -401,14 +427,30 @@ const confirmBatchAction = (actionType) => {
     confirmText: actions.confirmText,
     cancelText: t('取消'),
     onConfirm: () => {
-      (async () => {
-        await (actionType === 'delete'
-          ? batchDeleteUser(actions.params)
-          : batchUpdateStatus(actions.params));
-        emits('reloadList');
-      })();
+      switch (actionType) {
+        case 'delete':
+          batchDeleteUser(actions.params)
+            .then(() => {
+              emits('reloadList');
+            });
+          return;
+        case 'enable':
+        case 'disabled':
+          batchUpdateStatus(actions.params)
+            .then(() => {
+              emits('reloadList');
+            });
+          return;
+      }
     },
   });
+};
+
+const handleRenewal = () => {
+  selectedOption.value = '';
+  userInfoOptions.value.forEach(item => item.selected = false);
+  Message({ theme: 'success', message: t('更新成功') });
+  emits('reloadList');
 };
 
 </script>
