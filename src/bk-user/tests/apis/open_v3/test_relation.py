@@ -41,3 +41,26 @@ class TestTenantDepartmentUserRelationListApi:
         assert resp.data["count"] == 13
         assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id, wangwu.id, zhaoliu.id}
         assert {t["department_id"] for t in resp.data["results"]} == {company.id, dept_a.id, center_aa.id}
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantDepartmentRelationListApi:
+    def test_list(self, api_client):
+        company = TenantDepartment.objects.get(data_source_department__code="company")
+        dept_a = TenantDepartment.objects.get(data_source_department__code="dept_a")
+        center_aa = TenantDepartment.objects.get(data_source_department__code="center_aa")
+        center_ab = TenantDepartment.objects.get(data_source_department__code="center_ab")
+        group_aaa = TenantDepartment.objects.get(data_source_department__code="group_aaa")
+
+        resp = api_client.get(reverse("open_v3.tenant_department_relation.list"), data={"page": 1, "page_size": 5})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 9
+        assert {t["id"] for t in resp.data["results"]} == {
+            company.id,
+            dept_a.id,
+            center_aa.id,
+            center_ab.id,
+            group_aaa.id,
+        }
+        assert {t["parent_id"] for t in resp.data["results"]} == {None, company.id, dept_a.id, center_aa.id}

@@ -18,8 +18,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apis.open_v3.serializers.relation import TenantDepartmentUserRelationListOutputSLZ
-from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation
+from bkuser.apis.open_v3.serializers.relation import (
+    TenantDepartmentRelationListOutputSLZ,
+    TenantDepartmentUserRelationListOutputSLZ,
+)
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 
@@ -73,3 +76,40 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         ]
 
         return self.get_paginated_response(TenantDepartmentUserRelationListOutputSLZ(results, many=True).data)
+
+
+class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询部门间关系
+    """
+
+    @swagger_auto_schema(
+        tags=["open_v3.relation"],
+        operation_id="list_department_relation",
+        operation_description="查询部门间关系",
+        responses={status.HTTP_200_OK: TenantDepartmentRelationListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        # 获取数据源部门间的关系并分页
+        # Note: 这里为什么没有使用 order_by 保证分页稳定？
+        # 因为数据源部门采用 MPTT 模型，Manager 中的 get_queryset 方法已定义按照 tree_id 与 lft 联合排序保证分页稳定性
+        relations = DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
+        page = self.paginate_queryset(relations)
+
+        dept_ids = {rel.department_id for rel in page}
+
+        # 获取数据源部门与租户部门之间的映射
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=dept_ids, tenant_id=self.tenant_id
+            ).values_list("data_source_department_id", "id")
+        )
+
+        # 构建当前页的结果
+        # TODO: 由于数据源同步过程存在两阶段：
+        # 1.外部数据源同步到数据源用户（部门）2.数据源用户（部门）同步到租户用户（部门）
+        # 所以可能存在数据源部门存在，而租户部门不存在的情况
+        # 但是出现这种情况概率较低，后续考虑如何处理
+        results = [{"id": dept_id_map[rel.department_id], "parent_id": dept_id_map.get(rel.parent_id)} for rel in page]
+
+        return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(results, many=True).data)

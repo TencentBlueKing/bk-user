@@ -17,6 +17,11 @@
 from rest_framework import serializers
 
 
+class TenantDepartmentRelationListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    parent_id = serializers.IntegerField(help_text="父部门 ID")
+
+
 class TenantDepartmentUserRelationListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识")
     department_id = serializers.IntegerField(help_text="部门 ID")
