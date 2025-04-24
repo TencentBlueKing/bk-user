@@ -60,15 +60,15 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
         )
 
         # 构建当前页的结果
-        results = []
-        for rel in page:
-            tenant_user_id = user_id_map[rel.user_id]
-            tenant_dept_id = dept_id_map[rel.department_id]
-            results.append(
-                {
-                    "bk_username": tenant_user_id,
-                    "department_id": tenant_dept_id,
-                }
-            )
+        # TODO: 由于数据源同步过程存在两阶段：
+        # 1.外部数据源同步到数据源用户（部门）2.数据源用户（部门）同步到租户用户（部门）
+        # 所以可能存在数据源用户（部门）在租户用户（部门）表中不存在的情况，出现这种情况概率较低，后续需要考虑如何处理
+        results = [
+            {
+                "bk_username": user_id_map[rel.user_id],
+                "department_id": dept_id_map[rel.department_id],
+            }
+            for rel in page
+        ]
 
         return self.get_paginated_response(TenantDepartmentUserRelationListOutputSLZ(results, many=True).data)
