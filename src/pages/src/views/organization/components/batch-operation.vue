@@ -39,8 +39,6 @@
       :theme="'primary'"
       :size="'normal'"
       :height="200"
-      @closed="batchPasswordDialogShow = false"
-      @confirm="resetBatchPasswordConfirm"
     >
       <bk-form
         form-type="vertical"
@@ -63,6 +61,18 @@
           <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
         </bk-form-item>
       </bk-form>
+      <template #footer>
+        <bk-button
+          theme="primary"
+          class="mr-[8px]"
+          @click="resetBatchPasswordConfirm"
+          :loading="isResetPasswordLoading">
+          {{ t('确定') }}
+        </bk-button>
+        <bk-button @click="batchPasswordDialogShow = false">
+          {{ t('取消') }}
+        </bk-button>
+      </template>
     </bk-dialog>
     <!-- 批量修改信息弹窗 -->
     <bk-dialog
@@ -329,11 +339,13 @@ const randomPasswordHandle = async (type: string) => {
   formData.value.newPassword = res.data?.password;
 };
 
+const isResetPasswordLoading = ref(false);
 /**
    * 重置密码
    */
 const resetBatchPasswordConfirm = async () => {
   try {
+    isResetPasswordLoading.value = true;
     await formRef.value.validate();
     if (formData.value.newPassword !== formData.value.confirmPassword) {
       return isError.value = true;
@@ -348,6 +360,8 @@ const resetBatchPasswordConfirm = async () => {
     emits('reloadList');
   } catch (e) {
     console.warn(e);
+  } finally {
+    isResetPasswordLoading.value = false;
   }
 };
 
