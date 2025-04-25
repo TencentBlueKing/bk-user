@@ -30,7 +30,11 @@
             />
         </div>
         <bk-table
-            max-height="100%"
+            :pagination-height="paginationHeight"
+            :thead="{ height: headHeight }"
+            :row-height="lineHeight"
+            :max-height="curTableMaxHeight"
+            :height="curTableHeight"
             min-height="30%"
             class="organization-table-main"
             :border="['outer']"
@@ -248,6 +252,7 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
+import { useTableMaxHeight } from '@/hooks';
 
   const appStore = useAppStore();
   const recursive = ref(true);
@@ -786,6 +791,28 @@ const batchMoveOrg = (params) => {
   currentHandle.value = params
   handleOperations(true, t('移动至组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
 }
+
+// 固定表头行高分页器高度，便于切换行高时计算高度
+const paginationHeight = 60;
+const headHeight = 42;
+const lineHeight = ref(42);
+// 使用max-height来限制表格高度
+const curTableMaxHeight = computed(() => {
+  // header(52) + subHeader(52) + padding(48) + actionBar(32) + actionBarMarginBottom(16) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
+  const tableMaxHeight = window.innerHeight - 200;
+  // 计算当前分页下table高度
+  const targetTableHeight = headHeight + lineHeight.value * pagination.limit + paginationHeight;
+  // 若超出页面允许的最大高度，返回最大高度，否则返回数据铺满高度，防止出现空白区域未铺满数据的情况
+  if (targetTableHeight < tableMaxHeight) return targetTableHeight;
+  return tableMaxHeight;
+})
+// table height继续采用响应式hook，用于处理window resize以及折叠功能高度的计算(curRedundantHeight is ref data)
+const dynamicTableHeight = useTableMaxHeight(200);
+const curTableHeight = computed(() => {
+  if (pagination.count < pagination.limit) return 'auto';
+  return dynamicTableHeight.value;
+});
+
 defineExpose({
   importDialogHandle
 })
@@ -796,6 +823,7 @@ defineExpose({
 }
 
 .organization-table-main {
+  transition: height 0.5s ease;
   .bk-table-head thead th {
     &:first-child {
       text-align: center;
