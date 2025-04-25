@@ -33,6 +33,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
@@ -242,6 +243,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
     leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
+    password_expired_at = serializers.SerializerMethodField(help_text="密码过期时间")
 
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
@@ -288,6 +290,15 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         ).select_related("data_source_user")
 
         return TenantUserLeaderSLZ(leaders, many=True).data
+
+    @swagger_serializer_method(serializer_or_field=serializers.DateTimeField())
+    def get_password_expired_at(self, obj: TenantUser) -> datetime.datetime | None:
+        """获取密码过期时间"""
+        # Q： 怎么才能判断用户是不是本地数据源用户
+        # A： 通过 LocalDataSourceIdentityInfo 模型是否存在来判断
+        # 如果支持账密登录，肯定存在password_expired_at 字段
+        identity_info = LocalDataSourceIdentityInfo.objects.filter(user_id=obj.data_source_user_id).first()
+        return identity_info.password_expired_at if identity_info else None
 
 
 def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:

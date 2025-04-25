@@ -25,6 +25,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
@@ -522,6 +523,18 @@ class TestTenantUserRetrieveApi:
         assert resp.data["extras"] == {
             f.name: f.default for f in random_tenant_custom_fields if "hobbies" not in f.name
         }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_tenant_users_identity_infos")
+    def test_password_expired_at_display(self, api_client, random_tenant):
+        """测试本地数据源用户的密码过期时间显示"""
+        lushi = TenantUser.objects.get(data_source_user__username="lushi", tenant=random_tenant)
+        resp = api_client.get(reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": lushi.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert "password_expired_at" in resp.data
+        identity_info = LocalDataSourceIdentityInfo.objects.filter(user=lushi.data_source_user).first()
+        assert resp.data["password_expired_at"] == identity_info.password_expired_at if identity_info else None
 
 
 class TestTenantUserDestroyApi:
