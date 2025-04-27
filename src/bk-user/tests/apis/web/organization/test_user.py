@@ -536,9 +536,9 @@ class TestTenantUserRetrieveApi:
         # 将字符串转换为 datetime 对象
         expired_at_str = resp.data["password_expired_at"]
         expired_at = datetime.datetime.strptime(expired_at_str, "%Y-%m-%d %H:%M:%S")
-        expired_at = timezone.make_aware(expired_at, timezone.utc)
+        expired_at = timezone.make_aware(expired_at, timezone.get_current_timezone())
         # 计算预期时间
-        expected_time = timezone.now().astimezone(timezone.utc) + datetime.timedelta(days=3)
+        expected_time = timezone.now().astimezone(timezone.get_current_timezone()) + datetime.timedelta(days=3)
 
         # 允许的误差最大为 5 分钟
         assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
