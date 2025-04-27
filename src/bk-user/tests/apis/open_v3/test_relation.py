@@ -64,3 +64,21 @@ class TestTenantDepartmentRelationListApi:
             group_aaa.id,
         }
         assert {t["parent_id"] for t in resp.data["results"]} == {None, company.id, dept_a.id, center_aa.id}
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserLeaderRelationListApi:
+    def test_list(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        wangwu = TenantUser.objects.get(data_source_user__username="wangwu")
+        zhaoliu = TenantUser.objects.get(data_source_user__username="zhaoliu")
+        liuqi = TenantUser.objects.get(data_source_user__username="liuqi")
+        maiba = TenantUser.objects.get(data_source_user__username="maiba")
+
+        resp = api_client.get(reverse("open_v3.tenant_user_leader_relation.list"), data={"page": 1, "page_size": 5})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 11
+        assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id, zhaoliu.id, liuqi.id, maiba.id}
+        assert {t["leader_id"] for t in resp.data["results"]} == {zhangsan.id, lisi.id, zhaoliu.id, wangwu.id}

@@ -21,7 +21,11 @@ from .department import (
     TenantDepartmentRetrieveApi,
     TenantDepartmentUserListApi,
 )
-from .relation import TenantDepartmentRelationListApi, TenantDepartmentUserRelationListApi
+from .relation import (
+    TenantDepartmentRelationListApi,
+    TenantDepartmentUserRelationListApi,
+    TenantUserLeaderRelationListApi,
+)
 from .tenant import TenantCommonVariableListApi, TenantListApi
 from .user import (
     TenantUserDepartmentListApi,
@@ -48,6 +52,7 @@ __all__ = [
     "TenantDepartmentLookupListApi",
     "TenantDepartmentRelationListApi",
     "TenantDepartmentUserRelationListApi",
+    "TenantUserLeaderRelationListApi",
     "VirtualUserLookupApi",
     "TenantCommonVariableListApi",
 ]

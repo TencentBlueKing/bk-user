@@ -21,8 +21,13 @@ from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.relation import (
     TenantDepartmentRelationListOutputSLZ,
     TenantDepartmentUserRelationListOutputSLZ,
+    TenantUserLeaderRelationListOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
+from bkuser.apps.data_source.models import (
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+    DataSourceUserLeaderRelation,
+)
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 
@@ -113,3 +118,46 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         results = [{"id": dept_id_map[rel.department_id], "parent_id": dept_id_map.get(rel.parent_id)} for rel in page]
 
         return self.get_paginated_response(TenantDepartmentRelationListOutputSLZ(results, many=True).data)
+
+
+class TenantUserLeaderRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询用户与 Leader 间关系
+    """
+
+    @swagger_auto_schema(
+        tags=["open_v3.relation"],
+        operation_id="list_user_leader_relation",
+        operation_description="查询用户与 Leader 间关系",
+        responses={status.HTTP_200_OK: TenantUserLeaderRelationListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        # 获取数据源用户与 Leader 间关系并分页
+        relations = DataSourceUserLeaderRelation.objects.filter(data_source_id=self.real_data_source_id).order_by("id")
+        page = self.paginate_queryset(relations)
+
+        # 获取所有相关的数据源用户与 Leader ID
+        user_ids = {rel.user_id for rel in page}
+        leader_ids = {rel.leader_id for rel in page}
+
+        # 获取数据源用户与租户用户之间的映射
+        user_id_map = dict(
+            TenantUser.objects.filter(
+                data_source_user_id__in=user_ids | leader_ids, tenant_id=self.tenant_id
+            ).values_list("data_source_user_id", "id")
+        )
+
+        # 构建当前页的结果
+        # TODO: 由于数据源同步过程存在两阶段：
+        # 1.外部数据源同步到数据源用户（部门）2.数据源用户（部门）同步到租户用户（部门）
+        # 所以可能存在数据源用户存在，而租户用户不存在的情况
+        # 但是出现这种情况概率较低，后续考虑如何处理
+        results = [
+            {
+                "bk_username": user_id_map[rel.user_id],
+                "leader_id": user_id_map[rel.leader_id],
+            }
+            for rel in page
+        ]
+
+        return self.get_paginated_response(TenantUserLeaderRelationListOutputSLZ(results, many=True).data)
