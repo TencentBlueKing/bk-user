@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from django.urls import reverse
 from rest_framework import status
@@ -216,6 +217,7 @@ class TestTenantDepartmentUserListApi:
         assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id}
         assert {t["display_name"] for t in resp.data["results"]} == {"lisi(李四)", "wangwu(王五)"}
         assert {t["full_name"] for t in resp.data["results"]} == {"李四", "王五"}
+        assert {t["status"] for t in resp.data["results"]} == {TenantUserStatus.ENABLED}
 
     def test_with_department_not_found(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_department.user.list", kwargs={"id": 9999}))

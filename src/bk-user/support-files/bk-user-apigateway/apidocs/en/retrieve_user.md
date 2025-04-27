@@ -24,7 +24,8 @@ Query user's information
         "bk_username": "7idwx3b7nzk6xigs",
         "display_name": "zhangsan(张三)",
         "time_zone": "Asia/Shanghai",
-        "language": "zh-cn"
+        "language": "zh-cn",
+        "status": "enabled"
     }
 }
 ```
@@ -38,3 +39,4 @@ Query user's information
 | display_name | string | User's display_name               |
 | time_zone    | string | Time Zone                         |
 | language     | string | Language                          |
+| status       | string | User's status                     |

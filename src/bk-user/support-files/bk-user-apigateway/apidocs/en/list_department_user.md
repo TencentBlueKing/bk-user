@@ -27,12 +27,14 @@
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
                 "full_name": "张三",
-                "display_name": "zhangsan(张三)"
+                "display_name": "zhangsan(张三)",
+                "status": "enabled"
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
                 "full_name": "李四",
-                "display_name": "lisi(李四)"
+                "display_name": "lisi(李四)",
+                "status": "disabled"
             }
         ]
     }
@@ -46,3 +48,4 @@
 | bk_username  | string | Blueking user's unique identifier |
 | full_name    | string | User's name                       |
 | display_name | string | User's display name               |
+| status       | string | User's status                     |

@@ -22,6 +22,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.constants import BkLanguageEnum
@@ -78,6 +79,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="数据源用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_display_name(self, obj: TenantUser) -> str:
@@ -131,6 +133,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_display_name(self, obj: TenantUser) -> str:

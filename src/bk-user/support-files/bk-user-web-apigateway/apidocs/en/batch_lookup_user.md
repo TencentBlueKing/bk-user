@@ -31,6 +31,7 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
             "display_name": "zhangsan(张三)",
             "data_source_type": "real",
             "owner_tenant_id": "default",
+            "status": "enabled",
             "organization_paths": ["公司/部门A/中心AA"],
         },
         {
@@ -40,6 +41,7 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
             "display_name": "lisi(李四)",
             "data_source_type": "real",
             "owner_tenant_id": "collaborative_tenant",
+            "status": "enabled",
             "organization_paths": ["公司/部门A/中心AB", "公司/部门B/中心BA"],
         },
         {
@@ -49,6 +51,7 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
             "display_name": "zhangsan(张三)",
             "data_source_type": "virtual",
             "owner_tenant_id": "default",
+            "status": "disabled",
             "organization_paths": [],
         },
     ]
@@ -65,4 +68,5 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
 | display_name       | string | User's display_name                                                                                                                                                                      |
 | data_source_type   | string | Data source type, where `real` corresponds to real-name data source (user), and `virtual` corresponds to virtual data source (user)                                                      |
 | owner_tenant_id    | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
+| status             | string | User's status                                                                                                                                                                            |
 | organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`; virtual users have no organization path          |
