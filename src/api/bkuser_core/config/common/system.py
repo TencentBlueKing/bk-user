@@ -34,7 +34,6 @@ try:
 except ImproperlyConfigured:
     FERNET_ENCRYPT_SECRET_KEY = b"hzd3Mf7eLAG4gy6N-cBZmguZ39oHprqgoOeCj3qDltg="
 
-
 # ==============================================================================
 # 探针配置
 # ==============================================================================
@@ -148,7 +147,6 @@ ENABLE_LDAP3_DEBUG = env.bool("ENABLE_LDAP3_DEBUG", default=False)
 TASK_MAX_RETRIES = env.int("TASK_MAX_RETRIES", default=3)
 RETRY_BACKOFF = env.int("RETRY_BACKOFF", default=30)
 
-
 # for SaaS
 # 统一使用_DATA
 # DEFAULT_LOGO_URL = "img/logo_default.png"
@@ -176,3 +174,6 @@ FOOTER_CONFIG = {
         },
     ]
 }
+
+# 是否开启登录安全防止爆破
+ENABLE_LOGIN_BRUTE_FORCE_PROTECTION = env.bool("ENABLE_LOGIN_BRUTE_FORCE_PROTECTION", default=False)
