@@ -236,6 +236,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
+    password_expired_at = serializers.SerializerMethodField(help_text="密码过期时间")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
     language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
@@ -243,7 +244,6 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     departments = serializers.SerializerMethodField(help_text="租户部门 ID & 名称列表")
     leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID & 名称列表")
-    password_expired_at = serializers.SerializerMethodField(help_text="密码过期时间")
 
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
@@ -292,13 +292,21 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         return TenantUserLeaderSLZ(leaders, many=True).data
 
     @swagger_serializer_method(serializer_or_field=serializers.DateTimeField())
-    def get_password_expired_at(self, obj: TenantUser) -> datetime.datetime | None:
+    def get_password_expired_at(self, obj: TenantUser) -> str | None:
         """获取密码过期时间"""
-        # Q： 怎么才能判断用户是不是本地数据源用户
-        # A： 通过 LocalDataSourceIdentityInfo 模型是否存在来判断
-        # 如果支持账密登录，肯定存在password_expired_at 字段
+        # Q：怎么才能判断用户是不是本地数据源用户
+        # A：通过 LocalDataSourceIdentityInfo 模型是否存在来判断
+        # 如果支持账密登录，肯定存在 password_expired_at 字段
         identity_info = LocalDataSourceIdentityInfo.objects.filter(user_id=obj.data_source_user_id).first()
-        return identity_info.password_expired_at if identity_info else None
+        if not identity_info or not identity_info.password_expired_at:
+            return None
+        expired_at = identity_info.password_expired_at
+        # 确保使用本地时区
+        if not expired_at.tzinfo:
+            expired_at = timezone.make_aware(expired_at, timezone.get_current_timezone())
+        else:
+            expired_at = expired_at.astimezone(timezone.get_current_timezone())
+        return expired_at.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:
@@ -306,7 +314,7 @@ def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:
 
     # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时，
     #  将时间字符串 "2024-01-01 00:00:00" 直接附加当前用户的时区（不会进行时区转换），
-    #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC时区）对比即可
+    #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC 时区）对比即可
     return expired_at.replace(tzinfo=datetime.timezone.utc) >= PERMANENT_TIME
 
 

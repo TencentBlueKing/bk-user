@@ -25,12 +25,12 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
-    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework import status
 
@@ -533,8 +533,15 @@ class TestTenantUserRetrieveApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert "password_expired_at" in resp.data
-        identity_info = LocalDataSourceIdentityInfo.objects.filter(user=lushi.data_source_user).first()
-        assert resp.data["password_expired_at"] == identity_info.password_expired_at if identity_info else None
+        # 将字符串转换为 datetime 对象
+        expired_at_str = resp.data["password_expired_at"]
+        expired_at = datetime.datetime.strptime(expired_at_str, "%Y-%m-%d %H:%M:%S")
+        expired_at = timezone.make_aware(expired_at, timezone.utc)
+        # 计算预期时间
+        expected_time = timezone.now().astimezone(timezone.utc) + datetime.timedelta(days=3)
+
+        # 允许的误差最大为 5 分钟
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
 
 
 class TestTenantUserDestroyApi:
