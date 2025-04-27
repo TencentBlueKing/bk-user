@@ -306,7 +306,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
             expired_at = timezone.make_aware(expired_at, timezone.get_current_timezone())
         else:
             expired_at = expired_at.astimezone(timezone.get_current_timezone())
-        return expired_at.strftime("%Y-%m-%d %H:%M:%S")
+        return expired_at.strftime(settings.REST_FRAMEWORK["DATETIME_FORMAT"])
 
 
 def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:
