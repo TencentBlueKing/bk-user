@@ -9,6 +9,7 @@
     :dialog-type="'process'"
     :current="currentId"
     :total-step="objectSteps.length"
+    @closed="closed"
   >
     <div class="fast-input-dialog">
       <bk-steps

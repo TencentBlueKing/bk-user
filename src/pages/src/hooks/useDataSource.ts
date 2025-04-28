@@ -13,6 +13,10 @@ import { t } from '@/language/index';
 import router from '@/router';
 import { useSyncStatus } from '@/store/syncStatus';
 
+
+/**
+ * @description 数据源配置hooks，引入hook即在onMounted阶段调用 initDataSourcePlugins
+ */
 export const useDataSource = () => {
   const dataSourcePlugins = ref([]);
   const dataSource = ref({});
@@ -29,6 +33,7 @@ export const useDataSource = () => {
     isLoading.value = true;
     getDataSourcePlugins().then((res) => {
       dataSourcePlugins.value = res.data;
+      // 若为初次进入页面/是否刷新页面 触发refreshSync
       if (syncStatusStore.isRefresh) {
         initDataSourceList(refreshSync);
       } else {
@@ -41,6 +46,7 @@ export const useDataSource = () => {
       });
   };
 
+  /** 若状态处于pending或running，触发轮询 */
   const refreshSync = ({ status }) => {
     if (!['pending', 'running'].includes(status)) {
       return;
@@ -69,7 +75,10 @@ export const useDataSource = () => {
       });
   };
 
-  // 获取同步数据源状态
+  /**
+   * @param customFn 自定义回调方法
+   * @description 获取同步数据源状态
+   */
   const initSyncRecords = (customFn: Function = null) => {
     getSyncRecords({ id: currentDataSourceId.value })
       .then((res) => {
@@ -136,23 +145,36 @@ export const useDataSource = () => {
 
   const importDataTimePolling = ref(null);
 
-  const handleImportLocalDataSync = () => {
-    initSyncRecords(importDataStopRule);
+  /**
+   * @param callback 停止轮询的钩子方法
+   * @description 轮询 [获取导入本地数据源同步状态]
+   */
+  const handleImportLocalDataSync = (callback?: Function) => {
+    initSyncRecords((data) => importDataStopRule(data, callback));
     importDataTimePolling.value = setInterval(() => {
-      initSyncRecords(importDataStopRule);
+      initSyncRecords((data) => importDataStopRule(data, callback));
     }, 5000);
   };
 
-  const stopImportDataTimePolling = () => {
+  /**
+   * @param callback 停止轮询的钩子方法
+   * @description 停止轮询的主要方法，并执行传入的钩子方法
+   */
+  const stopImportDataTimePolling = (callback?: Function) => {
     if (importDataTimePolling.value) {
       clearInterval(importDataTimePolling.value);
       importDataTimePolling.value = null;
+      callback?.();
     }
   };
 
-  const importDataStopRule = (data) => {
+  /**
+   * @param callback 停止轮询的钩子方法
+   * @description 停止轮询的规则 [获取导入本地数据源同步状态]
+   */
+  const importDataStopRule = (data, callback?: Function) => {
     if (data.status === 'success' || data.status === 'failed') {
-      stopImportDataTimePolling();
+      stopImportDataTimePolling(callback);
     }
   };
 
