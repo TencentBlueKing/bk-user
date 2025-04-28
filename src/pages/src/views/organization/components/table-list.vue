@@ -172,8 +172,8 @@
       :size="'normal'"
       :height="200"
       @closed="resetPasswordClose"
-      @confirm="resetPasswordConfirm"
     >
+      <bk-loading :loading="isResetPasswordLoading">
         <bk-form
             class="example"
             form-type="vertical"
@@ -187,6 +187,21 @@
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
+      </bk-loading>
+      <template #footer>
+        <div class="flex justify-end">
+          <bk-button
+            theme="primary"
+            class="mr-[8px]"
+            @click="resetPasswordConfirm"
+            :disabled="isResetPasswordLoading">
+            {{ t('确定') }}
+          </bk-button>
+          <bk-button @click="resetPasswordClose">
+            {{ t('取消') }}
+          </bk-button>
+        </div>
+      </template>
     </bk-dialog>
     <!-- 快速录入弹框 -->
     <FastInputDialog v-model:isShow="fastInputDialogShow" @clickImport="$emit('click-import')"
@@ -689,9 +704,11 @@ import { useTableMaxHeight } from '@/hooks';
     const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
       password.value = res.data?.password;
   };
+  const isResetPasswordLoading = ref(false);
   /** 重置密码 */
   const resetPasswordConfirm = async () => {
     try {
+        isResetPasswordLoading.value = true;
         const param = { password: password.value };
         await resetTenantsUserPassword(detailsInfo.value.id, param);
         handleClear();
@@ -699,6 +716,8 @@ import { useTableMaxHeight } from '@/hooks';
         Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
         console.warn(e);
+    } finally {
+      isResetPasswordLoading.value = false;
     }
   }
   /** 取消重置密码 */

@@ -39,39 +39,44 @@
       :theme="'primary'"
       :size="'normal'"
       :height="200"
+      @closed="batchPasswordDialogShow = false"
     >
-      <bk-form
-        form-type="vertical"
-        ref="formRef"
-        :model="formData">
-        <bk-form-item :label="$t('新密码')" property="newPassword" required>
-          <passwordInput
-            v-model="formData.newPassword" :style="{ width: '80%' }" clearable
-            :placeholder="passwordTips.join('、')"
-            v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-            @input="(val) => inputPassword(val, 'newPassword')" />
-          <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
-        </bk-form-item>
-        <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
-          <passwordInput
-            :class="{ 'is-error': isError }"
-            v-model="formData.confirmPassword"
-            :placeholder="$t('请再次输入密码')"
-            @input="(val) => inputPassword(val, 'confirmPassword')" />
-          <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
-        </bk-form-item>
-      </bk-form>
+      <bk-loading :loading="isResetPasswordLoading">
+        <bk-form
+          form-type="vertical"
+          ref="formRef"
+          :model="formData">
+          <bk-form-item :label="$t('新密码')" property="newPassword" required>
+            <passwordInput
+              v-model="formData.newPassword" :style="{ width: '80%' }" clearable
+              :placeholder="passwordTips.join('、')"
+              v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
+              @input="(val) => inputPassword(val, 'newPassword')" />
+            <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
+          </bk-form-item>
+          <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
+            <passwordInput
+              :class="{ 'is-error': isError }"
+              v-model="formData.confirmPassword"
+              :placeholder="$t('请再次输入密码')"
+              @input="(val) => inputPassword(val, 'confirmPassword')" />
+            <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
+          </bk-form-item>
+        </bk-form>
+      </bk-loading>
       <template #footer>
-        <bk-button
-          theme="primary"
-          class="mr-[8px]"
-          @click="resetBatchPasswordConfirm"
-          :loading="isResetPasswordLoading">
-          {{ t('确定') }}
-        </bk-button>
-        <bk-button @click="batchPasswordDialogShow = false">
-          {{ t('取消') }}
-        </bk-button>
+        <div class="flex justify-end">
+          <bk-button
+            theme="primary"
+            class="mr-[8px]"
+            @click="resetBatchPasswordConfirm"
+            :disabled="isResetPasswordLoading">
+            {{ t('确定') }}
+          </bk-button>
+          <bk-button @click="batchPasswordDialogShow = false">
+            {{ t('取消') }}
+          </bk-button>
+        </div>
       </template>
     </bk-dialog>
     <!-- 批量修改信息弹窗 -->
