@@ -25,11 +25,11 @@ page=1&page_size=5
         "results": [
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
-                "leader_id": "mzkampfs7tf57rpg",
+                "leader_bk_username": "mzkampfs7tf57rpg",
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
-                "leader_id": "zxp8d1467qmu4ipb",
+                "leader_bk_username": "zxp8d1467qmu4ipb",
             }
         ]
     }
@@ -38,7 +38,7 @@ page=1&page_size=5
 
 ### 响应参数说明
 
-| 参数名称        | 参数类型   | 描述       |
-|-------------|--------|----------|
-| bk_username | string | 蓝鲸用户唯一标识 |
-| leader_id   | string | 用户上级唯一标识 |
+| 参数名称               | 参数类型   | 描述       |
+|--------------------|--------|----------|
+| bk_username        | string | 蓝鲸用户唯一标识 |
+| leader_bk_username | string | 用户上级唯一标识 |

@@ -81,4 +81,4 @@ class TestTenantUserLeaderRelationListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 11
         assert {t["bk_username"] for t in resp.data["results"]} == {lisi.id, wangwu.id, zhaoliu.id, liuqi.id, maiba.id}
-        assert {t["leader_id"] for t in resp.data["results"]} == {zhangsan.id, lisi.id, zhaoliu.id, wangwu.id}
+        assert {t["leader_bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id, zhaoliu.id, wangwu.id}

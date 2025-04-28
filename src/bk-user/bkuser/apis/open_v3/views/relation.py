@@ -155,7 +155,7 @@ class TenantUserLeaderRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         results = [
             {
                 "bk_username": user_id_map[rel.user_id],
-                "leader_id": user_id_map[rel.leader_id],
+                "leader_bk_username": user_id_map[rel.leader_id],
             }
             for rel in page
         ]

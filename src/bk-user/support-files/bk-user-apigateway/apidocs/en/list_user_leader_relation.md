@@ -25,11 +25,11 @@ page=1&page_size=5
         "results": [
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
-                "leader_id": "mzkampfs7tf57rpg",
+                "leader_bk_username": "mzkampfs7tf57rpg",
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
-                "leader_id": "zxp8d1467qmu4ipb",
+                "leader_bk_username": "zxp8d1467qmu4ipb",
             }
         ]
     }
@@ -38,7 +38,7 @@ page=1&page_size=5
 
 ### Response Parameters Description
 
-| Name        | Type   | Description                       |
-|-------------|--------|-----------------------------------|
-| bk_username | string | Blueking user's unique identifier |
-| leader_id   | string | User leaders' unique identifier   |
+| Name               | Type   | Description                       |
+|--------------------|--------|-----------------------------------|
+| bk_username        | string | Blueking user's unique identifier |
+| leader_bk_username | string | User leaders' unique identifier   |

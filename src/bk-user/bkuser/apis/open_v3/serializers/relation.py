@@ -29,4 +29,4 @@ class TenantDepartmentUserRelationListOutputSLZ(serializers.Serializer):
 
 class TenantUserLeaderRelationListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识")
-    leader_id = serializers.CharField(help_text="用户上级唯一标识")
+    leader_bk_username = serializers.CharField(help_text="用户上级唯一标识")
