@@ -24,17 +24,19 @@
         "bk_username": "7idwx3b7nzk6xigs",
         "display_name": "zhangsan(张三)",
         "time_zone": "Asia/Shanghai",
-        "language": "zh-cn"
+        "language": "zh-cn",
+        "status": "enabled"
     }
 }
 ```
 
 ### 响应参数说明
 
-| 参数名称         | 参数类型   | 描述       |
-|--------------|--------|----------|
-| tenant_id    | string | 租户 ID    |
-| bk_username  | string | 蓝鲸用户唯一标识 |
-| display_name | string | 用户展示名    |
-| time_zone    | string | 时区       |
-| language     | string | 语言       |
+| 参数名称         | 参数类型   | 描述                                                                      |
+|--------------|--------|-------------------------------------------------------------------------|
+| tenant_id    | string | 租户 ID                                                                   |
+| bk_username  | string | 蓝鲸用户唯一标识                                                                |
+| display_name | string | 用户展示名                                                                   |
+| time_zone    | string | 时区                                                                      |
+| language     | string | 语言                                                                      |
+| status       | string | 用户状态，其中 `enabled` 表示**启用**状态；`disabled` 表示**禁用**状态；`expired` 表示**过期**状态 |
