@@ -14,6 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from datetime import timedelta
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -24,6 +26,7 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.common.passwd import PasswordGenerator
+from django.utils import timezone
 
 
 def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
@@ -227,6 +230,8 @@ def init_local_data_source_identity_infos(ds: DataSource) -> None:
                 "data_source": ds,
                 "username": user.username,
                 "password": passwd_generator.generate(),
+                "password_updated_at": timezone.now(),
+                "password_expired_at": timezone.now() + timedelta(days=3),
             },
         )
 

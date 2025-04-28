@@ -30,6 +30,7 @@ from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework import status
 
@@ -522,6 +523,26 @@ class TestTenantUserRetrieveApi:
         assert resp.data["extras"] == {
             f.name: f.default for f in random_tenant_custom_fields if "hobbies" not in f.name
         }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_tenant_users_identity_infos")
+    def test_password_expired_at_display(self, api_client, random_tenant):
+        """测试本地数据源用户的密码过期时间显示"""
+        lushi = TenantUser.objects.get(data_source_user__username="lushi", tenant=random_tenant)
+        resp = api_client.get(reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": lushi.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert "password_expired_at" in resp.data
+        expired_at_str = resp.data["password_expired_at"]
+        # 不带时区的 expired_at
+        native_expired_at = datetime.datetime.strptime(expired_at_str, settings.REST_FRAMEWORK["DATETIME_FORMAT"])
+        # 带时区的 expired_at
+        expired_at = timezone.make_aware(native_expired_at)
+        # 预期时间
+        expected_time = timezone.now() + datetime.timedelta(days=3)
+
+        # 允许的误差最大为 5 分钟
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
 
 
 class TestTenantUserDestroyApi:
