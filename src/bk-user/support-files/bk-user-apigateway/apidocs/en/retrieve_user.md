@@ -32,11 +32,11 @@ Query user's information
 
 ### Response Parameters Description
 
-| Name         | Type   | Description                       |
-|--------------|--------|-----------------------------------|
-| tenant_id    | string | Tenant ID                         |
-| bk_username  | string | Blueking user's unique identifier |
-| display_name | string | User's display_name               |
-| time_zone    | string | Time Zone                         |
-| language     | string | Language                          |
-| status       | string | User's status                     |
+| Name         | Type   | Description                                                                |
+|--------------|--------|----------------------------------------------------------------------------|
+| tenant_id    | string | Tenant ID                                                                  |
+| bk_username  | string | Blueking user's unique identifier                                          |
+| display_name | string | User's display_name                                                        |
+| time_zone    | string | Time Zone                                                                  |
+| language     | string | Language                                                                   |
+| status       | string | User's status, including the states of 'enabled', 'disabled' and 'expired' |

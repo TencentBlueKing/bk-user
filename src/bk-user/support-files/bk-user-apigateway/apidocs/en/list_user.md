@@ -42,9 +42,9 @@ page=1&page_size=5
 
 ### Response Parameters Description
 
-| Name         | Type   | Description                       |
-|--------------|--------|-----------------------------------|
-| bk_username  | string | Blueking user's unique identifier |
-| full_name    | string | User's name                       |
-| display_name | string | User's display name               |
-| status       | string | User's status                     |
+| Name         | Type   | Description                                                                |
+|--------------|--------|----------------------------------------------------------------------------|
+| bk_username  | string | Blueking user's unique identifier                                          |
+| full_name    | string | User's name                                                                |
+| display_name | string | User's display name                                                        |
+| status       | string | User's status, including the states of 'enabled', 'disabled' and 'expired' |

@@ -67,5 +67,5 @@ keyword=zhang&with_organization_paths=true
 | display_name       | string | User's display_name                                                                                                                                                                      |
 | data_source_type   | string | Data source type, where `real` corresponds to real-name data source (user), and `virtual` corresponds to virtual data source (user)                                                      |
 | owner_tenant_id    | string | The tenant ID to which the data source belongs. The tenant user (including virtual users) is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
-| status             | string | User's status                                                                                                                                                                            |
+| status             | string | User's status, including the states of 'enabled', 'disabled' and 'expired'                                                                                                               |
 | organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`; virtual users have no organization path          |
