@@ -300,13 +300,12 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         identity_info = LocalDataSourceIdentityInfo.objects.filter(user_id=obj.data_source_user_id).first()
         if not identity_info or not identity_info.password_expired_at:
             return None
-        expired_at = identity_info.password_expired_at
-        # 确保使用本地时区
-        if not expired_at.tzinfo:
-            expired_at = timezone.make_aware(expired_at, timezone.get_current_timezone())
-        else:
-            expired_at = expired_at.astimezone(timezone.get_current_timezone())
-        return expired_at.strftime(settings.REST_FRAMEWORK["DATETIME_FORMAT"])
+
+        # Note: 由于无法直接使用 serializers.DateTimeField() 输出，所以这里定义了对应的 Serializer 来处理时间转换
+        class ExpiredAtOutputSLZ(serializers.Serializer):
+            expired_at = serializers.DateTimeField()
+
+        return ExpiredAtOutputSLZ({"expired_at": identity_info.password_expired_at}).data["expired_at"]
 
 
 def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:
