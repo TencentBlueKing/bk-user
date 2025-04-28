@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from blue_krill.encrypt.handler import EncryptHandler
 from django.conf import settings
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from bklogin.bkaccount.models import BkToken, LoginLog
 from bklogin.common.encrypt import salt

@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, re_path
 
 # from django.utils.module_loading import import_module
 
@@ -28,7 +28,7 @@ urlpatterns = []
 #     try:
 #         urls_module = f"{app}.urls"
 #         import_module(urls_module)
-#         urlpatterns.append(url(r"^", include(urls_module)))
+#         urlpatterns.append(re_path(r"^", include(urls_module)))
 #         print(f"Load urls from {urls_module}")
 #     except ImportError:
 #         logger.exception("failed to load urls from installed app: %s", app)
@@ -38,20 +38,20 @@ urlpatterns = []
 # bkuser_core.user_settings.urls
 # bkuser_core.audit.urls
 urlpatterns += [
-    url(r"^", include("bkuser_core.apis.urls")),
-    url(r"^", include("bkuser_core.monitoring.urls")),
-    url(r"^", include("bkuser_core.profiles.urls")),
-    url(r"^", include("bkuser_core.departments.urls")),
-    url(r"^", include("bkuser_core.categories.urls")),
-    url(r"^", include("bkuser_core.bkiam.urls")),
+    re_path(r"^", include("bkuser_core.apis.urls")),
+    re_path(r"^", include("bkuser_core.monitoring.urls")),
+    re_path(r"^", include("bkuser_core.profiles.urls")),
+    re_path(r"^", include("bkuser_core.departments.urls")),
+    re_path(r"^", include("bkuser_core.categories.urls")),
+    re_path(r"^", include("bkuser_core.bkiam.urls")),
     # prometheus
-    url(r"^", include("django_prometheus.urls")),
+    re_path(r"^", include("django_prometheus.urls")),
     # new sass web apis
-    url(r"^api/v1/web/", include("bkuser_core.api.web.urls")),
+    re_path(r"^api/v1/web/", include("bkuser_core.api.web.urls")),
     # for login
-    url(r"^api/v1/login/", include("bkuser_core.api.login.urls")),
+    re_path(r"^api/v1/login/", include("bkuser_core.api.login.urls")),
 ]
 
 
 if "silk" in settings.INSTALLED_APPS:
-    urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]
+    urlpatterns += [re_path(r"^silk/", include("silk.urls", namespace="silk"))]

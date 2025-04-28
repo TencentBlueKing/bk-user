@@ -126,7 +126,7 @@ class DBSyncManager:
         "profile_leader_relation": LeaderProfileMeta,
     }
 
-    def __init__(self, meta_map: dict = None):
+    def __init__(self, meta_map: dict | None = None):
         self.update_model_meta(meta_map or {})
 
     def __getitem__(self, item):
@@ -178,7 +178,7 @@ class DBSyncManager:
         update_map.update(update_meta_info)
         self._update_cache(meta_map=update_map)
 
-    def _update_cache(self, meta_map: dict = None):
+    def _update_cache(self, meta_map: dict | None = None):
         self.meta_map = meta_map or self._default_meta_map
         self._sets = {x.target_model: SyncModelManager(meta=x) for x in list(self.meta_map.values())}
 
@@ -233,7 +233,7 @@ class Syncer:
     def get_fetcher(self):
         return self.fetcher_cls(self.category_id, self.config_loader, self.with_initialize_client)
 
-    def disable_departments_before_sync(self, exempt_ids: list = None):
+    def disable_departments_before_sync(self, exempt_ids: list | None = None):
         """全同步前禁用该目录下的组织
         !!! 仅限事务中调用，不然会有数据中断风险 !!!
         """
@@ -245,7 +245,7 @@ class Syncer:
         )
         Department.objects.filter(category_id=self.category_id).exclude(id__in=exempt_ids).update(enabled=False)
 
-    def disable_profiles_before_sync(self, exempt_ids: list = None):
+    def disable_profiles_before_sync(self, exempt_ids: list | None = None):
         """
         全同步前禁用该目录下的人员 & 删除人员与组织的关系
         !!! 仅限事务中调用，不然会有数据中断风险 !!!

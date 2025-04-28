@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_shell.account.conf import ConfFixture
 

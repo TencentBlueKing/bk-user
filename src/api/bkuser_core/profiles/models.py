@@ -15,9 +15,8 @@ import jsonfield
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from jsonfield.fields import DEFAULT_DUMP_KWARGS
-
 from .constants import (
     TIME_ZONE_CHOICES,
     DynamicFieldTypeEnum,

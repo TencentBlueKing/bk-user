@@ -17,7 +17,7 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 
 
-def make_simple_profile(username: str, force_create_params: Dict = None):
+def make_simple_profile(username: str, force_create_params: Dict | None = None):
     """创建一个简单的人员"""
     default_category = ProfileCategory.objects.get_default()
     default_create_params = {
@@ -33,7 +33,7 @@ def make_simple_profile(username: str, force_create_params: Dict = None):
     return Profile.objects.create(**default_create_params)
 
 
-def make_simple_department(name: str, parent_id: int = None, force_create_params: Dict = None):
+def make_simple_department(name: str, parent_id: int | None = None, force_create_params: Dict | None = None):
     """创建一个简单的组织"""
     default_category = ProfileCategory.objects.get_default()
     default_create_params = {"name": name, "parent_id": parent_id, "category_id": default_category.id}
@@ -50,7 +50,7 @@ def make_simple_category(
     domain: str,
     display_name: str,
     type: str = "local",
-    force_create_params: Dict = None,
+    force_create_params: Dict | None = None,
 ):
     """创建一个简单的目录"""
     default_create_params = {"domain": domain, "display_name": display_name, "type": type}
@@ -65,7 +65,7 @@ def attach_pd_relation(profile: Profile, department: Department):
     department.add_profile(profile)
 
 
-def make_simple_dynamic_field(name: str, force_create_params: Dict = None):
+def make_simple_dynamic_field(name: str, force_create_params: Dict | None = None):
     """创建一个简单的动态字段"""
     default_create_params = {
         "name": name,

@@ -10,5 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_setting_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_setting_update = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+# providing_args=["instance", "operator", "extra_values"]
+post_setting_create = django.dispatch.Signal()
+# providing_args=["instance", "operator", "extra_values"]
+post_setting_update = django.dispatch.Signal()

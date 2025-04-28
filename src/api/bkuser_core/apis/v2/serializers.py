@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from bkuser_core.apis.serializers import StringArrayField
@@ -70,8 +70,12 @@ def is_custom_fields_enabled(slz: serializers.Serializer) -> bool:
 
 
 class AdvancedListSerializer(serializers.Serializer):
-    fields = StringArrayField(required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"))
-    lookup_field = serializers.CharField(required=False, help_text=_("查询字段，针对 exact_lookups,fuzzy_lookups 生效"))
+    fields = StringArrayField(
+        required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id")
+    )
+    lookup_field = serializers.CharField(
+        required=False, help_text=_("查询字段，针对 exact_lookups,fuzzy_lookups 生效")
+    )
     exact_lookups = StringArrayField(
         required=False,
         help_text=_("精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"),
@@ -103,8 +107,12 @@ class AdvancedListSerializer(serializers.Serializer):
 
 
 class AdvancedRetrieveSerializer(serializers.Serializer):
-    fields = serializers.CharField(required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"))
-    lookup_field = serializers.CharField(required=False, help_text=_("指定查询字段，内容为 lookup_value 所属字段, 例如: username"))
+    fields = serializers.CharField(
+        required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id")
+    )
+    lookup_field = serializers.CharField(
+        required=False, help_text=_("指定查询字段，内容为 lookup_value 所属字段, 例如: username")
+    )
     include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
 
 

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, re_path
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.views import get_schema_view
@@ -33,19 +33,19 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
     generator_class=CustomOpenAPISchemaGenerator,
     patterns=[
-        url(r"^", include("bkuser_core.monitoring.urls")),
-        url(r"^", include("bkuser_core.departments.urls")),
-        url(r"^", include("bkuser_core.profiles.urls")),
-        url(r"^", include("bkuser_core.categories.urls")),
-        # url(r"^", include("bkuser_core.user_settings.urls")),
-        # url(r"^", include("bkuser_core.audit.urls")),
+        re_path(r"^", include("bkuser_core.monitoring.urls")),
+        re_path(r"^", include("bkuser_core.departments.urls")),
+        re_path(r"^", include("bkuser_core.profiles.urls")),
+        re_path(r"^", include("bkuser_core.categories.urls")),
+        # re_path(r"^", include("bkuser_core.user_settings.urls")),
+        # re_path(r"^", include("bkuser_core.audit.urls")),
     ],
 )
 
 urlpatterns = []
 if settings.DEBUG:
     urlpatterns += [
-        url(r"^swagger(?P<format>\.json|\.yaml)$", schema_view.without_ui(cache_timeout=0), name="schema-json"),
-        url(r"^swagger/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
-        url(r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+        re_path(r"^swagger(?P<format>\.json|\.yaml)$", schema_view.without_ui(cache_timeout=0), name="schema-json"),
+        re_path(r"^swagger/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+        re_path(r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     ]
