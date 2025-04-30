@@ -270,7 +270,7 @@ class TenantUserValidityPeriodConfigOutputSLZ(TenantUserValidityPeriodConfigInpu
     pass
 
 
-class TenantUserDisplayNameConfigUpdateInputSLZ(serializers.Serializer):
+class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer):
     expression = serializers.CharField(help_text="display_name 表达式", max_length=128)
 
     def validate_expression(self, expression: str) -> str:
@@ -323,12 +323,14 @@ class TenantUserDisplayNameConfigUpdateInputSLZ(serializers.Serializer):
         return validated_data
 
 
-class TenantUserDisplayNameConfigRetrieveOutputSLZ(serializers.Serializer):
+class TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(serializers.Serializer):
     expression = serializers.CharField(help_text="display_name 表达式")
 
 
-class TenantUserDisplayNameConfigUpdatePreviewInputSLZ(TenantUserDisplayNameConfigUpdateInputSLZ): ...
+class TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(
+    TenantUserDisplayNameExpressionConfigUpdateInputSLZ
+): ...
 
 
-class TenantUserDisplayNameConfigUpdatePreviewOutputSLZ(serializers.Serializer):
+class TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="预览 display_name")

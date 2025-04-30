@@ -24,10 +24,10 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldCreateInputSLZ,
     TenantUserCustomFieldUpdateInputSLZ,
-    TenantUserDisplayNameConfigRetrieveOutputSLZ,
-    TenantUserDisplayNameConfigUpdateInputSLZ,
-    TenantUserDisplayNameConfigUpdatePreviewInputSLZ,
-    TenantUserDisplayNameConfigUpdatePreviewOutputSLZ,
+    TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ,
+    TenantUserDisplayNameExpressionConfigUpdateInputSLZ,
+    TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ,
+    TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserValidityPeriodConfigInputSLZ,
     TenantUserValidityPeriodConfigOutputSLZ,
@@ -208,24 +208,24 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="用户展示名自定义配置",
-        responses={status.HTTP_200_OK: TenantUserDisplayNameConfigRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
         config = get_object_or_404(TenantUserDisplayNameExpressionConfig, tenant_id=tenant_id)
-        return Response(TenantUserDisplayNameConfigRetrieveOutputSLZ(instance=config).data)
+        return Response(TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(instance=config).data)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="更新当前租户的用户展示名自定义配置",
-        request_body=TenantUserDisplayNameConfigUpdateInputSLZ(),
+        request_body=TenantUserDisplayNameExpressionConfigUpdateInputSLZ(),
         responses={
             status.HTTP_204_NO_CONTENT: "",
         },
     )
     def put(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-        slz = TenantUserDisplayNameConfigUpdateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
+        slz = TenantUserDisplayNameExpressionConfigUpdateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -248,14 +248,16 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="预览用户展示名（根据给定的展示名配置）",
-        request_body=TenantUserDisplayNameConfigUpdatePreviewInputSLZ,
+        request_body=TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ,
         responses={
-            status.HTTP_200_OK: TenantUserDisplayNameConfigUpdatePreviewOutputSLZ(many=True),
+            status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(many=True),
         },
     )
     def put(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-        slz = TenantUserDisplayNameConfigUpdatePreviewInputSLZ(data=request.data, context={"tenant_id": tenant_id})
+        slz = TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(
+            data=request.data, context={"tenant_id": tenant_id}
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -270,4 +272,6 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
             {"display_name": TenantUserHandler.render_display_name(user, config)} for user in tenant_users
         ]
 
-        return Response(TenantUserDisplayNameConfigUpdatePreviewOutputSLZ(instance=user_display_names, many=True).data)
+        return Response(
+            TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(instance=user_display_names, many=True).data
+        )
