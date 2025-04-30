@@ -25,7 +25,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from pydantic import BaseModel
 
-from bkuser.apps.tenant.constants import DISPLAY_NAME_FIELD_PATTERN
+from bkuser.apps.tenant.constants import DISPLAY_NAME_EXPRESSION_FIELD_PATTERN
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class TenantUserHandler:
         )
 
         # 使用正则表达式 sub 替换方法，将表达式中的字段替换为 field_value_map 对应的值
-        return DISPLAY_NAME_FIELD_PATTERN.sub(
+        return DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub(
             lambda match: field_value_map.get(match.group(1), "-"), config.expression
         )
 

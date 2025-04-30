@@ -28,7 +28,7 @@ from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum, \
-    DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG
+    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ def forwards_func(apps, schema_editor):
     first_tenant = Tenant.objects.create(id=first_tenant_id, name=first_tenant_name, is_default=True)
     # 租户配置
     TenantUserValidityPeriodConfig.objects.create(tenant=first_tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
-    TenantUserDisplayNameExpressionConfig.objects.create(tenant=first_tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG)
+    TenantUserDisplayNameExpressionConfig.objects.create(tenant=first_tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
 
     data_source = DataSource.objects.create(
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,

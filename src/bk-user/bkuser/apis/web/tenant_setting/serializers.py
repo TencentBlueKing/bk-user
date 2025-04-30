@@ -24,7 +24,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import (
-    DISPLAY_NAME_FIELD_PATTERN,
+    DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
     NotificationMethod,
     NotificationScene,
     UserFieldDataType,
@@ -275,7 +275,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
 
     def validate_expression(self, expression: str) -> str:
         # 匹配表达式中的`{xxx}`提取字段名
-        fields = DISPLAY_NAME_FIELD_PATTERN.findall(expression)
+        fields = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.findall(expression)
 
         if not fields:
             raise ValidationError(_("表达式中至少需要填入一个字段"))
@@ -287,7 +287,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
             raise ValidationError(_("表达式中字段不能重复"))
 
         # 校验非字段部分的字符数量是否超过 16
-        non_field_length = len(DISPLAY_NAME_FIELD_PATTERN.sub("", expression))
+        non_field_length = len(DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub("", expression))
         if non_field_length > 16:  # noqa: PLR2004
             raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
 

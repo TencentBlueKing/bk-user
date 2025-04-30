@@ -133,7 +133,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
     ],
 }
 
-DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG = {
+DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG = {
     "expression": "{username}({full_name})",
     "builtin_fields": ["username", "full_name"],
     "custom_fields": [],
@@ -141,7 +141,7 @@ DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG = {
 }
 
 # 租户用户展示名表达式匹配模式为：`{}` 中至少包含一个由字母、数字或下划线组成的字段名
-DISPLAY_NAME_FIELD_PATTERN = re.compile(r"\{(\w+)}")
+DISPLAY_NAME_EXPRESSION_FIELD_PATTERN = re.compile(r"\{(\w+)}")
 
 
 class TenantStatus(StrStructuredEnum):
