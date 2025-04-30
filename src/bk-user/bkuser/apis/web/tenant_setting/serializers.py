@@ -23,7 +23,12 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.tenant.constants import NotificationMethod, NotificationScene, UserFieldDataType
+from bkuser.apps.tenant.constants import (
+    DISPLAY_NAME_FIELD_PATTERN,
+    NotificationMethod,
+    NotificationScene,
+    UserFieldDataType,
+)
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOption
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.validators import validate_tenant_custom_field_name
@@ -263,3 +268,67 @@ class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
 
 class TenantUserValidityPeriodConfigOutputSLZ(TenantUserValidityPeriodConfigInputSLZ):
     pass
+
+
+class TenantUserDisplayNameConfigUpdateInputSLZ(serializers.Serializer):
+    expression = serializers.CharField(help_text="display_name 表达式", max_length=128)
+
+    def validate_expression(self, expression: str) -> str:
+        # 匹配表达式中的`{xxx}`提取字段名
+        fields = DISPLAY_NAME_FIELD_PATTERN.findall(expression)
+
+        if not fields:
+            raise ValidationError(_("表达式中至少需要填入一个字段"))
+
+        if len(fields) > 3:  # noqa: PLR2004
+            raise ValidationError(_("表达式中字段个数不能超过 3 个"))
+
+        if len(fields) != len(set(fields)):
+            raise ValidationError(_("表达式中字段不能重复"))
+
+        # 校验非字段部分的字符数量是否超过 16
+        non_field_length = len(DISPLAY_NAME_FIELD_PATTERN.sub("", expression))
+        if non_field_length > 16:  # noqa: PLR2004
+            raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
+
+        self.context["parsed_fields"] = fields
+
+        return expression
+
+    def to_internal_value(self, data: Dict) -> Dict:
+        validated_data = super().to_internal_value(data)
+
+        fields = self.context["parsed_fields"]
+
+        # TODO: 后续需要过滤敏感字段，敏感字段不支持展示
+        # TODO: 后续支持用户组织字段，归类于内置字段
+        builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+        custom_fields = set(
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
+        )
+
+        all_fields = builtin_fields | custom_fields
+
+        invalid_fields = [f for f in fields if f not in all_fields]
+        if invalid_fields:
+            # to_internal_value 方法里必须返回 {"key": error_message} 形式的错误消息
+            raise ValidationError({"expression": _("表达式中存在无效字段: {}").format(", ".join(invalid_fields))})
+
+        # 集合运算 & 求交集，比遍历判断更高效
+        # 获取表达式中的内置字段与自定义字段
+        validated_data.update(
+            {"builtin_fields": list(set(fields) & builtin_fields), "custom_fields": list(set(fields) & custom_fields)}
+        )
+
+        return validated_data
+
+
+class TenantUserDisplayNameConfigRetrieveOutputSLZ(serializers.Serializer):
+    expression = serializers.CharField(help_text="display_name 表达式")
+
+
+class TenantUserDisplayNameConfigUpdatePreviewInputSLZ(TenantUserDisplayNameConfigUpdateInputSLZ): ...
+
+
+class TenantUserDisplayNameConfigUpdatePreviewOutputSLZ(serializers.Serializer):
+    display_name = serializers.CharField(help_text="预览 display_name")

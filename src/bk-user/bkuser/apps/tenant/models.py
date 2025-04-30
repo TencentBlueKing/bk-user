@@ -300,3 +300,17 @@ class TenantCommonVariable(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "name")]
+
+
+class TenantUserDisplayNameExpressionConfig(TimestampedModel):
+    """租户用户展示名表达式配置"""
+
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, unique=True, db_constraint=False)
+    expression = models.CharField("展示名称表达式", max_length=128)
+    # 冗余字段
+    builtin_fields = models.JSONField("内置字段", default=list)
+    custom_fields = models.JSONField("自定义字段", default=list)
+    # Note: 版本号主要用于表达式变更时，能够自动失效缓存
+    # Q：为什么不采用直接删除缓存的方式？
+    # A：不确定缓存中存储的用户范围，需要遍历所有租户用户进行查找 Key 并删除对应数据，存在性能问题
+    version = models.IntegerField("版本号", default=1)

@@ -17,8 +17,11 @@
 
 
 import pytest
+from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
+
+from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -73,3 +76,57 @@ def custom_fields(default_tenant):
     custom_field_list = [TenantUserCustomField(**field) for field in custom_field_data]
     TenantUserCustomField.objects.bulk_create(custom_field_list)
     return TenantUserCustomField.objects.filter(tenant=default_tenant)
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def _create_custom_fields(random_tenant, full_local_data_source):
+    custom_field_data = [
+        {
+            "tenant": random_tenant,
+            "name": "test_num",
+            "display_name": "数字测试",
+            "data_type": UserFieldDataType.NUMBER,
+            "required": True,
+            "default": 0,
+            "options": [],
+        },
+        {
+            "tenant": random_tenant,
+            "name": "test_str",
+            "display_name": "字符测试",
+            "data_type": UserFieldDataType.STRING,
+            "required": True,
+            "default": "test",
+            "options": [],
+        },
+        {
+            "tenant": random_tenant,
+            "name": "test_enum",
+            "display_name": "test_enum",
+            "data_type": UserFieldDataType.ENUM,
+            "required": True,
+            "default": "test_a",
+            "options": [
+                {"id": "test_a", "value": "test_a"},
+                {"id": "test_b", "value": "test_b"},
+            ],
+        },
+    ]
+    custom_field_list = [TenantUserCustomField(**field) for field in custom_field_data]
+    TenantUserCustomField.objects.bulk_create(custom_field_list)
+
+    # 初始化数据源用户的自定义字段
+    data_source_users = DataSourceUser.objects.filter(data_source=full_local_data_source)
+    for data_source_user in data_source_users:
+        data_source_user.extras = {
+            "test_num": data_source_user.phone,
+            "test_str": data_source_user.username,
+            "test_enum": data_source_user.full_name,
+        }
+        data_source_user.save()

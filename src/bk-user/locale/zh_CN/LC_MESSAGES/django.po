@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-10 02:32+0800\n"
+"POT-Creation-Date: 2025-04-29 20:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -301,7 +301,7 @@ msgid "不能移动至自己的子部门下"
 msgstr "不能移动至自己的子部门下"
 
 #: bkuser/apis/web/organization/serializers/relations.py:34
-#: bkuser/apis/web/organization/serializers/users.py:596
+#: bkuser/apis/web/organization/serializers/users.py:609
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "用户 ID {} 在当前租户中不存在"
 
@@ -309,71 +309,71 @@ msgstr "用户 ID {} 在当前租户中不存在"
 msgid "部门 ID {} 在当前租户中不存在"
 msgstr "部门 ID {} 在当前租户中不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:100
+#: bkuser/apis/web/organization/serializers/users.py:101
 msgid "部门不存在"
 msgstr "部门不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:130
-#: bkuser/apis/web/organization/serializers/users.py:564
+#: bkuser/apis/web/organization/serializers/users.py:131
+#: bkuser/apis/web/organization/serializers/users.py:577
 #: bkuser/apis/web/virtual_user/serializers.py:51
 msgid "用户名 {} 已存在"
 msgstr "用户名 {} 已存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:142
+#: bkuser/apis/web/organization/serializers/users.py:143
 msgid "指定的直属上级 {} 不存在"
 msgstr "指定的直属上级 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:185
+#: bkuser/apis/web/organization/serializers/users.py:186
 msgid "指定的部门 {} 不存在"
 msgstr "指定的部门 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:335
+#: bkuser/apis/web/organization/serializers/users.py:336
 msgid "不能设置自己为自己的直接上级"
 msgstr "不能设置自己为自己的直接上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:350
-#: bkuser/apis/web/organization/serializers/users.py:365
+#: bkuser/apis/web/organization/serializers/users.py:351
+#: bkuser/apis/web/organization/serializers/users.py:366
 msgid "账号有效期时间不能早于当前时间"
 msgstr "账号有效期时间不能早于当前时间"
 
-#: bkuser/apis/web/organization/serializers/users.py:477
+#: bkuser/apis/web/organization/serializers/users.py:478
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:490
+#: bkuser/apis/web/organization/serializers/users.py:491
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "第 {} 行，手机号 {} 格式不正确"
 
-#: bkuser/apis/web/organization/serializers/users.py:525
+#: bkuser/apis/web/organization/serializers/users.py:533
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 
-#: bkuser/apis/web/organization/serializers/users.py:533
-#: bkuser/apis/web/organization/serializers/users.py:544
+#: bkuser/apis/web/organization/serializers/users.py:541
+#: bkuser/apis/web/organization/serializers/users.py:554
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 
-#: bkuser/apis/web/organization/serializers/users.py:559
+#: bkuser/apis/web/organization/serializers/users.py:572
 msgid "用户名 {} 重复"
 msgstr "用户名 {} 重复"
 
-#: bkuser/apis/web/organization/serializers/users.py:671
+#: bkuser/apis/web/organization/serializers/users.py:684
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "用户 {} 不能设置为自己的直属上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:682
+#: bkuser/apis/web/organization/serializers/users.py:695
 msgid "一次只能批量更新一个自定义字段"
 msgstr "一次只能批量更新一个自定义字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:690
+#: bkuser/apis/web/organization/serializers/users.py:703
 msgid "请提供自定义字段 {} 的值"
 msgstr "请提供自定义字段 {} 的值"
 
-#: bkuser/apis/web/organization/serializers/users.py:698
+#: bkuser/apis/web/organization/serializers/users.py:711
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:702
+#: bkuser/apis/web/organization/serializers/users.py:715
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
@@ -630,19 +630,19 @@ msgstr ""
 msgid "密码不符合密码规则：{}"
 msgstr "密码不符合密码规则：{}"
 
-#: bkuser/apis/web/platform_management/views.py:200
+#: bkuser/apis/web/platform_management/views.py:203
 msgid "管理员账密登录"
 msgstr "管理员账密登录"
 
-#: bkuser/apis/web/platform_management/views.py:259
+#: bkuser/apis/web/platform_management/views.py:262
 msgid "默认租户不能删除"
 msgstr "默认租户不能删除"
 
-#: bkuser/apis/web/platform_management/views.py:262
+#: bkuser/apis/web/platform_management/views.py:265
 msgid "需要先停用租户才能删除"
 msgstr "需要先停用租户才能删除"
 
-#: bkuser/apis/web/platform_management/views.py:308
+#: bkuser/apis/web/platform_management/views.py:311
 msgid "默认租户不能停用"
 msgstr "默认租户不能停用"
 
@@ -735,6 +735,26 @@ msgstr "展示用名称 {} 与内置字段冲突"
 #: bkuser/apis/web/tenant_setting/serializers.py:233
 msgid "枚举选项 ID 必须是数字，值 {} 不合法"
 msgstr "枚举选项 ID 必须是数字，值 {} 不合法"
+
+#: bkuser/apis/web/tenant_setting/serializers.py:275
+msgid "表达式中至少需要填入一个字段"
+msgstr "表达式中至少需要填入一个字段"
+
+#: bkuser/apis/web/tenant_setting/serializers.py:278
+msgid "表达式中字段个数不能超过 3 个"
+msgstr "表达式中字段个数不能超过 3 个"
+
+#: bkuser/apis/web/tenant_setting/serializers.py:281
+msgid "表达式中字段不能重复"
+msgstr "表达式中字段不能重复"
+
+#: bkuser/apis/web/tenant_setting/serializers.py:286
+msgid "表达式中非字段部分的字符数不能超过 16 个"
+msgstr "表达式中非字段部分的字符数不能超过 16 个"
+
+#: bkuser/apis/web/tenant_setting/serializers.py:309
+msgid "表达式中存在无效字段: {}"
+msgstr "表达式中存在无效字段: {}"
 
 #: bkuser/apps/audit/constants.py:25 bkuser/apps/idp/constants.py:40
 msgid "数据源"
@@ -948,11 +968,11 @@ msgstr "修改虚拟用户"
 msgid "删除虚拟用户"
 msgstr "删除虚拟用户"
 
-#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:172
+#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:179
 msgid "直接"
 msgstr "直接"
 
-#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:173
+#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:180
 msgid "表达式"
 msgstr "表达式"
 
@@ -976,8 +996,8 @@ msgstr "企业"
 msgid "社交"
 msgstr "社交"
 
-#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:140
-#: bkuser/apps/tenant/constants.py:147 bkuser/apps/tenant/constants.py:155
+#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:147
+#: bkuser/apps/tenant/constants.py:154 bkuser/apps/tenant/constants.py:162
 msgid "启用"
 msgstr "启用"
 
@@ -1203,36 +1223,36 @@ msgstr "邮件通知"
 msgid "短信通知"
 msgstr "短信通知"
 
-#: bkuser/apps/tenant/constants.py:141 bkuser/apps/tenant/constants.py:148
-#: bkuser/apps/tenant/constants.py:156
+#: bkuser/apps/tenant/constants.py:148 bkuser/apps/tenant/constants.py:155
+#: bkuser/apps/tenant/constants.py:163
 msgid "禁用"
 msgstr "禁用"
 
-#: bkuser/apps/tenant/constants.py:149
+#: bkuser/apps/tenant/constants.py:156
 msgid "已过期"
 msgstr "已过期"
 
-#: bkuser/apps/tenant/constants.py:158
+#: bkuser/apps/tenant/constants.py:165
 msgid "未确认"
 msgstr "未确认"
 
-#: bkuser/apps/tenant/constants.py:164
+#: bkuser/apps/tenant/constants.py:171
 msgid "全部"
 msgstr "全部"
 
-#: bkuser/apps/tenant/constants.py:179
+#: bkuser/apps/tenant/constants.py:186
 msgid "nanoid"
 msgstr "nanoid"
 
-#: bkuser/apps/tenant/constants.py:180
+#: bkuser/apps/tenant/constants.py:187
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:181
+#: bkuser/apps/tenant/constants.py:188
 msgid "用户名"
 msgstr "用户名"
 
-#: bkuser/apps/tenant/constants.py:182
+#: bkuser/apps/tenant/constants.py:189
 msgid "用户名@域名"
 msgstr "用户名@域名"
 

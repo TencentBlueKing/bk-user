@@ -16,13 +16,17 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
+import operator
+from functools import reduce
 from typing import Dict, List, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from pydantic import BaseModel
 
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.constants import DISPLAY_NAME_FIELD_PATTERN
+from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +60,36 @@ class TenantUserHandler:
 
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
-        # TODO (su) 支持读取表达式并渲染
-        return f"{user.data_source_user.username}({user.data_source_user.full_name})"
+        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.tenant_id)
+        return TenantUserHandler.render_display_name(user, config)
+
+    @staticmethod
+    def render_display_name(user: TenantUser, config: TenantUserDisplayNameExpressionConfig) -> str:
+        """渲染用户展示名"""
+        tenant_user_contact_info = {
+            "email": user.email,
+            "phone": user.phone_info[0],
+            "phone_country_code": user.phone_info[1],
+        }
+
+        field_value_map = {}
+        # 处理内置字段
+        for field in config.builtin_fields:
+            if field in tenant_user_contact_info:
+                field_value_map[field] = tenant_user_contact_info[field]
+            # TODO：后续加入对用户组织的支持
+            else:
+                field_value_map[field] = getattr(user.data_source_user, field)
+
+        # 处理自定义字段，需要将值转换为字符串，否则无法执行正则表达式替换操作
+        field_value_map.update(
+            {field: str(user.data_source_user.extras.get(field, "-")) for field in config.custom_fields}
+        )
+
+        # 使用正则表达式 sub 替换方法，将表达式中的字段替换为 field_value_map 对应的值
+        return DISPLAY_NAME_FIELD_PATTERN.sub(
+            lambda match: field_value_map.get(match.group(1), "-"), config.expression
+        )
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
@@ -87,3 +119,32 @@ class TenantUserHandler:
             display_name_map.update({user_id: user_id for user_id in not_exists_user_ids})
 
         return display_name_map
+
+    @staticmethod
+    def build_search_query(tenant_id: str, keyword: str) -> Q:
+        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+
+        inherit_flag_mapping = {"phone_country_code": "phone", "phone": "phone", "email": "email"}
+
+        def _covert_contact_field_to_query(field: str) -> Q:
+            # 由于租户用户的电子邮箱与手机号、手机国际区号分为用户自定义与继承自数据源两种情况，故需要分别考虑查询条件
+            inherit_flag = f"is_inherited_{inherit_flag_mapping[field]}"
+            return Q(
+                Q(**{inherit_flag: False, f"custom_{field}__icontains": keyword})
+                | Q(**{inherit_flag: True, f"data_source_user__{field}__icontains": keyword})
+            )
+
+        # 处理内置字段
+        builtin_queries = [
+            _covert_contact_field_to_query(field)
+            if field in inherit_flag_mapping
+            else Q(**{f"data_source_user__{field}__icontains": keyword})
+            for field in config.builtin_fields
+        ]
+
+        # 处理自定义字段
+        custom_queries = [
+            Q(**{f"data_source_user__extras__{field}__icontains": keyword}) for field in config.custom_fields
+        ]
+
+        return reduce(operator.or_, builtin_queries + custom_queries)

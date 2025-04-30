@@ -141,10 +141,13 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         keyword = data["keyword"]
-        # TODO: 后续支持更多搜索条件（例如 phone、email 等）
+
+        # 动态构造搜索条件
+        search_conditions = TenantUserHandler.build_search_query(tenant_id=self.tenant_id, keyword=keyword)
+
         filter_args = [
             Q(tenant_id=self.tenant_id),
-            Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword),
+            search_conditions,
         ]
 
         # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
@@ -157,17 +160,9 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
 
-        queryset = (
-            TenantUser.objects.filter(*filter_args)
-            .select_related("data_source_user", "data_source")
-            .only(
-                "id",
-                "data_source_user__username",
-                "data_source_user__full_name",
-                "data_source__type",
-                "data_source__owner_tenant_id",
-            )[: self.search_limit]
-        )
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")[
+            : self.search_limit
+        ]
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}

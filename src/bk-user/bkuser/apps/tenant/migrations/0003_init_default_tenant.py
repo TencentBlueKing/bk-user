@@ -27,7 +27,8 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum, \
+    DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ def forwards_func(apps, schema_editor):
     TenantUser = apps.get_model("tenant", "TenantUser")
     TenantManager = apps.get_model("tenant", "TenantManager")
     TenantUserValidityPeriodConfig = apps.get_model("tenant", "TenantUserValidityPeriodConfig")
+    TenantUserDisplayNameExpressionConfig = apps.get_model("tenant", "TenantUserDisplayNameExpressionConfig")
     DataSource = apps.get_model("data_source", "DataSource")
     DataSourceUser = apps.get_model("data_source", "DataSourceUser")
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
@@ -71,6 +73,7 @@ def forwards_func(apps, schema_editor):
     first_tenant = Tenant.objects.create(id=first_tenant_id, name=first_tenant_name, is_default=True)
     # 租户配置
     TenantUserValidityPeriodConfig.objects.create(tenant=first_tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
+    TenantUserDisplayNameExpressionConfig.objects.create(tenant=first_tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_CONFIG)
 
     data_source = DataSource.objects.create(
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
@@ -121,6 +124,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("tenant", "0002_init_builtin_user_fields"),
+        ("tenant", "0009_tenantuserdisplaynameexpressionconfig"),
         ("data_source", "0002_init_builtin_data_source_plugin"),
         ("idp", "0002_init_builtin_idp_plugin"),
     ]
