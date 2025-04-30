@@ -18,6 +18,7 @@ from unittest import mock
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from django.conf import settings
 from django.urls import reverse
@@ -136,6 +137,7 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["display_name"] == "baishier(白十二)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
+        assert resp.data[0]["status"] == TenantUserStatus.ENABLED
 
     def test_with_login_name(self, api_client, random_tenant):
         lisi = TenantUser.objects.get(
@@ -364,6 +366,7 @@ class TestTenantUserLookupApi:
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
+        assert {t["status"] for t in resp.data} == {TenantUserStatus.ENABLED}
         assert {p for t in resp.data for p in t["organization_paths"]} == {
             "公司",
             "公司/部门A/中心AA",

@@ -182,7 +182,8 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         return (
             TenantUser.objects.select_related("data_source_user")
             .filter(data_source_user_id__in=user_ids, tenant_id=self.tenant_id)
-            .only("id", "data_source_user__username", "data_source_user__full_name")
+            .only("id", "status", "data_source_user__username", "data_source_user__full_name")
+            .order_by("id")
         )
 
     @swagger_auto_schema(

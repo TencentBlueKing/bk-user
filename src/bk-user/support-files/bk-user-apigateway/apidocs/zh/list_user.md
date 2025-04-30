@@ -26,12 +26,14 @@ page=1&page_size=5
             {
                 "bk_username": "q9k6bhqks0ckl5ew",
                 "full_name": "张三",
-                "display_name": "zhangsan(张三)"
+                "display_name": "zhangsan(张三)",
+                "status": "enabled"
             },
             {
                 "bk_username": "er0ugcammqwf1q5w",
                 "full_name": "李四",
-                "display_name": "lisi(李四)"
+                "display_name": "lisi(李四)",
+                "status": "disabled"
             }
         ]
     }
@@ -40,8 +42,9 @@ page=1&page_size=5
 
 ### 响应参数说明
 
-| 参数名称         | 参数类型   | 描述       |
-|--------------|--------|----------|
-| bk_username  | string | 蓝鲸用户唯一标识 |
-| full_name    | string | 用户姓名     |
-| display_name | string | 用户展示名    |
+| 参数名称         | 参数类型   | 描述                                                                      |
+|--------------|--------|-------------------------------------------------------------------------|
+| bk_username  | string | 蓝鲸用户唯一标识                                                                |
+| full_name    | string | 用户姓名                                                                    |
+| display_name | string | 用户展示名                                                                   |
+| status       | string | 用户状态，其中 `enabled` 表示**启用**状态；`disabled` 表示**禁用**状态；`expired` 表示**过期**状态 |

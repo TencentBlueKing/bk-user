@@ -25,3 +25,8 @@ class TenantDepartmentRelationListOutputSLZ(serializers.Serializer):
 class TenantDepartmentUserRelationListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识")
     department_id = serializers.IntegerField(help_text="部门 ID")
+
+
+class TenantUserLeaderRelationListOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识")
+    leader_bk_username = serializers.CharField(help_text="用户上级唯一标识")

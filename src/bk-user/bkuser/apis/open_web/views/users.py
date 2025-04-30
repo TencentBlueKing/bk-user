@@ -225,6 +225,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             .select_related("data_source_user", "data_source")
             .only(
                 "id",
+                "status",
                 "data_source_user__username",
                 "data_source_user__full_name",
                 "data_source__type",

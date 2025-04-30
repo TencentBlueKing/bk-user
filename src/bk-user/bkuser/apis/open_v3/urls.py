@@ -87,6 +87,11 @@ urlpatterns = [
                     name="open_v3.tenant_department_relation.list",
                 ),
                 path(
+                    "user-leader-relations/",
+                    views.TenantUserLeaderRelationListApi.as_view(),
+                    name="open_v3.tenant_user_leader_relation.list",
+                ),
+                path(
                     "virtual-users/-/lookup/",
                     views.VirtualUserLookupApi.as_view(),
                     name="open_v3.virtual_user.lookup",
