@@ -109,6 +109,7 @@ error_codes.add_codes(
         ErrorCode("TOO_MANY_TRY", _("密码输入错误次数过多，已被锁定"), 3210011),
         ErrorCode("USERNAME_FORMAT_ERROR", _("账户名格式错误"), 3210012),
         ErrorCode("PASSWORD_ERROR", _("账户或者密码错误，请重新输入"), 3210013),
+        ErrorCode("PASSWORD_ERROR_RETRY", _("密码错误，您还有{retry_password_times}次重试机会"), 3210013),
         ErrorCode("USER_IS_DISABLED", _("该账号已禁用，请联系管理员"), 3210016),
         ErrorCode("USER_EXIST_MANY", _("存在多个同名账号，请联系管理员"), 3210014),
         ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
