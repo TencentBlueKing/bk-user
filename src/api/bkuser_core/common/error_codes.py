@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import copy
 from typing import Optional
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
@@ -104,12 +105,14 @@ error_codes.add_codes(
         ErrorCode("RESOURCE_RESTORATION_FAILED", _("资源恢复失败")),
         # 登陆相关
         ErrorCode("USER_DOES_NOT_EXIST", _("账号不存在"), 3210010),
+        ErrorCode("USER_LOCKED_TEMPORARILY", _("用户已锁定，请过{wait_seconds}s后再试"), 3210011),
         ErrorCode("TOO_MANY_TRY", _("密码输入错误次数过多，已被锁定"), 3210011),
         ErrorCode("USERNAME_FORMAT_ERROR", _("账户名格式错误"), 3210012),
         ErrorCode("PASSWORD_ERROR", _("账户或者密码错误，请重新输入"), 3210013),
+        ErrorCode("PASSWORD_ERROR_RETRY", _("密码错误，您还有{retry_password_times}次重试机会"), 3210013),
+        ErrorCode("USER_IS_DISABLED", _("该账号已禁用，请联系管理员"), 3210016),
         ErrorCode("USER_EXIST_MANY", _("存在多个同名账号，请联系管理员"), 3210014),
         ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
-        ErrorCode("USER_IS_DISABLED", _("账号已被管理员禁用，请联系管理员"), 3210016),
         ErrorCode("DOMAIN_UNKNOWN", _("未知登陆域"), 3210017),
         ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期"), 3210018),
         ErrorCode("CATEGORY_NOT_ENABLED", _("用户目录未启用"), 3210019),
@@ -187,3 +190,35 @@ error_codes.add_codes(
         ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )
+
+# 可以维护一个需要隐藏真实错误信息的错误码列表
+LOGIN_SECURITY_SENSITIVE_ERRORS = {
+    "USER_DOES_NOT_EXIST",
+    "PASSWORD_ERROR",
+    "TOO_MANY_TRY",
+    "USER_EXIST_MANY",
+    "USERNAME_FORMAT_ERROR",
+    "USER_IS_LOCKED",
+    "USER_IS_DISABLED",
+    "PASSWORD_EXPIRED",
+    "USER_IS_DELETED",
+    "USER_IS_EXPIRED",
+    "USER_IS_RESIGNED",
+    "USER_IS_ABNORMAL",
+}
+
+
+def mask_login_error(error: CoreAPIError) -> CoreAPIError:
+    """
+    登录接口使用: 对于敏感错误码，在开启防爆破保护后，统一返回密码错误
+    """
+    if not settings.ENABLE_LOGIN_BRUTE_FORCE_PROTECTION:
+        return error
+
+    if error.code.code_name in LOGIN_SECURITY_SENSITIVE_ERRORS:
+        # 返回统一的 PASSWORD_ERROR，同时保留原 error 的附加 data
+        masked_error = error_codes.PASSWORD_ERROR
+        masked_error.data = error.data
+        return masked_error
+
+    return error

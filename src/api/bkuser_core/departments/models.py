@@ -44,7 +44,7 @@ class Department(TimestampMPTTModel):
 
     name = models.CharField("组织名称", max_length=255)
     # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
-    code = models.CharField("组织标识", null=True, blank=True, unique=True, max_length=64)
+    code = models.CharField("组织标识", null=True, blank=True, unique=True, max_length=255)
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     order = models.IntegerField("顺序", default=1)
     profiles = models.ManyToManyField(Profile, blank=True, related_name="departments", verbose_name="成员")
