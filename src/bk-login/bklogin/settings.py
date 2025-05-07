@@ -113,14 +113,14 @@ DATABASES = {
 }
 
 # Database tls
-DATABASE_TLS_ENABLED = env.bool("DATABASE_TLS_ENABLED", False)
-if DATABASE_TLS_ENABLED:
+MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
+if MYSQL_TLS_ENABLED:
     default_ssl_options = {
-        "ca": env.str("DATABASE_TLS_CA_FILE", ""),
+        "ca": env.str("MYSQL_TLS_CA_FILE", ""),
     }
     # mTLS
-    default_cert_file = env.str("DATABASE_TLS_CLIENT_CERT", "")
-    default_key_file = env.str("DATABASE_TLS_CLIENT_KEY", "")
+    default_cert_file = env.str("MYSQL_TLS_CLIENT_CERT", "")
+    default_key_file = env.str("MYSQL_TLS_CLIENT_KEY", "")
     if default_cert_file and default_key_file:
         default_ssl_options["cert"] = default_cert_file
         default_ssl_options["key"] = default_key_file
