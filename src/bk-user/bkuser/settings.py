@@ -126,14 +126,14 @@ DATABASES = {
 }
 
 # Database tls
-BK_USER_DB_TLS_ENABLED = env.bool("BK_USER_DB_TLS_ENABLED", False)
-if BK_USER_DB_TLS_ENABLED:
+DATABASE_TLS_ENABLED = env.bool("DATABASE_TLS_ENABLED", False)
+if DATABASE_TLS_ENABLED:
     default_ssl_options = {
-        "ca": env.str("BK_USER_DB_TLS_CA_FILE", ""),
+        "ca": env.str("DATABASE_TLS_CA_FILE", ""),
     }
     # mTLS
-    default_cert_file = env.str("BK_USER_DB_TLS_CLIENT_CERT", "")
-    default_key_file = env.str("BK_USER_DB_TLS_CLIENT_KEY", "")
+    default_cert_file = env.str("DATABASE_TLS_CLIENT_CERT", "")
+    default_key_file = env.str("DATABASE_TLS_CLIENT_KEY", "")
     if default_cert_file and default_key_file:
         default_ssl_options["cert"] = default_cert_file
         default_ssl_options["key"] = default_key_file
@@ -343,13 +343,13 @@ CELERY_BEAT_SCHEDULE = {
 # 初始化 CELERY_BROKER_URL 为空字符串
 CELERY_BROKER_URL = ""
 # rabbitmq as broker
-RABBITMQ_VHOST = env.str("BK_USER_RABBITMQ_VHOST", default="")
-RABBITMQ_PORT = env.str("BK_USER_RABBITMQ_PORT", default="")
-RABBITMQ_HOST = env.str("BK_USER_RABBITMQ_HOST", default="")
-RABBITMQ_USER = env.str("BK_USER_RABBITMQ_USER", default="")
-RABBITMQ_PASSWORD = env.str("BK_USER_RABBITMQ_PASSWORD", default="")
+RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
+RABBITMQ_PORT = env.str("RABBITMQ_PORT", default="")
+RABBITMQ_HOST = env.str("RABBITMQ_HOST", default="")
+RABBITMQ_USER = env.str("RABBITMQ_USER", default="")
+RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
 
-RABBITMQ_TLS_ENABLED = env.bool("BK_USER_RABBITMQ_TLS_ENABLED", default=False)
+RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
 if all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
     CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
     if RABBITMQ_TLS_ENABLED:
@@ -358,12 +358,12 @@ if all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PA
             f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
         )
         CELERY_BROKER_USE_SSL = {
-            "ca_certs": env.str("BK_USER_RABBITMQ_TLS_CA_FILE", default=""),
+            "ca_certs": env.str("RABBITMQ_TLS_CA_FILE", default=""),
             "cert_reqs": ssl.CERT_REQUIRED,
         }
         # mTLS
-        rabbit_certfile = env.str("BK_USER_RABBITMQ_TLS_CLIENT_CERT", default="")
-        rabbit_keyfile = env.str("BK_USER_RABBITMQ_TLS_CLIENT_KEY", default="")
+        rabbit_certfile = env.str("RABBITMQ_TLS_CLIENT_CERT", default="")
+        rabbit_keyfile = env.str("RABBITMQ_TLS_CLIENT_KEY", default="")
         if rabbit_certfile and rabbit_keyfile:
             CELERY_BROKER_USE_SSL["certfile"] = rabbit_certfile
             CELERY_BROKER_USE_SSL["keyfile"] = rabbit_keyfile
@@ -377,10 +377,10 @@ REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
 REDIS_DB = env.int("REDIS_DB", 0)
 
 # redis tls
-REDIS_TLS_ENABLED = env.bool("BK_USER_REDIS_TLS_ENABLED", False)
-REDIS_TLS_CA_FILE = env.str("BK_USER_REDIS_TLS_CA_FILE", "")
-REDIS_TLS_CLIENT_CERT = env.str("BK_USER_REDIS_TLS_CLIENT_CERT", "")
-REDIS_TLS_CLIENT_KEY = env.str("BK_USER_REDIS_TLS_CLIENT_KEY", "")
+REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
+REDIS_TLS_CA_FILE = env.str("REDIS_TLS_CA_FILE", "")
+REDIS_TLS_CLIENT_CERT = env.str("REDIS_TLS_CLIENT_CERT", "")
+REDIS_TLS_CLIENT_KEY = env.str("REDIS_TLS_CLIENT_KEY", "")
 
 # redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
