@@ -273,5 +273,5 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
         ]
 
         return Response(
-            TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(instance=user_display_names, many=True).data
+            TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(user_display_names, many=True).data
         )
