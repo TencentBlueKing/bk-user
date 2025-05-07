@@ -130,6 +130,7 @@ if BK_LOGIN_DB_TLS_ENABLED:
 
     DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
 
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
