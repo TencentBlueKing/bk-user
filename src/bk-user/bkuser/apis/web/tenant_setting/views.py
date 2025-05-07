@@ -248,7 +248,7 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="预览用户展示名（根据给定的展示名配置）",
-        request_body=TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ,
+        request_body=TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(),
         responses={
             status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(many=True),
         },
