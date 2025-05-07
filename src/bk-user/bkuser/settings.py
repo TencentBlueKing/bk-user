@@ -17,6 +17,7 @@
 
 import hashlib
 import re
+import ssl
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -123,6 +124,25 @@ DATABASES = {
         },
     },
 }
+
+# Database tls
+BK_USER_DB_TLS_ENABLED = env.bool("BK_USER_DB_TLS_ENABLED", False)
+if BK_USER_DB_TLS_ENABLED:
+    default_ssl_options = {
+        "ca": env.str("BK_USER_DB_TLS_CA_FILE", ""),
+    }
+    # mTLS
+    default_cert_file = env.str("BK_USER_DB_TLS_CLIENT_CERT", "")
+    default_key_file = env.str("BK_USER_DB_TLS_CLIENT_KEY", "")
+    if default_cert_file and default_key_file:
+        default_ssl_options["cert"] = default_cert_file
+        default_ssl_options["key"] = default_key_file
+
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+
+    DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -319,8 +339,34 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="0", hour="3"),
     },
 }
-# Celery 消息队列配置
-CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
+
+# 初始化 CELERY_BROKER_URL 为空字符串
+CELERY_BROKER_URL = ""
+# rabbitmq as broker
+RABBITMQ_VHOST = env.str("BK_USER_RABBITMQ_VHOST", default="")
+RABBITMQ_PORT = env.str("BK_USER_RABBITMQ_PORT", default="")
+RABBITMQ_HOST = env.str("BK_USER_RABBITMQ_HOST", default="")
+RABBITMQ_USER = env.str("BK_USER_RABBITMQ_USER", default="")
+RABBITMQ_PASSWORD = env.str("BK_USER_RABBITMQ_PASSWORD", default="")
+
+RABBITMQ_TLS_ENABLED = env.bool("BK_USER_RABBITMQ_TLS_ENABLED", default=False)
+if all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
+    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+    if RABBITMQ_TLS_ENABLED:
+        # 启用 rabbitmq tls
+        CELERY_BROKER_URL = (
+            f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+        )
+        CELERY_BROKER_USE_SSL = {
+            "ca_certs": env.str("BK_USER_RABBITMQ_TLS_CA_FILE", default=""),
+            "cert_reqs": ssl.CERT_REQUIRED,
+        }
+        # mTLS
+        rabbit_certfile = env.str("BK_USER_RABBITMQ_TLS_CLIENT_CERT", default="")
+        rabbit_keyfile = env.str("BK_USER_RABBITMQ_TLS_CLIENT_KEY", default="")
+        if rabbit_certfile and rabbit_keyfile:
+            CELERY_BROKER_USE_SSL["certfile"] = rabbit_certfile
+            CELERY_BROKER_USE_SSL["keyfile"] = rabbit_keyfile
 
 # ------------------------------------------ 缓存配置 ------------------------------------------
 
@@ -330,6 +376,13 @@ REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
 REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
 REDIS_DB = env.int("REDIS_DB", 0)
 
+# redis tls
+REDIS_TLS_ENABLED = env.bool("BK_USER_REDIS_TLS_ENABLED", False)
+REDIS_TLS_CA_FILE = env.str("BK_USER_REDIS_TLS_CA_FILE", "")
+REDIS_TLS_CLIENT_CERT = env.str("BK_USER_REDIS_TLS_CLIENT_CERT", "")
+REDIS_TLS_CLIENT_KEY = env.str("BK_USER_REDIS_TLS_CLIENT_KEY", "")
+
+# redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
 REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
 REDIS_SENTINEL_PASSWORD = env.str("REDIS_SENTINEL_PASSWORD", "")
@@ -367,8 +420,9 @@ CACHES: Dict[str, Any] = {
         "VERSION": 3,
         "OPTIONS": {
             # Sentinel 模式 django_redis.client.SentinelClient (django-redis>=5.0.0)
-            # 集群模式 django_redis.client.HerdClient
             # 单实例模式 django_redis.client.DefaultClient
+            # Note: django_redis.client.HerdClient 并不是 RedisCluster 的客户端，
+            #       而是削峰模式，通过分散缓存失效时间来减少同时构建缓存带来的负载峰值
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": REDIS_PASSWORD,
             # socket 建立连接超时设置，单位秒
@@ -387,6 +441,17 @@ CACHES: Dict[str, Any] = {
     },
 }
 
+if REDIS_TLS_ENABLED:
+    CACHES["redis"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CACHES["redis"]["OPTIONS"]["ssl"] = True
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+
+    # mTLS
+    if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+
 # 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
 DJANGO_REDIS_LOGGER = "root"
 
@@ -401,10 +466,32 @@ if REDIS_USE_SENTINEL:
     CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {"password": REDIS_SENTINEL_PASSWORD, "socket_timeout": 5}
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
 
+    if REDIS_TLS_ENABLED:
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl"] = True
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+        # mTLS
+        if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+
+# =============================== Celery broker 配置 ===============================
+
 # default celery broker
 if not CELERY_BROKER_URL:
     # use Redis as the default broker
     CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    if REDIS_TLS_ENABLED:
+        CELERY_BROKER_URL = f"rediss://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        CELERY_BROKER_USE_SSL = {
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_ca_certs": REDIS_TLS_CA_FILE,
+        }
+        # mTLS
+        if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
+            CELERY_BROKER_USE_SSL["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
+            CELERY_BROKER_USE_SSL["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
         CELERY_BROKER_URL = ";".join(
@@ -412,11 +499,25 @@ if not CELERY_BROKER_URL:
         )
         CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
-            "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
             "socket_timeout": 5,
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
+        if "sentinel_kwargs" not in CELERY_BROKER_TRANSPORT_OPTIONS:
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"] = {}
+
+        if REDIS_SENTINEL_PASSWORD:
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["password"] = REDIS_SENTINEL_PASSWORD
+
+        if REDIS_TLS_ENABLED:
+            # 用于与 Sentinel 节点之间的TLS通信
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+            # mTLS
+            if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 

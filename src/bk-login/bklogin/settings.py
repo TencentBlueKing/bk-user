@@ -111,6 +111,25 @@ DATABASES = {
         },
     },
 }
+
+# Database tls
+BK_LOGIN_DB_TLS_ENABLED = env.bool("BK_LOGIN_DB_TLS_ENABLED", False)
+if BK_LOGIN_DB_TLS_ENABLED:
+    default_ssl_options = {
+        "ca": env.str("BK_LOGIN_DB_TLS_CA_FILE", ""),
+    }
+    # mTLS
+    default_cert_file = env.str("BK_LOGIN_DB_TLS_CLIENT_CERT", "")
+    default_key_file = env.str("BK_LOGIN_DB_TLS_CLIENT_KEY", "")
+    if default_cert_file and default_key_file:
+        default_ssl_options["cert"] = default_cert_file
+        default_ssl_options["key"] = default_key_file
+
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = default_ssl_options
+
+    DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
