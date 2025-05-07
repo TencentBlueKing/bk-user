@@ -55,6 +55,12 @@
             {{ $t('续期') }}
           </button>
         </div>
+        <div class="details-content-item" v-if="detail.password_expired_at">
+          <span class="details-content-key">{{ $t('密码过期时间') }}：</span>
+          <span class="details-content-value">
+            {{ remainingDays(detail.password_expired_at) }}
+          </span>
+        </div>
         <CustomFieldsView :extras="detail.extras" />
       </div>
       <img v-if="detail.logo" class="user-logo" :src="detail.logo" alt="" />
