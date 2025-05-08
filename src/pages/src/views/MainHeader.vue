@@ -143,7 +143,7 @@ import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { getTenantInfo, getVersionLogs } from '@/http';
-import { t } from '@/language/index';
+import { locale, t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
@@ -230,7 +230,12 @@ const onGoBack = () => {
 };
 
 // 产品文档
-const docUrl = window.BK_USER_DOC_URL;
+const docUrl = computed(() => (
+  window?.BK_USER_DOC_URL?.replace(
+    'markdown',
+    `markdown/${locale.value === 'en' ? 'EN' : 'ZH'}`,
+  )
+));
 
 // 问题反馈
 const feedbackUrl = window.BK_USER_FEEDBACK_URL;
