@@ -129,11 +129,11 @@ DATABASES = {
 MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
-        "ca": env.str("MYSQL_TLS_CA_FILE", ""),
+        "ca": env.str("MYSQL_TLS_CERT_CA_FILE", ""),
     }
     # mTLS
-    default_cert_file = env.str("MYSQL_TLS_CLIENT_CERT", "")
-    default_key_file = env.str("MYSQL_TLS_CLIENT_KEY", "")
+    default_cert_file = env.str("MYSQL_TLS_CERT_FILE", "")
+    default_key_file = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
     if default_cert_file and default_key_file:
         default_ssl_options["cert"] = default_cert_file
         default_ssl_options["key"] = default_key_file
@@ -343,19 +343,19 @@ CELERY_BEAT_SCHEDULE = {
 # 如果传入了 CELERY_BROKER_URL, 需要优先判断
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
 CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
-CELERY_BROKER_TLS_CA_FILE = env.str("CELERY_BROKER_TLS_CA_FILE", default="")
-CELERY_BROKER_TLS_CLIENT_CERT = env.str("CELERY_BROKER_TLS_CLIENT_CERT", default="")
-CELERY_BROKER_TLS_CLIENT_KEY = env.str("CELERY_BROKER_TLS_CLIENT_KEY", default="")
+CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
+CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
+CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
 
 if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
     CELERY_BROKER_USE_SSL = {
-        "ca_certs": CELERY_BROKER_TLS_CLIENT_CERT,
+        "ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
         "cert_reqs": ssl.CERT_REQUIRED,
     }
     # mTLS
-    if CELERY_BROKER_TLS_CLIENT_CERT and CELERY_BROKER_TLS_CLIENT_KEY:
-        CELERY_BROKER_USE_SSL["certfile"] = CELERY_BROKER_TLS_CLIENT_CERT
-        CELERY_BROKER_USE_SSL["keyfile"] = CELERY_BROKER_TLS_CLIENT_KEY
+    if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+        CELERY_BROKER_USE_SSL["certfile"] = CELERY_BROKER_TLS_CERT_FILE
+        CELERY_BROKER_USE_SSL["keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
 
 # rabbitmq as broker
 RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
@@ -373,12 +373,12 @@ if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, 
             f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
         )
         CELERY_BROKER_USE_SSL = {
-            "ca_certs": env.str("RABBITMQ_TLS_CA_FILE", default=""),
+            "ca_certs": env.str("RABBITMQ_TLS_CERT_CA_FILE", default=""),
             "cert_reqs": ssl.CERT_REQUIRED,
         }
         # mTLS
-        rabbit_certfile = env.str("RABBITMQ_TLS_CLIENT_CERT", default="")
-        rabbit_keyfile = env.str("RABBITMQ_TLS_CLIENT_KEY", default="")
+        rabbit_certfile = env.str("RABBITMQ_TLS_CERT_FILE", default="")
+        rabbit_keyfile = env.str("RABBITMQ_TLS_CERT_KEY_FILE", default="")
         if rabbit_certfile and rabbit_keyfile:
             CELERY_BROKER_USE_SSL["certfile"] = rabbit_certfile
             CELERY_BROKER_USE_SSL["keyfile"] = rabbit_keyfile
@@ -393,9 +393,9 @@ REDIS_DB = env.int("REDIS_DB", 0)
 
 # redis tls
 REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
-REDIS_TLS_CA_FILE = env.str("REDIS_TLS_CA_FILE", "")
-REDIS_TLS_CLIENT_CERT = env.str("REDIS_TLS_CLIENT_CERT", "")
-REDIS_TLS_CLIENT_KEY = env.str("REDIS_TLS_CLIENT_KEY", "")
+REDIS_TLS_CERT_CA_FILE = env.str("REDIS_TLS_CERT_CA_FILE", "")
+REDIS_TLS_CERT_FILE = env.str("REDIS_TLS_CERT_FILE", "")
+REDIS_TLS_CERT_KEY_FILE = env.str("REDIS_TLS_CERT_KEY_FILE", "")
 
 # redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
@@ -460,12 +460,12 @@ if REDIS_TLS_ENABLED:
     CACHES["redis"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     CACHES["redis"]["OPTIONS"]["ssl"] = True
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
-    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
 
     # mTLS
-    if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
-        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
-        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+    if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
 # 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
 DJANGO_REDIS_LOGGER = "root"
@@ -484,11 +484,11 @@ if REDIS_USE_SENTINEL:
     if REDIS_TLS_ENABLED:
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl"] = True
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
-        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
         # mTLS
-        if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
-            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
-            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
 # =============================== Celery broker 配置 ===============================
 
@@ -500,12 +500,12 @@ if not CELERY_BROKER_URL:
         CELERY_BROKER_URL = f"rediss://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
         CELERY_BROKER_USE_SSL = {
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
-            "ssl_ca_certs": REDIS_TLS_CA_FILE,
+            "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
         }
         # mTLS
-        if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
-            CELERY_BROKER_USE_SSL["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
-            CELERY_BROKER_USE_SSL["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL["ssl_certfile"] = REDIS_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
@@ -527,12 +527,12 @@ if not CELERY_BROKER_URL:
         if REDIS_TLS_ENABLED:
             # 用于与 Sentinel 节点之间的TLS通信
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
-            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CA_FILE
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
             # mTLS
-            if REDIS_TLS_CLIENT_CERT and REDIS_TLS_CLIENT_KEY:
-                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CLIENT_CERT
-                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_keyfile"] = REDIS_TLS_CLIENT_KEY
+            if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
