@@ -30,7 +30,7 @@ REDIS_PASSWORD = env("CACHE_REDIS_PASSWORD", default="")
 REDIS_DB = env("CACHE_REDIS_DB", default=0)
 REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 
-REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 # redis tls
 REDIS_TLS_ENABLED = env.bool("CACHE_REDIS_TLS_ENABLED", False)
@@ -96,7 +96,6 @@ if REDIS_TLS_ENABLED:
     CACHES["verification_code"]["OPTIONS"]["ssl"] = True
     CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
     CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
-
     # mTLS
     if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
         CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
