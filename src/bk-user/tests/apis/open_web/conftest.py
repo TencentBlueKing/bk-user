@@ -138,6 +138,16 @@ def display_name_expression_config_with_custom_field(random_tenant) -> TenantUse
 
 
 @pytest.fixture
+def display_name_expression_config_with_tenant_user_id(random_tenant) -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(
+        tenant_id=random_tenant.id,
+        builtin_fields=["tenant_user_id"],
+        custom_fields=[],
+        expression="{tenant_user_id}",
+    )
+
+
+@pytest.fixture
 def _create_custom_fields(random_tenant, full_local_data_source):
     custom_field_data = [
         {

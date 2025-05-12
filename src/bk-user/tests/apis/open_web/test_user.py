@@ -61,6 +61,18 @@ class TestTenantUserDisplayInfoRetrieveApi:
             assert resp.status_code == status.HTTP_200_OK
             assert resp.data["display_name"] == "13512345671-zhangsan--张三"
 
+    @pytest.mark.usefixtures("_create_custom_fields")
+    def test_with_tenant_user_id(self, api_client, display_name_expression_config_with_tenant_user_id):
+        with mock.patch(
+            "bkuser.apps.tenant.models.TenantUserDisplayNameExpressionConfig.objects.get",
+            return_value=display_name_expression_config_with_tenant_user_id,
+        ):
+            zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+            resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan.id}))
+
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data["display_name"] == zhangsan.id
+
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -315,6 +327,26 @@ class TestTenantUserSearchApi:
             assert len(resp.data) == 1
             assert {t["bk_username"] for t in resp.data} == {wangwu.id}
             assert {t["display_name"] for t in resp.data} == {"13512345673-wangwu--王五"}
+
+    def test_with_tenant_user_id(self, api_client, random_tenant, display_name_expression_config_with_tenant_user_id):
+        with mock.patch(
+            "bkuser.apps.tenant.models.TenantUserDisplayNameExpressionConfig.objects.get",
+            return_value=display_name_expression_config_with_tenant_user_id,
+        ):
+            zhangsan = TenantUser.objects.get(
+                data_source_user__username="zhangsan",
+                data_source__type="real",
+                data_source__owner_tenant_id=random_tenant.id,
+            )
+            resp = api_client.get(
+                reverse("open_web.tenant_user.search"),
+                data={"keyword": zhangsan.id, "owner_tenant_id": random_tenant.id, "with_organization_paths": False},
+            )
+
+            assert resp.status_code == status.HTTP_200_OK
+            assert len(resp.data) == 1
+            assert {t["bk_username"] for t in resp.data} == {zhangsan.id}
+            assert {t["display_name"] for t in resp.data} == {zhangsan.id}
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "chen"})

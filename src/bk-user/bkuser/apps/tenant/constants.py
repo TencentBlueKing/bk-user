@@ -143,6 +143,9 @@ DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG = {
 # 租户用户展示名表达式匹配模式为：`{}` 中至少包含一个由字母、数字或下划线组成的字段名
 DISPLAY_NAME_EXPRESSION_FIELD_PATTERN = re.compile(r"\{(\w+)}")
 
+# DisplayName 表达式中额外的内置字段
+DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS = {"tenant_user_id"}
+
 
 class TenantStatus(StrStructuredEnum):
     """租户状态"""

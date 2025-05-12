@@ -24,6 +24,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import (
+    DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
     NotificationMethod,
     NotificationScene,
@@ -301,8 +302,10 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         fields = self.context["parsed_fields"]
 
         # TODO: 后续需要过滤敏感字段，敏感字段不支持展示
-        # TODO: 后续支持用户组织字段，归类于内置字段
+        # TODO: 内置字段目前额外增加 `租户用户 ID (tenant_user_id)` 字段，后续支持用户组织字段
         builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+        builtin_fields.update(DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS)
+
         custom_fields = set(
             TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
         )

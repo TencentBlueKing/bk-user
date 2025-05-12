@@ -25,7 +25,10 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from pydantic import BaseModel
 
-from bkuser.apps.tenant.constants import DISPLAY_NAME_EXPRESSION_FIELD_PATTERN
+from bkuser.apps.tenant.constants import (
+    DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS,
+    DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
+)
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 
 logger = logging.getLogger(__name__)
@@ -72,11 +75,16 @@ class TenantUserHandler:
             "phone_country_code": user.phone_info[1],
         }
 
+        # 额外的内置字段，目前支持租户用户 ID (tenant_user_id)
+        additional_builtin_field_info = {"tenant_user_id": user.id}
+
         field_value_map = {}
         # 处理内置字段
         for field in config.builtin_fields:
             if field in tenant_user_contact_info:
                 field_value_map[field] = tenant_user_contact_info[field]
+            elif field in DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS:
+                field_value_map[field] = additional_builtin_field_info[field]
             # TODO：后续加入对用户组织的支持
             else:
                 field_value_map[field] = getattr(user.data_source_user, field)
@@ -126,7 +134,7 @@ class TenantUserHandler:
 
         inherit_flag_mapping = {"phone_country_code": "phone", "phone": "phone", "email": "email"}
 
-        def _covert_contact_field_to_query(field: str) -> Q:
+        def _convert_contact_field_to_query(field: str) -> Q:
             # 由于租户用户的电子邮箱与手机号、手机国际区号分为用户自定义与继承自数据源两种情况，故需要分别考虑查询条件
             inherit_flag = f"is_inherited_{inherit_flag_mapping[field]}"
             return Q(
@@ -134,13 +142,19 @@ class TenantUserHandler:
                 | Q(**{inherit_flag: True, f"data_source_user__{field}__icontains": keyword})
             )
 
+        def _convert_additional_builtin_field_to_query(field: str) -> Q:
+            # 由于租户用户的展示名表达式中可能包含额外的内置字段，故需要单独处理
+            return Q(id__icontains=keyword) if field == "tenant_user_id" else Q()
+
         # 处理内置字段
-        builtin_queries = [
-            _covert_contact_field_to_query(field)
-            if field in inherit_flag_mapping
-            else Q(**{f"data_source_user__{field}__icontains": keyword})
-            for field in config.builtin_fields
-        ]
+        builtin_queries = []
+        for field in config.builtin_fields:
+            if field in inherit_flag_mapping:
+                builtin_queries.append(_convert_contact_field_to_query(field))
+            elif field in DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS:
+                builtin_queries.append(_convert_additional_builtin_field_to_query(field))
+            else:
+                builtin_queries.append(Q(**{f"data_source_user__{field}__icontains": keyword}))
 
         # 处理自定义字段
         custom_queries = [
