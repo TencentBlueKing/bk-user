@@ -127,16 +127,19 @@ DATABASES = {
 
 # Database tls
 MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
+MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", True)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
-        "ca": env.str("MYSQL_TLS_CERT_CA_FILE", ""),
+        "ca": MYSQL_TLS_CERT_CA_FILE,
+        "check_hostname": MYSQL_TLS_CHECK_HOSTNAME,
     }
     # mTLS
-    default_cert_file = env.str("MYSQL_TLS_CERT_FILE", "")
-    default_key_file = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
-    if default_cert_file and default_key_file:
-        default_ssl_options["cert"] = default_cert_file
-        default_ssl_options["key"] = default_key_file
+    if MYSQL_TLS_CERT_FILE and MYSQL_TLS_CERT_KEY_FILE:
+        default_ssl_options["cert"] = MYSQL_TLS_CERT_FILE
+        default_ssl_options["key"] = MYSQL_TLS_CERT_KEY_FILE
 
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
@@ -290,99 +293,6 @@ BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tence
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
-# ------------------------------------------ Celery 配置 ------------------------------------------
-
-# 连接 BROKER 超时时间
-CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY 与 RabbitMQ 增加 60 秒心跳设置项
-CELERY_BROKER_HEARTBEAT = 60
-# CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
-CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
-# 与周期任务配置的定时相关 UTC
-CELERY_ENABLE_UTC = False
-# 任务结果存储
-CELERY_RESULT_BACKEND = "django-db"
-# close celery hijack root logger
-CELERY_WORKER_HIJACK_ROOT_LOGGER = False
-# disable remote control
-CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
-# Celery 消息序列化
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-# CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
-# CELERY_IMPORTS = []
-# 内置的周期任务
-CELERY_BEAT_SCHEDULE = {
-    "periodic_notify_expiring_tenant_users": {
-        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
-        "schedule": crontab(minute="0", hour="10"),
-    },
-    "periodic_notify_expired_tenant_users": {
-        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expired_tenant_users_task",
-        "schedule": crontab(minute="0", hour="10"),
-    },
-    "periodic_notify_password_expiring_users": {
-        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expiring_users_task",
-        "schedule": crontab(minute="30", hour="10"),
-    },
-    "periodic_notify_password_expired_users": {
-        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
-        "schedule": crontab(minute="30", hour="10"),
-    },
-    "mark_running_sync_task_as_failed_if_exceed_one_day": {
-        "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
-        "schedule": crontab(minute="0", hour="9"),
-    },
-    "periodic_update_tenant_user_status": {
-        "task": "bkuser.apps.tenant.tasks.update_expired_tenant_user_status",
-        "schedule": crontab(minute="0", hour="3"),
-    },
-}
-
-# 如果传入了 CELERY_BROKER_URL, 需要优先判断
-CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
-CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
-CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
-CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
-CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
-
-if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
-    CELERY_BROKER_USE_SSL = {
-        "ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
-        "cert_reqs": ssl.CERT_REQUIRED,
-    }
-    # mTLS
-    if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
-        CELERY_BROKER_USE_SSL["certfile"] = CELERY_BROKER_TLS_CERT_FILE
-        CELERY_BROKER_USE_SSL["keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
-
-# rabbitmq as broker
-RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
-RABBITMQ_PORT = env.str("RABBITMQ_PORT", default="")
-RABBITMQ_HOST = env.str("RABBITMQ_HOST", default="")
-RABBITMQ_USER = env.str("RABBITMQ_USER", default="")
-RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
-
-RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
-if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
-    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
-    if RABBITMQ_TLS_ENABLED:
-        # 启用 rabbitmq tls
-        CELERY_BROKER_URL = (
-            f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
-        )
-        CELERY_BROKER_USE_SSL = {
-            "ca_certs": env.str("RABBITMQ_TLS_CERT_CA_FILE", default=""),
-            "cert_reqs": ssl.CERT_REQUIRED,
-        }
-        # mTLS
-        rabbit_certfile = env.str("RABBITMQ_TLS_CERT_FILE", default="")
-        rabbit_keyfile = env.str("RABBITMQ_TLS_CERT_KEY_FILE", default="")
-        if rabbit_certfile and rabbit_keyfile:
-            CELERY_BROKER_USE_SSL["certfile"] = rabbit_certfile
-            CELERY_BROKER_USE_SSL["keyfile"] = rabbit_keyfile
-
 # ------------------------------------------ 缓存配置 ------------------------------------------
 
 REDIS_HOST = env.str("REDIS_HOST", "localhost")
@@ -396,6 +306,7 @@ REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
 REDIS_TLS_CERT_CA_FILE = env.str("REDIS_TLS_CERT_CA_FILE", "")
 REDIS_TLS_CERT_FILE = env.str("REDIS_TLS_CERT_FILE", "")
 REDIS_TLS_CERT_KEY_FILE = env.str("REDIS_TLS_CERT_KEY_FILE", "")
+REDIS_TLS_CHECK_HOSTNAME = env.str("REDIS_TLS_CHECK_HOSTNAME", True)
 
 # redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
@@ -461,6 +372,7 @@ if REDIS_TLS_ENABLED:
     CACHES["redis"]["OPTIONS"]["ssl"] = True
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
 
     # mTLS
     if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
@@ -490,7 +402,117 @@ if REDIS_USE_SENTINEL:
             CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
             CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
-# =============================== Celery broker 配置 ===============================
+
+# ------------------------------------------ Celery 配置 ------------------------------------------
+
+# 连接 BROKER 超时时间
+CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
+# CELERY 与 RabbitMQ 增加 60 秒心跳设置项
+CELERY_BROKER_HEARTBEAT = 60
+# CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
+CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
+# 与周期任务配置的定时相关 UTC
+CELERY_ENABLE_UTC = False
+# 任务结果存储
+CELERY_RESULT_BACKEND = "django-db"
+# close celery hijack root logger
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+# disable remote control
+CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
+# Celery 消息序列化
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+# CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
+# CELERY_IMPORTS = []
+# 内置的周期任务
+CELERY_BEAT_SCHEDULE = {
+    "periodic_notify_expiring_tenant_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
+        "schedule": crontab(minute="0", hour="10"),
+    },
+    "periodic_notify_expired_tenant_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expired_tenant_users_task",
+        "schedule": crontab(minute="0", hour="10"),
+    },
+    "periodic_notify_password_expiring_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expiring_users_task",
+        "schedule": crontab(minute="30", hour="10"),
+    },
+    "periodic_notify_password_expired_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
+        "schedule": crontab(minute="30", hour="10"),
+    },
+    "mark_running_sync_task_as_failed_if_exceed_one_day": {
+        "task": "bkuser.apps.sync.periodic_tasks.mark_running_sync_task_as_failed_if_exceed_one_day",
+        "schedule": crontab(minute="0", hour="9"),
+    },
+    "periodic_update_tenant_user_status": {
+        "task": "bkuser.apps.tenant.tasks.update_expired_tenant_user_status",
+        "schedule": crontab(minute="0", hour="3"),
+    },
+}
+
+# 如果传入了 CELERY_BROKER_URL, 需要优先判断
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
+CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
+CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
+CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
+CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
+
+if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
+    # 这里需要判断一下使用的是 redis 还是 rabbitmq
+    broker_url_scheme = urlparse(CELERY_BROKER_URL).scheme
+    if broker_url_scheme == "amqps":
+        CELERY_BROKER_USE_SSL = {
+            "ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+            "cert_reqs": ssl.CERT_REQUIRED,
+        }
+    elif broker_url_scheme == "rediss":
+        CELERY_BROKER_USE_SSL = {
+            "ssl_ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+        }
+    else:
+        raise ValueError(
+            "When TLS is enabled, CELERY_BROKER_URL must use a secure protocol (amqps or rediss). "
+            f"Current protocol: {broker_url_scheme}"
+        )
+    # mTLS
+    if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+        if broker_url_scheme == "amqps":
+            CELERY_BROKER_USE_SSL["certfile"] = CELERY_BROKER_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
+        elif broker_url_scheme == "rediss":
+            CELERY_BROKER_USE_SSL["ssl_certfile"] = CELERY_BROKER_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["ssl_keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
+
+# rabbitmq as broker
+RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
+RABBITMQ_PORT = env.str("RABBITMQ_PORT", default="")
+RABBITMQ_HOST = env.str("RABBITMQ_HOST", default="")
+RABBITMQ_USER = env.str("RABBITMQ_USER", default="")
+RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
+
+RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
+RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
+RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
+RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_CERT_KEY_FILE", default="")
+if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
+    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+    if RABBITMQ_TLS_ENABLED:
+        # 启用 rabbitmq tls
+        CELERY_BROKER_URL = (
+            f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+        )
+        CELERY_BROKER_USE_SSL = {
+            "ca_certs": RABBITMQ_TLS_CERT_CA_FILE,
+            "cert_reqs": ssl.CERT_REQUIRED,
+        }
+        # mTLS
+        if RABBITMQ_TLS_CERT_FILE and RABBITMQ_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL["certfile"] = RABBITMQ_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["keyfile"] = RABBITMQ_TLS_CERT_KEY_FILE
 
 # default celery broker
 if not CELERY_BROKER_URL:
@@ -501,6 +523,7 @@ if not CELERY_BROKER_URL:
         CELERY_BROKER_USE_SSL = {
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
             "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
+            "ssl_check_hostname": REDIS_TLS_CHECK_HOSTNAME,
         }
         # mTLS
         if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
@@ -514,15 +537,11 @@ if not CELERY_BROKER_URL:
         )
         CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
+            "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
             "socket_timeout": 5,
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
-        if "sentinel_kwargs" not in CELERY_BROKER_TRANSPORT_OPTIONS:
-            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"] = {}
-
-        if REDIS_SENTINEL_PASSWORD:
-            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["password"] = REDIS_SENTINEL_PASSWORD
 
         if REDIS_TLS_ENABLED:
             # 用于与 Sentinel 节点之间的TLS通信

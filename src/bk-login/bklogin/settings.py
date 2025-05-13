@@ -114,19 +114,22 @@ DATABASES = {
 
 # Database tls
 MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
+MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", True)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
-        "ca": env.str("MYSQL_TLS_CERT_CA_FILE", ""),
+        "ca": MYSQL_TLS_CERT_CA_FILE,
+        "check_hostname": MYSQL_TLS_CHECK_HOSTNAME,
     }
     # mTLS
-    default_cert_file = env.str("MYSQL_TLS_CERT_FILE", "")
-    default_key_file = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
-    if default_cert_file and default_key_file:
-        default_ssl_options["cert"] = default_cert_file
-        default_ssl_options["key"] = default_key_file
+    if MYSQL_TLS_CERT_FILE and MYSQL_TLS_CERT_KEY_FILE:
+        default_ssl_options["cert"] = MYSQL_TLS_CERT_FILE
+        default_ssl_options["key"] = MYSQL_TLS_CERT_KEY_FILE
 
     if "OPTIONS" not in DATABASES["default"]:
-        DATABASES["default"]["OPTIONS"] = default_ssl_options
+        DATABASES["default"]["OPTIONS"] = {}
 
     DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
 
