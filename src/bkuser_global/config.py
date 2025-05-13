@@ -42,9 +42,9 @@ def get_db_config(env: environ.Env, db_prefix: str) -> dict:
         }
     }
     tls_enabled = env.bool(f"{db_prefix}_TLS_ENABLED", default=False)
-    tls_ca = env.str(f"{db_prefix}_TLS_CERT_CA_FILE", "")
-    tls_cert = env.str(f"{db_prefix}_TLS_CERT_FILE", "")
-    tls_key = env.str(f"{db_prefix}_TLS_CERT_KEY_FILE", "")
+    tls_ca = env.str(f"{db_prefix}_TLS_CERT_CA_FILE", default="")
+    tls_cert = env.str(f"{db_prefix}_TLS_CERT_FILE", default="")
+    tls_key = env.str(f"{db_prefix}_TLS_CERT_KEY_FILE", default="")
     # 跳过主机名/IP 验证，会降低安全性，正式环境需要设置为 True
     tls_check_hostname = env.bool(f"{db_prefix}_TLS_CHECK_HOSTNAME", default=True)
     if tls_enabled:

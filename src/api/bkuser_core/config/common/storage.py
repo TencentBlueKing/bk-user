@@ -34,9 +34,9 @@ REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 # redis tls
 REDIS_TLS_ENABLED = env.bool("CACHE_REDIS_TLS_ENABLED", False)
-REDIS_TLS_CERT_CA_FILE = env.str("CACHE_REDIS_TLS_CERT_CA_FILE", "")
-REDIS_TLS_CERT_FILE = env.str("CACHE_REDIS_TLS_CERT_FILE", "")
-REDIS_TLS_CERT_KEY_FILE = env.str("CACHE_REDIS_TLS_CERT_KEY_FILE", "")
+REDIS_TLS_CERT_CA_FILE = env.str("CACHE_REDIS_TLS_CERT_CA_FILE", default="")
+REDIS_TLS_CERT_FILE = env.str("CACHE_REDIS_TLS_CERT_FILE", default="")
+REDIS_TLS_CERT_KEY_FILE = env.str("CACHE_REDIS_TLS_CERT_KEY_FILE", default="")
 
 # ==============================================================================
 # Celery
