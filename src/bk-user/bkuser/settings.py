@@ -456,7 +456,7 @@ CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
 CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
 CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
 CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
-#  直接提供 CELERY_BROKER_URL 时，仅支持 Rabbitmq 和 单例 Redis 开启 TLS，Sentinel Redis 暂不支持
+# 直接提供 CELERY_BROKER_URL 时，仅支持 Rabbitmq 和 单例 Redis 开启 TLS，Sentinel Redis 暂不支持
 if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
     ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
     CELERY_BROKER_USE_SSL = {
