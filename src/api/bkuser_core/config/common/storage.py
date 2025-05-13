@@ -93,7 +93,6 @@ GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)
 # redis tls : 仅仅支持 redis 单例模式
 if REDIS_TLS_ENABLED:
     CACHES["verification_code"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-    CACHES["verification_code"]["OPTIONS"]["ssl"] = True
     CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
     CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
     # mTLS
