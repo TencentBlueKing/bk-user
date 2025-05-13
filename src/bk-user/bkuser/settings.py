@@ -300,14 +300,12 @@ REDIS_PORT = env.int("REDIS_PORT", 6379)
 REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
 REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
 REDIS_DB = env.int("REDIS_DB", 0)
-
 # redis tls
 REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
 REDIS_TLS_CERT_CA_FILE = env.str("REDIS_TLS_CERT_CA_FILE", "")
 REDIS_TLS_CERT_FILE = env.str("REDIS_TLS_CERT_FILE", "")
 REDIS_TLS_CERT_KEY_FILE = env.str("REDIS_TLS_CERT_KEY_FILE", "")
 REDIS_TLS_CHECK_HOSTNAME = env.str("REDIS_TLS_CHECK_HOSTNAME", True)
-
 # redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
 REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
@@ -367,20 +365,18 @@ CACHES: Dict[str, Any] = {
     },
 }
 
+# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
+DJANGO_REDIS_LOGGER = "root"
+
 if REDIS_TLS_ENABLED:
     CACHES["redis"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-    CACHES["redis"]["OPTIONS"]["ssl"] = True
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
-
     # mTLS
     if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
         CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
         CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
-
-# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
-DJANGO_REDIS_LOGGER = "root"
 
 # redis sentinel
 if REDIS_USE_SENTINEL:
@@ -392,8 +388,9 @@ if REDIS_USE_SENTINEL:
     CACHES["redis"]["OPTIONS"]["SENTINELS"] = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR]
     CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {"password": REDIS_SENTINEL_PASSWORD, "socket_timeout": 5}
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
-
+    # redis sentinel tls
     if REDIS_TLS_ENABLED:
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl"] = True
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl"] = True
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
@@ -401,7 +398,6 @@ if REDIS_USE_SENTINEL:
         if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
             CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
             CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
-
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
@@ -455,37 +451,22 @@ CELERY_BEAT_SCHEDULE = {
 
 # 如果传入了 CELERY_BROKER_URL, 需要优先判断
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
+# celery tls
 CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
 CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
 CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
 CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
-
+#  直接提供 CELERY_BROKER_URL 时，仅支持 Rabbitmq 和 单例 Redis 开启 TLS，Sentinel Redis 暂不支持
 if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
-    # 这里需要判断一下使用的是 redis 还是 rabbitmq
-    broker_url_scheme = urlparse(CELERY_BROKER_URL).scheme
-    if broker_url_scheme == "amqps":
-        CELERY_BROKER_USE_SSL = {
-            "ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
-            "cert_reqs": ssl.CERT_REQUIRED,
-        }
-    elif broker_url_scheme == "rediss":
-        CELERY_BROKER_USE_SSL = {
-            "ssl_ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
-            "ssl_cert_reqs": ssl.CERT_REQUIRED,
-        }
-    else:
-        raise ValueError(
-            "When TLS is enabled, CELERY_BROKER_URL must use a secure protocol (amqps or rediss). "
-            f"Current protocol: {broker_url_scheme}"
-        )
+    ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
+    CELERY_BROKER_USE_SSL = {
+        f"{ssl_key_prefix}cert_reqs": ssl.CERT_REQUIRED,
+        f"{ssl_key_prefix}ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+    }
     # mTLS
     if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
-        if broker_url_scheme == "amqps":
-            CELERY_BROKER_USE_SSL["certfile"] = CELERY_BROKER_TLS_CERT_FILE
-            CELERY_BROKER_USE_SSL["keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
-        elif broker_url_scheme == "rediss":
-            CELERY_BROKER_USE_SSL["ssl_certfile"] = CELERY_BROKER_TLS_CERT_FILE
-            CELERY_BROKER_USE_SSL["ssl_keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
+        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = CELERY_BROKER_TLS_CERT_FILE
+        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
 
 # rabbitmq as broker
 RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
@@ -493,7 +474,7 @@ RABBITMQ_PORT = env.str("RABBITMQ_PORT", default="")
 RABBITMQ_HOST = env.str("RABBITMQ_HOST", default="")
 RABBITMQ_USER = env.str("RABBITMQ_USER", default="")
 RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
-
+# rabbitmq tls
 RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
 RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
 RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
@@ -501,7 +482,6 @@ RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_CERT_KEY_FILE", default="")
 if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
     CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
     if RABBITMQ_TLS_ENABLED:
-        # 启用 rabbitmq tls
         CELERY_BROKER_URL = (
             f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
         )
@@ -542,7 +522,6 @@ if not CELERY_BROKER_URL:
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
-
         if REDIS_TLS_ENABLED:
             # 用于与 Sentinel 节点之间的TLS通信
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
