@@ -110,7 +110,7 @@ class BkApigwCmsiClient(NotificationClient):
         """
         发送短信
 
-        :param receiver: 接收者租户用户 ID（用户管理理论上没有向多个用户发送相同短信的需求）
+        :param receiver: 接收者租户用户 ID
         :param phone_info: 接收者手机号信息
         :param content: 短信内容
         """
