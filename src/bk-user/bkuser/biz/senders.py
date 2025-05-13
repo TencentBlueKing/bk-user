@@ -42,10 +42,27 @@ class PhoneVerificationCodeSender:
         if not self._can_send(tenant_user):
             raise ExceedSendRateLimit(_("今日发送验证码次数超过上限"))
 
+        # 若是更新手机号场景，则使用自定义手机号与国际区号
+        # Q：为什么使用自定义手机号与国际区号？
+        # A：因为用户更新手机号（国际区号）的场景需要向新手机号发送验证码
+        # 而用户更改的新手机号（国际区号）此时存于用户对象的自定义手机号（国际区号）属性
+        if self.scene == VerificationCodeScene.UPDATE_PHONE:
+            phone = tenant_user.custom_phone
+            phone_country_code = tenant_user.custom_phone_country_code
+        else:
+            phone, phone_country_code = tenant_user.phone_info
+
+        contact_info = {
+            "phone_info": {
+                "phone": phone,
+                "phone_country_code": phone_country_code,
+            }
+        }
+
         TenantUserNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.SMS,
-        ).send(tenant_user, verification_code=code)
+        ).send(tenant_user, contact_info, verification_code=code)  # type: ignore
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         phone, phone_country_code = tenant_user.phone_info
@@ -72,10 +89,16 @@ class EmailVerificationCodeSender:
         if not self._can_send(tenant_user):
             raise ExceedSendRateLimit(_("今日发送验证码次数超过上限"))
 
+        # 若是更新邮箱场景，则使用自定义邮箱
+        # Q：为什么使用自定义邮箱？
+        # A：因为用户更新邮箱的场景需要向新邮箱号发送验证码
+        # 而用户更改的新邮箱号此时存于用户对象的自定义邮箱属性
+        email = tenant_user.custom_email if self.scene == VerificationCodeScene.UPDATE_EMAIL else tenant_user.email
+
         TenantUserNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.EMAIL,
-        ).send(tenant_user, verification_code=code)
+        ).send(tenant_user, contact_info={"email": email}, verification_code=code)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         email = tenant_user.email
@@ -103,7 +126,7 @@ class EmailResetPasswdTokenSender:
         TenantUserNotifier(
             NotificationScene.RESET_PASSWORD,
             data_source_id=tenant_user.data_source_user.data_source_id,
-        ).send(tenant_user, token=token)
+        ).send(tenant_user, contact_info={"email": tenant_user.email}, token=token)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         send_cnt_cache_key = f"{tenant_user.email}:send_cnt"

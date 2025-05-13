@@ -86,7 +86,13 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
     tenant_users = TenantUser.objects.filter(
         tenant_id=data_source.owner_tenant_id, data_source_user__in=data_source_users
     ).select_related("data_source_user")
+
+    contact_infos = {
+        user.id: {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1], "email": user.email}
+        for user in tenant_users
+    }
+
     TenantUserNotifier(
         NotificationScene.USER_INITIALIZE,
         data_source_id=data_source.id,
-    ).batch_send(tenant_users, user_passwd_map=user_passwd_map)
+    ).batch_send(tenant_users, contact_infos, user_passwd_map=user_passwd_map)

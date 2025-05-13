@@ -41,7 +41,9 @@ def send_reset_password_to_user(data_source_user_id: int, new_password: str):
     tenant_user = TenantUser.objects.get(
         data_source_user=data_source_user, tenant_id=data_source_user.data_source.owner_tenant_id
     )
-    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(tenant_user, passwd=new_password)
+    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(
+        tenant_user, {"email": tenant_user.email}, passwd=new_password
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -75,7 +77,16 @@ def notify_password_expiring_users(data_source_id: int):
     logger.info(
         "data source %s send password expiring notification to %d users...", data_source_id, tenant_users.count()
     )
-    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(tenant_users)
+    contact_infos = {
+        user.id: {
+            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
+            "email": user.email,
+        }
+        for user in tenant_users
+    }
+    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(
+        tenant_users, contact_infos
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -113,7 +124,16 @@ def notify_password_expired_users(data_source_id: int):
     logger.info(
         "data source %s send password expired notification to %d users...", data_source_id, tenant_users.count()
     )
-    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(tenant_users)
+    contact_infos = {
+        user.id: {
+            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
+            "email": user.email,
+        }
+        for user in tenant_users
+    }
+    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(
+        tenant_users, contact_infos
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -159,7 +179,17 @@ def notify_expiring_tenant_users(tenant_id: str):
         return
 
     logger.info("tenant %s send expiring notification to %d users...", tenant_id, tenant_users.count())
-    TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRING, tenant_id=tenant_id).batch_send(tenant_users)
+    contact_infos = {
+        user.id: {
+            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
+            "email": user.email,
+        }
+        for user in tenant_users
+    }
+
+    TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRING, tenant_id=tenant_id).batch_send(
+        tenant_users, contact_infos
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -193,7 +223,17 @@ def notify_expired_tenant_users(tenant_id: str):
         return
 
     logger.info("tenant %s send expired notification to %d users...", tenant_id, tenant_users.count())
-    TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRED, tenant_id=tenant_id).batch_send(tenant_users)
+
+    contact_infos = {
+        user.id: {
+            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
+            "email": user.email,
+        }
+        for user in tenant_users
+    }
+    TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRED, tenant_id=tenant_id).batch_send(
+        tenant_users, contact_infos
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)

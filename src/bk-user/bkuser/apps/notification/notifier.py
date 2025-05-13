@@ -17,17 +17,17 @@
 import logging
 from typing import Dict, List
 
+from django.conf import settings
 from django.template import Context, Template
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from bkuser import settings
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.data_models import NotificationTemplate
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
-from bkuser.component import cmsi
+from bkuser.component.clients import get_notification_client
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 logger = logging.getLogger(__name__)
@@ -267,28 +267,32 @@ class TenantUserNotifier:
         """
         self.scene = scene
         self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
+        self.client = get_notification_client()
 
-    def batch_send(self, users: List[TenantUser], **kwargs) -> None:
+    def batch_send(
+        self, users: List[TenantUser], contact_infos: Dict[str, Dict[str, str | Dict[str, str]]], **kwargs
+    ) -> None:
         """
         批量发送通知
 
         :param users: 租户用户列表
+        :param contact_infos: {租户用户ID: 联系方式} 映射表
         :param user_passwd_map: {数据源用户ID: 密码} 映射表，密码初始化/重置场景必须
         """
         for u in users:
             try:
-                self.send(u, **self._gen_scene_kwargs(u, **kwargs))
+                self.send(u, contact_infos[u.id], **self._gen_scene_kwargs(u, **kwargs))
             except Exception:  # noqa: PERF203
                 logger.exception("send notification to user %s, scene %s failed", u.id, self.scene)
 
-    def send(self, user: TenantUser, **scene_kwargs) -> None:
+    def send(self, user: TenantUser, contact_info: Dict[str, str | Dict[str, str]], **scene_kwargs) -> None:
         for tmpl in self.templates:
             content = self._render_tmpl(user, tmpl.content, **scene_kwargs)
             if tmpl.method == NotificationMethod.EMAIL:
-                cmsi.send_mail(user.id, tmpl.sender, tmpl.title, content)  # type: ignore
+                self.client.send_mail(user.id, contact_info["email"], tmpl.sender, tmpl.title, content)  # type: ignore
 
             elif tmpl.method == NotificationMethod.SMS:
-                cmsi.send_sms(user.id, content)
+                self.client.send_sms(user.id, contact_info["phone_info"], content)  # type: ignore
 
             logger.info("send %s to user %s, scene %s", tmpl.method.value, user.id, self.scene)
 
