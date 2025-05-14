@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from django_celery_beat.models import IntervalSchedule, PeriodicTask, PeriodicTasks
 
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
@@ -48,7 +48,7 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
 
     kwargs = json.dumps({"instance_id": category_id, "operator": operator})
     try:
-        p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
+        p: PeriodicTask = PeriodicTask.objects.get(name=f"plugin-sync-data-{category_id}")
         p.interval = schedule
         p.kwargs = kwargs
         p.save(update_fields=["interval", "kwargs"])
@@ -61,6 +61,8 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
             "kwargs": kwargs,
         }
         PeriodicTask.objects.create(**create_params)
+        # 更新调度器
+        PeriodicTasks.update_changed()
 
 
 def delete_periodic_sync_task(category_id: int):

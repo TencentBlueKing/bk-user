@@ -26,7 +26,7 @@ def init_patch():
 
 def get_db_config(env: environ.Env, db_prefix: str) -> dict:
     """通用 DB 配置获取方法"""
-    return {
+    cfg = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
             "NAME": env(f"{db_prefix}_NAME"),
@@ -38,3 +38,17 @@ def get_db_config(env: environ.Env, db_prefix: str) -> dict:
             "TEST": {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_general_ci"},
         }
     }
+    tls_enabled = env.bool(f"{db_prefix}_TLS_ENABLED", default=False)
+    tls_ca = env.str(f"{db_prefix}_TLS_CERT_CA_FILE", default="")
+    tls_cert = env.str(f"{db_prefix}_TLS_CERT_FILE", default="")
+    tls_key = env.str(f"{db_prefix}_TLS_CERT_KEY_FILE", default="")
+    # 跳过主机名/IP 验证，会降低安全性，正式环境需要设置为 True
+    tls_check_hostname = env.bool(f"{db_prefix}_TLS_CHECK_HOSTNAME", default=True)
+    if tls_enabled:
+        cfg["default"]["OPTIONS"]["ssl"] = {"ca": tls_ca, "check_hostname": tls_check_hostname}
+        # mTLS
+        if tls_cert and tls_key:
+            cfg["default"]["OPTIONS"]["ssl"]["cert"] = tls_cert
+            cfg["default"]["OPTIONS"]["ssl"]["key"] = tls_key
+
+    return cfg

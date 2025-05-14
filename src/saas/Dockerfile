@@ -1,5 +1,13 @@
-ARG PRE_SAAS_TAG
-from docker-bkrepo.cwoa.net/h536b8/canway_d/blueking/bk-user-saas:${PRE_SAAS_TAG} as presaas
+FROM node:12.16.3-stretch-slim AS StaticBuilding
+
+ENV NPM_VERSION 6.14.4
+
+# install requirements & build
+COPY src/pages /
+WORKDIR /
+RUN npm i
+RUN npm rebuild node-sass --force && npm run build
+
 FROM python:3.11.10-slim-bullseye as SaaS
 USER root
 RUN rm /etc/apt/sources.list && \
@@ -25,6 +33,6 @@ COPY src/saas/media /app/media
 COPY src/saas/manage.py /app
 COPY src/saas/RELEASE.yaml /app
 COPY src/bkuser_global /app/bkuser_global
-COPY --from=presaas /app/static/ /app/static
+COPY --from=StaticBuilding /dist/ /app/static
 COPY src/saas/bin/start.sh /app
 CMD ["bash", "/app/start.sh"]
