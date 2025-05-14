@@ -16,7 +16,7 @@ from threading import RLock
 from typing import Any, ClassVar, List, Optional, Type
 
 from django.conf import settings
-from django.db import connections, models
+from django.db import connections, models, transaction, IntegrityError
 
 from bkuser_core.common.enum import AutoLowerEnum
 
@@ -230,33 +230,32 @@ class SyncModelManager:
             # NOTE: 批量插入失败, 会导致整体同步任务失败
             # - 优化: 批量插入失败, 切换成单条插入
             # - 优化: 单条插入失败, continue (会打详细日志)
+            # 每个批次都新建一个事务，避免污染后续操作
             try:
-                getattr(getattr(self.meta.target_model, manager), method)(part, **extra_params)
-            except Exception:
+                with transaction.atomic():
+                    getattr(getattr(self.meta.target_model, manager), method)(part, **extra_params)
+            except Exception as e:
                 logger.warning(
-                    "%s %s failed, count=%d, extra_params=%s, will try to sync one by one",
+                    "%s %s failed, count=%d, extra_params=%s, will try to sync one by one. Error: %s",
                     target_model_name,
                     method,
                     len(part),
                     extra_params,
+                    e
                 )
+                # 批量失败后，逐条独立保存，每次都重新开事务
                 for one in part:
                     try:
-                        one.save()
-                        continue
-                    except Exception:
-                        total_fail_count += 1
-                        logger.exception(
-                            "%s %s: save one by one fail, item=%s, will not be updated, detail=%s",
-                            target_model_name,
-                            method,
-                            one,
-                            vars(one),
-                        )
+                        with transaction.atomic():
+                            one.save()
+                    except IntegrityError as ie:
+                        logger.error("%s: IntegrityError on %s, skipped. Error: %s", target_model_name, one,
+                                     str(ie))
                         total_fail_records.append(one)
-                        continue
-                # 原先的逻辑: raise
-                # raise
+                    except Exception as ee:
+                        logger.exception("%s: Unexpected error on %s. Error: %s", target_model_name, one, str(ee))
+                        total_fail_records.append(one)
+
         if total_fail_count > 0:
             logger.error(
                 "%s %s failed, total_fail_count=%d, total_fail_records=%s",
