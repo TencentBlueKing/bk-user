@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-29 20:00+0800\n"
+"POT-Creation-Date: 2025-05-15 01:27+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,12 +41,12 @@ msgstr ""
 "When the department_id is not provided, the owner_tenant_id must be "
 "specified."
 
-#: bkuser/apis/open_web/serializers/users.py:114
+#: bkuser/apis/open_web/serializers/users.py:116
 msgid "指定查询的值 {} 长度超过 64 个字符限制"
 msgstr ""
 "The length of the specified lookup value {} exceeds the 64-character limit."
 
-#: bkuser/apis/open_web/serializers/users.py:120
+#: bkuser/apis/open_web/serializers/users.py:122
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 msgstr ""
 "The specified lookup field {} is not supported. Only login_name, full_name, "
@@ -332,7 +332,7 @@ msgid "不能移动至自己的子部门下"
 msgstr "Department cannot move to its sub-department"
 
 #: bkuser/apis/web/organization/serializers/relations.py:34
-#: bkuser/apis/web/organization/serializers/users.py:609
+#: bkuser/apis/web/organization/serializers/users.py:627
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "User ID {} does not exist in the current tenant"
 
@@ -340,73 +340,73 @@ msgstr "User ID {} does not exist in the current tenant"
 msgid "部门 ID {} 在当前租户中不存在"
 msgstr "Department ID {} does not exist in the current tenant"
 
-#: bkuser/apis/web/organization/serializers/users.py:101
+#: bkuser/apis/web/organization/serializers/users.py:102
 msgid "部门不存在"
 msgstr "The department does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:131
-#: bkuser/apis/web/organization/serializers/users.py:577
+#: bkuser/apis/web/organization/serializers/users.py:132
+#: bkuser/apis/web/organization/serializers/users.py:595
 #: bkuser/apis/web/virtual_user/serializers.py:51
 msgid "用户名 {} 已存在"
 msgstr "Username {} already exists"
 
-#: bkuser/apis/web/organization/serializers/users.py:143
+#: bkuser/apis/web/organization/serializers/users.py:144
 msgid "指定的直属上级 {} 不存在"
 msgstr "The specified direct leader {} does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:186
+#: bkuser/apis/web/organization/serializers/users.py:187
 msgid "指定的部门 {} 不存在"
 msgstr "The specified department {} does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:336
+#: bkuser/apis/web/organization/serializers/users.py:354
 msgid "不能设置自己为自己的直接上级"
 msgstr "Unable to set yourself as your direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:351
-#: bkuser/apis/web/organization/serializers/users.py:366
+#: bkuser/apis/web/organization/serializers/users.py:369
+#: bkuser/apis/web/organization/serializers/users.py:384
 msgid "账号有效期时间不能早于当前时间"
 msgstr "Account expiration time cannot be earlier than the current time"
 
-#: bkuser/apis/web/organization/serializers/users.py:478
+#: bkuser/apis/web/organization/serializers/users.py:496
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr ""
 "On line {}, the format of user information is incorrect, expected {} fields, "
 "but got {} fields"
 
-#: bkuser/apis/web/organization/serializers/users.py:491
+#: bkuser/apis/web/organization/serializers/users.py:509
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "On line {}, the format of the phone number {} is incorrect"
 
-#: bkuser/apis/web/organization/serializers/users.py:533
+#: bkuser/apis/web/organization/serializers/users.py:551
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "Username: {} custom field {} value {} cannot be converted to a number"
 
-#: bkuser/apis/web/organization/serializers/users.py:541
-#: bkuser/apis/web/organization/serializers/users.py:554
+#: bkuser/apis/web/organization/serializers/users.py:559
+#: bkuser/apis/web/organization/serializers/users.py:572
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "Username: {} custom field {} value {} is not in the options {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:572
+#: bkuser/apis/web/organization/serializers/users.py:590
 msgid "用户名 {} 重复"
 msgstr "Username {} is duplicated"
 
-#: bkuser/apis/web/organization/serializers/users.py:684
+#: bkuser/apis/web/organization/serializers/users.py:702
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "Unable to set user {} as their direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:695
+#: bkuser/apis/web/organization/serializers/users.py:713
 msgid "一次只能批量更新一个自定义字段"
 msgstr "Only one custom field can be updated in a batch update"
 
-#: bkuser/apis/web/organization/serializers/users.py:703
+#: bkuser/apis/web/organization/serializers/users.py:721
 msgid "请提供自定义字段 {} 的值"
 msgstr "Please provide the value of the custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:711
+#: bkuser/apis/web/organization/serializers/users.py:729
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "The current tenant has no admin editable custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:715
+#: bkuser/apis/web/organization/serializers/users.py:733
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr ""
 "Cannot modify custom field {} that is set to be unique in batch operations"
@@ -679,19 +679,19 @@ msgstr ""
 msgid "密码不符合密码规则：{}"
 msgstr "Password does not meet password rules: {}"
 
-#: bkuser/apis/web/platform_management/views.py:203
+#: bkuser/apis/web/platform_management/views.py:209
 msgid "管理员账密登录"
 msgstr "Admin account password login"
 
-#: bkuser/apis/web/platform_management/views.py:262
+#: bkuser/apis/web/platform_management/views.py:268
 msgid "默认租户不能删除"
 msgstr "Default tenant cannot be deleted"
 
-#: bkuser/apis/web/platform_management/views.py:265
+#: bkuser/apis/web/platform_management/views.py:271
 msgid "需要先停用租户才能删除"
 msgstr "The tenant needs to be disabled before it can be deleted"
 
-#: bkuser/apis/web/platform_management/views.py:311
+#: bkuser/apis/web/platform_management/views.py:317
 msgid "默认租户不能停用"
 msgstr "Default tenant cannot be deactivated"
 
@@ -707,116 +707,118 @@ msgstr ""
 "There is no real-name administrator, so built-in administrator account login "
 "cannot be disabled"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:37
+#: bkuser/apis/web/tenant_setting/serializers.py:43
 msgid "需要提供至少一个枚举选项"
 msgstr "At least one enum option must be provided"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:42
+#: bkuser/apis/web/tenant_setting/serializers.py:48
 msgid "枚举选项不合法：{}"
 msgstr "Enum option is invalid: {}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:47
+#: bkuser/apis/web/tenant_setting/serializers.py:53
 msgid "存在重复枚举 ID：{}"
 msgstr "Duplicate enum ID exists: {}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:52
+#: bkuser/apis/web/tenant_setting/serializers.py:58
 msgid "存在重复枚举值：{}"
 msgstr "Duplicate enum value exists: {}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:58
+#: bkuser/apis/web/tenant_setting/serializers.py:64
 msgid "枚举默认值 {} 需要是可选值 {} 之一"
 msgstr "Enum default value {} needs to be one of the optional values {}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:64
+#: bkuser/apis/web/tenant_setting/serializers.py:70
 msgid "多选枚举类型自定义字段 默认值 必须是 列表类型"
 msgstr ""
 "The default value for multiple-choice enum custom fields must be of list type"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:67
+#: bkuser/apis/web/tenant_setting/serializers.py:73
 msgid "多选枚举默认值 {} 不是可选值 {} 的子集"
 msgstr ""
 "The multiple-choice enum default value {} must not be a subset of the "
 "optional values {}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:123
+#: bkuser/apis/web/tenant_setting/serializers.py:129
 msgid "字段名称 {} 已存在"
 msgstr "Field name {} already exists"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:126
+#: bkuser/apis/web/tenant_setting/serializers.py:132
 msgid "字段名称 {} 与内置字段冲突"
 msgstr "Field name {} conflicts with built-in fields"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:132
+#: bkuser/apis/web/tenant_setting/serializers.py:138
 msgid "英文标识 {} 已存在"
 msgstr "English ID {} already exists"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:135
+#: bkuser/apis/web/tenant_setting/serializers.py:141
 msgid "英文标识 {} 与内置字段冲突"
 msgstr "English ID {} conflicts with built-in fields"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:145
+#: bkuser/apis/web/tenant_setting/serializers.py:151
 msgid "枚举类型字段不支持设置唯一性"
 msgstr "Enum type fields do not support setting uniqueness"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:162
+#: bkuser/apis/web/tenant_setting/serializers.py:168
 msgid "设置为在个人中心可编辑的字段必须也设置可见"
 msgstr ""
 "Fields set to be editable in personal center must also be set to be visible"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:170
+#: bkuser/apis/web/tenant_setting/serializers.py:176
 msgid ""
 "字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"
 msgstr ""
 "Field migration mapping must be of dictionary type, format: {deleted enum "
 "ID: target value enum ID}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:174
+#: bkuser/apis/web/tenant_setting/serializers.py:180
 msgid "枚举选项没有修改，无需配置字段迁移映射"
 msgstr ""
 "Enum options have not been modified, no need to configure field migration "
 "mapping"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:179
+#: bkuser/apis/web/tenant_setting/serializers.py:185
 msgid "被删除的枚举项 {} 均需要配置字段迁移映射"
 msgstr ""
 "All deleted enumeration items {} need to be configured with field migration "
 "mapping"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:183
+#: bkuser/apis/web/tenant_setting/serializers.py:189
 msgid "字段迁移映射的目标值 {} 不在新的枚举选项中"
 msgstr ""
 "The target value {} of the field migration mapping is not in the new enum "
 "options"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:200
+#: bkuser/apis/web/tenant_setting/serializers.py:206
 msgid "展示用名称 {} 已存在"
 msgstr "Display name {} already exists"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:203
+#: bkuser/apis/web/tenant_setting/serializers.py:209
 msgid "展示用名称 {} 与内置字段冲突"
 msgstr "Display name {} conflicts with built-in fields"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:233
+#: bkuser/apis/web/tenant_setting/serializers.py:239
 msgid "枚举选项 ID 必须是数字，值 {} 不合法"
 msgstr "Enum option ID must be a number, value {} is invalid"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:275
+#: bkuser/apis/web/tenant_setting/serializers.py:282
 msgid "表达式中至少需要填入一个字段"
 msgstr "At least one field needs to be filled in the expression"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:278
+#: bkuser/apis/web/tenant_setting/serializers.py:285
 msgid "表达式中字段个数不能超过 3 个"
 msgstr "The number of fields in the expression cannot exceed 3"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:281
+#: bkuser/apis/web/tenant_setting/serializers.py:288
 msgid "表达式中字段不能重复"
 msgstr "Fields in the expression cannot be repeated"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:286
+#: bkuser/apis/web/tenant_setting/serializers.py:293
 msgid "表达式中非字段部分的字符数不能超过 16 个"
-msgstr "The number of characters in the non-field part of the expression cannot exceed 16"
+msgstr ""
+"The number of characters in the non-field part of the expression cannot "
+"exceed 16"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:309
+#: bkuser/apis/web/tenant_setting/serializers.py:318
 msgid "表达式中存在无效字段: {}"
 msgstr "There are invalid fields in the expression: {}"
 
@@ -1032,11 +1034,11 @@ msgstr "Modify virtual user"
 msgid "删除虚拟用户"
 msgstr "Delete virtual user"
 
-#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:179
+#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:187
 msgid "直接"
 msgstr "Direct"
 
-#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:180
+#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:188
 msgid "表达式"
 msgstr "Expression"
 
@@ -1060,8 +1062,8 @@ msgstr "Enterprise"
 msgid "社交"
 msgstr "Social"
 
-#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:147
-#: bkuser/apps/tenant/constants.py:154 bkuser/apps/tenant/constants.py:162
+#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:155
+#: bkuser/apps/tenant/constants.py:162 bkuser/apps/tenant/constants.py:170
 msgid "启用"
 msgstr "Enabled"
 
@@ -1289,36 +1291,40 @@ msgstr "Email Notification"
 msgid "短信通知"
 msgstr "SMS Notification"
 
-#: bkuser/apps/tenant/constants.py:148 bkuser/apps/tenant/constants.py:155
-#: bkuser/apps/tenant/constants.py:163
+#: bkuser/apps/tenant/constants.py:149
+msgid "租户用户 ID"
+msgstr "Tenant user ID"
+
+#: bkuser/apps/tenant/constants.py:156 bkuser/apps/tenant/constants.py:163
+#: bkuser/apps/tenant/constants.py:171
 msgid "禁用"
 msgstr "Disabled"
 
-#: bkuser/apps/tenant/constants.py:156
+#: bkuser/apps/tenant/constants.py:164
 msgid "已过期"
 msgstr "Expired"
 
-#: bkuser/apps/tenant/constants.py:165
+#: bkuser/apps/tenant/constants.py:173
 msgid "未确认"
 msgstr "Unconfirmed"
 
-#: bkuser/apps/tenant/constants.py:171
+#: bkuser/apps/tenant/constants.py:179
 msgid "全部"
 msgstr "All"
 
-#: bkuser/apps/tenant/constants.py:186
+#: bkuser/apps/tenant/constants.py:194
 msgid "nanoid"
 msgstr "nanoid"
 
-#: bkuser/apps/tenant/constants.py:187
+#: bkuser/apps/tenant/constants.py:195
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:188
+#: bkuser/apps/tenant/constants.py:196
 msgid "用户名"
 msgstr "Username"
 
-#: bkuser/apps/tenant/constants.py:189
+#: bkuser/apps/tenant/constants.py:197
 msgid "用户名@域名"
 msgstr "Username@Domain"
 
