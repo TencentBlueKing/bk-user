@@ -82,8 +82,8 @@ class TenantUserHandler:
 
         fields = config.fields
         field_value_map = {}
+        # 处理内置字段
         for field in fields["builtin"]:
-            # 由于租户用户的电子邮箱与手机号、手机国际区号分为用户自定义与继承自数据源两种情况，故需要分别考虑
             if field in tenant_user_contact_info:
                 field_value_map[field] = tenant_user_contact_info[field]
             else:
