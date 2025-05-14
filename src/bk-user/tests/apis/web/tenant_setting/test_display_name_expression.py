@@ -33,8 +33,8 @@ class TestTenantUserDisplayNameConfigRetrieveUpdateApi:
     def test_update_display_name_config(self, api_client, random_tenant):
         config = TenantUserDisplayNameExpressionConfig.objects.get(tenant=random_tenant)
         assert config.expression == "{username}({full_name})"
-        assert config.builtin_fields == ["username", "full_name"]
-        assert config.custom_fields == []
+        assert set(config.fields["builtin"]) == {"username", "full_name"}
+        assert set(config.fields["custom"]) == set()
 
         resp = api_client.put(
             reverse("tenant_user_display_name_expression_config.retrieve_update"),
@@ -44,8 +44,8 @@ class TestTenantUserDisplayNameConfigRetrieveUpdateApi:
 
         config.refresh_from_db()
         assert config.expression == "{username}-{full_name}-{test_num}"
-        assert set(config.builtin_fields) == {"username", "full_name"}
-        assert set(config.custom_fields) == {"test_num"}
+        assert set(config.fields["builtin"]) == {"username", "full_name"}
+        assert set(config.fields["custom"]) == {"test_num"}
         assert config.version == 2
 
     def test_update_display_name_config_without_field(self, api_client):
@@ -90,7 +90,7 @@ class TestTenantUserDisplayNameConfigUpdatePreviewApi:
     def test_with_builtin_fields(self, api_client, random_tenant):
         # 由于租户用户顺序不固定，所以需要提前获取
         tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
-        resp = api_client.put(
+        resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.update_preview"),
             data={"expression": "{username}({full_name})"},
         )
@@ -101,8 +101,8 @@ class TestTenantUserDisplayNameConfigUpdatePreviewApi:
         }
 
     def test_with_custom_fields(self, api_client, random_tenant):
-        tenant_users = TenantUser.objects.filter(tenant=random_tenant).select_related("data_source_user")
-        resp = api_client.put(
+        tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
+        resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.update_preview"),
             data={"expression": "{username}({test_num})({test_str})"},
         )

@@ -232,17 +232,14 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
         config = get_object_or_404(TenantUserDisplayNameExpressionConfig, tenant_id=tenant_id)
 
         config.expression = data["expression"]
-        config.builtin_fields = data["builtin_fields"]
-        config.custom_fields = data["custom_fields"]
+        config.fields = data["fields"]
         config.version += 1
         config.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
-    ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.UpdateAPIView
-):
+class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(CurrentUserTenantMixin, generics.CreateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
@@ -253,7 +250,7 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
             status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(many=True),
         },
     )
-    def put(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
         slz = TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(
             data=request.data, context={"tenant_id": tenant_id}
@@ -264,9 +261,7 @@ class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(
         # 取前三个租户用户进行预览
         tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)[:3]
 
-        config = TenantUserDisplayNameExpressionConfig(
-            expression=data["expression"], builtin_fields=data["builtin_fields"], custom_fields=data["custom_fields"]
-        )
+        config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=data["fields"])
 
         user_display_names = [
             {"display_name": TenantUserHandler.render_display_name(user, config)} for user in tenant_users

@@ -26,8 +26,8 @@ from django.db.models import Q
 from pydantic import BaseModel
 
 from bkuser.apps.tenant.constants import (
-    DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
+    DisplayNameExpressionExtraField,
 )
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 
@@ -69,30 +69,35 @@ class TenantUserHandler:
     @staticmethod
     def render_display_name(user: TenantUser, config: TenantUserDisplayNameExpressionConfig) -> str:
         """渲染用户展示名"""
+
+        def _get_extra_field_value(field: str) -> str:
+            # 由于展示名表达式中可能包含额外字段，故需要单独处理
+            return user.id if field == DisplayNameExpressionExtraField.TENANT_USER_ID else "-"
+
         tenant_user_contact_info = {
             "email": user.email,
             "phone": user.phone_info[0],
             "phone_country_code": user.phone_info[1],
         }
 
-        # 额外的内置字段，目前支持租户用户 ID (tenant_user_id)
-        additional_builtin_field_info = {"tenant_user_id": user.id}
-
+        fields = config.fields
         field_value_map = {}
-        # 处理内置字段
-        for field in config.builtin_fields:
+        for field in fields["builtin"]:
+            # 由于租户用户的电子邮箱与手机号、手机国际区号分为用户自定义与继承自数据源两种情况，故需要分别考虑
             if field in tenant_user_contact_info:
                 field_value_map[field] = tenant_user_contact_info[field]
-            elif field in DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS:
-                field_value_map[field] = additional_builtin_field_info[field]
-            # TODO：后续加入对用户组织的支持
             else:
                 field_value_map[field] = getattr(user.data_source_user, field)
 
         # 处理自定义字段，需要将值转换为字符串，否则无法执行正则表达式替换操作
         field_value_map.update(
-            {field: str(user.data_source_user.extras.get(field, "-")) for field in config.custom_fields}
+            {field: str(user.data_source_user.extras.get(field, "-")) for field in fields["custom"]}
         )
+
+        # 处理额外字段
+        for field in fields["extra"]:
+            field_info = _get_extra_field_value(field)
+            field_value_map[field] = str(field_info) if field_info else "-"
 
         # 使用正则表达式 sub 替换方法，将表达式中的字段替换为 field_value_map 对应的值
         return DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub(
@@ -142,23 +147,23 @@ class TenantUserHandler:
                 | Q(**{inherit_flag: True, f"data_source_user__{field}__icontains": keyword})
             )
 
-        def _convert_additional_builtin_field_to_query(field: str) -> Q:
-            # 由于租户用户的展示名表达式中可能包含额外的内置字段，故需要单独处理
-            return Q(id__icontains=keyword) if field == "tenant_user_id" else Q()
+        def _convert_extra_field_to_query(field: str) -> Q:
+            # 由于展示名表达式中可能包含额外字段，故需要单独处理
+            return Q(id__icontains=keyword) if field == DisplayNameExpressionExtraField.TENANT_USER_ID else Q()
 
+        fields = config.fields
+        queries = []
         # 处理内置字段
-        builtin_queries = []
-        for field in config.builtin_fields:
+        for field in fields["builtin"]:
             if field in inherit_flag_mapping:
-                builtin_queries.append(_convert_contact_field_to_query(field))
-            elif field in DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS:
-                builtin_queries.append(_convert_additional_builtin_field_to_query(field))
+                queries.append(_convert_contact_field_to_query(field))
             else:
-                builtin_queries.append(Q(**{f"data_source_user__{field}__icontains": keyword}))
+                queries.append(Q(**{f"data_source_user__{field}__icontains": keyword}))
 
         # 处理自定义字段
-        custom_queries = [
-            Q(**{f"data_source_user__extras__{field}__icontains": keyword}) for field in config.custom_fields
-        ]
+        queries.extend([Q(**{f"data_source_user__extras__{field}__icontains": keyword}) for field in fields["custom"]])
 
-        return reduce(operator.or_, builtin_queries + custom_queries)
+        # 处理额外字段
+        queries.extend([_convert_extra_field_to_query(field) for field in fields["extra"]])
+
+        return reduce(operator.or_, queries)

@@ -52,8 +52,11 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     TenantUserDisplayNameExpressionConfig.objects.get_or_create(
         tenant=tenant,
         expression="{username}({full_name})",
-        builtin_fields=["username", "full_name"],
-        custom_fields=[],
+        fields={
+            "builtin": ["username", "full_name"],
+            "custom": [],
+            "extra": [],
+        },
         version=1,
     )
 

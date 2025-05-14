@@ -121,8 +121,7 @@ def auth_user() -> User:
 def display_name_expression_config_with_contact_field(random_tenant) -> TenantUserDisplayNameExpressionConfig:
     return TenantUserDisplayNameExpressionConfig(
         tenant_id=random_tenant.id,
-        builtin_fields=["phone", "phone_country_code", "email"],
-        custom_fields=[],
+        fields={"builtin": ["phone", "phone_country_code", "email"], "custom": [], "extra": []},
         expression="{phone_country_code}-{phone}--{email}",
     )
 
@@ -131,8 +130,7 @@ def display_name_expression_config_with_contact_field(random_tenant) -> TenantUs
 def display_name_expression_config_with_custom_field(random_tenant) -> TenantUserDisplayNameExpressionConfig:
     return TenantUserDisplayNameExpressionConfig(
         tenant_id=random_tenant.id,
-        builtin_fields=[],
-        custom_fields=["test_num", "test_str", "test_enum"],
+        fields={"builtin": [], "custom": ["test_num", "test_str", "test_enum"], "extra": []},
         expression="{test_num}-{test_str}--{test_enum}",
     )
 
@@ -141,8 +139,11 @@ def display_name_expression_config_with_custom_field(random_tenant) -> TenantUse
 def display_name_expression_config_with_tenant_user_id(random_tenant) -> TenantUserDisplayNameExpressionConfig:
     return TenantUserDisplayNameExpressionConfig(
         tenant_id=random_tenant.id,
-        builtin_fields=["tenant_user_id"],
-        custom_fields=[],
+        fields={
+            "builtin": [],
+            "custom": [],
+            "extra": ["tenant_user_id"],
+        },
         expression="{tenant_user_id}",
     )
 

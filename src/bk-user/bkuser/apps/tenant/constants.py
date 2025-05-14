@@ -135,16 +135,18 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
 
 DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG = {
     "expression": "{username}({full_name})",
-    "builtin_fields": ["username", "full_name"],
-    "custom_fields": [],
+    "fields": {"builtin": ["username", "full_name"], "custom": [], "extra": []},
     "version": 1,
 }
 
 # 租户用户展示名表达式匹配模式为：`{}` 中至少包含一个由字母、数字或下划线组成的字段名
 DISPLAY_NAME_EXPRESSION_FIELD_PATTERN = re.compile(r"\{(\w+)}")
 
-# DisplayName 表达式中额外的内置字段
-DISPLAY_NAME_EXPRESSION_ADDITIONAL_BUILTIN_FIELDS = {"tenant_user_id"}
+
+class DisplayNameExpressionExtraField(StrStructuredEnum):
+    """租户用户展示名表达式中额外允许的字段名"""
+
+    TENANT_USER_ID = EnumField("tenant_user_id", label=_("租户用户 ID"))
 
 
 class TenantStatus(StrStructuredEnum):
