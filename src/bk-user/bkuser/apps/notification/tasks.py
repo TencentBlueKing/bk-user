@@ -23,6 +23,7 @@ from django.db.models import Q
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
+from bkuser.apps.notification.helpers import get_tenant_user_contact_info
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
@@ -77,13 +78,7 @@ def notify_password_expiring_users(data_source_id: int):
     logger.info(
         "data source %s send password expiring notification to %d users...", data_source_id, tenant_users.count()
     )
-    contact_infos = {
-        user.id: {
-            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
-            "email": user.email,
-        }
-        for user in tenant_users
-    }
+    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(
         tenant_users, contact_infos
     )
@@ -124,13 +119,7 @@ def notify_password_expired_users(data_source_id: int):
     logger.info(
         "data source %s send password expired notification to %d users...", data_source_id, tenant_users.count()
     )
-    contact_infos = {
-        user.id: {
-            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
-            "email": user.email,
-        }
-        for user in tenant_users
-    }
+    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(
         tenant_users, contact_infos
     )
@@ -179,13 +168,7 @@ def notify_expiring_tenant_users(tenant_id: str):
         return
 
     logger.info("tenant %s send expiring notification to %d users...", tenant_id, tenant_users.count())
-    contact_infos = {
-        user.id: {
-            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
-            "email": user.email,
-        }
-        for user in tenant_users
-    }
+    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
 
     TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRING, tenant_id=tenant_id).batch_send(
         tenant_users, contact_infos
@@ -224,13 +207,7 @@ def notify_expired_tenant_users(tenant_id: str):
 
     logger.info("tenant %s send expired notification to %d users...", tenant_id, tenant_users.count())
 
-    contact_infos = {
-        user.id: {
-            "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
-            "email": user.email,
-        }
-        for user in tenant_users
-    }
+    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRED, tenant_id=tenant_id).batch_send(
         tenant_users, contact_infos
     )
