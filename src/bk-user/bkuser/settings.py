@@ -632,7 +632,7 @@ ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
 ENABLE_CREATE_TENANT = ENABLE_MUTIL_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
-# 是否开启 BK-CMSI 网关
+# 是否单独部署 bk-cmsi 网关
 HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
 
 # logo 文件大小限制，单位为：KB
