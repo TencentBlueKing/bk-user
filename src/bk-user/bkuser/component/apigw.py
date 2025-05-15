@@ -33,7 +33,6 @@ def _call_apigw_api(http_func, apigw_name, url_path, **kwargs):
         kwargs["headers"] = {}
 
     # 应用认证&用户认证Header
-    # Note: 特殊逻辑，如果参数有bk_token，则使用，没有则使用bk_username认证
     bk_token = (
         kwargs.get("params", {}).get("bk_token")
         or kwargs.get("data", {}).get("bk_token")

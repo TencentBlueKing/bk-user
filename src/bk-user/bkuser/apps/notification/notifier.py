@@ -267,7 +267,7 @@ class TenantUserNotifier:
         """
         self.scene = scene
         self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
-        self.client = get_notification_client()
+        self.sender = NotificationSender()
 
     def batch_send(
         self, users: List[TenantUser], contact_infos: Dict[str, Dict[str, str | Dict[str, str]]], **kwargs
@@ -288,11 +288,7 @@ class TenantUserNotifier:
     def send(self, user: TenantUser, contact_info: Dict[str, str | Dict[str, str]], **scene_kwargs) -> None:
         for tmpl in self.templates:
             content = self._render_tmpl(user, tmpl.content, **scene_kwargs)
-            if tmpl.method == NotificationMethod.EMAIL:
-                self.client.send_mail(user.id, contact_info["email"], tmpl.sender, tmpl.title, content)  # type: ignore
-
-            elif tmpl.method == NotificationMethod.SMS:
-                self.client.send_sms(user.id, contact_info["phone_info"], content)  # type: ignore
+            self.sender.send(tmpl.method, contact_info, tmpl.title, content, tmpl.sender)
 
             logger.info("send %s to user %s, scene %s", tmpl.method.value, user.id, self.scene)
 
@@ -311,3 +307,21 @@ class TenantUserNotifier:
     def _render_tmpl(self, user: TenantUser, tmpl_content: str, **scene_kwargs) -> str:
         ctx = TmplContextGenerator(user=user, scene=self.scene, **scene_kwargs).gen()
         return Template(tmpl_content).render(Context(ctx))
+
+
+class NotificationSender:
+    """统一的消息发送器"""
+
+    def __init__(self):
+        self.client = get_notification_client()
+
+    def send(
+        self, method: str, contact_info: Dict[str, str | Dict[str, str]], title: str | None, content: str, sender: str
+    ):
+        """单条消息发送"""
+        if method == NotificationMethod.EMAIL:
+            self.client.send_mail(contact_info["email"], sender, title, content)  # type: ignore
+        elif method == NotificationMethod.SMS:
+            self.client.send_sms(contact_info["phone_info"], content)  # type: ignore
+        else:
+            raise ValueError(f"Unsupported notification method: {method}")

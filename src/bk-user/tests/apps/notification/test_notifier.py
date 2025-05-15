@@ -86,6 +86,20 @@ class TestTenantUserNotifier:
                 tenant_users, contact_infos, user_passwd_map={u.data_source_user_id: "123456" for u in tenant_users}
             )
 
+        with override_settings(HAS_BK_CMSI_APIGW=True):
+            notifier = TenantUserNotifier(scene=NotificationScene.USER_INITIALIZE, data_source_id=data_source.id)
+            tenant_users = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id)
+            contact_infos = {
+                user.id: {
+                    "phone_info": {"phone": user.phone_info[0], "phone_country_code": user.phone_info[1]},
+                    "email": user.email,
+                }
+                for user in tenant_users
+            }
+            notifier.batch_send(
+                tenant_users, contact_infos, user_passwd_map={u.data_source_user_id: "123456" for u in tenant_users}
+            )
+
     @mock.patch("bkuser.component.clients.BkEsbCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.clients.BkEsbCmsiClient.send_sms", return_value=None)
     def test_send_with_esb(self, mocked_send_sms, mocked_send_mail, data_source):
@@ -97,6 +111,11 @@ class TestTenantUserNotifier:
     @mock.patch("bkuser.component.clients.BkApigwCmsiClient.send_sms", return_value=None)
     def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
         with override_settings(ENABLE_MUTIL_TENANT_MODE=True):
+            notifier = TenantUserNotifier(scene=NotificationScene.MANAGER_RESET_PASSWORD)
+            tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
+            notifier.send(tenant_user, {"email": tenant_user.email}, passwd="123456")
+
+        with override_settings(HAS_BK_CMSI_APIGW=True):
             notifier = TenantUserNotifier(scene=NotificationScene.MANAGER_RESET_PASSWORD)
             tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
             notifier.send(tenant_user, {"email": tenant_user.email}, passwd="123456")
