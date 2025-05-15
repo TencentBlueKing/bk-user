@@ -78,6 +78,7 @@ def notify_password_expiring_users(data_source_id: int):
     logger.info(
         "data source %s send password expiring notification to %d users...", data_source_id, tenant_users.count()
     )
+
     contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(
         tenant_users, contact_infos
@@ -119,6 +120,7 @@ def notify_password_expired_users(data_source_id: int):
     logger.info(
         "data source %s send password expired notification to %d users...", data_source_id, tenant_users.count()
     )
+
     contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(
         tenant_users, contact_infos
@@ -168,8 +170,8 @@ def notify_expiring_tenant_users(tenant_id: str):
         return
 
     logger.info("tenant %s send expiring notification to %d users...", tenant_id, tenant_users.count())
-    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
 
+    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(NotificationScene.TENANT_USER_EXPIRING, tenant_id=tenant_id).batch_send(
         tenant_users, contact_infos
     )

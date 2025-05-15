@@ -310,7 +310,7 @@ class TenantUserNotifier:
 
 
 class NotificationSender:
-    """统一的消息发送器"""
+    """消息通知发送器"""
 
     def __init__(self):
         self.client = get_notification_client()
