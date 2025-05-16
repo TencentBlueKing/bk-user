@@ -130,7 +130,7 @@ MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
 MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
 MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
 MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
-MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", True)
+MYSQL_TLS_CHECK_HOSTNAME = env.bool("MYSQL_TLS_CHECK_HOSTNAME", True)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
         "ca": MYSQL_TLS_CERT_CA_FILE,
@@ -305,7 +305,7 @@ REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
 REDIS_TLS_CERT_CA_FILE = env.str("REDIS_TLS_CERT_CA_FILE", "")
 REDIS_TLS_CERT_FILE = env.str("REDIS_TLS_CERT_FILE", "")
 REDIS_TLS_CERT_KEY_FILE = env.str("REDIS_TLS_CERT_KEY_FILE", "")
-REDIS_TLS_CHECK_HOSTNAME = env.str("REDIS_TLS_CHECK_HOSTNAME", True)
+REDIS_TLS_CHECK_HOSTNAME = env.bool("REDIS_TLS_CHECK_HOSTNAME", True)
 # redis sentinel
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
 REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
@@ -394,6 +394,7 @@ if REDIS_USE_SENTINEL:
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl"] = True
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
         CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
         # mTLS
         if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
             CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
@@ -527,6 +528,7 @@ if not CELERY_BROKER_URL:
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CERT_FILE
             # mTLS
             if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
                 CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
