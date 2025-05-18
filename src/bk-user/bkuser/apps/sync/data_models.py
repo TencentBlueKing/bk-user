@@ -14,11 +14,13 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from datetime import time
 
 from django.conf import settings
+from django_celery_beat.models import IntervalSchedule
 from pydantic import BaseModel
 
-from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskTrigger
 
 
 class DataSourceSyncOptions(BaseModel):
@@ -50,5 +52,26 @@ class TenantSyncOptions(BaseModel):
 class DataSourceSyncConfig(BaseModel):
     """数据源同步配置"""
 
-    sync_period: DataSourceSyncPeriod = DataSourceSyncPeriod.PER_1_DAY
+    period_type: DataSourceSyncPeriodType = DataSourceSyncPeriodType.MINUTE
+    period_value: int = 24 * 60
+    exec_time: time | None = None
     sync_timeout: int = settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT
+
+    def get_interval_schedule(self):
+        """根据配置生成 IntervalSchedule"""
+        if self.period_type == DataSourceSyncPeriodType.MINUTE:
+            return IntervalSchedule.objects.get_or_create(
+                every=self.period_value,
+                period=IntervalSchedule.MINUTES,
+            )
+        if self.period_type == DataSourceSyncPeriodType.HOUR:
+            return IntervalSchedule.objects.get_or_create(
+                every=self.period_value,
+                period=IntervalSchedule.HOURS,
+            )
+        if self.period_type == DataSourceSyncPeriodType.DAY:
+            return IntervalSchedule.objects.get_or_create(
+                every=self.period_value,
+                period=IntervalSchedule.DAYS,
+            )
+        raise ValueError(f"Unsupported period_type: {self.period_type}")

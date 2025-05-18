@@ -17,7 +17,7 @@
 
 import re
 
-from blue_krill.data_types.enum import EnumField, IntStructuredEnum, StrStructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAME_REGEX  # noqa: F401
@@ -25,18 +25,12 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
 
 
-class DataSourceSyncPeriod(IntStructuredEnum):
-    """数据源自动同步周期"""
+class DataSourceSyncPeriodType(StrStructuredEnum):
+    """数据源自动同步周期类型（单位）"""
 
-    NEVER = EnumField(0, label=_("从不"))
-    PER_30_MIN = EnumField(30, label=_("每 30 分钟"))
-    PER_1_HOUR = EnumField(60, label=_("每 1 小时"))
-    PER_3_HOUR = EnumField(3 * 60, label=_("每 3 小时"))
-    PER_6_HOUR = EnumField(6 * 60, label=_("每 6 小时"))
-    PER_12_HOUR = EnumField(12 * 60, label=_("每 12 小时"))
-    PER_1_DAY = EnumField(24 * 60, label=_("每 1 天"))
-    PER_7_DAY = EnumField(7 * 24 * 60, label=_("每 7 天"))
-    PER_30_DAY = EnumField(30 * 24 * 60, label=_("每 30 天"))
+    MINUTE = EnumField("minute", label=_("分钟"))
+    HOUR = EnumField("hour", label=_("小时"))
+    DAY = EnumField("day", label=_("天"))
 
 
 class SyncTaskTrigger(StrStructuredEnum):

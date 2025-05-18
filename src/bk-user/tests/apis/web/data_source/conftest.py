@@ -23,7 +23,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp
-from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
@@ -100,7 +100,7 @@ def field_mapping(request) -> List[Dict]:
 @pytest.fixture
 def sync_config() -> Dict[str, Any]:
     """数据源同步配置"""
-    return {"sync_period": 30}
+    return {"period_type": DataSourceSyncPeriodType.MINUTE, "period_value": 30}
 
 
 @pytest.fixture

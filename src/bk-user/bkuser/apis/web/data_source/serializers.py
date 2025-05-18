@@ -28,7 +28,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
-from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
@@ -91,7 +91,11 @@ def _validate_field_mapping_with_tenant_user_fields(
 class DataSourceSyncConfigSLZ(serializers.Serializer):
     """数据源同步配置"""
 
-    sync_period = serializers.ChoiceField(help_text="同步周期", choices=DataSourceSyncPeriod.get_choices())
+    period_type = serializers.ChoiceField(help_text="同步周期类型", choices=DataSourceSyncPeriodType.get_choices())
+    period_value = serializers.IntegerField(help_text="周期数值", min_value=1)
+    exec_time = serializers.TimeField(
+        help_text="按天同步时的执行时间（格式: HH:MM:SS）", required=False, allow_null=True
+    )
     sync_timeout = serializers.IntegerField(
         help_text="同步超时时间（单位：秒，范围：5m-12h）",
         required=False,
@@ -99,6 +103,12 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
         min_value=5 * 60,
         max_value=12 * 60 * 60,
     )
+
+    def validate(self, attrs):
+        if attrs["period_type"] == DataSourceSyncPeriodType.DAY and not attrs.get("exec_time"):
+            raise ValidationError(_("按天同步时必须提供执行时间"))
+
+        return attrs
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):

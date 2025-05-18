@@ -20,12 +20,13 @@ import logging
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from django.utils import timezone
+from django_celery_beat.models import PeriodicTask
 from pydantic import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.constants import DataSourceSyncPeriod
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
@@ -108,32 +109,48 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         logger.exception("data source %s sync_config invalid, skip set sync periodic task", data_source.id)
         return
 
-    # sync_period 为 Never 时，表示当前数据源数据不会定时同步，只能通过手动同步
-    if cfg.sync_period == DataSourceSyncPeriod.NEVER:
-        logger.info(
-            "data source %s has sync_period -> never (0). Any existing periodic tasks will be removed.",
-            data_source.id,
-        )
-        PeriodicTask.objects.filter(name=periodic_task_name).delete()
-        return
+    create_or_update_periodic_task(data_source, cfg, periodic_task_name)
 
-    interval_schedule, _ = IntervalSchedule.objects.get_or_create(
-        every=cfg.sync_period,
-        period=IntervalSchedule.MINUTES,
-    )
-    periodic_task, task_created = PeriodicTask.objects.get_or_create(
+
+def create_or_update_periodic_task(data_source, cfg, periodic_task_name):
+    """创建或更新定时任务"""
+    interval_schedule, _ = cfg.get_interval_schedule()
+    now = timezone.now()
+
+    # 处理按天同步的首次运行时间
+    first_run_time = None
+    if cfg.period_type == DataSourceSyncPeriodType.DAY and cfg.exec_time:
+        first_run_time = now.replace(
+            hour=cfg.exec_time.hour,
+            minute=cfg.exec_time.minute,
+            second=cfg.exec_time.second,
+            microsecond=0,
+        )
+        if first_run_time < now:
+            first_run_time += timezone.timedelta(days=cfg.period_value)
+
+    periodic_task, task_created = PeriodicTask.objects.update_or_create(
         name=periodic_task_name,
         defaults={
             "interval": interval_schedule,
+            "start_time": first_run_time,
             "task": "bkuser.apps.sync.periodic_tasks.build_and_run_data_source_sync_task",
             "kwargs": json.dumps({"data_source_id": data_source.id}),
         },
     )
     if not task_created:
-        logger.info(
-            "update data source %s sync periodic task's period as %s",
-            data_source.id,
-            cfg.sync_period,
-        )
-        periodic_task.interval = interval_schedule
-        periodic_task.save()
+        if periodic_task.start_time:
+            logger.info(
+                "update data source %s sync periodic task's period every %s %s at %s",
+                data_source.id,
+                interval_schedule.every,
+                interval_schedule.period,
+                cfg.exec_time.strftime("%H:%M:%S"),
+            )
+        else:
+            logger.info(
+                "update data source %s sync periodic task's period every %s %s",
+                data_source.id,
+                interval_schedule.every,
+                interval_schedule.period,
+            )

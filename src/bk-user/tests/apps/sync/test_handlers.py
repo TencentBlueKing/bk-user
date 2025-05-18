@@ -17,6 +17,7 @@
 
 import pytest
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType
 from bkuser.apps.sync.handlers import set_data_source_sync_periodic_task
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from django.db.models.signals import post_save
@@ -40,16 +41,41 @@ def test_set_data_source_sync_periodic_task_with_local(bare_local_data_source):
 
 
 @pytest.mark.usefixtures("_enable_signal")
-def test_set_data_source_sync_periodic_task_with_general(bare_general_data_source):
+def test_set_data_source_sync_periodic_task_with_general_by_minute(bare_general_data_source):
     """通用 HTTP 数据源，创建任务并更新，最后删除"""
     task_name = gen_data_source_sync_periodic_task_name(bare_general_data_source.id)
     task = PeriodicTask.objects.get(name=task_name)
     assert task.interval.every == 60  # noqa: PLR2004
 
-    bare_general_data_source.sync_config = {"sync_period": 30}  # noqa: PLR2004
+    bare_general_data_source.sync_config = {"period_type": DataSourceSyncPeriodType.MINUTE, "period_value": 30}  # noqa: PLR2004
     bare_general_data_source.save()
     task = PeriodicTask.objects.get(name=task_name)
     assert task.interval.every == 30  # noqa: PLR2004
+
+    bare_general_data_source.sync_config = {}
+    bare_general_data_source.save()
+    assert not PeriodicTask.objects.filter(name=task_name).exists()
+
+
+@pytest.mark.usefixtures("_enable_signal")
+def test_set_data_source_sync_periodic_task_with_general_by_day(bare_general_data_source):
+    """通用 HTTP 数据源，创建任务并更新，最后删除"""
+    task_name = gen_data_source_sync_periodic_task_name(bare_general_data_source.id)
+    task = PeriodicTask.objects.get(name=task_name)
+    assert task.interval.every == 60  # noqa: PLR2004
+
+    bare_general_data_source.sync_config = {
+        "period_type": DataSourceSyncPeriodType.DAY,
+        "period_value": 30,
+        "exec_time": "12:00:00",
+    }  # noqa: PLR2004
+    bare_general_data_source.save()
+    task = PeriodicTask.objects.get(name=task_name)
+    assert task.interval.every == 30  # noqa: PLR2004
+    assert task.interval.period == "days"
+    assert task.start_time.hour == 12
+    assert task.start_time.minute == 0
+    assert task.start_time.second == 0
 
     bare_general_data_source.sync_config = {}
     bare_general_data_source.save()
