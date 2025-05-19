@@ -108,6 +108,10 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
         if attrs["period_type"] == DataSourceSyncPeriodType.DAY and not attrs.get("exec_time"):
             raise ValidationError(_("按天同步时必须提供执行时间"))
 
+        # 转换 exec_time 为字符串，避免序列化时出现问题
+        if attrs.get("exec_time"):
+            attrs["exec_time"] = attrs["exec_time"].strftime("%H:%M:%S")
+
         return attrs
 
 
