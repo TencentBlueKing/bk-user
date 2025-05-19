@@ -17,7 +17,7 @@
 
 from rest_framework import serializers
 
-from bkuser.apps.tenant.constants import TenantStatus
+from bkuser.apps.tenant.constants import TenantStatus, UserFieldDataType
 
 
 class TenantListOutputSLZ(serializers.Serializer):
@@ -29,3 +29,10 @@ class TenantListOutputSLZ(serializers.Serializer):
 class TenantCommonVariableListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="变量名")
     value = serializers.CharField(help_text="变量值")
+
+
+class TenantUserCustomEnumFieldListOutputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="英文标识")
+    display_name = serializers.CharField(help_text="字段名称")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
+    options = serializers.JSONField(help_text="枚举选项")
