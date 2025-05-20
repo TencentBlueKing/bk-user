@@ -27,13 +27,15 @@ page=1&page_size=5
                 "bk_username": "klzwge6k69ly0rjt",
                 "login_name": "virtual_user_1",
                 "full_name": "虚拟用户1",
-                "display_name": "virtual_user_1(虚拟用户1)"
+                "display_name": "virtual_user_1(虚拟用户1)",
+                "status": "enabled"
              },
              {
                 "bk_username": "soxteugr5ymfi3w1",
                 "login_name": "virtual_user_2",
                 "full_name": "虚拟用户2",
-                "display_name": "virtual_user_2(虚拟用户2)"
+                "display_name": "virtual_user_2(虚拟用户2)",
+                "status": "enabled"
             }
         ]
     }
