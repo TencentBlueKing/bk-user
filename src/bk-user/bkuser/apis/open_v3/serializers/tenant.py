@@ -39,5 +39,7 @@ class TenantUserCustomEnumFieldListInputSLZ(serializers.Serializer):
 class TenantUserCustomEnumFieldListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="字段名称")
-    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
+    data_type = serializers.ChoiceField(
+        help_text="字段类型", choices=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+    )
     options = serializers.JSONField(help_text="枚举选项")
