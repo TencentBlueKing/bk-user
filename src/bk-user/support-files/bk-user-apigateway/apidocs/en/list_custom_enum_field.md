@@ -33,7 +33,7 @@ Query the list of tenant user's custom enum fields
 
 | Name         | Type   | Description                                    |
 |--------------|--------|------------------------------------------------|
-| name         | string | English sign                                   |
+| name         | string | The English sign of the field                  |
 | display_name | string | The name of the field                          |
 | data_type    | string | The type of the field（`enum` and `multi_enum`） |
 | options      | array  | The options of the field                       |
