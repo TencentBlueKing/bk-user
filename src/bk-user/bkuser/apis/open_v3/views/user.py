@@ -35,6 +35,7 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    VirtualUserListOutputSLZ,
     VirtualUserLookupInputSLZ,
     VirtualUserLookupOutputSLZ,
 )
@@ -326,6 +327,31 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询虚拟用户信息",
         query_serializer=VirtualUserLookupInputSLZ(),
         responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询虚拟用户列表
+    """
+
+    serializer_class = VirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(tenant_id=self.tenant_id)
+            .only("id", "status", "data_source_user__username", "data_source_user__full_name")
+            .order_by("id")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_virtual_user",
+        operation_description="查询虚拟用户列表",
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

@@ -101,6 +101,11 @@ urlpatterns = [
                     views.TenantCommonVariableListApi.as_view(),
                     name="open_v3.tenant_common_variable.list",
                 ),
+                path(
+                    "virtual-users/",
+                    views.VirtualUserListApi.as_view(),
+                    name="open_v3.virtual_user.list",
+                ),
             ]
         ),
     ),
