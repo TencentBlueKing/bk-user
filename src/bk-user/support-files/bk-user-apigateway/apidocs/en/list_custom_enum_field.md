@@ -2,6 +2,19 @@
 
 Query the list of tenant user's custom enum fields
 
+### Parameters
+
+| Name  | Type   | Required | Description                                                                       |
+|-------|--------|----------|-----------------------------------------------------------------------------------|
+| names | string | No       | The English identifier of the field, multiple identifiers are separated by commas |
+
+### Request Example
+
+```
+// URL Query Parameters
+names=enum_field,multi_enum_field
+```
+
 ### Response Example for Status Code 200
 
 ```json5
