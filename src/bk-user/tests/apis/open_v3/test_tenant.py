@@ -59,21 +59,3 @@ class TestTenantUserCustomEnumFieldListApi:
             {"id": "golf", "value": "高尔夫"},
             {"id": "cycling", "value": "骑行"},
         ] in [t["options"] for t in resp.data]
-
-    def test_with_name(self, api_client, tenant_user_custom_fields):
-        resp = api_client.get(reverse("open_v3.tenant_user_custom_enum_field.list"), data={"names": "gender"})
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 1
-        assert resp.data[0]["name"] == "gender"
-        assert resp.data[0]["display_name"] == "性别"
-        assert resp.data[0]["data_type"] == UserFieldDataType.ENUM
-        assert resp.data[0]["options"] == [
-            {"id": "male", "value": "男"},
-            {"id": "female", "value": "女"},
-            {"id": "other", "value": "其他"},
-        ]
-
-    def test_with_invalid_name(self, api_client, tenant_user_custom_fields):
-        resp = api_client.get(reverse("open_v3.tenant_user_custom_enum_field.list"), data={"names": "invalid"})
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 0

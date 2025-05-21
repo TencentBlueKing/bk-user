@@ -24,7 +24,6 @@ from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.tenant import (
     TenantCommonVariableListOutputSLZ,
     TenantListOutputSLZ,
-    TenantUserCustomEnumFieldListInputSLZ,
     TenantUserCustomEnumFieldListOutputSLZ,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -79,25 +78,14 @@ class TenantUserCustomEnumFieldListApi(OpenApiCommonMixin, generics.ListAPIView)
     serializer_class = TenantUserCustomEnumFieldListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUserCustomField]:
-        slz = TenantUserCustomEnumFieldListInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        filters = {
-            "tenant_id": self.tenant_id,
-            "data_type__in": [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM],
-        }
-
-        if names := data.get("names"):
-            filters["name__in"] = names
-
-        return TenantUserCustomField.objects.filter(**filters)
+        return TenantUserCustomField.objects.filter(
+            tenant_id=self.tenant_id, data__type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+        )
 
     @swagger_auto_schema(
         tags=["open_v3.tenant"],
         operation_id="list_custom_enum_field",
         operation_description="查询租户用户自定义枚举字段信息",
-        query_serializer=TenantUserCustomEnumFieldListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserCustomEnumFieldListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
