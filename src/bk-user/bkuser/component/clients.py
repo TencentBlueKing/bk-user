@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Dict, List, Protocol
+from typing import Dict, Protocol
 
 from django.conf import settings
 
@@ -112,19 +112,17 @@ class BkApigwCmsiClient:
         :param phone_info: 接收者手机号信息
         :param content: 短信内容
         """
-        # TODO: 拼接手机国际区号与手机号码以向国际手机号发送短信，需待 bk-cmsi 提供支持，目前只能向国内手机号发送短信
         return _call_apigw_api(
             http_post,
             self.APIGW_NAME,
             "/v1/send_sms/",
-            json={"receiver": self._format_phone(phone_info), "content": content},
+            json={"receiver": [self._format_phone(phone_info)], "content": content},
         )
 
-    def _format_phone(self, phone_info: Dict[str, str]) -> List[str]:
+    def _format_phone(self, phone_info: Dict[str, str]) -> str:
         """
         格式化手机号
         :param phone_info: 手机号信息
-        :return: 格式化后的手机号
+        :return: 格式化后的手机号（"+手机区号 手机号"）
         """
-        # TODO : 拼接手机国际区号与手机号码以向国际手机号发送短信，需待 bk-cmsi 提供支持，目前只能向国内手机号发送短信
-        return [phone_info["phone"]]
+        return f"+{phone_info['country_code']} {phone_info['phone']}"
