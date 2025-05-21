@@ -442,7 +442,7 @@ paths:
           description: ''
       x-bk-apigateway-resource:
         isPublic: true
-        allowApplyPermission: true
+        allowApplyPermission: false
         matchSubpath: false
         backend:
           name: default
