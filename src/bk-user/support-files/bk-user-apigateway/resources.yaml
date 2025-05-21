@@ -454,5 +454,5 @@ paths:
         authConfig:
           userVerifiedRequired: false
           appVerifiedRequired: true
-          resourcePermissionRequired: true
+          resourcePermissionRequired: false
         descriptionEn: Query the list of tenant user's custom enum fields

@@ -79,7 +79,7 @@ class TenantUserCustomEnumFieldListApi(OpenApiCommonMixin, generics.ListAPIView)
 
     def get_queryset(self) -> QuerySet[TenantUserCustomField]:
         return TenantUserCustomField.objects.filter(
-            tenant_id=self.tenant_id, data__type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+            tenant_id=self.tenant_id, data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
         )
 
     @swagger_auto_schema(

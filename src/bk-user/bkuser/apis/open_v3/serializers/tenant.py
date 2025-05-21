@@ -31,10 +31,15 @@ class TenantCommonVariableListOutputSLZ(serializers.Serializer):
     value = serializers.CharField(help_text="变量值")
 
 
+class EnumFieldOptionSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="选项 ID")
+    value = serializers.CharField(help_text="选项值")
+
+
 class TenantUserCustomEnumFieldListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="字段名称")
     data_type = serializers.ChoiceField(
         help_text="字段类型", choices=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
     )
-    options = serializers.JSONField(help_text="枚举选项")
+    options = serializers.ListField(help_text="枚举选项", child=EnumFieldOptionSLZ())

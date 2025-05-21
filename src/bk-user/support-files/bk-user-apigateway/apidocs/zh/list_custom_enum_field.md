@@ -33,7 +33,7 @@
 
 | 参数名称         | 参数类型   | 描述                                |
 |--------------|--------|-----------------------------------|
-| name         | string | 字段英文标识                            |
+| name         | string | 字段唯一标识                            |
 | display_name | string | 字段名称                              |
 | data_type    | string | 字段类型（枚举 `enum` 与多枚举 `multi_enum`） |
 | options      | array  | 枚举选项                              |
