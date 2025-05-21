@@ -34,6 +34,7 @@ from .user import (
     TenantUserListApi,
     TenantUserRetrieveApi,
     TenantUserSensitiveInfoListApi,
+    VirtualUserListApi,
     VirtualUserLookupApi,
 )
 
@@ -55,4 +56,5 @@ __all__ = [
     "TenantUserLeaderRelationListApi",
     "VirtualUserLookupApi",
     "TenantCommonVariableListApi",
+    "VirtualUserListApi",
 ]
