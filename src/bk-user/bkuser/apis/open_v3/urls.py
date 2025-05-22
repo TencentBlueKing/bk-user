@@ -106,6 +106,11 @@ urlpatterns = [
                     views.TenantCommonVariableListApi.as_view(),
                     name="open_v3.tenant_common_variable.list",
                 ),
+                path(
+                    "custom-enum-fields/",
+                    views.TenantUserCustomEnumFieldListApi.as_view(),
+                    name="open_v3.tenant_user_custom_enum_field.list",
+                ),
             ]
         ),
     ),
