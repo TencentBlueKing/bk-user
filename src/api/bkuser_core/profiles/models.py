@@ -161,6 +161,11 @@ class Profile(TimestampedModel):
         verbose_name_plural = "用户信息"
         unique_together = ("username", "category_id")
         index_together = ("category_id", "account_expiration_date")
+        indexes = [
+                models.Index(fields=["domain", "email"]),
+                models.Index(fields=["domain", "telephone"]),
+                models.Index(fields=["domain", "username"]),
+            ]
 
     def custom_validate(self):
         validate_domain(self.domain)
