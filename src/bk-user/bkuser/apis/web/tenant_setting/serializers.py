@@ -296,14 +296,9 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
 
     def to_internal_value(self, data: Dict) -> Dict:
         validated_data = super().to_internal_value(data)
-        try:
-            validated_data["fields"] = TenantUserDisplayNameExpressionConfigHandler.parse_display_name_expression(
-                self.context["tenant_id"], validated_data["expression"]
-            )
-        except Exception as e:
-            raise ValidationError(
-                {"expression": _("表达式 {} 不合法: {}").format(validated_data["expression"], str(e))}
-            )
+        validated_data["fields"] = TenantUserDisplayNameExpressionConfigHandler.parse_display_name_expression(
+            self.context["tenant_id"], validated_data["expression"]
+        )
 
         return validated_data
 

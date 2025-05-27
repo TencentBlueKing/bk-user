@@ -33,7 +33,6 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserValidityPeriodConfigOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.data_source.tasks import (
     migrate_user_extras_with_mapping,
     remove_dropped_field_in_data_source_field_mapping,
@@ -281,7 +280,9 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=data["fields"])
 
         if not tenant_users:
-            default_tenant_user = self.get_default_preview_tenant_user(tenant_id)
+            default_tenant_user = TenantUserDisplayNameExpressionConfigHandler.build_default_preview_tenant_user(
+                tenant_id
+            )
             display_name = TenantUserDisplayNameExpressionConfigHandler.render_display_name(
                 default_tenant_user, config
             )
@@ -295,17 +296,3 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         ]
 
         return Response(TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(user_display_names, many=True).data)
-
-    def get_default_preview_tenant_user(self, tenant_id: str) -> TenantUser:
-        return TenantUser(
-            id="517hMkqnSBqF9Mv9",
-            data_source=DataSource(owner_tenant_id=tenant_id),
-            tenant_id=tenant_id,
-            data_source_user=DataSourceUser(
-                username="zhangsan",
-                full_name="张三",
-                phone="13512345671",
-                phone_country_code="86",
-                email="zhangsan@m.com",
-            ),
-        )

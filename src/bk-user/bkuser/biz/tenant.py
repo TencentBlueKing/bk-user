@@ -37,6 +37,8 @@ from bkuser.apps.tenant.constants import (
 from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
+    DataSource,
+    DataSourceUser,
     TenantUser,
     TenantUserCustomField,
     TenantUserDisplayNameExpressionConfig,
@@ -387,3 +389,18 @@ class TenantUserDisplayNameExpressionConfigHandler:
             Q(id__icontains=keyword) if field == DisplayNameExpressionExtraFieldEnum.TENANT_USER_ID else Q()
             for field in extra_fields
         ]
+
+    @staticmethod
+    def build_default_preview_tenant_user(tenant_id: str) -> TenantUser:
+        return TenantUser(
+            id="517hMkqnSBqF9Mv9",
+            data_source=DataSource(owner_tenant_id=tenant_id),
+            tenant_id=tenant_id,
+            data_source_user=DataSourceUser(
+                username="zhangsan",
+                full_name="张三",
+                phone="13512345671",
+                phone_country_code="86",
+                email="zhangsan@m.com",
+            ),
+        )

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-27 11:17+0800\n"
+"POT-Creation-Date: 2025-05-27 11:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -751,10 +751,6 @@ msgstr "表达式中字段不能重复"
 #: bkuser/apis/web/tenant_setting/serializers.py:293
 msgid "表达式中非字段部分的字符数不能超过 16 个"
 msgstr "表达式中非字段部分的字符数不能超过 16 个"
-
-#: bkuser/apis/web/tenant_setting/serializers.py:305
-msgid "表达式 {} 不合法: {}"
-msgstr "表达式 {} 不合法: {}"
 
 #: bkuser/apps/audit/constants.py:25 bkuser/apps/idp/constants.py:40
 msgid "数据源"
@@ -2035,3 +2031,6 @@ msgstr "message"
 #: tests/utils/test_std_error.py:81
 msgid "new message"
 msgstr "new message"
+
+#~ msgid "表达式 {} 不合法: {}"
+#~ msgstr "表达式 {} 不合法: {}"
