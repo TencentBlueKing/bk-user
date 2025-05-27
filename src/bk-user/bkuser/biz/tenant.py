@@ -227,7 +227,7 @@ class TenantUserDisplayNameExpressionConfigHandler:
                     "tenant [%s] display name expression config not found, please contact administrator",
                     owner_tenant_id,
                 )
-                raise ValidationError(_("租户 [%s] 的展示名表达式配置不存在，请联系管理员") % owner_tenant_id)
+                raise ValidationError(_("租户 {} 的展示名表达式配置不存在，请联系管理员").format(owner_tenant_id))
 
             fields = config.fields
             # 由于未来额外字段查询可能涉及到 N + 1 问题，所以需要单独处理
