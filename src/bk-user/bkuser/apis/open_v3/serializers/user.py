@@ -131,3 +131,14 @@ class VirtualUserLookupOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class VirtualUserListOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)

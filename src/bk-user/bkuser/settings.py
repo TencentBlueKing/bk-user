@@ -17,6 +17,7 @@
 
 import hashlib
 import re
+import ssl
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -123,6 +124,28 @@ DATABASES = {
         },
     },
 }
+
+# Database tls
+MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
+MYSQL_TLS_CHECK_HOSTNAME = env.bool("MYSQL_TLS_CHECK_HOSTNAME", True)
+if MYSQL_TLS_ENABLED:
+    default_ssl_options = {
+        "ca": MYSQL_TLS_CERT_CA_FILE,
+        "check_hostname": MYSQL_TLS_CHECK_HOSTNAME,
+    }
+    # mTLS
+    if MYSQL_TLS_CERT_FILE and MYSQL_TLS_CERT_KEY_FILE:
+        default_ssl_options["cert"] = MYSQL_TLS_CERT_FILE
+        default_ssl_options["key"] = MYSQL_TLS_CERT_KEY_FILE
+
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+
+    DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -270,6 +293,113 @@ BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tence
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
 
+# ------------------------------------------ 缓存配置 ------------------------------------------
+
+REDIS_HOST = env.str("REDIS_HOST", "localhost")
+REDIS_PORT = env.int("REDIS_PORT", 6379)
+REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
+REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
+REDIS_DB = env.int("REDIS_DB", 0)
+# redis tls
+REDIS_TLS_ENABLED = env.bool("REDIS_TLS_ENABLED", False)
+REDIS_TLS_CERT_CA_FILE = env.str("REDIS_TLS_CERT_CA_FILE", "")
+REDIS_TLS_CERT_FILE = env.str("REDIS_TLS_CERT_FILE", "")
+REDIS_TLS_CERT_KEY_FILE = env.str("REDIS_TLS_CERT_KEY_FILE", "")
+REDIS_TLS_CHECK_HOSTNAME = env.bool("REDIS_TLS_CHECK_HOSTNAME", True)
+# redis sentinel
+REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
+REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
+REDIS_SENTINEL_PASSWORD = env.str("REDIS_SENTINEL_PASSWORD", "")
+# env[REDIS_SENTINEL_ADDR] format: "host1:port1,host2:port2"
+# REDIS_SENTINEL_ADDR value: ["host1:port1", "host2:port2"]
+REDIS_SENTINEL_ADDR = env.list("REDIS_SENTINEL_ADDR", default=[])
+
+CACHES: Dict[str, Any] = {
+    # 默认缓存是本地内存，使用最近最少使用（LRU）的淘汰策略，使用 pickle 序列化数据
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        # 多个本地内存缓存时才需要设置
+        "LOCATION": "",
+        # 默认过期时间：30 min
+        "TIMEOUT": 60 * 30,
+        # 缓存的 Key 前缀
+        "KEY_PREFIX": "bkuser",
+        # 内存缓存特有参数
+        "OPTIONS": {
+            # 支持缓存的 key 最多数量，越大将会占用更多内存
+            "MAX_ENTRIES": 1000,
+            # 当达到 MAX_ENTRIES 时被淘汰的部分条目，淘汰率是 1 / CULL_FREQUENCY，默认淘汰 1/3 的缓存 key
+            "CULL_FREQUENCY": 3,
+        },
+    },
+    "redis": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        # 若需要支持主从配置，则 LOCATION 为 List[master_url, slave_url]
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+        # 默认过期时间：30 min
+        "TIMEOUT": 60 * 30,
+        # 缓存的 Key 前缀
+        "KEY_PREFIX": "bkuser",
+        # 避免同缓存 Key 在不同 SaaS 版本之间存在差异导致读取的值非期望的
+        "VERSION": 3,
+        "OPTIONS": {
+            # Sentinel 模式 django_redis.client.SentinelClient (django-redis>=5.0.0)
+            # 单实例模式 django_redis.client.DefaultClient
+            # Note: django_redis.client.HerdClient 并不是 RedisCluster 的客户端，
+            #       而是削峰模式，通过分散缓存失效时间来减少同时构建缓存带来的负载峰值
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
+            # socket 建立连接超时设置，单位秒
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            # 连接建立后的读写操作超时设置，单位秒
+            "SOCKET_TIMEOUT": 5,
+            "IGNORE_EXCEPTIONS": False,
+            # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
+            # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
+            # Redis 连接池配置
+            "CONNECTION_POOL_KWARGS": {
+                # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
+                "max_connections": REDIS_MAX_CONNECTIONS
+            },
+        },
+    },
+}
+
+# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
+DJANGO_REDIS_LOGGER = "root"
+
+if REDIS_TLS_ENABLED:
+    CACHES["redis"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
+    # mTLS
+    if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
+
+# redis sentinel
+if REDIS_USE_SENTINEL:
+    # Enable the alternate connection factory.
+    DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
+    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"
+    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"
+    # parse sentinel address from ["host1:port1", "host2:port2"] to [("host1", port1), ("host2", port2)]
+    CACHES["redis"]["OPTIONS"]["SENTINELS"] = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR]
+    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {"password": REDIS_SENTINEL_PASSWORD, "socket_timeout": 5}
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
+    # redis sentinel tls
+    if REDIS_TLS_ENABLED:
+        CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl"] = True
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl"] = True
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+        CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
+        # mTLS
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+            CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
+
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
 # 连接 BROKER 超时时间
@@ -319,92 +449,68 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="0", hour="3"),
     },
 }
-# Celery 消息队列配置
-CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
 
-# ------------------------------------------ 缓存配置 ------------------------------------------
+# 如果传入了 CELERY_BROKER_URL, 需要优先判断
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
+# celery tls
+CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
+CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
+CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
+CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
+# 直接提供 CELERY_BROKER_URL 时，仅支持 Rabbitmq 和 单例 Redis 开启 TLS，Sentinel Redis 暂不支持
+if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
+    ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
+    CELERY_BROKER_USE_SSL = {
+        f"{ssl_key_prefix}cert_reqs": ssl.CERT_REQUIRED,
+        f"{ssl_key_prefix}ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+    }
+    # mTLS
+    if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = CELERY_BROKER_TLS_CERT_FILE
+        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
 
-REDIS_HOST = env.str("REDIS_HOST", "localhost")
-REDIS_PORT = env.int("REDIS_PORT", 6379)
-REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
-REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
-REDIS_DB = env.int("REDIS_DB", 0)
-
-REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
-REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
-REDIS_SENTINEL_PASSWORD = env.str("REDIS_SENTINEL_PASSWORD", "")
-# env[REDIS_SENTINEL_ADDR] format: "host1:port1,host2:port2"
-# REDIS_SENTINEL_ADDR value: ["host1:port1", "host2:port2"]
-REDIS_SENTINEL_ADDR = env.list("REDIS_SENTINEL_ADDR", default=[])
-
-CACHES: Dict[str, Any] = {
-    # 默认缓存是本地内存，使用最近最少使用（LRU）的淘汰策略，使用 pickle 序列化数据
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        # 多个本地内存缓存时才需要设置
-        "LOCATION": "",
-        # 默认过期时间：30 min
-        "TIMEOUT": 60 * 30,
-        # 缓存的 Key 前缀
-        "KEY_PREFIX": "bkuser",
-        # 内存缓存特有参数
-        "OPTIONS": {
-            # 支持缓存的 key 最多数量，越大将会占用更多内存
-            "MAX_ENTRIES": 1000,
-            # 当达到 MAX_ENTRIES 时被淘汰的部分条目，淘汰率是 1 / CULL_FREQUENCY，默认淘汰 1/3 的缓存 key
-            "CULL_FREQUENCY": 3,
-        },
-    },
-    "redis": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        # 若需要支持主从配置，则 LOCATION 为 List[master_url, slave_url]
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
-        # 默认过期时间：30 min
-        "TIMEOUT": 60 * 30,
-        # 缓存的 Key 前缀
-        "KEY_PREFIX": "bkuser",
-        # 避免同缓存 Key 在不同 SaaS 版本之间存在差异导致读取的值非期望的
-        "VERSION": 3,
-        "OPTIONS": {
-            # Sentinel 模式 django_redis.client.SentinelClient (django-redis>=5.0.0)
-            # 集群模式 django_redis.client.HerdClient
-            # 单实例模式 django_redis.client.DefaultClient
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": REDIS_PASSWORD,
-            # socket 建立连接超时设置，单位秒
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            # 连接建立后的读写操作超时设置，单位秒
-            "SOCKET_TIMEOUT": 5,
-            "IGNORE_EXCEPTIONS": False,
-            # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
-            # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
-            # Redis 连接池配置
-            "CONNECTION_POOL_KWARGS": {
-                # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
-                "max_connections": REDIS_MAX_CONNECTIONS
-            },
-        },
-    },
-}
-
-# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
-DJANGO_REDIS_LOGGER = "root"
-
-# redis sentinel
-if REDIS_USE_SENTINEL:
-    # Enable the alternate connection factory.
-    DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
-    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"
-    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"
-    # parse sentinel address from ["host1:port1", "host2:port2"] to [("host1", port1), ("host2", port2)]
-    CACHES["redis"]["OPTIONS"]["SENTINELS"] = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR]
-    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {"password": REDIS_SENTINEL_PASSWORD, "socket_timeout": 5}
-    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
+# rabbitmq as broker
+RABBITMQ_VHOST = env.str("RABBITMQ_VHOST", default="")
+RABBITMQ_PORT = env.str("RABBITMQ_PORT", default="")
+RABBITMQ_HOST = env.str("RABBITMQ_HOST", default="")
+RABBITMQ_USER = env.str("RABBITMQ_USER", default="")
+RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
+# rabbitmq tls
+RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
+RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
+RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
+RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_CERT_KEY_FILE", default="")
+if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
+    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+    if RABBITMQ_TLS_ENABLED:
+        CELERY_BROKER_URL = (
+            f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+        )
+        CELERY_BROKER_USE_SSL = {
+            "ca_certs": RABBITMQ_TLS_CERT_CA_FILE,
+            "cert_reqs": ssl.CERT_REQUIRED,
+        }
+        # mTLS
+        if RABBITMQ_TLS_CERT_FILE and RABBITMQ_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL["certfile"] = RABBITMQ_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["keyfile"] = RABBITMQ_TLS_CERT_KEY_FILE
 
 # default celery broker
 if not CELERY_BROKER_URL:
     # use Redis as the default broker
     CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    if REDIS_TLS_ENABLED:
+        CELERY_BROKER_URL = f"rediss://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        CELERY_BROKER_USE_SSL = {
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
+            "ssl_check_hostname": REDIS_TLS_CHECK_HOSTNAME,
+        }
+        # mTLS
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL["ssl_certfile"] = REDIS_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
+
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
         CELERY_BROKER_URL = ";".join(
@@ -417,6 +523,16 @@ if not CELERY_BROKER_URL:
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
+        if REDIS_TLS_ENABLED:
+            # 用于与 Sentinel 节点之间的TLS通信
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CERT_FILE
+            # mTLS
+            if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+                CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
