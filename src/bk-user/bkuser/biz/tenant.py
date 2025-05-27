@@ -137,7 +137,7 @@ class TenantUserHandler:
 
 class TenantUserDisplayNameExpressionConfigHandler:
     @staticmethod
-    def parse_display_name_expression(tenant_id: str, expression: str) -> dict[str, List[str]]:
+    def parse_display_name_expression(tenant_id: str, expression: str) -> Dict[str, List[str]]:
         fields = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.findall(expression)
 
         # TODO: 后续需要过滤敏感字段，敏感字段不支持展示
@@ -161,7 +161,7 @@ class TenantUserDisplayNameExpressionConfigHandler:
 
         invalid_fields = [f for f in fields if f not in all_fields]
         if invalid_fields:
-            raise ValidationError(_("表达式中存在无效字段: {}").format(", ".join(invalid_fields)))
+            raise ValidationError({"expression": _("表达式中存在无效字段: {}").format(", ".join(invalid_fields))})
 
         # 表达式字段必须存在唯一字段
         has_unique_field = any(
@@ -171,7 +171,7 @@ class TenantUserDisplayNameExpressionConfigHandler:
             for field in fields
         )
         if not has_unique_field:
-            raise ValidationError(_("表达式中必须存在唯一字段"))
+            raise ValidationError({"expression": _("表达式中必须存在唯一字段")})
 
         # 集合运算 & 求交集，比遍历判断更高效
         return {
