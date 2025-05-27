@@ -27,8 +27,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum, \
-    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 logger = logging.getLogger(__name__)
