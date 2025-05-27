@@ -40,7 +40,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
@@ -78,7 +78,7 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
@@ -88,7 +88,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantUserSensitiveInfoListInputSLZ(serializers.Serializer):
@@ -130,4 +130,4 @@ class VirtualUserLookupOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]

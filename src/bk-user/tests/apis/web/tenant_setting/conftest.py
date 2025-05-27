@@ -104,6 +104,7 @@ def _create_custom_fields(random_tenant, full_local_data_source):
             "required": True,
             "default": "test",
             "options": [],
+            "unique": True,
         },
         {
             "tenant": random_tenant,

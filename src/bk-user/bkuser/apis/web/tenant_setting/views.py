@@ -24,14 +24,16 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldCreateInputSLZ,
     TenantUserCustomFieldUpdateInputSLZ,
+    TenantUserDisplayNameExpressionConfigPreviewInputSLZ,
+    TenantUserDisplayNameExpressionConfigPreviewOutputSLZ,
     TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ,
     TenantUserDisplayNameExpressionConfigUpdateInputSLZ,
-    TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ,
-    TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserValidityPeriodConfigInputSLZ,
     TenantUserValidityPeriodConfigOutputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.data_source.tasks import (
     migrate_user_extras_with_mapping,
     remove_dropped_field_in_data_source_field_mapping,
@@ -48,8 +50,11 @@ from bkuser.apps.tenant.models import (
     UserBuiltinField,
 )
 from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaboration_strategy_field_mapping
-from bkuser.biz.auditor import TenantUserValidityPeriodConfigUpdateAuditor
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.auditor import (
+    TenantUserDisplayNameExpressionConfigUpdateAuditor,
+    TenantUserValidityPeriodConfigUpdateAuditor,
+)
+from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -205,19 +210,23 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
+    def get_object(self):
+        queryset = TenantUserDisplayNameExpressionConfig.objects.all()
+        filter_kwargs = {"tenant_id": self.get_current_tenant_id()}
+        return get_object_or_404(queryset, **filter_kwargs)
+
     @swagger_auto_schema(
         tags=["tenant-setting"],
-        operation_description="用户展示名自定义配置",
+        operation_description="用户展示名表达式配置",
         responses={status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        tenant_id = self.get_current_tenant_id()
-        config = get_object_or_404(TenantUserDisplayNameExpressionConfig, tenant_id=tenant_id)
+        config = self.get_object()
         return Response(TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(instance=config).data)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
-        operation_description="更新当前租户的用户展示名自定义配置",
+        operation_description="更新当前租户的用户展示名表达式配置",
         request_body=TenantUserDisplayNameExpressionConfigUpdateInputSLZ(),
         responses={
             status.HTTP_204_NO_CONTENT: "",
@@ -229,44 +238,74 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        config = get_object_or_404(TenantUserDisplayNameExpressionConfig, tenant_id=tenant_id)
+        # 【审计】创建租户用户显示名称表达式配置审计对象并记录变更前的数据
+        auditor = TenantUserDisplayNameExpressionConfigUpdateAuditor(request.user.username, tenant_id)
 
+        config = self.get_object()
+        auditor.pre_record_data_before(config)
+        # 若表达式发生变化，则更新版本号
+        if config.expression != data["expression"]:
+            config.version += 1
         config.expression = data["expression"]
         config.fields = data["fields"]
-        config.version += 1
         config.save()
+
+        # 【审计】记录变更后的数据
+        auditor.record(config)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserDisplayNameExpressionConfigUpdatePreviewApi(CurrentUserTenantMixin, generics.CreateAPIView):
+class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, generics.CreateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="预览用户展示名（根据给定的展示名配置）",
-        request_body=TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(),
+        request_body=TenantUserDisplayNameExpressionConfigPreviewInputSLZ(),
         responses={
-            status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(many=True),
+            status.HTTP_200_OK: TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(many=True),
         },
     )
     def post(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-        slz = TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(
-            data=request.data, context={"tenant_id": tenant_id}
-        )
+        slz = TenantUserDisplayNameExpressionConfigPreviewInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         # 取前三个租户用户进行预览
-        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)[:3]
+        tenant_users = TenantUser.objects.filter(
+            tenant_id=tenant_id, data_source__owner_tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+        ).select_related("data_source_user", "data_source")[:3]
 
         config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=data["fields"])
 
+        if not tenant_users:
+            default_tenant_user = self.get_default_preview_tenant_user(tenant_id)
+            display_name = TenantUserDisplayNameExpressionConfigHandler.render_display_name(
+                default_tenant_user, config
+            )
+            return Response(
+                TenantUserDisplayNameExpressionConfigPreviewOutputSLZ([{"display_name": display_name}], many=True).data
+            )
+
         user_display_names = [
-            {"display_name": TenantUserHandler.render_display_name(user, config)} for user in tenant_users
+            {"display_name": TenantUserDisplayNameExpressionConfigHandler.render_display_name(user, config)}
+            for user in tenant_users
         ]
 
-        return Response(
-            TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(user_display_names, many=True).data
+        return Response(TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(user_display_names, many=True).data)
+
+    def get_default_preview_tenant_user(self, tenant_id: str) -> TenantUser:
+        return TenantUser(
+            id="517hMkqnSBqF9Mv9",
+            data_source=DataSource(owner_tenant_id=tenant_id),
+            tenant_id=tenant_id,
+            data_source_user=DataSourceUser(
+                username="zhangsan",
+                full_name="张三",
+                phone="13512345671",
+                phone_country_code="86",
+                email="zhangsan@m.com",
+            ),
         )

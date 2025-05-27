@@ -38,7 +38,7 @@ urlpatterns = [
     ),
     path(
         "settings/tenant-user-display-name-expression/preview/",
-        views.TenantUserDisplayNameExpressionConfigUpdatePreviewApi.as_view(),
-        name="tenant_user_display_name_expression_config.update_preview",
+        views.TenantUserDisplayNameExpressionConfigPreviewApi.as_view(),
+        name="tenant_user_display_name_expression_config.preview",
     ),
 ]

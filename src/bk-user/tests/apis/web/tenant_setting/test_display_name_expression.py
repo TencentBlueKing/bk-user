@@ -83,15 +83,22 @@ class TestTenantUserDisplayNameConfigRetrieveUpdateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_update_display_name_config_with_not_unique_field(self, api_client):
+        resp = api_client.put(
+            reverse("tenant_user_display_name_expression_config.retrieve_update"),
+            data={"expression": "{phone}-{test_enum}-{test_num}"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
 
 @pytest.mark.usefixtures("_create_custom_fields")
-@pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDisplayNameConfigUpdatePreviewApi:
+class TestTenantUserDisplayNameConfigPreviewApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_builtin_fields(self, api_client, random_tenant):
         # 由于租户用户顺序不固定，所以需要提前获取
         tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
         resp = api_client.post(
-            reverse("tenant_user_display_name_expression_config.update_preview"),
+            reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({full_name})"},
         )
         assert resp.status_code == status.HTTP_200_OK
@@ -100,10 +107,11 @@ class TestTenantUserDisplayNameConfigUpdatePreviewApi:
             f"{t.data_source_user.username}({t.data_source_user.full_name})" for t in tenant_users
         }
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_custom_fields(self, api_client, random_tenant):
         tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
         resp = api_client.post(
-            reverse("tenant_user_display_name_expression_config.update_preview"),
+            reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({test_num})({test_str})"},
         )
         assert resp.status_code == status.HTTP_200_OK
@@ -112,3 +120,12 @@ class TestTenantUserDisplayNameConfigUpdatePreviewApi:
             f"{t.data_source_user.username}({t.data_source_user.phone})({t.data_source_user.username})"
             for t in tenant_users[:3]
         }
+
+    def test_with_not_tenant_user(self, api_client):
+        resp = api_client.post(
+            reverse("tenant_user_display_name_expression_config.preview"),
+            data={"expression": "{username}({full_name})"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["display_name"] == "zhangsan(张三)"

@@ -127,6 +127,17 @@ def display_name_expression_config_with_contact_field(random_tenant) -> TenantUs
 
 
 @pytest.fixture
+def display_name_expression_config_with_collaboration_tenant_user(
+    collaboration_tenant,
+) -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(
+        tenant_id=collaboration_tenant.id,
+        fields={"builtin": ["phone", "username", "email"], "custom": [], "extra": []},
+        expression="{username}-{phone}--{email}---",
+    )
+
+
+@pytest.fixture
 def display_name_expression_config_with_custom_field(random_tenant) -> TenantUserDisplayNameExpressionConfig:
     return TenantUserDisplayNameExpressionConfig(
         tenant_id=random_tenant.id,

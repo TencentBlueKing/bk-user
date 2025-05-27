@@ -46,6 +46,7 @@ from bkuser.biz.senders import (
     ExceedSendRateLimit,
     PhoneVerificationCodeSender,
 )
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.biz.validators import validate_user_new_password
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
@@ -174,9 +175,9 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
 
     def _validate_verification_code(self, phone: str, phone_country_code: str, code: str):
         try:
-            PhoneVerificationCodeManager(
-                phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD
-            ).validate(code)
+            PhoneVerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).validate(
+                code
+            )
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
@@ -252,8 +253,18 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
         params = slz.validated_data
 
         # 只是查询租户用户列表，不应该使得令牌失效，否则后续无法进行校验
-        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"])
-        return Response(TenantUserMatchedByTokenOutputSLZ(tenant_users, many=True).data)
+        tenant_users = (
+            UserResetPasswordTokenManager()
+            .list_users_by_token(params["token"])
+            .select_related("data_source_user", "data_source")
+        )
+        display_name_mapping = TenantUserHandler.batch_generate_tenant_user_display_name(tenant_users)
+
+        return Response(
+            TenantUserMatchedByTokenOutputSLZ(
+                tenant_users, many=True, context={"display_name_mapping": display_name_mapping}
+            ).data
+        )
 
 
 class ResetPasswordByTokenApi(generics.CreateAPIView):

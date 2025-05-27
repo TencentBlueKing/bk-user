@@ -43,7 +43,7 @@ from bkuser.apis.open_web.serializers.users import (
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler, TenantUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -66,9 +66,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
                 data_source_id=self.real_data_source_id,
-            )
-            .select_related("data_source_user")
-            .only("data_source_user__username", "data_source_user__full_name"),
+            ).select_related("data_source_user", "data_source"),
             id=kwargs["id"],
         )
 
@@ -97,15 +95,14 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         # 后续支持表达式，则需要查询表达式可配置的所有字段
-        return (
-            TenantUser.objects.filter(
-                id__in=data["bk_usernames"],
-                tenant_id=self.tenant_id,
-                data_source_id=self.real_data_source_id,
-            )
-            .select_related("data_source_user")
-            .only("id", "data_source_user__username", "data_source_user__full_name")
-        )
+        return TenantUser.objects.filter(
+            id__in=data["bk_usernames"],
+            tenant_id=self.tenant_id,
+            data_source_id=self.real_data_source_id,
+        ).select_related("data_source_user", "data_source")
+
+    def get_serializer_context(self):
+        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
 
     @swagger_auto_schema(
         tags=["open_web.user"],
@@ -142,12 +139,16 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         keyword = data["keyword"]
 
-        # 动态构造搜索条件
-        search_conditions = TenantUserHandler.build_search_query(tenant_id=self.tenant_id, keyword=keyword)
+        # 构造 DisplayName 搜索条件
+        search_conditions = TenantUserDisplayNameExpressionConfigHandler.build_display_name_search_queries(
+            tenant_id=self.tenant_id, keyword=keyword
+        )
 
         filter_args = [
             Q(tenant_id=self.tenant_id),
-            search_conditions,
+            Q(data_source_user__username__icontains=keyword)
+            | Q(data_source_user__full_name__icontains=keyword)
+            | search_conditions,
         ]
 
         # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
@@ -166,6 +167,8 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
+        context["display_name_mapping"] = TenantUserHandler.batch_generate_tenant_user_display_name(queryset)
+
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
@@ -220,21 +223,12 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
 
-        queryset = (
-            TenantUser.objects.filter(*filter_args)
-            .select_related("data_source_user", "data_source")
-            .only(
-                "id",
-                "status",
-                "data_source_user__username",
-                "data_source_user__full_name",
-                "data_source__type",
-                "data_source__owner_tenant_id",
-            )
-        )
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
+        context["display_name_mapping"] = TenantUserHandler.batch_generate_tenant_user_display_name(queryset)
+
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
             data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
@@ -250,11 +244,12 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return (
-            TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
-            .only("id", "data_source_user__username", "data_source_user__full_name")
+        return TenantUser.objects.select_related("data_source_user", "data_source").filter(
+            tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL
         )
+
+    def get_serializer_context(self):
+        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
 
     @swagger_auto_schema(
         tags=["open_web.user"],

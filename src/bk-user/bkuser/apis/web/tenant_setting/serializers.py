@@ -25,13 +25,13 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import (
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
-    DisplayNameExpressionExtraField,
     NotificationMethod,
     NotificationScene,
     UserFieldDataType,
 )
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOption
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
 
 logger = logging.getLogger(__name__)
@@ -292,41 +292,18 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         if non_field_length > 16:  # noqa: PLR2004
             raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
 
-        self.context["parsed_fields"] = fields
-
         return expression
 
     def to_internal_value(self, data: Dict) -> Dict:
         validated_data = super().to_internal_value(data)
-
-        fields = self.context["parsed_fields"]
-
-        # TODO: 后续需要过滤敏感字段，敏感字段不支持展示
-        builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
-
-        custom_fields = set(
-            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
-        )
-
-        extra_fields = set(DisplayNameExpressionExtraField.get_values())
-        # 获取所有允许配置的字段
-        all_fields = builtin_fields | custom_fields | extra_fields
-
-        invalid_fields = [f for f in fields if f not in all_fields]
-        if invalid_fields:
-            # to_internal_value 方法里必须返回 {"key": error_message} 形式的错误消息
-            raise ValidationError({"expression": _("表达式中存在无效字段: {}").format(", ".join(invalid_fields))})
-
-        # 集合运算 & 求交集，比遍历判断更高效
-        validated_data.update(
-            {
-                "fields": {
-                    "builtin": list(set(fields) & builtin_fields),
-                    "custom": list(set(fields) & custom_fields),
-                    "extra": list(set(fields) & extra_fields),
-                }
-            }
-        )
+        try:
+            validated_data["fields"] = TenantUserDisplayNameExpressionConfigHandler.parse_display_name_expression(
+                self.context["tenant_id"], validated_data["expression"]
+            )
+        except Exception as e:
+            raise ValidationError(
+                {"expression": _("表达式 {} 不合法: {}").format(validated_data["expression"], str(e))}
+            )
 
         return validated_data
 
@@ -335,10 +312,8 @@ class TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(serializers.Seriali
     expression = serializers.CharField(help_text="display_name 表达式")
 
 
-class TenantUserDisplayNameExpressionConfigUpdatePreviewInputSLZ(
-    TenantUserDisplayNameExpressionConfigUpdateInputSLZ
-): ...
+class TenantUserDisplayNameExpressionConfigPreviewInputSLZ(TenantUserDisplayNameExpressionConfigUpdateInputSLZ): ...
 
 
-class TenantUserDisplayNameExpressionConfigUpdatePreviewOutputSLZ(serializers.Serializer):
+class TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="预览 display_name")

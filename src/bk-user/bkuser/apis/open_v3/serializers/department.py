@@ -19,7 +19,6 @@ from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
@@ -72,7 +71,7 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):
