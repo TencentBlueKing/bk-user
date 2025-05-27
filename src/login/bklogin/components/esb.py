@@ -10,7 +10,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-
+import time
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -21,7 +21,7 @@ from bklogin.common.log import logger
 from bkuser_global.local import local
 
 
-def _call_esb_api(http_func, url_path, data, timeout=30):
+def _call_esb_api(http_func, url_path, data, timeout=30, max_retries=5, retry_delay=0.2):
     # 默认请求头
     headers = {
         "Blueking-Language": translation.get_language(),
@@ -42,17 +42,29 @@ def _call_esb_api(http_func, url_path, data, timeout=30):
 
     # url = "{}{}".format(settings.BK_COMPONENT_API_URL, url_path)
     url = urljoin(settings.BK_COMPONENT_API_URL, url_path)
+    ok, retry_count = False, 0
+    # 调用esb接口失败，重试
+    while retry_count < max_retries:
+        start_time = time.time()
+        ok, resp_data = http_func(url, data, headers=headers)
+        end_time = time.time()
+        if ok:
+            break
+        else:
+            message = resp_data["error"]
+            logger.error(
+                "call esb api failed! %s %s, retry_count: %d, cost time: %0.3f, data: %s, error: %s",
+                http_func.__name__,
+                url,
+                retry_count,
+                end_time - start_time,
+                _remove_sensitive_info(data),
+                message,
+            )
+            retry_count += 1
+            time.sleep(retry_delay)
 
-    ok, resp_data = http_func(url, data, headers=headers)
     if not ok:
-        message = resp_data["error"]
-        logger.error(
-            "call esb api failed! %s %s, data: %s, error: %s",
-            http_func.__name__,
-            url,
-            _remove_sensitive_info(data),
-            message,
-        )
         return False, -1, message, None
 
     code = resp_data.get("code", -1)
