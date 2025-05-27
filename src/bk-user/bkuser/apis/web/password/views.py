@@ -258,11 +258,14 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
             .list_users_by_token(params["token"])
             .select_related("data_source_user", "data_source")
         )
-        display_name_mapping = TenantUserHandler.batch_generate_tenant_user_display_name(tenant_users)
 
         return Response(
             TenantUserMatchedByTokenOutputSLZ(
-                tenant_users, many=True, context={"display_name_mapping": display_name_mapping}
+                tenant_users,
+                many=True,
+                context={
+                    "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(tenant_users)
+                },
             ).data
         )
 

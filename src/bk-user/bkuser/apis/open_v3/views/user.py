@@ -35,9 +35,11 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    VirtualUserListOutputSLZ,
     VirtualUserLookupInputSLZ,
     VirtualUserLookupOutputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
@@ -249,7 +251,11 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         )
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+                self.paginate_queryset(self.get_queryset())
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -324,6 +330,37 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询虚拟用户信息",
         query_serializer=VirtualUserLookupInputSLZ(),
         responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    查询虚拟用户列表
+    """
+
+    serializer_class = VirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return (
+            TenantUser.objects.select_related("data_source_user", "data_source")
+            .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
+            .order_by("id")
+        )
+
+    def get_serializer_context(self):
+        return {
+            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+                self.paginate_queryset(self.get_queryset())
+            )
+        }
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="list_virtual_user",
+        operation_description="查询虚拟用户列表",
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

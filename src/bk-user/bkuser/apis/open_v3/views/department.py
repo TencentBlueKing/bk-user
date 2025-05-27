@@ -187,7 +187,11 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         )
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+                self.paginate_queryset(self.get_queryset())
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
