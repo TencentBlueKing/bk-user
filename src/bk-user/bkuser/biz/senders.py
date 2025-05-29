@@ -95,13 +95,13 @@ class EmailVerificationCodeSender:
 
 
 class EmailResetPasswdTokenSender:
-    """发送邮箱重置密码链接"""
+    """发送用户邮箱重置密码链接"""
 
     def __init__(self):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.RESET_PASSWORD_TOKEN)
 
     def send(self, tenant_user: TenantUser, token: str):
-        """发送重置密码链接到指定邮箱"""
+        """发送重置密码链接到用户邮箱"""
         if not self._can_send(tenant_user):
             raise ExceedSendRateLimit(_("超过发送次数限制"))
 

@@ -294,7 +294,8 @@ class NotificationSender:
         contact_info: Dict[str, str | Dict[str, str]] | None = None,
         tenant_user_id: str | None = None,
     ) -> None:
-        """单条消息发送
+        """
+        单条消息发送
         :param method: 发送方式（邮件/短信）
         :param title: 标题（邮件必需）
         :param content: 内容
@@ -334,7 +335,8 @@ class TenantUserNotifier:
         self.sender = NotificationSender()
 
     def batch_send(self, users: List[TenantUser], **kwargs) -> None:
-        """批量发送通知到用户
+        """
+        批量发送通知到用户
         :param users: 租户用户列表
         :param user_passwd_map: {数据源用户ID: 密码} 映射表，密码初始化/重置场景必须
         """
@@ -359,7 +361,8 @@ class TenantUserNotifier:
             logger.info("send %s to user %s, scene %s", tmpl.method.value, user.id, self.scene)
 
     def send_by_contact(self, contact_info: Dict[str, str | Dict[str, str]], **scene_kwargs) -> None:
-        """直接通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
+        """
+        直接通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
         :param contact_info: 联系方式，如 {"email": "xxx"} 或 {"phone_info": {"phone": "xxx", "country_code": "xxx"}}
         """
         for tmpl in self.templates:
