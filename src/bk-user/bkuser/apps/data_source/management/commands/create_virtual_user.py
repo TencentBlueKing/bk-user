@@ -69,7 +69,6 @@ class Command(BaseCommand):
             )
 
             if not created:
-                # 检查并准备需要更新的字段
                 update_fields = {}
                 if options.get("full_name") != user.full_name:
                     update_fields["full_name"] = options.get("full_name")
