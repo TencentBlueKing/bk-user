@@ -86,7 +86,6 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
     tenant_users = TenantUser.objects.filter(
         tenant_id=data_source.owner_tenant_id, data_source_user__in=data_source_users
     ).select_related("data_source_user")
-
     TenantUserNotifier(
         NotificationScene.USER_INITIALIZE,
         data_source_id=data_source.id,
