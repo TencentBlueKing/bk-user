@@ -226,7 +226,7 @@ class SendResetPasswordEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView)
             raise error_codes.TOO_FREQUENTLY.f(_("请稍后再试"))
 
         try:
-            EmailResetPasswdTokenSender().send(tenant_user.email, token)
+            EmailResetPasswdTokenSender().send(tenant_user, token)
         except ExceedSendRateLimit:
             raise error_codes.SEND_RESET_PASSWORD_EMAIL_FAILED.f(_("今日发送次数超过上限，请明天再试"))
         except Exception:

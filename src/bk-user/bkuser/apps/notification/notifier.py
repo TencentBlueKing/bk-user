@@ -300,7 +300,7 @@ class NotificationSender:
         :param content: 内容
         :param sender: 发送者
         :param contact_info: 联系方式
-        :param tenant_user_id: 租户用户ID，与 contact_info 二选一
+        :param tenant_user_id: 租户用户 ID，与 contact_info 二选一
         """
         if method == NotificationMethod.EMAIL:
             self.client.send_mail(

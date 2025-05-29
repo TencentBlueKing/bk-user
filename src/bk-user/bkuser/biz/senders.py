@@ -20,6 +20,7 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
+from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.verification_code import VerificationCodeScene
 from bkuser.utils.time import calc_remaining_seconds_today
@@ -99,17 +100,18 @@ class EmailResetPasswdTokenSender:
     def __init__(self):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.RESET_PASSWORD_TOKEN)
 
-    def send(self, email: str, token: str):
+    def send(self, tenant_user: TenantUser, token: str):
         """发送重置密码链接到指定邮箱"""
-        if not self._can_send(email):
+        if not self._can_send(tenant_user):
             raise ExceedSendRateLimit(_("超过发送次数限制"))
 
         TenantUserNotifier(
             NotificationScene.RESET_PASSWORD,
-        ).send_by_contact({"email": email}, token=token)
+            data_source_id=tenant_user.data_source_user.data_source_id,
+        ).send_by_contact({"email": tenant_user.email}, token=token)
 
-    def _can_send(self, email: str) -> bool:
-        send_cnt_cache_key = f"{email}:send_cnt"
+    def _can_send(self, tenant_user: TenantUser) -> bool:
+        send_cnt_cache_key = f"{tenant_user.email}:send_cnt"
 
         send_cnt = self.cache.get(send_cnt_cache_key, 0)
         if send_cnt >= settings.RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY:
