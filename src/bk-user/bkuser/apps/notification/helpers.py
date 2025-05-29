@@ -14,21 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Dict
-
 from django.conf import settings
-
-from bkuser.apps.tenant.models import TenantUser
 
 
 def gen_reset_password_url(token: str) -> str:
     """生成用户重置密码的链接"""
     return f"{settings.BK_USER_URL.rstrip('/')}/reset-password/?token={token}"
-
-
-def get_tenant_user_contact_info(tenant_user: TenantUser) -> Dict[str, str | Dict[str, str]]:
-    # 获取租户用户的联系方式（手机信息和邮箱）
-    return {
-        "phone_info": {"phone": tenant_user.phone_info[0], "phone_country_code": tenant_user.phone_info[1]},
-        "email": tenant_user.email,
-    }

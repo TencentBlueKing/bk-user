@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Dict, Protocol
+from typing import Dict, List, Protocol
 
 from django.conf import settings
 
@@ -25,15 +25,35 @@ from bkuser.utils.url import urljoin
 
 
 class NotificationClient(Protocol):
-    """
-    通知通知基类
-    """
+    """通知客户端基类"""
 
-    def send_mail(self, email: str, sender: str, title: str, content: str):
-        pass
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        receiver: str | None,
+        receiver__username: str | None,
+    ) -> None:
+        """发送邮件
+        :param receiver: 接收者邮箱
+        :param receiver__username: 接收者用户名，与 receiver 二选一
+        :param sender: 发件人
+        :param title: 邮件标题
+        :param content: 邮件内容（HTML格式）
+        """
 
-    def send_sms(self, phone_info: Dict[str, str], content: str):
-        pass
+    def send_sms(
+        self,
+        content: str,
+        receiver: Dict[str, str] | None,
+        receiver__username: str | None,
+    ) -> None:
+        """发送短信
+        :param receiver: 接收者手机号码信息，格式：{"phone": "xxx", "phone_country_code": "xxx"}
+        :param receiver__username: 接收者用户名，与 receiver 二选一
+        :param content: 短信内容
+        """
 
 
 def get_notification_client() -> NotificationClient:
@@ -46,77 +66,129 @@ def get_notification_client() -> NotificationClient:
     return BkEsbCmsiClient()
 
 
+def validate_notification_params(receiver: str | Dict[str, str] | None, receiver__username: str | None):
+    """
+    验证通知参数，receiver 和 receiver__username 必须提供一个
+    :param receiver: 接收者手机号或邮箱
+    :param receiver__username: 接收者用户名
+    """
+    if not (receiver or receiver__username):
+        raise ValueError(
+            "Param `receiver`(phone_info & email) or param `receiver__username`(tenant_user_id) must be provided"
+        )
+
+
 class BkEsbCmsiClient:
-    """
-    由 ESB 提供的消息通知 API
-    """
+    """由 ESB 提供的消息通知 API"""
 
     ESB_CMSI_URL_PATH = "/api/c/compapi/v2/cmsi/"
 
-    def send_mail(self, email: str, sender: str, title: str, content: str):
-        """
-        发送邮件（目前未支持抄送，附件等参数，如有需要可以添加）
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        receiver: str | None,
+        receiver__username: str | None,
+    ):
+        """发送邮件"""
+        validate_notification_params(receiver, receiver__username)
 
-        :param email: 接收者邮箱
-        :param sender: 发件人
-        :param title: 邮件标题
-        :param content: 邮件内容（HTML 格式）
-        """
+        # 当两者都存在时，优先使用 receiver
+        params: Dict[str, str] = {
+            "sender": sender,
+            "title": title,
+            "content": content,
+        }
+        if receiver:
+            params["receiver"] = receiver
+        else:
+            params["receiver__username"] = receiver__username  # type: ignore
+
         return _call_esb_api(
             http_post,
             urljoin(self.ESB_CMSI_URL_PATH, "send_mail/"),
-            json={"receiver": email, "sender": sender, "title": title, "content": content},
+            json=params,
         )
 
-    def send_sms(self, phone_info: Dict[str, str], content: str):
-        """
-        发送短信
+    def send_sms(
+        self,
+        content: str,
+        receiver: Dict[str, str] | None,
+        receiver__username: str | None,
+    ):
+        """发送短信"""
+        validate_notification_params(receiver, receiver__username)
 
-        :param phone_info: 接收者手机号信息
-        :param content: 短信内容
-        """
+        # 当两者都存在时，优先使用 receiver
+        params: Dict[str, str] = {"content": content}
+        if receiver:
+            params["receiver"] = receiver["phone"]
+        else:
+            params["receiver__username"] = receiver__username  # type: ignore
+
         return _call_esb_api(
             http_post,
             urljoin(self.ESB_CMSI_URL_PATH, "send_sms/"),
-            json={"receiver": phone_info["phone"], "content": content},
+            json=params,
         )
 
 
 class BkApigwCmsiClient:
-    """
-    由 API 网关提供的消息通知 API
-    """
+    """由 API 网关提供的消息通知 API"""
 
     APIGW_NAME = "bk-cmsi"
 
-    def send_mail(self, email: str, sender: str, title: str, content: str):
-        """
-        发送邮件
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        receiver: str | None,
+        receiver__username: str | None,
+    ):
+        """发送邮件"""
+        validate_notification_params(receiver, receiver__username)
 
-        :param email: 接收者邮箱地址
-        :param sender: 发件人
-        :param title: 邮件标题
-        :param content: 邮件内容（HTML 格式）
-        """
+        # 当两者都存在时，优先使用 receiver
+        params: Dict[str, str | List[str]] = {
+            "sender": sender,
+            "title": title,
+            "content": content,
+        }
+        if receiver:
+            params["receiver"] = [receiver]
+        else:
+            params["receiver__username"] = [receiver__username]  # type: ignore
+
         return _call_apigw_api(
             http_post,
             self.APIGW_NAME,
             "/v1/send_mail/",
-            json={"receiver": [email], "sender": sender, "title": title, "content": content},
+            json=params,
         )
 
-    def send_sms(self, phone_info: Dict[str, str], content: str):
-        """
-        发送短信
+    def send_sms(
+        self,
+        content: str,
+        receiver: Dict[str, str] | None,
+        receiver__username: str | None,
+    ) -> None:
+        """发送短信"""
+        validate_notification_params(receiver, receiver__username)
 
-        :param phone_info: 接收者手机号信息
-        :param content: 短信内容
-        """
+        # 当两者都存在时，优先使用 receiver
+        params: Dict[str, str | List[str]] = {"content": content}
+        if receiver:
+            params["receiver"] = [self._format_phone(receiver)]
+        else:
+            params["receiver__username"] = [receiver__username]  # type: ignore
+
         return _call_apigw_api(
             http_post,
             self.APIGW_NAME,
             "/v1/send_sms/",
-            json={"receiver": [self._format_phone(phone_info)], "content": content},
+            json=params,
         )
 
     def _format_phone(self, phone_info: Dict[str, str]) -> str:
@@ -125,4 +197,4 @@ class BkApigwCmsiClient:
         :param phone_info: 手机号信息
         :return: 格式化后的手机号（"+手机区号 手机号"）
         """
-        return f"+{phone_info['country_code']} {phone_info['phone']}"
+        return f"+{phone_info['phone_country_code']} {phone_info['phone']}"

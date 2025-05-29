@@ -22,7 +22,6 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.notification.constants import NotificationScene
-from bkuser.apps.notification.helpers import get_tenant_user_contact_info
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
@@ -88,8 +87,7 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
         tenant_id=data_source.owner_tenant_id, data_source_user__in=data_source_users
     ).select_related("data_source_user")
 
-    contact_infos = {user.id: get_tenant_user_contact_info(user) for user in tenant_users}
     TenantUserNotifier(
         NotificationScene.USER_INITIALIZE,
         data_source_id=data_source.id,
-    ).batch_send(tenant_users, contact_infos, user_passwd_map=user_passwd_map)
+    ).batch_send(tenant_users, user_passwd_map=user_passwd_map)
