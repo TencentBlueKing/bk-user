@@ -28,34 +28,30 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 class Command(BaseCommand):
     """
     Virtual Account Management CLI
-    $ (List virtual accounts) python manage.py virtual_account list
-    $ (Get single virtual account) python manage.py virtual_account get
-    $ (Update or insert virtual account) python manage.py virtual_account upsert
+    $ (Query virtual accounts) python manage.py virtual_account query
+    $ (Create virtual account) python manage.py virtual_account create
+    $ (Update virtual account) python manage.py virtual_account update
     """
 
     def add_arguments(self, parser):
         """Define subcommands"""
         subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-        # list subcommand
-        list_parser = subparsers.add_parser("list", help="List virtual accounts")
-        list_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-
-        # get subcommand
-        get_parser = subparsers.add_parser("get", help="Get single virtual account")
-        get_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-        get_parser.add_argument("--login_name")
-        get_parser.add_argument("--full_name")
-        get_parser.add_argument("--bk_username")
+        # query subcommand (merged list+get)
+        query_parser = subparsers.add_parser("query", help="Query virtual accounts")
+        query_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
+        query_parser.add_argument("--login_name")
+        query_parser.add_argument("--full_name")
+        query_parser.add_argument("--bk_username")
 
         # create subcommand
-        create_parser = subparsers.add_parser("create", help="create virtual account")
+        create_parser = subparsers.add_parser("create", help="Create virtual account")
         create_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         create_parser.add_argument("--login_name", required=True)
         create_parser.add_argument("--full_name", required=True)
 
         # update subcommand
-        update_parser = subparsers.add_parser("update", help="update virtual account")
+        update_parser = subparsers.add_parser("update", help="Update virtual account")
         update_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         update_parser.add_argument("--old_login_name", required=True)
         update_parser.add_argument("--new_login_name")
@@ -67,33 +63,45 @@ class Command(BaseCommand):
             raise ValueError(f"tenant {tenant_id} is not existed")
 
     def handle(self, *args, **options):
-        # Subcommand validation
         subcommand = options["subcommand"]
-        if subcommand not in ("list", "get", "create", "update"):
-            raise CommandError(
-                f"subcommand {options['subcommand']} is not supported, only support list/get/delete/upsert"
-            )
+        if subcommand not in ("query", "create", "update"):
+            raise CommandError(f"subcommand {subcommand} is not supported, only support query/create/update")
 
-        # Common parameters
         tenant_id = options["tenant_id"]
-        # Validation
         self._check_tenant(tenant_id)
-
-        # Subcommand handling
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
-    def handle_list(self, tenant_id: str, options):
-        """Handle list virtual accounts"""
-        virtual_accounts = (
-            TenantUser.objects.filter(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
-            .select_related("data_source_user")
-            .order_by("id")
-        )
+    def handle_query(self, tenant_id: str, options):
+        """Handle query virtual accounts"""
+        # Build query filters
+        query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
+        if login_name := options.get("login_name"):
+            query &= Q(data_source_user__username=login_name)
+        if full_name := options.get("full_name"):
+            query &= Q(data_source_user__full_name=full_name)
+        if bk_username := options.get("bk_username"):
+            query &= Q(id=bk_username)
 
-        self.stdout.write(f"Virtual accounts for tenant {tenant_id} (Total: {virtual_accounts.count()}):")
+        accounts = TenantUser.objects.filter(query).select_related("data_source_user").order_by("id")
+
+        if not accounts.exists():
+            self.stdout.write("No virtual accounts found")
+            return
+
+        # Single account detail
+        if any([options.get("login_name"), options.get("full_name"), options.get("bk_username")]):
+            account = accounts.first()
+            self.stdout.write(
+                f"bk_username: {account.id}\n"
+                f"login_name: {account.data_source_user.username}\n"
+                f"full_name: {account.data_source_user.full_name}\n"
+            )
+            return
+
+        # List all accounts
+        self.stdout.write(f"Virtual accounts for tenant {tenant_id} (Total: {accounts.count()}):")
         self.stdout.write("-" * 80)
-
-        for account in virtual_accounts:
+        for account in accounts:
             self.stdout.write(
                 f"bk_username: {account.id}\n"
                 f"login_name: {account.data_source_user.username}\n"
@@ -101,7 +109,7 @@ class Command(BaseCommand):
                 f"-----------------------------"
             )
 
-        if not virtual_accounts.exists():
+        if not accounts.exists():
             self.stdout.write("No virtual accounts found for this tenant")
 
     def handle_get(self, tenant_id: str, options):
