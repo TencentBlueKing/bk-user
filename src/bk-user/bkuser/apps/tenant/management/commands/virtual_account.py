@@ -23,6 +23,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class Command(BaseCommand):
@@ -73,7 +74,6 @@ class Command(BaseCommand):
 
     def handle_query(self, tenant_id: str, options):
         """Handle query virtual accounts"""
-        # Build query filters
         query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
         if login_name := options.get("login_name"):
             query &= Q(data_source_user__username=login_name)
@@ -112,43 +112,16 @@ class Command(BaseCommand):
         if not accounts.exists():
             self.stdout.write("No virtual accounts found for this tenant")
 
-    def handle_get(self, tenant_id: str, options):
-        """Handle get single virtual account"""
-        login_name = options.get("login_name")
-        full_name = options.get("full_name")
-        bk_username = options.get("bk_username")
-
-        if not any([login_name, full_name, bk_username]):
-            raise CommandError("At least one of --login_name/--full_name/--bk_username is required")
-
-        # Build query filters
-        query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
-        if login_name:
-            query &= Q(data_source_user__username=login_name)
-        if full_name:
-            query &= Q(data_source_user__full_name=full_name)
-        if bk_username:
-            query &= Q(id=bk_username)
-
-        account = TenantUser.objects.filter(query).select_related("data_source_user").first()
-
-        if not account:
-            raise CommandError("Virtual account not found")
-
-        self.stdout.write(
-            f"Virtual account details:\n"
-            f"bk_username: {account.id}\n"
-            f"login_name: {account.data_source_user.username}\n"
-            f"full_name: {account.data_source_user.full_name}\n"
-        )
-
     def handle_create(self, tenant_id: str, options):
         """Handle create virtual account"""
         login_name = options.get("login_name")
         full_name = options.get("full_name")
 
         data_source, _ = DataSource.objects.get_or_create(
-            owner_tenant_id=tenant_id, type=DataSourceTypeEnum.VIRTUAL, plugin_id=DataSourcePluginEnum.LOCAL
+            owner_tenant_id=tenant_id,
+            type=DataSourceTypeEnum.VIRTUAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
+            defaults={"plugin_config": LocalDataSourcePluginConfig(enable_password=False)},
         )
 
         with transaction.atomic():
