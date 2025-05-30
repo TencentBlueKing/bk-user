@@ -202,7 +202,10 @@ class TenantUserDisplayNameHandler:
 
         # 遍历所有组合
         for owner_tenant_id, tenant_users in tenant_user_map.items():
-            config = config_map[owner_tenant_id]
+            config = config_map.get(owner_tenant_id)
+            if not config:
+                logger.error("tenant %s display_name expression config not found", owner_tenant_id)
+                continue
 
             # 由于未来额外字段查询可能涉及到 N + 1 问题，所以需要单独处理
             extra_values = TenantUserDisplayNameHandler._get_extra_field_values(
