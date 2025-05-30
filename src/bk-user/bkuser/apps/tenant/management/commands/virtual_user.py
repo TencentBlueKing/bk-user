@@ -28,10 +28,10 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 class Command(BaseCommand):
     """
-    Virtual Account Management CLI
-    $ (Query virtual accounts) python manage.py virtual_account query
-    $ (Create virtual account) python manage.py virtual_account create
-    $ (Update virtual account) python manage.py virtual_account update
+    Virtual User Management CLI
+    $ (Query virtual users) python manage.py virtual_user query
+    $ (Create virtual user) python manage.py virtual_user create
+    $ (Update virtual user) python manage.py virtual_user update
     """
 
     def add_arguments(self, parser):
@@ -39,20 +39,20 @@ class Command(BaseCommand):
         subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
         # query subcommand (merged list+get)
-        query_parser = subparsers.add_parser("query", help="Query virtual accounts")
+        query_parser = subparsers.add_parser("query", help="Query virtual users")
         query_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         query_parser.add_argument("--login_name")
         query_parser.add_argument("--full_name")
         query_parser.add_argument("--bk_username")
 
         # create subcommand
-        create_parser = subparsers.add_parser("create", help="Create virtual account")
+        create_parser = subparsers.add_parser("create", help="Create virtual user")
         create_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         create_parser.add_argument("--login_name", required=True)
         create_parser.add_argument("--full_name", required=True)
 
         # update subcommand
-        update_parser = subparsers.add_parser("update", help="Update virtual account")
+        update_parser = subparsers.add_parser("update", help="Update virtual user")
         update_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         update_parser.add_argument("--old_login_name", required=True)
         update_parser.add_argument("--new_login_name")
@@ -73,7 +73,7 @@ class Command(BaseCommand):
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
     def handle_query(self, tenant_id: str, options):
-        """Handle query virtual accounts"""
+        """Handle query virtual users"""
         query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
         if login_name := options.get("login_name"):
             query &= Q(data_source_user__username=login_name)
@@ -82,38 +82,38 @@ class Command(BaseCommand):
         if bk_username := options.get("bk_username"):
             query &= Q(id=bk_username)
 
-        accounts = TenantUser.objects.filter(query).select_related("data_source_user").order_by("id")
+        users = TenantUser.objects.filter(query).select_related("data_source_user").order_by("id")
 
-        if not accounts.exists():
-            self.stdout.write("No virtual accounts found")
+        if not users.exists():
+            self.stdout.write("No virtual users found")
             return
 
-        # Single account detail
+        # Single user detail
         if any([options.get("login_name"), options.get("full_name"), options.get("bk_username")]):
-            account = accounts.first()
+            user = users.first()
             self.stdout.write(
-                f"bk_username: {account.id}\n"
-                f"login_name: {account.data_source_user.username}\n"
-                f"full_name: {account.data_source_user.full_name}\n"
+                f"bk_username: {user.id}\n"
+                f"login_name: {user.data_source_user.username}\n"
+                f"full_name: {user.data_source_user.full_name}\n"
             )
             return
 
-        # List all accounts
-        self.stdout.write(f"Virtual accounts for tenant {tenant_id} (Total: {accounts.count()}):")
+        # List all users
+        self.stdout.write(f"Virtual users for tenant {tenant_id} (Total: {users.count()}):")
         self.stdout.write("-" * 80)
-        for account in accounts:
+        for user in users:
             self.stdout.write(
-                f"bk_username: {account.id}\n"
-                f"login_name: {account.data_source_user.username}\n"
-                f"full_name: {account.data_source_user.full_name}\n"
+                f"bk_username: {user.id}\n"
+                f"login_name: {user.data_source_user.username}\n"
+                f"full_name: {user.data_source_user.full_name}\n"
                 f"-----------------------------"
             )
 
-        if not accounts.exists():
-            self.stdout.write("No virtual accounts found for this tenant")
+        if not users.exists():
+            self.stdout.write("No virtual users found for this tenant")
 
     def handle_create(self, tenant_id: str, options):
-        """Handle create virtual account"""
+        """Handle create virtual user"""
         login_name = options.get("login_name")
         full_name = options.get("full_name")
 
@@ -143,12 +143,12 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created virtual account:\n" f"login_name: {login_name}\n" f"full_name: {full_name}"
+                f"Successfully created virtual user:\n" f"login_name: {login_name}\n" f"full_name: {full_name}"
             )
         )
 
     def handle_update(self, tenant_id: str, options):
-        """Handle update virtual account"""
+        """Handle update virtual user"""
         old_login_name = options.get("old_login_name")
         new_login_name = options.get("new_login_name")
         new_full_name = options.get("new_full_name")
@@ -179,7 +179,7 @@ class Command(BaseCommand):
 
                 user.save()
             except DataSourceUser.DoesNotExist:
-                raise CommandError(f"Virtual account with login name '{old_login_name}' not found")
+                raise CommandError(f"Virtual user with login name '{old_login_name}' not found")
 
         updated_fields = []
         if new_login_name:
@@ -187,4 +187,4 @@ class Command(BaseCommand):
         if new_full_name:
             updated_fields.append(f"full_name: {new_full_name}")
 
-        self.stdout.write(self.style.SUCCESS("Successfully updated virtual account:\n" + "\n".join(updated_fields)))
+        self.stdout.write(self.style.SUCCESS("Successfully updated virtual user:\n" + "\n".join(updated_fields)))
