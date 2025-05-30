@@ -35,7 +35,7 @@ from bkuser.apis.open_v3.serializers.department import (
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler, TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -181,14 +181,14 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         ).values_list("user_id", flat=True)
 
         return (
-            TenantUser.objects.select_related("data_source_user", "data_source")
+            TenantUser.objects.select_related("data_source_user")
             .filter(data_source_user_id__in=user_ids, tenant_id=self.tenant_id)
             .order_by("id")
         )
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

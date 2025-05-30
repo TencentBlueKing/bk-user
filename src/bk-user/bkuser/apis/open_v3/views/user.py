@@ -47,7 +47,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +72,14 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
             data_source_id=self.real_data_source_id,
-        ).select_related("data_source_user", "data_source")
+        ).select_related("data_source_user")
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -99,7 +103,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     def get_queryset(self):
         return TenantUser.objects.filter(
             tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
-        ).select_related("data_source_user", "data_source")
+        ).select_related("data_source_user")
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -219,10 +223,14 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
         return TenantUser.objects.filter(
             data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id
-        ).select_related("data_source_user", "data_source")
+        ).select_related("data_source_user")
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -245,14 +253,14 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
-            TenantUser.objects.select_related("data_source_user", "data_source")
+            TenantUser.objects.select_related("data_source_user")
             .filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
             .order_by("id")
         )
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }
@@ -319,10 +327,14 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         else:
             filter_args["id__in"] = data["lookups"]
 
-        return TenantUser.objects.filter(**filter_args).select_related("data_source_user", "data_source")
+        return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -344,14 +356,14 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
-            TenantUser.objects.select_related("data_source_user", "data_source")
+            TenantUser.objects.select_related("data_source_user")
             .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
             .order_by("id")
         )
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

@@ -43,7 +43,7 @@ from bkuser.apis.open_web.serializers.users import (
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler, TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -74,7 +74,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
             {
                 "login_name": tenant_user.data_source_user.username,
                 "full_name": tenant_user.data_source_user.full_name,
-                "display_name": TenantUserHandler.generate_tenant_user_display_name(tenant_user),
+                "display_name": TenantUserDisplayNameHandler.generate_tenant_user_display_name(tenant_user),
             }
         )
 
@@ -99,10 +99,14 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
             data_source_id=self.real_data_source_id,
-        ).select_related("data_source_user", "data_source")
+        ).select_related("data_source_user")
 
     def get_serializer_context(self):
-        return {"display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(self.get_queryset())}
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_web.user"],
@@ -140,7 +144,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         keyword = data["keyword"]
 
         # 构造 DisplayName 搜索条件
-        search_conditions = TenantUserDisplayNameExpressionConfigHandler.build_display_name_search_queries(
+        search_conditions = TenantUserDisplayNameHandler.build_display_name_search_queries(
             tenant_id=self.tenant_id, keyword=keyword
         )
 
@@ -167,7 +171,9 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserHandler.batch_generate_tenant_user_display_name(queryset)
+        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            queryset
+        )
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -227,7 +233,9 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserHandler.batch_generate_tenant_user_display_name(queryset)
+        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            queryset
+        )
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -244,13 +252,13 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.select_related("data_source_user", "data_source").filter(
+        return TenantUser.objects.select_related("data_source_user").filter(
             tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL
         )
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserHandler.batch_generate_tenant_user_display_name(
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

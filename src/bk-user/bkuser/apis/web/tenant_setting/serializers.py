@@ -24,14 +24,15 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import (
+    DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
     NotificationMethod,
     NotificationScene,
     UserFieldDataType,
 )
-from bkuser.apps.tenant.data_models import TenantUserCustomFieldOption
+from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField, TenantUserCustomFieldOption
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
 
 logger = logging.getLogger(__name__)
@@ -292,15 +293,57 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         if non_field_length > 16:  # noqa: PLR2004
             raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
 
+        # 先解析字段，再一次性校验字段有效性和唯一性
+        parsed_fields = TenantUserDisplayNameHandler.parse_display_name_expression(
+            self.context["tenant_id"], expression
+        )
+        self._validate_parsed_fields(fields, parsed_fields)
+
         return expression
 
-    def to_internal_value(self, data: Dict) -> Dict:
-        validated_data = super().to_internal_value(data)
-        validated_data["fields"] = TenantUserDisplayNameExpressionConfigHandler.parse_display_name_expression(
-            self.context["tenant_id"], validated_data["expression"]
-        )
+    def _validate_parsed_fields(self, original_fields: List[str], parsed_fields: Dict[str, List[str]]):
+        """校验解析后的字段有效性和唯一性"""
+        # 检查是否有无效字段（解析后不在任何分类中的字段）
+        parsed_field_set = set(parsed_fields["builtin"] + parsed_fields["custom"] + parsed_fields["extra"])
+        invalid_fields = [f for f in original_fields if f not in parsed_field_set]
+        if invalid_fields:
+            raise ValidationError(_("表达式中存在无效字段: {}").format(", ".join(invalid_fields)))
 
-        return validated_data
+        # 表达式字段必须存在唯一字段
+        if not self._has_unique_field(parsed_fields):
+            raise ValidationError(_("表达式中必须存在唯一字段"))
+
+    def _has_unique_field(self, parsed_fields: Dict[str, List[str]]) -> bool:
+        """检查解析后的字段中是否包含唯一字段"""
+        tenant_id = self.context["tenant_id"]
+
+        # 检查内置字段中的唯一字段
+        if (
+            parsed_fields["builtin"]
+            and UserBuiltinField.objects.filter(name__in=parsed_fields["builtin"], unique=True).exists()
+        ):
+            return True
+
+        # 检查自定义字段中的唯一字段
+        if (
+            parsed_fields["custom"]
+            and TenantUserCustomField.objects.filter(
+                tenant_id=tenant_id, name__in=parsed_fields["custom"], unique=True
+            ).exists()
+        ):
+            return True
+
+        # 检查额外字段中的唯一字段
+        if parsed_fields["extra"]:
+            extra_fields = [
+                DisplayNameExpressionExtraField(**field)  # type: ignore
+                for field in DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS
+            ]
+            for field in extra_fields:
+                if field.name in parsed_fields["extra"] and field.unique:
+                    return True
+
+        return False
 
 
 class TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(serializers.Serializer):

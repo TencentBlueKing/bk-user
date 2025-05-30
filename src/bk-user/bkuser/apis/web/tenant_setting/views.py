@@ -53,7 +53,7 @@ from bkuser.biz.auditor import (
     TenantUserDisplayNameExpressionConfigUpdateAuditor,
     TenantUserValidityPeriodConfigUpdateAuditor,
 )
-from bkuser.biz.tenant import TenantUserDisplayNameExpressionConfigHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -237,6 +237,9 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 从表达式中解析字段
+        fields = TenantUserDisplayNameHandler.parse_display_name_expression(tenant_id, data["expression"])
+
         # 【审计】创建租户用户显示名称表达式配置审计对象并记录变更前的数据
         auditor = TenantUserDisplayNameExpressionConfigUpdateAuditor(request.user.username, tenant_id)
 
@@ -246,7 +249,7 @@ class TenantUserDisplayNameExpressionConfigRetrieveUpdateApi(
         if config.expression != data["expression"]:
             config.version += 1
         config.expression = data["expression"]
-        config.fields = data["fields"]
+        config.fields = fields
         config.save()
 
         # 【审计】记录变更后的数据
@@ -272,27 +275,26 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 从表达式中解析字段
+        fields = TenantUserDisplayNameHandler.parse_display_name_expression(tenant_id, data["expression"])
+
         # 取前三个租户用户进行预览
         tenant_users = TenantUser.objects.filter(
             tenant_id=tenant_id, data_source__owner_tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
         ).select_related("data_source_user", "data_source")[:3]
 
-        config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=data["fields"])
+        config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=fields)
 
         if not tenant_users:
-            default_tenant_user = TenantUserDisplayNameExpressionConfigHandler.build_default_preview_tenant_user(
-                tenant_id
-            )
-            display_name = TenantUserDisplayNameExpressionConfigHandler.render_display_name(
-                default_tenant_user, config
-            )
+            # 如果目前没有获取到 tenant_user 则根据一个默认的租户用户进行生成 display_name
+            default_tenant_user = TenantUserDisplayNameHandler.build_default_preview_tenant_user(tenant_id)
+            display_name = TenantUserDisplayNameHandler.render_display_name(default_tenant_user, config)
             return Response(
                 TenantUserDisplayNameExpressionConfigPreviewOutputSLZ([{"display_name": display_name}], many=True).data
             )
 
         user_display_names = [
-            {"display_name": TenantUserDisplayNameExpressionConfigHandler.render_display_name(user, config)}
-            for user in tenant_users
+            {"display_name": TenantUserDisplayNameHandler.render_display_name(user, config)} for user in tenant_users
         ]
 
         return Response(TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(user_display_names, many=True).data)

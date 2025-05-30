@@ -23,7 +23,7 @@ from rest_framework.fields import ChoiceField
 
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
@@ -52,7 +52,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
 
 
 class AncestorSLZ(serializers.Serializer):
@@ -141,4 +141,4 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)

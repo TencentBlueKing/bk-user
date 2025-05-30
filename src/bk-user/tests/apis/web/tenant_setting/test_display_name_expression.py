@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 from django.urls import reverse
 from rest_framework import status
@@ -96,7 +97,9 @@ class TestTenantUserDisplayNameConfigPreviewApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_builtin_fields(self, api_client, random_tenant):
         # 由于租户用户顺序不固定，所以需要提前获取
-        tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
+        tenant_users = TenantUser.objects.filter(tenant=random_tenant, data_source__type=DataSourceTypeEnum.REAL)[
+            :3
+        ].select_related("data_source_user")
         resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({full_name})"},
@@ -109,7 +112,9 @@ class TestTenantUserDisplayNameConfigPreviewApi:
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_custom_fields(self, api_client, random_tenant):
-        tenant_users = TenantUser.objects.filter(tenant=random_tenant)[:3].select_related("data_source_user")
+        tenant_users = TenantUser.objects.filter(tenant=random_tenant, data_source__type=DataSourceTypeEnum.REAL)[
+            :3
+        ].select_related("data_source_user")
         resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({test_num})({test_str})"},
@@ -118,7 +123,7 @@ class TestTenantUserDisplayNameConfigPreviewApi:
         assert len(resp.data) == 3
         assert {t["display_name"] for t in resp.data} == {
             f"{t.data_source_user.username}({t.data_source_user.phone})({t.data_source_user.username})"
-            for t in tenant_users[:3]
+            for t in tenant_users
         }
 
     def test_with_not_tenant_user(self, api_client):
