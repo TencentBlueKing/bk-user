@@ -186,13 +186,20 @@ class TenantUserDisplayNameHandler:
     def batch_render_display_name(
         users: List[TenantUser],
         config_map: Dict[str, TenantUserDisplayNameExpressionConfig],
-        data_source_tenant_map: Dict[int, str],
+        data_source_tenant_map: Dict[int, str] | None = None,
     ) -> Dict[str, str]:
         """批量渲染用户展示用名称"""
         if not users:
             return {}
 
         user_display_name_map: Dict[str, str] = {}
+
+        # 如果没有传入 data_source_tenant_map，则从 DataSource 表中查询
+        if not data_source_tenant_map:
+            data_source_ids = {user.data_source_id for user in users}
+            data_source_tenant_map = dict(
+                DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
+            )
 
         # 使用用户数据源的 owner_tenant_id 作为租户 ID 进行分组
         tenant_user_map: Dict[str, List[TenantUser]] = defaultdict(list)
