@@ -38,7 +38,7 @@ class Command(BaseCommand):
         """Define subcommands"""
         subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-        # query subcommand (merged list+get)
+        # query subcommand
         query_parser = subparsers.add_parser("query", help="Query virtual users")
         query_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
         query_parser.add_argument("--login_name")
