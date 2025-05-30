@@ -106,7 +106,14 @@ class TenantUserDisplayNameHandler:
         configs = TenantUserDisplayNameExpressionConfig.objects.filter(tenant_id__in=tenant_ids)
         tenant_config_map = {config.tenant_id: config for config in configs}
 
-        return TenantUserDisplayNameHandler.batch_render_display_name(users, tenant_config_map, data_source_tenant_map)
+        # 构建 data_source_id 到 config 的直接映射
+        data_source_config_map = {
+            data_source_id: tenant_config_map[tenant_id]
+            for data_source_id, tenant_id in data_source_tenant_map.items()
+            if tenant_id in tenant_config_map
+        }
+
+        return TenantUserDisplayNameHandler.batch_render_display_name(users, data_source_config_map)
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
@@ -185,8 +192,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def batch_render_display_name(
         users: List[TenantUser],
-        config_map: Dict[str, TenantUserDisplayNameExpressionConfig],
-        data_source_tenant_map: Dict[int, str] | None = None,
+        data_source_config_map: Dict[int, TenantUserDisplayNameExpressionConfig],
     ) -> Dict[str, str]:
         """批量渲染用户展示用名称"""
         if not users:
@@ -194,29 +200,21 @@ class TenantUserDisplayNameHandler:
 
         user_display_name_map: Dict[str, str] = {}
 
-        # 如果没有传入 data_source_tenant_map，则从 DataSource 表中查询
-        if not data_source_tenant_map:
-            data_source_ids = {user.data_source_id for user in users}
-            data_source_tenant_map = dict(
-                DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
-            )
-
-        # 使用用户数据源的 owner_tenant_id 作为租户 ID 进行分组
-        tenant_user_map: Dict[str, List[TenantUser]] = defaultdict(list)
+        # 使用 data_source_id 直接获取 config 并按 data_source_id 分组
+        tenant_user_map: Dict[int, List[TenantUser]] = defaultdict(list)
         for user in users:
-            owner_tenant_id = data_source_tenant_map[user.data_source_id]
-            tenant_user_map[owner_tenant_id].append(user)
+            tenant_user_map[user.data_source_id].append(user)
 
         # 遍历所有组合
-        for owner_tenant_id, tenant_users in tenant_user_map.items():
-            config = config_map.get(owner_tenant_id)
+        for data_source_id, tenant_users in tenant_user_map.items():
+            config = data_source_config_map.get(data_source_id)
             if not config:
-                logger.error("tenant %s display_name expression config not found", owner_tenant_id)
+                logger.error("data_source %s display_name expression config not found", data_source_id)
                 continue
 
             # 由于未来额外字段查询可能涉及到 N + 1 问题，所以需要单独处理
             extra_values = TenantUserDisplayNameHandler._get_extra_field_values(
-                tenant_users, config.extra_fields, owner_tenant_id
+                tenant_users, config.extra_fields, config.tenant_id
             )
 
             for user in tenant_users:
