@@ -65,7 +65,7 @@ class Command(BaseCommand):
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
     def handle_get(self, tenant_id: str, options):
-        """Handle query virtual users"""
+        """Handle get virtual users"""
         query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
         if username := options.get("username"):
             query &= Q(data_source_user__username=username)
