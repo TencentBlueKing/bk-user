@@ -171,7 +171,7 @@ class UserBuiltinField(TimestampedModel):
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
     required = models.BooleanField("是否必填")
     unique = models.BooleanField("是否唯一")
-    default = models.JSONField("默认值", default=dict)
+    default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
 
     class Meta:
@@ -190,7 +190,7 @@ class TenantUserCustomField(TimestampedModel):
     personal_center_visible = models.BooleanField("是否在个人中心可见", default=False)
     personal_center_editable = models.BooleanField("是否在个人中心可编辑", default=False)
     manager_editable = models.BooleanField("租户管理员是否可重复编辑", default=True)
-    default = models.JSONField("默认值", default=dict)
+    default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
     # 兼容逻辑，只有老版本迁移过来的枚举类型自定义字段会需要
     use_digit_option_id = models.BooleanField("是否使用数字作为选项ID", default=False)
@@ -250,7 +250,7 @@ class TenantUserIDGenerateConfig(TimestampedModel):
     """租户用户 ID 生成规则（兼容 v2 版本迁移数据）"""
 
     # 注：每个数据源只能配置一个到某个租户的生成规则，若到某租户的规则不存在，则生成的租户用户 ID 是 uuid
-    data_source = models.OneToOneField(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, unique=True, db_constraint=False)
     target_tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     rule = models.CharField(
         "租户用户 ID 生成规则",

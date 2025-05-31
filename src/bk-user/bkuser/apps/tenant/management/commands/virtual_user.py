@@ -14,6 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import json
+
 from django.core.management import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Q
@@ -29,34 +31,24 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 class Command(BaseCommand):
     """
     Virtual User Management CLI
-    $ (Query virtual users) python manage.py virtual_user query
-    $ (Create virtual user) python manage.py virtual_user create
-    $ (Update virtual user) python manage.py virtual_user update
+    $ (Get virtual users) python manage.py virtual_user get
+    $ (Upsert virtual user) python manage.py virtual_user upsert
     """
 
     def add_arguments(self, parser):
         """Define subcommands"""
         subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-        # query subcommand
-        query_parser = subparsers.add_parser("query", help="Query virtual users")
-        query_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-        query_parser.add_argument("--login_name")
-        query_parser.add_argument("--full_name")
-        query_parser.add_argument("--bk_username")
+        # get subcommand
+        get_parser = subparsers.add_parser("get", help="Get virtual users")
+        get_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
+        get_parser.add_argument("--username")
 
-        # create subcommand
-        create_parser = subparsers.add_parser("create", help="Create virtual user")
-        create_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-        create_parser.add_argument("--login_name", required=True)
-        create_parser.add_argument("--full_name", required=True)
-
-        # update subcommand
-        update_parser = subparsers.add_parser("update", help="Update virtual user")
-        update_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-        update_parser.add_argument("--old_login_name", required=True)
-        update_parser.add_argument("--new_login_name")
-        update_parser.add_argument("--new_full_name")
+        # upsert subcommand
+        upsert_parser = subparsers.add_parser("upsert", help="Upsert virtual user")
+        upsert_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
+        upsert_parser.add_argument("--username", required=True)
+        upsert_parser.add_argument("--full_name", required=True)
 
     @staticmethod
     def _check_tenant(tenant_id: str):
@@ -65,126 +57,85 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         subcommand = options["subcommand"]
-        if subcommand not in ("query", "create", "update"):
-            raise CommandError(f"subcommand {subcommand} is not supported, only support query/create/update")
+        if subcommand not in ("get", "upsert"):
+            raise CommandError(f"subcommand {subcommand} is not supported, only support get/upsert")
 
         tenant_id = options["tenant_id"]
         self._check_tenant(tenant_id)
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
-    def handle_query(self, tenant_id: str, options):
+    def handle_get(self, tenant_id: str, options):
         """Handle query virtual users"""
         query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
-        if login_name := options.get("login_name"):
-            query &= Q(data_source_user__username=login_name)
-        if full_name := options.get("full_name"):
-            query &= Q(data_source_user__full_name=full_name)
-        if bk_username := options.get("bk_username"):
-            query &= Q(id=bk_username)
+        if username := options.get("username"):
+            query &= Q(data_source_user__username=username)
 
         users = TenantUser.objects.filter(query).select_related("data_source_user").order_by("id")
 
         if not users.exists():
-            self.stdout.write("No virtual users found")
-            return
+            if options.get("username"):
+                raise CommandError(f"Virtual user with username '{options['username']}' not found")
+            raise CommandError("No virtual users found")
 
-        # Single user detail
-        if any([options.get("login_name"), options.get("full_name"), options.get("bk_username")]):
+        if options.get("username"):
+            # Single user
             user = users.first()
             self.stdout.write(
-                f"bk_username: {user.id}\n"
-                f"login_name: {user.data_source_user.username}\n"
-                f"full_name: {user.data_source_user.full_name}\n"
+                json.dumps(
+                    {
+                        "tenant_user_id": user.id,
+                        "username": user.data_source_user.username,
+                        "full_name": user.data_source_user.full_name,
+                    },
+                    ensure_ascii=False,
+                )
             )
-            return
+        else:
+            # List all users
+            for user in users:
+                self.stdout.write(
+                    json.dumps(
+                        {
+                            "tenant_user_id": user.id,
+                            "username": user.data_source_user.username,
+                            "full_name": user.data_source_user.full_name,
+                        },
+                        ensure_ascii=False,
+                    )
+                )
 
-        # List all users
-        self.stdout.write(f"Virtual users for tenant {tenant_id} (Total: {users.count()}):")
-        self.stdout.write("-" * 80)
-        for user in users:
-            self.stdout.write(
-                f"bk_username: {user.id}\n"
-                f"login_name: {user.data_source_user.username}\n"
-                f"full_name: {user.data_source_user.full_name}\n"
-                f"-----------------------------"
-            )
-
-        if not users.exists():
-            self.stdout.write("No virtual users found for this tenant")
-
-    def handle_create(self, tenant_id: str, options):
-        """Handle create virtual user"""
-        login_name = options.get("login_name")
-        full_name = options.get("full_name")
+    def handle_upsert(self, tenant_id: str, options):
+        """upsert virtual user"""
+        username = options["username"]
+        full_name = options["full_name"]
 
         data_source, _ = DataSource.objects.get_or_create(
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
-            plugin_id=DataSourcePluginEnum.LOCAL,
-            defaults={"plugin_config": LocalDataSourcePluginConfig(enable_password=False)},
+            defaults={
+                "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+            },
         )
 
         with transaction.atomic():
-            if DataSourceUser.objects.filter(data_source=data_source, username=login_name).exists():
-                raise CommandError(f"Login name '{login_name}' already exists")
-
-            # Create data source user
-            data_source_user = DataSourceUser.objects.create(
-                data_source=data_source, username=login_name, full_name=full_name, code=login_name
-            )
-
-            # Create tenant user
-            TenantUser.objects.create(
-                id=TenantUserIDGenerator(tenant_id, data_source).gen(data_source_user),
-                tenant_id=tenant_id,
-                data_source_user=data_source_user,
+            # Update if already exists
+            data_source_user, created = DataSourceUser.objects.update_or_create(
                 data_source=data_source,
+                username=username,
+                defaults={
+                    "full_name": full_name,
+                    "code": username,
+                },
             )
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Successfully created virtual user:\n" f"login_name: {login_name}\n" f"full_name: {full_name}"
-            )
-        )
+            if created:
+                # Create tenant user only for newly created data source user
+                TenantUser.objects.create(
+                    id=TenantUserIDGenerator(tenant_id, data_source).gen(data_source_user),
+                    tenant_id=tenant_id,
+                    data_source_user=data_source_user,
+                    data_source=data_source,
+                )
 
-    def handle_update(self, tenant_id: str, options):
-        """Handle update virtual user"""
-        old_login_name = options.get("old_login_name")
-        new_login_name = options.get("new_login_name")
-        new_full_name = options.get("new_full_name")
-
-        if not old_login_name:
-            raise CommandError("--login_name is required for update")
-        if not any([new_login_name, new_full_name]):
-            raise CommandError("At least one of --new_login_name or --new_full_name is required for update")
-
-        with transaction.atomic():
-            # Find virtual data source
-            data_source = DataSource.objects.get(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.VIRTUAL)
-
-            # Find and update data source user
-            try:
-                user = DataSourceUser.objects.get(data_source=data_source, username=old_login_name)
-                if new_login_name:
-                    if (
-                        DataSourceUser.objects.filter(data_source=data_source, username=new_login_name)
-                        .exclude(id=user.id)
-                        .exists()
-                    ):
-                        raise CommandError(f"New login name '{new_login_name}' already exists")
-                    user.username = new_login_name
-
-                if new_full_name:
-                    user.full_name = new_full_name
-
-                user.save()
-            except DataSourceUser.DoesNotExist:
-                raise CommandError(f"Virtual user with login name '{old_login_name}' not found")
-
-        updated_fields = []
-        if new_login_name:
-            updated_fields.append(f"login_name: {new_login_name}")
-        if new_full_name:
-            updated_fields.append(f"full_name: {new_full_name}")
-
-        self.stdout.write(self.style.SUCCESS("Successfully updated virtual user:\n" + "\n".join(updated_fields)))
+        self.stdout.write(f"Successfully upserted virtual user:\n" f"username: {username}\n" f"full_name: {full_name}")
