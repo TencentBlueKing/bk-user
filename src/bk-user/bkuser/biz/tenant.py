@@ -110,7 +110,6 @@ class TenantUserDisplayNameHandler:
         data_source_config_map = {
             data_source_id: tenant_config_map[tenant_id]
             for data_source_id, tenant_id in data_source_tenant_map.items()
-            if tenant_id in tenant_config_map
         }
 
         return TenantUserDisplayNameHandler.batch_render_display_name(users, data_source_config_map)
@@ -207,10 +206,7 @@ class TenantUserDisplayNameHandler:
 
         # 遍历所有组合
         for data_source_id, tenant_users in tenant_user_map.items():
-            config = data_source_config_map.get(data_source_id)
-            if not config:
-                logger.error("data_source %s display_name expression config not found", data_source_id)
-                continue
+            config = data_source_config_map[data_source_id]
 
             # 由于未来额外字段查询可能涉及到 N + 1 问题，所以需要单独处理
             extra_values = TenantUserDisplayNameHandler._get_extra_field_values(

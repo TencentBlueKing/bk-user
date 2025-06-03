@@ -92,7 +92,7 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"].get(obj.id, "-")
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):
