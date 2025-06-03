@@ -64,7 +64,7 @@ class Command(BaseCommand):
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
     def handle_get(self, tenant_id: str, options):
-        """Handle get virtual user"""
+        """get virtual user"""
 
         user = (
             TenantUser.objects.select_related("data_source_user")
