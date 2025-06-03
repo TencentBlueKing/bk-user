@@ -34,7 +34,6 @@ class App(TimestampedModel):
     name = models.CharField("应用名称", max_length=128)
 
 
-# TODO 虚拟账户——责任人关系表
 class VirtualUserOwnerRelation(TimestampedModel):
     owner = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
     virtual_user = models.ForeignKey(VirtualUser, on_delete=models.CASCADE, db_constraint=False)
@@ -46,7 +45,6 @@ class VirtualUserOwnerRelation(TimestampedModel):
         ]
 
 
-# TODO 虚拟账户——应用的关系表
 class VirtualUserAppRelation(TimestampedModel):
     app = models.ForeignKey(App, on_delete=models.CASCADE, db_constraint=False)
     virtual_user = models.ForeignKey(VirtualUser, on_delete=models.CASCADE, db_constraint=False)
