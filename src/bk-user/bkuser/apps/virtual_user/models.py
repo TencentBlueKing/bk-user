@@ -28,6 +28,12 @@ class VirtualUser(TimestampedModel):
     data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE, db_constraint=False)
     tenant_user = models.ForeignKey(TenantUser, on_delete=models.DO_NOTHING, db_constraint=False)
 
+    class Meta:
+        ordering = ["id"]
+        unique_together = [
+            ("data_source_user", "tenant_user"),
+        ]
+
 
 class App(TimestampedModel):
     id = models.CharField("应用唯一标识", primary_key=True, max_length=128, default=generate_uuid)
@@ -36,7 +42,7 @@ class App(TimestampedModel):
 
 
 class VirtualUserOwnerRelation(TimestampedModel):
-    owner = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    owner = models.ForeignKey(TenantUser, on_delete=models.DO_NOTHING, db_constraint=False)
     virtual_user = models.ForeignKey(VirtualUser, on_delete=models.CASCADE, db_constraint=False)
 
     class Meta:
@@ -48,7 +54,7 @@ class VirtualUserOwnerRelation(TimestampedModel):
 
 class VirtualUserAppRelation(TimestampedModel):
     app = models.ForeignKey(App, on_delete=models.DO_NOTHING, db_constraint=False)
-    virtual_user = models.ForeignKey(VirtualUser, on_delete=models.DO_NOTHING, db_constraint=False)
+    virtual_user = models.ForeignKey(VirtualUser, on_delete=models.CASCADE, db_constraint=False)
 
     class Meta:
         ordering = ["id"]
