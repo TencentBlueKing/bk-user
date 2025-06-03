@@ -52,7 +52,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_mapping"].get(obj.id, "-")
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
@@ -83,7 +83,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_mapping"].get(obj.id, "-")
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return self.context["org_path_map"].get(obj.data_source_user_id, [])
@@ -137,7 +137,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_mapping"].get(obj.id, "-")
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return self.context["org_path_map"].get(obj.data_source_user_id, [])
@@ -155,7 +155,7 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_mapping"].get(obj.id, "-")
 
 
 class CurrentUserLanguageUpdateInputSLZ(serializers.Serializer):

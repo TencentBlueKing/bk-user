@@ -71,7 +71,7 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_mapping"].get(obj.id, "-")
 
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):
