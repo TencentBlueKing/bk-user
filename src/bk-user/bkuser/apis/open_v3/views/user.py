@@ -103,7 +103,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     def get_queryset(self):
         return TenantUser.objects.filter(
             tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
-        ).select_related("data_source_user")
+        ).select_related("data_source_user", "data_source")
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
