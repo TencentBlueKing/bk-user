@@ -72,7 +72,7 @@ class Command(BaseCommand):
             data_source_user__username=options["username"],
         )
 
-        user = TenantUser.objects.filter(query).select_related("data_source_user").first()
+        user = TenantUser.objects.select_related("data_source_user").filter(query).first()
 
         if not user:
             raise CommandError(f"Virtual user with username '{options['username']}' not found")
