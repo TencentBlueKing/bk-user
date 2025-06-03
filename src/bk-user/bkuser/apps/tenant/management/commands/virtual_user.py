@@ -18,7 +18,6 @@ import json
 
 from django.core.management import BaseCommand, CommandError
 from django.db import transaction
-from django.db.models import Q
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
@@ -66,16 +65,19 @@ class Command(BaseCommand):
 
     def handle_get(self, tenant_id: str, options):
         """Handle get virtual user"""
-        query = Q(
-            tenant_id=tenant_id,
-            data_source__type=DataSourceTypeEnum.VIRTUAL,
-            data_source_user__username=options["username"],
+
+        user = (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(
+                tenant_id=tenant_id,
+                data_source__type=DataSourceTypeEnum.VIRTUAL,
+                data_source_user__username=options["username"],
+            )
+            .first()
         )
 
-        user = TenantUser.objects.select_related("data_source_user").filter(query).first()
-
         if not user:
-            raise CommandError(f"Virtual user with username '{options['username']}' not found")
+            raise ValueError(f"Virtual user with username '{options['username']}' not found")
 
         self.stdout.write(
             json.dumps(
