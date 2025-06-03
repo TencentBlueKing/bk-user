@@ -302,7 +302,7 @@ class TenantCommonVariable(TimestampedModel):
         unique_together = [("tenant", "name")]
 
 
-class TenantUserDisplayNameExpressionConfig(TimestampedModel):
+class TenantUserDisplayNameExpressionConfig(AuditedModel):
     """租户用户展示名表达式配置"""
 
     tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, unique=True, db_constraint=False)
