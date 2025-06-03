@@ -122,4 +122,4 @@ class Command(BaseCommand):
                     data_source=data_source,
                 )
 
-        self.stdout.write(f"Successfully upserted virtual user:\n" f"username: {username}\n" f"full_name: {full_name}")
+        self.stdout.write(f"Successfully upserted virtual user: {username}")
