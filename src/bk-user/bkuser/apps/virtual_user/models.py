@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from django.db import models
 
+from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.models import TimestampedModel
 from bkuser.utils.uuid import generate_uuid
@@ -23,9 +24,9 @@ from bkuser.utils.uuid import generate_uuid
 
 class VirtualUser(TimestampedModel):
     id = models.CharField("虚拟用户标识", primary_key=True, max_length=128, default=generate_uuid)
-    username = models.CharField("用户名", max_length=128)
-    full_name = models.CharField("姓名", max_length=128)
     desc = models.TextField("描述", default="", blank=True)
+    data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE, db_constraint=False)
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
 
 
 class App(TimestampedModel):
@@ -36,7 +37,7 @@ class App(TimestampedModel):
 
 class VirtualUserOwnerRelation(TimestampedModel):
     owner = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
-    virtual_user = models.ForeignKey(VirtualUser, on_delete=models.CASCADE, db_constraint=False)
+    virtual_user = models.ForeignKey(VirtualUser, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
         ordering = ["id"]
