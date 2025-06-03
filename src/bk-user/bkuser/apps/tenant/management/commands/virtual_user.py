@@ -31,7 +31,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 class Command(BaseCommand):
     """
     Virtual User Management CLI
-    $ (Get virtual users) python manage.py virtual_user get
+    $ (Get virtual user) python manage.py virtual_user get
     $ (Upsert virtual user) python manage.py virtual_user upsert
     """
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
         # get subcommand
         get_parser = subparsers.add_parser("get", help="Get virtual users")
         get_parser.add_argument("--tenant_id", required=True, help="Tenant ID")
-        get_parser.add_argument("--username")
+        get_parser.add_argument("--username", required=True)
 
         # upsert subcommand
         upsert_parser = subparsers.add_parser("upsert", help="Upsert virtual user")
@@ -65,44 +65,28 @@ class Command(BaseCommand):
         getattr(self, f"handle_{subcommand}")(tenant_id, options)
 
     def handle_get(self, tenant_id: str, options):
-        """Handle get virtual users"""
-        query = Q(tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
-        if username := options.get("username"):
-            query &= Q(data_source_user__username=username)
+        """Handle get virtual user"""
+        query = Q(
+            tenant_id=tenant_id,
+            data_source__type=DataSourceTypeEnum.VIRTUAL,
+            data_source_user__username=options["username"],
+        )
 
-        users = TenantUser.objects.filter(query).select_related("data_source_user").order_by("id")
+        user = TenantUser.objects.filter(query).select_related("data_source_user").first()
 
-        if not users.exists():
-            if options.get("username"):
-                raise CommandError(f"Virtual user with username '{options['username']}' not found")
-            raise CommandError("No virtual users found")
+        if not user:
+            raise CommandError(f"Virtual user with username '{options['username']}' not found")
 
-        if options.get("username"):
-            # Single user
-            user = users.first()
-            self.stdout.write(
-                json.dumps(
-                    {
-                        "tenant_user_id": user.id,
-                        "username": user.data_source_user.username,
-                        "full_name": user.data_source_user.full_name,
-                    },
-                    ensure_ascii=False,
-                )
+        self.stdout.write(
+            json.dumps(
+                {
+                    "tenant_user_id": user.id,
+                    "username": user.data_source_user.username,
+                    "full_name": user.data_source_user.full_name,
+                },
+                ensure_ascii=False,
             )
-        else:
-            # List all users
-            for user in users:
-                self.stdout.write(
-                    json.dumps(
-                        {
-                            "tenant_user_id": user.id,
-                            "username": user.data_source_user.username,
-                            "full_name": user.data_source_user.full_name,
-                        },
-                        ensure_ascii=False,
-                    )
-                )
+        )
 
     def handle_upsert(self, tenant_id: str, options):
         """upsert virtual user"""
