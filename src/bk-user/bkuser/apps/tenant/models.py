@@ -307,11 +307,11 @@ class VirtualUserAppRelation(TimestampedModel):
     虚拟用户 - 应用 关联表
     """
 
-    virtual_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
     app_code = models.CharField("应用编码", max_length=128)
 
     class Meta:
-        unique_together = [("app_code", "virtual_user")]
+        unique_together = [("app_code", "tenant_user")]
 
 
 class VirtualUserOwnerRelation(TimestampedModel):
@@ -319,10 +319,10 @@ class VirtualUserOwnerRelation(TimestampedModel):
     虚拟用户 - 责任人 关联表
     """
 
-    virtual_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
     owner = models.ForeignKey(
         TenantUser, on_delete=models.CASCADE, db_constraint=False, related_name="owned_virtual_users"
     )
 
     class Meta:
-        unique_together = [("owner", "virtual_user")]
+        unique_together = [("owner", "tenant_user")]
