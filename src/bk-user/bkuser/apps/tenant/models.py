@@ -322,7 +322,9 @@ class VirtualUserOwnerRelation(TimestampedModel):
     虚拟用户 - 责任人 关联表
     """
 
-    owner = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    owner = models.ForeignKey(
+        TenantUser, on_delete=models.CASCADE, db_constraint=False, related_name="owned_virtual_users"
+    )
     virtual_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
 
     # 冗余字段
