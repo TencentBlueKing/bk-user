@@ -300,3 +300,23 @@ class TenantCommonVariable(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "name")]
+
+
+class VirtualUserAppRelation(TimestampedModel):
+    """虚拟用户"""
+
+    app_code = models.CharField("应用编码", max_length=128)
+    virtual_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+
+    class Meta:
+        unique_together = [("app", "virtual_user")]
+
+
+class VirtualUserOwnerRelation(TimestampedModel):
+    """虚拟用户与"""
+
+    owner = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    virtual_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+
+    class Meta:
+        unique_together = [("owner", "virtual_user")]
