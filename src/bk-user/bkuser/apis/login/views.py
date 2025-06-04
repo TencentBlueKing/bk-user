@@ -246,5 +246,5 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
 
 class TenantUserRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
-    queryset = TenantUser.objects.all()
+    queryset = TenantUser.objects.select_related("data_source_user", "data_source").all()
     lookup_field = "id"

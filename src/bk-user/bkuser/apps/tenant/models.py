@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Tuple
+from typing import List, Tuple
 
 from django.conf import settings
 from django.db import models
@@ -300,3 +300,27 @@ class TenantCommonVariable(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "name")]
+
+
+class TenantUserDisplayNameExpressionConfig(AuditedModel):
+    """租户用户展示名表达式配置"""
+
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, unique=True, db_constraint=False)
+    expression = models.CharField("展示名称表达式", max_length=128)
+    fields = models.JSONField("配置字段", default=dict)
+    # Note: 版本号主要用于表达式变更时，能够自动失效缓存
+    # Q：为什么不采用直接删除缓存的方式？
+    # A：不确定缓存中存储的用户范围，需要遍历所有租户用户进行查找 Key 并删除对应数据，存在性能问题
+    version = models.IntegerField("版本号", default=1)
+
+    @property
+    def builtin_fields(self) -> List[str]:
+        return self.fields["builtin"]
+
+    @property
+    def custom_fields(self) -> List[str]:
+        return self.fields["custom"]
+
+    @property
+    def extra_fields(self) -> List[str]:
+        return self.fields["extra"]

@@ -21,7 +21,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
@@ -93,7 +92,7 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):

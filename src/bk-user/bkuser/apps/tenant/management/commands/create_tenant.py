@@ -25,11 +25,18 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalData
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import (
+    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
     DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
     TENANT_ID_REGEX,
     BuiltInTenantIDEnum,
 )
-from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.apps.tenant.models import (
+    Tenant,
+    TenantManager,
+    TenantUser,
+    TenantUserDisplayNameExpressionConfig,
+    TenantUserValidityPeriodConfig,
+)
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
@@ -78,6 +85,10 @@ class Command(BaseCommand):
         """初始化租户的默认配置"""
         # 账号有效期
         TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
+        # DisplayName 表达式
+        TenantUserDisplayNameExpressionConfig.objects.create(
+            tenant=tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+        )
 
     @staticmethod
     def _init_builtin_manager(tenant: Tenant, data_source: DataSource, password: str):

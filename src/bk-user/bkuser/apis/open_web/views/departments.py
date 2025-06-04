@@ -42,6 +42,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 
 class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
@@ -166,11 +167,9 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = (
-            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.REAL)
-            .select_related("data_source_user")
-            .only("id", "data_source_user__username", "data_source_user__full_name")
-        )
+        queryset = TenantUser.objects.filter(
+            tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.REAL
+        ).select_related("data_source_user")
 
         # 若指定部门 ID 不为 0，则获取部门下的用户
         if department_id := self.kwargs["id"]:
@@ -197,6 +196,13 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             queryset = queryset.exclude(data_source_user_id__in=user_ids)
 
         return queryset
+
+    def get_serializer_context(self):
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     @swagger_auto_schema(
         tags=["open_web.department"],

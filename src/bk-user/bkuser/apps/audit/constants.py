@@ -95,6 +95,9 @@ class OperationEnum(StrStructuredEnum):
     MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG = EnumField(
         "modify_tenant_account_validity_period_config", label=_("修改租户账户有效期配置")
     )
+    MODIFY_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG = EnumField(
+        "modify_tenant_user_display_name_expression_config", label=_("修改租户用户显示名称表达式配置")
+    )
 
     # 虚拟用户
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
