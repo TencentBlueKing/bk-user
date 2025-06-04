@@ -314,7 +314,7 @@ class VirtualUserAppRelation(TimestampedModel):
     data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
-        unique_together = [("app", "virtual_user")]
+        unique_together = [("app_code", "virtual_user")]
 
 
 class VirtualUserOwnerRelation(TimestampedModel):
