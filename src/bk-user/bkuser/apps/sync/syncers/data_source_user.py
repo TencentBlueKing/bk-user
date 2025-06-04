@@ -33,6 +33,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
+from bkuser.apps.tenant.tasks import batch_delete_tenant_user_display_names
 from bkuser.apps.tenant.utils import is_username_frozen
 from bkuser.plugins.models import RawDataSourceUser
 
@@ -93,6 +94,11 @@ class DataSourceUserSyncer:
                 batch_size=self.batch_size,
             )
             DataSourceUser.objects.bulk_create(waiting_create_users, batch_size=self.batch_size)
+
+            # 将所有更新用户的 display_name 缓存失效
+            transaction.on_commit(
+                lambda: batch_delete_tenant_user_display_names.delay([user.id for user in waiting_update_users])
+            )
 
         self.ctx.logger.info(f"delete {len(waiting_delete_users)} users")
         self.ctx.recorder.add(SyncOperation.DELETE, DataSourceSyncObjectType.USER, waiting_delete_users)

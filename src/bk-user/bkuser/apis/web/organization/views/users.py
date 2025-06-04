@@ -71,6 +71,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantUserStatus
+from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     Tenant,
@@ -78,6 +79,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
+from bkuser.apps.tenant.tasks import batch_delete_tenant_user_display_names
 from bkuser.apps.tenant.utils import TenantUserIDGenerator, is_username_frozen
 from bkuser.biz.auditor import (
     TenantUserAccountExpiredAtUpdateAuditor,
@@ -533,6 +535,8 @@ class TenantUserRetrieveUpdateDestroyApi(
                     tenant_user.status = TenantUserStatus.ENABLED
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
+            # 失效 DisplayName 缓存
+            transaction.on_commit(lambda: DisplayNameCacheHandler.delete_display_name_cache(tenant_user))
 
         # 【审计】将审计记录保存至数据库
         auditor.record(tenant_user)
@@ -1280,5 +1284,8 @@ class TenantUserCustomFieldBatchUpdateApi(
             data_source_user.updated_at = now
 
         DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
+
+        # 失效 DisplayName 缓存
+        batch_delete_tenant_user_display_names.delay([data_source_user.id for data_source_user in data_source_users])
 
         return Response(status=status.HTTP_204_NO_CONTENT)

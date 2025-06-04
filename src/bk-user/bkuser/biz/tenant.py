@@ -33,6 +33,7 @@ from bkuser.apps.tenant.constants import (
     DisplayNameExpressionExtraFieldEnum,
 )
 from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField
+from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler, DisplayNameCacheManager
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     DataSource,
@@ -81,7 +82,16 @@ class TenantUserDisplayNameHandler:
         # 如果是协同租户用户，使用源租户的表达式配置
 
         config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.data_source.owner_tenant_id)
-        return TenantUserDisplayNameHandler.render_display_name(user, config)
+
+        # 首先从缓存获取
+        display_name = DisplayNameCacheManager.get_display_name(user.id, config.version)
+        if not display_name:
+            # 如果缓存中没有，则从数据库中获取
+            display_name = TenantUserDisplayNameHandler.render_display_name(user, config)
+            # 将获取到的展示名缓存到 Redis 中
+            DisplayNameCacheManager.set_display_name(user.id, config.version, display_name)
+
+        return display_name
 
     @staticmethod
     def batch_generate_tenant_user_display_name(users: List[TenantUser]) -> Dict[str, str]:
@@ -91,10 +101,34 @@ class TenantUserDisplayNameHandler:
         注意：调用时需要提前连表查询 `data_source_user`，否则会导致 N+1 问题
         不需要强制关联 DataSource，本方法内部会优化查询
         """
-
         if not users:
             return {}
 
+        # 获取所有用户的 data_source_id 到 config 的映射
+        data_source_config_map = TenantUserDisplayNameHandler._get_data_source_config_map(users)
+
+        # 1. 从缓存中获取已有的 display_name 映射，以及需要渲染的用户列表
+        display_name_map, users_need_render = DisplayNameCacheHandler.get_display_names_from_cache(
+            users, data_source_config_map
+        )
+
+        # 2. 渲染需要渲染的用户列表
+        if users_need_render:
+            rendered_display_names = TenantUserDisplayNameHandler.batch_render_display_name(
+                users_need_render, data_source_config_map
+            )
+            display_name_map.update(rendered_display_names)
+
+            # 3. 将新渲染的结果缓存
+            DisplayNameCacheHandler.set_rendered_display_names_cache(
+                users_need_render, data_source_config_map, rendered_display_names
+            )
+
+        return display_name_map
+
+    @staticmethod
+    def _get_data_source_config_map(users: List[TenantUser]) -> Dict[int, TenantUserDisplayNameExpressionConfig]:
+        """获取 data_source_id 到 config 的映射"""
         # 一次性获取所有用户的 data_source_id，并建立 data_source_id 到 owner_tenant_id 的映射
         data_source_ids = {user.data_source_id for user in users}
         data_source_tenant_map = dict(
@@ -107,12 +141,10 @@ class TenantUserDisplayNameHandler:
         tenant_config_map = {config.tenant_id: config for config in configs}
 
         # 构建 data_source_id 到 config 的直接映射
-        data_source_config_map = {
+        return {
             data_source_id: tenant_config_map[tenant_id]
             for data_source_id, tenant_id in data_source_tenant_map.items()
         }
-
-        return TenantUserDisplayNameHandler.batch_render_display_name(users, data_source_config_map)
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
