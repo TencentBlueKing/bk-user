@@ -335,7 +335,8 @@ class VirtualUserAppRelation(TimestampedModel):
     app_code = models.CharField("应用编码", max_length=128)
 
     class Meta:
-        unique_together = [("app_code", "tenant_user")]
+        unique_together = [("tenant_user", "app_code")]
+        index_together = [("app_code", "tenant_user")]
 
 
 class VirtualUserOwnerRelation(TimestampedModel):
@@ -349,4 +350,5 @@ class VirtualUserOwnerRelation(TimestampedModel):
     )
 
     class Meta:
-        unique_together = [("owner", "tenant_user")]
+        unique_together = [("tenant_user", "owner")]
+        index_together = [("owner", "tenant_user")]
