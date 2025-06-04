@@ -324,3 +324,31 @@ class TenantUserDisplayNameExpressionConfig(AuditedModel):
     @property
     def extra_fields(self) -> List[str]:
         return self.fields["extra"]
+
+
+class VirtualUserAppRelation(TimestampedModel):
+    """
+    虚拟用户 - 应用 关联表
+    """
+
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    app_code = models.CharField("应用编码", max_length=128)
+
+    class Meta:
+        unique_together = [("tenant_user", "app_code")]
+        index_together = [("app_code", "tenant_user")]
+
+
+class VirtualUserOwnerRelation(TimestampedModel):
+    """
+    虚拟用户 - 责任人 关联表
+    """
+
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    owner = models.ForeignKey(
+        TenantUser, on_delete=models.CASCADE, db_constraint=False, related_name="owned_virtual_users"
+    )
+
+    class Meta:
+        unique_together = [("tenant_user", "owner")]
+        index_together = [("owner", "tenant_user")]
