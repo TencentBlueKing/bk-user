@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     "bkuser.apps.natural_user",
     "bkuser.apps.permission",
     "bkuser.apps.notification",
-    "bkuser.apps.virtual_user",
 ]
 
 MIDDLEWARE = [
