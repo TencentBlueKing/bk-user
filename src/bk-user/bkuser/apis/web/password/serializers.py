@@ -20,7 +20,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -76,7 +75,7 @@ class TenantUserMatchedByTokenOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="展示用名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
 
 class ResetPasswordByTokenInputSLZ(serializers.Serializer):

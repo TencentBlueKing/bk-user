@@ -25,7 +25,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 from .serializers import AuditRecordListInputSLZ, AuditRecordListOutputSLZ
 
@@ -69,7 +69,9 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_user_ids = self.paginate_queryset(self.get_queryset().values_list("creator", flat=True))
 
         return {
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+            "user_display_name_map": TenantUserDisplayNameHandler.get_tenant_user_display_name_map_by_ids(
+                tenant_user_ids
+            ),
         }
 
     @swagger_auto_schema(

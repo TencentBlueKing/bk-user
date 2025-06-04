@@ -31,4 +31,14 @@ urlpatterns = [
         views.TenantUserValidityPeriodConfigRetrieveUpdateApi.as_view(),
         name="tenant_user_validity_period_config.retrieve_update",
     ),
+    path(
+        "settings/tenant-user-display-name-expression/",
+        views.TenantUserDisplayNameExpressionConfigRetrieveUpdateApi.as_view(),
+        name="tenant_user_display_name_expression_config.retrieve_update",
+    ),
+    path(
+        "settings/tenant-user-display-name-expression/preview/",
+        views.TenantUserDisplayNameExpressionConfigPreviewApi.as_view(),
+        name="tenant_user_display_name_expression_config.preview",
+    ),
 ]

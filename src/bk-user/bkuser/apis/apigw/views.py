@@ -19,6 +19,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 from .mixins import InnerApiCommonMixin
 from .serializers import TenantUserContactInfoListInputSLZ, TenantUserContactInfoListOutputSLZ
@@ -57,6 +58,13 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(id__in=data["bk_usernames"], tenant_id=self.tenant_id).select_related(
             "data_source_user"
         )
+
+    def get_serializer_context(self):
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

@@ -17,7 +17,6 @@
 from rest_framework import serializers
 
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.serializers import StringArrayField
 
 
@@ -34,7 +33,7 @@ class TenantUserContactInfoListOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return self.context["display_name_mapping"][obj.id]
 
     def get_phone(self, obj: TenantUser) -> str:
         return obj.phone_info[0]
