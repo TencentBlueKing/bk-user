@@ -14,44 +14,49 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import Callable
+
 import pytest
 from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from django.urls import reverse
 from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
 
+def _create_owners_for_test(create_real_owner: Callable, tenant: Tenant, owners: list[str]):
+    for owner in owners:
+        create_real_owner(tenant, owner)
+
+
 class TestVirtualUserCreateApi:
     def test_create_virtual_user_success(self, api_client, valid_data, create_real_owner, random_tenant):
-        create_real_owner(random_tenant)
+        _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
         url = reverse("virtual_user.list_create")
-        data = valid_data
         resp = api_client.post(
             url,
-            data=data,
+            data=valid_data,
         )
         assert resp.status_code == status.HTTP_201_CREATED
-        data_source_user = DataSourceUser.objects.get(username=data["username"])
+        data_source_user = DataSourceUser.objects.get(username=valid_data["username"])
         tenant_user = TenantUser.objects.get(data_source_user=data_source_user)
         assert resp.data["id"] == tenant_user.id
-        assert DataSourceUser.objects.filter(username=data["username"]).exists()
+        assert DataSourceUser.objects.filter(username=valid_data["username"]).exists()
 
     def test_create_virtual_user_duplicate_username(self, api_client, valid_data, create_real_owner, random_tenant):
-        create_real_owner(random_tenant)
+        _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
         url = reverse("virtual_user.list_create")
-        data = valid_data
-        resp = api_client.post(url, data=data)
+        resp = api_client.post(url, data=valid_data)
         assert resp.status_code == status.HTTP_201_CREATED
 
         # 第二次创建应失败
-        resp = api_client.post(url, data=data)
+        resp = api_client.post(url, data=valid_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert f"用户名 {valid_data['username']} 已存在" in resp.data["message"]
 
     def test_create_virtual_user_invalid_owner(self, api_client, valid_data, create_real_owner, random_tenant):
-        create_real_owner(random_tenant)
+        _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
         data = valid_data.copy()
         data["owners"] = ["invalid_owner"]
         resp = api_client.post(reverse("virtual_user.list_create"), data=data)
@@ -59,9 +64,9 @@ class TestVirtualUserCreateApi:
         assert "用户 invalid_owner 不存在" in resp.data["message"]
 
     def test_create_virtual_user_duplicate_app_codes(self, api_client, valid_data, create_real_owner, random_tenant):
-        create_real_owner(random_tenant)
         data = valid_data.copy()
         data["app_codes"] = ["app_code_1", "app_code_1", "app_code_2"]
+        _create_owners_for_test(create_real_owner, random_tenant, data["owners"])
         resp = api_client.post(reverse("virtual_user.list_create"), data=data)
         assert resp.status_code == status.HTTP_201_CREATED
 
@@ -74,7 +79,7 @@ class TestVirtualUserCreateApi:
         ]
 
     def test_create_virtual_user_relations(self, api_client, valid_data, create_real_owner, random_tenant):
-        create_real_owner(random_tenant)
+        _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
         resp = api_client.post(reverse("virtual_user.list_create"), data=valid_data)
         assert resp.status_code == status.HTTP_201_CREATED
 

@@ -39,13 +39,13 @@ def valid_data():
         "phone": "13800000000",
         "phone_country_code": "86",
         "app_codes": ["app1", "app2"],
-        "owners": ["real_user"],
+        "owners": ["real_user_1", "real_user_2"],
     }
 
 
 @pytest.fixture
 def create_real_owner():
-    def _create(tenant: Tenant, username="real_user"):
+    def _create(tenant: Tenant, username: str):
         data_source, _ = DataSource.objects.get_or_create(
             type=DataSourceTypeEnum.REAL,
             owner_tenant_id=tenant.id,
