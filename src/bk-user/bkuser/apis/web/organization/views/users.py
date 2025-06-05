@@ -1286,6 +1286,8 @@ class TenantUserCustomFieldBatchUpdateApi(
         DataSourceUser.objects.bulk_update(data_source_users, fields=["extras", "updated_at"])
 
         # 失效 DisplayName 缓存
-        batch_delete_tenant_user_display_names.delay([data_source_user.id for data_source_user in data_source_users])
+        batch_delete_tenant_user_display_names.delay(
+            [data_source_user.id for data_source_user in data_source_users], cur_tenant_id
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

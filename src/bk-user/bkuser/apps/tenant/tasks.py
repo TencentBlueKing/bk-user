@@ -80,13 +80,14 @@ def update_expired_tenant_user_status():
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def batch_delete_tenant_user_display_names(data_source_user_ids: List[int]):
+def batch_delete_tenant_user_display_names(data_source_user_ids: List[int], tenant_id: str):
     """
     批量失效 DisplayName 缓存
     """
     logger.info(f"starting to invalidate display name cache for {len(data_source_user_ids)} data source users")
 
-    # 查询相关的租户用户
-    tenant_users = TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids)
+    # 查询相关的本租户用户
+    tenant_users = TenantUser.objects.filter(tenant_id=tenant_id, data_source_user_id__in=data_source_user_ids)
+
     # 批量失效缓存
     DisplayNameCacheHandler.batch_delete_display_name_cache(tenant_users)

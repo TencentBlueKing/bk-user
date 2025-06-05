@@ -97,7 +97,9 @@ class DataSourceUserSyncer:
 
             # 将所有更新用户的 display_name 缓存失效
             transaction.on_commit(
-                lambda: batch_delete_tenant_user_display_names.delay([user.id for user in waiting_update_users])
+                lambda: batch_delete_tenant_user_display_names.delay(
+                    [user.id for user in waiting_update_users], self.data_source.owner_tenant_id
+                )
             )
 
         self.ctx.logger.info(f"delete {len(waiting_delete_users)} users")

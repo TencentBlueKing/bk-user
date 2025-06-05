@@ -75,7 +75,9 @@ class TenantUserSyncer:
             # 因为可能存在数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，会使用一致的租户用户 ID
             # 如果此时数据源用户属性被修改，则会导致租户用户展示名不一致
             data_source_user_ids = [user.data_source_user_id for user in waiting_create_tenant_users]
-            transaction.on_commit(lambda: batch_delete_tenant_user_display_names.delay(data_source_user_ids))
+            transaction.on_commit(
+                lambda: batch_delete_tenant_user_display_names.delay(data_source_user_ids, self.tenant.id)
+            )
 
         # 记录删除日志，变更记录
         self.ctx.logger.info(f"delete {len(waiting_delete_tenant_users)} tenant users")

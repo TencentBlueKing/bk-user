@@ -16,16 +16,25 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-from collections import defaultdict
 from typing import Dict, List, Tuple
 
+from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum, cached
 
 logger = logging.getLogger(__name__)
 
 # DisplayName 缓存过期时间（默认为 30 天）
 DisplayNameDefaultTimeout = 30 * 24 * 60 * 60
+# 配置 config 缓存过期时间（默认为 2 分钟）
+ConfigCacheTimeout = 120
+
+
+@cached(timeout=ConfigCacheTimeout)
+def get_display_name_config(tenant_id: str) -> TenantUserDisplayNameExpressionConfig:
+    """获取指定租户的展示名配置"""
+    return TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
 
 
 class DisplayNameCacheManager:
@@ -86,66 +95,143 @@ class DisplayNameCacheHandler:
     """DisplayName 缓存处理类"""
 
     @staticmethod
+    def build_default_display_name_config() -> TenantUserDisplayNameExpressionConfig:
+        return TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
+
+    @staticmethod
+    def _split_users_by_tenant(users: List[TenantUser]) -> Tuple[List[TenantUser], List[TenantUser]]:
+        """区分本租户用户与协同租户用户"""
+        if not users:
+            return [], []
+
+        # 为了避免 n + 1 问题，需要提前获取所有用户数据源所属租户的信息
+        data_source_ids = [user.data_source_id for user in users]
+        data_source_tenant_map = dict(
+            DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
+        )
+
+        current_tenant_users: List[TenantUser] = []
+        collaboration_users: List[TenantUser] = []
+        for user in users:
+            owner_tenant_id = data_source_tenant_map[user.data_source_id]
+            if owner_tenant_id == user.tenant_id:
+                current_tenant_users.append(user)
+            else:
+                collaboration_users.append(user)
+
+        return current_tenant_users, collaboration_users
+
+    @staticmethod
+    def _get_cached_display_names(
+        users: List[TenantUser],
+        config: TenantUserDisplayNameExpressionConfig,
+    ) -> Tuple[Dict[str, str], List[TenantUser]]:
+        if not users:
+            return {}, []
+
+        # 批量获取用户的 ID 列表并从缓存获取 display_name
+        user_ids = [user.id for user in users]
+        cached_display_names = DisplayNameCacheManager.batch_get_display_name(user_ids, config.version)
+
+        # 记录未缓存的用户，后续需要重新渲染
+        cached_user_ids = list(cached_display_names.keys())
+        users_need_render = [user for user in users if user.id not in cached_user_ids]
+
+        return cached_display_names, users_need_render
+
+    @staticmethod
     def get_display_names_from_cache(
         users: List[TenantUser],
-        data_source_config_map: Dict[int, TenantUserDisplayNameExpressionConfig],
     ) -> Tuple[Dict[str, str], List[TenantUser]]:
         """从缓存获取已有的 display_name，返回缓存结果和需要渲染的用户列表"""
         display_name_map: Dict[str, str] = {}
         users_need_render: List[TenantUser] = []
 
-        # 按 data_source_id 分组用户，每组使用相同的 config
-        data_source_user_map: Dict[int, List[TenantUser]] = defaultdict(list)
-        for user in users:
-            data_source_user_map[user.data_source_id].append(user)
+        # 按租户类型分组用户
+        current_tenant_users, collaboration_users = DisplayNameCacheHandler._split_users_by_tenant(users)
 
-        for data_source_id, tenant_users in data_source_user_map.items():
-            config = data_source_config_map[data_source_id]
+        # 批量处理本租户用户
+        if current_tenant_users:
+            config = get_display_name_config(current_tenant_users[0].tenant_id)
+            cached_names, uncached_users = DisplayNameCacheHandler._get_cached_display_names(
+                current_tenant_users, config
+            )
+            display_name_map.update(cached_names)
+            users_need_render.extend(uncached_users)
 
-            # 尝试从缓存获取这组用户的 display_name
-            user_ids = [user.id for user in tenant_users]
-            cached_display_names = DisplayNameCacheManager.batch_get_display_name(user_ids, config.version)
-            display_name_map.update(cached_display_names)
-
-            # 将缓存中没有的用户加入待渲染列表
-            cached_user_ids = set(cached_display_names.keys())
-            users_need_render.extend([user for user in tenant_users if user.id not in cached_user_ids])
+        # 批量处理协同租户用户
+        if collaboration_users:
+            config = DisplayNameCacheHandler.build_default_display_name_config()
+            cached_names, uncached_users = DisplayNameCacheHandler._get_cached_display_names(
+                collaboration_users, config
+            )
+            display_name_map.update(cached_names)
+            users_need_render.extend(uncached_users)
 
         return display_name_map, users_need_render
 
     @staticmethod
     def set_rendered_display_names_cache(
         users_need_render: List[TenantUser],
-        data_source_config_map: Dict[int, TenantUserDisplayNameExpressionConfig],
-        rendered_display_name_map: Dict[str, str],
+        display_name_map: Dict[str, str],
     ):
         """将渲染结果缓存"""
-        # 因为不同租户的表达式版本号不同，所以需要按 data_source_id 分组进行缓存
-        data_source_user_map: Dict[int, List[TenantUser]] = defaultdict(list)
-        for user in users_need_render:
-            data_source_user_map[user.data_source_id].append(user)
+        # 按租户类型分组用户
+        current_tenant_users, collaboration_users = DisplayNameCacheHandler._split_users_by_tenant(users_need_render)
 
-        for data_source_id, tenant_users in data_source_user_map.items():
-            config = data_source_config_map[data_source_id]
-            display_name_map = {user.id: rendered_display_name_map[user.id] for user in tenant_users}
-            # 缓存渲染结果
-            DisplayNameCacheManager.batch_set_display_name(display_name_map, config.version)
+        # 批量处理本租户用户缓存
+        if current_tenant_users:
+            config = get_display_name_config(current_tenant_users[0].tenant_id)
+            current_tenant_display_names = {user.id: display_name_map[user.id] for user in current_tenant_users}
+            DisplayNameCacheManager.batch_set_display_name(current_tenant_display_names, config.version)
+
+        # 批量处理协同租户用户缓存
+        if collaboration_users:
+            config = DisplayNameCacheHandler.build_default_display_name_config()
+            collaboration_display_names = {user.id: display_name_map[user.id] for user in collaboration_users}
+            DisplayNameCacheManager.batch_set_display_name(collaboration_display_names, config.version)
 
     @staticmethod
     def delete_display_name_cache(user: TenantUser):
         """失效 DisplayName 缓存"""
+        # NOTE：这里输入的一定为当前租户用户，因为只有当前租户用户才会触发这个方法
         data_source_user = user.data_source_user
-        users = TenantUser.objects.filter(data_source_user=data_source_user)
+        collaboration_tenant_users = TenantUser.objects.filter(data_source_user=data_source_user).exclude(
+            tenant_id=user.tenant_id
+        )
 
-        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.data_source.owner_tenant_id)
-        DisplayNameCacheManager.batch_delete_display_name([user.id for user in users], config.version)
+        # 删除本租户用户缓存
+        config = get_display_name_config(user.tenant_id)
+        DisplayNameCacheManager.delete_display_name(user.id, config.version)
+
+        # 删除协同租户用户缓存
+        if collaboration_tenant_users:
+            config = DisplayNameCacheHandler.build_default_display_name_config()
+            DisplayNameCacheManager.batch_delete_display_name(
+                [user.id for user in collaboration_tenant_users], config.version
+            )
 
     @staticmethod
     def batch_delete_display_name_cache(users: List[TenantUser]):
         """批量失效 DisplayName 缓存"""
+        # NOTE：这里输入的一定为当前租户用户，因为只有当前租户用户才会触发这个方法
+
         if not users:
             return
 
-        # 失效的用户都属于同一数据源，且表达式配置相同
-        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=users[0].data_source.owner_tenant_id)
+        # 获取协同至其他租户的用户
+        data_source_user_ids = [user.data_source_user_id for user in users]
+        collaboration_tenant_users = TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).exclude(
+            tenant_id=users[0].tenant_id
+        )
+
+        # 删除本租户用户缓存
+        config = get_display_name_config(users[0].tenant_id)
         DisplayNameCacheManager.batch_delete_display_name([user.id for user in users], config.version)
+
+        # 删除协同租户用户缓存
+        if collaboration_tenant_users:
+            config = DisplayNameCacheHandler.build_default_display_name_config()
+            DisplayNameCacheManager.batch_delete_display_name(
+                [user.id for user in collaboration_tenant_users], config.version
+            )
