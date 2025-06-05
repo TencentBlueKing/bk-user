@@ -26,7 +26,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.auditor import VirtualUserAuditor
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -53,9 +53,15 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         data = slz.validated_data
 
         # 过滤当前租户的虚拟用户
-        queryset = TenantUser.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
-        ).select_related("data_source_user")
+        # Note: 使用 prefetch_related 避免 N+1 问题
+        queryset = (
+            TenantUser.objects.filter(
+                tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
+            )
+            .select_related("data_source_user")
+            .prefetch_related("virtualuserownerrelation_set__owner__data_source_user")
+            .prefetch_related("virtualuserapprelation_set")
+        )
 
         # 关键字过滤
         if keyword := data.get("keyword"):
@@ -103,6 +109,35 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                 data_source_user=user,
                 tenant_id=tenant_id,
                 data_source=data_source,
+            )
+            # 创建虚拟用户与应用的关联
+            VirtualUserAppRelation.objects.bulk_create(
+                [
+                    VirtualUserAppRelation(
+                        tenant_user=tenant_user,
+                        app_code=app_code,
+                    )
+                    for app_code in data["app_codes"]
+                ]
+            )
+            # 预先查询所有owner对应的 TenantUser ID, 建立username到id到映射
+            owner_usernames = data["owners"]
+            owner_mapping = {
+                user.data_source_user.username: user.id
+                for user in TenantUser.objects.filter(
+                    data_source_user__username__in=owner_usernames,
+                ).select_related("data_source_user")
+            }
+            # 创建虚拟用户与责任人的关联
+            VirtualUserOwnerRelation.objects.bulk_create(
+                [
+                    VirtualUserOwnerRelation(
+                        tenant_user=tenant_user,
+                        owner_id=owner_mapping[owner],
+                    )
+                    for owner in owner_usernames
+                    if owner in owner_mapping
+                ]
             )
 
         # 【审计】创建虚拟用户审计对象
