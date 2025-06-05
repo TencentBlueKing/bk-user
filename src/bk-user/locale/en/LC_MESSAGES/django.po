@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-05 12:04+0800\n"
+"POT-Creation-Date: 2025-06-05 20:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -346,7 +346,7 @@ msgstr "The department does not exist"
 
 #: bkuser/apis/web/organization/serializers/users.py:132
 #: bkuser/apis/web/organization/serializers/users.py:595
-#: bkuser/apis/web/virtual_user/serializers.py:61
+#: bkuser/apis/web/virtual_user/serializers.py:64
 msgid "用户名 {} 已存在"
 msgstr "Username {} already exists"
 
@@ -826,13 +826,10 @@ msgstr "There are invalid fields in the expression: {}"
 msgid "表达式中必须存在唯一字段"
 msgstr "There must be a unique field in the expression"
 
-#: bkuser/apis/web/virtual_user/serializers.py:100
-msgid "用户 {} 不存在"
-msgstr "User {} does not exist"
-
-#: bkuser/apis/web/virtual_user/serializers.py:102
-msgid "用户 {} 不是实体用户"
-msgstr "User {} is not a real User"
+#: bkuser/apis/web/virtual_user/serializers.py:106
+#: bkuser/apis/web/virtual_user/serializers.py:152
+msgid "用户 {} 不存在或不是实体用户"
+msgstr "User {} is not exists or is not a real User"
 
 #: bkuser/apps/audit/constants.py:25 bkuser/apps/idp/constants.py:40
 msgid "数据源"
@@ -2174,6 +2171,9 @@ msgstr "message"
 #: tests/utils/test_std_error.py:81
 msgid "new message"
 msgstr "new message"
+
+#~ msgid "用户 {} 不存在"
+#~ msgstr "User {} does not exist"
 
 #~ msgid "租户 {} 的展示名表达式配置不存在，请联系管理员"
 #~ msgstr ""

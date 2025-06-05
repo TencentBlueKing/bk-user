@@ -46,11 +46,11 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_app_codes(self, obj: TenantUser) -> List[str]:
-        return list(obj.virtualuserapprelation_set.values_list("app_code", flat=True))
+        return [r.app_code for r in getattr(obj, "_prefetched_app_relations", [])]
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_owners(self, obj: TenantUser) -> List[str]:
-        return list(obj.virtualuserownerrelation_set.values_list("owner__data_source_user__username", flat=True))
+        return [rel.owner.data_source_user.username for rel in getattr(obj, "_prefetched_owner_relations", [])]
 
 
 def _validate_duplicate_data_source_username(data_source_id: str, username: str, data_source_user_id: int = 0) -> str:

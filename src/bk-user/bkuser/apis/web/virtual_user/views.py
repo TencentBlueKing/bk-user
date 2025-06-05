@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 from django.db import transaction
-from django.db.models import Q, QuerySet
+from django.db.models import Prefetch, Q, QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -53,10 +53,26 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         data = slz.validated_data
 
         # 过滤当前租户的虚拟用户
-        queryset = TenantUser.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
-        ).select_related("data_source_user")
-
+        queryset = (
+            TenantUser.objects.filter(
+                tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
+            )
+            .select_related("data_source_user")
+            .prefetch_related(
+                Prefetch(
+                    "virtualuserapprelation_set",
+                    queryset=VirtualUserAppRelation.objects.only("app_code"),
+                    to_attr="_prefetched_app_relations",
+                ),
+                Prefetch(
+                    "virtualuserownerrelation_set__owner__data_source_user",
+                    queryset=VirtualUserOwnerRelation.objects.select_related(
+                        Prefetch("owner__data_source_user", queryset=DataSourceUser.objects.only("username"))
+                    ),
+                    to_attr="_prefetched_owner_relations",
+                ),
+            )
+        )
         # 关键字过滤
         if keyword := data.get("keyword"):
             queryset = queryset.filter(
