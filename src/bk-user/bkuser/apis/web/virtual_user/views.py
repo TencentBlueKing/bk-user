@@ -120,7 +120,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                     for app_code in data["app_codes"]
                 ]
             )
-            # 预先查询所有owner对应的 TenantUser ID, 建立username到id到映射
+            # 预先查询所有 owner 对应的 TenantUser ID, 建立 username 到 id 到映射
             owner_usernames = data["owners"]
             owner_mapping = {
                 user.data_source_user.username: user.id
