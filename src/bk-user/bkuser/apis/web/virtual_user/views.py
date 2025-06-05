@@ -53,15 +53,9 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         data = slz.validated_data
 
         # 过滤当前租户的虚拟用户
-        # Note: 使用 prefetch_related 避免 N+1 问题
-        queryset = (
-            TenantUser.objects.filter(
-                tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
-            )
-            .select_related("data_source_user")
-            .prefetch_related("virtualuserownerrelation_set__owner__data_source_user")
-            .prefetch_related("virtualuserapprelation_set")
-        )
+        queryset = TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
+        ).select_related("data_source_user")
 
         # 关键字过滤
         if keyword := data.get("keyword"):
@@ -122,21 +116,23 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             )
             # 预先查询所有 owner 对应的 TenantUser ID, 建立 username 到 id 到映射
             owner_usernames = data["owners"]
-            owner_mapping = {
-                user.data_source_user.username: user.id
-                for user in TenantUser.objects.filter(
+            owner_mapping = dict(
+                TenantUser.objects.filter(
                     data_source_user__username__in=owner_usernames,
-                ).select_related("data_source_user")
-            }
+                    data_source__type=DataSourceTypeEnum.REAL,
+                )
+                .select_related("data_source_user")
+                .values_list("data_source_user__username", "id")
+            )
             # 创建虚拟用户与责任人的关联
             VirtualUserOwnerRelation.objects.bulk_create(
                 [
                     VirtualUserOwnerRelation(
                         tenant_user=tenant_user,
-                        owner_id=owner_mapping[owner],
+                        owner_id=owner_mapping[username],
                     )
-                    for owner in owner_usernames
-                    if owner in owner_mapping
+                    for username in owner_usernames
+                    if username in owner_mapping
                 ]
             )
 
@@ -196,6 +192,34 @@ class VirtualUserRetrieveUpdateDestroyApi(
         data_source_user.phone_country_code = data["phone_country_code"]
         data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
 
+        # 更新虚拟用户与应用的关联
+        VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).delete()
+        VirtualUserAppRelation.objects.bulk_create(
+            [VirtualUserAppRelation(tenant_user=tenant_user, app_code=app_code) for app_code in data["app_codes"]]
+        )
+
+        # 更新虚拟用户与责任人的关联
+        owner_usernames = data["owners"]
+        owner_mapping = dict(
+            TenantUser.objects.filter(
+                data_source_user__username__in=owner_usernames,
+                data_source__type=DataSourceTypeEnum.REAL,
+            )
+            .select_related("data_source_user")
+            .values_list("data_source_user__username", "id")
+        )
+
+        VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).delete()
+        VirtualUserOwnerRelation.objects.bulk_create(
+            [
+                VirtualUserOwnerRelation(
+                    tenant_user=tenant_user,
+                    owner_id=owner_mapping[username],
+                )
+                for username in owner_usernames
+                if username in owner_mapping
+            ]
+        )
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_user)
 
@@ -217,6 +241,11 @@ class VirtualUserRetrieveUpdateDestroyApi(
         with transaction.atomic():
             tenant_user.delete()
             data_source_user.delete()
+
+            # 删除虚拟用户与应用的关联
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).delete()
+            #  删除虚拟用户和责任人的关联
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).delete()
 
         # 【审计】将审计记录保存至数据库
         auditor.record_delete()

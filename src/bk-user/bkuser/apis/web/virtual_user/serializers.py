@@ -18,6 +18,7 @@ from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -43,11 +44,13 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
 
-    def get_app_names(self, obj: TenantUser) -> List[str]:
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
+    def get_app_codes(self, obj: TenantUser) -> List[str]:
         return list(obj.virtualuserapprelation_set.values_list("app_code", flat=True))
 
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_owners(self, obj: TenantUser) -> List[str]:
-        return [rel.owner.data_source_user.username for rel in obj.virtualuserownerrelation_set.all()]
+        return list(obj.virtualuserownerrelation_set.values_list("owner__data_source_user__username", flat=True))
 
 
 def _validate_duplicate_data_source_username(data_source_id: str, username: str, data_source_user_id: int = 0) -> str:
@@ -87,19 +90,20 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
 
         return attrs
 
-    def validate_app_codes(self, app_codes: List[str]) -> List[str]:
+    def validate_app_codes(self, app_codes: list[str]) -> list[str]:
         # 过滤重复值
         return list(set(app_codes))
 
-    def validate_owners(self, owners: List[str]) -> List[str]:
+    def validate_owners(self, owners: list[str]) -> list[str]:
         # 过滤重复值
         owners = list(set(owners))
         # 责任人必须存在且为实体用户
         for owner in owners:
-            if not DataSourceUser.objects.filter(username=owner).exists():
-                raise ValidationError(_("用户 {} 不存在").format(owner))
-            if not DataSourceUser.objects.filter(username=owner, data_source__type=DataSourceTypeEnum.REAL):
-                raise ValidationError(_("用户 {} 不是实体用户").format(owner))
+            if not TenantUser.objects.filter(
+                data_source_user__username=owner,
+                data_source__type=DataSourceTypeEnum.REAL,
+            ).exists():
+                raise ValidationError(_("用户 {} 不存在或不是实体用户").format(owner))
 
         return owners
 
@@ -114,6 +118,8 @@ class VirtualUserRetrieveOutputSLZ(VirtualUserListOutputSLZ):
 
 class VirtualUserUpdateInputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名")
+    app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
+    owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
     email = serializers.EmailField(help_text="邮箱", required=False, default="", allow_blank=True)
     phone = serializers.CharField(help_text="手机号", required=False, default="", allow_blank=True)
     phone_country_code = serializers.CharField(
@@ -129,3 +135,20 @@ class VirtualUserUpdateInputSLZ(serializers.Serializer):
                 raise ValidationError(str(e))
 
         return attrs
+
+    def validate_app_codes(self, app_codes: list[str]) -> list[str]:
+        # 过滤重复值
+        return list(set(app_codes))
+
+    def validate_owners(self, owners: list[str]) -> list[str]:
+        # 过滤重复值
+        owners = list(set(owners))
+        # 责任人必须存在且为实体用户
+        for owner in owners:
+            if not TenantUser.objects.filter(
+                data_source_user__username=owner,
+                data_source__type=DataSourceTypeEnum.REAL,
+            ).exists():
+                raise ValidationError(_("用户 {} 不存在或不是实体用户").format(owner))
+
+        return owners
