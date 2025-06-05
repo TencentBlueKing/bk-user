@@ -48,6 +48,10 @@
               <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
             </bk-radio-group>
           </bk-form-item>
+
+          <bk-form-item :label="$t('用户展示名')" required>
+            <UserDisplayNameConfig v-model:data="formData.display_name_config" />
+          </bk-form-item>
         </Row>
       </bk-form>
       <bk-button
@@ -98,6 +102,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
+import UserDisplayNameConfig from '@/components/user-display-name-config/userDisplayNameConfig.vue';
 import { useValidate } from '@/hooks';
 import { getTenantInfo, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
@@ -115,6 +120,7 @@ const formData = ref({
   logo: '',
   visible: true,
   user_number_visible: true,
+  display_name_config: [],
 });
 
 const rules = {
@@ -133,6 +139,18 @@ watch(() => isEdit.value, (val) => {
 onMounted(() => {
   initTenantInfo();
 });
+
+const handleGetValue = () => {
+  let str = '';
+  for (const item of formData.value.display_name_config) {
+    if (item.type === 'field') {
+      str += `{${item.value}}`;
+    } else {
+      str += item.value;
+    }
+  }
+  return str;
+};
 
 let originalData = {};
 const isDisabled = ref(true);
