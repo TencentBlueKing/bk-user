@@ -17,7 +17,7 @@
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -45,10 +45,10 @@ def valid_data():
 
 @pytest.fixture
 def create_real_owner():
-    def _create(tenant_id, username="real_user"):
+    def _create(tenant: Tenant, username="real_user"):
         data_source, _ = DataSource.objects.get_or_create(
             type=DataSourceTypeEnum.REAL,
-            owner_tenant_id=tenant_id,
+            owner_tenant_id=tenant.id,
             defaults={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
@@ -59,9 +59,9 @@ def create_real_owner():
             data_source=data_source,
         )
         TenantUser.objects.create(
-            id=TenantUserIDGenerator(tenant_id, data_source).gen(ds_user),
+            id=TenantUserIDGenerator(tenant.id, data_source).gen(ds_user),
             data_source=data_source,
-            tenant_id=tenant_id,
+            tenant=tenant,
             data_source_user=ds_user,
         )
 
