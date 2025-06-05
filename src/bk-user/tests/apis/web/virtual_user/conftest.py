@@ -28,11 +28,6 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def data_source_id():
-    return 114514
-
-
-@pytest.fixture
 def valid_data() -> dict:
     return {
         "username": "v_user",
