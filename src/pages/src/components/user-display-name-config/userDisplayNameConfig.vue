@@ -18,13 +18,13 @@
         <template #content>
           <div class="flex">
             <SelectPanel
-              title="字段"
+              :title="$t('字段')"
               :options="fieldOptions"
               class="border-r-[1px] border-[#DCDEE5]"
-              tips="最多仅允许添加3个字段"
+              :tips="$t('最多仅允许添加3个字段')"
               @change="handleFieldChange" />
             <SelectPanel
-              title="符号"
+              :title="$t('符号')"
               :options="symbolOptions"
               @change="handleSymbolChange" />
           </div>

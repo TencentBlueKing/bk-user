@@ -7,11 +7,11 @@
       :class="innerClassName || ''"
       class="cursor-pointer h-[24px] w-[52px] rounded-[2px] hover:bg-[#E1ECFF] flex justify-center items-center">
       <eye :width="16" :height="16" fill="#3A84FF" />
-      <span class="select-none ml-[4px] text-[#3A84FF]">预览</span>
+      <span class="select-none ml-[4px] text-[#3A84FF]">{{ $t('预览') }}</span>
     </div>
     <template #content>
       <ul class="text-[#4D4F56]">
-        <li>结果预览</li>
+        <li>{{ $t('结果预览') }}</li>
         <li class="name-tag">zhangsan (张三)</li>
         <li class="name-tag">lisi (李四)</li>
         <li class="name-tag">wangwu (王五)</li>

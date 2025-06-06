@@ -59,7 +59,6 @@ onMounted(() => {
     new Sortable(listContainer.value, {
       animation: 150,
       onEnd: (e: { oldIndex: number; newIndex: number; }) => {
-        console.log(e)
         emit('sort', {
           oldIndex: e.oldIndex,
           newIndex: e.newIndex,
