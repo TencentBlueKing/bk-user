@@ -42,7 +42,7 @@ def valid_data() -> dict:
 
 @pytest.fixture
 def create_real_owner() -> Callable[[Tenant, str], None]:
-    def _create(tenant: Tenant, username: str):
+    def _create(tenant: Tenant, tenant_user_id: str):
         data_source, _ = DataSource.objects.get_or_create(
             type=DataSourceTypeEnum.REAL,
             owner_tenant_id=tenant.id,
@@ -52,37 +52,11 @@ def create_real_owner() -> Callable[[Tenant, str], None]:
             },
         )
         ds_user = DataSourceUser.objects.create(
-            username=username,
+            username=tenant_user_id,
             data_source=data_source,
         )
         TenantUser.objects.create(
-            id=TenantUserIDGenerator(tenant.id, data_source).gen(ds_user),
-            data_source=data_source,
-            tenant=tenant,
-            data_source_user=ds_user,
-        )
-
-    return _create
-
-
-@pytest.fixture
-def create_virtual_user() -> Callable[[Tenant, str, str], None]:
-    def _create(tenant: Tenant, username: str, full_name=""):
-        data_source, _ = DataSource.objects.get_or_create(
-            type=DataSourceTypeEnum.VIRTUAL,
-            owner_tenant_id=tenant.id,
-            defaults={
-                "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
-            },
-        )
-        ds_user = DataSourceUser.objects.create(
-            username=username,
-            data_source=data_source,
-            full_name=full_name,
-        )
-        TenantUser.objects.create(
-            id=TenantUserIDGenerator(tenant.id, data_source).gen(ds_user),
+            id=tenant_user_id,
             data_source=data_source,
             tenant=tenant,
             data_source_user=ds_user,
@@ -140,17 +114,8 @@ def create_virtual_user_with_relations(
             )
         # 创建责任人关联
         if owners:
-            owner_mapping = dict(
-                TenantUser.objects.filter(
-                    data_source__type=DataSourceTypeEnum.REAL, data_source_user__username__in=owners
-                ).values_list("data_source_user__username", "id")
-            )
             VirtualUserOwnerRelation.objects.bulk_create(
-                [
-                    VirtualUserOwnerRelation(tenant_user=tenant_user, owner_id=owner_mapping[owner])
-                    for owner in owners
-                    if owner in owner_mapping
-                ]
+                [VirtualUserOwnerRelation(tenant_user=tenant_user, owner_id=owner) for owner in owners]
             )
 
         return tenant_user

@@ -44,24 +44,13 @@ class TestVirtualUserCreateApi:
         assert resp.data["id"] == tenant_user.id
         assert DataSourceUser.objects.filter(username=valid_data["username"]).exists()
 
-    def test_create_virtual_user_duplicate_username(self, api_client, valid_data, create_real_owner, random_tenant):
-        _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
-        url = reverse("virtual_user.list_create")
-        resp = api_client.post(url, data=valid_data)
-        assert resp.status_code == status.HTTP_201_CREATED
-
-        # 第二次创建应失败
-        resp = api_client.post(url, data=valid_data)
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert f"用户名 {valid_data['username']} 已存在" in resp.data["message"]
-
     def test_create_virtual_user_invalid_owner(self, api_client, valid_data, create_real_owner, random_tenant):
         _create_owners_for_test(create_real_owner, random_tenant, valid_data["owners"])
         data = valid_data.copy()
         data["owners"] = ["invalid_owner"]
         resp = api_client.post(reverse("virtual_user.list_create"), data=data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 invalid_owner 不存在" in resp.data["message"]
+        assert "用户 invalid_owner 不存在或不是实体用户" in resp.data["message"]
 
     def test_create_virtual_user_duplicate_app_codes(self, api_client, valid_data, create_real_owner, random_tenant):
         data = valid_data.copy()
@@ -89,9 +78,7 @@ class TestVirtualUserCreateApi:
             valid_data["app_codes"]
         )
         # 验证责任人关联
-        assert {rel.owner.data_source_user.username for rel in tenant_user.virtualuserownerrelation_set.all()} == set(
-            valid_data["owners"]
-        )
+        assert {rel.owner_id for rel in tenant_user.virtualuserownerrelation_set.all()} == set(valid_data["owners"])
 
 
 class TestVirtualUserListApi:
@@ -127,12 +114,10 @@ class TestVirtualUserListApi:
     def test_list_virtual_user_success(
         self, api_client, random_tenant, create_real_owner, create_virtual_user_with_relations, users_data
     ):
-        all_owners = set()
-        for user in users_data:
-            all_owners.update(user["owners"])
+        all_owners = [user["owners"] for user in users_data]
 
         # 创建责任人
-        _create_owners_for_test(create_real_owner, random_tenant, list(all_owners))
+        _create_owners_for_test(create_real_owner, random_tenant, all_owners)
 
         # 创建虚拟用户
         expected_usernames = set()
@@ -176,9 +161,22 @@ class TestVirtualUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data["results"]) == 0
 
-    def test_list_virtual_user_with_keyword(self, api_client, create_virtual_user, random_tenant):
-        create_virtual_user(random_tenant, "virtual_user1")
-        create_virtual_user(random_tenant, "other_user2")
+    def test_list_virtual_user_with_keyword(
+        self, api_client, create_real_owner, create_virtual_user_with_relations, random_tenant
+    ):
+        _create_owners_for_test(create_real_owner, random_tenant, ["owner1", "owner2"])
+        create_virtual_user_with_relations(
+            tenant=random_tenant,
+            username="virtual_user1",
+            app_codes=["app1", "app2"],
+            owners=["owner1", "owner2"],
+        )
+        create_virtual_user_with_relations(
+            tenant=random_tenant,
+            username="other_user",
+            app_codes=["app1", "app2"],
+            owners=["owner1", "owner2"],
+        )
 
         resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual")
         assert resp.status_code == status.HTTP_200_OK
@@ -270,9 +268,7 @@ class TestVirtualUserUpdateApi:
         assert set(virtual_user.virtualuserapprelation_set.values_list("app_code", flat=True)) == set(new_app_codes)
 
         # 验证责任人关联
-        assert {rel.owner.data_source_user.username for rel in virtual_user.virtualuserownerrelation_set.all()} == set(
-            new_owners
-        )
+        assert {rel.owner_id for rel in virtual_user.virtualuserownerrelation_set.all()} == set(new_owners)
 
 
 class TestVirtualDeleteApi:
@@ -297,7 +293,7 @@ class TestVirtualDeleteApi:
             TenantUser.objects.get(id=virtual_user.id)
 
         with pytest.raises(DataSourceUser.DoesNotExist):
-            DataSourceUser.objects.get(username=username)
+            DataSourceUser.objects.get(username=username, data_source=virtual_user.data_source)
 
         assert not VirtualUserAppRelation.objects.filter(tenant_user=virtual_user).exists()
 

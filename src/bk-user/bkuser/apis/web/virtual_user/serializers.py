@@ -46,11 +46,11 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_app_codes(self, obj: TenantUser) -> List[str]:
-        return list(obj.virtualuserapprelation_set.values_list("app_code", flat=True))
+        return self.context["app_codes_mapping"][obj.id]
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_owners(self, obj: TenantUser) -> List[str]:
-        return list(obj.virtualuserownerrelation_set.values_list("owner__data_source_user__username", flat=True))
+        return self.context["owners_mapping"][obj.id]
 
 
 def _validate_duplicate_data_source_username(data_source_id: str, username: str, data_source_user_id: int = 0) -> str:
@@ -100,7 +100,7 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
         # 责任人必须存在且为实体用户
         for owner in owners:
             if not TenantUser.objects.filter(
-                data_source_user__username=owner,
+                id=owner,
                 data_source__type=DataSourceTypeEnum.REAL,
             ).exists():
                 raise ValidationError(_("用户 {} 不存在或不是实体用户").format(owner))

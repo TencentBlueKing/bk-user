@@ -64,6 +64,29 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             )
         return queryset
 
+    def get_serializer_context(self):
+        virtual_user_ids = [user.id for user in self.get_queryset()]
+
+        app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=virtual_user_ids).values_list(
+            "tenant_user_id", "app_code"
+        )
+        # 虚拟用户与 app_code 之间的映射
+        app_codes_mapping: dict[str, list[str]] = {}
+        for tenant_user_id, app_code in app_relations:
+            if tenant_user_id not in app_codes_mapping:
+                app_codes_mapping[tenant_user_id] = []
+            app_codes_mapping[tenant_user_id].append(app_code)
+
+        owner_relations = VirtualUserOwnerRelation.objects.filter(tenant_user_id__in=virtual_user_ids)
+        # 虚拟用户与责任人列表之间的映射
+        owners_mapping: dict[str, list[str]] = {}
+        for relation in owner_relations:
+            if relation.tenant_user_id not in owners_mapping:
+                owners_mapping[relation.tenant_user_id] = []
+            owners_mapping[relation.tenant_user_id].append(relation.owner_id)
+
+        return {"app_codes_mapping": app_codes_mapping, "owners_mapping": owners_mapping}
+
     @swagger_auto_schema(
         tags=["virtual_user"],
         operation_description="虚拟用户列表",
@@ -114,25 +137,14 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                     for app_code in data["app_codes"]
                 ]
             )
-            # 预先查询所有 owner 对应的 TenantUser ID, 建立 username 到 id 到映射
-            owner_usernames = data["owners"]
-            owner_mapping = dict(
-                TenantUser.objects.filter(
-                    data_source_user__username__in=owner_usernames,
-                    data_source__type=DataSourceTypeEnum.REAL,
-                )
-                .select_related("data_source_user")
-                .values_list("data_source_user__username", "id")
-            )
             # 创建虚拟用户与责任人的关联
             VirtualUserOwnerRelation.objects.bulk_create(
                 [
                     VirtualUserOwnerRelation(
                         tenant_user=tenant_user,
-                        owner_id=owner_mapping[username],
+                        owner_id=owner,
                     )
-                    for username in owner_usernames
-                    if username in owner_mapping
+                    for owner in data["owners"]
                 ]
             )
 
@@ -157,6 +169,19 @@ class VirtualUserRetrieveUpdateDestroyApi(
         return TenantUser.objects.filter(
             tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
         )
+
+    def get_serializer_context(self):
+        tenant_user = self.get_object()
+
+        app_codes = list(
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
+        )
+
+        owner_ids = list(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
+        )
+
+        return {"app_codes_mapping": {tenant_user.id: app_codes}, "owners_mapping": {tenant_user.id: owner_ids}}
 
     @swagger_auto_schema(
         tags=["virtual_user"],
@@ -199,25 +224,14 @@ class VirtualUserRetrieveUpdateDestroyApi(
         )
 
         # 更新虚拟用户与责任人的关联
-        owner_usernames = data["owners"]
-        owner_mapping = dict(
-            TenantUser.objects.filter(
-                data_source_user__username__in=owner_usernames,
-                data_source__type=DataSourceTypeEnum.REAL,
-            )
-            .select_related("data_source_user")
-            .values_list("data_source_user__username", "id")
-        )
-
         VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).delete()
         VirtualUserOwnerRelation.objects.bulk_create(
             [
                 VirtualUserOwnerRelation(
                     tenant_user=tenant_user,
-                    owner_id=owner_mapping[username],
+                    owner_id=owner,
                 )
-                for username in owner_usernames
-                if username in owner_mapping
+                for owner in data["owners"]
             ]
         )
         # 【审计】将审计记录保存至数据库
