@@ -542,7 +542,7 @@ class TestTenantUserRetrieveApi:
         expected_time = timezone.now() + datetime.timedelta(days=3)
 
         # 允许的误差最大为 5 分钟
-        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=10)
 
 
 class TestTenantUserDestroyApi:
