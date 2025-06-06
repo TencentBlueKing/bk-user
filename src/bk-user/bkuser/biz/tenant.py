@@ -30,6 +30,7 @@ from bkuser.apps.tenant.constants import (
     DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
 )
+from bkuser.apps.tenant.display_name_cache import get_display_name_config
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     DataSource,
@@ -78,7 +79,7 @@ class TenantUserDisplayNameHandler:
         # 如果是协同租户用户，使用默认的表达式配置
 
         if user.data_source.owner_tenant_id == user.tenant_id:
-            config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.tenant_id)
+            config = get_display_name_config(user.tenant_id)
         else:
             config = TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
         return TenantUserDisplayNameHandler.render_display_name(user, config)
@@ -188,7 +189,7 @@ class TenantUserDisplayNameHandler:
             owner_tenant_id = data_source_tenant_map[user.data_source_id]
             # 如果为本租户用户，则直接使用本租户的配置
             if owner_tenant_id == user.tenant_id:
-                config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.tenant_id)
+                config = get_display_name_config(user.tenant_id)
             # 如果为协同租户用户，则使用默认的 display_name 表达式配置
             else:
                 config = TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
@@ -236,7 +237,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def build_display_name_search_queries(tenant_id: str, keyword: str) -> Q:
         """根据不同字段类型构建展示名搜索查询条件"""
-        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+        config = get_display_name_config(tenant_id)
 
         # 构建内置字段查询条件
         builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)
