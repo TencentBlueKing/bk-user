@@ -12,9 +12,12 @@
     <template #content>
       <ul class="text-[#4D4F56]">
         <li>{{ $t('结果预览') }}</li>
-        <li class="name-tag">zhangsan (张三)</li>
-        <li class="name-tag">lisi (李四)</li>
-        <li class="name-tag">wangwu (王五)</li>
+        <li
+          class="name-tag"
+          v-for="(item, index) in previewList"
+          :key="index">
+          {{ item?.display_name || '' }}
+        </li>
       </ul>
     </template>
   </bk-popover>
@@ -25,6 +28,7 @@ import { Eye } from 'bkui-vue/lib/icon';
 
 defineProps<{
   innerClassName: string
+  previewList: { display_name: string }[]
 }>();
 
 </script>

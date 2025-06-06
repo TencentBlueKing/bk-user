@@ -1,9 +1,17 @@
 <template>
   <div>
-    <ConfigPreview inner-class-name="absolute -top-[28px] left-[90px]" />
+    <ConfigPreview
+      inner-class-name="absolute -top-[28px] left-[90px]"
+      :preview-list="previewList" />
     <div class="flex">
       <div class="mr-[4px]">
-        <showTags :data="data" @delete="handleDeleteTag" @sort="handleSortTag" />
+        <bk-loading :loading="isLoading" size="small">
+          <showTags
+            :data="data"
+            :value-map="tagValueMap"
+            @delete="handleDeleteTag"
+            @sort="handleSortTag" />
+        </bk-loading>
       </div>
       <bk-popover
         trigger="click"
@@ -35,7 +43,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import ConfigPreview from './configPreview.vue';
 import { SYMBOL_OPTIONS } from './select-panel/data';
@@ -46,24 +54,22 @@ import showTags from './showTags.vue';
 import { getFields } from '@/http';
 
 const data = defineModel<any[]>('data');
+defineProps<{
+  previewList: { display_name: string }[]
+}>();
+const emit = defineEmits(['change']);
+const tagValueMap = computed(() => [...fieldOptions.value, ...symbolOptions.value]);
 
 const handleDeleteTag = (index: number) => {
-  data.value.splice(index, 1);
-  for (const item of fieldOptions.value) {
-    if (selectedFieldValue.value.findIndex(field => field.value === item.id) !== -1) {
-      item.hide = true;
-      item.disabled = false;
-    } else {
-      item.hide = false;
-      item.disabled = false;
-    }
-  }
+  const item = data.value.splice(index, 1);
   isAllFieldDisabled = false;
+  emit('change', item, 'delete');
 };
 
 const handleSortTag = ({ oldIndex, newIndex }: {oldIndex: number, newIndex: number}) => {
   const item = data.value.splice(oldIndex, 1)[0];
   data.value.splice(newIndex, 0, item);
+  emit('change', item, 'sort');
 };
 
 const fieldOptions = ref([]);
@@ -73,16 +79,12 @@ const selectedFieldValue = computed(() => data.value.filter(item => item.type ==
 
 const handleFieldChange = (option: IOption) => {
   if (selectedFieldValue.value.length >= 3) return;
-
-  data.value.push({
+  const curItem = {
     type: 'field',
     value: option.id,
-    label: option.value,
-  });
-  const optionIndex = fieldOptions.value.findIndex(item => item.id === option.id);
-  fieldOptions.value[optionIndex].hide = true;
-
-  fieldEnableManagement();
+  };
+  data.value.push(curItem);
+  emit('change', curItem, 'add');
 };
 
 let isAllFieldDisabled = false;
@@ -112,29 +114,57 @@ const fieldEnableManagement = () => {
   }
 };
 
+const fieldShowManagement = () => {
+  for (const item of fieldOptions.value) {
+    if (selectedFieldValue.value.findIndex(field => field.value === item.id) !== -1) {
+      item.hide = true;
+      item.disabled = false;
+    } else {
+      item.hide = false;
+      item.disabled = false;
+    }
+  }
+};
+
 const handleSymbolChange = (option: IOption) => {
-  data.value.push({
+  const curItem = {
     type: 'symbol',
     value: option.id,
-    label: option.value,
-  });
+  };
+  data.value.push(curItem);
+  emit('change', curItem, 'add');
 };
 
+const isLoading = ref(false);
 const handleFetchFields = async () => {
-  const res = await getFields();
-  const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
-  [builtinFields, customFields].forEach((fields) => {
-    const fieldsArr = fields.map(item => ({
-      id: item.name,
-      value: item.display_name,
-      icon: 'user-icon icon-app-store-fill bg-[#F8B64F]',
-    }));
-    fieldOptions.value = [...fieldOptions.value, ...fieldsArr];
-  });
+  try {
+    isLoading.value = true;
+    const res = await getFields();
+    const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
+    [builtinFields, customFields].forEach((fields) => {
+      const fieldsArr = fields.map(item => ({
+        id: item.name,
+        value: item.display_name,
+        icon: 'user-icon icon-app-store-fill bg-[#F8B64F]',
+      }));
+      fieldOptions.value = [...fieldOptions.value, ...fieldsArr];
+    });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-onMounted(() => {
-  handleFetchFields();
+watch(data, () => {
+  fieldShowManagement();
+  fieldEnableManagement();
+}, { deep: true });
+
+onMounted(async () => {
+  await handleFetchFields();
+  fieldShowManagement();
+  fieldEnableManagement();
 });
 
 </script>

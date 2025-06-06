@@ -9,7 +9,7 @@
         @dragstart="isDragging = true"
         @dragend="isDragging = false"
         :class="[typeColorMap[item.type] ,'show-tag']">
-        <span>{{ item.label }}</span>
+        <span>{{ getCurIdLabel(item.value) }}</span>
         <i
           v-if="curHoverIndex === index && !isDragging"
           class="bk-sq-icon icon-close-fill text-[#979BA5] text-[14px] absolute -top-[5px]"
@@ -30,8 +30,12 @@ interface IProps {
     value: number | string
     label: number | string
   }[]
+  valueMap: {
+    id: number | string
+    value: number | string
+  }[]
 }
-defineProps<IProps>();
+const props = defineProps<IProps>();
 const emit = defineEmits(['delete', 'sort']);
 const listContainer = ref<HTMLElement>();
 const typeColorMap = {
@@ -53,6 +57,8 @@ const handleDeleteItem = (index: number) => {
   emit('delete', index);
   handleMouseLeave();
 };
+
+const getCurIdLabel = (id: string | number) => props.valueMap.find(item => item.id === id)?.value || '';
 
 onMounted(() => {
   if (listContainer.value) {
