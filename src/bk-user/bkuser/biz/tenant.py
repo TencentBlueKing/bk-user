@@ -23,7 +23,6 @@ from typing import Dict, List, Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from django.db.models.query import QuerySet
 from pydantic import BaseModel
 
 from bkuser.apps.tenant.constants import (
@@ -32,7 +31,6 @@ from bkuser.apps.tenant.constants import (
 )
 from bkuser.apps.tenant.display_name_cache import get_display_name_config
 from bkuser.apps.tenant.models import (
-    CollaborationStrategy,
     DataSource,
     DataSourceUser,
     TenantUser,
@@ -249,16 +247,6 @@ class TenantUserDisplayNameHandler:
 
         field_queries = reduce(operator.or_, builtin_queries)
         return field_queries & Q(data_source__owner_tenant_id=tenant_id)
-
-    @staticmethod
-    def _get_collaboration_tenant_display_name_expression_config(
-        tenant_id: str,
-    ) -> QuerySet[TenantUserDisplayNameExpressionConfig]:
-        """获取协同租户的展示名表达式配置"""
-        source_tenant_ids = CollaborationStrategy.objects.filter(target_tenant_id=tenant_id).values_list(
-            "source_tenant_id", flat=True
-        )
-        return TenantUserDisplayNameExpressionConfig.objects.filter(tenant_id__in=source_tenant_ids)
 
     @staticmethod
     def _build_builtin_field_queries(builtin_fields: List[str], keyword: str) -> List[Q]:
