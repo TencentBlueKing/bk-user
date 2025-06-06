@@ -77,7 +77,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
         """生成租户用户展示名"""
-
+        # 如果是协同租户用户，使用默认的表达式配置
         if user.data_source.owner_tenant_id == user.tenant_id:
             config = get_display_name_config(user.tenant_id)
         else:
@@ -197,14 +197,14 @@ class TenantUserDisplayNameHandler:
             DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
         )
 
-        # 遍历所有用户
+        # 遍历所有用户，渲染 display_name
         for user in users:
             field_value_map = {}
             owner_tenant_id = data_source_tenant_map[user.data_source_id]
-            # 如果为本租户，则使用本租户的 display_name 表达式配置
+            # 如果为本租户用户，则使用本租户的 display_name 表达式配置
             if owner_tenant_id == user.tenant_id:
                 config = get_display_name_config(user.tenant_id)
-            # 如果为协同租户，则使用默认的 display_name 表达式配置
+            # 如果为协同租户用户，则使用默认的 display_name 表达式配置
             else:
                 config = DisplayNameCacheHandler.build_default_display_name_config()
 
