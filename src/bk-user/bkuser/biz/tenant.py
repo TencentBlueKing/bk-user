@@ -17,7 +17,6 @@
 
 import logging
 import operator
-from collections import defaultdict
 from functools import reduce
 from typing import Dict, List, Optional
 
@@ -28,11 +27,9 @@ from django.db.models.query import QuerySet
 from pydantic import BaseModel
 
 from bkuser.apps.tenant.constants import (
-    DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS,
+    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
-    DisplayNameExpressionExtraFieldEnum,
 )
-from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     DataSource,
@@ -78,9 +75,12 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
         """生成租户用户展示名"""
-        # 如果是协同租户用户，使用源租户的表达式配置
+        # 如果是协同租户用户，使用默认的表达式配置
 
-        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.data_source.owner_tenant_id)
+        if user.data_source.owner_tenant_id == user.tenant_id:
+            config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.tenant_id)
+        else:
+            config = TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
         return TenantUserDisplayNameHandler.render_display_name(user, config)
 
     @staticmethod
@@ -89,30 +89,17 @@ class TenantUserDisplayNameHandler:
         批量生成租户用户展示名
 
         注意：调用时需要提前连表查询 `data_source_user`，否则会导致 N+1 问题
-        不需要强制关联 DataSource，本方法内部会优化查询
         """
 
         if not users:
             return {}
 
-        # 一次性获取所有用户的 data_source_id，并建立 data_source_id 到 owner_tenant_id 的映射
-        data_source_ids = {user.data_source_id for user in users}
-        data_source_tenant_map = dict(
-            DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
-        )
+        # TODO：后续加入缓存逻辑
+        # 1. 先获取 display_name 缓存
+        # 2. 对于缓存不存在的用户，则执行 batch_render_display_name 方法进行渲染
+        # 3. 将渲染后的结果保存到缓存中
 
-        # 获取所有租户 ID（包括协同用户源租户 ID）
-        tenant_ids = set(data_source_tenant_map.values())
-        configs = TenantUserDisplayNameExpressionConfig.objects.filter(tenant_id__in=tenant_ids)
-        tenant_config_map = {config.tenant_id: config for config in configs}
-
-        # 构建 data_source_id 到 config 的直接映射
-        data_source_config_map = {
-            data_source_id: tenant_config_map[tenant_id]
-            for data_source_id, tenant_id in data_source_tenant_map.items()
-        }
-
-        return TenantUserDisplayNameHandler.batch_render_display_name(users, data_source_config_map)
+        return TenantUserDisplayNameHandler.batch_render_display_name(users)
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
@@ -152,17 +139,12 @@ class TenantUserDisplayNameHandler:
 
         custom_field_names = {field.name for field in TenantUserCustomField.objects.filter(tenant_id=tenant_id)}
 
-        extra_fields = [
-            DisplayNameExpressionExtraField(**field)  # type: ignore
-            for field in DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS
-        ]
-        extra_field_names = {field.name for field in extra_fields}
-
+        # TODO: 后续支持 extra 字段
         # 集合运算 & 求交集，比遍历判断更高效
         return {
             "builtin": list(set(fields) & builtin_field_names),
             "custom": list(set(fields) & custom_field_names),
-            "extra": list(set(fields) & extra_field_names),
+            "extra": [],
         }
 
     @staticmethod
@@ -172,14 +154,10 @@ class TenantUserDisplayNameHandler:
         # 获取各类字段值
         builtin_values = TenantUserDisplayNameHandler._get_builtin_field_values(user, config.builtin_fields)
         custom_values = TenantUserDisplayNameHandler._get_custom_field_values(user, config.custom_fields)
-        extra_values = TenantUserDisplayNameHandler._get_extra_field_values(
-            [user], config.extra_fields, owner_tenant_id=user.data_source.owner_tenant_id
-        )
 
         field_value_map = {}
         field_value_map.update(builtin_values)
         field_value_map.update(custom_values)
-        field_value_map.update(extra_values[user.id])
 
         # 使用正则表达式替换表达式中的字段为对应值
         # match 是正则表达式从表达式（expression）中匹配到的对象，group(1) 是匹配到的第一个分组，即字段名
@@ -191,7 +169,6 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def batch_render_display_name(
         users: List[TenantUser],
-        data_source_config_map: Dict[int, TenantUserDisplayNameExpressionConfig],
     ) -> Dict[str, str]:
         """批量渲染用户展示用名称"""
         if not users:
@@ -199,36 +176,34 @@ class TenantUserDisplayNameHandler:
 
         user_display_name_map: Dict[str, str] = {}
 
-        # 使用 data_source_id 直接获取 config 并按 data_source_id 分组
-        tenant_user_map: Dict[int, List[TenantUser]] = defaultdict(list)
+        # 为了避免 n + 1 问题，需要提前获取所有用户数据源所属租户的信息
+        data_source_ids = {user.data_source_id for user in users}
+        data_source_tenant_map = dict(
+            DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
+        )
+
+        # 遍历所有用户，渲染 display_name
         for user in users:
-            tenant_user_map[user.data_source_id].append(user)
+            field_value_map = {}
+            owner_tenant_id = data_source_tenant_map[user.data_source_id]
+            # 如果为本租户用户，则直接使用本租户的配置
+            if owner_tenant_id == user.tenant_id:
+                config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=user.tenant_id)
+            # 如果为协同租户用户，则使用默认的 display_name 表达式配置
+            else:
+                config = TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
 
-        # 遍历所有组合
-        for data_source_id, tenant_users in tenant_user_map.items():
-            config = data_source_config_map[data_source_id]
+            builtin_values = TenantUserDisplayNameHandler._get_builtin_field_values(user, config.builtin_fields)
+            custom_values = TenantUserDisplayNameHandler._get_custom_field_values(user, config.custom_fields)
 
-            # 由于未来额外字段查询可能涉及到 N + 1 问题，所以需要单独处理
-            extra_values = TenantUserDisplayNameHandler._get_extra_field_values(
-                tenant_users, config.extra_fields, config.tenant_id
+            field_value_map.update(builtin_values)
+            field_value_map.update(custom_values)
+
+            # 使用表达式模板渲染展示名
+            user_display_name_map[user.id] = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub(
+                lambda match, field_value_map=field_value_map: field_value_map.get(match.group(1), "-"),  # type: ignore
+                config.expression,
             )
-
-            for user in tenant_users:
-                user_id = user.id
-                field_value_map = {}
-
-                builtin_values = TenantUserDisplayNameHandler._get_builtin_field_values(user, config.builtin_fields)
-                custom_values = TenantUserDisplayNameHandler._get_custom_field_values(user, config.custom_fields)
-
-                field_value_map.update(builtin_values)
-                field_value_map.update(custom_values)
-                field_value_map.update(extra_values[user_id])
-
-                # 使用表达式模板渲染展示名
-                user_display_name_map[user_id] = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub(
-                    lambda match, field_value_map=field_value_map: field_value_map.get(match.group(1), "-"),  # type: ignore
-                    config.expression,
-                )
 
         return user_display_name_map
 
@@ -259,85 +234,20 @@ class TenantUserDisplayNameHandler:
         return {field: str(user.data_source_user.extras.get(field, "-")) for field in custom_fields}
 
     @staticmethod
-    def _get_extra_field_values(
-        users: List[TenantUser],
-        extra_fields: List[str],
-        owner_tenant_id: str,
-    ) -> Dict[str, Dict[str, str]]:
-        """处理额外字段"""
-        user_field_value_map: Dict[str, Dict[str, str]] = {user.id: {} for user in users}
-        for field in extra_fields:
-            if field == DisplayNameExpressionExtraFieldEnum.TENANT_USER_ID:
-                tenant_user_id_values = TenantUserDisplayNameHandler._get_tenant_user_id_field_values(
-                    users, owner_tenant_id
-                )
-                # 合并 tenant_user_id 字段值到总的字段值映射中
-                for user_id, field_value in tenant_user_id_values.items():
-                    user_field_value_map[user_id][field] = field_value
-            else:
-                # TODO: 后续加入组织字段
-                continue
-
-        return user_field_value_map
-
-    @staticmethod
-    def _get_tenant_user_id_field_values(
-        users: List[TenantUser],
-        owner_tenant_id: str,
-    ) -> Dict[str, str]:
-        """获取租户用户 ID 字段值，如果是协同租户用户，则从源租户的 TenantUser 表中获取对应的 ID
-
-        :param users: 租户用户列表
-        :param owner_tenant_id: 数据源所属租户 ID
-        :return: {用户ID: 租户用户ID值}
-        """
-        tenant_user_id_map: Dict[str, str] = {}
-
-        # 如果这一批用户是当前租户用户，则直接使用当前租户用户 ID
-        if owner_tenant_id == users[0].tenant_id:
-            for user in users:
-                tenant_user_id_map[user.id] = user.id
-        else:
-            # 如果这一批用户是协同租户用户，则从源租户的 TenantUser 中获取对应的 ID
-            # 构建数据源用户 ID 到当前用户 ID 的映射
-            data_source_user_map = {user.data_source_user_id: user.id for user in users}
-            data_source_user_ids = set(data_source_user_map.keys())
-
-            # 获取源租户中的用户
-            tenant_users = TenantUser.objects.filter(
-                tenant_id=owner_tenant_id, data_source_user_id__in=data_source_user_ids
-            )
-
-            for tenant_user in tenant_users:
-                user_id = data_source_user_map[tenant_user.data_source_user_id]
-                tenant_user_id_map[user_id] = tenant_user.id
-
-        return tenant_user_id_map
-
-    @staticmethod
     def build_display_name_search_queries(tenant_id: str, keyword: str) -> Q:
         """根据不同字段类型构建展示名搜索查询条件"""
         config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
-        collab_configs = TenantUserDisplayNameHandler._get_collaboration_tenant_display_name_expression_config(
-            tenant_id
-        )
-        all_configs = [config] + list(collab_configs) if collab_configs else [config]
 
-        queries = []
-        for config in all_configs:
-            # 构建内置字段查询条件
-            builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)
-            # 为什么不构建自定义字段查询条件？
-            # 因为自定义字段存储在 extra 字段（JsonField）中，进行模糊搜索非常消耗资源，JSON 数据需要解析与字符串匹配
+        # 构建内置字段查询条件
+        builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)
+        # 为什么不构建自定义字段查询条件？
+        # 因为自定义字段存储在 extra 字段（JsonField）中，进行模糊搜索非常消耗资源，JSON 数据需要解析与字符串匹配
 
-            # 构建额外字段查询条件
-            extra_queries = TenantUserDisplayNameHandler._build_extra_field_queries(config.extra_fields, keyword)
+        if not builtin_queries:
+            return Q()
 
-            field_queries = reduce(operator.or_, builtin_queries + extra_queries)
-
-            queries.append(field_queries & Q(data_source__owner_tenant_id=config.tenant_id))
-
-        return reduce(operator.or_, queries)
+        field_queries = reduce(operator.or_, builtin_queries)
+        return field_queries & Q(data_source__owner_tenant_id=tenant_id)
 
     @staticmethod
     def _get_collaboration_tenant_display_name_expression_config(
@@ -366,14 +276,6 @@ class TenantUserDisplayNameHandler:
                 queries.append(Q(**{f"data_source_user__{field}__icontains": keyword}))
 
         return queries
-
-    @staticmethod
-    def _build_extra_field_queries(extra_fields: List[str], keyword: str) -> List[Q]:
-        """构建额外字段查询条件"""
-        return [
-            Q(id__icontains=keyword) if field == DisplayNameExpressionExtraFieldEnum.TENANT_USER_ID else Q()
-            for field in extra_fields
-        ]
 
     @staticmethod
     def build_default_preview_tenant_user(tenant_id: str) -> TenantUser:
