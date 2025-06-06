@@ -75,7 +75,7 @@ class DisplayNameCacheManager:
         cls.cache.set_many(cache_mappings, timeout=DisplayNameDefaultTimeout)
 
     @classmethod
-    def delete_display_name(cls, user_id: str, version: int) -> None:
+    def delete_display_name(cls, user_id: str, version: int):
         """删除单个用户的展示名缓存"""
 
         cache_key = f"{user_id}:{version}"
