@@ -150,7 +150,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """获取用户列表"""
         self.check_permissions(request)
         _query_slz = AdvancedListSerializer(data=request.query_params)
-        _query_slz.is_valid(True)
+        _query_slz.is_valid(raise_exception=True)
         query_data = _query_slz.validated_data
 
         serializer_class = local_serializers.RapidProfileSerializer

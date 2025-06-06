@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
+from django.urls import re_path
 
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
 from bkuser_core.departments.v2 import views
@@ -16,7 +16,7 @@ from bkuser_core.departments.v2 import views
 PVAR_DEPARTMENT_ID = r"(?P<%s>[\w\-\.]+)" % LOOKUP_FIELD_NAME
 
 urlpatterns = [
-    url(
+    re_path(
         r"^api/v2/departments/$",
         views.DepartmentViewSet.as_view(
             {
@@ -28,7 +28,7 @@ urlpatterns = [
         ),
         name="departments",
     ),
-    url(
+    re_path(
         r"^api/v2/departments/%s/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
@@ -44,7 +44,7 @@ urlpatterns = [
         ),
         name="departments.action",
     ),
-    url(
+    re_path(
         r"^api/v2/departments/%s/ancestors/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
@@ -54,7 +54,7 @@ urlpatterns = [
         ),
         name="departments.ancestors",
     ),
-    url(
+    re_path(
         r"^api/v2/departments/%s/children/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
@@ -64,7 +64,7 @@ urlpatterns = [
         ),
         name="departments.children",
     ),
-    url(
+    re_path(
         r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
@@ -79,7 +79,7 @@ urlpatterns = [
     ########
     # Edge #
     ########
-    url(
+    re_path(
         r"^api/v2/edges/department_profile/$",
         # NOTE: login used
         views.DepartmentProfileEdgeViewSet.as_view({"get": "list"}),

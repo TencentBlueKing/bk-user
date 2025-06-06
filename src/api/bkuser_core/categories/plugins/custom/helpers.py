@@ -244,7 +244,10 @@ class ProSyncHelper(DBSyncHelper):
             for leader_id in info.leaders:
                 if leader_id == profile.code:
                     self.context.add_record(
-                        step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("无法设置自己为上级")
+                        step=SyncStep.USERS_RELATIONSHIP,
+                        success=False,
+                        username=info.username,
+                        error=_("无法设置自己为上级"),
                     )
                     logger.warning("profile<%s:%s> can not regard self as leader, will skip", info.code, info.username)
                     continue

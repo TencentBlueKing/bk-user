@@ -24,7 +24,9 @@ SYNC_LOG_TEMPLATE_MAP = {
     (SyncStep.DEPARTMENTS, True): _("同步组织【{department}】成功"),
     (SyncStep.DEPARTMENTS, False): _("同步组织【{department}】失败"),
     (SyncStep.DEPT_USER_RELATIONSHIP, True): _("同步组织【{department}】与用户【{username}】的关联关系成功"),
-    (SyncStep.DEPT_USER_RELATIONSHIP, False): _("同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"),
+    (SyncStep.DEPT_USER_RELATIONSHIP, False): _(
+        "同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
+    ),
     (SyncStep.USERS_RELATIONSHIP, True): _("同步用户【{username}】上级成功"),
     (SyncStep.USERS_RELATIONSHIP, False): _("同步用户【{username}】上级失败, 失败原因: {error}"),
 }

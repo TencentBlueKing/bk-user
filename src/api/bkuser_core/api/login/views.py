@@ -37,7 +37,7 @@ from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
-from bkuser_core.common.error_codes import error_codes
+from bkuser_core.common.error_codes import error_codes, mask_login_error
 from bkuser_core.profiles.constants import ProfileStatus, StaffStatus
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.utils import align_country_iso_code, make_passwd_reset_url_by_token, parse_username_domain
@@ -121,7 +121,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": failed_reason},
                 )
                 logger.info("login check, profile<%s> of %s is %s", profile.username, message_detail, profile.status)
-                raise error_codes.PASSWORD_ERROR
+                raise mask_login_error(error_codes.USER_IS_DISABLED)
                 # NOTE: 安全原因, 不能返回账户状态
                 # if profile.status == ProfileStatus.DISABLED.value:
                 #     raise error_codes.USER_IS_DISABLED
@@ -135,7 +135,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
                 logger.info("login check, profile<%s> of %s is locked", profile.username, message_detail)
-                raise error_codes.PASSWORD_ERROR
+                raise mask_login_error(error_codes.USER_IS_LOCKED)
                 # NOTE: 安全原因, 不能返回账户状态
                 # raise error_codes.USER_IS_LOCKED
             elif profile.staff_status == StaffStatus.OUT.value:
@@ -175,7 +175,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         message_detail,
                     )
                     # NOTE: 安全原因, 不能返回账户状态
-                    raise error_codes.PASSWORD_ERROR
+                    raise mask_login_error(error_codes.USER_LOCKED_TEMPORARILY.f(wait_seconds=retry_after_wait))
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
@@ -200,7 +200,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
             logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
             # NOTE: 这里不能使用其他错误, 一律是 PASSWORD_ERROR, 安全问题
-            raise error_codes.PASSWORD_ERROR
+            raise mask_login_error(
+                error_codes.PASSWORD_ERROR_RETRY.f(
+                    retry_password_times=(int(config_loader["max_trail_times"]) - profile.bad_check_cnt)
+                )
+            )
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
         self._check_account_status(request, profile)

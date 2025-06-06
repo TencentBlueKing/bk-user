@@ -145,6 +145,7 @@ import InputComponents from './InputComponents';
 import UploadAvatar from './UploadAvatar';
 
 import SetDepartment from '@/components/organization/SetDepartment';
+import moment from 'moment';
 
 export default {
   components: {
@@ -468,75 +469,51 @@ export default {
         }
       });
       this.$refs.userInfoData.$refs.validateForm.validate().then(() => {
-        // 编辑
-        if (this.detailsBarInfo.type === 'edit') {
-          // 点击保存时，只在样式上隐藏侧边栏，打开loading
-
-          const data = {
-            leader: this.userSettingData.leader,
-            departments: this.getSelectedDepartments.map(item => item.id),
-            password_valid_days: this.userSettingData.password_valid_days,
-          };
-          this.profileInfoList.forEach((info) => {
-            // 不保存内置不可编辑字段
-            if (!(info.editable === false && info.builtin === true)) {
-              data[info.key] = info.value;
-              if (info.key === 'telephone') {
-                data.iso_code = info.iso_code;
-              }
-            }
-          });
-          if (this.AvatarBase64) {
-            data.logo = this.AvatarBase64;
+        const data = {
+          leader: this.userSettingData.leader,
+          departments: this.getSelectedDepartments.map(item => item.id),
+          password_valid_days: this.userSettingData.password_valid_days,
+        };
+        const type = this.detailsBarInfo.type;
+        this.profileInfoList.forEach((info) => {
+          const key = info.key;
+          const add = (type === 'add' && !['last_login_time', 'create_time'].includes(key));
+          const edit = (type === 'edit' && !(info.editable === false && info.builtin === true));
+          if (add || edit) {
+            data[key] = info.value;
           }
-
-          !phoneValue && this.$store.dispatch('organization/patchProfile', {
+          if (key === 'account_expiration_date') {
+            data[key] = moment(info.value).format('YYYY-MM-DD');
+          }
+          if ((type === 'add' || edit) && key === 'telephone') {
+            data.iso_code = info.iso_code;
+          }
+        });
+        if (this.AvatarBase64) {
+          data.logo = this.AvatarBase64;
+        }
+        let dispatchPath = 'organization/postProfile' ;
+        let params = {
+          category_id: this.currentCategoryId,
+          ...data,
+        };
+        if (type === 'edit') {
+          dispatchPath = 'organization/patchProfile';
+          params = {
             id: this.currentProfile.id,
             data,
-          }).then((res) => {
-            if (res.result) {
-              this.$emit('updateUserInfor');
-              this.$emit('hideBar');
-            }
-          })
-            .catch((e) => {
-              console.warn(e);
-              this.$emit('showBar');
-            });
-        } else if (this.detailsBarInfo.type === 'add') {
-          // 点击保存时，只在样式上隐藏侧边栏，打开loading
-
-          const params = {
-            category_id: this.currentCategoryId,
-            leader: this.userSettingData.leader,
-            departments: this.getSelectedDepartments.map(item => item.id),
-            password_valid_days: this.userSettingData.password_valid_days,
           };
-          this.profileInfoList.forEach((info) => {
-            if (info.key !== 'last_login_time' && info.key !== 'create_time') {
-              params[info.key] = info.value;
-            }
-            if (info.key === 'telephone') {
-              params.iso_code = info.iso_code;
-            }
-          });
-          if (this.AvatarBase64) {
-            params.logo = this.AvatarBase64;
-          }
-
-          !phoneValue && this.$store.dispatch('organization/postProfile', params).then((res) => {
-            if (res.result) {
-              this.$emit('updateUserInfor');
-              this.$emit('hideBar');
-            }
-          })
-            .catch((e) => {
-              console.warn(e);
-            })
-            .finally(() => {
-              this.$emit('showBar');
-            });
         }
+        !phoneValue && this.$store.dispatch(dispatchPath, params).then((res) => {
+          if (res.result) {
+            this.$emit('updateUserInfor');
+            this.$emit('hideBar');
+          }
+        })
+          .catch((e) => {
+            console.warn(e);
+            this.$emit('showBar');
+          });
       });
     },
     isUserInfo() {

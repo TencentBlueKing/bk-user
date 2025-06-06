@@ -44,7 +44,7 @@ class Department(TimestampMPTTModel):
 
     name = models.CharField("组织名称", max_length=255)
     # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
-    code = models.CharField("组织标识", null=True, blank=True, unique=True, max_length=64)
+    code = models.CharField("组织标识", null=True, blank=True, unique=True, max_length=255)
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     order = models.IntegerField("顺序", default=1)
     profiles = models.ManyToManyField(Profile, blank=True, related_name="departments", verbose_name="成员")
@@ -71,7 +71,7 @@ class Department(TimestampMPTTModel):
         return f"{self.id}-{self.name}"
 
     # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
-    def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
+    def get_profiles(self, recursive: bool = False, wildcard_search: str | None = None) -> models.QuerySet:
         if not recursive:
             # FIXME: 为什么滤掉了 status.DELETE? 而不是通过 enabled=False过滤?
             target = self.profiles.exclude(status=ProfileStatus.DELETED.value)

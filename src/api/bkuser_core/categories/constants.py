@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from datetime import timedelta
 from enum import auto
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.common.enum import AutoLowerEnum
 
@@ -57,7 +57,9 @@ class CategoryType(AutoLowerEnum):
             cls.LDAP: _("支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
             cls.CUSTOM: _("支持对接任意符合自定义数据拉取协议的用户系统。"),
             cls.LOCAL.value: _("本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"),
-            cls.MAD.value: _("支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
+            cls.MAD.value: _(
+                "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
+            ),
             cls.LDAP.value: _("支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
             cls.CUSTOM.value: _("支持对接任意符合自定义数据拉取协议的用户系统。"),
         }
@@ -105,4 +107,9 @@ class SyncTaskStatus(AutoLowerEnum):
     RUNNING = auto()
     RETRYING = auto()
 
-    _choices_labels = ((SUCCESSFUL, _("成功")), (FAILED, _("失败")), (RUNNING, _("同步中")), (RETRYING, _("失败重试中")))
+    _choices_labels = (
+        (SUCCESSFUL, _("成功")),
+        (FAILED, _("失败")),
+        (RUNNING, _("同步中")),
+        (RETRYING, _("失败重试中")),
+    )

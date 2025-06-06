@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 
-def get_api_factory(force_params: dict = None):
+def get_api_factory(force_params: dict | None = None):
     """获取一个通用的 ApiFactory"""
     force_params = force_params or {}
     normal_params = {

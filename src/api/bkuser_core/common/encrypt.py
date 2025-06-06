@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from cryptography.fernet import Fernet
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +26,13 @@ class EncryptHandler:
             return text
 
         text = force_bytes(text)
-        return self.Header.add_header(force_text(self.f.encrypt(text)))
+        return self.Header.add_header(force_str(self.f.encrypt(text)))
 
     def decrypt(self, encrypted: str) -> str:
         encrypted = self.Header.strip_header(encrypted)
 
         encrypted = force_bytes(encrypted)
-        return force_text(self.f.decrypt(encrypted))
+        return force_str(self.f.decrypt(encrypted))
 
     class Header:
         HEADER = "bkcrypt$"

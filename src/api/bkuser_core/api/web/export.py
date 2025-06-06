@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from openpyxl.styles import Alignment, Font, colors
 from openpyxl.styles.numbers import FORMAT_TEXT
 from rest_framework import serializers
@@ -102,7 +102,7 @@ class ProfileExcelExporter:
             for cell in columns:
                 cell.number_format = FORMAT_TEXT
 
-    def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
+    def update_profiles(self, profiles: List[dict], extra_infos: dict | None = None):
         field_col_map = self.update_sheet_titles()
 
         for p_index, p in enumerate(profiles):
