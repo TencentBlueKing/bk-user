@@ -204,8 +204,7 @@ class TenantUserDisplayNameHandler:
 
         for field in builtin_fields:
             if field in contact_info:
-                value = contact_info[field]
-                field_value_map[field] = value if value else "-"
+                field_value_map[field] = contact_info[field] or "-"
             else:
                 field_value_map[field] = getattr(user.data_source_user, field)
         return field_value_map
@@ -218,7 +217,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def build_display_name_search_queries(tenant_id: str, keyword: str) -> Q:
         """根据不同字段类型构建展示名搜索查询条件"""
-        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+        config = get_display_name_config(tenant_id)
 
         # 构建内置字段查询条件
         builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)

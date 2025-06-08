@@ -29,8 +29,13 @@ ConfigCacheTimeout = 120
 
 
 @cached(timeout=ConfigCacheTimeout)
-def get_display_name_config(tenant_id: str, data_source_id: int) -> TenantUserDisplayNameExpressionConfig:
+def get_display_name_config(
+    tenant_id: str, data_source_id: int | None = None
+) -> TenantUserDisplayNameExpressionConfig:
     """获取指定租户的展示名配置"""
+    if not data_source_id:
+        return TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+
     data_source = DataSource.objects.get(id=data_source_id)
     # 如果为本租户用户，则直接使用本租户的配置
     if data_source.owner_tenant_id == tenant_id:
