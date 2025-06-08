@@ -158,3 +158,18 @@ export const getCollaborationSyncRecordsLogs = (id: number) => http.get(`/api/v3
  * 跨租户协同-新建协同策略-目标租户
  */
 export const getTenantList = (params: TenantItem) => http.get('/api/v3/web/collaboration/target-tenants/', params);
+
+/**
+ * 用户展示名表达式
+ */
+export const getDisplayNameExpression = () => http.get('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/');
+
+/**
+ * 修改用户展示名表达式
+ */
+export const putDisplayNameExpression = (params: { expression: string }) => http.put('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/', params);
+
+/**
+ * 用户展示名配置预览
+ */
+export const getDisplayNameExpressionPreview = (params: { expression: string }) => http.post('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/preview/', params);
