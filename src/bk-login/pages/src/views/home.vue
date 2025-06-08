@@ -9,7 +9,6 @@
     </div>
 
     <section v-if="!hasStorage && !loading">
-
       <h1 class="login-header">{{ $t('请选择您所属的企业') }}</h1>
 
       <bk-form-item ref="tenantInputRef">
@@ -114,38 +113,41 @@
         </span>
       </div>
       <div class="language-switcher">
-        <div class="language-select" style="display: flex">
+        <div class="language-select">
           <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
-            <span id="ch" class="text-active ">中文</span>
+            <span class="text-active">中文</span>
           </p>
-          <p class="language-item " :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
-            <span id="en" class="text-active">English</span>
+          <p class="language-item" :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
+            <span class="text-active">English</span>
           </p>
         </div>
       </div>
     </section>
-    <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
+    <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
+    <ProtocolEn v-if="protocolVisible && activeTab === 'en'" @close="protocolVisible = false" />
   </bk-form>
 </template>
 
 <script setup lang="ts">
 import { getGlobalSettings, getIdpList, getTenantList, searchTenantList } from '@/http/api';
-import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
+import { type Ref, onBeforeMount, ref, computed } from 'vue';
 import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
+import ProtocolEn from './components/protocol-en.vue';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
-import I18n, { t } from '@/language/index';
+import I18n from '@/language/index';
 import Cookies from 'js-cookie';
 import logoPng from '../../static/images/blueking.png';
 import { debounce } from 'lodash';
 
-const  platformConfigData = platformConfig();
+// 平台配置数据
+const platformConfigData = platformConfig();
 const appLogo = computed(() => (platformConfigData.appLogo ? platformConfigData.appLogo : logoPng));
 const activeTab = ref(I18n.global.locale.value);
 
-
+// 接口定义
 interface Item {
   id: string;
   name: string;
@@ -158,61 +160,45 @@ interface Tenant extends Item {
 interface Idp {
   id: string;
   name: string;
-  plugin_id: string
+  plugin_id: string;
 }
 
-
+// 状态管理
 const appStore = useAppStore();
 const loading = ref(false);
-// 选中的租户
 const selectedTenant = ref<Tenant | null>(null);
-// localStorage 中存储的租户列表
 const tenantList = ref<Tenant[]>([]);
-// 是否存在登录过的租户
 const hasStorage = ref(!!localStorage.getItem('tenantId'));
-// 是否显示租户选择弹窗
 const popoverVisible = ref(false);
-// 搜索租户结果是否为空
 const searchTenantEmpty = ref(false);
-// 租户选择弹窗是否加载中
 const tenantOptionsLoading = ref(false);
-// 租户选择输入框
 const tenantInputRef = ref(null);
-
-/**
- * 输入搜索出的租户
- */
 const tenantOptions = ref<Tenant[]>([]);
-
-/**
- * 输入搜索出的租户
- */
 const inputTenant = ref(null);
+const idpList: Ref<Idp[]> = ref([]);
+const activeIdp: Ref<Idp> = ref();
+const protocolVisible = ref(false);
+const settings = ref<Record<string, any>>({});
 
-/**
- * 从 localStorage 中加载租户列表
- */
+// 从 localStorage 中加载租户列表
 try {
   tenantList.value = JSON.parse(localStorage.getItem('tenantList') || '[]');
   appStore.tenantId = localStorage.getItem('tenantId');
 } catch (error) {
-  console.log(error);
+  console.error('Failed to load tenant list from localStorage:', error);
 }
 
 /**
- * 选择/输入租户
- * @param id 租户ID
+ * 处理租户搜索
  */
 const handleTenantChange = async () => {
   const id = inputTenant.value;
-  console.log('handleTenantChange', id);
   searchTenantEmpty.value = false;
   if (!id) {
     tenantOptions.value = [];
     return;
   }
   tenantOptionsLoading.value = true;
-  // popoverVisible.value = false;
   const res = await searchTenantList({
     keyword: id,
   });
@@ -230,10 +216,16 @@ const handleTenantChange = async () => {
 // 使用 debounce 包装 handleTenantChange 函数，设置 300ms 的延迟
 const debouncedTenantChange = debounce(handleTenantChange, 300);
 
+/**
+ * 处理租户输入框焦点
+ */
 const handleTenantFocus = () => {
   popoverVisible.value = true;
 };
 
+/**
+ * 处理点击外部事件
+ */
 const handleClickOutside = ({ event }: { event: Event }) => {
   const target = event.target as HTMLElement;
   if (tenantInputRef.value?.$el.contains(target)) {
@@ -243,7 +235,7 @@ const handleClickOutside = ({ event }: { event: Event }) => {
 };
 
 /**
- * 清空租户
+ * 清空租户输入
  */
 const handleClearTenant = () => {
   inputTenant.value = null;
@@ -255,24 +247,13 @@ const handleClearTenant = () => {
 
 /**
  * 选择租户
- * @param item 租户
+ * @param item 租户信息
  */
 const handleSelectTenant = (item: Tenant) => {
   selectedTenant.value = item;
   inputTenant.value = `${item.name}（${item.id}）`;
   popoverVisible.value = false;
 };
-
-/**
- * 认证源列表
- */
-const idpList: Ref<Idp[]> = ref([]);
-
-/**
- * 当前选中认证源
- */
-const activeIdp: Ref<Idp> = ref();
-
 
 /**
  * 确认登录租户
@@ -313,17 +294,50 @@ const changeTenant = () => {
   inputTenant.value = null;
 };
 
+/**
+ * 切换认证源
+ * @param idp 认证源信息
+ */
 const handleChangeIdp = (idp: Idp) => {
   activeIdp.value = idp;
 };
 
-const protocolVisible = ref(false);
-
-const settings = ref({});
+/**
+ * 重置密码
+ */
+const handleResetPassword = () => {
+  window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
+};
 
 /**
- * 从 localStorage 中加载租户列表
+ * 切换语言
+ * @param locale 语言代码
  */
+const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
+  activeTab.value = locale;
+  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  // const scriptId = 'jsonp-script';
+  // const prevJsonpScript = document.getElementById(scriptId);
+  // if (prevJsonpScript) {
+  //   document.body.removeChild(prevJsonpScript);
+  // }
+  // const script = document.createElement('script');
+  // script.type = 'text/javascript';
+  // script.src = `${api}?language=${locale}`;
+  // script.id = scriptId;
+  // document.body.appendChild(script);
+
+  Cookies.set('blueking_language', locale, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  I18n.global.locale.value = locale;
+  document.querySelector('html')?.setAttribute('lang', locale);
+  // window.location.reload();
+};
+
+// 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
   getTenantList({
@@ -338,42 +352,6 @@ onBeforeMount(async () => {
   settings.value = await getGlobalSettings();
   loading.value = false;
 });
-
-/**
- * 重置密码
- */
-const handleResetPassword = () => {
-  // 确认环境变量后补充路径
-  window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
-};
-
-/**
- * 语言切换
- * @param locale 语言
- */
-const handleSwitchLocale = (locale: string) => {
-  activeTab.value = locale;
-  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  const scriptId = 'jsonp-script';
-  const prevJsonpScript = document.getElementById(scriptId);
-  if (prevJsonpScript) {
-    document.body.removeChild(prevJsonpScript);
-  }
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = `${api}?language=${locale}`;
-  script.id = scriptId;
-  document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale as any;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  window.location.reload();
-};
 </script>
 
 <style lang="postcss" scoped>
@@ -393,43 +371,9 @@ const handleSwitchLocale = (locale: string) => {
   margin-bottom: 12px;
 }
 
-.tenant-input {
-  flex-grow: 1;
-}
-
-.tenant-button {
-  margin-left: 8px;
-  width: 72px;
-  height: 40px;
-}
-
-.tenant-content {
-  font-size: 20px;
-  color: #313238;
-  line-height: 28px;
-}
-
-.tenant-list {
-  position: relative;
-  background: #E1ECFF;
-  height: 40px;
-  font-size: 16px;
-  line-height: 40px;
-  margin: 15px 0;
-  padding-left: 20px;
-}
-
 .tenant-input-error {
   color: #E71818;
   font-size: 14px;
-}
-
-.tenant-check {
-  position: absolute;
-  right: 8px;
-  top: 4px;
-  font-size: 32px;
-  color: #3A84FF;
 }
 
 .logo {
@@ -453,15 +397,6 @@ const handleSwitchLocale = (locale: string) => {
   padding-bottom: 4px;
 }
 
-.admin-login {
-  font-size: 14px;
-  color: #63656E;
-  position: absolute;
-  right: 0;
-  top: -22px;
-  cursor: pointer;
-}
-
 .tenant-logo {
   text-align: center;
   img {
@@ -482,23 +417,6 @@ const handleSwitchLocale = (locale: string) => {
 
   .tenant-name {
     width: 280px;
-  }
-}
-
-.tenant-change {
-  position: absolute;
-  right: 12px;
-  top: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  color: #3A84FF;
-  font-size: 14px;
-  cursor: pointer;
-
-  .bk-icon {
-    margin-right: 4px;
-    font-size: 18px;
   }
 }
 
@@ -534,63 +452,22 @@ const handleSwitchLocale = (locale: string) => {
   font-size: 14px;
 }
 
-.content-list {
-  font-weight: 400;
-  font-size: 14px;
-  color: #494B50;
-  letter-spacing: 0;
-  text-align: center;
-  min-width: 120px;
-
-  .item {
-    position: relative;
-    line-height: 36px;
-    cursor: pointer;
-    margin: 0 -14px;
-    padding: 0 14px;
-
-    &:hover {
-      color: #3A84FF;
-      background: #F5F6F9;
-      .delete-icon {
-        display: inline-block !important;
-      }
-    }
-    .item-name {
-      margin-right: 10px;
-    }
-    .delete-icon {
-      color: #d9dadf;
-      display: none !important;
-      cursor: pointer;
-      position: absolute;
-      right: 5px;
-    }
-  }
-
-  .add {
-    border-top: 1px solid #E5E5E5;
-    background: #FAFBFD;
-    color: #3A84FF;
-    line-height: 22px;
-    padding: 8px 0;
-    cursor: pointer;
-    margin: 0 -12px -7px;
-  }
-}
 .confirm-btn {
   width: 100%;
   margin-top: 8px;
 }
+
 .tenant-options {
   font-size: 12px;
   line-height: 32px;
   margin: -8px 0;
   min-height: 32px;
 }
+
 .tenant-option-title {
   color: #979BA5;
 }
+
 .tenant-option {
   height: 32px;
   margin: 0 -12px;
@@ -601,55 +478,9 @@ const handleSwitchLocale = (locale: string) => {
     background: #f5f7fa;
   }
 }
-.h2-title {
-  font-size: 16px;
-  color: #313238;
-  line-height: 24px;
-  margin-bottom: 16px;
-}
-.unset {
-  text-align: center;
-  color: #313238;
-  margin-bottom: 20px;
 
-  .unset-logo {
-    img {
-      height: 120px;
-    }
-  }
-  .unset-header {
-    font-size: 16px;
-    line-height: 22px;
-    padding: 8px 0;
-  }
-  .unset-content {
-    font-size: 14px;
-  }
-}
-.admin-back {
-  display: inline-block;
-  font-size: 14px;
-  padding-bottom: 16px;
-}
-.admin-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #313238;
-  margin-bottom: 12px;
-}
-.admin-desc {
-  display: inline-block;
-  height: 22px;
-  line-height: 22px;
-  font-size: 14px;
-  color: #63656E;
-  margin-bottom: 24px;
-}
-.options-show {
+.language-select {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
 }
 
 .language-item {
@@ -660,6 +491,7 @@ const handleSwitchLocale = (locale: string) => {
   display: inline-block;
   height: 24px;
   cursor: pointer;
+
   .text-active {
     display: block;
     width: 70px;
@@ -667,8 +499,9 @@ const handleSwitchLocale = (locale: string) => {
     line-height: 24px;
     font-size: 12px;
     transform: skew(15deg, 0deg);
+  }
 }
-}
+
 .language-switcher {
   display: flex;
   border-radius: 2px;
@@ -678,6 +511,7 @@ const handleSwitchLocale = (locale: string) => {
   text-align: right;
   margin-top: 23px;
 }
+
 .active {
   background: #e1ecff;
   .text-active {
@@ -697,6 +531,7 @@ const handleSwitchLocale = (locale: string) => {
   height: 200px;
   margin: 20px 0;
 }
+
 .empty-text {
   height: 22px;
   font-size: 14px;
