@@ -31,10 +31,33 @@ DisplayNameDefaultTimeout = 30 * 24 * 60 * 60
 ConfigCacheTimeout = 120
 
 
+def build_default_display_name_config() -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
+
+
 @cached(timeout=ConfigCacheTimeout)
-def get_display_name_config(tenant_id: str) -> TenantUserDisplayNameExpressionConfig:
-    """获取指定租户的展示名配置"""
-    return TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+def get_display_name_config_info(
+    tenant_id: str, data_source_id: int | None = None
+) -> Dict[str, TenantUserDisplayNameExpressionConfig | bool]:
+    """获取指定租户的展示名配置信息"""
+    if not data_source_id:
+        return {
+            "config": TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id),
+            "is_collaboration": False,
+        }
+
+    data_source = DataSource.objects.get(id=data_source_id)
+    # 如果为本租户用户，则直接使用本租户的配置
+    if data_source.owner_tenant_id == tenant_id:
+        return {
+            "config": TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id),
+            "is_collaboration": False,
+        }
+    # 如果为协同租户用户，则使用默认的 display_name 表达式配置
+    return {
+        "config": build_default_display_name_config(),
+        "is_collaboration": True,
+    }
 
 
 class DisplayNameCacheManager:
@@ -95,26 +118,17 @@ class DisplayNameCacheHandler:
     """DisplayName 缓存处理类"""
 
     @staticmethod
-    def build_default_display_name_config() -> TenantUserDisplayNameExpressionConfig:
-        return TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
-
-    @staticmethod
     def _split_users_by_tenant(users: List[TenantUser]) -> Tuple[List[TenantUser], List[TenantUser]]:
         """区分本租户用户与协同租户用户"""
         if not users:
             return [], []
 
-        # 为了避免 n + 1 问题，需要提前获取所有用户数据源所属租户的信息
-        data_source_ids = [user.data_source_id for user in users]
-        data_source_tenant_map = dict(
-            DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
-        )
-
         current_tenant_users: List[TenantUser] = []
         collaboration_users: List[TenantUser] = []
         for user in users:
-            owner_tenant_id = data_source_tenant_map[user.data_source_id]
-            if owner_tenant_id == user.tenant_id:
+            is_collaboration = get_display_name_config_info(user.tenant_id, user.data_source_id)["is_collaboration"]
+
+            if not is_collaboration:
                 current_tenant_users.append(user)
             else:
                 collaboration_users.append(user)
@@ -144,7 +158,9 @@ class DisplayNameCacheHandler:
         users: List[TenantUser],
     ) -> Tuple[Dict[str, str], List[TenantUser]]:
         """从缓存获取已有的 display_name，返回缓存结果和需要渲染的用户列表"""
+        # 已缓存的用户 display_name 结果
         display_name_map: Dict[str, str] = {}
+        # 需要渲染的用户列表
         users_need_render: List[TenantUser] = []
 
         # 按租户类型分组用户
@@ -152,7 +168,7 @@ class DisplayNameCacheHandler:
 
         # 批量处理本租户用户
         if current_tenant_users:
-            config = get_display_name_config(current_tenant_users[0].tenant_id)
+            config = get_display_name_config_info(current_tenant_users[0].tenant_id)["config"]
             cached_names, uncached_users = DisplayNameCacheHandler._get_cached_display_names(
                 current_tenant_users, config
             )
@@ -161,7 +177,8 @@ class DisplayNameCacheHandler:
 
         # 批量处理协同租户用户
         if collaboration_users:
-            config = DisplayNameCacheHandler.build_default_display_name_config()
+            # 批量获取协同租户用户的 display_name 缓存时，直接使用默认 display_name 表达式配置
+            config = build_default_display_name_config()
             cached_names, uncached_users = DisplayNameCacheHandler._get_cached_display_names(
                 collaboration_users, config
             )
@@ -181,13 +198,13 @@ class DisplayNameCacheHandler:
 
         # 批量处理本租户用户缓存
         if current_tenant_users:
-            config = get_display_name_config(current_tenant_users[0].tenant_id)
+            config = get_display_name_config_info(current_tenant_users[0].tenant_id)["config"]
             current_tenant_display_names = {user.id: display_name_map[user.id] for user in current_tenant_users}
             DisplayNameCacheManager.batch_set_display_name(current_tenant_display_names, config.version)
 
         # 批量处理协同租户用户缓存
         if collaboration_users:
-            config = DisplayNameCacheHandler.build_default_display_name_config()
+            config = build_default_display_name_config()
             collaboration_display_names = {user.id: display_name_map[user.id] for user in collaboration_users}
             DisplayNameCacheManager.batch_set_display_name(collaboration_display_names, config.version)
 
@@ -201,12 +218,13 @@ class DisplayNameCacheHandler:
         )
 
         # 删除本租户用户缓存
-        config = get_display_name_config(user.tenant_id)
+        config = get_display_name_config_info(user.tenant_id)["config"]
         DisplayNameCacheManager.delete_display_name(user.id, config.version)
 
         # 删除协同租户用户缓存
         if collaboration_tenant_users:
-            config = DisplayNameCacheHandler.build_default_display_name_config()
+            # 直接获取默认配置，无需 get_display_name_config 方法
+            config = build_default_display_name_config()
             DisplayNameCacheManager.batch_delete_display_name(
                 [user.id for user in collaboration_tenant_users], config.version
             )
@@ -226,12 +244,13 @@ class DisplayNameCacheHandler:
         )
 
         # 删除本租户用户缓存
-        config = get_display_name_config(users[0].tenant_id)
+        config = get_display_name_config_info(users[0].tenant_id)["config"]
         DisplayNameCacheManager.batch_delete_display_name([user.id for user in users], config.version)
 
         # 删除协同租户用户缓存
         if collaboration_tenant_users:
-            config = DisplayNameCacheHandler.build_default_display_name_config()
+            # 直接获取默认配置，无需 get_display_name_config 方法
+            config = build_default_display_name_config()
             DisplayNameCacheManager.batch_delete_display_name(
                 [user.id for user in collaboration_tenant_users], config.version
             )

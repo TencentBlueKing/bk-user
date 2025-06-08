@@ -31,7 +31,7 @@ from bkuser.apps.tenant.constants import (
 from bkuser.apps.tenant.display_name_cache import (
     DisplayNameCacheHandler,
     DisplayNameCacheManager,
-    get_display_name_config,
+    get_display_name_config_info,
 )
 from bkuser.apps.tenant.models import (
     DataSource,
@@ -77,11 +77,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
         """生成租户用户展示名"""
-        # 如果是协同租户用户，使用默认的表达式配置
-        if user.data_source.owner_tenant_id == user.tenant_id:
-            config = get_display_name_config(user.tenant_id)
-        else:
-            config = DisplayNameCacheHandler.build_default_display_name_config()
+        config = get_display_name_config_info(user.tenant_id, user.data_source_id)["config"]
 
         # 首先从 Redis 缓存获取
         display_name = DisplayNameCacheManager.get_display_name(user.id, config.version)
@@ -191,22 +187,10 @@ class TenantUserDisplayNameHandler:
 
         user_display_name_map: Dict[str, str] = {}
 
-        # 为了避免 n + 1 问题，需要提前获取所有用户数据源所属租户的信息
-        data_source_ids = {user.data_source_id for user in users}
-        data_source_tenant_map = dict(
-            DataSource.objects.filter(id__in=data_source_ids).values_list("id", "owner_tenant_id")
-        )
-
         # 遍历所有用户，渲染 display_name
         for user in users:
             field_value_map = {}
-            owner_tenant_id = data_source_tenant_map[user.data_source_id]
-            # 如果为本租户用户，则使用本租户的 display_name 表达式配置
-            if owner_tenant_id == user.tenant_id:
-                config = get_display_name_config(user.tenant_id)
-            # 如果为协同租户用户，则使用默认的 display_name 表达式配置
-            else:
-                config = DisplayNameCacheHandler.build_default_display_name_config()
+            config = get_display_name_config_info(user.tenant_id, user.data_source_id)["config"]
 
             builtin_values = TenantUserDisplayNameHandler._get_builtin_field_values(user, config.builtin_fields)
             custom_values = TenantUserDisplayNameHandler._get_custom_field_values(user, config.custom_fields)
@@ -238,7 +222,7 @@ class TenantUserDisplayNameHandler:
 
         for field in builtin_fields:
             if field in contact_info:
-                field_value_map[field] = contact_info[field]
+                field_value_map[field] = contact_info[field] or "-"
             else:
                 field_value_map[field] = getattr(user.data_source_user, field)
         return field_value_map
@@ -251,7 +235,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def build_display_name_search_queries(tenant_id: str, keyword: str) -> Q:
         """根据不同字段类型构建展示名搜索查询条件"""
-        config = get_display_name_config(tenant_id)
+        config = get_display_name_config_info(tenant_id)["config"]
 
         # 构建内置字段查询条件
         builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)
