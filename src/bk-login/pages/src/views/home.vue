@@ -1,67 +1,68 @@
 <template>
-  <bk-form v-show="!isAdminShow" form-type="vertical" v-bkloading="{ loading }">
+  <bk-form form-type="vertical" v-bkloading="{ loading }">
+    <div class="switch-tenant" v-if="hasStorage" @click="changeTenant">
+      < {{ $t('切换企业') }}
+    </div>
+
     <div class="tenant-logo">
       <img :src="appLogo" />
     </div>
 
     <section v-if="!hasStorage && !loading">
 
-      <h1 class="login-header">{{ $t('请选择租户与用户来源') }}</h1>
+      <h1 class="login-header">{{ $t('请选择您所属的企业') }}</h1>
 
-      <bk-form-item>
-        <bk-select
-          ref="selectRef"
-          size="large"
-          filterable
-          input-search
-          allow-create
-          :placeholder="$t('请选择租户或输入租户ID')"
-          @change="handleTenantChange">
-          <bk-option
-            v-for="item in showOptions"
-            class="tenant-option"
-            :id="item.id"
-            :key="item.id"
-            :name="`${item.name} (${item.id})`">
-            <div class="options-show">
-              <span>{{ `${item.name} (${item.id})` }}</span>
-              <bk-tag v-if="inputTenant?.name" size="small">{{ $t('隐藏租户') }}</bk-tag>
-            </div>
-          </bk-option>
-        </bk-select>
-        <span v-if="inputTenant !== null && !inputTenant?.name">{{ $t('暂无匹配租户') }}</span>
-      </bk-form-item>
-
-      <bk-form-item>
-        <bk-select
-          size="large"
-          filterable
-          :placeholder="$t('请选择用户来源')"
-          v-model="userGroup"
+      <bk-form-item ref="tenantInputRef">
+        <bk-popover
+          trigger="manual"
+          :is-show="popoverVisible"
+          :arrow="false"
+          :width="400"
+          theme="light"
+          placement="bottom-start"
+          ext-cls="tenant-popover"
+          @clickoutside="handleClickOutside"
         >
-          <bk-option
-            v-for="item in userGroupList"
-            class="tenant-option"
-            :id="item.id"
-            :key="item.id"
-            :name="item.name + $t('成员')">
-            {{ `${item.name}${$t('成员')}`}}
-          </bk-option>
-        </bk-select>
-      </bk-form-item>
+          <bk-input
+            v-model="inputTenant"
+            clearable
+            size="large"
+            :placeholder="$t('请输入企业ID或名称')"
+            @focus="handleTenantFocus"
+            @clear="handleClearTenant"
+            @keydown="debouncedTenantChange">
+          </bk-input>
+          <template #content>
+            <div class="tenant-options">
+              <div class="tenant-option"
+                   v-bkloading="{ loading: tenantOptionsLoading }"
+                   v-for="item in tenantOptions"
+                   :key="item.id"
+                   @click="handleSelectTenant(item)">
+                {{ item.name }} ({{ item.id }})
+              </div>
 
-      <bk-form-item style="margin: -12px 0 20px;">
-        <bk-checkbox v-model="trust">{{ $t('记住我的选择') }}</bk-checkbox>
+              <template v-if="tenantList.length && tenantOptions.length === 0">
+                <div class="tenant-option-title">{{ $t('上次登录') }}</div>
+                <div class="tenant-option" v-for="item in tenantList" :key="item.id" @click="handleSelectTenant(item)">
+                  {{ item.name }} ({{ item.id }})
+                </div>
+              </template>
+            </div>
+          </template>
+        </bk-popover>
+
+        <span class="tenant-input-error" v-if="searchTenantEmpty && !selectedTenant?.id">{{ $t('未匹配到相应企业') }}</span>
       </bk-form-item>
 
       <bk-form-item>
         <bk-button
           theme="primary"
           size="large"
-          style="width: 100%"
-          :disabled="!tenant || !userGroup"
+          class="confirm-btn"
+          :disabled="!selectedTenant?.id"
           @click="confirmTenant">
-          {{ $t('确认') }}
+          {{ $t('确定') }}
         </bk-button>
       </bk-form-item>
       <div class="tenant-password">
@@ -70,47 +71,17 @@
     </section>
 
     <section v-else-if="hasStorage">
-      <bk-link v-if="hasBuiltin && hasRealUser" @click.prevent="isAdminShow = true" class="admin-login">
-        {{ $t('管理员登录') }} >
-      </bk-link>
       <div class="tenant-header">
-        <img v-if="tenant?.logo" class="logo-img" :src="tenant?.logo" />
+        <img v-if="selectedTenant?.logo" class="logo-img" :src="selectedTenant?.logo" />
         <span v-else class="logo">
-          {{ tenant?.name?.charAt(0).toUpperCase() }}
+          {{ selectedTenant?.name?.charAt(0).toUpperCase() }}
         </span>
         <bk-overflow-title class="inline-flex tenant-name">
-          {{ tenant?.name }} / {{ userGroupName }}
+          {{ selectedTenant?.name }} ({{ selectedTenant?.id }})
         </bk-overflow-title>
-        <bk-popover
-          v-if="storageTenantList.length && !isOnlyOneTenant"
-          trigger="click" theme="light"
-          placement="bottom"
-          ext-cls="tenant-popover">
-          <div class="tenant-change">
-            <Transfer class="bk-icon" />
-            <span>{{ $t('切换') }}</span>
-          </div>
-          <template #content>
-            <section class="content-list cursor-pointer">
-              <div
-                class="item"
-                v-for="item in storageTenantList"
-                :key="item.id"
-                @click="handleChangeStorageTenant(item)">
-                <span class="item-name">{{ item.name }} / {{ getUserGroupName(item) }}</span>
-                <close class="delete-icon" @click.stop="deleteStorageTenant(item)" />
-              </div>
-              <div class="add" @click="addTenant">{{ $t('其他租户或用户来源') }}</div>
-            </section>
-          </template>
-        </bk-popover>
-        <div v-else-if="!isOnlyOneTenant" class="tenant-change" @click="addTenant">
-          <Transfer class="bk-icon" />
-          <span>{{ $t('切换') }}</span>
-        </div>
       </div>
 
-      <section v-if="hasRealUser">
+      <section v-if="idpList.length">
         <div class="tenant-tab">
           <div
             class="tab-item"
@@ -125,31 +96,19 @@
         <Password v-if="activeIdp?.plugin_id === 'local'" :idp-id="activeIdp.id" />
         <custom-login v-else :idp-id="activeIdp.id"></custom-login>
       </section>
-
-      <section v-else-if="!hasRealUser && hasBuiltin">
-        <h2 class="h2-title">{{ $t('该租户未完成用户登录的配置，请以管理员模式登录') }}</h2>
-        <Password
-          v-if="activeIdp?.plugin_id === 'local'"
-          is-admin
-          :idp-id="activeIdp.id"
-        />
-      </section>
-
-      <section v-else-if="!hasRealUser && !hasBuiltin" class="unset">
-        <div class="unset-logo">
-          <img src="../../static/images/unset.svg" />
+      <!-- 未完成用户登录配置 -->
+      <section v-else>
+        <div class="empty-container">
+          <img class="empty-img" src="../images/empty.png" />
+          <div class="empty-text">{{ $t('该企业未完成用户登录配置') }}</div>
         </div>
-        <div class="unset-header">
-          {{ $t(userGroupName === '本租户' ? '当前' : '协同') }}{{ $t('租户未完成用户登录配置，无法登录') }}
-        </div>
-        <div v-if="userGroupName !== '本租户'" class="unset-content">{{`${$t('协同租户：')}${userGroupName}`}}</div>
       </section>
 
       <div class="tenant-password">
         <span class="cursor-pointer" @click="protocolVisible = true">{{ $t('用户协议') }} ></span>
         <span
           class="cursor-pointer"
-          v-if="hasRealUser && activeIdp?.plugin_id === 'local'"
+          v-if="activeIdp?.plugin_id === 'local'"
           @click="handleResetPassword">
           {{ $t('忘记密码？') }}
         </span>
@@ -167,17 +126,10 @@
     </section>
     <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
   </bk-form>
-  <div v-show="isAdminShow" style="margin-top: -28px">
-    <bk-link class="admin-back" @click.prevent="isAdminShow = false">&lt; {{ $t('返回上一级') }}</bk-link>
-    <h1 class="admin-title">{{ $t('管理员登录') }}</h1>
-    <span class="admin-desc"> {{ tenant?.name }} / {{ userGroupName }} </span>
-    <Password is-admin :idp-id="appStore.manageIdpId"></Password>
-  </div>
 </template>
 
 <script setup lang="ts">
-import { getGlobalSettings, getIdpList, getTenantList } from '@/http/api';
-import { Transfer, Close } from 'bkui-vue/lib/icon';
+import { getGlobalSettings, getIdpList, getTenantList, searchTenantList } from '@/http/api';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
 import Protocol from './components/protocol.vue';
@@ -186,10 +138,11 @@ import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
 import I18n, { t } from '@/language/index';
 import Cookies from 'js-cookie';
-import logoPng from '../../static/images/blueking.png'
+import logoPng from '../../static/images/blueking.png';
+import { debounce } from 'lodash';
 
 const  platformConfigData = platformConfig();
-const appLogo = computed(() => platformConfigData.appLogo ? platformConfigData.appLogo : logoPng);
+const appLogo = computed(() => (platformConfigData.appLogo ? platformConfigData.appLogo : logoPng));
 const activeTab = ref(I18n.global.locale.value);
 
 
@@ -199,69 +152,116 @@ interface Item {
 }
 
 interface Tenant extends Item {
-  name: string;
   logo: string;
-  collaboration_tenants: Item[];
 }
 
 interface Idp {
   id: string;
   name: string;
   plugin_id: string
-  data_source_type: DataSourceType
 }
 
-type DataSourceType = 'builtin_management' | 'real';
 
 const appStore = useAppStore();
 const loading = ref(false);
-const allTenantList: Ref<Tenant[]> = ref([]);
-const tenantMap = ref({});
+// 选中的租户
+const selectedTenant = ref<Tenant | null>(null);
+// localStorage 中存储的租户列表
 const tenantList = ref<Tenant[]>([]);
-const hasStorage = ref(!!localStorage.getItem('userGroup'));
+// 是否存在登录过的租户
+const hasStorage = ref(!!localStorage.getItem('tenantId'));
+// 是否显示租户选择弹窗
+const popoverVisible = ref(false);
+// 搜索租户结果是否为空
+const searchTenantEmpty = ref(false);
+// 租户选择弹窗是否加载中
+const tenantOptionsLoading = ref(false);
+// 租户选择输入框
+const tenantInputRef = ref(null);
 
 /**
- * 选中的用户群
+ * 输入搜索出的租户
  */
-const userGroup = ref(null);
+const tenantOptions = ref<Tenant[]>([]);
 
 /**
  * 输入搜索出的租户
  */
 const inputTenant = ref(null);
+
+/**
+ * 从 localStorage 中加载租户列表
+ */
+try {
+  tenantList.value = JSON.parse(localStorage.getItem('tenantList') || '[]');
+  appStore.tenantId = localStorage.getItem('tenantId');
+} catch (error) {
+  console.log(error);
+}
+
 /**
  * 选择/输入租户
  * @param id 租户ID
  */
-const handleTenantChange = async (id: string) => {
-  // 清空时清空输入租户名称
+const handleTenantChange = async () => {
+  const id = inputTenant.value;
+  console.log('handleTenantChange', id);
+  searchTenantEmpty.value = false;
   if (!id) {
-    inputTenant.value = null;
+    tenantOptions.value = [];
     return;
   }
-  let selected = allTenantList.value.find(item => item.id === id) || inputTenant.value?.find(item => item.id === id);
-  if (!selected) {
-    const res = await getTenantList({
-      tenant_ids: id,
-    });
-    const searchResult = res[0];
-    selected = searchResult;
-    inputTenant.value = searchResult;
+  tenantOptionsLoading.value = true;
+  // popoverVisible.value = false;
+  const res = await searchTenantList({
+    keyword: id,
+  });
+  if (res?.length === 0) {
+    searchTenantEmpty.value = true;
+    popoverVisible.value = false;
+    tenantOptions.value = [];
   } else {
-    inputTenant.value = null;
+    tenantOptions.value = res || [];
+    popoverVisible.value = true;
   }
-  tenant.value = selected;
-  appStore.tenantId = id;
-  userGroup.value = null;
+  tenantOptionsLoading.value = false;
 };
-try {
-  tenantMap.value = JSON.parse(localStorage.getItem('tenantMap') || '{}');
-} catch (error) {
-  console.log(error);
-}
-const tenant: Ref<Tenant> = ref(null);
 
-const trust = ref(true);
+// 使用 debounce 包装 handleTenantChange 函数，设置 300ms 的延迟
+const debouncedTenantChange = debounce(handleTenantChange, 300);
+
+const handleTenantFocus = () => {
+  popoverVisible.value = true;
+};
+
+const handleClickOutside = ({ event }: { event: Event }) => {
+  const target = event.target as HTMLElement;
+  if (tenantInputRef.value?.$el.contains(target)) {
+    return;
+  }
+  popoverVisible.value = false;
+};
+
+/**
+ * 清空租户
+ */
+const handleClearTenant = () => {
+  inputTenant.value = null;
+  searchTenantEmpty.value = false;
+  popoverVisible.value = false;
+  selectedTenant.value = null;
+  tenantOptions.value = [];
+};
+
+/**
+ * 选择租户
+ * @param item 租户
+ */
+const handleSelectTenant = (item: Tenant) => {
+  selectedTenant.value = item;
+  inputTenant.value = `${item.name}（${item.id}）`;
+  popoverVisible.value = false;
+};
 
 /**
  * 认证源列表
@@ -273,36 +273,21 @@ const idpList: Ref<Idp[]> = ref([]);
  */
 const activeIdp: Ref<Idp> = ref();
 
-/**
- * 是否有实名用户
- */
-const hasRealUser = ref(false);
-
-/**
- * 是否有内置管理员认证源
- */
-const hasBuiltin = ref(false);
 
 /**
  * 确认登录租户
  */
 const confirmTenant = () => {
-  if (trust.value) {
-    localStorage.setItem('tenantId', appStore.tenantId);
-    localStorage.setItem('userGroup', userGroup.value);
-    tenantMap.value[appStore.tenantId] = userGroup.value;
-    localStorage.setItem('tenantMap', JSON.stringify(tenantMap.value));
-  } else {
-    // 取消记住选择，需要删除原来已经记住的租户
-    tenantMap.value = Object.fromEntries(Object.entries(tenantMap.value).filter(([key]) => key !== appStore.tenantId));
-    localStorage.setItem('tenantMap', JSON.stringify(tenantMap.value));
-    // 如果tenantMap为空，清除localStorage tenantId，否则设置为第一个
-    if (Object.keys(tenantMap.value).length === 0) {
-      localStorage.removeItem('tenantId');
-    } else {
-      localStorage.setItem('tenantId', Object.keys(tenantMap.value)[0]);
-    }
+  const selectedTenantId = selectedTenant.value?.id;
+  if (!selectedTenantId) {
+    return;
   }
+  appStore.tenantId = selectedTenantId;
+  localStorage.setItem('tenantId', selectedTenantId);
+  if (!tenantList.value.find(item => item.id === selectedTenantId)) {
+    tenantList.value.push(selectedTenant.value);
+  }
+  localStorage.setItem('tenantList', JSON.stringify(tenantList.value));
   hasStorage.value = true;
   getIdps();
 };
@@ -311,66 +296,21 @@ const confirmTenant = () => {
  * 获取认证源列表
  */
 const getIdps = async () => {
-  const res = await getIdpList(
-    appStore.tenantId,
-    userGroup.value,
-  );
-  const manageIdp = res.find(item => item.data_source_type === 'builtin_management');
-  if (manageIdp) {
-    appStore.manageIdpId = manageIdp.id;
-    hasBuiltin.value = true;
-  } else {
-    appStore.manageIdpId = '';
-    hasBuiltin.value = false;
-  }
-  hasRealUser.value = res.some(item => item.data_source_type === 'real');
-  idpList.value = res.filter((item) => {
-    if (hasRealUser.value) {
-      return item.data_source_type !== 'builtin_management';
-    }
-    // 如果没有实名认证源，就不用过滤内置管理员认证源
-    return true;
-  });
-  [activeIdp.value] = idpList.value;
+  const res = await getIdpList(appStore.tenantId);
+  [activeIdp.value] = res;
+  idpList.value = res;
   handleChangeIdp(activeIdp.value);
   loading.value = false;
 };
 
-// 存在登录过的租户
-if (hasStorage.value) {
-  appStore.tenantId = localStorage.getItem('tenantId');
-  userGroup.value = localStorage.getItem('userGroup');
-  getTenantList({
-    tenant_ids: appStore.tenantId,
-  }).then((res) => {
-    tenant.value = res[0];
-  });
-  getIdps();
-}
-
-// 新增租户
-const addTenant = () => {
+/**
+ * 切换租户
+ */
+const changeTenant = () => {
   hasStorage.value = false;
   appStore.tenantId = '';
-  tenant.value = null;
-  userGroup.value = null;
+  selectedTenant.value = null;
   inputTenant.value = null;
-};
-
-/**
- * 本地存储的租户列表
- */
-const storageTenantList = computed(() => tenantList.value.filter(item => item.id !== appStore.tenantId));
-
-/**
- * 切换已登录过租户
- * @param item 租户
- */
-const handleChangeStorageTenant = (item: Tenant) => {
-  appStore.tenantId = item.id;
-  tenant.value = item;
-  userGroup.value = tenantMap.value[item.id];
-  confirmTenant();
 };
 
 const handleChangeIdp = (idp: Idp) => {
@@ -379,112 +319,38 @@ const handleChangeIdp = (idp: Idp) => {
 
 const protocolVisible = ref(false);
 
-const isOnlyOneTenant = ref(false);
-
 const settings = ref({});
 
-watch(
-  () => tenantMap.value,
-  (val) => {
-    if (Object.keys(val).length === 0) return;
-    getTenantList({
-      tenant_ids: Object.keys(val).join(','),
-    }).then((res) => {
-      tenantList.value = res;
-    });
-  },
-  {
-    immediate: true,
-    deep: true,
-  },
-);
-
 /**
- * 加载租户列表
+ * 从 localStorage 中加载租户列表
  */
 onBeforeMount(async () => {
   loading.value = true;
-  getTenantList({}).then((res) => {
-    allTenantList.value = res;
-  })
-    .finally(() => {
-      loading.value = false;
-    });
+  getTenantList({
+    tenant_ids: tenantList.value.map(item => item.id).join(','),
+  }).then((res) => {
+    tenantList.value = res;
+  });
+  if (hasStorage.value) {
+    selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
+    getIdps();
+  }
   settings.value = await getGlobalSettings();
+  loading.value = false;
 });
 
 /**
- * 用户群列表
+ * 重置密码
  */
-const userGroupList = computed(() => {
-  let currentTenant = allTenantList.value.find(item => item.id === appStore.tenantId);
-  // 通过输入搜索出来的租户，匹配不到用户群，需要从inputTenant获取
-  if (inputTenant.value) {
-    currentTenant = inputTenant.value;
-  }
-  const list = currentTenant?.collaboration_tenants || [];
-  const current = [{
-    id: appStore.tenantId,
-    name: '本租户',
-  }];
-  return current.concat(list);
-});
-
 const handleResetPassword = () => {
   // 确认环境变量后补充路径
   window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
 };
 
 /**
- * 用户群名称
+ * 语言切换
+ * @param locale 语言
  */
-const userGroupName = computed(() => {
-  if (userGroup.value === appStore.tenantId) {
-    return '本租户';
-  }
-  const list = tenant.value?.collaboration_tenants || [];
-  const current = list.find(item => item.id === userGroup.value);
-  return current?.name || '';
-});
-
-/**
- * 获取存储的租户对应的用户群名称
- */
-const getUserGroupName = (tenant: Tenant) => {
-  const userGroupId = tenantMap.value[tenant.id];
-  if (userGroupId === tenant.id) {
-    return '本租户';
-  }
-  return userGroupId;
-};
-
-/**
- * 管理员登录
- */
-const isAdminShow = ref(false);
-
-/**
- * 删除快捷切换项
- */
-const deleteStorageTenant = (item: any) => {
-  const obj = storageTenantList.value.find(i => i.id === item.id);
-  tenantMap.value = Object.fromEntries(Object.entries(tenantMap.value).filter(([key]) => key !== obj.id));
-  localStorage.setItem('tenantMap', JSON.stringify(tenantMap.value));
-};
-
-const selectRef = ref();
-
-/**
- * 下拉框中的值展示
- */
-
-const showOptions = computed(() => {
-  const options = inputTenant.value?.name ? [inputTenant.value] : allTenantList.value;
-  inputTenant.value?.name && selectRef.value?.showPopover();
-  return options;
-});
-
-// 语言切换
 const handleSwitchLocale = (locale: string) => {
   activeTab.value = locale;
   const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
@@ -511,6 +377,14 @@ const handleSwitchLocale = (locale: string) => {
 </script>
 
 <style lang="postcss" scoped>
+.switch-tenant {
+  font-size: 14px;
+  color: #4D4F56;
+  line-height: 22px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
 .login-header {
   height: 28px;
   font-size: 20px;
@@ -543,6 +417,11 @@ const handleSwitchLocale = (locale: string) => {
   line-height: 40px;
   margin: 15px 0;
   padding-left: 20px;
+}
+
+.tenant-input-error {
+  color: #E71818;
+  font-size: 14px;
 }
 
 .tenant-check {
@@ -594,11 +473,10 @@ const handleSwitchLocale = (locale: string) => {
   position: relative;
   color: #313238;
   font-size: 16px;
-  height: 52px;
-  line-height: 52px;
+  height: 40px;
+  line-height: 40px;
   padding-left: 20px;
   background: #F0F5FF;
-  border: 1px solid #A3C5FD;
   border-radius: 2px;
   margin: 32px 0 24px;
 
@@ -653,6 +531,7 @@ const handleSwitchLocale = (locale: string) => {
   align-items: center;
   justify-content: space-between;
   margin-top: -14px;
+  font-size: 14px;
 }
 
 .content-list {
@@ -699,9 +578,28 @@ const handleSwitchLocale = (locale: string) => {
     margin: 0 -12px -7px;
   }
 }
+.confirm-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+.tenant-options {
+  font-size: 12px;
+  line-height: 32px;
+  margin: -8px 0;
+  min-height: 32px;
+}
+.tenant-option-title {
+  color: #979BA5;
+}
 .tenant-option {
-  height: 36px;
-  font-size: 14px;
+  height: 32px;
+  margin: 0 -12px;
+  padding: 0 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f5f7fa;
+  }
 }
 .h2-title {
   font-size: 16px;
@@ -785,5 +683,25 @@ const handleSwitchLocale = (locale: string) => {
   .text-active {
     color: #3a84ff;
   }
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-img {
+  width: 200px;
+  height: 200px;
+  margin: 20px 0;
+}
+.empty-text {
+  height: 22px;
+  font-size: 14px;
+  color: #313238;
+  line-height: 22px;
+  margin-bottom: 20px;
 }
 </style>
