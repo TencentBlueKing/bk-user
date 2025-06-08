@@ -17,7 +17,8 @@
 
 import logging
 
-from bkuser.apps.tenant.models import TenantUserDisplayNameExpressionConfig
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+from bkuser.apps.tenant.models import DataSource, TenantUserDisplayNameExpressionConfig
 from bkuser.common.cache import cached
 
 logger = logging.getLogger(__name__)
@@ -28,9 +29,14 @@ ConfigCacheTimeout = 120
 
 
 @cached(timeout=ConfigCacheTimeout)
-def get_display_name_config(tenant_id: str) -> TenantUserDisplayNameExpressionConfig:
+def get_display_name_config(tenant_id: str, data_source_id: int) -> TenantUserDisplayNameExpressionConfig:
     """获取指定租户的展示名配置"""
-    return TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+    data_source = DataSource.objects.get(id=data_source_id)
+    # 如果为本租户用户，则直接使用本租户的配置
+    if data_source.owner_tenant_id == tenant_id:
+        return TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=tenant_id)
+    # 如果为协同租户用户，则使用默认的 display_name 表达式配置
+    return TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG)
 
 
 # TODO: 后续支持 display_name 缓存
