@@ -114,9 +114,18 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
+ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .show-tag {
   display: inline-block;
-  margin-right: 4px;
   border-radius: 2px;
   height: 32px;
   line-height: 32px;
@@ -126,4 +135,5 @@ onMounted(() => {
   color: #313238;
   font-size: 12px;
 }
+
 </style>
