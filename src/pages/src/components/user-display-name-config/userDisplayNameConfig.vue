@@ -9,8 +9,10 @@
           <showTags
             :data="data"
             :value-map="tagValueMap"
+            :symbol-options="symbolOptions"
             @delete="handleDeleteTag"
-            @sort="handleSortTag" />
+            @sort="handleSortTag"
+            @symbol-replace="handleSymbolReplace" />
         </bk-loading>
       </div>
       <bk-popover
@@ -24,18 +26,12 @@
           <i class="user-icon icon-add-2"></i>
         </div>
         <template #content>
-          <div class="flex">
-            <SelectPanel
-              :title="$t('字段')"
-              :options="fieldOptions"
-              class="border-r-[1px] border-[#DCDEE5]"
-              :tips="$t('最多仅允许添加3个字段')"
-              @change="handleFieldChange" />
-            <SelectPanel
-              :title="$t('符号')"
-              :options="symbolOptions"
-              @change="handleSymbolChange" />
-          </div>
+          <SelectPanelGroup
+            :field-options="fieldOptions"
+            :symbol-options="symbolOptions"
+            @field-change="handleFieldChange"
+            @symbol-change="handleSymbolChange"
+          />
         </template>
       </bk-popover>
     </div>
@@ -47,11 +43,11 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import ConfigPreview from './configPreview.vue';
 import { SYMBOL_OPTIONS } from './select-panel/data';
-import SelectPanel from './select-panel/selectPanel.vue';
+import SelectPanelGroup from './select-panel/selectPanelGroup.vue';
 import { IOption } from './select-panel/type';
 import showTags from './showTags.vue';
 
-import { getFields } from '@/http';
+import { useFieldData } from '@/store';
 
 const data = defineModel<any[]>('data');
 defineProps<{
@@ -135,24 +131,29 @@ const handleSymbolChange = (option: IOption) => {
   emit('change', curItem, 'add');
 };
 
+const handleSymbolReplace = (option: IOption, index) => {
+  const curItem = {
+    type: 'symbol',
+    value: option.id,
+  };
+  data.value[index] = (curItem);
+  emit('change', curItem, 'replace');
+};
+
 const isLoading = ref(false);
+const fieldData = useFieldData();
 const handleFetchFields = async () => {
   try {
     isLoading.value = true;
 
     const disabledDataTypes = ['enum', 'multi_enum'];
-    const res = await getFields();
-    const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
-    [builtinFields, customFields].forEach((fields) => {
-      const fieldsArr = fields
-        .filter(item => !disabledDataTypes.includes(item.data_type))
-        .map(item => ({
-          id: item.name,
-          value: item.display_name,
-          icon: 'user-icon icon-app-store-fill bg-[#F8B64F]',
-        }));
-      fieldOptions.value = [...fieldOptions.value, ...fieldsArr];
-    });
+    const fieldsArr = fieldData.data.filter(item => !disabledDataTypes.includes(item.data_type))
+      .map(item => ({
+        id: item.name,
+        value: item.display_name,
+        icon: 'field-icon',
+      }));
+    fieldOptions.value = [...fieldOptions.value, ...fieldsArr];
   } catch (err) {
     console.error(err);
   } finally {
@@ -176,5 +177,23 @@ onMounted(async () => {
 <style lang="less">
 .display-name-config-no-padding-popover {
   padding: 0 !important;
+}
+
+.field-icon {
+  background-image: url('../../images/variable.svg');
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-size: contain;
+  background-position: center;
+}
+
+.symbol-icon {
+  background-image: url('../../images/constant.svg');
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-size: contain;
+  background-position: center;
 }
 </style>
