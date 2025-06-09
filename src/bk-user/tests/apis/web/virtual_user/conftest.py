@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Callable
+from typing import Callable, Dict
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
@@ -27,17 +27,9 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def valid_data() -> dict:
-    return {
-        "username": "v_user",
-        "full_name": "虚拟用户",
-        "email": "v@example.com",
-        "phone": "13800000000",
-        "phone_country_code": "86",
-        "app_codes": ["app1", "app2"],
-        "owners": ["real_user_1", "real_user_2"],
-    }
+def _create_owners_for_test(create_real_owner: Callable, tenant: Tenant, owners: list[str]):
+    for owner in owners:
+        create_real_owner(tenant, owner)
 
 
 @pytest.fixture
@@ -121,3 +113,56 @@ def create_virtual_user_with_relations(
         return tenant_user
 
     return _create
+
+
+@pytest.fixture
+def virtual_user_data() -> Dict:
+    """预置虚拟用户测试数据"""
+    return {
+        "users": [
+            {
+                "username": "virtual_user_1",
+                "full_name": "虚拟用户1",
+                "app_codes": ["app1", "app2"],
+                "owners": ["owner1", "owner2"],
+            },
+            {
+                "username": "virtual_user_2",
+                "full_name": "虚拟用户2",
+                "app_codes": ["app3"],
+                "owners": ["owner3", "owner4"],
+            },
+        ],
+        "all_owners": ["owner1", "owner2", "owner3", "owner4"],
+        "all_app_codes": ["app1", "app2", "app3"],
+    }
+
+
+@pytest.fixture
+def prepared_owners(random_tenant, create_real_owner, virtual_user_data):
+    """预创建所有的责任人"""
+    for owner in virtual_user_data["all_owners"]:
+        create_real_owner(random_tenant, owner)
+    return virtual_user_data["all_owners"]
+
+
+@pytest.fixture
+def prepared_virtual_users(
+    random_tenant, create_real_owner, create_virtual_user_with_relations, virtual_user_data
+) -> list[TenantUser]:
+    """预创建一批虚拟用户数据"""
+    # 创建所有责任人
+    _create_owners_for_test(create_real_owner, random_tenant, virtual_user_data["all_owners"])
+
+    # 创建所有虚拟用户
+    users = []
+    for user_data in virtual_user_data["users"]:
+        user = create_virtual_user_with_relations(
+            tenant=random_tenant,
+            username=user_data["username"],
+            full_name=user_data["full_name"],
+            app_codes=user_data["app_codes"],
+            owners=user_data["owners"],
+        )
+        users.append(user)
+    return users
