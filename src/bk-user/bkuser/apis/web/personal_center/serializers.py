@@ -292,3 +292,55 @@ class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
 
 class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="用户邮箱")
+
+
+class TenantUserVirtualUserListInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
+
+
+class TenantUserVirtualUserListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户 ID")
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
+    app_codes = serializers.SerializerMethodField(help_text="应用编码列表")
+    owners = serializers.SerializerMethodField(help_text="责任人列表")
+    # Note: 这里并不获取租户用户的联系方式，因为虚拟账号并不是同步而来，也无法通过登录后修改
+    email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
+    phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
+    phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
+    def get_app_codes(self, obj: TenantUser) -> List[str]:
+        return self.context["app_codes_mapping"][obj.id]
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
+    def get_owners(self, obj: TenantUser) -> List[str]:
+        return self.context["owners_mapping"][obj.id]
+
+
+class TenantUserVirtualUserUpdateInputSLZ(serializers.Serializer):
+    full_name = serializers.CharField(help_text="姓名")
+    app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
+    email = serializers.EmailField(help_text="邮箱", required=False, default="", allow_blank=True)
+    phone = serializers.CharField(help_text="手机号", required=False, default="", allow_blank=True)
+    phone_country_code = serializers.CharField(
+        help_text="手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
+    )
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 如果提供了手机号，则校验手机号是否合法
+        if attrs["phone"]:
+            try:
+                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+            except ValueError as e:
+                raise ValidationError(str(e))
+
+        return attrs
+
+    def validate_app_codes(self, app_codes: list[str]) -> list[str]:
+        # 过滤重复值
+        return list(set(app_codes))
+
+
+class TenantUserVirtualUserRetrieveOutputSLZ(TenantUserVirtualUserListOutputSLZ):
+    pass

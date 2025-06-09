@@ -87,4 +87,14 @@ urlpatterns = [
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.email_verification_code.send",
     ),
+    path(
+        "tenant-users/<str:id>/virtual-users/",
+        views.TenantUserVirtualUserListApi.as_view(),
+        name="personal_center.tenant_users.virtual_users.list",
+    ),
+    path(
+        "tenant-users/<str:id>/virtual-users/<str:virtual_user_id>",
+        views.TenantUserVirtualUserRetrieveUpdateApi.as_view(),
+        name="personal_center.tenant_users.virtual_users.update",
+    ),
 ]

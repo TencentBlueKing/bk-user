@@ -18,6 +18,7 @@
 import logging
 from typing import Dict
 
+from django.db.models import Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -39,12 +40,22 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserPhoneVerificationCodeSendInputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
+    TenantUserVirtualUserListInputSLZ,
+    TenantUserVirtualUserListOutputSLZ,
+    TenantUserVirtualUserRetrieveOutputSLZ,
+    TenantUserVirtualUserUpdateInputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
-from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor
+from bkuser.apps.tenant.models import (
+    TenantUser,
+    TenantUserCustomField,
+    UserBuiltinField,
+    VirtualUserAppRelation,
+    VirtualUserOwnerRelation,
+)
+from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor, VirtualUserAuditor
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.senders import (
@@ -557,3 +568,134 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         auditor.record(tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserVirtualUserListApi(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    lookup_url_kwarg = "id"
+    serializer_class = TenantUserVirtualUserListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        current_tenant_user = self.get_object()
+
+        slz = TenantUserVirtualUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 过滤当前租户用户关联的虚拟用户
+        queryset = TenantUser.objects.filter(
+            id__in=VirtualUserOwnerRelation.objects.filter(owner_id=current_tenant_user.id).values_list(
+                "tenant_user_id", flat=True
+            ),
+        ).select_related("data_source_user")
+
+        # 关键字过滤
+        if keyword := data.get("keyword"):
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+        return queryset
+
+    def get_serializer_context(self):
+        virtual_user_ids = [user.id for user in self.get_queryset()]
+
+        app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=virtual_user_ids).values_list(
+            "tenant_user_id", "app_code"
+        )
+        # 虚拟用户 与 app_code 之间的映射
+        app_codes_mapping: dict[str, list[str]] = {}
+        for tenant_user_id, app_code in app_relations:
+            app_codes_mapping.setdefault(tenant_user_id, []).append(app_code)
+
+        owner_relations = VirtualUserOwnerRelation.objects.filter(tenant_user_id__in=virtual_user_ids)
+        # 虚拟用户与责任人列表之间的映射
+        owners_mapping: dict[str, list[str]] = {}
+        for relation in owner_relations:
+            owners_mapping.setdefault(relation.tenant_user_id, []).append(relation.owner_id)
+
+        return {"app_codes_mapping": app_codes_mapping, "owners_mapping": owners_mapping}
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心-虚拟用户列表",
+        query_serializer=TenantUserVirtualUserListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserVirtualUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserVirtualUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    serializer_class = TenantUserVirtualUserRetrieveOutputSLZ
+
+    def __init__(self, **kwargs):
+        super().__init__(kwargs)
+        self.virtual_user_id = self.kwargs.get("virtual_user_id")
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        # 过滤当前实体用户关联的虚拟用户
+        current_tenant_user = self.get_object()
+        return TenantUser.objects.filter(
+            id__in=VirtualUserOwnerRelation.objects.filter(owner_id=current_tenant_user.id).values_list(
+                "tenant_user_id", flat=True
+            ),
+        ).select_related("data_source_user")
+
+    def get_serializer_context(self):
+        virtual_user = TenantUser.objects.get(id=self.virtual_user_id)
+
+        app_codes = list(
+            VirtualUserAppRelation.objects.filter(tenant_user=virtual_user).values_list("app_code", flat=True)
+        )
+
+        owner_ids = list(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=virtual_user).values_list("owner_id", flat=True)
+        )
+
+        return {"app_codes_mapping": {virtual_user.id: app_codes}, "owners_mapping": {virtual_user.id: owner_ids}}
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心-虚拟用户更新",
+        request_body=TenantUserVirtualUserUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        virtual_user = TenantUser.objects.get(id=self.virtual_user_id)
+
+        slz = TenantUserVirtualUserUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        data_source_user = virtual_user.data_source_user
+
+        # 【审计】创建虚拟用户审计对象并记录变更前的数据
+        auditor = VirtualUserAuditor(request.user.username, virtual_user.tenant_id)
+        auditor.pre_record_data_before(virtual_user)
+
+        # 覆盖更新
+        data_source_user.full_name = data["full_name"]
+        data_source_user.email = data["email"]
+        data_source_user.phone = data["phone"]
+        data_source_user.phone_country_code = data["phone_country_code"]
+        data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
+
+        # 更新虚拟用户与应用的关联
+        VirtualUserAppRelation.objects.filter(tenant_user=virtual_user).delete()
+        VirtualUserAppRelation.objects.bulk_create(
+            [VirtualUserAppRelation(tenant_user=virtual_user, app_code=app_code) for app_code in data["app_codes"]]
+        )
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(virtual_user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心-虚拟用户详情",
+        responses={status.HTTP_200_OK: TenantUserVirtualUserRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
