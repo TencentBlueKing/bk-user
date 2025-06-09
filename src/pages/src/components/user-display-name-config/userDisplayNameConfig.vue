@@ -139,14 +139,18 @@ const isLoading = ref(false);
 const handleFetchFields = async () => {
   try {
     isLoading.value = true;
+
+    const disabledDataTypes = ['enum', 'multi_enum'];
     const res = await getFields();
     const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
     [builtinFields, customFields].forEach((fields) => {
-      const fieldsArr = fields.map(item => ({
-        id: item.name,
-        value: item.display_name,
-        icon: 'user-icon icon-app-store-fill bg-[#F8B64F]',
-      }));
+      const fieldsArr = fields
+        .filter(item => !disabledDataTypes.includes(item.data_type))
+        .map(item => ({
+          id: item.name,
+          value: item.display_name,
+          icon: 'user-icon icon-app-store-fill bg-[#F8B64F]',
+        }));
       fieldOptions.value = [...fieldOptions.value, ...fieldsArr];
     });
   } catch (err) {
