@@ -96,6 +96,7 @@ class TenantUserDisplayNameHandler:
 
         注意：调用时需要提前连表查询 `data_source_user`，否则会导致 N+1 问题
         """
+
         if not users:
             return {}
 
