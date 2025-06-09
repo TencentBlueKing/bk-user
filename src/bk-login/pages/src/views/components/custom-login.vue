@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import useAppStore from '@/store/app';
+// import useAppStore from '@/store/app';
 const props = defineProps({
   idpId: {
     type: String,
@@ -26,9 +26,9 @@ const props = defineProps({
   },
 });
 
-const appStore = useAppStore();
+// const appStore = useAppStore();
 const handleLogin = () => {
-  window.location.href = `${window.SITE_URL}/tenants/${appStore.tenantId}/idps/${props.idpId}/actions/login/`;
+  window.location.href = `${window.SITE_URL}/auth/idps/${props.idpId}/actions/login/`;
 };
 </script>
 
