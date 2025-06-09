@@ -33,11 +33,12 @@
           </bk-input>
           <template #content>
             <div class="tenant-options">
-              <div class="tenant-option"
-                   v-bkloading="{ loading: tenantOptionsLoading }"
-                   v-for="item in tenantOptions"
-                   :key="item.id"
-                   @click="handleSelectTenant(item)">
+              <div
+                class="tenant-option"
+                v-bkloading="{ loading: tenantOptionsLoading }"
+                v-for="item in tenantOptions"
+                :key="item.id"
+                @click="handleSelectTenant(item)">
                 {{ item.name }} ({{ item.id }})
               </div>
 
@@ -220,7 +221,9 @@ const debouncedTenantChange = debounce(handleTenantChange, 300);
  * 处理租户输入框焦点
  */
 const handleTenantFocus = () => {
-  popoverVisible.value = true;
+  if (tenantList.value.length) {
+    popoverVisible.value = true;
+  }
 };
 
 /**
@@ -340,14 +343,16 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
 // 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
-  getTenantList({
-    tenant_ids: tenantList.value.map(item => item.id).join(','),
-  }).then((res) => {
-    tenantList.value = res;
-  });
-  if (hasStorage.value) {
-    selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
-    getIdps();
+  if (tenantList.value.length) {
+    getTenantList({
+      tenant_ids: tenantList.value.map(item => item.id).join(','),
+    }).then((res) => {
+      tenantList.value = res;
+    });
+    if (hasStorage.value) {
+      selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
+      getIdps();
+    }
   }
   settings.value = await getGlobalSettings();
   loading.value = false;
