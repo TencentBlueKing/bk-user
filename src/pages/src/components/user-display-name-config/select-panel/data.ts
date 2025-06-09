@@ -2,31 +2,31 @@ export const SYMBOL_OPTIONS = [
   {
     id: '(',
     value: '(',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
   {
     id: ')',
     value: ')',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
   {
     id: '[',
     value: '[',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
   {
     id: ']',
     value: ']',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
   {
     id: '_',
     value: '_',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
   {
     id: '-',
     value: '-',
-    icon: 'user-icon icon-root-node-i bg-[#54C69A]',
+    icon: 'symbol-icon',
   },
 ];

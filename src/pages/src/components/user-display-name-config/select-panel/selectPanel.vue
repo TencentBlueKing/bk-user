@@ -15,6 +15,7 @@
         :class="[
           item?.disabled && 'option-disabled',
           item?.hide && 'hidden',
+          'flex items-center',
         ]"
         @click="handleClickOption(item)">
         <i v-if="item?.icon" :class="[item.icon || '', 'mr-[5px]']"></i>
@@ -66,7 +67,6 @@ const handleClickOption = (option: IOption) => {
     }
     li {
       height: 32px;
-      line-height: 32px;
       color: #4D4F56;
       cursor: pointer;
       padding-inline: 12px;
