@@ -45,7 +45,6 @@ def _validate_owners(owners: list[str]) -> list[str]:
     1. 去重
     2. 检查每个责任人是否存在且为实体用户
     """
-
     found_owners = set(
         TenantUser.objects.filter(id__in=owners, data_source__type=DataSourceTypeEnum.REAL).values_list(
             "id", flat=True
