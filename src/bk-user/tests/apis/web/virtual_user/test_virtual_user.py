@@ -144,7 +144,6 @@ class TestVirtualUserListApi:
 class TestVirtualUserGetApi:
     @pytest.mark.parametrize("user_index", [0, 1, 2])
     def test_get_virtual_user(self, api_client, virtual_user_data, user_index):
-        # 使用第一个预置用户进行测试
         test_user_data = virtual_user_data["users"][user_index]
 
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": test_user_data["tenant_user_id"]})
@@ -197,7 +196,6 @@ class TestVirtualUserUpdateApi:
         ],
     )
     def test_update_virtual_user(self, api_client, update_fields, virtual_user_data):
-        # 使用第一个预置用户进行测试
         url, request_data, virtual_user = self._prepare_update_request(virtual_user_data, update_fields)
         test_data = virtual_user_data["users"][0]
 
