@@ -89,30 +89,17 @@ class TestVirtualUserCreateApi:
 class TestVirtualUserListApi:
     @pytest.mark.usefixtures("_init_virtual_user")
     def test_list_virtual_user(self, api_client):
-        expected_users = [
-            {
-                "username": "virtual_user_1",
-                "full_name": "虚拟用户1",
-                "app_codes": ["app1", "app2"],
-                "owners": ["zhangsan", "lisi"],
-            },
-            {
-                "username": "virtual_user_2",
-                "full_name": "虚拟用户2",
-                "app_codes": ["app3"],
-                "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
-            },
-            {
-                "username": "virtual_user_3",
-                "full_name": "虚拟用户3",
-                "app_codes": ["app4", "app5"],
-                "owners": ["maiba", "yangjiu", "lushi"],
-            },
-        ]
-
-        expected_usernames = {user["username"] for user in expected_users}
-        expected_app_codes = {user["username"]: set(user["app_codes"]) for user in expected_users}
-        expected_owners = {user["username"]: set(user["owners"]) for user in expected_users}
+        expected_usernames = {"virtual_user_1", "virtual_user_2", "virtual_user_3"}
+        expected_app_codes = {
+            "virtual_user_1": {"app1", "app2"},
+            "virtual_user_2": {"app3"},
+            "virtual_user_3": {"app4", "app5"},
+        }
+        expected_owners = {
+            "virtual_user_1": {"zhangsan", "lisi"},
+            "virtual_user_2": {"lisi", "wangwu", "zhaoliu", "liuqi"},
+            "virtual_user_3": {"maiba", "yangjiu", "lushi"},
+        }
 
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK

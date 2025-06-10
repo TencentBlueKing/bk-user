@@ -44,9 +44,6 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 
 @pytest.fixture
 def _init_virtual_user(random_tenant, _init_tenant_users_depts, bare_virtual_data_source) -> None:
-    """
-    初始化一批虚拟用户及其相关关系数据
-    """
     virtual_users = [
         {
             "username": "virtual_user_1",
