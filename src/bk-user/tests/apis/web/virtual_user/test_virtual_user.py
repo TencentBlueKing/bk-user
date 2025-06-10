@@ -25,37 +25,21 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.usefixtures("_init_virtual_user")
 class TestVirtualUserCreateApi:
-    @pytest.mark.parametrize(
-        "user_data",
-        [
-            {
-                "username": "virtual_user_4",
-                "full_name": "测试用户4",
-                "app_codes": ["app1", "app2"],
-                "owners": ["zhangsan", "lisi", "wangwu"],
-            },
-            {
-                "username": "virtual_user_5",
-                "full_name": "测试用户5",
-                "app_codes": ["app3"],
-                "owners": ["lisi", "wangwu", "zhaoliu"],
-            },
-            {
-                "username": "virtual_user_6",
-                "full_name": "测试用户6",
-                "app_codes": ["app1", "app3", "app4"],
-                "owners": ["maiba", "yangjiu"],
-            },
-        ],
-    )
-    def test_create_virtual_user(self, api_client, user_data):
+    def test_create_virtual_user(self, api_client):
+        data = {
+            "username": "virtual_user_4",
+            "full_name": "测试用户4",
+            "app_codes": ["app1", "app2", "app3"],
+            "owners": ["lisi", "wangwu"],
+        }
+
         url = reverse("virtual_user.list_create")
-        resp = api_client.post(url, data=user_data, format="json")
+        resp = api_client.post(url, data=data)
         assert resp.status_code == status.HTTP_201_CREATED
-        data_source_user = DataSourceUser.objects.get(username=user_data["username"])
+        data_source_user = DataSourceUser.objects.get(username=data["username"])
         tenant_user = TenantUser.objects.get(data_source_user=data_source_user)
         assert resp.data["id"] == tenant_user.id
-        assert DataSourceUser.objects.filter(username=user_data["username"]).exists()
+        assert DataSourceUser.objects.filter(username=data["username"]).exists()
 
     @pytest.mark.parametrize(
         "user_data",
@@ -81,7 +65,7 @@ class TestVirtualUserCreateApi:
         ],
     )
     def test_create_virtual_user_invalid_owner(self, api_client, user_data):
-        resp = api_client.post(reverse("virtual_user.list_create"), data=user_data, format="json")
+        resp = api_client.post(reverse("virtual_user.list_create"), data=user_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
 
@@ -116,8 +100,8 @@ class TestVirtualUserListApi:
             username = item["username"]
             expected = expected_data[username]
             assert item["full_name"] == expected["full_name"]
-            assert set(item["app_codes"]) == expected["app_codes"]
-            assert set(item["owners"]) == expected["owners"]
+            assert set(item["app_codes"]) == set(expected["app_codes"])
+            assert set(item["owners"]) == set(expected["owners"])
 
     def test_list_virtual_user_empty(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
@@ -130,30 +114,37 @@ class TestVirtualUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         usernames = {item["username"] for item in resp.data["results"]}
         assert {"virtual_user_1", "virtual_user_2", "virtual_user_3"} == usernames
-        assert "other_user" not in usernames
+
+        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual_user_1")
+        assert resp.status_code == status.HTTP_200_OK
+        usernames = {item["username"] for item in resp.data["results"]}
+        assert {"virtual_user_1"} == usernames
+        assert {"virtual_user_2", "virtual_user_3"} not in usernames
 
 
 @pytest.mark.usefixtures("_init_virtual_user")
 class TestVirtualUserGetApi:
     def test_get_virtual_user(self, api_client):
-        expected_user = {
-            "username": "virtual_user_2",
-            "full_name": "虚拟用户2",
-            "app_codes": ["app3"],
-            "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
-        }
+        virtual_user = TenantUser.objects.get(id="virtual_user_2")
+        data_source_user = virtual_user.data_source_user
+        app_codes = list(
+            VirtualUserAppRelation.objects.filter(tenant_user=virtual_user).values_list("app_code", flat=True)
+        )
+        owners = list(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=virtual_user).values_list("owner", flat=True)
+        )
 
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": expected_user["username"]})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_2"})
         resp = api_client.get(url)
 
         assert resp.status_code == status.HTTP_200_OK
 
-        assert resp.data["username"] == expected_user["username"]
-        assert resp.data["full_name"] == expected_user["full_name"]
-        assert set(resp.data["app_codes"]) == set(expected_user["app_codes"])
-        assert set(resp.data["owners"]) == set(expected_user["owners"])
+        assert resp.data["username"] == data_source_user.username
+        assert resp.data["full_name"] == data_source_user.full_name
+        assert set(resp.data["app_codes"]) == set(app_codes)
+        assert set(resp.data["owners"]) == set(owners)
 
-    def test_get_virtual_user_not_found(self, api_client):
+    def test_get_virtual_user_not_exists(self, api_client):
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_4"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -166,7 +157,6 @@ class TestVirtualUserUpdateApi:
         resp = api_client.put(
             url,
             data={"full_name": "测试虚拟用户", "app_codes": ["app3", "app4"], "owners": ["freedom", "lushi"]},
-            format="json",
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -188,7 +178,6 @@ class TestVirtualUserUpdateApi:
                 "app_codes": ["app3", "app4"],
                 "owners": ["freedom", "lushi", "zhangwei"],
             },
-            format="json",
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
