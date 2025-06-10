@@ -14,8 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-import random
-
 import pytest
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
@@ -30,37 +28,29 @@ class TestVirtualUserCreateApi:
     @pytest.mark.parametrize(
         "user_data",
         [
-            pytest.param(
-                {
-                    "username": "virtual_user_4",
-                    "full_name": "测试用户4",
-                    "app_codes": ["app1", "app2"],
-                },
-                id="virtual_user_4",
-            ),
-            pytest.param(
-                {
-                    "username": "virtual_user_5",
-                    "full_name": "测试用户5",
-                    "app_codes": ["app3"],
-                },
-                id="virtual_user_5",
-            ),
-            pytest.param(
-                {
-                    "username": "virtual_user_6",
-                    "full_name": "测试用户6",
-                    "app_codes": ["app1", "app3", "app4"],
-                },
-                id="virtual_user_6",
-            ),
+            {
+                "username": "virtual_user_4",
+                "full_name": "测试用户4",
+                "app_codes": ["app1", "app2"],
+                "owners": ["zhangsan", "lisi", "wangwu"],
+            },
+            {
+                "username": "virtual_user_5",
+                "full_name": "测试用户5",
+                "app_codes": ["app3"],
+                "owners": ["lisi", "wangwu", "zhaoliu"],
+            },
+            {
+                "username": "virtual_user_6",
+                "full_name": "测试用户6",
+                "app_codes": ["app1", "app3", "app4"],
+                "owners": ["maiba", "yangjiu"],
+            },
         ],
     )
-    def test_create_virtual_user(self, api_client, user_data, real_owner_ids):
-        num_owners = random.randint(1, 9)
-        user_data["owners"] = random.sample(real_owner_ids, num_owners)
+    def test_create_virtual_user(self, api_client, user_data):
         url = reverse("virtual_user.list_create")
-        resp = api_client.post(url, data=user_data)
+        resp = api_client.post(url, data=user_data, format="json")
         assert resp.status_code == status.HTTP_201_CREATED
         data_source_user = DataSourceUser.objects.get(username=user_data["username"])
         tenant_user = TenantUser.objects.get(data_source_user=data_source_user)
@@ -70,44 +60,59 @@ class TestVirtualUserCreateApi:
     @pytest.mark.parametrize(
         "user_data",
         [
-            pytest.param(
-                {
-                    "username": "invalid_user_1",
-                    "full_name": "无效用户1",
-                    "app_codes": ["app1"],
-                    "owners": ["invalid_owner1"],
-                },
-            ),
-            pytest.param(
-                {
-                    "username": "invalid_user_2",
-                    "full_name": "无效用户2",
-                    "app_codes": ["app2", "app3"],
-                    "owners": ["invalid_owner2", "owner1"],
-                },
-            ),
-            pytest.param(
-                {
-                    "username": "invalid_user_3",
-                    "full_name": "无效用户3",
-                    "app_codes": ["app4"],
-                    "owners": ["invalid_owner3", "owner1", "owner2"],
-                },
-            ),
+            {
+                "username": "invalid_user_1",
+                "full_name": "无效用户1",
+                "app_codes": ["app1"],
+                "owners": ["invalid_owner1"],
+            },
+            {
+                "username": "invalid_user_2",
+                "full_name": "无效用户2",
+                "app_codes": ["app2", "app3"],
+                "owners": ["invalid_owner2", "zhangsan", "lisi"],
+            },
+            {
+                "username": "invalid_user_3",
+                "full_name": "无效用户3",
+                "app_codes": ["app4"],
+                "owners": ["invalid_owner3", "wangwu", "zhaoliu"],
+            },
         ],
     )
     def test_create_virtual_user_invalid_owner(self, api_client, user_data):
-        resp = api_client.post(reverse("virtual_user.list_create"), data=user_data)
+        resp = api_client.post(reverse("virtual_user.list_create"), data=user_data, format="json")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不存在或不是实体用户" in resp.data["message"]
 
 
 class TestVirtualUserListApi:
     @pytest.mark.usefixtures("_init_virtual_user")
-    def test_list_virtual_user(self, api_client, virtual_user_data):
-        expected_usernames = {user["username"] for user in virtual_user_data["users"]}
-        expected_app_codes = {user["username"]: set(user["app_codes"]) for user in virtual_user_data["users"]}
-        expected_owners = {user["username"]: set(user["owners"]) for user in virtual_user_data["users"]}
+    def test_list_virtual_user(self, api_client):
+        expected_users = [
+            {
+                "username": "virtual_user_1",
+                "full_name": "虚拟用户1",
+                "app_codes": ["app1", "app2"],
+                "owners": ["zhangsan", "lisi"],
+            },
+            {
+                "username": "virtual_user_2",
+                "full_name": "虚拟用户2",
+                "app_codes": ["app3"],
+                "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
+            },
+            {
+                "username": "virtual_user_3",
+                "full_name": "虚拟用户3",
+                "app_codes": ["app4", "app5"],
+                "owners": ["maiba", "yangjiu", "lushi"],
+            },
+        ]
+
+        expected_usernames = {user["username"] for user in expected_users}
+        expected_app_codes = {user["username"]: set(user["app_codes"]) for user in expected_users}
+        expected_owners = {user["username"]: set(user["owners"]) for user in expected_users}
 
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK
@@ -139,80 +144,59 @@ class TestVirtualUserListApi:
 
 @pytest.mark.usefixtures("_init_virtual_user")
 class TestVirtualUserGetApi:
-    @pytest.mark.parametrize("user_index", [0, 1, 2])
-    def test_get_virtual_user(self, api_client, virtual_user_data, user_index):
-        test_user_data = virtual_user_data["users"][user_index]
+    def test_get_virtual_user(self, api_client):
+        expected_user = {
+            "username": "virtual_user_2",
+            "full_name": "虚拟用户2",
+            "app_codes": ["app3"],
+            "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
+        }
 
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": test_user_data["tenant_user_id"]})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": expected_user["username"]})
         resp = api_client.get(url)
 
         assert resp.status_code == status.HTTP_200_OK
 
-        assert resp.data["username"] == test_user_data["username"]
-        assert resp.data["full_name"] == test_user_data["full_name"]
-        assert set(resp.data["app_codes"]) == set(test_user_data["app_codes"])
-        assert set(resp.data["owners"]) == set(test_user_data["owners"])
+        assert resp.data["username"] == expected_user["username"]
+        assert resp.data["full_name"] == expected_user["full_name"]
+        assert set(resp.data["app_codes"]) == set(expected_user["app_codes"])
+        assert set(resp.data["owners"]) == set(expected_user["owners"])
 
     def test_get_virtual_user_not_found(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "not_found"})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_4"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.usefixtures("_init_virtual_user")
 class TestVirtualUserUpdateApi:
-    def _prepare_update_request(self, virtual_user_data, update_fields, user_index=0):
-        """准备更新请求的数据"""
-        test_user_data = virtual_user_data["users"][user_index]
-        virtual_user = TenantUser.objects.get(id=test_user_data["tenant_user_id"])
-
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": virtual_user.id})
-        request_data = {
-            "full_name": virtual_user.data_source_user.full_name,
-            "app_codes": list(virtual_user.virtualuserapprelation_set.values_list("app_code", flat=True)),
-            "owners": [rel.owner_id for rel in virtual_user.virtualuserownerrelation_set.all()],
-        }
-        request_data.update(update_fields)
-        return url, request_data, virtual_user
-
-    def test_update_virtual_user(self, api_client, virtual_user_data, real_owner_ids):
-        update_fields = {
-            "full_name": "zhangsan",
-            "app_codes": ["app1", "app2"],
-            "owners": real_owner_ids,
-        }
-        url, request_data, virtual_user = self._prepare_update_request(virtual_user_data, update_fields)
-        test_data = virtual_user_data["users"][0]
-
+    def test_update_virtual_user(self, api_client):
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
         resp = api_client.put(
             url,
-            data=request_data,
+            data={"full_name": "测试虚拟用户", "app_codes": ["app3", "app4"], "owners": ["freedom", "lushi"]},
             format="json",
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        virtual_user.refresh_from_db()
+        virtual_user = TenantUser.objects.get(id="virtual_user_1")
 
-        # 验证全名更新
-        expected_full_name = update_fields.get("full_name", test_data["full_name"])
-        assert virtual_user.data_source_user.full_name == expected_full_name
+        assert virtual_user.data_source_user.full_name == "测试虚拟用户"
+        assert set(virtual_user.virtualuserapprelation_set.values_list("app_code", flat=True)) == {"app3", "app4"}
+        assert set(virtual_user.virtualuserownerrelation_set.values_list("owner_id", flat=True)) == {
+            "freedom",
+            "lushi",
+        }
 
-        # 验证应用关联更新
-        expected_app_codes = set(update_fields.get("app_codes", test_data["app_codes"]))
-        actual_app_codes = set(virtual_user.virtualuserapprelation_set.values_list("app_code", flat=True))
-        assert actual_app_codes == expected_app_codes
-
-        # 验证责任人关联更新
-        expected_owners = set(update_fields.get("owners", test_data["owners"]))
-        actual_owners = {rel.owner_id for rel in virtual_user.virtualuserownerrelation_set.all()}
-        assert actual_owners == expected_owners
-
-    def test_update_virtual_user_with_invalid_owner(self, api_client, virtual_user_data, real_owner_ids):
-        update_fields = {"owners": [*real_owner_ids[2:4], "invalid_owner"]}
-        url, request_data, virtual_user = self._prepare_update_request(virtual_user_data, update_fields)
+    def test_update_virtual_user_with_invalid_owner(self, api_client):
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
         resp = api_client.put(
             url,
-            data=request_data,
+            data={
+                "full_name": "测试虚拟用户",
+                "app_codes": ["app3", "app4"],
+                "owners": ["freedom", "lushi", "invalid_owner"],
+            },
             format="json",
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -221,22 +205,17 @@ class TestVirtualUserUpdateApi:
 
 @pytest.mark.usefixtures("_init_virtual_user")
 class TestVirtualDeleteApi:
-    @pytest.mark.parametrize("user_index", [0, 1, 2])
-    def test_delete_virtual_user_with_prepared_data(self, api_client, virtual_user_data, user_index):
-        test_user_data = virtual_user_data["users"][user_index]
-        tenant_user = TenantUser.objects.get(id=test_user_data["tenant_user_id"])
-        data_source_user = tenant_user.data_source_user
+    def test_delete_virtual_user(self, api_client):
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
 
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": test_user_data["tenant_user_id"]})
+        # 确保用户存在
+        assert TenantUser.objects.filter(id="virtual_user_1").exists()
+        assert DataSourceUser.objects.filter(username="virtual_user_1").exists()
+        # 执行删除操作
         resp = api_client.delete(url)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        # 验证 租户用户
-        with pytest.raises(TenantUser.DoesNotExist):
-            TenantUser.objects.get(id=test_user_data["tenant_user_id"])
-        # 验证数据源用户
-        with pytest.raises(DataSourceUser.DoesNotExist):
-            DataSourceUser.objects.get(id=data_source_user.id)
-        # 验证关联表
-        assert not VirtualUserAppRelation.objects.filter(tenant_user=test_user_data["tenant_user_id"]).exists()
-        assert not VirtualUserOwnerRelation.objects.filter(tenant_user=test_user_data["tenant_user_id"]).exists()
+        # 验证用户及相关数据已被删除
+        assert not TenantUser.objects.filter(id="virtual_user_1").exists()
+        assert not DataSourceUser.objects.filter(username="virtual_user_1").exists()
+        assert not VirtualUserAppRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
+        assert not VirtualUserOwnerRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
