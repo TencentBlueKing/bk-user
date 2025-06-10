@@ -200,7 +200,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
 
             # 覆盖更新
             data_source_user.full_name = data["full_name"]
-            data_source_user.save(update_fields=["full_name"])
+            data_source_user.save(update_fields=["full_name", "updated_at"])
 
             # 更新虚拟用户与应用的关联
             current_app_codes = set(
