@@ -119,7 +119,6 @@ class TestVirtualUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         usernames = {item["username"] for item in resp.data["results"]}
         assert {"virtual_user_1"} == usernames
-        assert {"virtual_user_2", "virtual_user_3"} not in usernames
 
 
 @pytest.mark.usefixtures("_init_virtual_user")
