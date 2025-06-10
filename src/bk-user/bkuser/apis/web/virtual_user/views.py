@@ -86,7 +86,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         # 虚拟用户与责任人列表之间的映射
         owner_map: Dict[str, list[str]] = defaultdict(list)
         for tenant_user_id, owner_id in owner_relations:
-            owner_map.setdefault(tenant_user_id, []).append(owner_id)
+            owner_map[tenant_user_id].append(owner_id)
 
         return {"app_code_map": app_code_map, "owner_map": owner_map}
 
