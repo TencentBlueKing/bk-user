@@ -44,80 +44,61 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 
 @pytest.fixture
 def _init_virtual_user(random_tenant, _init_tenant_users_depts, bare_virtual_data_source) -> None:
-    # virtual_user_1
-    data_source_user_1 = DataSourceUser.objects.create(
-        username="virtual_user_1",
-        code="virtual_user_1",
-        full_name="虚拟用户1",
-        data_source=bare_virtual_data_source,
-    )
-    virtual_user_1 = TenantUser.objects.create(
-        id="virtual_user_1",
-        tenant=random_tenant,
-        data_source_user=data_source_user_1,
-        data_source=bare_virtual_data_source,
-    )
-    VirtualUserAppRelation.objects.bulk_create(
-        [
-            VirtualUserAppRelation(tenant_user=virtual_user_1, app_code="app1"),
-            VirtualUserAppRelation(tenant_user=virtual_user_1, app_code="app2"),
-        ]
-    )
-    VirtualUserOwnerRelation.objects.bulk_create(
-        [
-            VirtualUserOwnerRelation(tenant_user=virtual_user_1, owner_id="zhangsan"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_1, owner_id="lisi"),
-        ]
-    )
-    # virtual_user_2
-    data_source_user_2 = DataSourceUser.objects.create(
-        username="virtual_user_2",
-        code="virtual_user_2",
-        full_name="虚拟用户2",
-        data_source=bare_virtual_data_source,
-    )
-    virtual_user_2 = TenantUser.objects.create(
-        id="virtual_user_2",
-        tenant=random_tenant,
-        data_source_user=data_source_user_2,
-        data_source=bare_virtual_data_source,
-    )
-    VirtualUserAppRelation.objects.bulk_create(
-        [
-            VirtualUserAppRelation(tenant_user=virtual_user_2, app_code="app3"),
-        ]
-    )
-    VirtualUserOwnerRelation.objects.bulk_create(
-        [
-            VirtualUserOwnerRelation(tenant_user=virtual_user_2, owner_id="lisi"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_2, owner_id="wangwu"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_2, owner_id="zhaoliu"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_2, owner_id="liuqi"),
-        ]
-    )
-    # virtual_user_3
-    data_source_user_3 = DataSourceUser.objects.create(
-        username="virtual_user_3",
-        code="virtual_user_3",
-        full_name="虚拟用户3",
-        data_source=bare_virtual_data_source,
-    )
-    virtual_user_3 = TenantUser.objects.create(
-        id="virtual_user_3",
-        tenant=random_tenant,
-        data_source_user=data_source_user_3,
-        data_source=bare_virtual_data_source,
-    )
-    VirtualUserAppRelation.objects.bulk_create(
-        [
-            VirtualUserAppRelation(tenant_user=virtual_user_3, app_code="app4"),
-            VirtualUserAppRelation(tenant_user=virtual_user_3, app_code="app5"),
-        ]
-    )
-    VirtualUserOwnerRelation.objects.bulk_create(
-        [
-            VirtualUserOwnerRelation(tenant_user=virtual_user_3, owner_id="maiba"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_3, owner_id="yangjiu"),
-            VirtualUserOwnerRelation(tenant_user=virtual_user_3, owner_id="lushi"),
-        ]
-    )
+    virtual_user_data = [
+        {
+            "username": "virtual_user_1",
+            "full_name": "虚拟用户1",
+            "app_codes": ["app1", "app2"],
+            "owners": ["zhangsan", "lisi"],
+        },
+        {
+            "username": "virtual_user_2",
+            "full_name": "虚拟用户2",
+            "app_codes": ["app3"],
+            "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
+        },
+        {
+            "username": "virtual_user_3",
+            "full_name": "虚拟用户3",
+            "app_codes": ["app4", "app5"],
+            "owners": ["maiba", "yangjiu", "lushi"],
+        },
+    ]
+
+    for virtual_user in virtual_user_data:
+        username = virtual_user["username"]
+
+        # 创建数据源用户
+        data_source_user = DataSourceUser.objects.create(
+            username=username,
+            code=username,
+            full_name=virtual_user["full_name"],
+            data_source=bare_virtual_data_source,
+        )
+        # 创建租户用户
+        tenant_user = TenantUser.objects.create(
+            id=username,
+            tenant=random_tenant,
+            data_source_user=data_source_user,
+            data_source=bare_virtual_data_source,
+        )
+        # 创建 app_code 关联
+        VirtualUserAppRelation.objects.bulk_create(
+            [
+                VirtualUserAppRelation(
+                    tenant_user=tenant_user,
+                    app_code=app_code,
+                )
+                for app_code in virtual_user["app_codes"]
+            ]
+        )
+        # 创建责任人关联
+        VirtualUserOwnerRelation.objects.bulk_create(
+            [
+                VirtualUserOwnerRelation(
+                    tenant_user=tenant_user,
+                    owner_id=owner,
+                )
+                for owner in virtual_user["owners"]
+            ]
+        )
