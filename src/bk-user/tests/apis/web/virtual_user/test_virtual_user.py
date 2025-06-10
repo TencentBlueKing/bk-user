@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import random
 
 import pytest
 from bkuser.apps.data_source.models import DataSourceUser
@@ -34,7 +35,6 @@ class TestVirtualUserCreateApi:
                     "username": "virtual_user_4",
                     "full_name": "测试用户4",
                     "app_codes": ["app1", "app2"],
-                    "owners": ["owner1", "owner2"],
                 },
                 id="virtual_user_4",
             ),
@@ -43,7 +43,6 @@ class TestVirtualUserCreateApi:
                     "username": "virtual_user_5",
                     "full_name": "测试用户5",
                     "app_codes": ["app3"],
-                    "owners": ["owner3"],
                 },
                 id="virtual_user_5",
             ),
@@ -52,13 +51,14 @@ class TestVirtualUserCreateApi:
                     "username": "virtual_user_6",
                     "full_name": "测试用户6",
                     "app_codes": ["app1", "app3", "app4"],
-                    "owners": ["owner1", "owner4"],
                 },
                 id="virtual_user_6",
             ),
         ],
     )
-    def test_create_virtual_user(self, api_client, user_data):
+    def test_create_virtual_user(self, api_client, user_data, real_owner_ids):
+        num_owners = random.randint(1, 9)
+        user_data["owners"] = random.sample(real_owner_ids, num_owners)
         url = reverse("virtual_user.list_create")
         resp = api_client.post(url, data=user_data)
         assert resp.status_code == status.HTTP_201_CREATED
@@ -77,7 +77,6 @@ class TestVirtualUserCreateApi:
                     "app_codes": ["app1"],
                     "owners": ["invalid_owner1"],
                 },
-                id="invalid_owner_case1",
             ),
             pytest.param(
                 {
@@ -86,7 +85,6 @@ class TestVirtualUserCreateApi:
                     "app_codes": ["app2", "app3"],
                     "owners": ["invalid_owner2", "owner1"],
                 },
-                id="invalid_owner_case2",
             ),
             pytest.param(
                 {
@@ -95,7 +93,6 @@ class TestVirtualUserCreateApi:
                     "app_codes": ["app4"],
                     "owners": ["invalid_owner3", "owner1", "owner2"],
                 },
-                id="empty_owner_case",
             ),
         ],
     )
@@ -178,24 +175,12 @@ class TestVirtualUserUpdateApi:
         request_data.update(update_fields)
         return url, request_data, virtual_user
 
-    @pytest.mark.parametrize(
-        "update_fields",
-        [
-            pytest.param(
-                {"full_name": "更新后的名字"},
-            ),
-            pytest.param(
-                {"app_codes": ["new_app1", "new_app2"]},
-            ),
-            pytest.param(
-                {"owners": ["owner5", "owner6"]},
-            ),
-            pytest.param(
-                {"full_name": "更新后的名字", "app_codes": ["new_app1", "new_app2"], "owners": ["owner5", "owner6"]},
-            ),
-        ],
-    )
-    def test_update_virtual_user(self, api_client, update_fields, virtual_user_data):
+    def test_update_virtual_user(self, api_client, virtual_user_data, real_owner_ids):
+        update_fields = {
+            "full_name": "zhangsan",
+            "app_codes": ["app1", "app2"],
+            "owners": real_owner_ids,
+        }
         url, request_data, virtual_user = self._prepare_update_request(virtual_user_data, update_fields)
         test_data = virtual_user_data["users"][0]
 
@@ -222,15 +207,8 @@ class TestVirtualUserUpdateApi:
         actual_owners = {rel.owner_id for rel in virtual_user.virtualuserownerrelation_set.all()}
         assert actual_owners == expected_owners
 
-    @pytest.mark.parametrize(
-        "update_fields",
-        [
-            pytest.param(
-                {"owners": ["invalid_owner1", "owner6"]},
-            ),
-        ],
-    )
-    def test_update_virtual_user_with_invalid_owner(self, api_client, update_fields, virtual_user_data):
+    def test_update_virtual_user_with_invalid_owner(self, api_client, virtual_user_data, real_owner_ids):
+        update_fields = {"owners": [*real_owner_ids[2:4], "invalid_owner"]}
         url, request_data, virtual_user = self._prepare_update_request(virtual_user_data, update_fields)
         resp = api_client.put(
             url,

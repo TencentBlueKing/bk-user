@@ -18,44 +18,27 @@ from typing import Dict
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.tenant.models import Tenant, TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
-from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
+
+from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
 
 
-def _create_data_source(tenant: Tenant, data_source_type: DataSourceTypeEnum) -> DataSource:
-    data_source, _ = DataSource.objects.get_or_create(
-        type=data_source_type,
-        owner_tenant_id=tenant.id,
-        defaults={
-            "plugin_id": DataSourcePluginEnum.LOCAL,
-            "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
-        },
-    )
-    return data_source
-
-
-def _create_owner(tenant: Tenant, tenant_user_id: str):
-    data_source = _create_data_source(tenant, DataSourceTypeEnum.REAL)
-    ds_user = DataSourceUser.objects.create(
-        username=tenant_user_id,
-        data_source=data_source,
-        code=tenant_user_id,
-        full_name=tenant_user_id,
-    )
-    TenantUser.objects.create(
-        id=tenant_user_id,
-        data_source=data_source,
-        tenant=tenant,
-        data_source_user=ds_user,
-    )
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
 
 
 @pytest.fixture
-def virtual_user_data() -> Dict:
+def real_owner_ids(_init_tenant_users_depts):
+    return list(TenantUser.objects.filter(data_source__type=DataSourceTypeEnum.REAL).values_list("id", flat=True))
+
+
+@pytest.fixture
+def virtual_user_data(_init_tenant_users_depts, real_owner_ids) -> Dict:
     return {
         "users": [
             {
@@ -63,35 +46,30 @@ def virtual_user_data() -> Dict:
                 "username": "virtual_user_1",
                 "full_name": "测试用户1",
                 "app_codes": ["app1", "app2"],
-                "owners": ["owner1", "owner2"],
+                "owners": real_owner_ids[:3],
             },
             {
                 "tenant_user_id": "virtual_user_id_2",
                 "username": "virtual_user_2",
                 "full_name": "测试用户2",
                 "app_codes": ["app3"],
-                "owners": ["owner3"],
+                "owners": real_owner_ids[3:5],
             },
             {
                 "tenant_user_id": "virtual_user_id_3",
                 "username": "virtual_user_3",
                 "full_name": "测试用户3",
                 "app_codes": ["app1", "app3", "app4"],
-                "owners": ["owner1", "owner4"],
+                "owners": real_owner_ids[5:8],
             },
         ],
-        "all_owners": ["owner1", "owner2", "owner3", "owner4", "owner5", "owner6"],
-        "all_app_codes": ["app1", "app2", "app3", "app4"],
     }
 
 
 @pytest.fixture
-def _init_virtual_user(random_tenant, virtual_user_data):
-    data = virtual_user_data
-    data_source = _create_data_source(random_tenant, DataSourceTypeEnum.VIRTUAL)
-    for owner in data["all_owners"]:
-        _create_owner(random_tenant, owner)
-    for user_data in data["users"]:
+def _init_virtual_user(random_tenant, virtual_user_data, bare_virtual_data_source):
+    data_source = bare_virtual_data_source
+    for user_data in virtual_user_data["users"]:
         data_source_user = DataSourceUser.objects.create(
             username=user_data["username"],
             code=user_data["username"],
@@ -104,14 +82,11 @@ def _init_virtual_user(random_tenant, virtual_user_data):
             data_source=data_source,
             data_source_user=data_source_user,
         )
-        for app_code in user_data["app_codes"]:
-            VirtualUserAppRelation.objects.create(
-                tenant_user=tenant_user,
-                app_code=app_code,
-            )
-        for owner_id in user_data["owners"]:
-            owner = TenantUser.objects.get(id=owner_id)
-            VirtualUserOwnerRelation.objects.create(
-                tenant_user=tenant_user,
-                owner=owner,
-            )
+        # 创建 app_code 关联
+        VirtualUserAppRelation.objects.bulk_create(
+            [VirtualUserAppRelation(tenant_user=tenant_user, app_code=app_code) for app_code in user_data["app_codes"]]
+        )
+        # 创建责任人关联
+        VirtualUserOwnerRelation.objects.bulk_create(
+            [VirtualUserOwnerRelation(tenant_user=tenant_user, owner_id=owner_id) for owner_id in user_data["owners"]]
+        )
