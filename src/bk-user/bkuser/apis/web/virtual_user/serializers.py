@@ -40,7 +40,7 @@ def _validate_duplicate_data_source_username(data_source_id: str, username: str,
     return username
 
 
-def _validate_owners(owners: list[str]) -> list[str]:
+def _validate_owners(owners: List[str]) -> List[str]:
     """校验责任人列表
     1. 去重
     2. 检查每个责任人是否存在且为实体用户
@@ -51,7 +51,7 @@ def _validate_owners(owners: list[str]) -> list[str]:
         )
     )
     if invalid_owners := set(owners) - found_owners:
-        raise ValidationError(_("用户 {} 不存在或不是实体用户").format(invalid_owners.pop()))
+        raise ValidationError(_("用户 {} 不存在或不是实体用户").format(invalid_owners))
 
     return owners
 
@@ -85,11 +85,11 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(self.context["data_source_id"], username)
 
-    def validate_app_codes(self, app_codes: list[str]) -> list[str]:
+    def validate_app_codes(self, app_codes: List[str]) -> List[str]:
         # 过滤重复值
         return list(set(app_codes))
 
-    def validate_owners(self, owners: list[str]) -> list[str]:
+    def validate_owners(self, owners: List[str]) -> List[str]:
         return _validate_owners(owners)
 
 
@@ -118,9 +118,9 @@ class VirtualUserUpdateInputSLZ(serializers.Serializer):
     app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
-    def validate_app_codes(self, app_codes: list[str]) -> list[str]:
+    def validate_app_codes(self, app_codes: List[str]) -> List[str]:
         # 过滤重复值
         return list(set(app_codes))
 
-    def validate_owners(self, owners: list[str]) -> list[str]:
+    def validate_owners(self, owners: List[str]) -> List[str]:
         return _validate_owners(owners)
