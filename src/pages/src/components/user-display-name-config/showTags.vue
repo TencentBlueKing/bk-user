@@ -101,10 +101,10 @@ onMounted(() => {
   if (listContainer.value) {
     new Sortable(listContainer.value, {
       animation: 150,
-      onEnd: (e: { oldIndex: number; newIndex: number; }) => {
+      onEnd: (e: { oldDraggableIndex: number; newDraggableIndex: number; }) => {
         emit('sort', {
-          oldIndex: e.oldIndex,
-          newIndex: e.newIndex,
+          oldIndex: e.oldDraggableIndex,
+          newIndex: e.newDraggableIndex,
         });
       },
     });

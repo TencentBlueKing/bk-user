@@ -5,6 +5,7 @@ import { getFields } from '@/http/settingFiles';
 export const useFieldData = defineStore('useFieldData', {
   state: () => ({
     data: [],
+    isPreviewLoading: false,
   }),
   actions: {
     async initFieldsData() {

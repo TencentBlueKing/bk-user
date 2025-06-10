@@ -2,6 +2,7 @@
   <div>
     <ConfigPreview
       inner-class-name="absolute -top-[28px] left-[90px]"
+      @preview="handlePreview"
       :preview-list="previewList" />
     <div class="flex">
       <div class="mr-[4px]">
@@ -53,8 +54,12 @@ const data = defineModel<any[]>('data');
 defineProps<{
   previewList: { display_name: string }[]
 }>();
-const emit = defineEmits(['change']);
+const emit = defineEmits(['change', 'preview']);
 const tagValueMap = computed(() => [...fieldOptions.value, ...symbolOptions.value]);
+
+const handlePreview = () => {
+  emit('preview');
+};
 
 const handleDeleteTag = (index: number) => {
   const item = data.value.splice(index, 1);
@@ -131,7 +136,7 @@ const handleSymbolChange = (option: IOption) => {
   emit('change', curItem, 'add');
 };
 
-const handleSymbolReplace = (option: IOption, index) => {
+const handleSymbolReplace = (option: IOption, index: number) => {
   const curItem = {
     type: 'symbol',
     value: option.id,
@@ -147,7 +152,9 @@ const handleFetchFields = async () => {
     isLoading.value = true;
 
     const disabledDataTypes = ['enum', 'multi_enum'];
-    const fieldsArr = fieldData.data.filter(item => !disabledDataTypes.includes(item.data_type))
+    const disabledFields = ['phone', 'phone_country_code'];
+    const fieldsArr = fieldData.data
+      .filter(item => !disabledDataTypes.includes(item.data_type) && !disabledFields.includes(item.name))
       .map(item => ({
         id: item.name,
         value: item.display_name,
