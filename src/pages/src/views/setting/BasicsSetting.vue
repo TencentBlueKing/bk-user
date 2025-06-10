@@ -32,14 +32,6 @@
               />
             </bk-form-item>
           </div>
-          <bk-form-item :label="$t('租户名')" required>
-            <bk-radio-group
-              v-model="formData.visible"
-            >
-              <bk-radio-button class="min-w-[100px]" :label="true">{{ $t('显示') }}</bk-radio-button>
-              <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
-            </bk-radio-group>
-          </bk-form-item>
           <bk-form-item :label="$t('用户数量')" required>
             <bk-radio-group
               v-model="formData.user_number_visible"
@@ -53,7 +45,8 @@
             <UserDisplayNameConfig
               v-model:data="displayNameExpression"
               :preview-list="displayNameExpressionPreviewList"
-              @change="handleExpressionChange" />
+              @change="handleExpressionChange"
+              @preview="handlePreviewDisplayNameExpression" />
           </bk-form-item>
         </Row>
       </bk-form>
@@ -78,7 +71,6 @@
           <div>
             <LabelContent :label="$t('租户名称')">{{ formData.name }}</LabelContent>
             <LabelContent :label="$t('租户ID')">{{ formData.id }}</LabelContent>
-            <LabelContent :label="$t('租户名')">{{ formData.visible ? $t('显示') : $t('隐藏') }}</LabelContent>
             <LabelContent :label="$t('用户数量')">{{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}</LabelContent>
             <LabelContent :label="$t('用户展示名')">{{ displayNameExpressionView }}</LabelContent>
           </div>
@@ -123,7 +115,6 @@ const formData = ref({
   id: '',
   name: '',
   logo: '',
-  visible: true,
   user_number_visible: true,
 });
 /** 可配置的用户展示名 */
@@ -246,10 +237,21 @@ const handleTransformDisplayNameExpression = (): string => {
 
 /** 获取用户展示名预览数据 */
 const initDisplayNameExpressionPreview = async () => {
-  const res = await getDisplayNameExpressionPreview({
-    expression: handleTransformDisplayNameExpression(),
-  });
-  displayNameExpressionPreviewList.value = res?.data || [];
+  try {
+    fieldData.isPreviewLoading = true;
+    const res = await getDisplayNameExpressionPreview({
+      expression: handleTransformDisplayNameExpression(),
+    });
+    displayNameExpressionPreviewList.value = res?.data || [];
+  } catch (err) {
+    console.error(err);
+  } finally {
+    fieldData.isPreviewLoading = false;
+  }
+};
+
+const handlePreviewDisplayNameExpression = () => {
+  initDisplayNameExpressionPreview();
 };
 
 const handleExpressionChange = () => {
@@ -264,7 +266,6 @@ const initTenantInfo = async () => {
   originalData = JSON.stringify(res.data);
   formData.value = res.data;
   await initDisplayNameExpression();
-  initDisplayNameExpressionPreview();
 };
 
 watch(formData, () => {
@@ -319,7 +320,7 @@ const saveEdit = async () => {
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
     isEdit.value = false;
-    Message({ theme: 'success', message: t('保存成功') });
+    Message({ theme: 'success', message: t('保存成功，用户展示名配置将于2分钟之后生效，其他设置立即生效') });
     initTenantInfo();
   } catch (err) {
     console.error(err);
