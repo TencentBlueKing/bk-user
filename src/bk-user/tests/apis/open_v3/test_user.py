@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from django.conf import settings
 from django.urls import reverse
@@ -74,6 +75,7 @@ class TestTenantUserRetrieveApi:
         assert resp.data["display_name"] == "zhangsan(张三)"
         assert resp.data["language"] == "zh-cn"
         assert resp.data["time_zone"] == "Asia/Shanghai"
+        assert resp.data["status"] == TenantUserStatus.ENABLED
         assert resp.data["tenant_id"] == random_tenant.id
 
     def test_tenant_not_found(self, api_client):
@@ -169,6 +171,7 @@ class TestTenantUserListApi:
         assert resp.data["count"] == 11
         assert len(resp.data["results"]) == 11
         assert all("bk_username" in t for t in resp.data["results"])
+        assert {t["status"] for t in resp.data["results"]} == {TenantUserStatus.ENABLED}
         assert {t["full_name"] for t in resp.data["results"]} == {
             "张三",
             "李四",
@@ -272,3 +275,19 @@ class TestVirtualUserLookupApi:
         )
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
+
+
+@pytest.mark.usefixtures("_init_virtual_tenant_users")
+class TestVirtualUserListApi:
+    def test_standard(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(reverse("open_v3.virtual_user.list"), data={"page": 1, "page_size": 10})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 2
+        assert len(resp.data["results"]) == 2
+        assert {t["bk_username"] for t in resp.data["results"]} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data["results"]} == {"zhangsan(张三)", "lisi(李四)"}
+        assert {t["login_name"] for t in resp.data["results"]} == {"zhangsan", "lisi"}
+        assert {t["full_name"] for t in resp.data["results"]} == {"张三", "李四"}
+        assert {t["status"] for t in resp.data["results"]} == {TenantUserStatus.ENABLED}

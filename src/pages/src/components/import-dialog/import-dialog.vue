@@ -6,44 +6,46 @@
     :width="640"
     @closed="closed"
   >
-    <bk-upload
-      ref="uploadRef"
-      accept=".xlsx,.xls"
-      with-credentials
-      :limit="1"
-      :size="10"
-      :multiple="false"
-      :custom-request="customRequest"
-      @exceed="exceed">
-      <template #file="{ file }">
-        <div
-          :class="['excel-file', { 'excel-file-error': isError }]"
-          @mousemove="isHover = true"
-          @mouseleave="isHover = false">
-          <i class="user-icon icon-excel" />
-          <div class="file-text">
-            <bk-overflow-title
-              class="text-overflow">
-              {{ file.name }}
-            </bk-overflow-title>
-            <p class="text-overflow file-status">
-              <i v-if="!isError" class="user-icon icon-check-line" />
-              {{ textTips }}
-            </p>
+    <bk-loading :loading="curLoading">
+      <bk-upload
+        ref="uploadRef"
+        accept=".xlsx,.xls"
+        with-credentials
+        :limit="1"
+        :size="10"
+        :multiple="false"
+        :custom-request="customRequest"
+        @exceed="exceed">
+        <template #file="{ file }">
+          <div
+            :class="['excel-file', { 'excel-file-error': isError }]"
+            @mousemove="isHover = true"
+            @mouseleave="isHover = false">
+            <i class="user-icon icon-excel" />
+            <div class="file-text">
+              <bk-overflow-title
+                class="text-overflow">
+                {{ file.name }}
+              </bk-overflow-title>
+              <p class="text-overflow file-status">
+                <i v-if="!isError" class="user-icon icon-check-line" />
+                {{ textTips }}
+              </p>
+            </div>
+            <div class="file-operations">
+              <span v-if="!isHover">{{ getSize(file.size) }}</span>
+              <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
+            </div>
           </div>
-          <div class="file-operations">
-            <span v-if="!isHover">{{ getSize(file.size) }}</span>
-            <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
+        </template>
+        <template #tip>
+          <div class="mt-[8px]">
+            <span>{{ $t('支持 Excel 文件，文件小于 10 M，下载') }}</span>
+            <bk-button text theme="primary" @click="handleExportTemplate">{{ $t('模版文件') }}</bk-button>
           </div>
-        </div>
-      </template>
-      <template #tip>
-        <div class="mt-[8px]">
-          <span>{{ $t('支持 Excel 文件，文件小于 10 M，下载') }}</span>
-          <bk-button text theme="primary" @click="handleExportTemplate">{{ $t('模版文件') }}</bk-button>
-        </div>
-      </template>
-    </bk-upload>
+        </template>
+      </bk-upload>
+    </bk-loading>
     <template #footer>
       <div class="footer-wrapper">
         <div class="footer-left">
@@ -63,7 +65,7 @@
           <bk-button
             theme="primary"
             class="w-[64px] mr-[8px]"
-            :loading="importConfig.loading"
+            :disabled="curLoading"
             @click="confirmImportUsers">
             {{ $t('导入') }}
           </bk-button>
@@ -83,9 +85,11 @@ import axios from 'axios';
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 
+import { useDataSource } from '@/hooks';
 import { t } from '@/language/index';
+import { useSyncStatus } from '@/store';
 
 const props = defineProps({
   isShow: {
@@ -97,6 +101,13 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['update:isShow', 'success', 'close']);
+
+const {
+  stopImportDataTimePolling,
+  handleImportLocalDataSync,
+} = useDataSource();
+const syncStatusStore = useSyncStatus();
+
 const importConfig = reactive({
   loading: false,
   title: t('导入'),
@@ -164,29 +175,57 @@ const confirmImportUsers = async () => {
     };
     const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${props.currentDataSourceId}/operations/import/`;
     const res = await axios.post(url, formData, config);
+    // 确保 importConfig.loading 在最终状态(success/failed/backend error) 下才停止loading
+    // 因此取消在finally中处理loading的逻辑
     if (res.data.data.status === 'success') {
-      emit('update:isShow', false);
-      InfoBox({
-        infoType: 'success',
-        title: t('导入成功'),
-        confirmText: t('查看组织架构'),
-        cancelText: t('关闭'),
-        onConfirm: () => {
-          emit('success');
-        },
-        onClosed: () => {
-          emit('close');
-        },
-      });
-    } else {
+      importConfig.loading = false;
+      importSuccess();
+    } else if (res.data.data.status === 'failed') {
+      importConfig.loading = false;
       Message({ theme: 'error', message: res.data.data.summary });
+    } else {
+      handleImportLocalDataSync(afterSyncImportData);
     }
   } catch (e) {
-    Message({ theme: 'error', message: e.response.data.error.message });
-  } finally {
     importConfig.loading = false;
+    Message({ theme: 'error', message: e.response.data.error.message });
   }
 };
+
+/** 决定dialog loading的因素：导入的过程，后端同步数据的过程 */
+const curLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(syncStatusStore.syncStatus.status));
+
+/** 停止轮询时的钩子方法 [获取导入本地数据源状态] */
+const afterSyncImportData = () => {
+  importConfig.loading = false;
+  const curStatus = syncStatusStore.syncStatus.status;
+  if (curStatus === 'success') {
+    importSuccess();
+  } else if (curStatus === 'failed') {
+    Message({ theme: 'error', message: t('同步失败') });
+  }
+};
+
+/** 导入成功时执行 */
+const importSuccess = () => {
+  emit('update:isShow', false);
+  InfoBox({
+    infoType: 'success',
+    title: t('导入成功'),
+    confirmText: t('查看组织架构'),
+    cancelText: t('关闭'),
+    onConfirm: () => {
+      emit('success');
+    },
+    onClosed: () => {
+      emit('close');
+    },
+  });
+};
+
+onBeforeUnmount(() => {
+  stopImportDataTimePolling(afterSyncImportData);
+});
 </script>
 <style lang="less" scoped>
 .excel-file {

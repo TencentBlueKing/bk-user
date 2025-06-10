@@ -15,6 +15,8 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+import json
+
 from django.core.management import BaseCommand, CommandError
 
 from bkuser.apps.tenant.models import Tenant, TenantCommonVariable
@@ -77,31 +79,25 @@ class Command(BaseCommand):
     def handle_list(self, tenant_id: str, options):
         """列出所有公共变量"""
         variables = TenantCommonVariable.objects.filter(tenant_id=tenant_id)
-        if not variables:
-            self.stdout.write("there are no tenant common variables found")
-            return
 
-        self.stdout.write("tenant common variables:")
-        for variable in variables:
-            self.stdout.write(f"{variable.name} = {variable.value}")
+        output = {variable.name: variable.value for variable in variables}
+        self.stdout.write(json.dumps(output, ensure_ascii=False))
 
     def handle_get(self, tenant_id: str, options):
         """获取指定公共变量"""
         name = options["name"]
         variable = TenantCommonVariable.objects.filter(tenant_id=tenant_id, name=name).first()
         if not variable:
-            self.stdout.write(f"tenant common variable {name} not found")
-            return
+            raise ValueError(f"tenant common variable {name} not found")
 
-        self.stdout.write(f"{variable.value}")
+        self.stdout.write(json.dumps({variable.name: variable.value}, ensure_ascii=False))
 
     def handle_delete(self, tenant_id: str, options):
         """删除指定公共变量"""
         name = options["name"]
         deleted, _ = TenantCommonVariable.objects.filter(tenant_id=tenant_id, name=name).delete()
         if deleted == 0:
-            self.stdout.write(f"tenant common variable {name} not found")
-            return
+            raise ValueError(f"tenant common variable {name} not found")
 
         self.stdout.write(f"tenant common variable {name} has been deleted")
 

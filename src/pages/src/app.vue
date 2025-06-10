@@ -5,7 +5,6 @@ import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
 import { computed, ref, watch  } from 'vue';
 import { useRoute } from 'vue-router';
 
-import BkUserDisplayName from '@blueking/bk-user-display-name';
 import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
 
 import HeaderBox from './views/MainHeader.vue';
@@ -35,10 +34,6 @@ watch(() => route.name, (val) => {
   currentUser()
     .then((res) => {
       user.setUser(res.data);
-      BkUserDisplayName.configure({
-        tenantId: res.data.tenant_id,
-        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
-      });
     })
     .catch(() => {
       Message(t('获取用户信息失败，请检查后再试'));

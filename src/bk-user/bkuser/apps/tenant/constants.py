@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import re
+from typing import Any, Dict, List
 
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
@@ -132,6 +133,24 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         },
     ],
 }
+
+DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG = {
+    "expression": "{username}({full_name})",
+    "fields": {"builtin": ["username", "full_name"], "custom": [], "extra": []},
+    "version": 1,
+}
+
+# 租户用户展示名表达式匹配模式为：`{}` 中至少包含一个由字母、数字或下划线组成的字段名
+DISPLAY_NAME_EXPRESSION_FIELD_PATTERN = re.compile(r"\{(\w+)}")
+
+
+class DisplayNameExpressionExtraFieldEnum(StrStructuredEnum):
+    """租户用户展示名表达式中额外允许的字段名"""
+
+    # TODO：后续支持`组织`字段
+
+
+DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS: List[Dict[str, Any]] = []
 
 
 class TenantStatus(StrStructuredEnum):

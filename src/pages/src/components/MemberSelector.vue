@@ -11,6 +11,7 @@
       :show-on-init="showOnInit"
       :multiple-mode="multiple ? 'tag' : 'default'"
       :remote-method="remoteFilter"
+      :disabled="disabled"
       enable-scroll-load
       :scroll-loading="scrollLoading"
       @change="handleChange"
@@ -43,6 +44,10 @@ const props = defineProps({
     default: () => {},
   },
   clearable: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
     type: Boolean,
     default: false,
   },

@@ -40,29 +40,44 @@
       :size="'normal'"
       :height="200"
       @closed="batchPasswordDialogShow = false"
-      @confirm="resetBatchPasswordConfirm"
     >
-      <bk-form
-        form-type="vertical"
-        ref="formRef"
-        :model="formData">
-        <bk-form-item :label="$t('新密码')" property="newPassword" required>
-          <passwordInput
-            v-model="formData.newPassword" :style="{ width: '80%' }" clearable
-            :placeholder="passwordTips.join('、')"
-            v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-            @input="(val) => inputPassword(val, 'newPassword')" />
-          <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
-        </bk-form-item>
-        <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
-          <passwordInput
-            :class="{ 'is-error': isError }"
-            v-model="formData.confirmPassword"
-            :placeholder="$t('请再次输入密码')"
-            @input="(val) => inputPassword(val, 'confirmPassword')" />
-          <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
-        </bk-form-item>
-      </bk-form>
+      <bk-loading :loading="isResetPasswordLoading">
+        <bk-form
+          form-type="vertical"
+          ref="formRef"
+          :model="formData">
+          <bk-form-item :label="$t('新密码')" property="newPassword" required>
+            <passwordInput
+              v-model="formData.newPassword" :style="{ width: '80%' }" clearable
+              :placeholder="passwordTips.join('、')"
+              v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
+              @input="(val) => inputPassword(val, 'newPassword')" />
+            <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
+          </bk-form-item>
+          <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
+            <passwordInput
+              :class="{ 'is-error': isError }"
+              v-model="formData.confirmPassword"
+              :placeholder="$t('请再次输入密码')"
+              @input="(val) => inputPassword(val, 'confirmPassword')" />
+            <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
+          </bk-form-item>
+        </bk-form>
+      </bk-loading>
+      <template #footer>
+        <div class="flex justify-end">
+          <bk-button
+            theme="primary"
+            class="mr-[8px]"
+            @click="resetBatchPasswordConfirm"
+            :disabled="isResetPasswordLoading">
+            {{ t('确定') }}
+          </bk-button>
+          <bk-button @click="batchPasswordDialogShow = false">
+            {{ t('取消') }}
+          </bk-button>
+        </div>
+      </template>
     </bk-dialog>
     <!-- 批量修改信息弹窗 -->
     <bk-dialog
@@ -134,6 +149,11 @@
         <CustomFields v-if="selectedOption === 'custom'" :extras="infoFormData.customField" :rules="rules" />
       </bk-form>
     </bk-dialog>
+    <!-- 批量续期弹窗 -->
+    <batchRenewal
+      v-model:is-show-renewal="isShowRenewal"
+      @batch-renewal="handleRenewal"
+      :user-ids="userIds" />
   </div>
 </template>
 
@@ -143,6 +163,8 @@ import { clickoutside as vClickoutside, InfoBox, Message } from 'bkui-vue';
 import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+
+import batchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -164,10 +186,8 @@ const props = defineProps({
 });
 
 /** 是否为本地数据源 */
-const isLocalDataSource = computed(() => {
-  return appStore.currentTenant?.data_source?.plugin_id === 'local';
-});
-
+const isLocalDataSource = computed(() => appStore.currentTenant?.data_source?.plugin_id === 'local');
+const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
   newPassword: '',
   confirmPassword: '',
@@ -193,6 +213,7 @@ const infoFormRef = ref();
 const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 'reloadList']);
 
 const dropdownVisible = ref(false);
+const isShowRenewal = ref(false);
 
 const dropdownList = ref<any[]>([
   {
@@ -211,9 +232,8 @@ const dropdownList = ref<any[]>([
     disabled: !props.isEnabledPassword && !isLocalDataSource.value,
     tips: !props.isEnabledPassword ? t('当前租户未启用账密登录，无法修改密码') : !isLocalDataSource.value ? t('非本地数据源，无法重置密码') : '',
     handle: () => {
-      const userIds = props.selectList.map(item => item.id);
       batchPasswordDialogShow.value = true;
-      passwordRule(userIds[0]).then((res) => {
+      passwordRule(userIds.value[0]).then((res) => {
         passwordTips.value = res.data?.rule_tips;
       });
       formData.value = {
@@ -251,6 +271,12 @@ const dropdownList = ref<any[]>([
     handle: () => {
       confirmBatchAction('delete');
     },
+  },
+  {
+    label: t('续期'),
+    isShow: true,
+    tips: t('非本地数据源或 LDAP 数据源，无法续期'),
+    handle: () => isShowRenewal.value = true,
   },
 ]);
 
@@ -318,18 +344,19 @@ const randomPasswordHandle = async (type: string) => {
   formData.value.newPassword = res.data?.password;
 };
 
+const isResetPasswordLoading = ref(false);
 /**
    * 重置密码
    */
 const resetBatchPasswordConfirm = async () => {
   try {
+    isResetPasswordLoading.value = true;
     await formRef.value.validate();
     if (formData.value.newPassword !== formData.value.confirmPassword) {
       return isError.value = true;
     }
-    const userIds = props.selectList.map(item => item.id);
     const params = {
-      user_ids: userIds,
+      user_ids: userIds.value,
       password: formData.value.newPassword,
     };
     await batchResetPassword(params);
@@ -338,6 +365,8 @@ const resetBatchPasswordConfirm = async () => {
     emits('reloadList');
   } catch (e) {
     console.warn(e);
+  } finally {
+    isResetPasswordLoading.value = false;
   }
 };
 
@@ -350,8 +379,7 @@ const cancelBatchInfo = () => {
  * 修改用户信息
  */
 const confirmBatchInfo = () => {
-  const userIds = props.selectList.map(item => item.id);
-  const params = { user_ids: userIds };
+  const params = { user_ids: userIds.value };
 
   const actions = {
     date: () => {
@@ -387,12 +415,29 @@ const confirmBatchInfo = () => {
 /**
  * 批量启用/停用/删除
  */
-const confirmBatchAction = (actionType) => {
-  const userIds = props.selectList.map(item => item.id);
+const confirmBatchAction = (actionType: string) => {
   const actions = {
-    enable: { title: t('确认批量启用所选用户 ？'), confirmText: t('启用'), params: { user_ids: userIds, status: 'enabled' } },
-    disabled: { title: t('确认批量停用所选用户 ？'),  confirmText: t('停用'), params: { user_ids: userIds, status: 'disabled' } },
-    delete: { title: t('确认批量删除用户？'),  confirmText: t('删除'), params: userIds?.join(',') },
+    enable: {
+      title: t('确认批量启用所选用户 ？'),
+      confirmText: t('启用'),
+      params: {
+        user_ids: userIds.value,
+        status: 'enabled',
+      },
+    },
+    disabled: {
+      title: t('确认批量停用所选用户 ？'),
+      confirmText: t('停用'),
+      params: {
+        user_ids: userIds.value,
+        status: 'disabled',
+      },
+    },
+    delete: {
+      title: t('确认批量删除用户？'),
+      confirmText: t('删除'),
+      params: userIds.value?.join(','),
+    },
   }[actionType];
 
   InfoBox({
@@ -401,14 +446,30 @@ const confirmBatchAction = (actionType) => {
     confirmText: actions.confirmText,
     cancelText: t('取消'),
     onConfirm: () => {
-      (async () => {
-        await (actionType === 'delete'
-          ? batchDeleteUser(actions.params)
-          : batchUpdateStatus(actions.params));
-        emits('reloadList');
-      })();
+      switch (actionType) {
+        case 'delete':
+          batchDeleteUser(actions.params)
+            .then(() => {
+              emits('reloadList');
+            });
+          return;
+        case 'enable':
+        case 'disabled':
+          batchUpdateStatus(actions.params)
+            .then(() => {
+              emits('reloadList');
+            });
+          return;
+      }
     },
   });
+};
+
+const handleRenewal = () => {
+  selectedOption.value = '';
+  userInfoOptions.value.forEach(item => item.selected = false);
+  Message({ theme: 'success', message: t('更新成功') });
+  emits('reloadList');
 };
 
 </script>

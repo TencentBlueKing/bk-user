@@ -335,7 +335,7 @@ const expiredSms = findMethodScene('sms', props.expiredSmsKey);
 
         .editor-content {
           width: 100%;
-          height: calc(100% - 40px);
+          height: calc(100% - 40px) !important;
           overflow-y: auto;
 
           &::-webkit-scrollbar {

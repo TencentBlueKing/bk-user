@@ -17,6 +17,7 @@
 
 import collections
 import datetime
+import re
 from typing import Any, Dict, List
 
 import phonenumbers
@@ -32,6 +33,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
@@ -234,6 +236,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
+    password_expired_at = serializers.SerializerMethodField(help_text="密码过期时间")
     extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
     language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
@@ -288,13 +291,29 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
         return TenantUserLeaderSLZ(leaders, many=True).data
 
+    @swagger_serializer_method(serializer_or_field=serializers.DateTimeField())
+    def get_password_expired_at(self, obj: TenantUser) -> str | None:
+        """获取密码过期时间"""
+        # Q：怎么才能判断用户是不是本地数据源用户
+        # A：通过 LocalDataSourceIdentityInfo 模型是否存在来判断
+        # 如果支持账密登录，肯定存在 password_expired_at 字段
+        identity_info = LocalDataSourceIdentityInfo.objects.filter(user_id=obj.data_source_user_id).first()
+        if not identity_info or not identity_info.password_expired_at:
+            return None
+
+        # Note: 由于无法直接使用 serializers.DateTimeField() 输出，所以这里定义了对应的 Serializer 来处理时间转换
+        class ExpiredAtOutputSLZ(serializers.Serializer):
+            expired_at = serializers.DateTimeField()
+
+        return ExpiredAtOutputSLZ({"expired_at": identity_info.password_expired_at}).data["expired_at"]
+
 
 def _is_permanent_expired_at(expired_at: datetime.datetime) -> bool:
     """判断过期时间是否为永久时间"""
 
     # Note: drf serializers.DateTimeField 会在 USE_TZ=True 时，
     #  将时间字符串 "2024-01-01 00:00:00" 直接附加当前用户的时区（不会进行时区转换），
-    #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC时区）对比即可
+    #  所以对于永久时间，只需要忽略时区或直接替换为 UTC 时区与常量（UTC 时区）对比即可
     return expired_at.replace(tzinfo=datetime.timezone.utc) >= PERMANENT_TIME
 
 
@@ -467,10 +486,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             if not raw_info.strip():
                 continue
 
-            # 注：raw_info 格式是以英文逗号 (,) 为分隔符的用户信息字符串，多选枚举以 / 拼接
+            # 注：raw_info 格式是以英文逗号 (,) 或中文逗号 (，) 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email phone gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, female, StarCoreHunter, hunting/burning
-            data: List[str] = [s.strip() for s in raw_info.split(",") if s.strip()]
+            # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, 女, StarCoreHunter, 狩猎/阅读
+            data: List[str] = [s.strip() for s in re.split(r"[,，]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
                     _(
@@ -511,9 +530,16 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         username = props["username"]
         extras = {}
         for f in custom_fields:
-            opt_ids = [opt["id"] for opt in f.options]
-            value = props.get(f.name, f.default)
+            # 如果没有提供该字段，则使用默认值
+            if not props.get(f.name):
+                extras[f.name] = f.default
+                continue
 
+            # 提前预取枚举类型的选择项，便于后续校验和取 value 对应的 id
+            opt_values = [opt["value"] for opt in f.options]
+            opt_value_to_id_map = {opt["value"]: opt["id"] for opt in f.options}
+
+            value = props[f.name]
             # 数字类型，转换成整型不丢精度就转，不行就浮点数
             if f.data_type == UserFieldDataType.NUMBER:
                 try:
@@ -526,23 +552,28 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                         ).format(username, f.name, value)
                     )
 
-            # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+            # 枚举类型，值（value）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
-                if value not in opt_ids:
+                if value not in opt_values:
                     raise ValidationError(
-                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(username, f.name, value, opt_ids)
+                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(
+                            username, f.name, value, opt_values
+                        )
                     )
+                value = opt_value_to_id_map[value]
+
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 快速录入的数据中的的多选枚举，都是通过 "/" 分隔的字符串表示列表
-                # 但是默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
-                if isinstance(value, str):
-                    value = [v.strip() for v in value.split("/") if v.strip()]  # type: ignore
+                value = [v.strip() for v in value.split("/") if v.strip()]  # type: ignore
 
-                if set(value) - set(opt_ids):
+                if set(value) - set(opt_values):
                     raise ValidationError(
-                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(username, f.name, value, opt_ids)
+                        _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(
+                            username, f.name, value, opt_values
+                        )
                     )
+                value = [opt_value_to_id_map[v] for v in value]  # type: ignore
 
             extras[f.name] = value
 

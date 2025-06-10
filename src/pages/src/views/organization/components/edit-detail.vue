@@ -109,6 +109,15 @@
             :disabled-date="disabledDate">
           </bk-date-picker>
         </bk-form-item>
+        <bk-form-item :label="$t('密码过期时间')" v-if="formData.password_expired_at">
+          <bk-date-picker
+            v-model="formData.password_expired_at"
+            :placeholder="$t('选择日期时间')"
+            type="datetime"
+            format="yyyy-MM-dd HH:mm:ss"
+            :disabled="true">
+          </bk-date-picker>
+        </bk-form-item>
       </div>
       <CustomFields :extras="formData.extras" :rules="rules" />
     </bk-form>

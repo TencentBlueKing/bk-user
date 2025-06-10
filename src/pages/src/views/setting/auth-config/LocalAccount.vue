@@ -99,7 +99,10 @@
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
             <passwordInput
-              v-model="formData.config.password_initial.fixed_password" @input="inputPassword" />
+              v-model="formData.config.password_initial.fixed_password"
+              :is-password-disabled="isInputEyesDisabled"
+              :is-fast-clear-enable="isInputEyesDisabled"
+              @input="inputPassword" />
             <bk-button
               outline
               theme="primary"
@@ -320,6 +323,8 @@ onMounted(async () => {
       formData.config.enable_password = true;
     }
     originalData = JSON.parse(JSON.stringify(formData));
+
+    setIsIntPutEyesDisabled(formData.config?.password_initial?.fixed_password);
   } catch (e) {
     console.warn(e);
   } finally {
@@ -480,6 +485,12 @@ const handleRandomPassword = async () => {
   } catch (e) {
     console.warn(e);
   }
+};
+
+const isInputEyesDisabled = ref(false);
+/** 密码生成方式 - 固定时是否禁用eyes */
+const setIsIntPutEyesDisabled = (fixed_password: string) => {
+  isInputEyesDisabled.value = !!fixed_password;
 };
 
 const inputPassword = (val) => {

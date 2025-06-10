@@ -30,7 +30,10 @@
             />
         </div>
         <bk-table
-            max-height="100%"
+            :pagination-height="paginationHeight"
+            :thead="{ height: headHeight }"
+            :row-height="lineHeight"
+            :max-height="curTableMaxHeight"
             min-height="30%"
             class="organization-table-main"
             :border="['outer']"
@@ -168,8 +171,8 @@
       :size="'normal'"
       :height="200"
       @closed="resetPasswordClose"
-      @confirm="resetPasswordConfirm"
     >
+      <bk-loading :loading="isResetPasswordLoading">
         <bk-form
             class="example"
             form-type="vertical"
@@ -183,6 +186,21 @@
                 <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
             </bk-form-item>
         </bk-form>
+      </bk-loading>
+      <template #footer>
+        <div class="flex justify-end">
+          <bk-button
+            theme="primary"
+            class="mr-[8px]"
+            @click="resetPasswordConfirm"
+            :disabled="isResetPasswordLoading">
+            {{ t('确定') }}
+          </bk-button>
+          <bk-button @click="resetPasswordClose">
+            {{ t('取消') }}
+          </bk-button>
+        </div>
+      </template>
     </bk-dialog>
     <!-- 快速录入弹框 -->
     <FastInputDialog v-model:isShow="fastInputDialogShow" @clickImport="$emit('click-import')"
@@ -248,6 +266,7 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
+import { useTableMaxHeight } from '@/hooks';
 
   const appStore = useAppStore();
   const recursive = ref(true);
@@ -684,9 +703,11 @@
     const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
       password.value = res.data?.password;
   };
+  const isResetPasswordLoading = ref(false);
   /** 重置密码 */
   const resetPasswordConfirm = async () => {
     try {
+        isResetPasswordLoading.value = true;
         const param = { password: password.value };
         await resetTenantsUserPassword(detailsInfo.value.id, param);
         handleClear();
@@ -694,6 +715,8 @@
         Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
         console.warn(e);
+    } finally {
+      isResetPasswordLoading.value = false;
     }
   }
   /** 取消重置密码 */
@@ -786,6 +809,18 @@ const batchMoveOrg = (params) => {
   currentHandle.value = params
   handleOperations(true, t('移动至组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
 }
+
+// 固定表头行高分页器高度，便于切换行高时计算高度
+const paginationHeight = 60;
+const headHeight = 42;
+const lineHeight = ref(42);
+// table height继续采用响应式hook，用于处理window resize以及折叠功能高度的计算(curRedundantHeight is ref data)
+const dynamicTableHeight = useTableMaxHeight(200);
+const curTableMaxHeight = computed(() => {
+  if (pagination.count < pagination.limit) return '100%';
+  return dynamicTableHeight.value;
+});
+
 defineExpose({
   importDialogHandle
 })
@@ -796,6 +831,7 @@ defineExpose({
 }
 
 .organization-table-main {
+  transition: height 0.5s ease;
   .bk-table-head thead th {
     &:first-child {
       text-align: center;

@@ -30,6 +30,7 @@ from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework import status
 
@@ -523,6 +524,26 @@ class TestTenantUserRetrieveApi:
             f.name: f.default for f in random_tenant_custom_fields if "hobbies" not in f.name
         }
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_tenant_users_identity_infos")
+    def test_password_expired_at_display(self, api_client, random_tenant):
+        """测试本地数据源用户的密码过期时间显示"""
+        lushi = TenantUser.objects.get(data_source_user__username="lushi", tenant=random_tenant)
+        resp = api_client.get(reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": lushi.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert "password_expired_at" in resp.data
+        expired_at_str = resp.data["password_expired_at"]
+        # 不带时区的 expired_at
+        native_expired_at = datetime.datetime.strptime(expired_at_str, settings.REST_FRAMEWORK["DATETIME_FORMAT"])
+        # 带时区的 expired_at
+        expired_at = timezone.make_aware(native_expired_at)
+        # 预期时间
+        expected_time = timezone.now() + datetime.timedelta(days=3)
+
+        # 允许的误差最大为 5 分钟
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
+
 
 class TestTenantUserDestroyApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -595,11 +616,11 @@ class TestTenantUserBatchCreateAndPreviewApi:
     def raw_user_infos(self) -> List[str]:
         # username full_name email phone age gender region hobbies
         return [
-            "star, Star, trailblazer@railway.com, +8613612345671, 1, female, Nameless, dancing/collecting/traveling",
-            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, female, StarCoreHunter, shopping/hunting",
-            "sam, FireFly, sam@railway.com, +447700123456, 23, female, StarCoreHunter, singing/eating/sleeping",
-            "404, SilverWolf, 404@railway.com, +79123456789, 16, female, StarCoreHunter, gaming/hacking",
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving",
+            "star, Star, trailblazer@railway.com, +8613612345671, 1, 女, Nameless, 跳舞/采集/旅游",
+            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, 女, StarCoreHunter, 购物/狩猎",
+            "sam, FireFly, sam@railway.com, +447700123456, 23, 女, StarCoreHunter, 唱歌/吃饭/睡觉",
+            "404, SilverWolf, 404@railway.com, +79123456789, 16, 女, StarCoreHunter, 游戏/骇入",
+            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶",
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -713,38 +734,38 @@ class TestTenantUserBatchCreateAndPreviewApi:
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
         raw_user_infos.append(
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving"
+            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶"
         )
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 dotknifeboy 重复" in resp.data["message"]
 
-        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 lisi 已存在" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, male, shenzhen"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, 男, shenzhen"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "第 6 行，用户信息格式不正确，预期 8 个字段，实际 7 个字段" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "第 6 行，手机号 +x-xxxx 格式不正确" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "helicopter 不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, male, shenzhen, jumping/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, 男, shenzhen, 跳跃/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]

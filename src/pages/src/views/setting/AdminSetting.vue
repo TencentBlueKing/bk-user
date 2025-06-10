@@ -52,7 +52,7 @@
     </Row>
 
     <div class="mb-[24px]">
-      <Row class="admin-setting-item" :title="$t('实名管理员')">
+      <Row class="admin-setting-item" :title="$t('租户管理员')">
         <div class="flex items-center flex-wrap ml-[56px]">
           <bk-tag
             class="tag-style"

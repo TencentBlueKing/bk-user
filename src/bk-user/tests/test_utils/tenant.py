@@ -21,7 +21,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.models import Tenant, TenantUserDisplayNameExpressionConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -48,6 +48,18 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         defaults={"plugin_config": plugin_config},
     )
+
+    TenantUserDisplayNameExpressionConfig.objects.get_or_create(
+        tenant=tenant,
+        expression="{username}({full_name})",
+        fields={
+            "builtin": ["username", "full_name"],
+            "custom": [],
+            "extra": [],
+        },
+        version=1,
+    )
+
     return tenant
 
 

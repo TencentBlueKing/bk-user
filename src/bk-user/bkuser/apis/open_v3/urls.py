@@ -77,14 +77,39 @@ urlpatterns = [
                     name="open_v3.tenant_department.lookup",
                 ),
                 path(
+                    "department-user-relations/",
+                    views.TenantDepartmentUserRelationListApi.as_view(),
+                    name="open_v3.tenant_department_user_relation.list",
+                ),
+                path(
+                    "department-relations/",
+                    views.TenantDepartmentRelationListApi.as_view(),
+                    name="open_v3.tenant_department_relation.list",
+                ),
+                path(
+                    "user-leader-relations/",
+                    views.TenantUserLeaderRelationListApi.as_view(),
+                    name="open_v3.tenant_user_leader_relation.list",
+                ),
+                path(
                     "virtual-users/-/lookup/",
                     views.VirtualUserLookupApi.as_view(),
                     name="open_v3.virtual_user.lookup",
                 ),
                 path(
+                    "virtual-users/",
+                    views.VirtualUserListApi.as_view(),
+                    name="open_v3.virtual_user.list",
+                ),
+                path(
                     "common-variables/",
                     views.TenantCommonVariableListApi.as_view(),
                     name="open_v3.tenant_common_variable.list",
+                ),
+                path(
+                    "custom-enum-fields/",
+                    views.TenantUserCustomEnumFieldListApi.as_view(),
+                    name="open_v3.tenant_user_custom_enum_field.list",
                 ),
             ]
         ),

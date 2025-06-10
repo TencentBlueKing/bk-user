@@ -15,9 +15,9 @@
             <bk-overflow-title type="tips" class="name">
               {{ currentNaturalUser.full_name }}
             </bk-overflow-title>
-            <bk-overflow-title type="tips" class="id">
+            <!-- <bk-overflow-title type="tips" class="id">
               （{{ currentUserInfo.id }}）
-            </bk-overflow-title>
+            </bk-overflow-title> -->
             <!-- <i class="user-icon icon-edit" /> -->
           </div>
         </div>
@@ -93,7 +93,7 @@
                   {{ currentTenantInfo.tenant?.id }}
                 </div>
               </div>
-              <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p>
+              <!-- <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p> -->
             </div>
           </div>
           <div class="header-right">
@@ -116,9 +116,9 @@
                 distance: 20,
                 disabled: !isCurrentTenant,
               }">
-              <bk-button :disabled="isCurrentTenant">
+              <!-- <bk-button :disabled="isCurrentTenant">
                 {{ $t('切换为该账号登录') }}
-              </bk-button>
+              </bk-button> -->
             </span>
             <!-- <bk-button>
               取消关联
@@ -473,6 +473,7 @@ import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE
 const user = useUser();
 const userInfo = ref(user.user);
 
+const userStore = useUser();
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
 const currentNaturalUser = ref({});
@@ -644,7 +645,7 @@ const submitChange  = async (item) => {
     item.isEdit = false;
     Message({ theme: 'success', message: t('保存成功') });
     if (model === 'language') {
-      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language), 100);
+      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language, userStore.user.tenant_id), 100);
     }
     originalValue.value[model] = currentUserInfo.value[model];
   } catch (error) {

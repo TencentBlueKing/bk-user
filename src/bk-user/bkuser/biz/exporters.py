@@ -51,10 +51,12 @@ class DataSourceUserExporter:
         self.users = DataSourceUser.objects.filter(data_source=data_source)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=data_source.owner_tenant_id)
         self._load_template()
+        self.custom_field_option_map = self._build_custom_field_option_map()
 
     def get_template(self) -> Workbook:
         # 填充自定义字段默认值以供参考
-        extras = [",".join(f.default) if isinstance(f.default, list) else str(f.default) for f in self.custom_fields]
+        extras = [self._transform_custom_field_value(f.name, f.data_type, f.default) for f in self.custom_fields]
+
         self.sheet.append(  # noqa: PERF401 sheet isn't a list
             ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
         )
@@ -70,10 +72,11 @@ class DataSourceUserExporter:
             extras = []
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
-                # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
-                value = u.extras.get(field.name) or ""
-                value = ",".join(value) if isinstance(value, list) else str(value)  # type: ignore
-                extras.append(value)
+                # 导出数据时，若自定义字段不存在时替换为 ""
+                # Q: 为什么不能这样写 value = u.extras.get(field.name) or ""
+                # A: 这会导致部分类型的零值被转为空字符串，不符合预期，比如 类型是NUMBER, 0 应该是 "0"，而非 ""
+                value = u.extras.get(field.name, "")
+                extras.append(self._transform_custom_field_value(field.name, field.data_type, value))
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
                 (
@@ -96,6 +99,29 @@ class DataSourceUserExporter:
 
         self._set_all_columns_to_text_format()
         return self.workbook
+
+    def _transform_custom_field_value(
+        self, name: str, data_type: str, value: List[str | int | float] | str | int | float
+    ) -> str:
+        """
+        转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
+        """
+        # 对于单枚举（""）、多枚举（[]）、字符串("") 类型，当其为零值时，可提前返回空字符串
+        # 对于数值（0）类型，则需要按照正常处理，即 str(0)，不能返回空字符串
+        # Note: 无值，value 本身就是空字符串
+        if data_type != UserFieldDataType.NUMBER and not value:
+            return ""
+
+        # 单枚举，则选项映射
+        if data_type == UserFieldDataType.ENUM:
+            return self.custom_field_option_map[name][value]  # type: ignore
+
+        # 多枚举，则选项映射并逗号拼接
+        if data_type == UserFieldDataType.MULTI_ENUM:
+            return ",".join([self.custom_field_option_map[name][opt_id] for opt_id in value])  # type: ignore
+
+        # 非枚举类型，直接转换为字符串
+        return str(value)
 
     def _load_template(self):
         self.workbook = load_workbook(settings.EXPORT_ORG_TEMPLATE)
@@ -122,7 +148,7 @@ class DataSourceUserExporter:
 
             # 自定义字段提示信息（位置是字段名的上一行）
             tips_cell = self.sheet.cell(row=self.col_name_row_idx - 1, column=col_idx + 1)
-            opts = ", ".join(opt["id"] for opt in field.options)
+            opts = ", ".join(opt["value"] for opt in field.options)
             if field.data_type == UserFieldDataType.ENUM:
                 tips_cell.value = f"单选枚举（One of {opts}）"
             elif field.data_type == UserFieldDataType.MULTI_ENUM:
@@ -216,3 +242,7 @@ class DataSourceUserExporter:
     def _build_user_username_map(self) -> Dict[int, str]:
         """获取用户与用户名的映射表"""
         return dict(self.users.values_list("id", "username"))
+
+    def _build_custom_field_option_map(self) -> Dict[str, Dict[str, str]]:
+        """获取每个自定义枚举字段 opt_id 到 opt_value 的映射"""
+        return {field.name: {opt["id"]: opt["value"] for opt in field.options} for field in self.custom_fields}

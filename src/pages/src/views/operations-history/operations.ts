@@ -11,12 +11,10 @@ export const operationMap = {
   idp: {
     create_idp: t('创建认证源'),
     modify_idp: t('修改认证源'),
-    modify_idp_status: t('修改认证源状态'),
     delete_idp: t('删除认证源'),
   },
   data_source_user: {
     create_data_source_user: t('创建数据源用户'),
-    create_user_leader: t('创建用户-上级关系'),
     create_user_department: t('创建用户-部门关系'),
 
     modify_data_source_user: t('修改数据源用户'),

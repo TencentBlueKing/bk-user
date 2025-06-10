@@ -53,7 +53,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserCustomField,
 )
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
@@ -74,7 +74,9 @@ class CollaborationToStrategyListCreateApi(CurrentUserTenantMixin, generics.List
     def get_serializer_context(self) -> Dict[str, Any]:
         tenant_user_ids = self.get_queryset().values_list("creator", flat=True)
         return {
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+            "user_display_name_map": TenantUserDisplayNameHandler.get_tenant_user_display_name_map_by_ids(
+                tenant_user_ids
+            ),
             "tenant_name_map": {t.id: t.name for t in Tenant.objects.all()},
         }
 

@@ -24,7 +24,10 @@ from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationSt
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
-from tests.test_utils.data_source import init_data_source_users_depts_and_relations
+from tests.test_utils.data_source import (
+    init_data_source_users_depts_and_relations,
+    init_local_data_source_identity_infos,
+)
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
@@ -107,6 +110,11 @@ def collaboration_tenant_custom_fields(collaboration_tenant) -> List[TenantUserC
 def _init_tenant_users_depts(random_tenant, full_local_data_source, random_tenant_custom_fields) -> None:
     """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def _init_tenant_users_identity_infos(random_tenant, full_local_data_source) -> None:
+    init_local_data_source_identity_infos(full_local_data_source)
 
 
 @pytest.fixture
