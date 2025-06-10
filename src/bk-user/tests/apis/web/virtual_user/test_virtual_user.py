@@ -253,14 +253,12 @@ class TestVirtualDeleteApi:
         resp = api_client.delete(url)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        # 验证主对象是否被删除
+        # 验证 租户用户
         with pytest.raises(TenantUser.DoesNotExist):
             TenantUser.objects.get(id=test_user_data["tenant_user_id"])
-
-        # 验证数据源用户也被删除
+        # 验证数据源用户
         with pytest.raises(DataSourceUser.DoesNotExist):
             DataSourceUser.objects.get(id=data_source_user.id)
-
-        # 验证关联表也清理干净
+        # 验证关联表
         assert not VirtualUserAppRelation.objects.filter(tenant_user=test_user_data["tenant_user_id"]).exists()
         assert not VirtualUserOwnerRelation.objects.filter(tenant_user=test_user_data["tenant_user_id"]).exists()
