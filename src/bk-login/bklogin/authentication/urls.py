@@ -30,18 +30,12 @@ urlpatterns = [
     # 通用配置
     path("global-settings/", views.GlobalSettingRetrieveApi.as_view()),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------
+    path("tenants/-/search/", views.TenantSearchApi.as_view()),
     # 租户信息
     path("tenants/", views.TenantListApi.as_view()),
     # 认证源
-    path(
-        "tenants/<str:tenant_id>/idp-owner-tenants/<str:idp_owner_tenant_id>/idps/", views.TenantIdpListApi.as_view()
-    ),
+    path("idps/", views.TenantIdpListApi.as_view()),
     # ------------------------------------------ 认证插件 ------------------------------------------
-    # 插件认证
-    path(
-        "tenants/<str:tenant_id>/idps/<str:idp_id>/actions/<str:action>/",
-        xframe_options_exempt(views.IdpPluginDispatchView.as_view()),
-    ),
     path("auth/idps/<str:idp_id>/actions/<str:action>/", xframe_options_exempt(views.IdpPluginDispatchView.as_view())),
     # ------------------------------------------ 用户选择 ------------------------------------------
     # 已认证后的用户列表
