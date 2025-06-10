@@ -9,7 +9,7 @@
     </div>
 
     <section v-if="!hasStorage && !loading">
-      <h1 class="login-header">{{ $t('请选择您所属的企业') }}</h1>
+      <h1 class="login-header">{{ $t('请输入您所属的企业') }}</h1>
 
       <bk-form-item ref="tenantInputRef">
         <bk-popover
@@ -39,13 +39,21 @@
                 v-for="item in tenantOptions"
                 :key="item.id"
                 @click="handleSelectTenant(item)">
-                {{ item.name }} ({{ item.id }})
+                <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
+                <span v-else class="logo small">
+                  {{ item?.name?.charAt(0).toUpperCase() }}
+                </span>
+                <span>{{ item.name }} ({{ item.id }})</span>
               </div>
 
               <template v-if="tenantList.length && tenantOptions.length === 0">
                 <div class="tenant-option-title">{{ $t('上次登录') }}</div>
                 <div class="tenant-option" v-for="item in tenantList" :key="item.id" @click="handleSelectTenant(item)">
-                  {{ item.name }} ({{ item.id }})
+                  <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
+                  <span v-else class="logo small">
+                    {{ item?.name?.charAt(0).toUpperCase() }}
+                  </span>
+                  <span>{{ item.name }} ({{ item.id }})</span>
                 </div>
               </template>
             </div>
@@ -82,7 +90,7 @@
       </div>
 
       <section v-if="idpList.length">
-        <div class="tenant-tab">
+        <div class="tenant-tab" v-if="idpList.length > 1">
           <div
             class="tab-item"
             v-for="item in idpList"
@@ -343,16 +351,24 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
 // 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
+  // 兼容之前版本，之前版本没有 tenantList 数据
+  if (appStore.tenantId && !tenantList.value.length) {
+    tenantList.value = [{
+      id: appStore.tenantId,
+      name: '',
+      logo: '',
+    }];
+  }
   if (tenantList.value.length) {
     getTenantList({
       tenant_ids: tenantList.value.map(item => item.id).join(','),
     }).then((res) => {
       tenantList.value = res;
+      if (hasStorage.value) {
+        selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
+        getIdps();
+      }
     });
-    if (hasStorage.value) {
-      selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
-      getIdps();
-    }
   }
   settings.value = await getGlobalSettings();
   loading.value = false;
@@ -393,6 +409,13 @@ onBeforeMount(async () => {
   background-color: #3A84FF;
   border-radius: 4px;
   flex-shrink: 0;
+
+  &.small {
+    width: 16px;
+    font-size: 11px;
+    line-height: 16px;
+    margin-right: 0;
+  }
 }
 
 .logo-img {
@@ -400,6 +423,10 @@ onBeforeMount(async () => {
   margin-right: 4px;
   vertical-align: middle;
   padding-bottom: 4px;
+
+  &.small {
+    width: 16px;
+  }
 }
 
 .tenant-logo {
