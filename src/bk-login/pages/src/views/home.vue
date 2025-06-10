@@ -351,16 +351,24 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
 // 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
+  // 兼容之前版本，之前版本没有 tenantList 数据
+  if (appStore.tenantId && !tenantList.value.length) {
+    tenantList.value = [{
+      id: appStore.tenantId,
+      name: '',
+      logo: '',
+    }];
+  }
   if (tenantList.value.length) {
     getTenantList({
       tenant_ids: tenantList.value.map(item => item.id).join(','),
     }).then((res) => {
       tenantList.value = res;
+      if (hasStorage.value) {
+        selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
+        getIdps();
+      }
     });
-    if (hasStorage.value) {
-      selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
-      getIdps();
-    }
   }
   settings.value = await getGlobalSettings();
   loading.value = false;
