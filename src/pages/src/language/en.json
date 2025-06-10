@@ -679,5 +679,6 @@
   "删除租户实名管理员": "Delete Tenant Real-name Manager",
   "创建虚拟用户": "Create Virtual User",
   "修改虚拟用户": "Modify Virtual User",
-  "删除虚拟用户": "Delete Virtual User"
+  "删除虚拟用户": "Delete Virtual User",
+  "修改用户展示名表达式配置": "Modify user display name expression configuration"
 }
