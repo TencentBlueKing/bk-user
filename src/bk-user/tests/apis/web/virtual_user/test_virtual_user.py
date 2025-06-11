@@ -43,7 +43,14 @@ class TestVirtualUserCreateApi:
         )
         tenant_user = TenantUser.objects.get(data_source_user=data_source_user)
         assert resp.data["id"] == tenant_user.id
-        assert DataSourceUser.objects.filter(username=data["username"]).exists()
+        assert data_source_user.username == data["username"]
+        assert data_source_user.full_name == data["full_name"]
+        assert set(
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
+        ) == set(data["app_codes"])
+        assert set(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
+        ) == set(data["owners"])
 
     @pytest.mark.parametrize(
         "user_data",
