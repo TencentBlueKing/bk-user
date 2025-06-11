@@ -101,13 +101,10 @@ class TestVirtualUserListApi:
         }
 
         user_data_map = {item["username"]: item for item in results}
-        # 验证 virtual_user_1
         assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
         assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
-        # 验证 virtual_user_2
         assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
         assert set(user_data_map["virtual_user_2"]["owners"]) == {"lisi", "wangwu", "zhaoliu", "liuqi"}
-        # 验证 virtual_user_3
         assert set(user_data_map["virtual_user_3"]["app_codes"]) == {"app4", "app5"}
         assert set(user_data_map["virtual_user_3"]["owners"]) == {"maiba", "yangjiu", "lushi"}
 
@@ -150,15 +147,54 @@ class TestVirtualUserListApi:
 
     @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_keyword(self, api_client):
-        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual")
-        assert resp.status_code == status.HTTP_200_OK
-        usernames = {item["username"] for item in resp.data["results"]}
-        assert {"virtual_user_1", "virtual_user_2", "virtual_user_3"} == usernames
+        virtual_user_1 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_1", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+        virtual_user_2 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_2", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+        virtual_user_3 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_3", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
 
+        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual")
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 3
+        results = resp.data["results"]
+        assert {item["username"] for item in results} == {
+            virtual_user_1.data_source_user.username,
+            virtual_user_2.data_source_user.username,
+            virtual_user_3.data_source_user.username,
+        }
+        assert {item["full_name"] for item in results} == {
+            virtual_user_1.data_source_user.full_name,
+            virtual_user_2.data_source_user.full_name,
+            virtual_user_3.data_source_user.full_name,
+        }
+        user_data_map = {item["username"]: item for item in results}
+        assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
+        assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
+        assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
+        assert set(user_data_map["virtual_user_2"]["owners"]) == {"lisi", "wangwu", "zhaoliu", "liuqi"}
+        assert set(user_data_map["virtual_user_3"]["app_codes"]) == {"app4", "app5"}
+        assert set(user_data_map["virtual_user_3"]["owners"]) == {"maiba", "yangjiu", "lushi"}
+
+        # 测试只匹配 virtual_user_1
         resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual_user_1")
         assert resp.status_code == status.HTTP_200_OK
-        usernames = {item["username"] for item in resp.data["results"]}
-        assert {"virtual_user_1"} == usernames
+        results = resp.data["results"]
+        assert len(results) == 1
+        assert results[0]["username"] == "virtual_user_1"
+        assert results[0]["full_name"] == "虚拟用户1"
+        assert set(results[0]["app_codes"]) == {"app1", "app2"}
+        assert set(results[0]["owners"]) == {"zhangsan", "lisi"}
+
+        # 测试不匹配情况
+        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=not_exist")
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 0
+        assert len(resp.data["results"]) == 0
 
 
 @pytest.mark.usefixtures("_init_virtual_users")
@@ -173,7 +209,7 @@ class TestVirtualUserGetApi:
             VirtualUserOwnerRelation.objects.filter(tenant_user=virtual_user).values_list("owner", flat=True)
         )
 
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_2"})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": virtual_user.id})
         resp = api_client.get(url)
 
         assert resp.status_code == status.HTTP_200_OK
@@ -184,7 +220,7 @@ class TestVirtualUserGetApi:
         assert set(resp.data["owners"]) == set(owners)
 
     def test_get_virtual_user_not_exists(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_4"})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_not_exists"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
