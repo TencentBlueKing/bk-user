@@ -133,10 +133,8 @@ class TestVirtualUserListApi:
         }
 
         user_data_map = {item["username"]: item for item in results}
-        # 验证 virtual_user_1 的数据
         assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
         assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
-        # 验证 virtual_user_2 的数据
         assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
         assert set(user_data_map["virtual_user_2"]["owners"]) == {"lisi", "wangwu", "zhaoliu", "liuqi"}
 
