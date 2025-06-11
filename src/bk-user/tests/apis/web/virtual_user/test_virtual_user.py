@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
 from django.urls import reverse
@@ -73,35 +74,74 @@ class TestVirtualUserCreateApi:
 class TestVirtualUserListApi:
     @pytest.mark.usefixtures("_init_virtual_user")
     def test_list_virtual_user(self, api_client):
-        expected_data = {
-            "virtual_user_1": {
-                "full_name": "虚拟用户1",
-                "app_codes": {"app1", "app2"},
-                "owners": {"zhangsan", "lisi"},
-            },
-            "virtual_user_2": {
-                "full_name": "虚拟用户2",
-                "app_codes": {"app3"},
-                "owners": {"lisi", "wangwu", "zhaoliu", "liuqi"},
-            },
-            "virtual_user_3": {
-                "full_name": "虚拟用户3",
-                "app_codes": {"app4", "app5"},
-                "owners": {"maiba", "yangjiu", "lushi"},
-            },
-        }
+        virtual_user_1 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_1", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+        virtual_user_2 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_2", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+        virtual_user_3 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_3", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
 
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK
 
+        assert resp.data["count"] == 3
         results = resp.data["results"]
-        assert len(results) == len(expected_data)
-        for item in results:
-            username = item["username"]
-            expected = expected_data[username]
-            assert item["full_name"] == expected["full_name"]
-            assert set(item["app_codes"]) == set(expected["app_codes"])
-            assert set(item["owners"]) == set(expected["owners"])
+        assert {item["username"] for item in results} == {
+            virtual_user_1.data_source_user.username,
+            virtual_user_2.data_source_user.username,
+            virtual_user_3.data_source_user.username,
+        }
+        assert {item["full_name"] for item in results} == {
+            virtual_user_1.data_source_user.full_name,
+            virtual_user_2.data_source_user.full_name,
+            virtual_user_3.data_source_user.full_name,
+        }
+
+        user_data_map = {item["username"]: item for item in results}
+        # 验证 virtual_user_1
+        assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
+        assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
+        # 验证 virtual_user_2
+        assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
+        assert set(user_data_map["virtual_user_2"]["owners"]) == {"lisi", "wangwu", "zhaoliu", "liuqi"}
+        # 验证 virtual_user_3
+        assert set(user_data_map["virtual_user_3"]["app_codes"]) == {"app4", "app5"}
+        assert set(user_data_map["virtual_user_3"]["owners"]) == {"maiba", "yangjiu", "lushi"}
+
+    @pytest.mark.usefixtures("_init_virtual_user")
+    def test_list_virtual_user_with_pagination(self, api_client):
+        virtual_user_1 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_1", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+        virtual_user_2 = TenantUser.objects.get(
+            data_source_user__username="virtual_user_2", data_source__type=DataSourceTypeEnum.VIRTUAL
+        )
+
+        resp = api_client.get(reverse("virtual_user.list_create"), data={"page": 1, "page_size": 2})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 3
+        assert len(resp.data["results"]) == 2
+        results = resp.data["results"]
+        assert {t["username"] for t in results} == {
+            virtual_user_1.data_source_user.username,
+            virtual_user_2.data_source_user.username,
+        }
+        assert {t["full_name"] for t in results} == {
+            virtual_user_1.data_source_user.full_name,
+            virtual_user_2.data_source_user.full_name,
+        }
+
+        user_data_map = {item["username"]: item for item in results}
+        # 验证 virtual_user_1 的数据
+        assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
+        assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
+        # 验证 virtual_user_2 的数据
+        assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
+        assert set(user_data_map["virtual_user_2"]["owners"]) == {"lisi", "wangwu", "zhaoliu", "liuqi"}
 
     def test_list_virtual_user_empty(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
