@@ -24,7 +24,7 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.usefixtures("_init_virtual_user")
+@pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualUserCreateApi:
     def test_create_virtual_user(self, api_client):
         data = {
@@ -72,7 +72,7 @@ class TestVirtualUserCreateApi:
 
 
 class TestVirtualUserListApi:
-    @pytest.mark.usefixtures("_init_virtual_user")
+    @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user(self, api_client):
         virtual_user_1 = TenantUser.objects.get(
             data_source_user__username="virtual_user_1", data_source__type=DataSourceTypeEnum.VIRTUAL
@@ -111,7 +111,7 @@ class TestVirtualUserListApi:
         assert set(user_data_map["virtual_user_3"]["app_codes"]) == {"app4", "app5"}
         assert set(user_data_map["virtual_user_3"]["owners"]) == {"maiba", "yangjiu", "lushi"}
 
-    @pytest.mark.usefixtures("_init_virtual_user")
+    @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_pagination(self, api_client):
         virtual_user_1 = TenantUser.objects.get(
             data_source_user__username="virtual_user_1", data_source__type=DataSourceTypeEnum.VIRTUAL
@@ -148,7 +148,7 @@ class TestVirtualUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data["results"]) == 0
 
-    @pytest.mark.usefixtures("_init_virtual_user")
+    @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_keyword(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual")
         assert resp.status_code == status.HTTP_200_OK
@@ -161,7 +161,7 @@ class TestVirtualUserListApi:
         assert {"virtual_user_1"} == usernames
 
 
-@pytest.mark.usefixtures("_init_virtual_user")
+@pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualUserGetApi:
     def test_get_virtual_user(self, api_client):
         virtual_user = TenantUser.objects.get(id="virtual_user_2")
@@ -189,7 +189,7 @@ class TestVirtualUserGetApi:
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.usefixtures("_init_virtual_user")
+@pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualUserUpdateApi:
     def test_update_virtual_user(self, api_client):
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
@@ -222,7 +222,7 @@ class TestVirtualUserUpdateApi:
         assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
 
 
-@pytest.mark.usefixtures("_init_virtual_user")
+@pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualDeleteApi:
     def test_delete_virtual_user(self, api_client):
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
