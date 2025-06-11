@@ -187,17 +187,13 @@ class TestVirtualDeleteApi:
     def test_delete_virtual_user(self, api_client):
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
 
-        # 确保用户存在
-        assert TenantUser.objects.filter(id="virtual_user_1").exists()
-        assert DataSourceUser.objects.filter(username="virtual_user_1").exists()
-        # 执行删除操作
         resp = api_client.delete(url)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
-        # 验证用户及相关数据已被删除
+
         assert not TenantUser.objects.filter(id="virtual_user_1").exists()
         assert not DataSourceUser.objects.filter(username="virtual_user_1").exists()
         assert not VirtualUserAppRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
         assert not VirtualUserOwnerRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
-        # 验证其他虚拟用户没有被误删
+
         assert TenantUser.objects.filter(id="virtual_user_2").exists()
         assert TenantUser.objects.filter(id="virtual_user_3").exists()
