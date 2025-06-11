@@ -452,7 +452,7 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantUserAccountExpiredAtUpdateApii:
+class TestTenantUserAccountExpiredAtUpdateApi:
     @pytest.mark.parametrize(
         ("time_diff"),
         [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
