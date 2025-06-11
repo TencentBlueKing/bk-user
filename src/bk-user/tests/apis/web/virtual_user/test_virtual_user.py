@@ -89,18 +89,18 @@ class TestVirtualUserListApi:
 
         assert resp.data["count"] == 3
         results = resp.data["results"]
-        assert {item["username"] for item in results} == {
+        assert {t["username"] for t in results} == {
             virtual_user_1.data_source_user.username,
             virtual_user_2.data_source_user.username,
             virtual_user_3.data_source_user.username,
         }
-        assert {item["full_name"] for item in results} == {
+        assert {t["full_name"] for t in results} == {
             virtual_user_1.data_source_user.full_name,
             virtual_user_2.data_source_user.full_name,
             virtual_user_3.data_source_user.full_name,
         }
 
-        user_data_map = {item["username"]: item for item in results}
+        user_data_map = {t["username"]: t for t in results}
         assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
         assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
         assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
@@ -132,7 +132,7 @@ class TestVirtualUserListApi:
             virtual_user_2.data_source_user.full_name,
         }
 
-        user_data_map = {item["username"]: item for item in results}
+        user_data_map = {t["username"]: t for t in results}
         assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
         assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
         assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
@@ -160,17 +160,17 @@ class TestVirtualUserListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 3
         results = resp.data["results"]
-        assert {item["username"] for item in results} == {
+        assert {t["username"] for t in results} == {
             virtual_user_1.data_source_user.username,
             virtual_user_2.data_source_user.username,
             virtual_user_3.data_source_user.username,
         }
-        assert {item["full_name"] for item in results} == {
+        assert {t["full_name"] for t in results} == {
             virtual_user_1.data_source_user.full_name,
             virtual_user_2.data_source_user.full_name,
             virtual_user_3.data_source_user.full_name,
         }
-        user_data_map = {item["username"]: item for item in results}
+        user_data_map = {t["username"]: t for t in results}
         assert set(user_data_map["virtual_user_1"]["app_codes"]) == {"app1", "app2"}
         assert set(user_data_map["virtual_user_1"]["owners"]) == {"zhangsan", "lisi"}
         assert set(user_data_map["virtual_user_2"]["app_codes"]) == {"app3"}
