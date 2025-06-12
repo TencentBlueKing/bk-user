@@ -209,10 +209,9 @@ class VirtualUserRetrieveUpdateDestroyApi(
         auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
         auditor.pre_record_data_before(tenant_user)
 
-        with transaction.atomic():
-            # 实际修改的字段属性都在关联的数据源用户上
-            data_source_user = tenant_user.data_source_user
+        data_source_user = tenant_user.data_source_user
 
+        with transaction.atomic():
             # 覆盖更新
             data_source_user.full_name = data["full_name"]
             data_source_user.save(update_fields=["full_name", "updated_at"])
