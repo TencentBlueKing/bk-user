@@ -14,10 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from datetime import time
+from datetime import datetime
+from typing import List
 
 from django.conf import settings
-from django_celery_beat.models import IntervalSchedule
+from django.utils import timezone
+from django_celery_beat.models import CrontabSchedule, IntervalSchedule
 from pydantic import BaseModel
 
 from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskTrigger
@@ -54,24 +56,83 @@ class DataSourceSyncConfig(BaseModel):
 
     period_type: DataSourceSyncPeriodType = DataSourceSyncPeriodType.MINUTE
     period_value: int = 24 * 60
-    exec_time: time | None = None
+    exec_times: List[datetime] = []
     sync_timeout: int = settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT
 
-    def get_interval_schedule(self):
-        """根据配置生成 IntervalSchedule"""
-        if self.period_type == DataSourceSyncPeriodType.MINUTE:
-            return IntervalSchedule.objects.get_or_create(
-                every=self.period_value,
-                period=IntervalSchedule.MINUTES,
-            )
+    def get_interval_schedule(self) -> IntervalSchedule:
+        """为分钟类型生成 IntervalSchedule"""
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=self.period_value,
+            period=IntervalSchedule.MINUTES,
+        )
+        return schedule
+
+    def get_crontab_schedules(self) -> List[CrontabSchedule]:
+        """根据配置生成 CrontabSchedule 列表"""
+        schedules: List[CrontabSchedule] = []
+
         if self.period_type == DataSourceSyncPeriodType.HOUR:
-            return IntervalSchedule.objects.get_or_create(
-                every=self.period_value,
-                period=IntervalSchedule.HOURS,
-            )
+            # 小时级别：每小时在指定分钟触发，间隔检查在任务执行时进行
+            for exec_time in self.exec_times:
+                # 转换为本地时区来获取正确的小时和分钟
+                local_time = timezone.localtime(exec_time)
+                schedule, _ = CrontabSchedule.objects.get_or_create(
+                    minute=str(local_time.minute),
+                    hour="*",
+                    day_of_week="*",
+                    day_of_month="*",
+                    month_of_year="*",
+                    timezone=settings.TIME_ZONE,
+                )
+                schedules.append(schedule)
+
+        elif self.period_type == DataSourceSyncPeriodType.DAY:
+            # 天级别：每天在指定时间触发，间隔检查在任务执行时进行
+            for exec_time in self.exec_times:
+                # 转换为本地时区来获取正确的小时和分钟
+                local_time = timezone.localtime(exec_time)
+                schedule, _ = CrontabSchedule.objects.get_or_create(
+                    minute=str(local_time.minute),
+                    hour=str(local_time.hour),
+                    day_of_week="*",
+                    day_of_month="*",
+                    month_of_year="*",
+                    timezone=settings.TIME_ZONE,
+                )
+                schedules.append(schedule)
+
+        return schedules
+
+    def should_execute_now(self, exec_time: datetime) -> bool:
+        """
+        判断现在是否应该执行任务
+        """
+        now = timezone.now()
+
+        if self.period_value == 1:
+            # period_value = 1 时，由 crontab 精确控制，无需判断
+            return True
+
+        if self.period_type == DataSourceSyncPeriodType.MINUTE:
+            # 分钟级别：由 IntervalSchedule 控制间隔，直接执行
+            return True
+
+        if self.period_type == DataSourceSyncPeriodType.HOUR:
+            # 小时级别：检查距离参考时间的小时数是否为间隔的倍数
+            now_local = timezone.localtime(now)
+            exec_time_local = timezone.localtime(exec_time)
+
+            # 计算总的小时差，考虑跨天的情况
+            time_delta = now_local - exec_time_local
+            hour_delta = time_delta.days * 24 + time_delta.seconds // 3600
+            return hour_delta % self.period_value == 0
+
         if self.period_type == DataSourceSyncPeriodType.DAY:
-            return IntervalSchedule.objects.get_or_create(
-                every=self.period_value,
-                period=IntervalSchedule.DAYS,
-            )
-        raise ValueError(f"Unsupported period_type: {self.period_type}")
+            # 天级别：检查距离参考时间的天数是否为间隔的倍数
+            # 使用本地时区的日期来计算，避免UTC时区差异导致的日期偏移
+            now_local = timezone.localtime(now)
+            exec_time_local = timezone.localtime(exec_time)
+            days_delta = (now_local.date() - exec_time_local.date()).days
+            return days_delta % self.period_value == 0
+
+        return True

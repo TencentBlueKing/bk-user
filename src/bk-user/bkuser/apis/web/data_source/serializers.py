@@ -93,8 +93,12 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
 
     period_type = serializers.ChoiceField(help_text="同步周期类型", choices=DataSourceSyncPeriodType.get_choices())
     period_value = serializers.IntegerField(help_text="周期数值", min_value=1)
-    exec_time = serializers.TimeField(
-        help_text="按天同步时的执行时间（格式: HH:MM:SS）", required=False, allow_null=True
+    exec_times = serializers.ListField(
+        help_text="执行时间列表，支持多个起始时间点",
+        child=serializers.DateTimeField(),
+        required=False,
+        allow_empty=True,
+        default=list,
     )
     sync_timeout = serializers.IntegerField(
         help_text="同步超时时间（单位：秒，范围：5m-12h）",
@@ -105,14 +109,20 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        if attrs["period_type"] == DataSourceSyncPeriodType.DAY and not attrs.get("exec_time"):
-            raise ValidationError(_("按天同步时必须提供执行时间"))
+        period_type = attrs["period_type"]
+        exec_times = attrs.get("exec_times", [])
 
-        # 转换 exec_time 为字符串，避免序列化时出现问题
-        if attrs.get("exec_time"):
-            attrs["exec_time"] = attrs["exec_time"].strftime("%H:%M:%S")
+        # 小时和天级别至少需要一个执行时间
+        if period_type in [DataSourceSyncPeriodType.HOUR, DataSourceSyncPeriodType.DAY] and not exec_times:
+            raise ValidationError(_("小时和天级别的同步必须至少提供一个执行时间"))
 
         return attrs
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        if data.get("exec_times"):
+            data["exec_times"] = [t.isoformat() for t in data["exec_times"]]
+        return data
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):

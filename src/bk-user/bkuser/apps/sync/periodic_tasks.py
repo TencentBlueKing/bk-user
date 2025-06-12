@@ -24,7 +24,7 @@ from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
-from bkuser.apps.sync.data_models import DataSourceSyncOptions
+from bkuser.apps.sync.data_models import DataSourceSyncConfig, DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.celery import app
@@ -34,13 +34,21 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def build_and_run_data_source_sync_task(data_source_id: int):
+def build_and_run_data_source_sync_task(data_source_id: int, exec_time_index: int = 0):
     """同步数据源数据"""
-    logger.info("[celery-beat] receive build and run data source %s sync task", data_source_id)
-
+    logger.info(
+        "[celery-beat] receive build and run data source %s sync task, exec_time_index: %s",
+        data_source_id,
+        exec_time_index,
+    )
     data_source = DataSource.objects.get(id=data_source_id)
     if data_source.is_local:
         logger.error("why local data source %s has periodic task?", data_source_id)
+        return
+
+    # 检查是否应该执行任务
+    if not _should_execute_sync_task(data_source, exec_time_index):
+        logger.info("[celery-beat] data source %s sync task skipped due to schedule interval", data_source_id)
         return
 
     sync_opts = DataSourceSyncOptions(
@@ -55,6 +63,19 @@ def build_and_run_data_source_sync_task(data_source_id: int):
     DataSourceSyncManager(data_source, sync_opts).execute()
 
     logger.info("[celery-beat] build and run data source %s sync task end", data_source_id)
+
+
+def _should_execute_sync_task(data_source: DataSource, exec_time_index: int) -> bool:
+    """判断是否应该执行同步任务"""
+    sync_config = DataSourceSyncConfig(**data_source.sync_config)
+
+    exec_time = sync_config.exec_times[exec_time_index]
+    should_execute = sync_config.should_execute_now(exec_time)
+    if not should_execute:
+        logger.info("data source %s should not execute sync task now based on period config", data_source.id)
+        return False
+
+    return True
 
 
 @app.task(base=BaseTask, ignore_result=True)

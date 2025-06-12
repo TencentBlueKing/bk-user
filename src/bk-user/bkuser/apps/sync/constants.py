@@ -31,6 +31,7 @@ class DataSourceSyncPeriodType(StrStructuredEnum):
     MINUTE = EnumField("minute", label=_("分钟"))
     HOUR = EnumField("hour", label=_("小时"))
     DAY = EnumField("day", label=_("天"))
+    NEVER = EnumField("never", label=_("永不"))
 
 
 class SyncTaskTrigger(StrStructuredEnum):
