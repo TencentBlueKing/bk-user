@@ -114,7 +114,7 @@ class TestVirtualUserGetApi:
         assert resp.data["username"] == "virtual_user_2"
 
     def test_get_virtual_user_not_exists(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_not_exists"})
+        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_not_exist"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
