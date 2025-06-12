@@ -320,6 +320,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
         filter_args = {
             "tenant_id": self.tenant_id,
+            "data_source__type": DataSourceTypeEnum.VIRTUAL,
         }
 
         if data["lookup_field"] == "login_name":
