@@ -41,7 +41,8 @@ def _validate_duplicate_data_source_username(data_source_id: str, username: str,
 
 
 def _validate_owners(owners: List[str]) -> List[str]:
-    """校验责任人列表
+    """
+    校验责任人列表
     1. 去重
     2. 检查每个责任人是否存在且为实体用户
     """

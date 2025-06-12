@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-09 16:17+0800\n"
+"POT-Creation-Date: 2025-06-12 11:56+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -315,7 +315,7 @@ msgstr "部门不存在"
 
 #: bkuser/apis/web/organization/serializers/users.py:132
 #: bkuser/apis/web/organization/serializers/users.py:595
-#: bkuser/apis/web/virtual_user/serializers.py:40
+#: bkuser/apis/web/virtual_user/serializers.py:38
 msgid "用户名 {} 已存在"
 msgstr "用户名 {} 已存在"
 
@@ -760,7 +760,7 @@ msgstr "表达式中存在无效字段: {}"
 msgid "表达式中必须存在唯一字段"
 msgstr "表达式中必须存在唯一字段"
 
-#: bkuser/apis/web/virtual_user/serializers.py:53
+#: bkuser/apis/web/virtual_user/serializers.py:55
 msgid "用户 {} 不存在或不是实体用户"
 msgstr "用户 {} 不存在或不是实体用户"
 

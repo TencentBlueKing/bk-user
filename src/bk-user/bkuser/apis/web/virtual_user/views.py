@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, List
 
 from django.db import transaction
 from django.db.models import Q, QuerySet
@@ -76,7 +76,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             "tenant_user_id", "app_code"
         )
         # 虚拟用户与 app_code 之间的映射
-        app_code_map: Dict[str, list[str]] = defaultdict(list)
+        app_code_map: Dict[str, List[str]] = defaultdict(list)
         for tenant_user_id, app_code in app_relations:
             app_code_map[tenant_user_id].append(app_code)
 
@@ -84,7 +84,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             "tenant_user_id", "owner_id"
         )
         # 虚拟用户与责任人列表之间的映射
-        owner_map: Dict[str, list[str]] = defaultdict(list)
+        owner_map: Dict[str, List[str]] = defaultdict(list)
         for tenant_user_id, owner_id in owner_relations:
             owner_map[tenant_user_id].append(owner_id)
 
@@ -148,10 +148,10 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
                 ]
             )
 
-            # 【审计】创建虚拟用户审计对象
-            auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
-            # 【审计】将审计记录保存至数据库
-            auditor.record_create(tenant_user)
+        # 【审计】创建虚拟用户审计对象
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        # 【审计】将审计记录保存至数据库
+        auditor.record_create(tenant_user)
 
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
@@ -190,11 +190,27 @@ class VirtualUserRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        with transaction.atomic():
-            # 【审计】创建虚拟用户审计对象并记录变更前的数据
-            auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
-            auditor.pre_record_data_before(tenant_user)
+        # 计算 app_code 变更
+        current_app_codes = set(
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
+        )
+        new_app_codes = set(data["app_codes"])
+        app_codes_to_delete = current_app_codes - new_app_codes
+        app_codes_to_create = new_app_codes - current_app_codes
 
+        # 计算 责任人 变更
+        current_owners = set(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
+        )
+        new_owners = set(data["owners"])
+        owners_to_delete = current_owners - new_owners
+        owners_to_create = new_owners - current_owners
+
+        # 【审计】创建虚拟用户审计对象并记录变更前的数据
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
+
+        with transaction.atomic():
             # 实际修改的字段属性都在关联的数据源用户上
             data_source_user = tenant_user.data_source_user
 
@@ -203,46 +219,43 @@ class VirtualUserRetrieveUpdateDestroyApi(
             data_source_user.save(update_fields=["full_name", "updated_at"])
 
             # 更新虚拟用户与应用的关联
-            current_app_codes = set(
-                VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
-            )
-            new_app_codes = set(data["app_codes"])
             # 需要删除的关系
-            if to_delete := current_app_codes - new_app_codes:
-                VirtualUserAppRelation.objects.filter(tenant_user=tenant_user, app_code__in=to_delete).delete()
+            if app_codes_to_delete:
+                VirtualUserAppRelation.objects.filter(
+                    tenant_user=tenant_user, app_code__in=app_codes_to_delete
+                ).delete()
             # 需要新增的关系
-            if to_create := new_app_codes - current_app_codes:
+            if app_codes_to_create:
                 VirtualUserAppRelation.objects.bulk_create(
                     [
                         VirtualUserAppRelation(
                             tenant_user=tenant_user,
                             app_code=app_code,
                         )
-                        for app_code in to_create
+                        for app_code in app_codes_to_create
                     ]
                 )
 
             # 更新虚拟用户与责任人的关联
-            current_owners = set(
-                VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
-            )
-            new_owners = set(data["owners"])
             # 需要删除的关系
-            if to_delete := current_owners - new_owners:
-                VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user, owner_id__in=to_delete).delete()
+            if owners_to_delete:
+                VirtualUserOwnerRelation.objects.filter(
+                    tenant_user=tenant_user, owner_id__in=owners_to_delete
+                ).delete()
             # 需要新增的关系
-            if to_create := new_owners - current_owners:
+            if owners_to_create:
                 VirtualUserOwnerRelation.objects.bulk_create(
                     [
                         VirtualUserOwnerRelation(
                             tenant_user=tenant_user,
                             owner_id=owner,
                         )
-                        for owner in to_create
+                        for owner in owners_to_create
                     ]
                 )
-            # 【审计】将审计记录保存至数据库
-            auditor.record_update(tenant_user)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_update(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -255,11 +268,11 @@ class VirtualUserRetrieveUpdateDestroyApi(
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
 
-        with transaction.atomic():
-            # 【审计】创建虚拟用户审计对象并记录变更前的数据
-            auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
-            auditor.pre_record_data_before(tenant_user)
+        # 【审计】创建虚拟用户审计对象并记录变更前的数据
+        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor.pre_record_data_before(tenant_user)
 
+        with transaction.atomic():
             tenant_user.delete()
             data_source_user.delete()
 
@@ -268,7 +281,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
             #  删除虚拟用户和责任人的关联
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).delete()
 
-            # 【审计】将审计记录保存至数据库
-            auditor.record_delete()
+        # 【审计】将审计记录保存至数据库
+        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
