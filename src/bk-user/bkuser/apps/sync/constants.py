@@ -28,10 +28,10 @@ EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
 class DataSourceSyncPeriodType(StrStructuredEnum):
     """数据源自动同步周期类型（单位）"""
 
+    NEVER = EnumField("never", label=_("永不"))
     MINUTE = EnumField("minute", label=_("分钟"))
     HOUR = EnumField("hour", label=_("小时"))
     DAY = EnumField("day", label=_("天"))
-    NEVER = EnumField("never", label=_("永不"))
 
 
 class SyncTaskTrigger(StrStructuredEnum):

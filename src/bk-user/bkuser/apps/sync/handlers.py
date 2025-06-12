@@ -163,11 +163,7 @@ def _create_interval_task(data_source: DataSource, cfg: DataSourceSyncConfig, ta
         defaults={
             "interval": interval_schedule,
             "task": "bkuser.apps.sync.periodic_tasks.build_and_run_data_source_sync_task",
-            "kwargs": json.dumps(
-                {
-                    "data_source_id": data_source.id,
-                }
-            ),
+            "kwargs": json.dumps({"data_source_id": data_source.id}),
         },
     )
 
