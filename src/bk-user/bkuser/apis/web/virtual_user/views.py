@@ -197,8 +197,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
         new_app_codes = set(data["app_codes"])
         app_codes_to_delete = current_app_codes - new_app_codes
         app_codes_to_create = new_app_codes - current_app_codes
-
-        # 计算 责任人 变更
+        # 计算责任人变更
         current_owners = set(
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
         )
