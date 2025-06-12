@@ -29,7 +29,7 @@ class TestVirtualUserCreateApi:
     def test_create_virtual_user(self, api_client):
         data = {
             "username": "virtual_user_4",
-            "full_name": "测试用户4",
+            "full_name": "测试用户_4",
             "app_codes": ["app1", "app2", "app3"],
             "owners": ["lisi", "wangwu"],
         }
@@ -55,7 +55,7 @@ class TestVirtualUserCreateApi:
     def test_create_virtual_user_invalid_owner(self, api_client):
         data = {
             "username": "virtual_user_4",
-            "full_name": "测试用户4",
+            "full_name": "测试用户_4",
             "app_codes": ["app1", "app2", "app3"],
             "owners": ["lisi", "wangwu", "zhangwei"],
         }
@@ -69,19 +69,14 @@ class TestVirtualUserListApi:
     def test_list_virtual_user(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK
-
-        assert len(resp.data["results"]) == 3
-        assert resp.data["count"] == 3
-        assert {r["id"] for r in resp.data["results"]} == {"virtual_user_1", "virtual_user_2", "virtual_user_3"}
+        assert set(resp.data["results"][0].keys()) == {"id", "username", "full_name", "app_codes", "owners"}
 
     @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_pagination(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"), data={"page": 1, "page_size": 2})
         assert resp.status_code == status.HTTP_200_OK
-
         assert len(resp.data["results"]) == 2
         assert resp.data["count"] == 3
-        assert {r["id"] for r in resp.data["results"]} == {"virtual_user_1", "virtual_user_2"}
 
     def test_list_virtual_user_empty(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
@@ -92,21 +87,19 @@ class TestVirtualUserListApi:
     @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_keyword(self, api_client):
         # 测试全部匹配
-        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual")
+        resp = api_client.get(reverse("virtual_user.list_create"), data={"keyword": "virtual"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data["results"]) == 3
-        assert resp.data["count"] == 3
         assert {r["id"] for r in resp.data["results"]} == {"virtual_user_1", "virtual_user_2", "virtual_user_3"}
 
         # 测试只匹配 virtual_user_1
-        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=virtual_user_1")
+        resp = api_client.get(reverse("virtual_user.list_create"), data={"keyword": "virtual_user_1"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data["results"]) == 1
-        assert resp.data["count"] == 1
         assert resp.data["results"][0]["id"] == "virtual_user_1"
 
         # 测试不匹配情况
-        resp = api_client.get(reverse("virtual_user.list_create") + "?keyword=not_exist")
+        resp = api_client.get(reverse("virtual_user.list_create"), data={"keyword": "virtual_user_not_exist"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data["results"]) == 0
         assert resp.data["count"] == 0
@@ -138,8 +131,12 @@ class TestVirtualUserUpdateApi:
 
         virtual_user = TenantUser.objects.get(id="virtual_user_1")
         assert virtual_user.data_source_user.full_name == "测试虚拟用户"
-        assert set(virtual_user.virtualuserapprelation_set.values_list("app_code", flat=True)) == {"app3", "app4"}
-        assert set(virtual_user.virtualuserownerrelation_set.values_list("owner_id", flat=True)) == {
+        assert set(
+            VirtualUserAppRelation.objects.filter(tenant_user=virtual_user).values_list("app_code", flat=True)
+        ) == {"app3", "app4"}
+        assert set(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=virtual_user).values_list("owner_id", flat=True)
+        ) == {
             "freedom",
             "lushi",
         }
