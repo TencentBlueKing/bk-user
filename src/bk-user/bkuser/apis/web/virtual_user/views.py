@@ -276,7 +276,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
 
             # 删除虚拟用户与应用的关联
             VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).delete()
-            #  删除虚拟用户和责任人的关联
+            # 删除虚拟用户和责任人的关联
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).delete()
 
         # 【审计】将审计记录保存至数据库
