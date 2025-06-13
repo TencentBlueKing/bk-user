@@ -16,6 +16,7 @@
           item?.disabled && 'option-disabled',
           item?.hide && 'hidden',
           'flex items-center',
+          activeValue && activeValue === item.value && 'bg-[#E1ECFF]'
         ]"
         @click="handleClickOption(item)">
         <i v-if="item?.icon" :class="[item.icon || '', 'mr-[5px]']"></i>
@@ -32,6 +33,7 @@ interface IProps {
   title: string
   tips?: string
   options: IOption[],
+  activeValue?: string | number
 }
 defineProps<IProps>();
 const emit = defineEmits(['change']);

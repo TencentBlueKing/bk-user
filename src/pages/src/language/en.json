@@ -528,6 +528,7 @@
   "结果预览": "Result Preview",
   "字段": "Field",
   "最多仅允许添加3个字段": "Only a maximum of 3 fields are allowed to be added",
+  "最多仅允许添加16个符号": "Only a maximum of 16 symbols are allowed to be added",
   "表达式字段不能超过3个": "The expression field cannot exceed 3",
   "表达式至少存在一个字段": "The expression must have at least one field",
   "表达式中非宇段部分的字符数不能超过16个": "The number of characters in the non segment part of the expression cannot exceed 16",
