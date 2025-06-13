@@ -41,6 +41,7 @@ from bkuser.apis.open_v3.serializers.user import (
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
@@ -318,9 +319,14 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 首先获取租户下的虚拟数据源
+        data_source = get_object_or_404(
+            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
+        )
+
         filter_args = {
             "tenant_id": self.tenant_id,
-            "data_source__type": DataSourceTypeEnum.VIRTUAL,
+            "data_source_id": data_source.id,
         }
 
         if data["lookup_field"] == "login_name":
