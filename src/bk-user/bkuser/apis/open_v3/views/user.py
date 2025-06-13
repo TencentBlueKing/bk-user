@@ -320,9 +320,11 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         # 首先获取租户下的虚拟数据源
-        data_source = get_object_or_404(
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
-        )
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL
+        ).first()
+        if not data_source:
+            return TenantUser.objects.none()
 
         filter_args = {
             "tenant_id": self.tenant_id,
@@ -362,9 +364,16 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
+        # 首先获取租户下的虚拟数据源
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL
+        ).first()
+        if not data_source:
+            return TenantUser.objects.none()
+
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
+            .filter(tenant_id=self.tenant_id, data_source_id=data_source.id)
             .order_by("id")
         )
 

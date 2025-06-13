@@ -41,6 +41,7 @@ from bkuser.apis.open_web.serializers.users import (
     VirtualUserListOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -252,8 +253,15 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
+        # 首先获取租户下的虚拟数据源
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL
+        ).first()
+        if not data_source:
+            return TenantUser.objects.none()
+
         return TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL
+            tenant_id=self.tenant_id, data_source_id=data_source.id
         )
 
     def get_serializer_context(self):
