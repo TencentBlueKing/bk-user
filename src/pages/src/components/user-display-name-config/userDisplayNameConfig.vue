@@ -77,6 +77,7 @@ const fieldOptions = ref([]);
 const symbolOptions = ref(SYMBOL_OPTIONS);
 
 const selectedFieldValue = computed(() => data.value.filter(item => item.type === 'field'));
+const selectedSymbolValue = computed(() => data.value.filter(item => item.type === 'symbol'));
 
 const handleFieldChange = (option: IOption) => {
   if (selectedFieldValue.value.length >= 3) return;
@@ -115,6 +116,32 @@ const fieldEnableManagement = () => {
   }
 };
 
+let isAllSymbolDisabled = false;
+const setAllSymbolEnable = () => {
+  if (!isAllSymbolDisabled) return;
+  for (const option of symbolOptions.value) {
+    option.disabled = false;
+  }
+  isAllSymbolDisabled = false;
+};
+
+/** 若字符已选择了16个，需要把所有字符选项禁用 */
+const setAllSymbolDisabled = () => {
+  for (const option of symbolOptions.value) {
+    option.disabled = true;
+  }
+  isAllSymbolDisabled = true;
+};
+
+/** 字符选项禁用管理 */
+const symbolEnableManagement = () => {
+  if (selectedSymbolValue.value.length >= 16) {
+    setAllSymbolDisabled();
+  } else {
+    setAllSymbolEnable();
+  }
+};
+
 const fieldShowManagement = () => {
   for (const item of fieldOptions.value) {
     if (selectedFieldValue.value.findIndex(field => field.value === item.id) !== -1) {
@@ -128,6 +155,7 @@ const fieldShowManagement = () => {
 };
 
 const handleSymbolChange = (option: IOption) => {
+  if (selectedSymbolValue.value.length >= 16) return;
   const curItem = {
     type: 'symbol',
     value: option.id,
@@ -171,12 +199,14 @@ const handleFetchFields = async () => {
 watch(data, () => {
   fieldShowManagement();
   fieldEnableManagement();
+  symbolEnableManagement();
 }, { deep: true });
 
 onMounted(async () => {
   await handleFetchFields();
   fieldShowManagement();
   fieldEnableManagement();
+  symbolEnableManagement();
 });
 
 </script>

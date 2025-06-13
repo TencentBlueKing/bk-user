@@ -28,6 +28,7 @@
             <SelectPanel
               :title="$t('符号')"
               :options="symbolOptions"
+              :active-value="item.value"
               @change="(option) => handleSymbolChange(option, index)" />
           </template>
         </bk-popover>

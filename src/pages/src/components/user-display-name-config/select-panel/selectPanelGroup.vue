@@ -9,6 +9,7 @@
     <SelectPanel
       :title="$t('符号')"
       :options="symbolOptions"
+      :tips="$t('最多仅允许添加16个符号')"
       @change="handleSymbolChange" />
   </div>
 </template>
