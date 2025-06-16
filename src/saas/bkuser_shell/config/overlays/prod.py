@@ -27,9 +27,6 @@ BUILD_STATIC = env("BK_STATIC_URL", default="%sstatic" % SITE_URL)
 # ===============================================================================
 LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_shell")
 
-_BK_PAAS_URL = env.str("BK_PAAS_URL", "")
-CSRF_TRUSTED_ORIGINS = [
-    "https://bkuser." + _BK_PAAS_URL.split(".", 1)[1],
-    "http://bkuser." + _BK_PAAS_URL.split(".", 1)[1],
-]
+_BK_USER_URL = env.str("BK_USER_SAAS_URL", "")
+CSRF_TRUSTED_ORIGINS = [_BK_USER_URL]
 CORS_ORIGIN_WHITELIST = CSRF_TRUSTED_ORIGINS
