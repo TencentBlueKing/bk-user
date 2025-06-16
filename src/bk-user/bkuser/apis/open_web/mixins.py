@@ -56,4 +56,8 @@ class OpenWebApiCommonMixin:
 
     @cached_property
     def virtual_data_source(self) -> DataSource:
-        return DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL).first()
+        return (
+            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
+            .only("id")
+            .first()
+        )
