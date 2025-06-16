@@ -317,12 +317,9 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        if not self.virtual_data_source:
-            return TenantUser.objects.none()
-
         filter_args = {
             "tenant_id": self.tenant_id,
-            "data_source_id": self.virtual_data_source.id,
+            "data_source_id": self.virtual_data_source_id,
         }
 
         if data["lookup_field"] == "login_name":
@@ -358,12 +355,9 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        if not self.virtual_data_source:
-            return TenantUser.objects.none()
-
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source.id)
+            .filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id)
             .order_by("id")
         )
 
