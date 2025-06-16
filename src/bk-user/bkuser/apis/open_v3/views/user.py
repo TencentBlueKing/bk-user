@@ -39,7 +39,6 @@ from bkuser.apis.open_v3.serializers.user import (
     VirtualUserLookupInputSLZ,
     VirtualUserLookupOutputSLZ,
 )
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
@@ -320,6 +319,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
         filter_args = {
             "tenant_id": self.tenant_id,
+            "data_source_id": self.virtual_data_source_id,
         }
 
         if data["lookup_field"] == "login_name":
@@ -357,7 +357,7 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL)
+            .filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id)
             .order_by("id")
         )
 
