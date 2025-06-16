@@ -53,3 +53,7 @@ class OpenWebApiCommonMixin:
             raise ValidationError(_("当前租户不存在实名用户数据源"))
 
         return data_source.id
+
+    @cached_property
+    def virtual_data_source(self) -> DataSource:
+        return DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL).first()

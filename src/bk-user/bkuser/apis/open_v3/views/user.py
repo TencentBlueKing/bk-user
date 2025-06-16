@@ -39,9 +39,7 @@ from bkuser.apis.open_v3.serializers.user import (
     VirtualUserLookupInputSLZ,
     VirtualUserLookupOutputSLZ,
 )
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
-    DataSource,
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
@@ -319,16 +317,12 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 首先获取租户下的虚拟数据源
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL
-        ).first()
-        if not data_source:
+        if not self.virtual_data_source:
             return TenantUser.objects.none()
 
         filter_args = {
             "tenant_id": self.tenant_id,
-            "data_source_id": data_source.id,
+            "data_source_id": self.virtual_data_source.id,
         }
 
         if data["lookup_field"] == "login_name":
@@ -364,16 +358,12 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        # 首先获取租户下的虚拟数据源
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL
-        ).first()
-        if not data_source:
+        if not self.virtual_data_source:
             return TenantUser.objects.none()
 
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source_id=data_source.id)
+            .filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source.id)
             .order_by("id")
         )
 
