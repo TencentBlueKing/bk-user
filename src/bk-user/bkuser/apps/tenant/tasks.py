@@ -14,11 +14,16 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+# ignore custom logger must use %s string format in this file
+# ruff: noqa: G003, G004
+
 import logging
+from typing import List
 
 from django.utils import timezone
 
 from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import CollaborationStrategy, TenantUser
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
@@ -72,3 +77,17 @@ def update_expired_tenant_user_status():
 
     TenantUser.objects.bulk_update(expired_users, fields=["status", "updated_at"], batch_size=500)
     logger.info("Updated %d expired users to EXPIRED status.", expired_count)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def batch_delete_tenant_user_display_names(data_source_user_ids: List[int], tenant_id: str):
+    """
+    批量失效 DisplayName 缓存
+    """
+    logger.info(f"starting to invalidate display name cache for {len(data_source_user_ids)} data source users")
+
+    # 查询相关的本租户用户
+    tenant_users = TenantUser.objects.filter(tenant_id=tenant_id, data_source_user_id__in=data_source_user_ids)
+
+    # 批量失效缓存
+    DisplayNameCacheHandler.batch_delete_display_name_cache(tenant_users)

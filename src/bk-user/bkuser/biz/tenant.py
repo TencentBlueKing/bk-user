@@ -28,7 +28,11 @@ from pydantic import BaseModel
 from bkuser.apps.tenant.constants import (
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
 )
-from bkuser.apps.tenant.display_name_cache import get_display_name_config
+from bkuser.apps.tenant.display_name_cache import (
+    DisplayNameCacheHandler,
+    DisplayNameCacheManager,
+    get_display_name_config_info,
+)
 from bkuser.apps.tenant.models import (
     DataSource,
     DataSourceUser,
@@ -73,8 +77,17 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
         """生成租户用户展示名"""
-        config = get_display_name_config(user.tenant_id, user.data_source_id)
-        return TenantUserDisplayNameHandler.render_display_name(user, config)
+        config = get_display_name_config_info(user.tenant_id, user.data_source_id)["config"]
+
+        # 首先从 Redis 缓存获取
+        display_name = DisplayNameCacheManager.get_display_name(user.id, config.version)
+        if not display_name:
+            # 如果缓存中没有，则从数据库中获取
+            display_name = TenantUserDisplayNameHandler.render_display_name(user, config)
+            # 将获取到的展示名缓存到 Redis 中
+            DisplayNameCacheManager.set_display_name(user.id, config.version, display_name)
+
+        return display_name
 
     @staticmethod
     def batch_generate_tenant_user_display_name(users: List[TenantUser]) -> Dict[str, str]:
@@ -87,12 +100,18 @@ class TenantUserDisplayNameHandler:
         if not users:
             return {}
 
-        # TODO：后续加入缓存逻辑
-        # 1. 先获取 display_name 缓存
-        # 2. 对于缓存不存在的用户，则执行 batch_render_display_name 方法进行渲染
-        # 3. 将渲染后的结果保存到缓存中
+        # 1. 从缓存中获取已有的 display_name 映射，以及需要渲染的用户列表
+        display_name_map, users_need_render = DisplayNameCacheHandler.get_display_names_from_cache(users)
 
-        return TenantUserDisplayNameHandler.batch_render_display_name(users)
+        # 2. 渲染没有缓存的用户的 display_name
+        if users_need_render:
+            rendered_display_names = TenantUserDisplayNameHandler.batch_render_display_name(users_need_render)
+            display_name_map.update(rendered_display_names)
+
+            # 3. 将新渲染的结果缓存至 Redis 中
+            DisplayNameCacheHandler.set_rendered_display_names_cache(users_need_render, rendered_display_names)
+
+        return display_name_map
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
@@ -172,7 +191,7 @@ class TenantUserDisplayNameHandler:
         # 遍历所有用户，渲染 display_name
         for user in users:
             field_value_map = {}
-            config = get_display_name_config(user.tenant_id, user.data_source_id)
+            config = get_display_name_config_info(user.tenant_id, user.data_source_id)["config"]
 
             builtin_values = TenantUserDisplayNameHandler._get_builtin_field_values(user, config.builtin_fields)
             custom_values = TenantUserDisplayNameHandler._get_custom_field_values(user, config.custom_fields)
@@ -217,7 +236,7 @@ class TenantUserDisplayNameHandler:
     @staticmethod
     def build_display_name_search_queries(tenant_id: str, keyword: str) -> Q:
         """根据不同字段类型构建展示名搜索查询条件"""
-        config = get_display_name_config(tenant_id)
+        config = get_display_name_config_info(tenant_id)["config"]
 
         # 构建内置字段查询条件
         builtin_queries = TenantUserDisplayNameHandler._build_builtin_field_queries(config.builtin_fields, keyword)

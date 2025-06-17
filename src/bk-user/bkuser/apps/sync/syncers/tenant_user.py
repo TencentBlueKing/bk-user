@@ -26,6 +26,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.contexts import TenantSyncTaskContext
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.apps.tenant.tasks import batch_delete_tenant_user_display_names
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.common.constants import PERMANENT_TIME
 
@@ -69,6 +70,14 @@ class TenantUserSyncer:
         with transaction.atomic():
             waiting_delete_tenant_users.delete()
             TenantUser.objects.bulk_create(waiting_create_tenant_users, batch_size=self.batch_size)
+            # 将所有创建用户的 display_name 缓存失效
+            # 为什么这里要对需要创建的租户用户 display_name 缓存失效？
+            # 因为可能存在数据源提供方误删数据，且被用户管理同步，恢复数据后再次同步，会使用一致的租户用户 ID
+            # 如果此时数据源用户属性被修改，则会导致租户用户展示名不一致
+            data_source_user_ids = [user.data_source_user_id for user in waiting_create_tenant_users]
+            transaction.on_commit(
+                lambda: batch_delete_tenant_user_display_names.delay(data_source_user_ids, self.tenant.id)
+            )
 
         # 记录删除日志，变更记录
         self.ctx.logger.info(f"delete {len(waiting_delete_tenant_users)} tenant users")

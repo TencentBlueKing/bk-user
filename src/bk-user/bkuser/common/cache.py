@@ -47,6 +47,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     RESET_PASSWORD_TOKEN = "rpt"
     # Workbook 临时存储
     WORKBOOK_TEMPORARY_STORE = "wts"
+    # 用户 DisplayName
+    DISPLAY_NAME = "dn"
 
 
 def _default_key_function(*args, **kwargs):

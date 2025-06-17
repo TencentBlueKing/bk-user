@@ -28,6 +28,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.auditor import VirtualUserAuditor
@@ -254,6 +255,9 @@ class VirtualUserRetrieveUpdateDestroyApi(
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_user)
+
+        # 失效 DisplayName 缓存
+        DisplayNameCacheHandler.delete_display_name_cache(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

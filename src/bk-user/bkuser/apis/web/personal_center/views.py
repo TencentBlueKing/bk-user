@@ -43,6 +43,7 @@ from bkuser.apis.web.personal_center.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor
 from bkuser.biz.natural_user import NatureUserHandler
@@ -210,6 +211,9 @@ class TenantUserPhoneUpdateApi(
         # 【审计】将审计记录保存至数据库
         auditor.record_update_phone(tenant_user)
 
+        # 失效 DisplayName 缓存
+        DisplayNameCacheHandler.delete_display_name_cache(tenant_user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _validate_verification_code(
@@ -314,6 +318,9 @@ class TenantUserEmailUpdateApi(
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update_email(tenant_user)
+
+        # 失效 DisplayName 缓存
+        DisplayNameCacheHandler.delete_display_name_cache(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -448,6 +455,10 @@ class TenantUserExtrasUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView
 
         data_source_user.extras.update(data["extras"])
         data_source_user.save(update_fields=["extras", "updated_at"])
+
+        # 失效 DisplayName 缓存
+        DisplayNameCacheHandler.delete_display_name_cache(tenant_user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

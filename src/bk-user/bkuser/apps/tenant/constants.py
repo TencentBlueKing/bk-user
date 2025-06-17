@@ -147,7 +147,7 @@ DISPLAY_NAME_EXPRESSION_FIELD_PATTERN = re.compile(r"\{(\w+)}")
 class DisplayNameExpressionExtraFieldEnum(StrStructuredEnum):
     """租户用户展示名表达式中额外允许的字段名"""
 
-    # TODO：后续支持`组织`字段
+    # TODO: 后续支持 `组织` 字段
 
 
 DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS: List[Dict[str, Any]] = []
