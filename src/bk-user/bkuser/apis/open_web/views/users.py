@@ -253,7 +253,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=self.tenant_id, data_source__type=DataSourceTypeEnum.VIRTUAL
+            tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id
         )
 
     def get_serializer_context(self):

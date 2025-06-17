@@ -83,10 +83,9 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         # 更新
         tenant.name = data["name"]
         tenant.logo = data["logo"]
-        tenant.visible = data["visible"]
         tenant.user_number_visible = data["user_number_visible"]
         tenant.updater = request.user.username
-        tenant.save(update_fields=["name", "logo", "visible", "user_number_visible", "updater", "updated_at"])
+        tenant.save(update_fields=["name", "logo", "user_number_visible", "updater", "updated_at"])
 
         # 【审计】记录变更后的数据
         auditor.record_update(tenant)

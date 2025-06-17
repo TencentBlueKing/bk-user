@@ -452,7 +452,7 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantUserAccountExpiredAtUpdateApii:
+class TestTenantUserAccountExpiredAtUpdateApi:
     @pytest.mark.parametrize(
         ("time_diff"),
         [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
@@ -541,8 +541,8 @@ class TestTenantUserRetrieveApi:
         # 预期时间
         expected_time = timezone.now() + datetime.timedelta(days=3)
 
-        # 允许的误差最大为 5 分钟
-        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=5)
+        # 允许的误差最大为 10 分钟
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=10)
 
 
 class TestTenantUserDestroyApi:

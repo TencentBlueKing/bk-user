@@ -107,7 +107,7 @@ curl login.example.com:8000/ping # pong
 
 ### 环境配置
 
-进入 `src/bk-login` 并进入虚拟环境
+进入 `src/bk-user` 并进入虚拟环境
 ``` bash
 cd src/bk-user
 ```

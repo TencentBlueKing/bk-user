@@ -482,6 +482,10 @@ class TenantUserFieldListApi(generics.ListAPIView):
                 continue
 
             selected = tenant_user.data_source_user.extras.get(f.name)
+            if not selected:
+                f.options = []
+                continue
+
             # 如果该字段是不可编辑的，且是枚举类型，则仅仅返回需要的 options 用于前端展示，避免泄露枚举选项
             if f.data_type == UserFieldDataType.ENUM:
                 f.options = [opt for opt in f.options if opt["id"] == selected]
