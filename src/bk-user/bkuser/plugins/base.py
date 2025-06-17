@@ -34,8 +34,7 @@ class BaseDataSourcePlugin(ABC):
     config_class: Type[BasePluginConfig]
 
     @abstractmethod
-    def __init__(self, *args, **kwargs):
-        ...
+    def __init__(self, *args, **kwargs): ...
 
     @abstractmethod
     def fetch_departments(self) -> List[RawDataSourceDepartment]:

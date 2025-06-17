@@ -33,12 +33,15 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 def open_v1_api_client() -> APIClient:
     client = APIClient()
 
-    with mock.patch(
-        "bkuser.apis.open_v1.authentications.ESBAuthentication.get_credentials",
-        return_value={"jwt": "jwt", "from": "esb"},
-    ), mock.patch(
-        "bkuser.apis.open_v1.authentications.ESBAuthentication.verify_credentials",
-        return_value={"user": {"verify": False}, "app": {"verified": True, "bk_app_code": "bk_paas"}},
+    with (
+        mock.patch(
+            "bkuser.apis.open_v1.authentications.ESBAuthentication.get_credentials",
+            return_value={"jwt": "jwt", "from": "esb"},
+        ),
+        mock.patch(
+            "bkuser.apis.open_v1.authentications.ESBAuthentication.verify_credentials",
+            return_value={"user": {"verify": False}, "app": {"verified": True, "bk_app_code": "bk_paas"}},
+        ),
     ):
         yield client
 
