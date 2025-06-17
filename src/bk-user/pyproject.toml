@@ -1,4 +1,5 @@
 [tool.poetry]
+requires-poetry = ">=2.0.0,<3.0.0"
 
 [[tool.poetry.source]]
 name = "tencent"
@@ -58,6 +59,9 @@ dependencies = [
     "nanoid==2.0.0",
     "apigw-manager[cryptography]==4.0.3"
 ]
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"
