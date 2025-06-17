@@ -24,8 +24,8 @@ from bkuser.common.cache import cached
 logger = logging.getLogger(__name__)
 
 
-# 配置 config 缓存过期时间（默认为 2 分钟）
-ConfigCacheTimeout = 120
+# 配置 config 缓存过期时间（默认为 1 分钟）
+ConfigCacheTimeout = 60
 
 
 @cached(timeout=ConfigCacheTimeout)
