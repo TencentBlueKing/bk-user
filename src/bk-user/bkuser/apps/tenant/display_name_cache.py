@@ -24,11 +24,9 @@ from bkuser.common.cache import cached
 logger = logging.getLogger(__name__)
 
 
-# 配置 config 缓存过期时间（默认为 1 分钟）
-ConfigCacheTimeout = 60
-
-
-@cached(timeout=ConfigCacheTimeout)
+# 这里为了避免同一请求多次查询 DisplayName 自定义表达式配置，导致查询次数过多
+# 设置缓存过期时间（默认为 10 秒）
+@cached(timeout=10)
 def get_display_name_config(
     tenant_id: str, data_source_id: int | None = None
 ) -> TenantUserDisplayNameExpressionConfig:
