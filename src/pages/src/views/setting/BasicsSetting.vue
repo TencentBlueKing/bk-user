@@ -320,7 +320,7 @@ const saveEdit = async () => {
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
     isEdit.value = false;
-    Message({ theme: 'success', message: t('保存成功，用户展示名配置将于2分钟之后生效，其他设置立即生效') });
+    Message({ theme: 'success', message: t('保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效') });
     initTenantInfo();
   } catch (err) {
     console.error(err);
