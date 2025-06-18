@@ -29,8 +29,9 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 def api_client(random_tenant):
     client = APIClient()
     client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-    with mock.patch.object(OpenApiCommonMixin, "authentication_classes", []), mock.patch.object(
-        OpenApiCommonMixin, "permission_classes", []
+    with (
+        mock.patch.object(OpenApiCommonMixin, "authentication_classes", []),
+        mock.patch.object(OpenApiCommonMixin, "permission_classes", []),
     ):
         yield client
 

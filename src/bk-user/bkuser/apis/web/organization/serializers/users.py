@@ -498,7 +498,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                 )
 
             # 按字段顺序映射（业务逻辑会确保数据顺序一致）
-            props = dict(zip(required_field_names, data))
+            props = dict(zip(required_field_names, data, strict=True))
             # 手机号 + 国际区号单独解析
             phone_numbers = props["phone"]
             props["phone_country_code"] = settings.DEFAULT_PHONE_COUNTRY_CODE

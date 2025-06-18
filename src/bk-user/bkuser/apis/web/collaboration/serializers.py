@@ -226,8 +226,7 @@ class CollaborationFromStrategyUpdateInputSLZ(serializers.Serializer):
         return config
 
 
-class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ):
-    ...
+class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ): ...
 
 
 class CollaborationFromStrategyTargetStatusUpdateOutputSLZ(serializers.Serializer):
