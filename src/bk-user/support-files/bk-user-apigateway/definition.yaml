@@ -54,7 +54,6 @@ grant_permissions:
     grant_dimension: "resource"
     resource_names:
       - "batch_lookup_department"
-      - "batch_query_user_display_info"
   - bk_app_code: "bk_monitorv3"
     grant_dimension: "resource"
     resource_names:
