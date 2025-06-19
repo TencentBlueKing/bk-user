@@ -302,6 +302,7 @@ class NotificationSender:
         :param title: 标题（邮件必填参数）
         :param content: 内容
         :param sender: 发送者
+        :param tenant_id: 接收者所属租户 ID
         :param contact_info: 联系方式
         :param tenant_user_id: 租户用户 ID，与 contact_info 二选一
         """
@@ -332,7 +333,7 @@ class TenantUserNotifier:
         """
         :param scene: 通知场景
         :param data_source_id: 数据源 ID，当通知模板来源于数据源插件时必须
-        :param tenant_id: 租户 ID，当通知模板来源于租户相关配置时必须
+        :param tenant_id: 接收者所属租户 ID，当通知模板来源于租户相关配置时必须
         """
         self.scene = scene
         self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
@@ -369,7 +370,7 @@ class TenantUserNotifier:
         """
         直接通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
         :param contact_info: 联系方式，如 {"email": "xxx"} 或 {"phone_info": {"phone": "xxx", "country_code": "xxx"}}
-        :param tenant_id: 收件人所属租户 ID（多租户版本调用网关时必须传入）
+        :param tenant_id: 接收者所属租户 ID（多租户版本调用网关时必须传入）
         """
         for tmpl in self.templates:
             content = self._render_tmpl(tmpl.content, **scene_kwargs)

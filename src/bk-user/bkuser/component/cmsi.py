@@ -61,6 +61,7 @@ class NotificationClient(Protocol):
         """
         发送邮件
         支持通过接收者的邮箱地址 或 租户用户 ID 发送通知，当两者都存在时，优先使用邮箱地址
+        :param tenant_id: 接收者所属租户 ID
         :param sender: 发件人，例如："蓝鲸智云"
         :param title: 邮件标题
         :param content: 邮件内容（HTML格式）
@@ -78,7 +79,7 @@ class NotificationClient(Protocol):
         """
         发送短信
         支持通过接收者的手机号码信息（国际区号 + 手机号） 或 租户用户 ID 发送通知，当两者都存在时，优先使用手机号码信息
-        :param tenant_id: 收件人所属租户 ID
+        :param tenant_id: 接收者所属租户 ID
         :param content: 短信内容
         :param phone_info: 接收者手机号码信息，格式：{"phone": "xxx", "phone_country_code": "xxx"}
         :param receiver: 接收者的租户用户 ID(tenant_user_id)，与 phone_info 参数二选一
