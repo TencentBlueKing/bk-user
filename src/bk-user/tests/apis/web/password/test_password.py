@@ -49,12 +49,15 @@ class TestResetPasswordByPhoneAfterForget:
 
     @pytest.fixture(autouse=True)
     def _mock_cmsi_component(self):
-        with mock.patch(
-            "bkuser.component.clients.BkEsbCmsiClient.send_mail",
-            return_value=None,
-        ), mock.patch(
-            "bkuser.component.clients.BkEsbCmsiClient.send_sms",
-            return_value=None,
+        with (
+            mock.patch(
+                "bkuser.component.cmsi.send_mail",
+                return_value=None,
+            ),
+            mock.patch(
+                "bkuser.component.cmsi.send_sms",
+                return_value=None,
+            ),
         ):
             yield
 
@@ -163,12 +166,15 @@ class TestResetPasswordByEmailAfterForget:
 
     @pytest.fixture(autouse=True)
     def _mock_cmsi_component(self):
-        with mock.patch(
-            "bkuser.component.clients.BkEsbCmsiClient.send_mail",
-            return_value=None,
-        ), mock.patch(
-            "bkuser.component.clients.BkEsbCmsiClient.send_sms",
-            return_value=None,
+        with (
+            mock.patch(
+                "bkuser.component.cmsi.send_mail",
+                return_value=None,
+            ),
+            mock.patch(
+                "bkuser.component.cmsi.send_sms",
+                return_value=None,
+            ),
         ):
             yield
 

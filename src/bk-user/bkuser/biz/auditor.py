@@ -35,6 +35,7 @@ from bkuser.apps.tenant.models import (
     TenantDepartment,
     TenantManager,
     TenantUser,
+    TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
 from bkuser.utils.django import get_model_dict
@@ -1079,6 +1080,32 @@ class TenantUserValidityPeriodConfigUpdateAuditor:
             operator=self.operator,
             tenant_id=self.tenant_id,
             operation=OperationEnum.MODIFY_TENANT_ACCOUNT_VALIDITY_PERIOD_CONFIG,
+            object_type=ObjectTypeEnum.TENANT,
+            object_id=self.tenant_id,
+            object_name=config.tenant.name,
+            data_before=self.data_befores["config"],
+            data_after=get_model_dict(config),
+        )
+
+
+class TenantUserDisplayNameExpressionConfigUpdateAuditor:
+    """用于记录租户用户显示名称表达式配置相关操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, config: TenantUserDisplayNameExpressionConfig):
+        """记录变更前的相关数据记录"""
+        self.data_befores["config"] = get_model_dict(config)
+
+    def record(self, config: TenantUserDisplayNameExpressionConfig):
+        """记录租户用户显示名称表达式配置更新操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.MODIFY_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
             object_type=ObjectTypeEnum.TENANT,
             object_id=self.tenant_id,
             object_name=config.tenant.name,

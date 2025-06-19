@@ -57,7 +57,7 @@ import Search from './components/search-org.vue';
 import SearchResultTree from './components/search-result-tree.vue';
 import TableList from './components/table-list.vue';
 
-import { getCollaboration, getCurrentTenant, getDepartmentsList } from '@/http/organizationFiles';
+import { getCurrentTenant } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
 
 const appStore = useAppStore();
@@ -69,10 +69,8 @@ const getList = async () => {
   isLoading.value = true;
   const tenantData = await getCurrentTenant();
   appStore.currentTenant = tenantData?.data;
-  const collaborationData = await getCollaboration();
-  const deptData = await getDepartmentsList(0, tenantData?.data?.id);
   isLoading.value = false;
-  if (deptData.data.length === 0 && collaborationData.data.length === 0) {
+  if (!tenantData?.data?.data_source) {
     isShow.value = true;
   } else {
     isShow.value = false;

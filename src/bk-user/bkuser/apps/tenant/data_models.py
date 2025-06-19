@@ -70,3 +70,11 @@ class CollaborationStrategyTargetConfig(BaseModel):
     organization_scope_config: Dict[str, Any] = Field(default_factory=dict)
     # 注：仅支持用户自定义字段映射，因为协同数据的模型是一致的，内置字段不需要映射
     field_mapping: List[TenantUserFieldMapping]
+
+
+class DisplayNameExpressionExtraField(BaseModel):
+    """租户用户展示名表达式中额外允许的字段"""
+
+    name: str
+    data_type: str
+    unique: bool

@@ -26,7 +26,7 @@ from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.serializers import StringArrayField
 
 
@@ -148,7 +148,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     data_source_type = serializers.CharField(help_text="数据源类型", source="data_source.type")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
 
     class Meta:
         ref_name = "login.TenantUserRetrieveOutputSLZ"

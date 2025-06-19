@@ -15,9 +15,9 @@
             <bk-overflow-title type="tips" class="name">
               {{ currentNaturalUser.full_name }}
             </bk-overflow-title>
-            <bk-overflow-title type="tips" class="id">
+            <!-- <bk-overflow-title type="tips" class="id">
               （{{ currentUserInfo.id }}）
-            </bk-overflow-title>
+            </bk-overflow-title> -->
             <!-- <i class="user-icon icon-edit" /> -->
           </div>
         </div>
@@ -93,7 +93,7 @@
                   {{ currentTenantInfo.tenant?.id }}
                 </div>
               </div>
-              <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p>
+              <!-- <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p> -->
             </div>
           </div>
           <div class="header-right">
@@ -116,9 +116,9 @@
                 distance: 20,
                 disabled: !isCurrentTenant,
               }">
-              <bk-button :disabled="isCurrentTenant">
+              <!-- <bk-button :disabled="isCurrentTenant">
                 {{ $t('切换为该账号登录') }}
-              </bk-button>
+              </bk-button> -->
             </span>
             <!-- <bk-button>
               取消关联

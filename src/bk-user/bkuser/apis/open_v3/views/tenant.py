@@ -24,8 +24,10 @@ from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.tenant import (
     TenantCommonVariableListOutputSLZ,
     TenantListOutputSLZ,
+    TenantUserCustomEnumFieldListOutputSLZ,
 )
-from bkuser.apps.tenant.models import Tenant, TenantCommonVariable
+from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.models import Tenant, TenantCommonVariable, TenantUserCustomField
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,29 @@ class TenantCommonVariableListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_id="list_common_variable",
         operation_description="查询租户公共变量信息",
         responses={status.HTTP_200_OK: TenantCommonVariableListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserCustomEnumFieldListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取租户用户自定义枚举字段信息
+    """
+
+    pagination_class = None
+    serializer_class = TenantUserCustomEnumFieldListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUserCustomField]:
+        return TenantUserCustomField.objects.filter(
+            tenant_id=self.tenant_id, data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.tenant"],
+        operation_id="list_custom_enum_field",
+        operation_description="查询租户用户自定义枚举字段信息",
+        responses={status.HTTP_200_OK: TenantUserCustomEnumFieldListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

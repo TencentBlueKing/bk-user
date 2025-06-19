@@ -14,11 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from unittest import mock
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -36,6 +37,29 @@ class TestTenantUserDisplayInfoRetrieveApi:
         assert resp.data["display_name"] == "zhangsan(张三)"
         assert resp.data["login_name"] == "zhangsan"
         assert resp.data["full_name"] == "张三"
+
+    def test_with_contact_field(self, api_client, display_name_expression_config_with_contact_field):
+        with mock.patch(
+            "bkuser.apps.tenant.models.TenantUserDisplayNameExpressionConfig.objects.get",
+            return_value=display_name_expression_config_with_contact_field,
+        ):
+            zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+            resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan.id}))
+
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data["display_name"] == "86-13512345671--zhangsan@m.com"
+
+    @pytest.mark.usefixtures("_create_custom_fields")
+    def test_with_custom_field(self, api_client, display_name_expression_config_with_custom_field):
+        with mock.patch(
+            "bkuser.apps.tenant.models.TenantUserDisplayNameExpressionConfig.objects.get",
+            return_value=display_name_expression_config_with_custom_field,
+        ):
+            zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+            resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": zhangsan.id}))
+
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.data["display_name"] == "13512345671-zhangsan--张三"
 
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
@@ -207,6 +231,50 @@ class TestTenantUserSearchApi:
         assert {p for t in resp.data for p in t["organization_paths"]} == {
             "公司",
         }
+
+    def test_with_contact_field(self, api_client, random_tenant, display_name_expression_config_with_contact_field):
+        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=random_tenant.id)
+        config.expression = display_name_expression_config_with_contact_field.expression
+        config.fields = display_name_expression_config_with_contact_field.fields
+        config.save()
+
+        real_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "13512345671", "owner_tenant_id": random_tenant.id, "with_organization_paths": False},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id}
+        assert {t["display_name"] for t in resp.data} == {"86-13512345671--zhangsan@m.com"}
+
+    def test_with_collaboration_tenant_by_other_expression(
+        self, api_client, collaboration_tenant, display_name_expression_config_with_collaboration_tenant_user
+    ):
+        config = TenantUserDisplayNameExpressionConfig.objects.get(tenant_id=collaboration_tenant.id)
+        config.expression = display_name_expression_config_with_collaboration_tenant_user.expression
+        config.fields = display_name_expression_config_with_collaboration_tenant_user.fields
+        config.save()
+
+        collab_zhangsan = TenantUser.objects.get(
+            data_source__owner_tenant_id=collaboration_tenant.id, data_source_user__username="zhangsan"
+        )
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "zhangsan", "owner_tenant_id": collaboration_tenant.id, "with_organization_paths": False},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert {t["bk_username"] for t in resp.data} == {collab_zhangsan.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)"}
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "chen"})

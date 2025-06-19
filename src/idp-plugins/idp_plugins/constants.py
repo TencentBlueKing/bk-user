@@ -33,7 +33,7 @@ class PluginTypeEnum(StrStructuredEnum):
 
 class BuiltinIdpPluginEnum(StrStructuredEnum):
     # 直接身份认证
-    LOCAL = EnumField("local", label=_("本地账密"))
+    LOCAL = EnumField("local", label=_("账密登录"))
     LDAP = EnumField("ldap", label=_("LDAP"))
     MAD = EnumField("mad", label=_("Microsoft AD"))
 

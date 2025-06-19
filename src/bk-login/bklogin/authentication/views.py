@@ -42,7 +42,7 @@ from bklogin.idp_plugins.exceptions import (
 )
 from bklogin.utils.url import urljoin
 
-from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
+from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME
 from .manager import BkTokenManager
 from .utils import url_has_allowed_host_and_scheme
 
@@ -111,6 +111,24 @@ class GlobalSettingRetrieveApi(View):
         return APISuccessResponse(data=gs.model_dump())
 
 
+class TenantSearchApi(View):
+    def get(self, request, *args, **kwargs):
+        """
+        搜索租户列表
+        """
+        # 过滤参数
+        keyword = request.GET.get("keyword", "")
+        if not keyword:
+            raise error_codes.VALIDATION_ERROR.f(_("keyword 参数必填"))
+
+        tenants = bk_user_api.list_tenant()
+
+        # 过滤租户
+        tenants = [t for t in tenants if keyword.lower() == t.name.lower() or keyword.lower() == t.id.lower()]
+
+        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
+
+
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
         """
@@ -118,11 +136,14 @@ class TenantListApi(View):
         """
         # 过滤参数
         tenant_ids_str = request.GET.get("tenant_ids", "")
+        if not tenant_ids_str:
+            raise error_codes.VALIDATION_ERROR.f(_("tenant_ids 参数必填"))
+
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
         tenants = bk_user_api.list_tenant(tenant_ids)
 
-        return APISuccessResponse(data=[t.model_dump() for t in tenants])
+        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
 
 
 class TenantIdpListApi(View):
@@ -130,14 +151,21 @@ class TenantIdpListApi(View):
         """
         获取需要登录租户的认证方式列表
         """
-        # 获取路径参数
-        tenant_id = kwargs["tenant_id"]
-        idp_owner_tenant_id = kwargs["idp_owner_tenant_id"]
+        # 过滤参数
+        tenant_id = request.GET.get("tenant_id", "")
+        if not tenant_id:
+            raise error_codes.VALIDATION_ERROR.f(_("tenant_id 参数必填"))
 
         # 获取指定租户中 本租户可用 且 已启用 的认证源
-        idps = bk_user_api.list_idp(tenant_id, idp_owner_tenant_id)
+        idps = bk_user_api.list_idp(tenant_id, tenant_id)
 
-        return APISuccessResponse(data=[i.model_dump() for i in idps])
+        return APISuccessResponse(
+            data=[
+                i.model_dump(include={"id", "name", "plugin_id"})
+                for i in idps
+                if i.data_source_type == DataSourceTypeEnum.REAL
+            ]
+        )
 
 
 class IdpBasicInfo(pydantic.BaseModel):
@@ -166,16 +194,6 @@ class IdpPluginDispatchView(View):
         """
         根据路径参数 idp_id 和 action 将请求路由调度到各个插件
         """
-        # Session 里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        # 路径优先
-        if kwargs.get("tenant_id"):
-            sign_in_tenant_id = kwargs.get("tenant_id")
-            # session 记录登录的租户
-            request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
-
         # 获取参数
         idp_id = kwargs["idp_id"]
         action = kwargs["action"]
@@ -185,6 +203,8 @@ class IdpPluginDispatchView(View):
         idp = bk_user_api.get_idp(idp_id)
         if idp.status != IdpStatus.ENABLED:
             raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
+
+        sign_in_tenant_id = idp.owner_tenant_id
 
         #  (1) 获取插件
         try:
@@ -388,11 +408,6 @@ class TenantUserListApi(View):
         """
         用户认证后，获取认证成功后的租户用户列表
         """
-        # Session 里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
-
         # Session 里获取已认证过的租户用户
         tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY)
         if not tenant_users:

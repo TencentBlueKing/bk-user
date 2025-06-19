@@ -33,13 +33,18 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantStatus
+from bkuser.apps.tenant.constants import (
+    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
+    DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
+    TenantStatus,
+)
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     Tenant,
     TenantDepartment,
     TenantManager,
     TenantUser,
+    TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
@@ -128,6 +133,10 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         """初始化租户的默认配置"""
         # 账号有效期
         TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
+        # DisplayName 表达式
+        TenantUserDisplayNameExpressionConfig.objects.create(
+            tenant=tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+        )
 
     @staticmethod
     def _create_builtin_management_data_source(

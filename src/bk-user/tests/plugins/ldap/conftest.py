@@ -291,12 +291,15 @@ class MockedLDAPConnection:
 
 @pytest.fixture
 def _mock_ldap_client():
-    with mock.patch(
-        "bkuser.plugins.ldap.client.paged_search_accumulator",
-        new=_mocked_paged_search_accumulator,
-    ), mock.patch(
-        "bkuser.plugins.ldap.client.LDAPClient._gen_conn",
-        return_value=MockedLDAPConnection(),
+    with (
+        mock.patch(
+            "bkuser.plugins.ldap.client.paged_search_accumulator",
+            new=_mocked_paged_search_accumulator,
+        ),
+        mock.patch(
+            "bkuser.plugins.ldap.client.LDAPClient._gen_conn",
+            return_value=MockedLDAPConnection(),
+        ),
     ):
         yield
 

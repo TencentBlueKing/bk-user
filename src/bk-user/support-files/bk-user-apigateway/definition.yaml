@@ -40,7 +40,27 @@ resource_docs:
 
 # 主动授权，网关主动给应用，添加访问网关所有资源的权限
 grant_permissions:
- - bk_app_code: "bk-cmsi"
-   grant_dimension: "resource"
-   resource_names:
-     - "batch_query_user_sensitive_info"
+  - bk_app_code: "bk-cmsi"
+    grant_dimension: "resource"
+    resource_names:
+      - "batch_query_user_sensitive_info"
+  - bk_app_code: "bk-itsm4"
+    grant_dimension: "resource"
+    resource_names:
+      - "list_department_user_relation"
+      - "list_user"
+      - "list_department"
+  - bk_app_code: "bk_cmdb"
+    grant_dimension: "resource"
+    resource_names:
+      - "batch_lookup_department"
+  - bk_app_code: "bk_monitorv3"
+    grant_dimension: "resource"
+    resource_names:
+      - "list_department_descendant"
+      - "list_department"
+      - "list_user_department"
+  - bk_app_code: "bk_paas"
+    grant_dimension: "resource"
+    resource_names:
+      - "list_user_department"

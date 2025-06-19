@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Tuple
+from typing import List, Tuple
 
 from django.conf import settings
 from django.db import models
@@ -40,7 +40,7 @@ class Tenant(AuditedModel):
     is_default = models.BooleanField("是否默认租户", default=False)
     status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
     # 特性
-    visible = models.BooleanField("租户可见性", default=True)
+    visible = models.BooleanField("租户可见性", default=False)
     user_number_visible = models.BooleanField("人员数量是否可见", default=True)
 
     class Meta:
@@ -81,8 +81,8 @@ class TenantUser(AuditedModel):
     # 冗余字段
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
-    # Note: 值：对于新用户则为 nanoid 或 uuid，对于迁移则兼容旧版本 username@domain或username
-    # 兼容旧版本：对外 id/username/bk_username 这3个字段，值是一样的
+    # Note: 值：对于新用户则为 nanoid 或 uuid，对于迁移则兼容旧版本 username@domain 或 username
+    # 兼容旧版本：对外 id/username/bk_username 这 3 个字段，值是一样的
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
     status = models.CharField(
         "状态", max_length=32, choices=TenantUserStatus.get_choices(), default=TenantUserStatus.ENABLED
@@ -95,8 +95,8 @@ class TenantUser(AuditedModel):
     time_zone = models.CharField("时区", choices=TIME_ZONE_CHOICES, default="Asia/Shanghai", max_length=32)
 
     # wx_userid/wx_openid 兼容旧版本迁移
-    wx_userid = models.CharField("微信ID", null=True, blank=True, default="", max_length=64)
-    wx_openid = models.CharField("微信公众号 用户OpenID", null=True, blank=True, default="", max_length=64)
+    wx_userid = models.CharField("微信 ID", null=True, blank=True, default="", max_length=64)
+    wx_openid = models.CharField("微信公众号 用户 OpenID", null=True, blank=True, default="", max_length=64)
 
     # 账号有效期相关
     account_expired_at = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
@@ -145,7 +145,7 @@ class TenantDepartment(TimestampedModel):
     # 冗余字段
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
-    # 目前租户部门暂无其他特别属性，后续可以加入一些统计相关字段(比如，递归人数、当前层级人数等)
+    # 目前租户部门暂无其他特别属性，后续可以加入一些统计相关字段 (比如，递归人数、当前层级人数等)
 
     class Meta:
         unique_together = [
@@ -193,7 +193,7 @@ class TenantUserCustomField(TimestampedModel):
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
     # 兼容逻辑，只有老版本迁移过来的枚举类型自定义字段会需要
-    use_digit_option_id = models.BooleanField("是否使用数字作为选项ID", default=False)
+    use_digit_option_id = models.BooleanField("是否使用数字作为选项 ID", default=False)
 
     class Meta:
         unique_together = [
@@ -203,13 +203,13 @@ class TenantUserCustomField(TimestampedModel):
 
 
 class TenantUserValidityPeriodConfig(AuditedModel):
-    """账号有效期-配置"""
+    """账号有效期 - 配置"""
 
     tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
 
     enabled = models.BooleanField("是否启用账户有效期", default=True)
-    validity_period = models.IntegerField("有效期(单位：天)", default=-1)
-    remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
+    validity_period = models.IntegerField("有效期 (单位：天)", default=-1)
+    remind_before_expire = models.JSONField("临 X 天过期发送提醒 (单位：天)", default=list)
     enabled_notification_methods = models.JSONField("通知方式", default=list)
     notification_templates = models.JSONField("通知模板", default=list)
 
@@ -300,3 +300,55 @@ class TenantCommonVariable(TimestampedModel):
 
     class Meta:
         unique_together = [("tenant", "name")]
+
+
+class TenantUserDisplayNameExpressionConfig(AuditedModel):
+    """租户用户展示名表达式配置"""
+
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, unique=True, db_constraint=False)
+    expression = models.CharField("展示名称表达式", max_length=128)
+    fields = models.JSONField("配置字段", default=dict)
+    # Note: 版本号主要用于表达式变更时，能够自动失效缓存
+    # Q：为什么不采用直接删除缓存的方式？
+    # A：不确定缓存中存储的用户范围，需要遍历所有租户用户进行查找 Key 并删除对应数据，存在性能问题
+    version = models.IntegerField("版本号", default=1)
+
+    @property
+    def builtin_fields(self) -> List[str]:
+        return self.fields["builtin"]
+
+    @property
+    def custom_fields(self) -> List[str]:
+        return self.fields["custom"]
+
+    @property
+    def extra_fields(self) -> List[str]:
+        return self.fields["extra"]
+
+
+class VirtualUserAppRelation(TimestampedModel):
+    """
+    虚拟用户 - 应用 关联表
+    """
+
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    app_code = models.CharField("应用编码", max_length=128)
+
+    class Meta:
+        unique_together = [("tenant_user", "app_code")]
+        index_together = [("app_code", "tenant_user")]
+
+
+class VirtualUserOwnerRelation(TimestampedModel):
+    """
+    虚拟用户 - 责任人 关联表
+    """
+
+    tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+    owner = models.ForeignKey(
+        TenantUser, on_delete=models.CASCADE, db_constraint=False, related_name="owned_virtual_users"
+    )
+
+    class Meta:
+        unique_together = [("tenant_user", "owner")]
+        index_together = [("owner", "tenant_user")]

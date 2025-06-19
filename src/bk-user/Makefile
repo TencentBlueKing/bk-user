@@ -8,7 +8,7 @@ help: ## 展示可用 make 命令及说明
 init: ## 初始化 pre-commit, python 依赖包
 	pip install pre-commit
 	pre-commit install
-	pip install poetry==1.8.3
+	pip install poetry==2.1.3
 	poetry install
 
 ##@ 研发命令
