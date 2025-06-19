@@ -748,6 +748,8 @@ ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
 ENABLE_CREATE_TENANT = ENABLE_MUTIL_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
+# 是否启用协同租户功能
+ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 
 # logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
