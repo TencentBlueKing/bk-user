@@ -151,7 +151,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         # 【审计】创建虚拟用户审计对象
         auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
         # 【审计】将审计记录保存至数据库
-        auditor.record_create(tenant_user)
+        auditor.record_create(tenant_user, data["app_codes"], data["owners"])
 
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 

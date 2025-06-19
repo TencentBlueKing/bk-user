@@ -37,6 +37,8 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
+    VirtualUserAppRelation,
+    VirtualUserOwnerRelation,
 )
 from bkuser.utils.django import get_model_dict
 
@@ -373,7 +375,7 @@ class TenantUserCreateAuditor:
 
 
 class TenantUserDepartmentRelationsAuditor:
-    """用于记录用户-部门关系变更操作的审计"""
+    """用于记录用户 - 部门关系变更操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str, data_source_user_ids: List[int]):
         self.operator = operator
@@ -432,7 +434,7 @@ class TenantUserDepartmentRelationsAuditor:
 
 
 class TenantUserLeaderRelationsUpdateAuditor:
-    """用于记录用户-上级关系变更操作的审计"""
+    """用于记录用户 - 上级关系变更操作的审计"""
 
     def __init__(self, operator: str, tenant_id: str, data_source_user_ids: List[int]):
         self.operator = operator
@@ -844,67 +846,162 @@ class VirtualUserAuditor:
         """记录变更前的相关数据记录"""
         self.data_befores["tenant_user"] = get_model_dict(tenant_user)
         self.data_befores["data_source_user"] = get_model_dict(tenant_user.data_source_user)
+        self.data_befores["owners"] = list(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
+        )
+        self.data_befores["app_codes"] = list(
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
+        )
 
-    def record_create(self, tenant_user: TenantUser):
+    def record_create(self, tenant_user: TenantUser, app_codes: List[str], owners: List[str]):
         """记录虚拟用户创建操作"""
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.CREATE_VIRTUAL_USER,
-            object_type=ObjectTypeEnum.TENANT_USER,
-            object_id=tenant_user.id,
-            data_after=get_model_dict(tenant_user),
-            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        audit_objects: List[AuditObject] = []
+
+        audit_objects.extend(
+            [
+                # 租户用户
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.CREATE_VIRTUAL_USER,
+                    data_after=get_model_dict(tenant_user),
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 数据源用户
+                AuditObject(
+                    id=tenant_user.data_source_user.id,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    name=tenant_user.data_source_user.username,
+                    operation=OperationEnum.CREATE_VIRTUAL_USER,
+                    data_after=get_model_dict(tenant_user.data_source_user),
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的 app_code
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.CREATE_VIRTUAL_USER,
+                    data_after={"app_codes": app_codes},
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的责任人
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.CREATE_VIRTUAL_USER,
+                    data_after={"owners": owners},
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+            ]
         )
 
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.CREATE_VIRTUAL_USER,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=tenant_user.data_source_user.id,
-            object_name=tenant_user.data_source_user.username,
-            data_after=get_model_dict(tenant_user.data_source_user),
-            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
-        )
+        batch_add_audit_records(self.operator, self.tenant_id, audit_objects)
 
     def record_update(self, tenant_user: TenantUser):
         """记录虚拟用户更新操作"""
-        data_source_user = tenant_user.data_source_user
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.MODIFY_VIRTUAL_USER,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=data_source_user.id,
-            object_name=data_source_user.username,
-            data_before=self.data_befores["data_source_user"],
-            data_after=get_model_dict(data_source_user),
-            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        audit_objects: List[AuditObject] = []
+
+        audit_objects.extend(
+            [
+                # 租户用户
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.MODIFY_VIRTUAL_USER,
+                    data_before=self.data_befores["tenant_user"],
+                    data_after=get_model_dict(tenant_user),
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 数据源用户
+                AuditObject(
+                    id=tenant_user.data_source_user.id,
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    name=tenant_user.data_source_user.username,
+                    operation=OperationEnum.MODIFY_VIRTUAL_USER,
+                    data_before=self.data_befores["data_source_user"],
+                    data_after=get_model_dict(tenant_user.data_source_user),
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的 app_code
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.MODIFY_VIRTUAL_USER,
+                    data_before={"app_codes": self.data_befores["app_codes"]},
+                    data_after={
+                        "app_codes": list(
+                            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list(
+                                "app_code", flat=True
+                            )
+                        )
+                    },
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的责任人
+                AuditObject(
+                    id=tenant_user.id,
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.MODIFY_VIRTUAL_USER,
+                    data_before={"owners": self.data_befores["owners"]},
+                    data_after={
+                        "owners": list(
+                            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list(
+                                "owner_id", flat=True
+                            )
+                        )
+                    },
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+            ]
         )
+
+        batch_add_audit_records(self.operator, self.tenant_id, audit_objects)
 
     def record_delete(self):
         """记录虚拟用户删除操作"""
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.DELETE_VIRTUAL_USER,
-            object_type=ObjectTypeEnum.TENANT_USER,
-            object_id=self.data_befores["tenant_user"]["id"],
-            data_before=self.data_befores["tenant_user"],
-            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+        audit_objects: List[AuditObject] = []
+
+        audit_objects.extend(
+            [
+                # 租户用户
+                AuditObject(
+                    id=self.data_befores["tenant_user"]["id"],
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.DELETE_VIRTUAL_USER,
+                    data_before=self.data_befores["tenant_user"],
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 数据源用户
+                AuditObject(
+                    id=self.data_befores["data_source_user"]["id"],
+                    type=ObjectTypeEnum.DATA_SOURCE_USER,
+                    name=self.data_befores["data_source_user"]["username"],
+                    operation=OperationEnum.DELETE_VIRTUAL_USER,
+                    data_before=self.data_befores["data_source_user"],
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的 app_code
+                AuditObject(
+                    id=self.data_befores["tenant_user"]["id"],
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.DELETE_VIRTUAL_USER,
+                    data_before={"app_codes": self.data_befores["app_codes"]},
+                    data_after={"app_codes": []},
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+                # 租户用户关联的责任人
+                AuditObject(
+                    id=self.data_befores["tenant_user"]["id"],
+                    type=ObjectTypeEnum.TENANT_USER,
+                    operation=OperationEnum.DELETE_VIRTUAL_USER,
+                    data_before={"owners": self.data_befores["owners"]},
+                    data_after={"owners": []},
+                    extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
+                ),
+            ]
         )
 
-        add_audit_record(
-            operator=self.operator,
-            tenant_id=self.tenant_id,
-            operation=OperationEnum.DELETE_VIRTUAL_USER,
-            object_type=ObjectTypeEnum.DATA_SOURCE_USER,
-            object_id=self.data_befores["data_source_user"]["id"],
-            object_name=self.data_befores["data_source_user"]["username"],
-            data_before=self.data_befores["data_source_user"],
-            extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
-        )
+        batch_add_audit_records(self.operator, self.tenant_id, audit_objects)
 
 
 class TenantUserPersonalInfoUpdateAuditor:
