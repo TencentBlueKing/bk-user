@@ -248,12 +248,14 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
         data = slz.validated_data
 
         self._send_verification_code_to_user_phone(
-            data["phone"], data["phone_country_code"], VerificationCodeScene.UPDATE_PHONE
+            tenant_user, data["phone"], data["phone_country_code"], VerificationCodeScene.UPDATE_PHONE
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _send_verification_code_to_user_phone(self, phone: str, phone_country_code: str, scene: VerificationCodeScene):
+    def _send_verification_code_to_user_phone(
+        self, tenant_user: TenantUser, phone: str, phone_country_code: str, scene: VerificationCodeScene
+    ):
         """发送短信验证码到指定的租户用户"""
 
         try:
@@ -263,7 +265,7 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
 
         try:
-            PhoneVerificationCodeSender(scene).send(phone, phone_country_code, code)
+            PhoneVerificationCodeSender(scene, tenant_user.tenant_id).send(phone, phone_country_code, code)
         except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:
@@ -348,11 +350,11 @@ class TenantUserEmailVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        self._send_verification_code_to_user_email(data["email"], VerificationCodeScene.UPDATE_EMAIL)
+        self._send_verification_code_to_user_email(tenant_user, data["email"], VerificationCodeScene.UPDATE_EMAIL)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _send_verification_code_to_user_email(self, email: str, scene: VerificationCodeScene):
+    def _send_verification_code_to_user_email(self, tenant_user: TenantUser, email: str, scene: VerificationCodeScene):
         """发送邮箱验证码到指定的租户用户"""
 
         try:
@@ -362,7 +364,7 @@ class TenantUserEmailVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
             raise error_codes.TOO_FREQUENTLY.f(_("发送邮箱验证码过于频繁，请稍后再试"))
 
         try:
-            EmailVerificationCodeSender(scene).send(email, code)
+            EmailVerificationCodeSender(scene, tenant_user.tenant_id).send(email, code)
         except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:

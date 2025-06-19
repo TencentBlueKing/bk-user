@@ -24,35 +24,64 @@ from bkuser.component.http import http_post
 from bkuser.utils.url import urljoin
 
 
+def validate_email_params(email: str, receiver: str):
+    """
+    校验邮件发送参数
+    :param email: 邮箱地址
+    :param receiver: 租户用户 ID
+    """
+    if not (email or receiver):
+        raise ValueError("params `email`(email address) or `receiver`(tenant_user_id) must be provided")
+
+
+def validate_sms_params(phone_info: Dict[str, str] | None, receiver: str):
+    """
+    校验短信发送参数
+    :param phone_info: 手机号信息，包含 phone 和 phone_country_code
+    :param receiver: 租户用户 ID
+    """
+    if not (phone_info or receiver):
+        raise ValueError(
+            "params `phone_info`(phone number and phone country code) or `receiver`(tenant_user_id) must be provided"
+        )
+
+
 class NotificationClient(Protocol):
     """通知客户端基类"""
 
     def send_mail(
         self,
+        tenant_id: str,
         sender: str,
         title: str,
         content: str,
-        receiver: str | None,
-        receiver__username: str | None,
+        email: str = "",
+        receiver: str = "",
     ) -> None:
-        """发送邮件
-        :param receiver: 接收者邮箱
-        :param receiver__username: 接收者用户名，与 receiver 二选一
-        :param sender: 发件人
+        """
+        发送邮件
+        支持通过接收者的邮箱地址 或 租户用户 ID 发送通知，当两者都存在时，优先使用邮箱地址
+        :param sender: 发件人，例如："蓝鲸智云"
         :param title: 邮件标题
         :param content: 邮件内容（HTML格式）
+        :param email: 接收者邮箱地址
+        :param receiver: 接收者的租户用户 ID(tenant_user_id)，与 email 参数二选一
         """
 
     def send_sms(
         self,
+        tenant_id: str,
         content: str,
-        receiver: Dict[str, str] | None,
-        receiver__username: str | None,
+        phone_info: Dict[str, str] | None = None,
+        receiver: str = "",
     ) -> None:
-        """发送短信
-        :param receiver: 接收者手机号码信息，格式：{"phone": "xxx", "phone_country_code": "xxx"}
-        :param receiver__username: 接收者用户名，与 receiver 二选一
+        """
+        发送短信
+        支持通过接收者的手机号码信息（国际区号 + 手机号） 或 租户用户 ID 发送通知，当两者都存在时，优先使用手机号码信息
+        :param tenant_id: 收件人所属租户 ID
         :param content: 短信内容
+        :param phone_info: 接收者手机号码信息，格式：{"phone": "xxx", "phone_country_code": "xxx"}
+        :param receiver: 接收者的租户用户 ID(tenant_user_id)，与 phone_info 参数二选一
         """
 
 
@@ -60,22 +89,11 @@ def get_notification_client() -> NotificationClient:
     """
     选择对应消息通知 API（ESB 或 API 网关）
     """
-    # 有单独部署 bk-cmsi  或 开启多租户
+    # 有单独部署 bk-cmsi 网关 或 开启多租户模式，使用 bk-cmsi 网关提供的消息通知 API
     if settings.HAS_BK_CMSI_APIGW or settings.ENABLE_MUTIL_TENANT_MODE:
         return BkApigwCmsiClient()
+    # 否则使用 ESB 提供的消息通知 API
     return BkEsbCmsiClient()
-
-
-def validate_notification_params(receiver: str | Dict[str, str] | None, receiver__username: str | None):
-    """
-    验证通知参数，receiver 和 receiver__username 必须提供一个
-    :param receiver: 接收者手机号或邮箱
-    :param receiver__username: 接收者用户名
-    """
-    if not (receiver or receiver__username):
-        raise ValueError(
-            "Param `receiver`(phone_info & email) or param `receiver__username`(tenant_user_id) must be provided"
-        )
 
 
 class BkEsbCmsiClient:
@@ -85,26 +103,28 @@ class BkEsbCmsiClient:
 
     def send_mail(
         self,
+        tenant_id: str,
         sender: str,
         title: str,
         content: str,
-        receiver: str | None,
-        receiver__username: str | None,
+        email: str = "",
+        receiver: str = "",
     ):
         """发送邮件"""
-        validate_notification_params(receiver, receiver__username)
+        validate_email_params(email, receiver)
 
-        # 当两者都存在时，优先使用 receiver
+        # 当两者都存在时，优先使用邮箱号
         params: Dict[str, str] = {
             "sender": sender,
             "title": title,
             "content": content,
         }
-        if receiver:
-            params["receiver"] = receiver
+        if email:
+            params["receiver"] = email
         else:
-            params["receiver__username"] = receiver__username  # type: ignore
+            params["receiver__username"] = receiver
 
+        # NOTE: ESB 调用无需要传递 tenant_id，下同
         return _call_esb_api(
             http_post,
             urljoin(self.ESB_CMSI_URL_PATH, "send_mail/"),
@@ -113,19 +133,20 @@ class BkEsbCmsiClient:
 
     def send_sms(
         self,
+        tenant_id: str,
         content: str,
-        receiver: Dict[str, str] | None,
-        receiver__username: str | None,
+        phone_info: Dict[str, str] | None = None,
+        receiver: str = "",
     ):
         """发送短信"""
-        validate_notification_params(receiver, receiver__username)
+        validate_sms_params(phone_info, receiver)
 
-        # 当两者都存在时，优先使用 receiver
+        # 当两者都存在时，优先使用 phone_info 中的手机号信息
         params: Dict[str, str] = {"content": content}
-        if receiver:
-            params["receiver"] = receiver["phone"]
+        if phone_info:
+            params["receiver"] = phone_info["phone"]
         else:
-            params["receiver__username"] = receiver__username  # type: ignore
+            params["receiver__username"] = receiver
 
         return _call_esb_api(
             http_post,
@@ -141,53 +162,58 @@ class BkApigwCmsiClient:
 
     def send_mail(
         self,
+        tenant_id: str,
         sender: str,
         title: str,
         content: str,
-        receiver: str | None,
-        receiver__username: str | None,
+        email: str = "",
+        receiver: str = "",
     ):
         """发送邮件"""
-        validate_notification_params(receiver, receiver__username)
+        validate_email_params(email, receiver)
 
-        # 当两者都存在时，优先使用 receiver
+        # 当两者都存在时，优先使用 email
         params: Dict[str, str | List[str]] = {
             "sender": sender,
             "title": title,
             "content": content,
         }
-        if receiver:
-            params["receiver"] = [receiver]
+        if email:
+            params["receiver"] = [email]
         else:
-            params["receiver__username"] = [receiver__username]  # type: ignore
+            params["receiver__username"] = [receiver]
 
+        # NOTE: API 网关调用需要收件人所属租户 ID，下同
         return _call_apigw_api(
             http_post,
             self.APIGW_NAME,
             "/v1/send_mail/",
+            tenant_id,
             json=params,
         )
 
     def send_sms(
         self,
+        tenant_id: str,
         content: str,
-        receiver: Dict[str, str] | None,
-        receiver__username: str | None,
-    ) -> None:
+        phone_info: Dict[str, str] | None = None,
+        receiver: str = "",
+    ):
         """发送短信"""
-        validate_notification_params(receiver, receiver__username)
+        validate_sms_params(phone_info, receiver)
 
-        # 当两者都存在时，优先使用 receiver
+        # 当两者都存在时，优先使用 phone_info
         params: Dict[str, str | List[str]] = {"content": content}
-        if receiver:
-            params["receiver"] = [self._format_phone(receiver)]
+        if phone_info:
+            params["receiver"] = [self._format_phone(phone_info)]
         else:
-            params["receiver__username"] = [receiver__username]  # type: ignore
+            params["receiver__username"] = [receiver]
 
         return _call_apigw_api(
             http_post,
             self.APIGW_NAME,
             "/v1/send_sms/",
+            tenant_id,
             json=params,
         )
 

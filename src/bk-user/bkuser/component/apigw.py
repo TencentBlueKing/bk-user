@@ -24,26 +24,19 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
 from bkuser.utils.url import urljoin
 
-logger = logging.getLogger("component.apigw")
+logger = logging.getLogger("component")
 
 
-def _call_apigw_api(http_func, apigw_name, url_path, **kwargs):
+def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
     request_id = local.request_id
     if "headers" not in kwargs:
         kwargs["headers"] = {}
 
-    # 应用认证&用户认证Header
-    bk_token = (
-        kwargs.get("params", {}).get("bk_token")
-        or kwargs.get("data", {}).get("bk_token")
-        or kwargs.get("json", {}).get("bk_token")
-    )
+    # 应用认证 Header
     bkapi_authorization = {
         "bk_app_code": settings.BK_APP_CODE,
         "bk_app_secret": settings.BK_APP_SECRET,
     }
-    if bk_token:
-        bkapi_authorization["bk_token"] = bk_token
 
     # 添加默认请求头
     kwargs["headers"].update(
@@ -51,11 +44,11 @@ def _call_apigw_api(http_func, apigw_name, url_path, **kwargs):
             "Content-Type": "application/json",
             "X-Request-Id": request_id,
             "X-Bkapi-Authorization": json.dumps(bkapi_authorization),
-            "X-Bk-Tenant-Id": local.request.user.get_property("tenant_id"),
+            "X-Bk-Tenant-Id": tenant_id,
         }
     )
 
-    apigw_url = urljoin(settings.BK_API_URL_TMPL.format(api_name=apigw_name), "/prod")
+    apigw_url = urljoin(settings.BK_API_URL_TMPL.format(api_name=apigw_name), settings.BK_CMSI_APIGW_ENV)
     url = urljoin(apigw_url, url_path)
 
     ok, resp_data = http_func(url, **kwargs)

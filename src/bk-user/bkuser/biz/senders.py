@@ -33,9 +33,10 @@ class ExceedSendRateLimit(Exception):
 class PhoneVerificationCodeSender:
     """发送手机验证码（含次数检查）"""
 
-    def __init__(self, scene: VerificationCodeScene):
+    def __init__(self, scene: VerificationCodeScene, tenant_id: str):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.scene = scene
+        self.tenant_id = tenant_id
 
     def send(self, phone: str, phone_country_code: str, code: str):
         """发送验证码到指定手机号"""
@@ -52,7 +53,7 @@ class PhoneVerificationCodeSender:
         TenantUserNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.SMS,
-        ).send_by_contact(contact_info, verification_code=code)  # type: ignore
+        ).send_by_contact(contact_info, tenant_id=self.tenant_id, verification_code=code)  # type: ignore
 
     def _can_send(self, phone: str, phone_country_code: str) -> bool:
         send_cnt_cache_key = f"{self.scene.value}:{phone_country_code}:{phone}:send_cnt"
@@ -69,9 +70,10 @@ class PhoneVerificationCodeSender:
 class EmailVerificationCodeSender:
     """发送邮箱验证码（含次数检查）"""
 
-    def __init__(self, scene: VerificationCodeScene):
+    def __init__(self, scene: VerificationCodeScene, tenant_id: str):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.scene = scene
+        self.tenant_id = tenant_id
 
     def send(self, email: str, code: str):
         """发送验证码到指定邮箱"""
@@ -81,7 +83,7 @@ class EmailVerificationCodeSender:
         TenantUserNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.EMAIL,
-        ).send_by_contact({"email": email}, verification_code=code)
+        ).send_by_contact({"email": email}, tenant_id=self.tenant_id, verification_code=code)
 
     def _can_send(self, email: str) -> bool:
         send_cnt_cache_key = f"{self.scene.value}:{email}:send_cnt"
@@ -108,7 +110,7 @@ class EmailResetPasswdTokenSender:
         TenantUserNotifier(
             NotificationScene.RESET_PASSWORD,
             data_source_id=tenant_user.data_source_user.data_source_id,
-        ).send_by_contact({"email": tenant_user.email}, token=token)
+        ).send_by_contact({"email": tenant_user.email}, tenant_id=tenant_user.tenant_id, token=token)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         send_cnt_cache_key = f"{tenant_user.email}:send_cnt"

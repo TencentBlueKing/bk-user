@@ -27,7 +27,7 @@ from bkuser.apps.notification.constants import NotificationMethod, NotificationS
 from bkuser.apps.notification.data_models import NotificationTemplate
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
-from bkuser.component.clients import get_notification_client
+from bkuser.component.cmsi import get_notification_client
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 logger = logging.getLogger(__name__)
@@ -291,13 +291,15 @@ class NotificationSender:
         title: str | None,
         content: str,
         sender: str,
+        tenant_id: str,
         contact_info: Dict[str, str | Dict[str, str]] | None = None,
-        tenant_user_id: str | None = None,
-    ) -> None:
+        tenant_user_id: str = "",
+    ):
         """
         单条消息发送
+        支持通过 联系方式 或 租户用户 ID 发送通知，当两者都存在时，优先使用联系方式
         :param method: 发送方式（邮件/短信）
-        :param title: 标题（邮件必需）
+        :param title: 标题（邮件必填参数）
         :param content: 内容
         :param sender: 发送者
         :param contact_info: 联系方式
@@ -305,17 +307,19 @@ class NotificationSender:
         """
         if method == NotificationMethod.EMAIL:
             self.client.send_mail(
+                tenant_id=tenant_id,
                 sender=sender,
                 title=title,  # type: ignore
                 content=content,
-                receiver=contact_info.get("email") if contact_info else None,  # type: ignore
-                receiver__username=tenant_user_id,
+                email=contact_info.get("email") if contact_info else None,  # type: ignore
+                receiver=tenant_user_id,
             )
         elif method == NotificationMethod.SMS:
             self.client.send_sms(
+                tenant_id=tenant_id,
                 content=content,
-                receiver=contact_info.get("phone_info") if contact_info else None,  # type: ignore
-                receiver__username=tenant_user_id,
+                phone_info=contact_info.get("phone_info") if contact_info else None,  # type: ignore
+                receiver=tenant_user_id,
             )
         else:
             raise ValueError(f"Unsupported notification method: {method}")
@@ -355,19 +359,22 @@ class TenantUserNotifier:
                 title=tmpl.title,
                 content=content,
                 sender=tmpl.sender,
+                tenant_id=user.tenant_id,
                 tenant_user_id=user.id,
             )
 
             logger.info("send %s to user %s, scene %s", tmpl.method.value, user.id, self.scene)
 
-    def send_by_contact(self, contact_info: Dict[str, str | Dict[str, str]], **scene_kwargs) -> None:
+    def send_by_contact(self, contact_info: Dict[str, str | Dict[str, str]], tenant_id: str, **scene_kwargs) -> None:
         """
         直接通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
         :param contact_info: 联系方式，如 {"email": "xxx"} 或 {"phone_info": {"phone": "xxx", "country_code": "xxx"}}
+        :param tenant_id: 收件人所属租户 ID（多租户版本调用网关时必须传入）
         """
         for tmpl in self.templates:
             content = self._render_tmpl(tmpl.content, **scene_kwargs)
             self.sender.send(
+                tenant_id=tenant_id,
                 method=tmpl.method,
                 title=tmpl.title,
                 content=content,
