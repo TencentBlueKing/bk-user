@@ -253,7 +253,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
                 )
 
         # 【审计】将审计记录保存至数据库
-        auditor.record_update(tenant_user)
+        auditor.record_update(tenant_user, data["app_codes"], data["owners"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

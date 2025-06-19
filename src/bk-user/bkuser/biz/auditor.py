@@ -897,7 +897,7 @@ class VirtualUserAuditor:
 
         batch_add_audit_records(self.operator, self.tenant_id, audit_objects)
 
-    def record_update(self, tenant_user: TenantUser):
+    def record_update(self, tenant_user: TenantUser, app_codes: List[str], owners: List[str]):
         """记录虚拟用户更新操作"""
         audit_objects: List[AuditObject] = []
 
@@ -928,13 +928,7 @@ class VirtualUserAuditor:
                     type=ObjectTypeEnum.TENANT_USER,
                     operation=OperationEnum.MODIFY_VIRTUAL_USER,
                     data_before={"app_codes": self.data_befores["app_codes"]},
-                    data_after={
-                        "app_codes": list(
-                            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list(
-                                "app_code", flat=True
-                            )
-                        )
-                    },
+                    data_after={"app_codes": app_codes},
                     extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
                 ),
                 # 租户用户关联的责任人
@@ -943,13 +937,7 @@ class VirtualUserAuditor:
                     type=ObjectTypeEnum.TENANT_USER,
                     operation=OperationEnum.MODIFY_VIRTUAL_USER,
                     data_before={"owners": self.data_befores["owners"]},
-                    data_after={
-                        "owners": list(
-                            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list(
-                                "owner_id", flat=True
-                            )
-                        )
-                    },
+                    data_after={"owners": owners},
                     extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
                 ),
             ]
