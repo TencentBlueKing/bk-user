@@ -30,5 +30,9 @@ export const getIdpList = (id: string) => fetch.get(`${apiPrefix}/idps/`, { tena
 export const signInByPassword = (id: string, idpId: string, params: PasswordParams) => fetch
   .post(`${apiPrefix}/auth/idps/${idpId}/actions/authenticate/`, params);
 
+// 管理员登录
+export const signInByAdmin = (idpId: string, params: PasswordParams) => fetch
+  .post(`${apiPrefix}/builtin-management-auth/idps/${idpId}/authenticate/`, params);
+
 // 全局配置
 export const getGlobalSettings = () => fetch.get(`${apiPrefix}/global-settings/`);

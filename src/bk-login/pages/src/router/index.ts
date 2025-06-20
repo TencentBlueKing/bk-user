@@ -6,7 +6,7 @@ import {
 // const HomeDemo = () => import(/* webpackChunkName: "HomeDemo" */ '../views/home-demo.vue');
 const Home = () => import(/* webpackChunkName: "Home" */ '../views/home.vue');
 const User = () => import(/* webpackChunkName: "Home" */ '../views/user.vue');
-
+const Admin = () => import(/* webpackChunkName: "Admin" */ '../views/components/password.vue');
 export default createRouter({
   history: createWebHistory(''),
   routes: [
@@ -24,6 +24,11 @@ export default createRouter({
       path: `${window.SITE_URL}/page/users/`,
       component: User,
       name: 'user',
+    },
+    {
+      path: `${window.SITE_URL}/login/builtin-management-auth/idps/:id/`,
+      component: Admin,
+      name: 'admin',
     },
   ],
 });

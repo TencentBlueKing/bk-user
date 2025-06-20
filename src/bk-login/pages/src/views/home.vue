@@ -448,7 +448,7 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
   });
   I18n.global.locale.value = locale;
   document.querySelector('html')?.setAttribute('lang', locale);
-  // window.location.reload();
+  window.location.reload();
 };
 
 // 组件挂载前初始化
