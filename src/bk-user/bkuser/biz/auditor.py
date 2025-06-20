@@ -847,15 +847,11 @@ class VirtualUserAuditor:
         self.data_befores["tenant_user"] = get_model_dict(tenant_user)
         self.data_befores["data_source_user"] = get_model_dict(tenant_user.data_source_user)
         # app_codes & owners
-        self.data_befores["tenant_user"].update(
-            {
-                "app_codes": list(
-                    VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
-                ),
-                "owners": list(
-                    VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
-                ),
-            }
+        self.data_befores["app_codes"] = list(
+            VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
+        )
+        self.data_befores["owners"] = list(
+            VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
         )
 
     def record_create(self, tenant_user: TenantUser):
@@ -868,8 +864,7 @@ class VirtualUserAuditor:
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
         )
 
-        tenant_user_dict = get_model_dict(tenant_user)
-        tenant_user_dict.update({"app_codes": app_codes, "owners": owners})
+        tenant_user_dict = {"tenant_user": get_model_dict(tenant_user), "app_codes": app_codes, "owners": owners}
 
         add_audit_record(
             operator=self.operator,
@@ -902,8 +897,7 @@ class VirtualUserAuditor:
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True)
         )
 
-        tenant_user_dict = get_model_dict(tenant_user)
-        tenant_user_dict.update({"app_codes": app_codes, "owners": owners})
+        tenant_user_dict = {"tenant_user": get_model_dict(tenant_user), "app_codes": app_codes, "owners": owners}
 
         add_audit_record(
             operator=self.operator,
@@ -911,7 +905,11 @@ class VirtualUserAuditor:
             operation=OperationEnum.MODIFY_VIRTUAL_USER,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            data_before=self.data_befores["tenant_user"],
+            data_before={
+                "tenant_user": self.data_befores["tenant_user"],
+                "app_codes": self.data_befores["app_codes"],
+                "owners": self.data_befores["owners"],
+            },
             data_after=tenant_user_dict,
             extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
         )
@@ -936,7 +934,11 @@ class VirtualUserAuditor:
             operation=OperationEnum.DELETE_VIRTUAL_USER,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=self.data_befores["tenant_user"]["id"],
-            data_before=self.data_befores["tenant_user"],
+            data_before={
+                "tenant_user": self.data_befores["tenant_user"],
+                "app_codes": self.data_befores["app_codes"],
+                "owners": self.data_befores["owners"],
+            },
             extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
         )
 
