@@ -133,21 +133,6 @@
       {{ $t('忘记密码？') }}
     </div>
 
-    <div class="tenant-footer">
-      <div class="cursor-pointer tenant-protocol" @click="protocolVisible = true">{{ $t('用户协议') }} ></div>
-      <div class="language-switcher">
-        <div class="language-select">
-          <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
-            <span class="text-active">中文</span>
-          </p>
-          <p class="language-item" :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
-            <span class="text-active">English</span>
-          </p>
-        </div>
-      </div>
-    </div>
-    <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
-    <ProtocolEn v-if="protocolVisible && activeTab === 'en'" @close="protocolVisible = false" />
   </bk-form>
 </template>
 
@@ -155,13 +140,9 @@
 import { getGlobalSettings, getIdpList, getTenantList, getSearchTenantList } from '@/http/api';
 import { type Ref, onBeforeMount, ref, computed, watch } from 'vue';
 import Password from './components/password.vue';
-import Protocol from './components/protocol.vue';
-import ProtocolEn from './components/protocol-en.vue';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
-import I18n from '@/language/index';
-import Cookies from 'js-cookie';
 import logoPng from '../../static/images/blueking.png';
 import { debounce } from 'lodash';
 import { CloseLine } from 'bkui-vue/lib/icon';
@@ -169,7 +150,6 @@ import { CloseLine } from 'bkui-vue/lib/icon';
 // 平台配置数据
 const platformConfigData = platformConfig();
 const appLogo = computed(() => (platformConfigData.appLogo ? platformConfigData.appLogo : logoPng));
-const activeTab = ref(I18n.global.locale.value);
 
 // 接口定义
 interface Item {
@@ -235,10 +215,6 @@ const idpList: Ref<Idp[]> = ref([]);
  * 当前认证源
  */
 const activeIdp: Ref<Idp> = ref();
-/**
- * 用户协议是否显示
- */
-const protocolVisible = ref(false);
 /**
  * 全局配置
  */
@@ -422,35 +398,6 @@ const handleResetPassword = () => {
   window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
 };
 
-/**
- * 切换语言
- * @param locale 语言代码
- */
-const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
-  activeTab.value = locale;
-  // 因为未登录，所以改为后端直接调用接口
-  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  // const scriptId = 'jsonp-script';
-  // const prevJsonpScript = document.getElementById(scriptId);
-  // if (prevJsonpScript) {
-  //   document.body.removeChild(prevJsonpScript);
-  // }
-  // const script = document.createElement('script');
-  // script.type = 'text/javascript';
-  // script.src = `${api}?language=${locale}`;
-  // script.id = scriptId;
-  // document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  window.location.reload();
-};
-
 // 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
@@ -602,18 +549,6 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
   font-size: 14px;
 }
 
-.tenant-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  font-size: 14px;
-}
-
-.tenant-protocol {
-  display: flex;
-}
-
 .confirm-btn {
   width: 100%;
   margin-top: 8px;
@@ -674,38 +609,6 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
   &:hover {
     color: #3A84FF;
   }
-}
-
-.language-select {
-  display: flex;
-}
-
-.language-item {
-  width: 70px;
-  text-align: center;
-  background: #f5f7fa;
-  transform: skew(-15deg, 0deg);
-  display: inline-block;
-  height: 24px;
-  cursor: pointer;
-
-  .text-active {
-    display: block;
-    width: 70px;
-    height: 24px;
-    line-height: 24px;
-    font-size: 12px;
-    transform: skew(15deg, 0deg);
-  }
-}
-
-.language-switcher {
-  display: flex;
-  border-radius: 2px;
-  height: 24px;
-  line-height: 24px;
-  justify-content: end;
-  text-align: right;
 }
 
 .active {

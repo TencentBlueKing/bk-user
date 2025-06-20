@@ -11,6 +11,21 @@
     </div>
     <div class="login-model">
       <router-view></router-view>
+      <div class="tenant-footer">
+        <div class="cursor-pointer tenant-protocol" @click="protocolVisible = true">{{ $t('用户协议') }} ></div>
+        <div class="language-switcher">
+          <div class="language-select">
+            <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
+              <span class="text-active">中文</span>
+            </p>
+            <p class="language-item" :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
+              <span class="text-active">English</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
+      <ProtocolEn v-if="protocolVisible && activeTab === 'en'" @close="protocolVisible = false" />
     </div>
     <div id="particles-js"></div>
     <footer class="footer">
@@ -31,9 +46,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import { getPlatformConfig, setShortcutIcon, setDocumentTitle } from '@blueking/platform-config';
 import { platformConfig } from '@/store/platformConfig';
+import Protocol from './views/components/protocol.vue';
+import ProtocolEn from './views/components/protocol-en.vue';
+import I18n from '@/language/index';
+import Cookies from 'js-cookie';
+
+const activeTab = ref(I18n.global.locale.value);
+/**
+ * 用户协议是否显示
+ */
+const protocolVisible = ref(false);
 
 onMounted(() => {
   particlesJS(
@@ -177,6 +202,36 @@ const getConfigData = async () => {
 getConfigData();
 const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
 const copyright = computed(() => platformConfigData.footerCopyrightContent);
+
+
+/**
+ * 切换语言
+ * @param locale 语言代码
+ */
+const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
+  activeTab.value = locale;
+  // 因为未登录，所以改为后端直接调用接口
+  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  // const scriptId = 'jsonp-script';
+  // const prevJsonpScript = document.getElementById(scriptId);
+  // if (prevJsonpScript) {
+  //   document.body.removeChild(prevJsonpScript);
+  // }
+  // const script = document.createElement('script');
+  // script.type = 'text/javascript';
+  // script.src = `${api}?language=${locale}`;
+  // script.id = scriptId;
+  // document.body.appendChild(script);
+
+  Cookies.set('blueking_language', locale, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  I18n.global.locale.value = locale;
+  document.querySelector('html')?.setAttribute('lang', locale);
+  window.location.reload();
+};
 </script>
 
 <style lang="postcss" scoped>
@@ -192,6 +247,58 @@ const copyright = computed(() => platformConfigData.footerCopyrightContent);
   transform: translate(-50%, -35%);
   padding: 52px 40px 32px;
 }
+
+.tenant-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.tenant-protocol {
+  display: flex;
+}
+
+.language-select {
+  display: flex;
+}
+
+.language-item {
+  width: 70px;
+  text-align: center;
+  background: #f5f7fa;
+  transform: skew(-15deg, 0deg);
+  display: inline-block;
+  height: 24px;
+  cursor: pointer;
+
+  .text-active {
+    display: block;
+    width: 70px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    transform: skew(15deg, 0deg);
+  }
+}
+
+.language-switcher {
+  display: flex;
+  border-radius: 2px;
+  height: 24px;
+  line-height: 24px;
+  justify-content: end;
+  text-align: right;
+}
+
+.active {
+  background: #e1ecff;
+  .text-active {
+    color: #3a84ff;
+  }
+}
+
 .main-content {
   height: 100%;
   background-color: #ebf2fa;
