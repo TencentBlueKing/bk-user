@@ -1,6 +1,6 @@
 <template>
   <bk-form ref="formRef" form-type="vertical" :model="formData" :rules="rules">
-    <div class="login-title">{{ $t('管理员登录') }}</div>
+    <div v-if="isAdmin" class="login-title">{{ $t('管理员登录') }}</div>
     <bk-form-item property="username">
       <bk-input
         size="large"
