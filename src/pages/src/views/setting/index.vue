@@ -34,13 +34,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import MainView from '@/components/layouts/MainView.vue';
 import { useMenuInfo } from '@/hooks';
 import { t } from '@/language/index';
 import { useMenu } from '@/store';
 
+const route = useRoute();
+const router = useRouter();
 const menuStore = useMenu();
 const { activeKey, handleChangeMenu } = useMenuInfo();
 
@@ -110,6 +113,25 @@ const menuData = reactive([
     ],
   },
 ]);
+
+onMounted(() => {
+  if (!window.ENABLE_COLLABORATION_TENANT) {
+    const COLLABORATION_KEY = 'collaboration';
+    // 菜单移除
+    const collaborationMenuIndex = menuData.findIndex(item => item.key === COLLABORATION_KEY);
+    if (collaborationMenuIndex > -1) {
+      menuData.splice(collaborationMenuIndex, 1);
+    }
+    // 路由移除
+    if (router.hasRoute(COLLABORATION_KEY)) {
+      router.removeRoute(COLLABORATION_KEY);
+
+      if (route.name === COLLABORATION_KEY) {
+        router.push('/setting');
+      }
+    }
+  }
+});
 
 </script>
 
