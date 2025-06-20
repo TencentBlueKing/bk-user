@@ -26,7 +26,7 @@ export default createRouter({
       name: 'user',
     },
     {
-      path: `${window.SITE_URL}/login/builtin-management-auth/idps/:id/`,
+      path: `${window.SITE_URL}/builtin-management-auth/idps/:id/`,
       component: Admin,
       name: 'admin',
     },
