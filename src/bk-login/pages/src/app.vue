@@ -169,7 +169,7 @@ const defaults = {
 
 const getConfigData = async () => {
   const config =  await getPlatformConfig(url, defaults);
-  
+
   setShortcutIcon(config.favicon);
   setDocumentTitle(config.i18n);
   platformConfigData.update(config);

@@ -34,5 +34,6 @@
   "请输入企业ID或名称": "Please enter the company ID or name",
   "切换企业": "Switch company",
   "该企业未完成用户登录配置": "The company has not completed the user login configuration",
-  "上次登录": "Last login"
+  "最近登录": "Recently logged in",
+  "清空": "Clear"
 }

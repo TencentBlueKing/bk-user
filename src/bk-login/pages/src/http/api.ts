@@ -18,7 +18,7 @@ export const getUserList = () => fetch.get(`${apiPrefix}/tenant-users/`);
 export const signInByUser = (params: UserParams) => fetch.post(`${apiPrefix}/sign-in-users/`, params);
 
 // 搜索租户列表，支持 id 和 name
-export const searchTenantList = (payload: { keyword: string }) => fetch.get(`${apiPrefix}/tenants/-/search`, payload);
+export const getSearchTenantList = (payload: { keyword: string }) => fetch.get(`${apiPrefix}/tenants/-/search`, payload);
 
 // 通过id搜索租户列表
 export const getTenantList = (payload: { tenant_ids: string }) => fetch.get(`${apiPrefix}/tenants/`, payload);
