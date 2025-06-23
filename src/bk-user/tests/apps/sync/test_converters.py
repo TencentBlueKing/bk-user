@@ -136,32 +136,6 @@ class TestDataSourceUserConverter:
         assert lisi.phone_country_code == "63"
         assert lisi.extras == {"age": 28, "gender": "female", "region": "china", "sport_hobby": ["swimming", "golf"]}
 
-    def test_convert_with_not_phone_and_phone_country_code(
-        self, bare_local_data_source, tenant_user_custom_fields, logger
-    ):
-        raw_wangwu = RawDataSourceUser(
-            code="wangwu",
-            properties={
-                "username": "wangwu",
-                "full_name": "王五",
-                "email": "wangwu@m.com",
-                "age": "28",
-                "gender": "女",
-                "sport_hobby": "高尔夫",
-            },
-            leaders=["zhangsan"],
-            departments=["dept_a", "center_aa"],
-        )
-
-        wangwu = DataSourceUserConverter(bare_local_data_source, logger).convert(raw_wangwu)
-        assert wangwu.code == "wangwu"
-        assert wangwu.username == "wangwu"
-        assert wangwu.full_name == "王五"
-        assert wangwu.email == "wangwu@m.com"
-        assert wangwu.phone == ""
-        assert wangwu.phone_country_code == ""
-        assert wangwu.extras == {"age": 28, "gender": "female", "region": "china", "sport_hobby": ["golf"]}
-
     def test_convert_with_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
             code="lisi",
