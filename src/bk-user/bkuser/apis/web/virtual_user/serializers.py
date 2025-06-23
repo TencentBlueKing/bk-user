@@ -67,6 +67,7 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     app_codes = serializers.SerializerMethodField(help_text="应用编码列表")
     owners = serializers.SerializerMethodField(help_text="责任人列表")
+    created_at = serializers.DateTimeField(help_text="创建时间")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_app_codes(self, obj: TenantUser) -> List[str]:
@@ -104,6 +105,7 @@ class VirtualUserRetrieveOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     app_codes = serializers.SerializerMethodField(help_text="应用编码列表")
     owners = serializers.SerializerMethodField(help_text="责任人列表")
+    created_at = serializers.DateTimeField(help_text="创建时间")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_app_codes(self, obj: TenantUser) -> List[str]:

@@ -69,7 +69,14 @@ class TestVirtualUserListApi:
     def test_list_virtual_user(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK
-        assert set(resp.data["results"][0].keys()) == {"id", "username", "full_name", "app_codes", "owners"}
+        assert set(resp.data["results"][0].keys()) == {
+            "id",
+            "username",
+            "full_name",
+            "app_codes",
+            "owners",
+            "created_at",
+        }
 
     @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_pagination(self, api_client):
