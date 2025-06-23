@@ -34,6 +34,7 @@
           property="captcha">
           <div class="flex justify-center">
             <bk-input
+              ref="inputRef"
               :class="`!w-[400px] !h-[40px] ${captchaValidate ? 'captcha-input-validate' : ''}`"
               :placeholder="t('请输入验证码')"
               @blur="() => captchaValidate = false"
@@ -44,7 +45,7 @@
               outline theme="primary"
               class="!w-[141.68px] ml-[12px] !h-[40px]"
               :disabled="verifyFormCaptchaBtn.disabled"
-              @click="() => handleSendCaptchaPhone(verifyFormRef, userId, verifyForm)">
+              @click="handleClickSendCaptcha">
               {{ verifyFormCaptchaBtn.disabled ?
                 `${verifyFormCaptchaBtn.times}s`
                 : t('获取验证码') }}
@@ -191,6 +192,13 @@ const handleCloseVerifyDialog = () => {
   clearCaptchaValidate();
   resetCustomForm();
 };
+
+const inputRef = ref();
+const handleClickSendCaptcha = () => {
+  inputRef.value.focus();
+  handleSendCaptchaPhone(verifyFormRef.value, props.userId, verifyForm);
+};
+
 
 const submitBtnLoading = ref(false);
 const handleSubmitVerifyForm = async () => {

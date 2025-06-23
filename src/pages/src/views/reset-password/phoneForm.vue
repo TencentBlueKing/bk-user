@@ -13,6 +13,7 @@
     <div style="display: flex; align-items: flex-start;">
       <bk-form-item style="margin-bottom: 32px;" property="verification_code" error-display-type="tooltips">
         <bk-input
+          ref="inputRef"
           :class="['verification-code-input', { 'is-enter': isEnter }]"
           size="large"
           v-model="formData.verification_code"
@@ -75,6 +76,7 @@ const props = defineProps({
 });
 
 const formRef = ref();
+const inputRef = ref();
 const formData = reactive({
   tenant_id: '',
   phone: '',
@@ -109,6 +111,7 @@ const handleSendCode = async () => {
         phone: formData.phone,
         phone_country_code: formData.phone_country_code,
       });
+      inputRef.value.focus();
       // 验证码倒计时
       timer.value = setInterval(() => {
         remainTime.value = remainTime.value - 1;
