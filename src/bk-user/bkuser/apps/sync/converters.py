@@ -70,15 +70,15 @@ class DataSourceUserConverter:
             )
 
         phone = props.get(mapping.get("phone")) or ""  # type: ignore
-        country_code = (
-            props.get(
-                mapping.get("phone_country_code"),  # type: ignore
-            )
-            or settings.DEFAULT_PHONE_COUNTRY_CODE
-        )
         # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
         if phone:
+            country_code = (
+                props.get(mapping.get("phone_country_code"))  # type: ignore
+                or settings.DEFAULT_PHONE_COUNTRY_CODE
+            )
             validate_phone_with_country_code(phone, country_code)
+        else:
+            country_code = ""
 
         return DataSourceUser(
             data_source=self.data_source,

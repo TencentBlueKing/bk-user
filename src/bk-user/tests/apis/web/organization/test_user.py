@@ -614,13 +614,13 @@ class TestTenantUserBatchCreateAndPreviewApi:
 
     @pytest.fixture
     def raw_user_infos(self) -> List[str]:
-        # username full_name email phone age gender region hobbies
+        # username full_name email age gender region hobbies
         return [
-            "star, Star, trailblazer@railway.com, +8613612345671, 1, 女, Nameless, 跳舞/采集/旅游",
-            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, 女, StarCoreHunter, 购物/狩猎",
-            "sam, FireFly, sam@railway.com, +447700123456, 23, 女, StarCoreHunter, 唱歌/吃饭/睡觉",
-            "404, SilverWolf, 404@railway.com, +79123456789, 16, 女, StarCoreHunter, 游戏/骇入",
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶",
+            "star, Star, trailblazer@railway.com, 1, 女, Nameless, 跳舞/采集/旅游",
+            "kafka, Kafka, kafka@railway.com, 32, 女, StarCoreHunter, 购物/狩猎",
+            "sam, FireFly, sam@railway.com, 23, 女, StarCoreHunter, 唱歌/吃饭/睡觉",
+            "404, SilverWolf, 404@railway.com, 16, 女, StarCoreHunter, 游戏/骇入",
+            "dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶",
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -639,8 +639,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "star",
                 "full_name": "Star",
                 "email": "trailblazer@railway.com",
-                "phone": "13612345671",
-                "phone_country_code": "86",
                 "extras": {
                     age_field.name: 1,
                     gender_field.name: "female",
@@ -652,8 +650,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "kafka",
                 "full_name": "Kafka",
                 "email": "kafka@railway.com",
-                "phone": "15123456789",
-                "phone_country_code": "49",
                 "extras": {
                     age_field.name: 32,
                     gender_field.name: "female",
@@ -665,8 +661,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "sam",
                 "full_name": "FireFly",
                 "email": "sam@railway.com",
-                "phone": "7700123456",
-                "phone_country_code": "44",
                 "extras": {
                     age_field.name: 23,
                     gender_field.name: "female",
@@ -678,8 +672,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "404",
                 "full_name": "SilverWolf",
                 "email": "404@railway.com",
-                "phone": "9123456789",
-                "phone_country_code": "7",
                 "extras": {
                     age_field.name: 16,
                     gender_field.name: "female",
@@ -691,8 +683,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "dotKnifeBoy",
                 "full_name": "Blade",
                 "email": "blade@railway.com",
-                "phone": "13612345675",
-                "phone_country_code": "86",
                 "extras": {
                     age_field.name: 48,
                     gender_field.name: "male",
@@ -719,8 +709,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
         fire_fly = TenantUser.objects.get(data_source_user__username="sam", tenant=random_tenant).data_source_user
         assert fire_fly.full_name == "FireFly"
         assert fire_fly.email == "sam@railway.com"
-        assert fire_fly.phone == "7700123456"
-        assert fire_fly.phone_country_code == "44"
         assert fire_fly.extras == {
             age_field.name: 23,
             gender_field.name: "female",
@@ -733,39 +721,32 @@ class TestTenantUserBatchCreateAndPreviewApi:
         url = reverse("organization.tenant_user.batch_create")
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        raw_user_infos.append(
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, 男, StarCoreHunter, 学习/驾驶"
-        )
+        raw_user_infos.append("dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶")
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 dotknifeboy 重复" in resp.data["message"]
 
-        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, 男, shenzhen, 阅读/驾驶"
+        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 lisi 已存在" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, 男, shenzhen"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, 55, 男, shenzhen"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "第 6 行，用户信息格式不正确，预期 8 个字段，实际 7 个字段" in resp.data["message"]
+        assert "第 6 行，用户信息格式不正确，预期 7 个字段，实际 6 个字段" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, 男, shenzhen, 阅读/驾驶"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "第 6 行，手机号 +x-xxxx 格式不正确" in resp.data["message"]
-
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, 阅读/驾驶"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, helicopter, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "helicopter 不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, 男, shenzhen, 跳跃/驾驶"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, 男, shenzhen, 跳跃/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, 男, shenzhen, 阅读/驾驶"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 1k, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]
