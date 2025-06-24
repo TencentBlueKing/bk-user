@@ -61,6 +61,17 @@ class TestTenantUserDisplayInfoRetrieveApi:
             assert resp.status_code == status.HTTP_200_OK
             assert resp.data["display_name"] == "13512345671-zhangsan--张三"
 
+    @pytest.mark.usefixtures("_init_virtual_tenant_users")
+    def test_with_virtual_user(self, api_client):
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        resp = api_client.get(
+            reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": virtual_zhangsan.id})
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["display_name"] == "zhangsan(张三)"
+        assert resp.data["login_name"] == "zhangsan"
+        assert resp.data["full_name"] == "张三"
+
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND

@@ -41,7 +41,8 @@ from bkuser.apis.open_web.serializers.users import (
     VirtualUserListOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.display_name_cache import DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -65,16 +66,25 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id=self.real_data_source_id,
-            ).select_related("data_source_user", "data_source"),
+                data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+            ).select_related("data_source_user"),
             id=kwargs["id"],
         )
+
+        if tenant_user.data_source_id == self.real_data_source_id:
+            display_name = TenantUserDisplayNameHandler.generate_tenant_user_display_name(tenant_user)
+        # 若为虚拟账号，则使用默认的 display_name 配置渲染
+        else:
+            display_name = TenantUserDisplayNameHandler.render_display_name(
+                tenant_user,
+                TenantUserDisplayNameExpressionConfig(**DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG),
+            )
 
         return Response(
             {
                 "login_name": tenant_user.data_source_user.username,
                 "full_name": tenant_user.data_source_user.full_name,
-                "display_name": TenantUserDisplayNameHandler.generate_tenant_user_display_name(tenant_user),
+                "display_name": display_name,
             }
         )
 
