@@ -1,14 +1,19 @@
 <template>
   <div :class="['virtual-account-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <header>
-      <bk-button theme="primary" @click="handleClick('add')">
-        <i class="user-icon icon-add-2 mr8" />
-        {{ $t('新建') }}
-      </bk-button>
+      <div class="flex">
+        <bk-button
+          theme="primary"
+          class="mr-[8px]"
+          @click="handleClick('add')">
+          <i class="user-icon icon-add-2 mr8" />
+          {{ $t('新建') }}
+        </bk-button>
+      </div>
       <bk-input
         class="header-right"
         v-model="searchVal"
-        :placeholder="$t('搜索用户名、姓名')"
+        :placeholder="$t('搜索用户名、全名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -22,6 +27,7 @@
       :data="tableData"
       :border="['outer']"
       :pagination="pagination"
+      :settings="settings"
       show-overflow-tooltip
       @select="handleSelect"
       @select-all="handleSelectAll"
@@ -45,28 +51,23 @@
       </template>
       <!-- 暂不支持批量操作 -->
       <!-- <bk-table-column type="selection" :width="80" align="center" /> -->
-      <bk-table-column prop="id" :label="$t('用户ID')">
+      <bk-table-column prop="username" :label="$t('用户名')">
         <template #default="{ row }">
-          <span
-            class="cursor-pointer"
-            @mouseenter="row.isShow = true"
-            @mouseleave="row.isShow = false"
-            @click="copy(row.id)"
-          >
-            {{ row.id }}
-            <i v-if="row.isShow" class="user-icon icon-copy text-[#3A84FF] text-[14px]" />
-          </span>
+          <bk-button text theme="primary" @click="handleClick('view', row.id)">{{ row.username }}</bk-button>
         </template>
       </bk-table-column>
-      <bk-table-column prop="username" :label="$t('用户名')" />
-      <bk-table-column prop="full_name" :label="$t('姓名')" />
-      <bk-table-column prop="email" :label="$t('邮箱')">
-        <template #default="{ row }">{{ row.email || '--' }}</template>
+      <bk-table-column prop="full_name" :label="$t('全名')" />
+      <bk-table-column prop="app_codes" :label="$t('所属应用')">
+        <template #default="{ row }">
+          {{ row.app_codes?.length ? row.app_codes?.join(', ') : '--' }}
+        </template>
       </bk-table-column>
-      <bk-table-column prop="phone" :label="$t('手机号')">
-        <template #default="{ row }">{{ row.phone || '--' }}</template>
+      <bk-table-column prop="owners" :label="$t('账号责任人')">
+        <template #default="{ row }">
+          <bk-user-display-name :user-id="row.owners"></bk-user-display-name>
+        </template>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="150">
+      <bk-table-column prop="action" :label="$t('操作')" width="160">
         <template #default="{ row }">
           <bk-button class="mr-[8px]" theme="primary" text @click="handleClick('edit', row.id)">
             {{ $t('编辑') }}
@@ -79,15 +80,30 @@
     <bk-sideslider
       :width="640"
       :is-show="detailsConfig.isShow"
-      :title="detailsConfig.title"
       render-directive="if"
       :before-close="handleBeforeClose"
       quick-close
     >
+      <template #header>
+        <div class="flex justify-between w-full pr-[15px]">
+          <div>{{ detailsConfig.title }}</div>
+          <bk-button
+            v-if="detailsConfig.type === 'view'"
+            outline
+            theme="primary"
+            @click="handleClick('edit')">
+            {{ $t('编辑') }}
+          </bk-button>
+        </div>
+      </template>
       <EditDetails
+        v-if="detailsConfig.type !== 'view'"
         :details-info="detailsInfo"
         @update-users="updateUsers"
         @handle-cancel-edit="handleCancelEdit" />
+      <ViewDetails
+        v-else
+        :details-info="detailsInfo" />
     </bk-sideslider>
   </div>
 </template>
@@ -97,12 +113,12 @@ import { InfoBox, Message } from 'bkui-vue';
 import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 
 import EditDetails from './EditDetails.vue';
+import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/SearchEmpty.vue';
 import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
-import { copy } from '@/utils';
 
 const userStore = useUser();
 
@@ -166,9 +182,8 @@ const handleSelectAll = ({ checked, data }) => {
 const detailsInfo = ref({
   username: '',
   full_name: '',
-  email: '',
-  phone: '',
-  phone_country_code: '86',
+  app_codes: '',
+  owners: [],
 });
 
 // 侧栏配置
@@ -178,35 +193,65 @@ const detailsConfig = reactive({
   type: '',
 });
 
+const settings = {
+  fields: [
+    {
+      label: t('用户名'),
+      field: 'username',
+    },
+    {
+      label: t('全名'),
+      field: 'full_name',
+    },
+    {
+      label: t('所属应用'),
+      field: 'app_codes',
+    },
+    {
+      label: t('账号责任人'),
+      field: 'owners',
+    },
+  ],
+  checked: ['username', 'full_name', 'app_codes', 'owners'],
+};
+
 const enumData = {
   add: {
-    title: t('新增用户'),
+    title: t('新建虚拟账户'),
     type: 'add',
   },
+  view: {
+    title: t('账号详情'),
+    type: 'view',
+  },
   edit: {
-    title: t('编辑用户'),
+    title: t('编辑虚拟账户'),
     type: 'edit',
   },
 };
-
+const isViewToEdit = ref(false);
 watch(() => detailsConfig.isShow, (val) => {
   if (!val) {
     nextTick(() => {
       detailsInfo.value = {
         username: '',
         full_name: '',
-        email: '',
-        phone: '',
-        phone_country_code: '86',
+        app_codes: '',
+        owners: [],
       };
+      isViewToEdit.value = false;
     });
   }
 });
 
 const handleClick = async (type: string, id?: string) => {
-  if (type !== 'add') {
+  if (type !== 'add' && !isViewToEdit.value) {
     const res = await getVirtualUsersDetail(id);
     detailsInfo.value = res.data;
+    detailsInfo.value.app_codes = res.data?.app_codes.join(',');
+    if (type === 'view') {
+      isViewToEdit.value = true;
+    }
   }
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
