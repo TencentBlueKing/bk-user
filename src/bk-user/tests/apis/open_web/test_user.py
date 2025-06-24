@@ -264,7 +264,7 @@ class TestTenantUserSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id}
-        assert {t["display_name"] for t in resp.data} == {"86-13512345671--zhangsan@m.com"}
+        assert {t["display_name"] for t in resp.data} == {"86-13512345671--zhangsan@m.com", "zhangsan(张三)"}
 
     def test_with_collaboration_tenant_by_other_expression(
         self, api_client, collaboration_tenant, display_name_expression_config_with_collaboration_tenant_user
