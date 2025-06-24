@@ -24,13 +24,13 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.my_virtual_user.serializers import (
     TenantUserVirtualUserListInputSLZ,
     TenantUserVirtualUserListOutputSLZ,
     TenantUserVirtualUserRetrieveOutputSLZ,
     TenantUserVirtualUserUpdateInputSLZ,
 )
-from bkuser.apis.web.virtual_user.mixins import CurrentTenantVirtualDataSource
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -98,7 +98,7 @@ class TenantUserVirtualUserListApi(generics.ListAPIView):
 
 
 class TenantUserVirtualUserRetrieveUpdateApi(
-    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
+    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
