@@ -461,3 +461,122 @@ class SignInTenantUserCreateApi(View):
         request.session.clear()
 
         return response
+
+
+# 确保无论何时，响应必然有 CSRFToken Cookie
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class BuiltinManagementLoginView(View):
+    """
+    内置管理员登录页面
+    """
+
+    template_name = "index.html"
+
+    def get(self, request, *args, **kwargs):
+        """登录页面"""
+        # 返回登录页面
+        return render(request, self.template_name)
+
+
+class BuiltinManagementAuthenticateView(View):
+    def post(self, request, *args, **kwargs):
+        """
+        内置管理员登录认证
+        """
+        idp_id = kwargs["idp_id"]
+        # 获取认证源信息
+        idp = bk_user_api.get_idp(idp_id)
+        if idp.status != IdpStatus.ENABLED:
+            raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
+
+        sign_in_tenant_id = idp.owner_tenant_id
+
+        #  (1) 获取插件
+        try:
+            plugin_cls = get_plugin_cls(idp.plugin.id)
+        except NotImplementedError as error:
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 获取插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
+            )
+
+        # （2）初始化插件
+        try:
+            plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
+            plugin = plugin_cls(cfg=plugin_cfg)
+        except pydantic.ValidationError:
+            logger.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            # Note: 不可将 error 对外，因为配置信息比较敏感
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 初始化插件配置 [{}] 失败").format(idp.name, idp.plugin.name),
+            )
+        except Exception as error:
+            logger.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 加载插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
+            )
+
+        idp_info = IdpBasicInfo(id=idp.id, name=idp.name, plugin_id=idp.plugin.id, plugin_name=idp.plugin.name)
+        assert isinstance(plugin, BaseCredentialIdpPlugin)
+
+        plugin_error_context = PluginErrorContext(
+            idp=idp_info, action=BuiltinActionEnum.AUTHENTICATE, http_method=AllowedHttpMethodEnum.POST
+        )
+        user_infos = self.wrap_plugin_error(plugin_error_context, plugin.authenticate_credentials, request=request)
+        # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
+        tenant_users = self._auth_backend(request, sign_in_tenant_id, idp.id, user_infos)
+
+        # 身份凭证认证直接返回成功即可，由前端重定向路由到用户列表选择页面
+        response = APISuccessResponse({"redirect_uri": bk_user_api.get_global_setting().bk_user_url})
+        # 生成 Cookie
+        bk_token, expired_at = BkTokenManager().generate(tenant_users[0]["id"])
+        # 设置 Cookie
+        response.set_cookie(
+            settings.BK_TOKEN_COOKIE_NAME,
+            bk_token,
+            expires=expired_at,
+            domain=settings.BK_COOKIE_DOMAIN,
+            httponly=True,
+            secure=False,
+        )
+
+        # 删除 Session
+        request.session.clear()
+
+        return response
+
+    def wrap_plugin_error(self, context: PluginErrorContext, func: Callable, *func_args, **func_kwargs):
+        """统一捕获插件异常"""
+        try:
+            return func(*func_args, **func_kwargs)
+        except ParseRequestBodyError as e:
+            raise error_codes.INVALID_ARGUMENT.f(str(e), replace=True)
+        except (InvalidParamError, ValidationError) as e:
+            raise error_codes.VALIDATION_ERROR.f(str(e), replace=True)
+        except UnexpectedDataError as e:
+            raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
+        except Exception:
+            logger.exception(
+                "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
+                context.idp.id,
+                context.action,
+                context.http_method,
+                context.idp.plugin_id,
+            )
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 执行插件 [{}] 失败").format(context.idp.name, context.idp.plugin_name),
+            )
+
+    def _auth_backend(
+        self, request, sign_in_tenant_id: str, idp_id: str, user_infos: Dict[str, Any] | List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """认证：认证源数据与数据源匹配"""
+        if isinstance(user_infos, dict):
+            user_infos = [user_infos]
+
+        tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp_id, user_infos)
+        if not tenant_users:
+            raise error_codes.OBJECT_NOT_FOUND.f(
+                _("认证成功，但用户在租户 ({}) 下未有对应账号").format(sign_in_tenant_id),
+            )
+
+        return [i.model_dump(include={"id", "username", "full_name"}) for i in tenant_users]

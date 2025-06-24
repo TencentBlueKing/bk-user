@@ -111,7 +111,7 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         # TODO: 密码错误次数检测&锁定，如何实现？
         #  不同数据源配置，key=(data_source_id, username)，错误次数如何计算？如何锁定？
 
-        # 由于密码是Hash并加盐, 无法直接查询DB匹配，只能一个个遍历匹配
+        # 由于密码是 Hash 并加盐，无法直接查询 DB 匹配，只能一个个遍历匹配
         users = LocalDataSourceIdentityInfo.objects.filter(
             data_source_id__in=data["data_source_ids"], username=data["username"]
         )
@@ -121,12 +121,12 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         if not matched_users:
             raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
 
-        # Q: 为什么这里不对用户状态、数据源状态、“是否首次登录检测并强制修改” 等进行检测呢？
+        # Q: 为什么这里不对用户状态、数据源状态、“是否首次登录检测并强制修改”等进行检测呢？
         # A: [单一职责] 这里只对用户的凭证进行认证，并不是与登录绑定
         #  多租户下，认证后的数据源用户，
-        #  还需要根据匹配规则和租户信息等最终匹配到租户用户(即对外的蓝鲸用户)，这些是在登录流程里的
+        #  还需要根据匹配规则和租户信息等最终匹配到租户用户 (即对外的蓝鲸用户)，这些是在登录流程里的
 
-        # FIXME (nan): 密码过期检测，过期需要返回重置URI
+        # FIXME (nan): 密码过期检测，过期需要返回重置 URI
 
         return Response(LocalUserCredentialAuthenticateOutputSLZ(instance=matched_users, many=True).data)
 
@@ -141,7 +141,7 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             source_status=CollaborationStrategyStatus.ENABLED, target_status=CollaborationStrategyStatus.ENABLED
         ).values("source_tenant_id", "target_tenant_id")
 
-        # 所有启用的租户, 对于协同场景，不过滤不可见的
+        # 所有启用的租户，对于协同场景，不过滤不可见的
         tenant_map = {t.id: t for t in Tenant.objects.filter(status=TenantStatus.ENABLED)}
 
         # 每个租户对应的协同租户列表
@@ -163,9 +163,6 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         # 根据指定的租户 ID(s) 查询
         if tenant_ids := data["tenant_ids"]:
             queryset = queryset.filter(id__in=tenant_ids)
-        else:
-            # 无指定需查询的租户，则只查询可见的租户
-            queryset = queryset.filter(visible=True)
 
         return queryset
 
@@ -212,7 +209,7 @@ class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
 
 
 class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
-    """通过IDP的用户信息匹配到蓝鲸用户"""
+    """通过 IDP 的用户信息匹配到蓝鲸用户"""
 
     def post(self, request, *args, **kwargs):
         slz = TenantUserMatchInputSLZ(data=request.data)
@@ -231,9 +228,9 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
             raise error_codes.OBJECT_NOT_FOUND.f(_("认证源 {} 不存在").format(idp_id))
 
         # FIXME: 查询是绑定匹配还是直接匹配，
-        #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
+        #  一般社会化登录都得通过绑定匹配方式，比如 QQ，用户得先绑定后才能使用 QQ 登录
         #  直接匹配，一般是企业身份登录方式，
-        #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
+        #  比如企业内部 SAML2.0 登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
         data_source_user_ids = AuthenticationMatcher(idp_id).match(data["idp_users"])
 
         # 查询租户用户
