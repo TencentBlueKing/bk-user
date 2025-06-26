@@ -24,13 +24,13 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apis.web.my_virtual_user.serializers import (
-    TenantUserVirtualUserListInputSLZ,
-    TenantUserVirtualUserListOutputSLZ,
-    TenantUserVirtualUserRetrieveOutputSLZ,
-    TenantUserVirtualUserUpdateInputSLZ,
+from bkuser.apis.web.me.serializers import (
+    MeVirtualUserListInputSLZ,
+    MeVirtualUserListOutputSLZ,
+    MeVirtualUserRetrieveOutputSLZ,
+    MeVirtualUserUpdateInputSLZ,
 )
+from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -39,22 +39,23 @@ from bkuser.biz.auditor import VirtualUserAuditor
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class TenantUserVirtualUserListApi(generics.ListAPIView):
-    serializer_class = TenantUserVirtualUserListOutputSLZ
+class MeVirtualUserListApi(generics.ListAPIView):
+    serializer_class = MeVirtualUserListOutputSLZ
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = TenantUserVirtualUserListInputSLZ(data=self.request.query_params)
+        slz = MeVirtualUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         current_tenant_user_id = self.request.user.username
         # 过滤当前租户用户关联的虚拟用户
-        queryset = TenantUser.objects.filter(
-            id__in=VirtualUserOwnerRelation.objects.filter(owner_id=current_tenant_user_id).values_list(
+        virtual_user_ids = list(
+            VirtualUserOwnerRelation.objects.filter(owner_id=current_tenant_user_id).values_list(
                 "tenant_user_id", flat=True
-            ),
-        ).select_related("data_source_user")
+            )
+        )
+        queryset = TenantUser.objects.filter(id__in=virtual_user_ids).select_related("data_source_user")
 
         # 关键字过滤
         if keyword := data.get("keyword"):
@@ -65,8 +66,6 @@ class TenantUserVirtualUserListApi(generics.ListAPIView):
 
     def get_serializer_context(self):
         queryset = self.paginate_queryset(self.get_queryset())
-        if queryset is None:
-            return {"app_code_map": {}, "owner_map": {}}
         virtual_user_ids = [user.id for user in queryset]
 
         app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=virtual_user_ids).values_list(
@@ -88,21 +87,19 @@ class TenantUserVirtualUserListApi(generics.ListAPIView):
         return {"app_code_map": app_code_map, "owner_map": owner_map}
 
     @swagger_auto_schema(
-        tags=["my_virtual_user"],
+        tags=["me"],
         operation_description="虚拟用户列表",
-        query_serializer=TenantUserVirtualUserListInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserVirtualUserListOutputSLZ(many=True)},
+        query_serializer=MeVirtualUserListInputSLZ(),
+        responses={status.HTTP_200_OK: MeVirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserVirtualUserRetrieveUpdateApi(
-    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
-):
+class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
-    serializer_class = TenantUserVirtualUserRetrieveOutputSLZ
+    serializer_class = MeVirtualUserRetrieveOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
@@ -111,14 +108,14 @@ class TenantUserVirtualUserRetrieveUpdateApi(
         )
 
     @swagger_auto_schema(
-        tags=["my_virtual_user"],
+        tags=["me"],
         operation_description="虚拟用户更新",
-        request_body=TenantUserVirtualUserUpdateInputSLZ(),
+        request_body=MeVirtualUserUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        slz = TenantUserVirtualUserUpdateInputSLZ(data=request.data)
+        slz = MeVirtualUserUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -127,15 +124,15 @@ class TenantUserVirtualUserRetrieveUpdateApi(
             VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True)
         )
         new_app_codes = set(data["app_codes"])
-        app_codes_to_delete = current_app_codes - new_app_codes
-        app_codes_to_create = new_app_codes - current_app_codes
+        should_deleted_app_codes = current_app_codes - new_app_codes
+        should_created_app_codes = new_app_codes - current_app_codes
         # 计算责任人变更
         current_owners = set(
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
         )
         new_owners = set(data["owners"])
-        owners_to_delete = current_owners - new_owners
-        owners_to_create = new_owners - current_owners
+        should_deleted_owners = current_owners - new_owners
+        should_created_owners = new_owners - current_owners
 
         # 【审计】创建虚拟用户审计对象并记录变更前的数据
         auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
@@ -150,37 +147,37 @@ class TenantUserVirtualUserRetrieveUpdateApi(
 
             # 更新虚拟用户与应用的关联
             # 需要删除的关系
-            if app_codes_to_delete:
+            if should_created_app_codes:
                 VirtualUserAppRelation.objects.filter(
-                    tenant_user=tenant_user, app_code__in=app_codes_to_delete
+                    tenant_user=tenant_user, app_code__in=should_deleted_app_codes
                 ).delete()
             # 需要新增的关系
-            if app_codes_to_create:
+            if should_created_app_codes:
                 VirtualUserAppRelation.objects.bulk_create(
                     [
                         VirtualUserAppRelation(
                             tenant_user=tenant_user,
                             app_code=app_code,
                         )
-                        for app_code in app_codes_to_create
+                        for app_code in should_created_app_codes
                     ]
                 )
 
             # 更新虚拟用户与责任人的关联
             # 需要删除的关系
-            if owners_to_delete:
+            if should_deleted_owners:
                 VirtualUserOwnerRelation.objects.filter(
-                    tenant_user=tenant_user, owner_id__in=owners_to_delete
+                    tenant_user=tenant_user, owner_id__in=should_deleted_owners
                 ).delete()
             # 需要新增的关系
-            if owners_to_create:
+            if should_created_owners:
                 VirtualUserOwnerRelation.objects.bulk_create(
                     [
                         VirtualUserOwnerRelation(
                             tenant_user=tenant_user,
                             owner_id=owner,
                         )
-                        for owner in owners_to_create
+                        for owner in should_created_owners
                     ]
                 )
 
@@ -190,9 +187,9 @@ class TenantUserVirtualUserRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        tags=["my_virtual_user"],
+        tags=["me"],
         operation_description="虚拟用户详情",
-        responses={status.HTTP_200_OK: TenantUserVirtualUserRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: MeVirtualUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)

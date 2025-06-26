@@ -25,11 +25,11 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
 
 
-class TenantUserVirtualUserListInputSLZ(serializers.Serializer):
+class MeVirtualUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
 
 
-class TenantUserVirtualUserListOutputSLZ(serializers.Serializer):
+class MeVirtualUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
@@ -63,7 +63,7 @@ def _validate_owners(owners: List[str]) -> List[str]:
     return owners
 
 
-class TenantUserVirtualUserUpdateInputSLZ(serializers.Serializer):
+class MeVirtualUserUpdateInputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名")
     app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
@@ -76,7 +76,7 @@ class TenantUserVirtualUserUpdateInputSLZ(serializers.Serializer):
         return _validate_owners(owners)
 
 
-class TenantUserVirtualUserRetrieveOutputSLZ(serializers.Serializer):
+class MeVirtualUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")

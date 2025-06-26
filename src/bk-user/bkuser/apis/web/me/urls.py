@@ -21,12 +21,12 @@ from . import views
 urlpatterns = [
     path(
         "virtual-users/",
-        views.TenantUserVirtualUserListApi.as_view(),
-        name="my_virtual_user.virtual_users.list",
+        views.MeVirtualUserListApi.as_view(),
+        name="me.virtual_users.list",
     ),
     path(
         "virtual-users/<str:id>/",
-        views.TenantUserVirtualUserRetrieveUpdateApi.as_view(),
-        name="my_virtual_user.virtual_users.retrieve_update",
+        views.MeVirtualUserRetrieveUpdateApi.as_view(),
+        name="me.virtual_users.retrieve_update",
     ),
 ]

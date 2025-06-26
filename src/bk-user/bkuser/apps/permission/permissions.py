@@ -67,9 +67,7 @@ def perm_class(action: PermAction):  # noqa: C901
                     return False
 
                 # 检查当前用户是否是虚拟用户的责任人，或是同一自然人用户（跨租户访问）
-                return is_same_nature_user(obj.id, cur_tenant_id, username) or is_virtual_user_owner(
-                    obj.id, cur_tenant_id, username
-                )
+                return is_same_nature_user(obj.id, cur_tenant_id, username) or is_virtual_user_owner(obj.id, username)
 
             # 租户权限与具体对象有关系的，需要根据具体对象确定关联的租户后再鉴权
             if action == PermAction.MANAGE_TENANT:
@@ -119,7 +117,8 @@ def is_tenant_manager(tenant_id: str, username: str) -> bool:
 
 
 def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) -> bool:
-    """判断是否同一自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
+    """
+    判断是否同一自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
 
     :param req_username: 待访问租户用户名
     :param cur_tenant_id: 当前用户的租户 ID
@@ -145,17 +144,14 @@ def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) ->
     return TenantUser.objects.filter(id=req_username, data_source_user__in=data_source_user_ids).exists()
 
 
-def is_virtual_user_owner(virtual_user_id: str, cur_tenant_id: str, owner_username: str) -> bool:
-    """判断当前用户是否为指定虚拟用户的责任人
+def is_virtual_user_owner(virtual_user_id: str, owner: str) -> bool:
+    """
+    判断当前用户是否为指定虚拟用户的责任人
 
     :param virtual_user_id: 待检查的虚拟用户 ID
-    :param cur_tenant_id: 当前用户的租户 ID
-    :param owner_username: 当前用户的用户名 (责任人用户名)
+    :param owner: 当前用户的用户 ID
     """
-    # 两者应该为同一个租户下
-    if not TenantUser.objects.filter(tenant_id=cur_tenant_id, id=virtual_user_id).exists():
-        return False
-    return VirtualUserOwnerRelation.objects.filter(owner_id=owner_username, tenant_user_id=virtual_user_id).exists()
+    return VirtualUserOwnerRelation.objects.filter(owner_id=owner, tenant_user_id=virtual_user_id).exists()
 
 
 def get_user_role(tenant_id: str, username: str) -> UserRole:
