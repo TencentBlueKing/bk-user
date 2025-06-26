@@ -98,7 +98,7 @@ class LoginView(View):
         bk_token = request.COOKIES.get(settings.BK_TOKEN_COOKIE_NAME)
         if is_from_logout and bk_token:
             BkTokenManager.set_invalid(bk_token)
-            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME)
+            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME, domain=settings.BK_COOKIE_DOMAIN)
 
         return response
 
