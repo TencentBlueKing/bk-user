@@ -52,7 +52,9 @@ class TestVirtualUserCreateApi:
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
         ) == set(data["owners"])
 
+    @pytest.mark.usefixtures("_init_cross_tenant_user")
     def test_create_virtual_user_invalid_owner(self, api_client):
+        # 不存在的责任人
         data = {
             "username": "virtual_user_4",
             "full_name": "测试用户_4",
@@ -61,7 +63,13 @@ class TestVirtualUserCreateApi:
         }
         resp = api_client.post(reverse("virtual_user.list_create"), data=data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
+        assert "用户 {'zhangwei'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
+
+        # 不属于当前租户的责任人
+        data["owners"] = ["lisi", "wangwu", "cross_tenant_user"]
+        resp = api_client.post(reverse("virtual_user.list_create"), data=data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户 {'cross_tenant_user'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
 
 
 class TestVirtualUserListApi:
@@ -141,8 +149,11 @@ class TestVirtualUserUpdateApi:
             "lushi",
         }
 
+    @pytest.mark.usefixtures("_init_cross_tenant_user")
     def test_update_virtual_user_with_invalid_owner(self, api_client):
         url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
+
+        # 不存在的责任人
         resp = api_client.put(
             url,
             data={
@@ -152,7 +163,19 @@ class TestVirtualUserUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
+        assert "用户 {'zhangwei'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
+
+        # 不属于当前租户的责任人
+        resp = api_client.put(
+            url,
+            data={
+                "full_name": "测试虚拟用户",
+                "app_codes": ["app3", "app4"],
+                "owners": ["freedom", "lushi", "cross_tenant_user"],
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户 {'cross_tenant_user'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
 
 
 @pytest.mark.usefixtures("_init_virtual_users")

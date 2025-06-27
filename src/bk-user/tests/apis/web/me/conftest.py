@@ -16,18 +16,20 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserIDGenerateConfig,
-    VirtualUserAppRelation,
-    VirtualUserOwnerRelation,
 )
 from bkuser.auth.models import User
+from bkuser.biz.virtual_user import VirtualUserHandler
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from rest_framework.test import APIClient
 
-from tests.test_utils.tenant import sync_users_depts_to_tenant
+from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -45,18 +47,38 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 
 
 @pytest.fixture
-def auth_user(random_tenant) -> User:
-    """用户认证后的 user 对象"""
-    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", tenant=random_tenant)
-    user, _ = User.objects.get_or_create(username=zhangsan.id)
-    user.set_property("tenant_id", random_tenant.id)
-    return user
+def _init_cross_tenant_user() -> None:
+    tenant = create_tenant("cross_tenant_id")
+    data_source, _ = DataSource.objects.get_or_create(
+        type=DataSourceTypeEnum.REAL,
+        owner_tenant_id=tenant.id,
+        defaults={
+            "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
+            "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
+        },
+    )
+    ds_user = DataSourceUser.objects.create(
+        username="cross_tenant_ds_user",
+        code="cross_tenant_ds_user",
+        data_source=data_source,
+        full_name="cross_tenant_ds_user",
+    )
+    TenantUser.objects.create(
+        tenant=tenant,
+        data_source_user=ds_user,
+        data_source=data_source,
+        id="cross_tenant_user",
+    )
 
 
 @pytest.fixture
-def api_client(auth_user) -> APIClient:
+def api_client(random_tenant) -> APIClient:
+    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", tenant=random_tenant)
+    user, _ = User.objects.get_or_create(username=zhangsan.id)
+    user.set_property("tenant_id", random_tenant.id)
+
     client = APIClient()
-    client.force_authenticate(user=auth_user)
+    client.force_authenticate(user=user)
     return client
 
 
@@ -108,22 +130,6 @@ def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_da
             data_source=bare_virtual_data_source,
         )
         # 创建 app_code 关联
-        VirtualUserAppRelation.objects.bulk_create(
-            [
-                VirtualUserAppRelation(
-                    tenant_user=tenant_user,
-                    app_code=app_code,
-                )
-                for app_code in virtual_user["app_codes"]
-            ]
-        )
+        VirtualUserHandler.set_app_codes(tenant_user, list(virtual_user["app_codes"]))
         # 创建责任人关联
-        VirtualUserOwnerRelation.objects.bulk_create(
-            [
-                VirtualUserOwnerRelation(
-                    tenant_user=tenant_user,
-                    owner_id=owner,
-                )
-                for owner in virtual_user["owners"]
-            ]
-        )
+        VirtualUserHandler.set_owners(tenant_user, list(virtual_user["owners"]))

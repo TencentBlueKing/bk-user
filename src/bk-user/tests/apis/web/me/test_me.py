@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 import pytest
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
 from django.urls import reverse
@@ -124,3 +125,18 @@ class TestMeVirtualUserUpdateApi:
             data={"full_name": "虚拟用户的新名字", "app_codes": ["app4", "app5"], "owners": ["zhangsan", "wangwu"]},
         )
         assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.usefixtures("_init_cross_tenant_user")
+    def test_update_virtual_user_with_owner_cross_tenant(self, api_client):
+        url = reverse("me.virtual_users.retrieve_update", kwargs={"id": "virtual_user_1"})
+        assert TenantUser.objects.filter(id="cross_tenant_user").exists()
+        resp = api_client.put(
+            url,
+            data={
+                "full_name": "虚拟用户的新名字",
+                "app_codes": ["app4", "app5"],
+                "owners": ["zhangsan", "wangwu", "cross_tenant_user"],
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户 {'cross_tenant_user'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]

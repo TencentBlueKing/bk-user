@@ -39,26 +39,26 @@ class MeVirtualUserListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_app_codes(self, obj: TenantUser) -> List[str]:
-        return self.context["app_code_map"][obj.id]
+        return self.context["app_codes_map"][obj.id]
 
     @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
     def get_owners(self, obj: TenantUser) -> List[str]:
-        return self.context["owner_map"][obj.id]
+        return self.context["owners_map"][obj.id]
 
 
-def _validate_owners(owners: List[str]) -> List[str]:
+def _validate_owners(owners: List[str], tenant_id: str) -> List[str]:
     """
     校验责任人列表
-    1. 去重
-    2. 检查每个责任人是否存在且为实体用户
+    1. 检查每个责任人是否存在且为实体用户
+    2. 检查每个责任人都应属于当前租户
     """
-    found_owners = set(
-        TenantUser.objects.filter(id__in=owners, data_source__type=DataSourceTypeEnum.REAL).values_list(
-            "id", flat=True
-        )
+    valid_owners = set(
+        TenantUser.objects.filter(
+            id__in=owners, tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+        ).values_list("id", flat=True)
     )
-    if invalid_owners := set(owners) - found_owners:
-        raise ValidationError(_("用户 {} 不存在或不是实体用户").format(invalid_owners))
+    if invalid_owners := set(owners) - valid_owners:
+        raise ValidationError(_("用户 {} 不存在、不是实体用户或不属于当前租户").format(invalid_owners))
 
     return owners
 
@@ -73,7 +73,8 @@ class MeVirtualUserUpdateInputSLZ(serializers.Serializer):
         return list(set(app_codes))
 
     def validate_owners(self, owners: List[str]) -> List[str]:
-        return _validate_owners(owners)
+        tenant_id = self.context["tenant_id"]
+        return _validate_owners(owners, tenant_id)
 
 
 class MeVirtualUserRetrieveOutputSLZ(serializers.Serializer):

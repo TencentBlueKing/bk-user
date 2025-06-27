@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 17:05+0800\n"
+"POT-Creation-Date: 2025-06-27 11:41+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -244,7 +244,7 @@ msgstr "An auth source with the same name already exists"
 
 #: bkuser/apis/web/idp/serializers.py:79
 msgid ""
-"{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组"
+"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组"
 "成，以字母开头并以字母或数字结尾"
 msgstr ""
 "{} does not meet the naming requirements for auth source fields: must be "
@@ -297,10 +297,10 @@ msgstr "Data source is not configured or is not a local type data source"
 msgid "本地账密登录已存在"
 msgstr "Local account password login already exists"
 
-#: bkuser/apis/web/my_virtual_user/serializers.py:60
-#: bkuser/apis/web/virtual_user/serializers.py:55
-msgid "用户 {} 不存在或不是实体用户"
-msgstr "User {} is not exists or is not a real User"
+#: bkuser/apis/web/me/serializers.py:61
+#: bkuser/apis/web/virtual_user/serializers.py:56
+msgid "用户 {} 不存在、不是实体用户或不属于当前租户"
+msgstr "User {} does not exist, is not a real user, or does not belong to the current tenant"
 
 #: bkuser/apis/web/organization/serializers/departments.py:37
 msgid "指定的父部门在当前租户中不存在"
@@ -671,8 +671,8 @@ msgstr "Tenant ID {} is already in use"
 
 #: bkuser/apis/web/platform_management/serializers.py:111
 msgid ""
-"{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
+"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
 msgstr ""
 "{} does not meet the naming requirements for Tenant ID: must be composed of "
 "3-32 lowercase letters, digits, or hyphens (-), starting with a lowercase "
@@ -1346,7 +1346,7 @@ msgstr "Exceeded the limit for sending times"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-)"
 "字符组成，以字母或数字开头及结尾"
 msgstr ""
 "{} does not meet the naming requirements for Username: must be composed of "
@@ -1355,7 +1355,7 @@ msgstr ""
 
 #: bkuser/biz/validators.py:55
 msgid ""
-"{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字"
+"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，以字"
 "母开头，字母或数字结尾"
 msgstr ""
 "{} does not meet the naming requirements for Custom Fields: must be composed "
@@ -1950,7 +1950,7 @@ msgstr ""
 
 #: bkuser/plugins/general/plugin.py:95
 msgid ""
-"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
+"连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
 "{}"
 msgstr ""
 "Connection test failed: unable to establish connection or request timed out, "
@@ -2136,7 +2136,7 @@ msgstr "Required field {} in the file to be imported has empty values"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符"
 "组成，以字母或数字开头及结尾"
 msgstr ""
 "Username {} does not meet the naming requirements: must be composed of 2-32 "
@@ -2178,5 +2178,5 @@ msgstr "new message"
 #~ "Tenant {} display_name expression config not found, please contact "
 #~ "administrator"
 
-#~ msgid "表达式 {} 不合法: {}"
+#~ msgid "表达式 {} 不合法：{}"
 #~ msgstr "Expression {} is invalid: {}"

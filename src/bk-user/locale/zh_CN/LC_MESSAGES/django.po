@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 17:05+0800\n"
+"POT-Creation-Date: 2025-06-27 11:41+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -153,7 +153,7 @@ msgstr "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 
 #: bkuser/apis/web/data_source/serializers.py:290
 msgid "密码规则配置不合法: {}"
-msgstr "密码规则配置不合法: {}"
+msgstr "密码规则配置不合法：{}"
 
 #: bkuser/apis/web/data_source/serializers.py:298
 msgid "指定数据源不存在"
@@ -221,10 +221,10 @@ msgstr "同名认证源已存在"
 
 #: bkuser/apis/web/idp/serializers.py:79
 msgid ""
-"{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组"
+"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组"
 "成，以字母开头并以字母或数字结尾"
 msgstr ""
-"{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组"
+"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组"
 "成，以字母开头并以字母或数字结尾"
 
 #: bkuser/apis/web/idp/serializers.py:101
@@ -269,10 +269,10 @@ msgstr "数据源未配置或非本地类型数据源"
 msgid "本地账密登录已存在"
 msgstr "本地账密登录已存在"
 
-#: bkuser/apis/web/my_virtual_user/serializers.py:60
-#: bkuser/apis/web/virtual_user/serializers.py:55
-msgid "用户 {} 不存在或不是实体用户"
-msgstr "用户 {} 不存在或不是实体用户"
+#: bkuser/apis/web/me/serializers.py:61
+#: bkuser/apis/web/virtual_user/serializers.py:56
+msgid "用户 {} 不存在、不是实体用户或不属于当前租户"
+msgstr "用户 {} 不存在、不是实体用户或不属于当前租户"
 
 #: bkuser/apis/web/organization/serializers/departments.py:37
 msgid "指定的父部门在当前租户中不存在"
@@ -290,7 +290,7 @@ msgstr "上级部门中存在同名部门：{}"
 #: bkuser/apis/web/organization/serializers/departments.py:97
 #: bkuser/apis/web/organization/serializers/departments.py:132
 msgid "部门名称不允许包含斜杠(/)"
-msgstr "部门名称不允许包含斜杠(/)"
+msgstr "部门名称不允许包含斜杠 (/)"
 
 #: bkuser/apis/web/organization/serializers/departments.py:191
 msgid "自己不能成为自己的子部门"
@@ -624,11 +624,11 @@ msgstr "租户 ID {} 已被使用"
 
 #: bkuser/apis/web/platform_management/serializers.py:111
 msgid ""
-"{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
+"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
 msgstr ""
-"{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
+"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
 
 #: bkuser/apis/web/platform_management/serializers.py:124
 msgid "密码不符合密码规则：{}"
@@ -758,7 +758,7 @@ msgstr "表达式中非字段部分的字符数不能超过 16 个"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:310
 msgid "表达式中存在无效字段: {}"
-msgstr "表达式中存在无效字段: {}"
+msgstr "表达式中存在无效字段：{}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:314
 msgid "表达式中必须存在唯一字段"
@@ -830,7 +830,7 @@ msgstr "创建租户用户"
 
 #: bkuser/apps/audit/constants.py:52
 msgid "创建用户-部门关系"
-msgstr "创建用户-部门关系"
+msgstr "创建用户 - 部门关系"
 
 #: bkuser/apps/audit/constants.py:53
 msgid "创建协同租户用户"
@@ -846,11 +846,11 @@ msgstr "修改租户用户"
 
 #: bkuser/apps/audit/constants.py:57
 msgid "修改用户-上级关系"
-msgstr "修改用户-上级关系"
+msgstr "修改用户 - 上级关系"
 
 #: bkuser/apps/audit/constants.py:58
 msgid "修改用户-部门关系"
-msgstr "修改用户-部门关系"
+msgstr "修改用户 - 部门关系"
 
 #: bkuser/apps/audit/constants.py:59
 msgid "修改用户状态"
@@ -882,11 +882,11 @@ msgstr "删除租户用户"
 
 #: bkuser/apps/audit/constants.py:67
 msgid "删除用户-上级关系"
-msgstr "删除用户-上级关系"
+msgstr "删除用户 - 上级关系"
 
 #: bkuser/apps/audit/constants.py:68
 msgid "删除用户-部门关系"
-msgstr "删除用户-部门关系"
+msgstr "删除用户 - 部门关系"
 
 #: bkuser/apps/audit/constants.py:69
 msgid "删除协同租户用户"
@@ -906,7 +906,7 @@ msgstr "创建协同租户部门"
 
 #: bkuser/apps/audit/constants.py:77
 msgid "创建部门-父部门关系"
-msgstr "创建部门-父部门关系"
+msgstr "创建部门 - 父部门关系"
 
 #: bkuser/apps/audit/constants.py:78
 msgid "修改数据源部门"
@@ -918,7 +918,7 @@ msgstr "修改租户部门"
 
 #: bkuser/apps/audit/constants.py:80
 msgid "修改部门-父部门关系"
-msgstr "修改部门-父部门关系"
+msgstr "修改部门 - 父部门关系"
 
 #: bkuser/apps/audit/constants.py:81
 msgid "删除数据源部门"
@@ -934,7 +934,7 @@ msgstr "删除协同租户部门"
 
 #: bkuser/apps/audit/constants.py:86
 msgid "删除部门-父部门关系"
-msgstr "删除部门-父部门关系"
+msgstr "删除部门 - 父部门关系"
 
 #: bkuser/apps/audit/constants.py:89
 msgid "创建租户"
@@ -1278,18 +1278,18 @@ msgstr "超过发送次数限制"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-)"
 "字符组成，以字母或数字开头及结尾"
 msgstr ""
-"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
+"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-)"
 "字符组成，以字母或数字开头及结尾"
 
 #: bkuser/biz/validators.py:55
 msgid ""
-"{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字"
+"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，以字"
 "母开头，字母或数字结尾"
 msgstr ""
-"{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字"
+"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，以字"
 "母开头，字母或数字结尾"
 
 #: bkuser/biz/validators.py:66
@@ -1458,7 +1458,7 @@ msgstr "操作过于频繁"
 
 #: bkuser/common/error_codes.py:82
 msgid "调用外部系统API异常"
-msgstr "调用外部系统API异常"
+msgstr "调用外部系统 API 异常"
 
 #: bkuser/common/error_codes.py:88
 msgid "当前数据源插件未提供默认配置"
@@ -1723,12 +1723,12 @@ msgstr "密码不可包含 {} 位重复字符（{}）"
 #: bkuser/common/serializers.py:28
 #, python-brace-format
 msgid "至多包含 {max_items} 个对象."
-msgstr "至多包含 {max_items} 个对象."
+msgstr "至多包含 {max_items} 个对象。"
 
 #: bkuser/common/serializers.py:29
 #, python-brace-format
 msgid "至少包含 {min_items} 个对象."
-msgstr "至少包含 {min_items} 个对象."
+msgstr "至少包含 {min_items} 个对象。"
 
 #: bkuser/common/verification_code/constants.py:25
 msgid "忘记密码后申请重置"
@@ -1842,10 +1842,10 @@ msgstr "数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}"
 
 #: bkuser/plugins/general/plugin.py:95
 msgid ""
-"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
+"连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
 "{}"
 msgstr ""
-"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
+"连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
 "{}"
 
 #: bkuser/plugins/general/plugin.py:105
@@ -1934,7 +1934,7 @@ msgstr "用户组 Base DN 必须都是 Base DN 的子节点"
 
 #: bkuser/plugins/ldap/plugin.py:144
 msgid "连接测试失败: 无法建立连接或请求超时，请检查配置。异常信息：{}"
-msgstr "连接测试失败: 无法建立连接或请求超时，请检查配置。异常信息：{}"
+msgstr "连接测试失败：无法建立连接或请求超时，请检查配置。异常信息：{}"
 
 #: bkuser/plugins/ldap/plugin.py:152
 msgid "获取到的用户/部门数据为空，请检查数据源服务"
@@ -1962,7 +1962,7 @@ msgstr "密码生成规则、初始密码设置、密码到期设置均不能为
 
 #: bkuser/plugins/local/models.py:189
 msgid "密码生成规则不合法: {}"
-msgstr "密码生成规则不合法: {}"
+msgstr "密码生成规则不合法：{}"
 
 #: bkuser/plugins/local/models.py:194
 msgid "固定密码不能为空"
@@ -2002,10 +2002,10 @@ msgstr "待导入文件中必填字段 {} 存在空值"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符"
 "组成，以字母或数字开头及结尾"
 msgstr ""
-"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
+"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符"
 "组成，以字母或数字开头及结尾"
 
 #: bkuser/plugins/local/parser.py:180
@@ -2034,5 +2034,5 @@ msgstr "new message"
 #~ msgid "租户 {} 的展示名表达式配置不存在，请联系管理员"
 #~ msgstr "租户 {} 的展示名表达式配置不存在，请联系管理员"
 
-#~ msgid "表达式 {} 不合法: {}"
-#~ msgstr "表达式 {} 不合法: {}"
+#~ msgid "表达式 {} 不合法：{}"
+#~ msgstr "表达式 {} 不合法：{}"

@@ -117,8 +117,7 @@ def is_tenant_manager(tenant_id: str, username: str) -> bool:
 
 
 def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) -> bool:
-    """
-    判断是否同一自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
+    """判断是否同一自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
 
     :param req_username: 待访问租户用户名
     :param cur_tenant_id: 当前用户的租户 ID
@@ -145,8 +144,7 @@ def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) ->
 
 
 def is_virtual_user_owner(virtual_user_id: str, owner: str) -> bool:
-    """
-    判断当前用户是否为指定虚拟用户的责任人
+    """判断当前用户是否为指定虚拟用户的责任人
 
     :param virtual_user_id: 待检查的虚拟用户 ID
     :param owner: 当前用户的用户 ID

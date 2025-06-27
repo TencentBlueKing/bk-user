@@ -16,16 +16,18 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserIDGenerateConfig,
-    VirtualUserAppRelation,
-    VirtualUserOwnerRelation,
 )
+from bkuser.biz.virtual_user import VirtualUserHandler
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
-from tests.test_utils.tenant import sync_users_depts_to_tenant
+from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -48,19 +50,19 @@ def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_da
     virtual_user_data = [
         {
             "username": "virtual_user_1",
-            "full_name": "虚拟用户1",
+            "full_name": "虚拟用户_1",
             "app_codes": ["app1", "app2"],
             "owners": ["zhangsan", "lisi"],
         },
         {
             "username": "virtual_user_2",
-            "full_name": "虚拟用户2",
+            "full_name": "虚拟用户_2",
             "app_codes": ["app3"],
             "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
         },
         {
             "username": "virtual_user_3",
-            "full_name": "虚拟用户3",
+            "full_name": "虚拟用户_3",
             "app_codes": ["app4", "app5"],
             "owners": ["maiba", "yangjiu", "lushi"],
         },
@@ -84,22 +86,31 @@ def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_da
             data_source=bare_virtual_data_source,
         )
         # 创建 app_code 关联
-        VirtualUserAppRelation.objects.bulk_create(
-            [
-                VirtualUserAppRelation(
-                    tenant_user=tenant_user,
-                    app_code=app_code,
-                )
-                for app_code in virtual_user["app_codes"]
-            ]
-        )
+        VirtualUserHandler.set_app_codes(tenant_user, list(virtual_user["app_codes"]))
         # 创建责任人关联
-        VirtualUserOwnerRelation.objects.bulk_create(
-            [
-                VirtualUserOwnerRelation(
-                    tenant_user=tenant_user,
-                    owner_id=owner,
-                )
-                for owner in virtual_user["owners"]
-            ]
-        )
+        VirtualUserHandler.set_owners(tenant_user, list(virtual_user["owners"]))
+
+
+@pytest.fixture
+def _init_cross_tenant_user() -> None:
+    tenant = create_tenant("cross_tenant_id")
+    data_source, _ = DataSource.objects.get_or_create(
+        type=DataSourceTypeEnum.REAL,
+        owner_tenant_id=tenant.id,
+        defaults={
+            "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
+            "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
+        },
+    )
+    ds_user = DataSourceUser.objects.create(
+        username="cross_tenant_ds_user",
+        code="cross_tenant_ds_user",
+        data_source=data_source,
+        full_name="cross_tenant_ds_user",
+    )
+    TenantUser.objects.create(
+        tenant=tenant,
+        data_source_user=ds_user,
+        data_source=data_source,
+        id="cross_tenant_user",
+    )
