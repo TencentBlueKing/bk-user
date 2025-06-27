@@ -425,7 +425,7 @@ class TenantUserStatusUpdateOutputSLZ(serializers.Serializer):
 
 
 class TenantUserInfoSLZ(serializers.Serializer):
-    """批量创建时校验用户信息用，该模式邮箱为必填字段"""
+    """批量创建时校验用户信息用"""
 
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
