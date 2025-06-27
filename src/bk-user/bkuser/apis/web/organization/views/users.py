@@ -832,7 +832,9 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
                     code=info["username"],
                     username=info["username"],
                     full_name=info["full_name"],
-                    email=info["email"],
+                    email=info.get("email", ""),
+                    phone=info.get("phone", ""),
+                    phone_country_code=info.get("phone_country_code", ""),
                     extras=info["extras"],
                 )
                 for info in data["user_infos"]

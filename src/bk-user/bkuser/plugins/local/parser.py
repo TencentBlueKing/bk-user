@@ -84,6 +84,7 @@ class LocalDataSourceDataParser:
         "full_name",
         "email",
     ]
+    # TODO: 后续支持根据字段设置的必填情况，调整必填字段
 
     def __init__(self, logger: PluginLogger, workbook: Workbook):
         self.logger = logger

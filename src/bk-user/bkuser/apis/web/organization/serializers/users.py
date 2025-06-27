@@ -20,6 +20,7 @@ import datetime
 import re
 from typing import Any, Dict, List
 
+import phonenumbers
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -428,7 +429,9 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱")
+    email = serializers.EmailField(help_text="邮箱", required=False)
+    phone = serializers.CharField(help_text="手机号", required=False)
+    phone_country_code = serializers.CharField(help_text="手机国际区号", required=False)
     extras = serializers.JSONField(help_text="自定义字段")
 
     class Meta:
@@ -436,6 +439,16 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         return validate_user_extras(extras, self.context["custom_fields"], self.context["data_source_id"])
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 校验手机号是否合法
+        try:
+            if attrs.get("phone"):
+                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        return attrs
 
 
 class TenantUserBatchCreateInputSLZ(serializers.Serializer):
@@ -461,10 +474,11 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         builtin_fields: QuerySet[UserBuiltinField],
         custom_fields: QuerySet[TenantUserCustomField],
     ) -> List[Dict[str, Any]]:
-        # 默认的内置字段，虽然邮箱在 DB 中不是必填，但是在快速录入场景中要求必填
-        required_field_names = [f.name for f in builtin_fields if f.name not in ["phone_country_code", "phone"]] + [
-            f.name for f in custom_fields if f.required
-        ]
+        all_builtin_field_names = [f.name for f in builtin_fields]
+
+        required_builtin_field_names = [f.name for f in builtin_fields if f.required]
+        required_custom_field_names = [f.name for f in custom_fields if f.required]
+        required_field_names = required_builtin_field_names + required_custom_field_names
         field_count = len(required_field_names)
 
         user_infos: List[Dict[str, Any]] = []
@@ -486,15 +500,25 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
 
             # 按字段顺序映射（业务逻辑会确保数据顺序一致）
             props = dict(zip(required_field_names, data, strict=True))
+            # 若 手机号 字段为必填，则手机号 + 国际区号单独解析
+            if phone_numbers := props.get("phone"):
+                props["phone_country_code"] = settings.DEFAULT_PHONE_COUNTRY_CODE
+                if phone_numbers.startswith("+"):
+                    try:
+                        ret = phonenumbers.parse(phone_numbers)
+                    except phonenumbers.NumberParseException:
+                        raise ValidationError(_("第 {} 行，手机号 {} 格式不正确").format(idx, phone_numbers))
 
-            user_infos.append(
-                {
-                    "username": props["username"],
-                    "full_name": props["full_name"],
-                    "email": props["email"],
-                    "extras": self._build_user_extras(props, custom_fields),
-                }
-            )
+                    props["phone"], props["phone_country_code"] = str(ret.national_number), str(ret.country_code)
+
+            # 动态构建用户信息：内置字段直接添加，自定义字段放到 extras 中
+            # 为什么这里要这么处理，直接遍历 required_builtin_field_names 不就好了？
+            # 因为可能存在 `phone` 为必填，而 `phone_country_code` 为非必填的情况
+            # 导致上述解析出来的 `phone_country_code` 不在 props 中，也就不在 user_info 中
+            user_info = {name: props[name] for name in all_builtin_field_names if name in props}
+            user_info["extras"] = self._build_user_extras(props, custom_fields)
+
+            user_infos.append(user_info)
 
         return user_infos
 
@@ -587,7 +611,9 @@ class TenantUserBatchCreatePreviewInputSLZ(TenantUserBatchCreateInputSLZ): ...
 class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱")
+    email = serializers.EmailField(help_text="邮箱", required=False)
+    phone = serializers.CharField(help_text="手机号", required=False)
+    phone_country_code = serializers.CharField(help_text="手机国际区号", required=False)
     extras = serializers.JSONField(help_text="自定义字段")
 
 
