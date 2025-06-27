@@ -134,8 +134,8 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
 
-class VirtualUserRetrieveUpdateDestroyApi(
-    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
+class VirtualUserRetrieveUpdateApi(
+    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
