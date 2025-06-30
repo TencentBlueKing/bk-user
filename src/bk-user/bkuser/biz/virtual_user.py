@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Union
+from typing import List
 
 from pydantic import BaseModel
 
@@ -34,71 +34,6 @@ class DetailedVirtualUser(BaseModel):
     owners: List[str]
     app_codes: List[str]
     created_at: datetime
-
-
-def to_detailed_virtual_users(
-    tenant_users: Union[TenantUser, List[TenantUser]],
-) -> Union[DetailedVirtualUser, List[DetailedVirtualUser]]:
-    """将 TenantUser 对象转换为 DetailedVirtualUser 模型
-
-    :param tenant_users: 单个 TenantUser 或 TenantUser 列表
-    :return: 单个 DetailedVirtualUser 或 DetailedVirtualUser 列表
-    """
-    if isinstance(tenant_users, TenantUser):
-        return _to_single_detailed_virtual_user(tenant_users)
-
-    if not tenant_users:
-        return []
-
-    # 批量查询关联数据
-    tenant_user_ids = [user.id for user in tenant_users]
-
-    # 查询 app_codes
-    app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=tenant_user_ids).values_list(
-        "tenant_user_id", "app_code"
-    )
-    app_codes_map = defaultdict(list)
-    for tenant_user_id, app_code in app_relations:
-        app_codes_map[tenant_user_id].append(app_code)
-
-    # 查询 owners
-    owner_relations = VirtualUserOwnerRelation.objects.filter(tenant_user_id__in=tenant_user_ids).values_list(
-        "tenant_user_id", "owner_id"
-    )
-    owners_map = defaultdict(list)
-    for tenant_user_id, owner_id in owner_relations:
-        owners_map[tenant_user_id].append(owner_id)
-
-    # 转换为 DetailedVirtualUser 列表
-    return [
-        DetailedVirtualUser(
-            id=tenant_user.id,
-            username=tenant_user.data_source_user.username,
-            full_name=tenant_user.data_source_user.full_name,
-            app_codes=app_codes_map[tenant_user.id],
-            owners=owners_map[tenant_user.id],
-            created_at=tenant_user.created_at,
-        )
-        for tenant_user in tenant_users
-    ]
-
-
-def _to_single_detailed_virtual_user(tenant_user: TenantUser) -> DetailedVirtualUser:
-    """转换单个 TenantUser 为 DetailedVirtualUser"""
-    # 查询 app_codes
-    app_codes = list(VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True))
-
-    # 查询 owners
-    owners = list(VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True))
-
-    return DetailedVirtualUser(
-        id=tenant_user.id,
-        username=tenant_user.data_source_user.username,
-        full_name=tenant_user.data_source_user.full_name,
-        app_codes=app_codes,
-        owners=owners,
-        created_at=tenant_user.created_at,
-    )
 
 
 class VirtualUserHandler:
@@ -167,3 +102,45 @@ class VirtualUserHandler:
 
         if should_create := new_owners_set - cur_owners_set:
             VirtualUserHandler.set_owners(tenant_user, list(should_create))
+
+    @staticmethod
+    def to_detailed_virtual_users(tenant_users: List[TenantUser]) -> List[DetailedVirtualUser]:
+        """将 TenantUser 列表转换为 DetailedVirtualUser 列表
+
+        :param tenant_users: TenantUser 列表
+        :return: DetailedVirtualUser 列表
+        """
+        if not tenant_users:
+            return []
+
+        # 批量查询关联数据
+        tenant_user_ids = [user.id for user in tenant_users]
+
+        # 查询 app_codes
+        app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=tenant_user_ids).values_list(
+            "tenant_user_id", "app_code"
+        )
+        app_codes_map = defaultdict(list)
+        for tenant_user_id, app_code in app_relations:
+            app_codes_map[tenant_user_id].append(app_code)
+
+        # 查询 owners
+        owner_relations = VirtualUserOwnerRelation.objects.filter(tenant_user_id__in=tenant_user_ids).values_list(
+            "tenant_user_id", "owner_id"
+        )
+        owners_map = defaultdict(list)
+        for tenant_user_id, owner_id in owner_relations:
+            owners_map[tenant_user_id].append(owner_id)
+
+        # 转换为 DetailedVirtualUser 列表
+        return [
+            DetailedVirtualUser(
+                id=tenant_user.id,
+                username=tenant_user.data_source_user.username,
+                full_name=tenant_user.data_source_user.full_name,
+                app_codes=app_codes_map[tenant_user.id],
+                owners=owners_map[tenant_user.id],
+                created_at=tenant_user.created_at,
+            )
+            for tenant_user in tenant_users
+        ]

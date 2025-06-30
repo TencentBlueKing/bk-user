@@ -33,7 +33,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser, VirtualUserOwnerRelation
 from bkuser.biz.auditor import VirtualUserAuditor
-from bkuser.biz.virtual_user import VirtualUserHandler, to_detailed_virtual_users
+from bkuser.biz.virtual_user import VirtualUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -73,11 +73,11 @@ class MeVirtualUserListApi(generics.ListAPIView):
         page = self.paginate_queryset(queryset)
 
         if page is not None:
-            detailed_vusers = to_detailed_virtual_users(page)
+            detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
             serializer = self.get_serializer(detailed_vusers, many=True)
             return self.get_paginated_response(serializer.data)
 
-        detailed_vusers = to_detailed_virtual_users(queryset)
+        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(queryset)
         serializer = self.get_serializer(detailed_vusers, many=True)
         return Response(serializer.data)
 
@@ -133,6 +133,6 @@ class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIView
     )
     def get(self, request, *args, **kwargs):
         virtual_user = self.get_object()
-        detailed_vuser = to_detailed_virtual_users(virtual_user)
-        serializer = self.get_serializer(detailed_vuser)
+        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users([virtual_user])
+        serializer = self.get_serializer(detailed_vusers[0])
         return Response(serializer.data)
