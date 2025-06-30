@@ -32,9 +32,8 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser, VirtualUserOwnerRelation
-from bkuser.apps.virtual_user.utils import to_detailed_virtual_users
 from bkuser.biz.auditor import VirtualUserAuditor
-from bkuser.biz.virtual_user import VirtualUserHandler
+from bkuser.biz.virtual_user import VirtualUserHandler, to_detailed_virtual_users
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
