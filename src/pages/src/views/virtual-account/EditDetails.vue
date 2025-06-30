@@ -6,7 +6,7 @@
       form-type="vertical"
       :model="formData"
       :rules="rules">
-      <bk-form-item v-if="formData.id" :label="$t('用户ID')" :min-width="280">
+      <bk-form-item v-if="formData.id" :label="$t('账号ID')" :min-width="280">
         <bk-input
           v-model="formData.id"
           disabled
@@ -15,36 +15,32 @@
       <bk-form-item :label="$t('用户名')" property="username" required>
         <bk-input
           v-model="formData.username"
-          :placeholder="validate.userName.message"
+          :placeholder="validate.fullName.message"
           :disabled="formData.id"
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('姓名')" property="full_name" required>
+      <bk-form-item :label="$t('全名')" property="full_name" required>
         <bk-input
           v-model="formData.full_name"
-          :placeholder="validate.name.message"
+          :placeholder="validate.fullName.message"
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('邮箱')" property="email">
+      <bk-form-item :label="$t('所属应用')" property="app_codes" required>
         <bk-input
-          v-model="formData.email"
+          v-model="formData.app_codes"
+          :placeholder="$t('请输入应用名，支持输入多个，以逗号进行区隔')"
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('手机号')">
-        <PhoneInput
-          :form-data="formData"
-          :tel-error="telError"
-          :required="false"
-          @change-country-code="changeCountryCode"
-          @change-tel-error="changeTelError" />
+      <bk-form-item :label="$t('账号责任人')" property="owners" required>
+        <UserSelector v-model:value="formData.owners" />
       </bk-form-item>
     </bk-form>
     <div class="footer">
       <bk-button theme="primary" @click="handleSubmit" :loading="isLoading" :disabled="isDisabled">
-        {{ $t('保存') }}
+        {{ formData.id ? $t('保存') : $t('创建账号') }}
       </bk-button>
       <bk-button @click="emit('handleCancelEdit')">
         {{ $t('取消') }}
@@ -54,9 +50,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import {  reactive, ref, watch } from 'vue';
 
-import PhoneInput from '@/components/phoneInput.vue';
+import UserSelector from '@/components/UserSelector.vue';
 import { useValidate } from '@/hooks';
 import { newVirtualUsers, putVirtualUsers } from '@/http';
 import { t } from '@/language/index';
@@ -84,39 +80,33 @@ watch(formData, () => {
 }, { deep: true, immediate: true });
 
 const rules = {
-  username: [validate.required, validate.userName],
-  full_name: [validate.required, validate.name],
-  email: [validate.emailNotRequired],
+  username: [validate.required, validate.fullName],
+  full_name: [validate.required, validate.fullName],
+  app_codes: [validate.required],
+  owners: [validate.required],
 };
 
 const isLoading = ref(false);
 
-const changeCountryCode = (code: string) => {
-  formData.phone_country_code = code;
-};
-
-const telError = ref(false);
-
-const changeTelError = (value: boolean) => {
-  telError.value = value;
-};
-
 const handleSubmit = async () => {
   try {
     await formRef.value.validate();
-    if (telError.value) return;
 
     isLoading.value = true;
     if (formData.id) {
       await putVirtualUsers(formData.id, {
         full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        phone_country_code: formData.phone_country_code,
+        app_codes: formData.app_codes.split(','),
+        owners: formData.owners,
       });
       emit('updateUsers', t('更新成功'));
     } else {
-      await newVirtualUsers(formData);
+      await newVirtualUsers({
+        username: formData.username,
+        full_name: formData.full_name,
+        owners: formData.owners,
+        app_codes: formData.app_codes.split(','),
+      });
       emit('updateUsers', t('创建成功'));
     }
   } finally {
