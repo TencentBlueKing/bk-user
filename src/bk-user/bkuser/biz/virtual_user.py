@@ -110,9 +110,6 @@ class VirtualUserHandler:
         :param tenant_users: TenantUser 列表
         :return: DetailedVirtualUser 列表
         """
-        if not tenant_users:
-            return []
-
         # 批量查询关联数据
         tenant_user_ids = [user.id for user in tenant_users]
 
