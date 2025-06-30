@@ -29,7 +29,8 @@
             :placeholder="$t('请输入企业ID或名称')"
             @focus="handleTenantFocus"
             @clear="handleClearTenant"
-            @keydown="(value: string, e: KeyboardEvent) => handleTenantKeydown(value, e)">
+            @input="debouncedTenantChange"
+            @keydown="(value: string, event: KeyboardEvent) => handleTenantKeydown(value, event)">
           </bk-input>
           <template #content>
             <div
@@ -232,6 +233,7 @@ try {
  * 处理租户搜索
  */
 const handleTenantChange = async () => {
+  selectedTenant.value = null;
   const id = inputTenant.value?.trim();
   searchTenantList.value = [];
   if (!id) {
@@ -424,10 +426,10 @@ onBeforeMount(async () => {
   loading.value = false;
 });
 
+/**
+ * 处理租户输入框按键
+ */
 const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
-  // 先执行原有的 debounce 搜索
-  debouncedTenantChange();
-
   // 判断是否为回车键
   if (event.key === 'Enter') {
     if (searchTenantList.value.length === 1) {
