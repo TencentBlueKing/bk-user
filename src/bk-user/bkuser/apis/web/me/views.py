@@ -14,8 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from collections import defaultdict
-from typing import Dict, List
 
 from django.db import transaction
 from django.db.models import Q, QuerySet
@@ -26,22 +24,22 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.me.serializers import (
     MeVirtualUserListInputSLZ,
-    MeVirtualUserListOutputSLZ,
-    MeVirtualUserRetrieveOutputSLZ,
+    MeVirtualUserOutputSLZ,
     MeVirtualUserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
+from bkuser.apps.tenant.models import TenantUser, VirtualUserOwnerRelation
+from bkuser.apps.virtual_user.utils import to_detailed_virtual_users
 from bkuser.biz.auditor import VirtualUserAuditor
 from bkuser.biz.virtual_user import VirtualUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class MeVirtualUserListApi(generics.ListAPIView):
-    serializer_class = MeVirtualUserListOutputSLZ
+    serializer_class = MeVirtualUserOutputSLZ
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
@@ -65,43 +63,30 @@ class MeVirtualUserListApi(generics.ListAPIView):
             )
         return queryset
 
-    def get_serializer_context(self):
-        queryset = self.paginate_queryset(self.get_queryset())
-
-        virtual_user_ids = [user.id for user in queryset]
-
-        app_relations = VirtualUserAppRelation.objects.filter(tenant_user_id__in=virtual_user_ids).values_list(
-            "tenant_user_id", "app_code"
-        )
-        # 虚拟用户与 app_code 之间的映射
-        app_codes_map: Dict[str, List[str]] = defaultdict(list)
-        for tenant_user_id, app_code in app_relations:
-            app_codes_map[tenant_user_id].append(app_code)
-
-        owner_relations = VirtualUserOwnerRelation.objects.filter(tenant_user_id__in=virtual_user_ids).values_list(
-            "tenant_user_id", "owner_id"
-        )
-        # 虚拟用户与责任人列表之间的映射
-        owners_map: Dict[str, List[str]] = defaultdict(list)
-        for tenant_user_id, owner_id in owner_relations:
-            owners_map[tenant_user_id].append(owner_id)
-
-        return {"app_codes_map": app_codes_map, "owners_map": owners_map}
-
     @swagger_auto_schema(
         tags=["me"],
         operation_description="虚拟用户列表",
         query_serializer=MeVirtualUserListInputSLZ(),
-        responses={status.HTTP_200_OK: MeVirtualUserListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: MeVirtualUserOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            detailed_vusers = to_detailed_virtual_users(page)
+            serializer = self.get_serializer(detailed_vusers, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        detailed_vusers = to_detailed_virtual_users(queryset)
+        serializer = self.get_serializer(detailed_vusers, many=True)
+        return Response(serializer.data)
 
 
 class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
-    serializer_class = MeVirtualUserRetrieveOutputSLZ
+    serializer_class = MeVirtualUserOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
@@ -145,7 +130,10 @@ class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIView
     @swagger_auto_schema(
         tags=["me"],
         operation_description="虚拟用户详情",
-        responses={status.HTTP_200_OK: MeVirtualUserRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: MeVirtualUserOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        virtual_user = self.get_object()
+        detailed_vuser = to_detailed_virtual_users(virtual_user)
+        serializer = self.get_serializer(detailed_vuser)
+        return Response(serializer.data)
