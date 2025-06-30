@@ -18,12 +18,12 @@ from collections import defaultdict
 from typing import List, Union
 
 from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
-from bkuser.apps.virtual_user.data_models import ToDetailedVirtualUser
+from bkuser.apps.virtual_user.data_models import DetailedVirtualUser
 
 
 def to_detailed_virtual_users(
     tenant_users: Union[TenantUser, List[TenantUser]],
-) -> Union[ToDetailedVirtualUser, List[ToDetailedVirtualUser]]:
+) -> Union[DetailedVirtualUser, List[DetailedVirtualUser]]:
     """将 TenantUser 对象转换为 ToDetailedVirtualUser 模型
 
     :param tenant_users: 单个 TenantUser 或 TenantUser 列表
@@ -56,7 +56,7 @@ def to_detailed_virtual_users(
 
     # 转换为 ToDetailedVirtualUser 列表
     return [
-        ToDetailedVirtualUser(
+        DetailedVirtualUser(
             id=tenant_user.id,
             username=tenant_user.data_source_user.username,
             full_name=tenant_user.data_source_user.full_name,
@@ -68,7 +68,7 @@ def to_detailed_virtual_users(
     ]
 
 
-def _to_single_detailed_virtual_user(tenant_user: TenantUser) -> ToDetailedVirtualUser:
+def _to_single_detailed_virtual_user(tenant_user: TenantUser) -> DetailedVirtualUser:
     """转换单个 TenantUser 为 ToDetailedVirtualUser"""
     # 查询 app_codes
     app_codes = list(VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True))
@@ -76,7 +76,7 @@ def _to_single_detailed_virtual_user(tenant_user: TenantUser) -> ToDetailedVirtu
     # 查询 owners
     owners = list(VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner_id", flat=True))
 
-    return ToDetailedVirtualUser(
+    return DetailedVirtualUser(
         id=tenant_user.id,
         username=tenant_user.data_source_user.username,
         full_name=tenant_user.data_source_user.full_name,

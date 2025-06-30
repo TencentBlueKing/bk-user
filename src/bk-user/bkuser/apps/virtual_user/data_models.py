@@ -20,7 +20,7 @@ from typing import List
 from pydantic import BaseModel
 
 
-class ToDetailedVirtualUser(BaseModel):
+class DetailedVirtualUser(BaseModel):
     """详细虚拟用户信息"""
 
     id: str
