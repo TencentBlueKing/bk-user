@@ -64,7 +64,7 @@ const appStore = useAppStore();
 const isShow = ref(null);
 const isLoading = ref(false);
 const tableListRef = ref();
-const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT);
+const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
 const getList = async () => {
   isLoading.value = true;
