@@ -24,10 +24,10 @@ from bkuser.apps.virtual_user.data_models import DetailedVirtualUser
 def to_detailed_virtual_users(
     tenant_users: Union[TenantUser, List[TenantUser]],
 ) -> Union[DetailedVirtualUser, List[DetailedVirtualUser]]:
-    """将 TenantUser 对象转换为 ToDetailedVirtualUser 模型
+    """将 TenantUser 对象转换为 DetailedVirtualUser 模型
 
     :param tenant_users: 单个 TenantUser 或 TenantUser 列表
-    :return: 单个 ToDetailedVirtualUser 或 ToDetailedVirtualUser 列表
+    :return: 单个 DetailedVirtualUser 或 DetailedVirtualUser 列表
     """
     if isinstance(tenant_users, TenantUser):
         return _to_single_detailed_virtual_user(tenant_users)
@@ -54,7 +54,7 @@ def to_detailed_virtual_users(
     for tenant_user_id, owner_id in owner_relations:
         owners_map[tenant_user_id].append(owner_id)
 
-    # 转换为 ToDetailedVirtualUser 列表
+    # 转换为 DetailedVirtualUser 列表
     return [
         DetailedVirtualUser(
             id=tenant_user.id,
@@ -69,7 +69,7 @@ def to_detailed_virtual_users(
 
 
 def _to_single_detailed_virtual_user(tenant_user: TenantUser) -> DetailedVirtualUser:
-    """转换单个 TenantUser 为 ToDetailedVirtualUser"""
+    """转换单个 TenantUser 为 DetailedVirtualUser"""
     # 查询 app_codes
     app_codes = list(VirtualUserAppRelation.objects.filter(tenant_user=tenant_user).values_list("app_code", flat=True))
 
