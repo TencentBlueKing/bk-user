@@ -17,13 +17,12 @@
 from typing import List
 
 from django.utils.translation import gettext_lazy as _
-from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.apps.tenant.models import TenantUser, VirtualUserAppRelation, VirtualUserOwnerRelation
+from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.validators import validate_data_source_user_username
 
 
@@ -40,19 +39,20 @@ def _validate_duplicate_data_source_username(data_source_id: str, username: str,
     return username
 
 
-def _validate_owners(owners: List[str]) -> List[str]:
+def _validate_owners(owners: List[str], tenant_id: str) -> List[str]:
     """
     校验责任人列表
-    1. 去重
-    2. 检查每个责任人是否存在且为实体用户
+    1. 检查每个责任人是否存在且为实体用户
+    2. 检查每个责任人都应属于当前租户
     """
-    found_owners = set(
-        TenantUser.objects.filter(id__in=owners, data_source__type=DataSourceTypeEnum.REAL).values_list(
-            "id", flat=True
-        )
+    valid_owners = set(
+        TenantUser.objects.filter(
+            id__in=owners, tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+        ).values_list("id", flat=True)
     )
-    if invalid_owners := set(owners) - found_owners:
-        raise ValidationError(_("用户 {} 不存在或不是实体用户").format(invalid_owners))
+
+    if invalid_owners := set(owners) - valid_owners:
+        raise ValidationError(_("用户 {} 不存在、不是实体用户或不属于当前租户").format(invalid_owners))
 
     return owners
 
@@ -61,21 +61,21 @@ class VirtualUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
 
 
-class VirtualUserListOutputSLZ(serializers.Serializer):
+class VirtualUserOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
-    app_codes = serializers.SerializerMethodField(help_text="应用编码列表")
-    owners = serializers.SerializerMethodField(help_text="责任人列表")
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="姓名")
+    app_codes = serializers.ListField(child=serializers.CharField(), help_text="应用编码列表")
+    owners = serializers.ListField(child=serializers.CharField(), help_text="责任人列表")
     created_at = serializers.DateTimeField(help_text="创建时间")
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
-    def get_app_codes(self, obj: TenantUser) -> List[str]:
-        return self.context["app_code_map"][obj.id]
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
-    def get_owners(self, obj: TenantUser) -> List[str]:
-        return self.context["owner_map"][obj.id]
+class VirtualUserRetrieveOutputSLZ(VirtualUserOutputSLZ):
+    pass
+
+
+class VirtualUserListOutputSLZ(VirtualUserOutputSLZ):
+    pass
 
 
 class VirtualUserCreateInputSLZ(serializers.Serializer):
@@ -92,28 +92,11 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
         return list(set(app_codes))
 
     def validate_owners(self, owners: List[str]) -> List[str]:
-        return _validate_owners(owners)
+        return _validate_owners(owners, self.context["tenant_id"])
 
 
 class VirtualUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
-
-
-class VirtualUserRetrieveOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
-    app_codes = serializers.SerializerMethodField(help_text="应用编码列表")
-    owners = serializers.SerializerMethodField(help_text="责任人列表")
-    created_at = serializers.DateTimeField(help_text="创建时间")
-
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
-    def get_app_codes(self, obj: TenantUser) -> List[str]:
-        return list(VirtualUserAppRelation.objects.filter(tenant_user=obj).values_list("app_code", flat=True))
-
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.CharField()))
-    def get_owners(self, obj: TenantUser) -> List[str]:
-        return list(VirtualUserOwnerRelation.objects.filter(tenant_user=obj).values_list("owner_id", flat=True))
 
 
 class VirtualUserUpdateInputSLZ(serializers.Serializer):
@@ -126,4 +109,4 @@ class VirtualUserUpdateInputSLZ(serializers.Serializer):
         return list(set(app_codes))
 
     def validate_owners(self, owners: List[str]) -> List[str]:
-        return _validate_owners(owners)
+        return _validate_owners(owners, self.context["tenant_id"])

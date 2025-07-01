@@ -75,13 +75,13 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-关联账户列表",
+        operation_description="个人中心 - 关联账户列表",
         responses={status.HTTP_200_OK: NaturalUserWithTenantUserListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         current_tenant_user_id = request.user.username
 
-        # 获取当前登录的租户用户的自然人:两种情况绑定、未绑定，在函数中做处理
+        # 获取当前登录的租户用户的自然人：两种情况绑定、未绑定，在函数中做处理
         nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
 
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(
@@ -89,7 +89,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         )
 
         # 将当前登录置顶
-        # 通过比对租户用户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
+        # 通过比对租户用户 id, 当等于当前登录用户的租户 id，将其排序到查询集的顶部，否则排序到查询集的底部
         sorted_tenant_users = sorted(tenant_users, key=lambda t: t.id != current_tenant_user_id)
 
         # 响应数据组装
@@ -118,7 +118,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-关联账户详情",
+        operation_description="个人中心 - 关联账户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
@@ -263,7 +263,7 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
         except GenerateCodeTooFrequently:
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
 
-        # FIXME: ESB只支持根据 username 发送，这里修改手机号并没有保存，发送的还是旧的，后续修复
+        # FIXME: ESB 只支持根据 username 发送，这里修改手机号并没有保存，发送的还是旧的，后续修复
         try:
             PhoneVerificationCodeSender(scene).send(tenant_user, code)
         except ExceedSendRateLimit:
@@ -459,7 +459,7 @@ class TenantUserFieldListApi(generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-用户可见字段列表",
+        operation_description="个人中心 - 用户可见字段列表",
         responses={status.HTTP_200_OK: TenantUserFieldOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
@@ -495,7 +495,7 @@ class TenantUserFeatureFlagListApi(CurrentTenantPhoneOrEmailUpdateRestrictionMix
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-用户功能特性",
+        operation_description="个人中心 - 用户功能特性",
         responses={status.HTTP_200_OK: TenantUserFeatureFlagOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):

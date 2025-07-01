@@ -14,11 +14,3 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.urls import path
-
-from . import views
-
-urlpatterns = [
-    path("", views.VirtualUserListCreateApi.as_view(), name="virtual_user.list_create"),
-    path("<str:id>/", views.VirtualUserRetrieveUpdateApi.as_view(), name="virtual_user.retrieve_update"),
-]

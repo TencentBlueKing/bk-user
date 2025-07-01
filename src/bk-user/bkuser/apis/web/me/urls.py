@@ -19,6 +19,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.VirtualUserListCreateApi.as_view(), name="virtual_user.list_create"),
-    path("<str:id>/", views.VirtualUserRetrieveUpdateApi.as_view(), name="virtual_user.retrieve_update"),
+    path(
+        "virtual-users/",
+        views.MeVirtualUserListApi.as_view(),
+        name="me.virtual_users.list",
+    ),
+    path(
+        "virtual-users/<str:id>/",
+        views.MeVirtualUserRetrieveUpdateApi.as_view(),
+        name="me.virtual_users.retrieve_update",
+    ),
 ]

@@ -23,9 +23,11 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserIDGenerateConfig,
 )
+from bkuser.auth.models import User
 from bkuser.biz.virtual_user import VirtualUserHandler
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from rest_framework.test import APIClient
 
 from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
@@ -42,53 +44,6 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
         target_tenant_id=full_local_data_source.owner_tenant_id,
     )
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
-
-
-@pytest.fixture
-def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_data_source) -> None:
-    """初始化虚拟用户"""
-    virtual_user_data = [
-        {
-            "username": "virtual_user_1",
-            "full_name": "虚拟用户_1",
-            "app_codes": ["app1", "app2"],
-            "owners": ["zhangsan", "lisi"],
-        },
-        {
-            "username": "virtual_user_2",
-            "full_name": "虚拟用户_2",
-            "app_codes": ["app3"],
-            "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
-        },
-        {
-            "username": "virtual_user_3",
-            "full_name": "虚拟用户_3",
-            "app_codes": ["app4", "app5"],
-            "owners": ["maiba", "yangjiu", "lushi"],
-        },
-    ]
-
-    for virtual_user in virtual_user_data:
-        username = virtual_user["username"]
-
-        # 创建数据源用户
-        data_source_user = DataSourceUser.objects.create(
-            username=username,
-            code=username,
-            full_name=virtual_user["full_name"],
-            data_source=bare_virtual_data_source,
-        )
-        # 创建租户用户
-        tenant_user = TenantUser.objects.create(
-            id=username,
-            tenant=random_tenant,
-            data_source_user=data_source_user,
-            data_source=bare_virtual_data_source,
-        )
-        # 创建 app_code 关联
-        VirtualUserHandler.add_app_codes(tenant_user, list(virtual_user["app_codes"]))
-        # 创建责任人关联
-        VirtualUserHandler.add_owners(tenant_user, list(virtual_user["owners"]))
 
 
 @pytest.fixture
@@ -114,3 +69,67 @@ def _init_cross_tenant_user() -> None:
         data_source=data_source,
         id="cross_tenant_user",
     )
+
+
+@pytest.fixture
+def api_client(random_tenant) -> APIClient:
+    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", tenant=random_tenant)
+    user, _ = User.objects.get_or_create(username=zhangsan.id)
+    user.set_property("tenant_id", random_tenant.id)
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+@pytest.fixture
+def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_data_source) -> None:
+    """初始化虚拟用户"""
+    virtual_user_data = [
+        {
+            "username": "virtual_user_1",
+            "full_name": "虚拟用户_1",
+            "app_codes": ["app1", "app2"],
+            "owners": ["zhangsan", "lisi"],
+        },
+        {
+            "username": "virtual_user_2",
+            "full_name": "虚拟用户_2",
+            "app_codes": ["app3"],
+            "owners": ["lisi", "wangwu", "zhaoliu", "liuqi"],
+        },
+        {
+            "username": "virtual_user_3",
+            "full_name": "虚拟用户_3",
+            "app_codes": ["app4", "app5"],
+            "owners": ["zhangsan", "maiba", "yangjiu", "lushi"],
+        },
+        {
+            "username": "virtual_user_4",
+            "full_name": "虚拟用户_4",
+            "app_codes": ["app6", "app7"],
+            "owners": ["zhangsan", "lisi", "wangwu", "zhaoliu", "liuqi"],
+        },
+    ]
+
+    for virtual_user in virtual_user_data:
+        username = virtual_user["username"]
+
+        # 创建数据源用户
+        data_source_user = DataSourceUser.objects.create(
+            username=username,
+            code=username,
+            full_name=virtual_user["full_name"],
+            data_source=bare_virtual_data_source,
+        )
+        # 创建租户用户
+        tenant_user = TenantUser.objects.create(
+            id=username,
+            tenant=random_tenant,
+            data_source_user=data_source_user,
+            data_source=bare_virtual_data_source,
+        )
+        # 创建 app_code 关联
+        VirtualUserHandler.add_app_codes(tenant_user, list(virtual_user["app_codes"]))
+        # 创建责任人关联
+        VirtualUserHandler.add_owners(tenant_user, list(virtual_user["owners"]))

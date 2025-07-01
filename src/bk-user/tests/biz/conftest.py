@@ -14,11 +14,22 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.urls import path
+import pytest
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
+from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
 
-from . import views
+from tests.test_utils.tenant import sync_users_depts_to_tenant
 
-urlpatterns = [
-    path("", views.VirtualUserListCreateApi.as_view(), name="virtual_user.list_create"),
-    path("<str:id>/", views.VirtualUserRetrieveUpdateApi.as_view(), name="virtual_user.retrieve_update"),
-]
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    # 这里修改 TenantUserIDGenerateConfig 方便测试
+    TenantUserIDGenerateConfig.objects.create(
+        data_source=full_local_data_source,
+        rule=TenantUserIdRuleEnum.USERNAME,
+        target_tenant_id=full_local_data_source.owner_tenant_id,
+    )
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
