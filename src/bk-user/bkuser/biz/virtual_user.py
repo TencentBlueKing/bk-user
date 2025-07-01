@@ -62,14 +62,14 @@ class VirtualUserHandler:
         )
 
     @staticmethod
-    def set_app_codes(tenant_user: TenantUser, app_codes: List[str]) -> None:
+    def add_app_codes(tenant_user: TenantUser, app_codes: List[str]) -> None:
         """设置虚拟用户和 app_code 之间的关联"""
         VirtualUserAppRelation.objects.bulk_create(
             [VirtualUserAppRelation(tenant_user=tenant_user, app_code=app_code) for app_code in app_codes]
         )
 
     @staticmethod
-    def set_owners(tenant_user: TenantUser, owners: List[str]) -> None:
+    def add_owners(tenant_user: TenantUser, owners: List[str]) -> None:
         """设置虚拟用户和责任人之间的关联"""
         VirtualUserOwnerRelation.objects.bulk_create(
             [VirtualUserOwnerRelation(tenant_user=tenant_user, owner_id=owner) for owner in owners]
@@ -87,7 +87,7 @@ class VirtualUserHandler:
             VirtualUserAppRelation.objects.filter(tenant_user=tenant_user, app_code__in=should_delete).delete()
 
         if should_create := new_app_codes_set - cur_app_codes_set:
-            VirtualUserHandler.set_app_codes(tenant_user, list(should_create))
+            VirtualUserHandler.add_app_codes(tenant_user, list(should_create))
 
     @staticmethod
     def update_owners(tenant_user: TenantUser, new_owners: List[str]) -> None:
@@ -101,7 +101,7 @@ class VirtualUserHandler:
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user, owner_id__in=should_delete).delete()
 
         if should_create := new_owners_set - cur_owners_set:
-            VirtualUserHandler.set_owners(tenant_user, list(should_create))
+            VirtualUserHandler.add_owners(tenant_user, list(should_create))
 
     @staticmethod
     def to_detailed_virtual_users(tenant_users: List[TenantUser]) -> List[DetailedVirtualUser]:

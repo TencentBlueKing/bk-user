@@ -64,9 +64,9 @@ class TestVirtualUserHandler:
                 data_source=bare_virtual_data_source,
             )
             # 创建 app_code 关联
-            VirtualUserHandler.set_app_codes(tenant_user, list(virtual_user["app_codes"]))
+            VirtualUserHandler.add_app_codes(tenant_user, list(virtual_user["app_codes"]))
             # 创建责任人关联
-            VirtualUserHandler.set_owners(tenant_user, list(virtual_user["owners"]))
+            VirtualUserHandler.add_owners(tenant_user, list(virtual_user["owners"]))
 
     def test_create(self, bare_virtual_data_source):
         VirtualUserHandler.create(bare_virtual_data_source, "test_username", "test_full_name")

@@ -35,15 +35,14 @@ from .serializers import (
     VirtualUserCreateInputSLZ,
     VirtualUserCreateOutputSLZ,
     VirtualUserListInputSLZ,
-    VirtualUserOutputSLZ,
+    VirtualUserListOutputSLZ,
+    VirtualUserRetrieveOutputSLZ,
     VirtualUserUpdateInputSLZ,
 )
 
 
 class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    serializer_class = VirtualUserOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = VirtualUserListInputSLZ(data=self.request.query_params)
@@ -66,20 +65,14 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         tags=["virtual_user"],
         operation_description="虚拟用户列表",
         query_serializer=VirtualUserListInputSLZ(),
-        responses={status.HTTP_200_OK: VirtualUserOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
 
-        if page is not None:
-            detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
-            serializer = self.get_serializer(detailed_vusers, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(queryset)
-        serializer = self.get_serializer(detailed_vusers, many=True)
-        return Response(serializer.data)
+        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
+        return self.get_paginated_response(VirtualUserListOutputSLZ(detailed_vusers, many=True).data)
 
     @swagger_auto_schema(
         tags=["virtual_user"],
@@ -106,9 +99,9 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             )
 
             # 创建虚拟用户与应用的关联
-            VirtualUserHandler.set_app_codes(tenant_user, data["app_codes"])
+            VirtualUserHandler.add_app_codes(tenant_user, data["app_codes"])
             # 创建虚拟用户与责任人的关联
-            VirtualUserHandler.set_owners(tenant_user, data["owners"])
+            VirtualUserHandler.add_owners(tenant_user, data["owners"])
 
         # 【审计】创建虚拟用户审计对象
         auditor = VirtualUserAuditor(request.user.username, cur_tenant_id)
@@ -122,9 +115,7 @@ class VirtualUserRetrieveUpdateApi(
     CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
     lookup_url_kwarg = "id"
-    serializer_class = VirtualUserOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
@@ -135,13 +126,12 @@ class VirtualUserRetrieveUpdateApi(
     @swagger_auto_schema(
         tags=["virtual_user"],
         operation_description="虚拟用户详情",
-        responses={status.HTTP_200_OK: VirtualUserOutputSLZ()},
+        responses={status.HTTP_200_OK: VirtualUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         virtual_user = self.get_object()
-        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users([virtual_user])
-        serializer = self.get_serializer(detailed_vusers[0])
-        return Response(serializer.data)
+        detailed_vuser = VirtualUserHandler.to_detailed_virtual_users([virtual_user])[0]
+        return Response(VirtualUserRetrieveOutputSLZ(detailed_vuser).data)
 
     @swagger_auto_schema(
         tags=["virtual_user"],

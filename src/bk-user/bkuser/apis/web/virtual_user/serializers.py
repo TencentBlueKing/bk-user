@@ -70,6 +70,14 @@ class VirtualUserOutputSLZ(serializers.Serializer):
     created_at = serializers.DateTimeField(help_text="创建时间")
 
 
+class VirtualUserRetrieveOutputSLZ(VirtualUserOutputSLZ):
+    pass
+
+
+class VirtualUserListOutputSLZ(VirtualUserOutputSLZ):
+    pass
+
+
 class VirtualUserCreateInputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
@@ -84,8 +92,7 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
         return list(set(app_codes))
 
     def validate_owners(self, owners: List[str]) -> List[str]:
-        tenant_id = self.context["tenant_id"]
-        return _validate_owners(owners, tenant_id)
+        return _validate_owners(owners, self.context["tenant_id"])
 
 
 class VirtualUserCreateOutputSLZ(serializers.Serializer):

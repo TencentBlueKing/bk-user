@@ -86,9 +86,9 @@ def _init_virtual_users(random_tenant, _init_tenant_users_depts, bare_virtual_da
             data_source=bare_virtual_data_source,
         )
         # 创建 app_code 关联
-        VirtualUserHandler.set_app_codes(tenant_user, list(virtual_user["app_codes"]))
+        VirtualUserHandler.add_app_codes(tenant_user, list(virtual_user["app_codes"]))
         # 创建责任人关联
-        VirtualUserHandler.set_owners(tenant_user, list(virtual_user["owners"]))
+        VirtualUserHandler.add_owners(tenant_user, list(virtual_user["owners"]))
 
 
 @pytest.fixture

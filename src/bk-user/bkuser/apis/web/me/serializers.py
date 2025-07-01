@@ -37,6 +37,14 @@ class MeVirtualUserOutputSLZ(serializers.Serializer):
     created_at = serializers.DateTimeField(help_text="创建时间")
 
 
+class MeVirtualUserRetrieveOutputSLZ(MeVirtualUserOutputSLZ):
+    pass
+
+
+class MeVirtualUserListOutputSLZ(MeVirtualUserOutputSLZ):
+    pass
+
+
 def _validate_owners(owners: List[str], tenant_id: str) -> List[str]:
     """
     校验责任人列表

@@ -24,7 +24,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.me.serializers import (
     MeVirtualUserListInputSLZ,
-    MeVirtualUserOutputSLZ,
+    MeVirtualUserListOutputSLZ,
+    MeVirtualUserRetrieveOutputSLZ,
     MeVirtualUserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -38,7 +39,6 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class MeVirtualUserListApi(generics.ListAPIView):
-    serializer_class = MeVirtualUserOutputSLZ
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
@@ -66,26 +66,19 @@ class MeVirtualUserListApi(generics.ListAPIView):
         tags=["me"],
         operation_description="虚拟用户列表",
         query_serializer=MeVirtualUserListInputSLZ(),
-        responses={status.HTTP_200_OK: MeVirtualUserOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: MeVirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
 
-        if page is not None:
-            detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
-            serializer = self.get_serializer(detailed_vusers, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(queryset)
-        serializer = self.get_serializer(detailed_vusers, many=True)
-        return Response(serializer.data)
+        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
+        return self.get_paginated_response(MeVirtualUserListOutputSLZ(detailed_vusers, many=True).data)
 
 
 class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
-    serializer_class = MeVirtualUserOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
@@ -129,10 +122,9 @@ class MeVirtualUserRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIView
     @swagger_auto_schema(
         tags=["me"],
         operation_description="虚拟用户详情",
-        responses={status.HTTP_200_OK: MeVirtualUserOutputSLZ()},
+        responses={status.HTTP_200_OK: MeVirtualUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         virtual_user = self.get_object()
-        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users([virtual_user])
-        serializer = self.get_serializer(detailed_vusers[0])
-        return Response(serializer.data)
+        detailed_vuser = VirtualUserHandler.to_detailed_virtual_users([virtual_user])[0]
+        return Response(MeVirtualUserRetrieveOutputSLZ(detailed_vuser).data)
