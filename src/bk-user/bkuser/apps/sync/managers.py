@@ -63,7 +63,7 @@ class DataSourceSyncManager:
                 plugin_init_extra_kwargs = {"temporary_storage_id": temporary_storage_id}
 
             self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
-            sync_data_source.apply_async(args=(task.id, plugin_init_extra_kwargs), soft_time_limit=self.sync_timeout)
+            sync_data_source.apply_async(args=[task.id, plugin_init_extra_kwargs], soft_time_limit=self.sync_timeout)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
             DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
@@ -117,7 +117,7 @@ class TenantSyncManager:
         )
 
         if self.sync_options.async_run:
-            sync_tenant.apply_async(args=(task.id,), soft_time_limit=self.sync_timeout)
+            sync_tenant.apply_async(args=[task.id], soft_time_limit=self.sync_timeout)
         else:
             TenantSyncTaskRunner(task).run()
 

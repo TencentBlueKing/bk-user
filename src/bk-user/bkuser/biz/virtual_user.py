@@ -107,7 +107,8 @@ class VirtualUserHandler:
     def to_detailed_virtual_users(tenant_users: List[TenantUser]) -> List[DetailedVirtualUser]:
         """将 TenantUser 列表转换为 DetailedVirtualUser 列表
 
-        :param tenant_users: TenantUser 列表
+        :param tenant_users: TenantUser 列表，由于依赖 data_source_user 关系，
+                            建议 Queryset 查询时，使用 .select_related("data_source_user")，避免出现 N +1 问题
         :return: DetailedVirtualUser 列表
         """
         # 批量查询关联数据
