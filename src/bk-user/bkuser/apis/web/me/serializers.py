@@ -72,5 +72,4 @@ class MeVirtualUserUpdateInputSLZ(serializers.Serializer):
         return list(set(app_codes))
 
     def validate_owners(self, owners: List[str]) -> List[str]:
-        tenant_id = self.context["tenant_id"]
-        return _validate_owners(owners, tenant_id)
+        return _validate_owners(owners, self.context["tenant_id"])
