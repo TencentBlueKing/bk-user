@@ -429,9 +429,9 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱", required=False)
-    phone = serializers.CharField(help_text="手机号", required=False)
-    phone_country_code = serializers.CharField(help_text="手机国际区号", required=False)
+    email = serializers.EmailField(help_text="邮箱", required=False, allow_blank=True)
+    phone = serializers.CharField(help_text="手机号", required=False, allow_blank=True)
+    phone_country_code = serializers.CharField(help_text="手机国际区号", required=False, allow_blank=True)
     extras = serializers.JSONField(help_text="自定义字段")
 
     class Meta:

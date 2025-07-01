@@ -639,6 +639,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "star",
                 "full_name": "Star",
                 "email": "trailblazer@railway.com",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 1,
                     gender_field.name: "female",
@@ -650,6 +652,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "kafka",
                 "full_name": "Kafka",
                 "email": "kafka@railway.com",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 32,
                     gender_field.name: "female",
@@ -661,6 +665,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "sam",
                 "full_name": "FireFly",
                 "email": "sam@railway.com",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 23,
                     gender_field.name: "female",
@@ -672,6 +678,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "404",
                 "full_name": "SilverWolf",
                 "email": "404@railway.com",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 16,
                     gender_field.name: "female",
@@ -683,6 +691,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "dotKnifeBoy",
                 "full_name": "Blade",
                 "email": "blade@railway.com",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 48,
                     gender_field.name: "male",
