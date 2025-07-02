@@ -83,8 +83,8 @@ class LocalDataSourceDataParser:
         "username",
         "full_name",
         "email",
-        "phone_number",
     ]
+    # TODO: 后续支持根据字段设置的必填情况，调整必填字段
 
     def __init__(self, logger: PluginLogger, workbook: Workbook):
         self.logger = logger
@@ -248,12 +248,17 @@ class LocalDataSourceDataParser:
                 # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
                 leaders = [ld.strip() for ld in leader_names.split(",") if ld.strip()]
 
-            phone_number = str(properties.pop("phone_number"))
-            # 默认认为是不带国际代码的
-            phone, country_code = phone_number, settings.DEFAULT_PHONE_COUNTRY_CODE
-            if phone_number.startswith("+"):
-                ret = phonenumbers.parse(phone_number)
-                phone, country_code = str(ret.national_number), str(ret.country_code)
+            phone_number = properties.pop("phone_number")
+            # 如果手机号为空，设置为空字符串
+            if not phone_number:
+                phone, country_code = "", ""
+            else:
+                phone_number = str(phone_number)
+                # 默认认为是不带国际代码的
+                phone, country_code = phone_number, settings.DEFAULT_PHONE_COUNTRY_CODE
+                if phone_number.startswith("+"):
+                    ret = phonenumbers.parse(phone_number)
+                    phone, country_code = str(ret.national_number), str(ret.country_code)
 
             properties.update({"phone": phone, "phone_country_code": country_code})
 
