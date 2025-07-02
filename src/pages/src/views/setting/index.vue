@@ -115,7 +115,7 @@ const menuData = reactive([
 ]);
 
 onMounted(() => {
-  if (window.ENABLE_COLLABORATION_TENANT !== 'False') {
+  if (window.ENABLE_COLLABORATION_TENANT === 'False') {
     const COLLABORATION_KEY = 'collaboration';
     // 菜单移除
     const collaborationMenuIndex = menuData.findIndex(item => item.key === COLLABORATION_KEY);
