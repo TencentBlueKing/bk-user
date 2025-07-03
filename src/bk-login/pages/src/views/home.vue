@@ -24,6 +24,7 @@
         >
           <bk-input
             v-model="inputTenant"
+            class="bk-user-tenant-input"
             clearable
             size="large"
             :placeholder="$t('请输入企业ID或名称')"
@@ -50,7 +51,7 @@
                     <span>{{ item.name }} ({{ item.id }})</span>
                   </div>
                 </div>
-                <div v-if="searchTenantList.length === 0" class="tenant-option-title">{{ $t('未匹配到相应企业') }}</div>
+                <div v-if="searchTenantList.length === 0" class="tenant-option-title">{{ $t('未匹配到相应企业，请检查输入内容是否完整和正确') }}</div>
               </template>
 
               <template v-else-if="tenantList.length">
@@ -240,11 +241,11 @@ const handleTenantChange = async () => {
     searchTenantListLoading.value = false;
     return;
   }
+  popoverVisible.value = true;
   searchTenantListLoading.value = true;
   const res = await getSearchTenantList({
     keyword: id,
   });
-  popoverVisible.value = true;
   searchTenantList.value = res || [];
   searchTenantListLoading.value = false;
 };
@@ -271,11 +272,11 @@ const handleTenantFocus = () => {
   searchTenantListLoading.value = true;
   if (tenantList.value.length) {
     popoverVisible.value = true;
-    // 组件库的 bug，loading 不设置隐藏会遮挡下拉框
-    setTimeout(() => {
-      searchTenantListLoading.value = false;
-    }, 100);
   }
+  // 处理组件库的 bug，loading 不设置隐藏会遮挡下拉框
+  setTimeout(() => {
+    searchTenantListLoading.value = false;
+  }, 100);
 };
 
 /**
@@ -444,6 +445,14 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
 </script>
 
 <style lang="postcss" scoped>
+.bk-user-tenant-input {
+  :deep(.bk-input--text) {
+    background: #F0F1F5;
+  }
+  :deep(.bk-input--suffix-icon) {
+    background: #F0F1F5;
+  }
+}
 .switch-tenant {
   font-size: 14px;
   color: #4D4F56;

@@ -4,6 +4,7 @@
     <bk-form-item property="username">
       <bk-input
         size="large"
+        class="login-input"
         v-model="formData.username"
         :placeholder="isAdmin ? $t('请输入管理员账号') : $t('请输入用户名')"
       >
@@ -13,6 +14,7 @@
     <bk-form-item property="password">
       <bk-input
         size="large"
+        class="login-input"
         v-model="formData.password"
         type="password"
         :placeholder="$t('请输入密码')"
@@ -115,6 +117,14 @@ const handleLogin = () => {
 </script>
 
 <style scoped lang="postcss">
+.login-input {
+  :deep(.bk-input--text) {
+    background: #F0F1F5;
+  }
+  :deep(.bk-input--suffix-icon) {
+    background: #F0F1F5;
+  }
+}
 .login-title {
   font-size: 32px;
   font-weight: 700;
