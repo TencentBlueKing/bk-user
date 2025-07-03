@@ -396,6 +396,7 @@ class PageUserView(View):
         if user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
             redirect_to = bk_user_api.get_global_setting().bk_user_url
 
+        # FIXME(nan): 需要重构，重新抽象，包括与内置管理员的区分，待改造内置管理时一起调整
         # 更新语言
         language = _get_language(request)
         if language and language != user.language:
@@ -465,6 +466,7 @@ class SignInTenantUserCreateApi(View):
         # TODO：支持 MFA、首次登录强制修改密码登录操作
         # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如 bk_token_for_force_change_password
 
+        # FIXME(nan): 需要重构，重新抽象，包括与内置管理员的区分，待改造内置管理时一起调整
         # 更新语言
         language = _get_language(request)
         if language and language != user.language:
