@@ -55,7 +55,7 @@ def _get_language(request) -> str:
     """
     # 从 Cookie 里获取，若获取得到，则说明用户有在页面上切换过语言，返回用户设置的语言
     language = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
-    if language and language not in ["zh-cn", "en"]:
+    if language and language in ["zh-cn", "en"]:
         return language
 
     return ""
