@@ -103,7 +103,7 @@ app.set('view engine', 'html');
 const cred = {
   key: fs.readFileSync(path.join(os.homedir(), 'local.bkuser-key.pem')),
   cert: fs.readFileSync(path.join(os.homedir(), 'local.bkuser.pem')),
-}
+};
 
 const httpsServer = https.createServer(cred, app);
 
