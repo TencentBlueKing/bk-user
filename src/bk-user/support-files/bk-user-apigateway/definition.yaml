@@ -44,7 +44,7 @@ grant_permissions:
     grant_dimension: "resource"
     resource_names:
       - "batch_query_user_sensitive_info"
-  - bk_app_code: "bk-itsm4"
+  - bk_app_code: "cw_aitsm"
     grant_dimension: "resource"
     resource_names:
       - "list_department_user_relation"
@@ -64,3 +64,12 @@ grant_permissions:
     grant_dimension: "resource"
     resource_names:
       - "list_user_department"
+  - bk_app_code: "bk_iam"
+    grant_dimension: "resource"
+    resource_names:
+      - "retrieve_user"
+      - "list_user"
+      - "list_virtual_user"
+      - "list_department"
+      - "list_department_relation"
+      - "list_department_user_relation"
