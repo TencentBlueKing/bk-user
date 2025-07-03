@@ -49,6 +49,18 @@ from .utils import url_has_allowed_host_and_scheme
 logger = logging.getLogger(__name__)
 
 
+def _get_language(request) -> str:
+    """
+    获取当前登录请求的语言
+    """
+    # 从 Cookie 里获取，若获取得到，则说明用户有在页面上切换过语言，返回用户设置的语言
+    language = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
+    if language and language not in ["zh-cn", "en"]:
+        return language
+
+    return ""
+
+
 # 确保无论何时，响应必然有 CSRFToken Cookie
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(View):
@@ -384,6 +396,13 @@ class PageUserView(View):
         if user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
             redirect_to = bk_user_api.get_global_setting().bk_user_url
 
+        # 更新语言
+        language = _get_language(request)
+        if language and language != user.language:
+            # 如果用户设置的语言与用户之前的语言不一致，则更新用户语言
+            user.language = language
+            bk_user_api.update_tenant_user_language(user_id, language)
+
         response = HttpResponseRedirect(redirect_to=redirect_to)
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
@@ -396,7 +415,9 @@ class PageUserView(View):
             httponly=True,
             secure=False,
         )
-
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME, user.language, expires=expired_at, domain=settings.BK_COOKIE_DOMAIN
+        )
         # 删除 Session
         request.session.clear()
 
@@ -444,6 +465,13 @@ class SignInTenantUserCreateApi(View):
         # TODO：支持 MFA、首次登录强制修改密码登录操作
         # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如 bk_token_for_force_change_password
 
+        # 更新语言
+        language = _get_language(request)
+        if language and language != user.language:
+            # 如果用户设置的语言与用户之前的语言不一致，则更新用户语言
+            user.language = language
+            bk_user_api.update_tenant_user_language(user_id, language)
+
         response = APISuccessResponse({"redirect_uri": redirect_to})
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
@@ -455,6 +483,9 @@ class SignInTenantUserCreateApi(View):
             domain=settings.BK_COOKIE_DOMAIN,
             httponly=True,
             secure=False,
+        )
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME, user.language, expires=expired_at, domain=settings.BK_COOKIE_DOMAIN
         )
 
         # 删除 Session

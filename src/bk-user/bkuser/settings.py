@@ -524,7 +524,7 @@ if not CELERY_BROKER_URL:
             "socket_keepalive": True,
         }
         if REDIS_TLS_ENABLED:
-            # 用于与 Sentinel 节点之间的TLS通信
+            # 用于与 Sentinel 节点之间的 TLS 通信
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
@@ -743,11 +743,11 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
 # 是否启用虚拟账号页面功能
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
-ENABLE_CREATE_TENANT = ENABLE_MUTIL_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
+ENABLE_CREATE_TENANT = ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 
