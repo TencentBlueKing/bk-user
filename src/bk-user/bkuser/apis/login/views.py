@@ -41,6 +41,7 @@ from .serializers import (
     LocalUserCredentialAuthenticateOutputSLZ,
     TenantListInputSLZ,
     TenantListOutputSLZ,
+    TenantUserLanguageUpdateInputSLZ,
     TenantUserMatchInputSLZ,
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
@@ -245,3 +246,23 @@ class TenantUserRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView
     serializer_class = TenantUserRetrieveOutputSLZ
     queryset = TenantUser.objects.select_related("data_source_user", "data_source").all()
     lookup_field = "id"
+
+
+class TenantUserLanguageUpdateApi(LoginApiAccessControlMixin, generics.UpdateAPIView):
+    """
+    更新租户用户的语言设置
+    """
+
+    queryset = TenantUser.objects.all()
+    lookup_field = "id"
+
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        slz = TenantUserLanguageUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user.language = data["language"]
+        tenant_user.save(update_fields=["language", "updated_at"])
+
+        return Response()
