@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-# (?!.*--) 为 negative lookahead（否定前瞻断言），表示若任意位置出现了连续两个连字符(--)，则会匹配失败
+# (?!.*--) 为 negative lookahead（否定前瞻断言），表示若任意位置出现了连续两个连字符 (--)，则会匹配失败
 TENANT_ID_REGEX = re.compile(r"^(?!.*--)[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 
 # 自定义字段英文标识命名规则
@@ -31,7 +31,7 @@ class BuiltInTenantIDEnum(StrStructuredEnum):
     """内置租户 ID 枚举"""
 
     DEFAULT = EnumField("default", label="Default")
-    SYSTEM = EnumField("system", label="BleuKing Op")
+    SYSTEM = EnumField("system", label="BlueKing Op")
 
 
 class UserFieldDataType(StrStructuredEnum):
