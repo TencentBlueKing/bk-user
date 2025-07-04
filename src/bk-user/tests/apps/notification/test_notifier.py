@@ -72,7 +72,7 @@ class TestTenantUserNotifier:
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
     def test_batch_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MUTIL_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.USER_INITIALIZE,
                 data_source_id=data_source.id,
@@ -102,7 +102,7 @@ class TestTenantUserNotifier:
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
     def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MUTIL_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
             )
@@ -128,7 +128,7 @@ class TestContactNotifier:
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
     def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MUTIL_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
             notifier = ContactNotifier(
                 scene=NotificationScene.SEND_VERIFICATION_CODE,
                 method=NotificationMethod.EMAIL,
@@ -144,7 +144,7 @@ class TestContactNotifier:
             )
             notifier.send(phone="12345678901", phone_country_code="86", verification_code="123456")
 
-        with override_settings(ENABLE_MUTIL_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
             notifier = ContactNotifier(
                 scene=NotificationScene.RESET_PASSWORD,
                 tenant_id=data_source.owner_tenant_id,
