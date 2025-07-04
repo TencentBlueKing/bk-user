@@ -34,16 +34,15 @@ def validate_email_params(email: str, receiver: str):
         raise ValueError("params `email`(email address) or `receiver`(tenant_user_id) must be provided")
 
 
-def validate_sms_params(phone_info: Dict[str, str] | None, receiver: str):
+def validate_sms_params(phone: str, phone_country_code: str, receiver: str):
     """
     校验短信发送参数
-    :param phone_info: 手机号信息，包含 phone 和 phone_country_code
+    :param phone: 手机号
+    :param phone_country_code: 手机国际区号
     :param receiver: 租户用户 ID
     """
-    if not (phone_info or receiver):
-        raise ValueError(
-            "params `phone_info`(phone number and phone country code) or `receiver`(tenant_user_id) must be provided"
-        )
+    if not ((phone and phone_country_code) or receiver):
+        raise ValueError("params `phone` and `phone_country_code` or `receiver`(tenant_user_id) must be provided")
 
 
 class NotificationClient(Protocol):
@@ -51,7 +50,6 @@ class NotificationClient(Protocol):
 
     def send_mail(
         self,
-        tenant_id: str,
         sender: str,
         title: str,
         content: str,
@@ -61,7 +59,6 @@ class NotificationClient(Protocol):
         """
         发送邮件
         支持通过接收者的邮箱地址 或 租户用户 ID 发送通知，当两者都存在时，优先使用邮箱地址
-        :param tenant_id: 接收者所属租户 ID
         :param sender: 发件人，例如："蓝鲸智云"
         :param title: 邮件标题
         :param content: 邮件内容（HTML格式）
@@ -71,28 +68,29 @@ class NotificationClient(Protocol):
 
     def send_sms(
         self,
-        tenant_id: str,
         content: str,
-        phone_info: Dict[str, str] | None = None,
+        phone: str = "",
+        phone_country_code: str = "",
         receiver: str = "",
     ) -> None:
         """
         发送短信
         支持通过接收者的手机号码信息（国际区号 + 手机号） 或 租户用户 ID 发送通知，当两者都存在时，优先使用手机号码信息
-        :param tenant_id: 接收者所属租户 ID
         :param content: 短信内容
-        :param phone_info: 接收者手机号码信息，格式：{"phone": "xxx", "phone_country_code": "xxx"}
-        :param receiver: 接收者的租户用户 ID(tenant_user_id)，与 phone_info 参数二选一
+        :param phone: 接收者手机号
+        :param phone_country_code: 接收者手机国际区号
+        :param receiver: 接收者的租户用户 ID (tenant_user_id)，与 手机号信息（phone、phone_country_code）参数二选一
         """
 
 
-def get_notification_client() -> NotificationClient:
+def get_notification_client(tenant_id: str) -> NotificationClient:
     """
     选择对应消息通知 API（ESB 或 API 网关）
+    :param tenant_id: 租户 ID
     """
     # 有单独部署 bk-cmsi 网关 或 开启多租户模式，使用 bk-cmsi 网关提供的消息通知 API
     if settings.HAS_BK_CMSI_APIGW or settings.ENABLE_MUTIL_TENANT_MODE:
-        return BkApigwCmsiClient()
+        return BkApigwCmsiClient(tenant_id)
     # 否则使用 ESB 提供的消息通知 API
     return BkEsbCmsiClient()
 
@@ -104,7 +102,6 @@ class BkEsbCmsiClient:
 
     def send_mail(
         self,
-        tenant_id: str,
         sender: str,
         title: str,
         content: str,
@@ -134,18 +131,18 @@ class BkEsbCmsiClient:
 
     def send_sms(
         self,
-        tenant_id: str,
         content: str,
-        phone_info: Dict[str, str] | None = None,
+        phone: str = "",
+        phone_country_code: str = "",
         receiver: str = "",
     ):
         """发送短信"""
-        validate_sms_params(phone_info, receiver)
+        validate_sms_params(phone, phone_country_code, receiver)
 
-        # 当两者都存在时，优先使用 phone_info 中的手机号信息
+        # 当两者都存在时，优先使用手机号信息
         params: Dict[str, str] = {"content": content}
-        if phone_info:
-            params["receiver"] = phone_info["phone"]
+        if phone and phone_country_code:
+            params["receiver"] = phone
         else:
             params["receiver__username"] = receiver
 
@@ -161,9 +158,15 @@ class BkApigwCmsiClient:
 
     APIGW_NAME = "bk-cmsi"
 
+    def __init__(self, tenant_id: str):
+        """
+        初始化客户端
+        :param tenant_id: 租户 ID
+        """
+        self.tenant_id = tenant_id
+
     def send_mail(
         self,
-        tenant_id: str,
         sender: str,
         title: str,
         content: str,
@@ -189,24 +192,24 @@ class BkApigwCmsiClient:
             http_post,
             self.APIGW_NAME,
             "/v1/send_mail/",
-            tenant_id,
+            self.tenant_id,
             json=params,
         )
 
     def send_sms(
         self,
-        tenant_id: str,
         content: str,
-        phone_info: Dict[str, str] | None = None,
+        phone: str = "",
+        phone_country_code: str = "",
         receiver: str = "",
     ):
         """发送短信"""
-        validate_sms_params(phone_info, receiver)
+        validate_sms_params(phone, phone_country_code, receiver)
 
-        # 当两者都存在时，优先使用 phone_info
+        # 当两者都存在时，优先使用手机号信息
         params: Dict[str, str | List[str]] = {"content": content}
-        if phone_info:
-            params["receiver"] = [self._format_phone(phone_info)]
+        if phone and phone_country_code:
+            params["receiver"] = [self._format_phone(phone, phone_country_code)]
         else:
             params["receiver__username"] = [receiver]
 
@@ -214,14 +217,15 @@ class BkApigwCmsiClient:
             http_post,
             self.APIGW_NAME,
             "/v1/send_sms/",
-            tenant_id,
+            self.tenant_id,
             json=params,
         )
 
-    def _format_phone(self, phone_info: Dict[str, str]) -> str:
+    def _format_phone(self, phone: str, phone_country_code: str) -> str:
         """
         格式化手机号
-        :param phone_info: 手机号信息
+        :param phone: 手机号
+        :param phone_country_code: 手机国际区号
         :return: 格式化后的手机号（"+手机区号 手机号"）
         """
-        return f"+{phone_info['phone_country_code']} {phone_info['phone']}"
+        return f"+{phone_country_code} {phone}"

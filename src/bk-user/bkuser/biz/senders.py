@@ -19,7 +19,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
-from bkuser.apps.notification.notifier import TenantUserNotifier
+from bkuser.apps.notification.notifier import ContactNotifier
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.verification_code import VerificationCodeScene
@@ -43,17 +43,11 @@ class PhoneVerificationCodeSender:
         if not self._can_send(phone, phone_country_code):
             raise ExceedSendRateLimit(_("今日发送验证码次数超过上限"))
 
-        contact_info = {
-            "phone_info": {
-                "phone": phone,
-                "phone_country_code": phone_country_code,
-            }
-        }
-
-        TenantUserNotifier(
+        ContactNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.SMS,
-        ).send_by_contact(contact_info, tenant_id=self.tenant_id, verification_code=code)  # type: ignore
+            tenant_id=self.tenant_id,
+        ).send(phone=phone, phone_country_code=phone_country_code, verification_code=code)  # type: ignore
 
     def _can_send(self, phone: str, phone_country_code: str) -> bool:
         send_cnt_cache_key = f"{self.scene.value}:{phone_country_code}:{phone}:send_cnt"
@@ -80,10 +74,11 @@ class EmailVerificationCodeSender:
         if not self._can_send(email):
             raise ExceedSendRateLimit(_("今日发送验证码次数超过上限"))
 
-        TenantUserNotifier(
+        ContactNotifier(
             NotificationScene.SEND_VERIFICATION_CODE,
             method=NotificationMethod.EMAIL,
-        ).send_by_contact({"email": email}, tenant_id=self.tenant_id, verification_code=code)
+            tenant_id=self.tenant_id,
+        ).send(email=email, verification_code=code)
 
     def _can_send(self, email: str) -> bool:
         send_cnt_cache_key = f"{self.scene.value}:{email}:send_cnt"
@@ -107,10 +102,11 @@ class EmailResetPasswdTokenSender:
         if not self._can_send(tenant_user):
             raise ExceedSendRateLimit(_("超过发送次数限制"))
 
-        TenantUserNotifier(
+        ContactNotifier(
             NotificationScene.RESET_PASSWORD,
+            tenant_id=tenant_user.tenant_id,
             data_source_id=tenant_user.data_source_user.data_source_id,
-        ).send_by_contact({"email": tenant_user.email}, tenant_id=tenant_user.tenant_id, token=token)
+        ).send(email=tenant_user.email, token=token)
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         send_cnt_cache_key = f"{tenant_user.email}:send_cnt"

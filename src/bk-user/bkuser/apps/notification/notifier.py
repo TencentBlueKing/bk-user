@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
+from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from django.conf import settings
@@ -162,23 +163,31 @@ class NotificationTmplsGetter:
         ]
 
 
-class BaseTmplContextGenerator:
+class BaseTmplContextGenerator(ABC):
     """模板上下文生成器基类"""
 
     def __init__(self, scene: NotificationScene, **scene_kwargs):
         self.scene = scene
         self.scene_kwargs = scene_kwargs
 
+    @abstractmethod
     def gen(self) -> Dict[str, str]:
         """生成通知模板使用的上下文
 
         注：为保证模板渲染准确性，value 值类型需为 str
         """
+
+
+class ContactTmplContextGenerator(BaseTmplContextGenerator):
+    """联系方式通知的模板上下文生成器"""
+
+    def gen(self) -> Dict[str, str]:
+        """生成通知模板使用的上下文"""
         if self.scene == NotificationScene.SEND_VERIFICATION_CODE:
             return self._gen_send_verification_code_ctx()
         if self.scene == NotificationScene.RESET_PASSWORD:
             return self._gen_reset_passwd_ctx()
-        raise ValueError(f"Scene {self.scene} not supported")
+        raise ValueError(f"Scene {self.scene} not supported for contact notification")
 
     def _gen_send_verification_code_ctx(self) -> Dict[str, str]:
         """发送验证码"""
@@ -218,8 +227,7 @@ class UserTmplContextGenerator(BaseTmplContextGenerator):
             return self._gen_tenant_user_expiring_ctx()
         if self.scene == NotificationScene.TENANT_USER_EXPIRED:
             return self._gen_tenant_user_expired_ctx()
-        # 对于不支持的场景，尝试使用基类的处理方法
-        return super().gen()
+        raise ValueError(f"Scene {self.scene} not supported for user notification")
 
     def _gen_base_ctx(self) -> Dict[str, str]:
         """获取基础信息"""
@@ -269,21 +277,16 @@ class UserTmplContextGenerator(BaseTmplContextGenerator):
         return self._gen_base_ctx()
 
 
-class TmplContextGenerator(BaseTmplContextGenerator):
-    """模版上下文生成器工厂类，根据是否提供用户对象，返回相应的生成器实例"""
-
-    @classmethod
-    def create(cls, scene: NotificationScene, user: TenantUser | None = None, **scene_kwargs):
-        if user is not None:
-            return UserTmplContextGenerator(user, scene, **scene_kwargs)
-        return cls(scene, **scene_kwargs)
-
-
 class NotificationSender:
     """消息通知发送器"""
 
-    def __init__(self):
-        self.client = get_notification_client()
+    def __init__(self, tenant_id: str):
+        """
+        初始化发送器
+        :param tenant_id: 租户 ID
+        """
+        self.tenant_id = tenant_id
+        self.client = get_notification_client(tenant_id)
 
     def send(
         self,
@@ -291,8 +294,9 @@ class NotificationSender:
         title: str | None,
         content: str,
         sender: str,
-        tenant_id: str,
-        contact_info: Dict[str, str | Dict[str, str]] | None = None,
+        email: str = "",
+        phone: str = "",
+        phone_country_code: str = "",
         tenant_user_id: str = "",
     ):
         """
@@ -302,100 +306,124 @@ class NotificationSender:
         :param title: 标题（邮件必填参数）
         :param content: 内容
         :param sender: 发送者
-        :param tenant_id: 接收者所属租户 ID
-        :param contact_info: 联系方式
-        :param tenant_user_id: 租户用户 ID，与 contact_info 二选一
+        :param email: 邮箱地址
+        :param phone: 手机号
+        :param phone_country_code: 手机国际区号
+        :param tenant_user_id: 租户用户 ID，与联系方式二选一
         """
         if method == NotificationMethod.EMAIL:
             self.client.send_mail(
-                tenant_id=tenant_id,
                 sender=sender,
                 title=title,  # type: ignore
                 content=content,
-                email=contact_info.get("email") if contact_info else None,  # type: ignore
+                email=email,
                 receiver=tenant_user_id,
             )
         elif method == NotificationMethod.SMS:
             self.client.send_sms(
-                tenant_id=tenant_id,
                 content=content,
-                phone_info=contact_info.get("phone_info") if contact_info else None,  # type: ignore
+                phone=phone,
+                phone_country_code=phone_country_code,
                 receiver=tenant_user_id,
             )
         else:
             raise ValueError(f"Unsupported notification method: {method}")
 
 
-class TenantUserNotifier:
-    """租户用户通知器，用于向一批或某个租户用户发送通知"""
+class BaseNotifier:
+    """通知器基类"""
 
-    def __init__(self, scene: NotificationScene, **scene_kwargs):
+    def __init__(self, scene: NotificationScene, tenant_id: str, **scene_kwargs):
         """
         :param scene: 通知场景
-        :param data_source_id: 数据源 ID，当通知模板来源于数据源插件时必须
-        :param tenant_id: 接收者所属租户 ID，当通知模板来源于租户相关配置时必须
+        :param tenant_id: 租户 ID
+        :param scene_kwargs: 场景相关参数
         """
         self.scene = scene
+        self.tenant_id = tenant_id
+
+        # 需要传递 tenant_id 作为场景相关参数
+        if scene in [NotificationScene.TENANT_USER_EXPIRING, NotificationScene.TENANT_USER_EXPIRED]:
+            scene_kwargs["tenant_id"] = tenant_id
+
         self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
-        self.sender = NotificationSender()
+        self.sender = NotificationSender(tenant_id)
+
+    def _render_tmpl(self, tmpl_content: str, context_generator: BaseTmplContextGenerator) -> str:
+        """渲染模板"""
+        ctx = context_generator.gen()
+        return Template(tmpl_content).render(Context(ctx))
+
+
+class ContactNotifier(BaseNotifier):
+    """联系方式通知器，用于向指定联系方式发送通知（如验证码）"""
+
+    def send(self, email: str = "", phone: str = "", phone_country_code: str = "", **scene_kwargs) -> None:
+        """
+        通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
+        :param email: 邮箱地址
+        :param phone: 手机号
+        :param phone_country_code: 手机国际区号
+        :param scene_kwargs: 场景相关参数
+        """
+        context_generator = ContactTmplContextGenerator(self.scene, **scene_kwargs)
+
+        for tmpl in self.templates:
+            content = self._render_tmpl(tmpl.content, context_generator)
+            self.sender.send(
+                method=tmpl.method,
+                title=tmpl.title,
+                content=content,
+                sender=tmpl.sender,
+                email=email,
+                phone=phone,
+                phone_country_code=phone_country_code,
+            )
+            logger.info("send %s by contact info, scene %s", tmpl.method.value, self.scene)
+
+
+class TenantUserNotifier(BaseNotifier):
+    """租户用户通知器，用于向租户用户发送通知"""
 
     def batch_send(self, users: List[TenantUser], **kwargs) -> None:
         """
         批量发送通知到用户
         :param users: 租户用户列表
-        :param user_passwd_map: {数据源用户ID: 密码} 映射表，密码初始化/重置场景必须
+        :param kwargs: 场景相关参数，如 user_passwd_map: {数据源用户ID: 密码} 映射表
         """
-        for u in users:
+        for user in users:
             try:
-                self.send(u, **self._gen_scene_kwargs(u, **kwargs))
+                scene_kwargs = self._gen_scene_kwargs(user, **kwargs)
+                self.send(user, **scene_kwargs)
             except Exception:  # noqa: PERF203
-                logger.exception("send notification to user %s, scene %s failed", u.id, self.scene)
+                logger.exception("send notification to user %s, scene %s failed", user.id, self.scene)
 
     def send(self, user: TenantUser, **scene_kwargs) -> None:
-        """发送通知到用户，适用于需要用户信息的场景（如密码过期提醒）"""
+        """
+        发送通知到用户，适用于需要用户信息的场景（如密码过期提醒）
+        :param user: 租户用户对象
+        :param scene_kwargs: 场景相关参数
+        """
+        context_generator = UserTmplContextGenerator(user, self.scene, **scene_kwargs)
+
         for tmpl in self.templates:
-            content = self._render_tmpl(tmpl.content, user=user, **scene_kwargs)
+            content = self._render_tmpl(tmpl.content, context_generator)
             self.sender.send(
                 method=tmpl.method,
                 title=tmpl.title,
                 content=content,
                 sender=tmpl.sender,
-                tenant_id=user.tenant_id,
                 tenant_user_id=user.id,
             )
-
             logger.info("send %s to user %s, scene %s", tmpl.method.value, user.id, self.scene)
 
-    def send_by_contact(self, contact_info: Dict[str, str | Dict[str, str]], tenant_id: str, **scene_kwargs) -> None:
-        """
-        直接通过联系方式发送通知，适用于不需要用户信息的场景（如发送验证码）
-        :param contact_info: 联系方式，如 {"email": "xxx"} 或 {"phone_info": {"phone": "xxx", "country_code": "xxx"}}
-        :param tenant_id: 接收者所属租户 ID（多租户版本调用网关时必须传入）
-        """
-        for tmpl in self.templates:
-            content = self._render_tmpl(tmpl.content, **scene_kwargs)
-            self.sender.send(
-                tenant_id=tenant_id,
-                method=tmpl.method,
-                title=tmpl.title,
-                content=content,
-                sender=tmpl.sender,
-                contact_info=contact_info,
-            )
-            logger.info("send %s by contact info, scene %s", tmpl.method.value, self.scene)
-
-    def _gen_scene_kwargs(self, user, **kwargs) -> Dict[str, str]:
+    def _gen_scene_kwargs(self, user: TenantUser, **kwargs) -> Dict[str, str]:
+        """生成特定场景所需的参数"""
         if self.scene in [
             NotificationScene.USER_INITIALIZE,
             NotificationScene.MANAGER_RESET_PASSWORD,
         ]:
             if "user_passwd_map" not in kwargs:
                 raise ValueError("user_passwd_map required when call batch_send")
-
             return {"passwd": kwargs["user_passwd_map"][user.data_source_user.id]}
-
         return {}
-
-    def _render_tmpl(self, tmpl_content: str, user: TenantUser | None = None, **scene_kwargs) -> str:
-        ctx = TmplContextGenerator.create(scene=self.scene, user=user, **scene_kwargs).gen()
-        return Template(tmpl_content).render(Context(ctx))
