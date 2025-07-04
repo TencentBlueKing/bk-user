@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from django.conf import settings
@@ -163,23 +162,12 @@ class NotificationTmplsGetter:
         ]
 
 
-class BaseTmplContextGenerator(ABC):
-    """模板上下文生成器基类"""
+class ContactTmplContextGenerator:
+    """联系方式通知的模板上下文生成器"""
 
     def __init__(self, scene: NotificationScene, **scene_kwargs):
         self.scene = scene
         self.scene_kwargs = scene_kwargs
-
-    @abstractmethod
-    def gen(self) -> Dict[str, str]:
-        """生成通知模板使用的上下文
-
-        注：为保证模板渲染准确性，value 值类型需为 str
-        """
-
-
-class ContactTmplContextGenerator(BaseTmplContextGenerator):
-    """联系方式通知的模板上下文生成器"""
 
     def gen(self) -> Dict[str, str]:
         """生成通知模板使用的上下文"""
@@ -206,12 +194,13 @@ class ContactTmplContextGenerator(BaseTmplContextGenerator):
         }
 
 
-class UserTmplContextGenerator(BaseTmplContextGenerator):
+class UserTmplContextGenerator:
     """依赖用户信息的模板上下文生成器"""
 
     def __init__(self, user: TenantUser, scene: NotificationScene, **scene_kwargs):
-        super().__init__(scene, **scene_kwargs)
         self.user = user
+        self.scene = scene
+        self.scene_kwargs = scene_kwargs
 
     def gen(self) -> Dict[str, str]:
         """生成通知模板使用的上下文"""
@@ -330,8 +319,8 @@ class NotificationSender:
             raise ValueError(f"Unsupported notification method: {method}")
 
 
-class BaseNotifier:
-    """通知器基类"""
+class ContactNotifier:
+    """联系方式通知器，用于向指定联系方式发送通知（如验证码）"""
 
     def __init__(self, scene: NotificationScene, tenant_id: str, **scene_kwargs):
         """
@@ -341,22 +330,8 @@ class BaseNotifier:
         """
         self.scene = scene
         self.tenant_id = tenant_id
-
-        # 需要传递 tenant_id 作为场景相关参数
-        if scene in [NotificationScene.TENANT_USER_EXPIRING, NotificationScene.TENANT_USER_EXPIRED]:
-            scene_kwargs["tenant_id"] = tenant_id
-
         self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
         self.sender = NotificationSender(tenant_id)
-
-    def _render_tmpl(self, tmpl_content: str, context_generator: BaseTmplContextGenerator) -> str:
-        """渲染模板"""
-        ctx = context_generator.gen()
-        return Template(tmpl_content).render(Context(ctx))
-
-
-class ContactNotifier(BaseNotifier):
-    """联系方式通知器，用于向指定联系方式发送通知（如验证码）"""
 
     def send(self, email: str = "", phone: str = "", phone_country_code: str = "", **scene_kwargs) -> None:
         """
@@ -381,9 +356,30 @@ class ContactNotifier(BaseNotifier):
             )
             logger.info("send %s by contact info, scene %s", tmpl.method.value, self.scene)
 
+    def _render_tmpl(self, tmpl_content: str, context_generator: ContactTmplContextGenerator) -> str:
+        """渲染模板"""
+        ctx = context_generator.gen()
+        return Template(tmpl_content).render(Context(ctx))
 
-class TenantUserNotifier(BaseNotifier):
+
+class TenantUserNotifier:
     """租户用户通知器，用于向租户用户发送通知"""
+
+    def __init__(self, scene: NotificationScene, tenant_id: str, **scene_kwargs):
+        """
+        :param scene: 通知场景
+        :param tenant_id: 租户 ID
+        :param scene_kwargs: 场景相关参数
+        """
+        self.scene = scene
+        self.tenant_id = tenant_id
+
+        # 需要传递 tenant_id 作为场景相关参数
+        if scene in [NotificationScene.TENANT_USER_EXPIRING, NotificationScene.TENANT_USER_EXPIRED]:
+            scene_kwargs["tenant_id"] = tenant_id
+
+        self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
+        self.sender = NotificationSender(tenant_id)
 
     def batch_send(self, users: List[TenantUser], **kwargs) -> None:
         """
@@ -427,3 +423,8 @@ class TenantUserNotifier(BaseNotifier):
                 raise ValueError("user_passwd_map required when call batch_send")
             return {"passwd": kwargs["user_passwd_map"][user.data_source_user.id]}
         return {}
+
+    def _render_tmpl(self, tmpl_content: str, context_generator: UserTmplContextGenerator) -> str:
+        """渲染模板"""
+        ctx = context_generator.gen()
+        return Template(tmpl_content).render(Context(ctx))
