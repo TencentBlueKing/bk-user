@@ -1,7 +1,7 @@
 <template>
   <bk-form form-type="vertical" v-bkloading="{ loading }">
     <div class="switch-tenant" v-if="hasStorage" @click="changeTenant">
-      < {{ $t('切换企业') }}
+      &lt; {{ $t('切换企业') }}
     </div>
 
     <div class="tenant-logo">
@@ -24,43 +24,61 @@
         >
           <bk-input
             v-model="inputTenant"
+            class="bk-user-tenant-input"
             clearable
             size="large"
             :placeholder="$t('请输入企业ID或名称')"
             @focus="handleTenantFocus"
             @clear="handleClearTenant"
-            @keydown="debouncedTenantChange">
+            @input="debouncedTenantChange"
+            @keydown="(value: string, event: KeyboardEvent) => handleTenantKeydown(value, event)">
           </bk-input>
           <template #content>
-            <div class="tenant-options">
-              <div
-                class="tenant-option"
-                v-bkloading="{ loading: tenantOptionsLoading }"
-                v-for="item in tenantOptions"
-                :key="item.id"
-                @click="handleSelectTenant(item)">
-                <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
-                <span v-else class="logo small">
-                  {{ item?.name?.charAt(0).toUpperCase() }}
-                </span>
-                <span>{{ item.name }} ({{ item.id }})</span>
-              </div>
+            <div
+              class="tenant-options"
+              v-bkloading="{ loading: searchTenantListLoading, mode: 'spin', size: 'mini' }">
+              <template v-if="inputTenant">
+                <div
+                  class="tenant-option-container"
+                  v-for="item in searchTenantList"
+                  :key="item.id"
+                  @click="handleSelectTenant(item)">
+                  <div class="tenant-option">
+                    <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
+                    <span v-else class="logo small">
+                      {{ item?.name?.charAt(0).toUpperCase() }}
+                    </span>
+                    <span>{{ item.name }} ({{ item.id }})</span>
+                  </div>
+                </div>
+                <div v-if="searchTenantList.length === 0" class="tenant-option-title">{{ $t('未匹配到相应企业，请检查输入内容是否完整和正确') }}</div>
+              </template>
 
-              <template v-if="tenantList.length && tenantOptions.length === 0">
-                <div class="tenant-option-title">{{ $t('上次登录') }}</div>
-                <div class="tenant-option" v-for="item in tenantList" :key="item.id" @click="handleSelectTenant(item)">
-                  <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
-                  <span v-else class="logo small">
-                    {{ item?.name?.charAt(0).toUpperCase() }}
-                  </span>
-                  <span>{{ item.name }} ({{ item.id }})</span>
+              <template v-else-if="tenantList.length">
+                <div class="tenant-option-header">
+                  <span class="tenant-option-title">{{ $t('最近登录') }}</span>
+                  <span class="clear-all-btn" @click="handleClearAllTenants">{{ $t('清空') }}</span>
+                </div>
+                <div class="tenant-option-container"
+                     v-for="item in tenantList"
+                     :key="item.id"
+                     @click="handleSelectTenant(item)">
+                  <div class="tenant-option">
+                    <img v-if="item?.logo" class="logo-img small" :src="item?.logo" />
+                    <span v-else class="logo small">
+                      {{ item?.name?.charAt(0).toUpperCase() }}
+                    </span>
+                    <span>{{ item.name }} ({{ item.id }})</span>
+                  </div>
+                  <div class="delete-btn" @click.stop="handleDeleteTenant(item)">
+                    <CloseLine />
+                  </div>
                 </div>
               </template>
             </div>
           </template>
         </bk-popover>
 
-        <span class="tenant-input-error" v-if="searchTenantEmpty && !selectedTenant?.id">{{ $t('未匹配到相应企业') }}</span>
       </bk-form-item>
 
       <bk-form-item>
@@ -73,9 +91,6 @@
           {{ $t('确定') }}
         </bk-button>
       </bk-form-item>
-      <div class="tenant-password">
-        <span class="cursor-pointer" @click="protocolVisible = true">{{ $t('用户协议') }} ></span>
-      </div>
     </section>
 
     <section v-else-if="hasStorage">
@@ -112,49 +127,31 @@
         </div>
       </section>
 
-      <div class="tenant-password">
-        <span class="cursor-pointer" @click="protocolVisible = true">{{ $t('用户协议') }} ></span>
-        <span
-          class="cursor-pointer"
-          v-if="activeIdp?.plugin_id === 'local'"
-          @click="handleResetPassword">
-          {{ $t('忘记密码？') }}
-        </span>
-      </div>
-      <div class="language-switcher">
-        <div class="language-select">
-          <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
-            <span class="text-active">中文</span>
-          </p>
-          <p class="language-item" :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
-            <span class="text-active">English</span>
-          </p>
-        </div>
-      </div>
     </section>
-    <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
-    <ProtocolEn v-if="protocolVisible && activeTab === 'en'" @close="protocolVisible = false" />
+    <div
+      class="cursor-pointer reset-password"
+      v-if="hasStorage && activeIdp?.plugin_id === 'local'"
+      @click="handleResetPassword">
+      {{ $t('忘记密码？') }}
+    </div>
+
   </bk-form>
 </template>
 
 <script setup lang="ts">
-import { getGlobalSettings, getIdpList, getTenantList, searchTenantList } from '@/http/api';
-import { type Ref, onBeforeMount, ref, computed } from 'vue';
+import { getGlobalSettings, getIdpList, getTenantList, getSearchTenantList } from '@/http/api';
+import { type Ref, onBeforeMount, ref, computed, watch } from 'vue';
 import Password from './components/password.vue';
-import Protocol from './components/protocol.vue';
-import ProtocolEn from './components/protocol-en.vue';
 import useAppStore from '@/store/app';
 import CustomLogin from './components/custom-login.vue';
 import { platformConfig } from '@/store/platformConfig';
-import I18n from '@/language/index';
-import Cookies from 'js-cookie';
 import logoPng from '../../static/images/blueking.png';
 import { debounce } from 'lodash';
+import { CloseLine } from 'bkui-vue/lib/icon';
 
 // 平台配置数据
 const platformConfigData = platformConfig();
 const appLogo = computed(() => (platformConfigData.appLogo ? platformConfigData.appLogo : logoPng));
-const activeTab = ref(I18n.global.locale.value);
 
 // 接口定义
 interface Item {
@@ -172,21 +169,57 @@ interface Idp {
   plugin_id: string;
 }
 
-// 状态管理
+/**
+ * 应用状态管理
+ */
 const appStore = useAppStore();
+/**
+ * 加载状态
+ */
 const loading = ref(false);
+/**
+ * 当前选中的企业
+ */
 const selectedTenant = ref<Tenant | null>(null);
+/**
+ * 最近登录的企业列表，从 localStorage 中加载
+ */
 const tenantList = ref<Tenant[]>([]);
+/**
+ * 是否存在 localStorage 中的企业列表
+ */
 const hasStorage = ref(!!localStorage.getItem('tenantId'));
-const popoverVisible = ref(false);
-const searchTenantEmpty = ref(false);
-const tenantOptionsLoading = ref(false);
-const tenantInputRef = ref(null);
-const tenantOptions = ref<Tenant[]>([]);
+/**
+ * 输入的企业ID或名称
+ */
 const inputTenant = ref(null);
+/**
+ * 企业列表下拉框是否显示
+ */
+const popoverVisible = ref(false);
+/**
+ * 搜索的企业列表加载状态
+ */
+const searchTenantListLoading = ref(false);
+/**
+ * 企业列表输入框
+ */
+const tenantInputRef = ref(null);
+/**
+ * 搜索的企业列表
+ */
+const searchTenantList = ref<Tenant[]>([]);
+/**
+ * 认证源列表
+ */
 const idpList: Ref<Idp[]> = ref([]);
+/**
+ * 当前认证源
+ */
 const activeIdp: Ref<Idp> = ref();
-const protocolVisible = ref(false);
+/**
+ * 全局配置
+ */
 const settings = ref<Record<string, any>>({});
 
 // 从 localStorage 中加载租户列表
@@ -201,37 +234,49 @@ try {
  * 处理租户搜索
  */
 const handleTenantChange = async () => {
-  const id = inputTenant.value;
-  searchTenantEmpty.value = false;
+  selectedTenant.value = null;
+  const id = inputTenant.value?.trim();
+  searchTenantList.value = [];
   if (!id) {
-    tenantOptions.value = [];
+    searchTenantListLoading.value = false;
     return;
   }
-  tenantOptionsLoading.value = true;
-  const res = await searchTenantList({
+  popoverVisible.value = true;
+  searchTenantListLoading.value = true;
+  const res = await getSearchTenantList({
     keyword: id,
   });
-  if (res?.length === 0) {
-    searchTenantEmpty.value = true;
-    popoverVisible.value = false;
-    tenantOptions.value = [];
-  } else {
-    tenantOptions.value = res || [];
-    popoverVisible.value = true;
-  }
-  tenantOptionsLoading.value = false;
+  searchTenantList.value = res || [];
+  searchTenantListLoading.value = false;
 };
 
-// 使用 debounce 包装 handleTenantChange 函数，设置 300ms 的延迟
-const debouncedTenantChange = debounce(handleTenantChange, 300);
+/**
+ * 监听 inputTenant 的变化，增加 loading，避免 debounce 产生的等待
+ */
+watch(inputTenant, (value) => {
+  searchTenantListLoading.value = true;
+  if (tenantList.value.length === 0 && !value) {
+    popoverVisible.value = false;
+  }
+}, {
+  immediate: true,
+});
+
+// 使用 debounce 包装 handleTenantChange 函数，设置 500ms 的延迟
+const debouncedTenantChange = debounce(handleTenantChange, 500);
 
 /**
  * 处理租户输入框焦点
  */
 const handleTenantFocus = () => {
+  searchTenantListLoading.value = true;
   if (tenantList.value.length) {
     popoverVisible.value = true;
   }
+  // 处理组件库的 bug，loading 不设置隐藏会遮挡下拉框
+  setTimeout(() => {
+    searchTenantListLoading.value = false;
+  }, 100);
 };
 
 /**
@@ -250,10 +295,9 @@ const handleClickOutside = ({ event }: { event: Event }) => {
  */
 const handleClearTenant = () => {
   inputTenant.value = null;
-  searchTenantEmpty.value = false;
   popoverVisible.value = false;
   selectedTenant.value = null;
-  tenantOptions.value = [];
+  searchTenantList.value = [];
 };
 
 /**
@@ -263,6 +307,42 @@ const handleClearTenant = () => {
 const handleSelectTenant = (item: Tenant) => {
   selectedTenant.value = item;
   inputTenant.value = `${item.name}（${item.id}）`;
+  popoverVisible.value = false;
+  searchTenantList.value = [];
+};
+
+/**
+ * 删除单个租户
+ * @param item 租户信息
+ */
+const handleDeleteTenant = (item: Tenant) => {
+  tenantList.value = tenantList.value.filter(i => i.id !== item.id);
+  localStorage.setItem('tenantList', JSON.stringify(tenantList.value));
+
+  // 如果删除的是当前登录的租户，需要重新登录
+  if (localStorage.getItem('tenantId') === item.id || appStore.tenantId === item.id) {
+    appStore.tenantId = '';
+    localStorage.removeItem('tenantId');
+    hasStorage.value = false;
+  }
+
+  // 如果删除后没有租户，则隐藏下拉框
+  if (tenantList.value.length === 0) {
+    popoverVisible.value = false;
+  }
+};
+
+/**
+ * 清空所有最近登录的租户
+ */
+const handleClearAllTenants = () => {
+  tenantList.value = [];
+  localStorage.removeItem('tenantList');
+  localStorage.removeItem('tenantId');
+  hasStorage.value = false;
+  appStore.tenantId = '';
+  selectedTenant.value = null;
+  inputTenant.value = null;
   popoverVisible.value = false;
 };
 
@@ -296,13 +376,14 @@ const getIdps = async () => {
 };
 
 /**
- * 切换租户
+ * 切换企业
  */
 const changeTenant = () => {
   hasStorage.value = false;
   appStore.tenantId = '';
   selectedTenant.value = null;
   inputTenant.value = null;
+  popoverVisible.value = false;
 };
 
 /**
@@ -318,34 +399,6 @@ const handleChangeIdp = (idp: Idp) => {
  */
 const handleResetPassword = () => {
   window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
-};
-
-/**
- * 切换语言
- * @param locale 语言代码
- */
-const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
-  activeTab.value = locale;
-  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  // const scriptId = 'jsonp-script';
-  // const prevJsonpScript = document.getElementById(scriptId);
-  // if (prevJsonpScript) {
-  //   document.body.removeChild(prevJsonpScript);
-  // }
-  // const script = document.createElement('script');
-  // script.type = 'text/javascript';
-  // script.src = `${api}?language=${locale}`;
-  // script.id = scriptId;
-  // document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  // window.location.reload();
 };
 
 // 组件挂载前初始化
@@ -373,15 +426,40 @@ onBeforeMount(async () => {
   settings.value = await getGlobalSettings();
   loading.value = false;
 });
+
+/**
+ * 处理租户输入框按键
+ */
+const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
+  // 判断是否为回车键
+  if (event.key === 'Enter') {
+    if (searchTenantList.value.length === 1) {
+      handleSelectTenant(searchTenantList.value[0]);
+      confirmTenant();
+    } else if (searchTenantList.value.length === 0 && tenantList.value.length === 1) {
+      handleSelectTenant(tenantList.value[0]);
+      confirmTenant();
+    }
+  }
+};
 </script>
 
 <style lang="postcss" scoped>
+.bk-user-tenant-input {
+  :deep(.bk-input--text) {
+    background: #F0F1F5;
+  }
+  :deep(.bk-input--suffix-icon) {
+    background: #F0F1F5;
+  }
+}
 .switch-tenant {
   font-size: 14px;
   color: #4D4F56;
   line-height: 22px;
   margin-bottom: 6px;
   cursor: pointer;
+  margin-top: -28px;
 }
 
 .login-header {
@@ -476,11 +554,9 @@ onBeforeMount(async () => {
   }
 }
 
-.tenant-password {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.reset-password {
   margin-top: -14px;
+  text-align: right;
   font-size: 14px;
 }
 
@@ -496,52 +572,54 @@ onBeforeMount(async () => {
   min-height: 32px;
 }
 
+.tenant-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .tenant-option-title {
   color: #979BA5;
 }
 
-.tenant-option {
+.clear-all-btn {
+  cursor: pointer;
+  color: #979BA5;
+
+  &:hover {
+    color: #3A84FF;
+  }
+}
+
+.tenant-option-container {
   height: 32px;
   margin: 0 -12px;
   padding: 0 12px;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 
   &:hover {
     background: #f5f7fa;
+
+    .delete-btn {
+      opacity: 1;
+    }
   }
 }
 
-.language-select {
-  display: flex;
-}
-
-.language-item {
-  width: 70px;
-  text-align: center;
-  background: #f5f7fa;
-  transform: skew(-15deg, 0deg);
-  display: inline-block;
-  height: 24px;
+.delete-btn {
+  opacity: 0;
   cursor: pointer;
+  color: #979BA5;
+  padding: 0 6px;
+  margin-top: 1px;
 
-  .text-active {
-    display: block;
-    width: 70px;
-    height: 24px;
-    line-height: 24px;
-    font-size: 12px;
-    transform: skew(15deg, 0deg);
+  &:hover {
+    color: #3A84FF;
   }
-}
-
-.language-switcher {
-  display: flex;
-  border-radius: 2px;
-  height: 24px;
-  line-height: 24px;
-  justify-content: end;
-  text-align: right;
-  margin-top: 23px;
 }
 
 .active {

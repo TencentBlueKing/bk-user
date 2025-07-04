@@ -65,8 +65,8 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id=self.real_data_source_id,
-            ).select_related("data_source_user", "data_source"),
+                data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+            ).select_related("data_source_user"),
             id=kwargs["id"],
         )
 
@@ -98,7 +98,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id=self.real_data_source_id,
+            data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
         ).select_related("data_source_user")
 
     def get_serializer_context(self):

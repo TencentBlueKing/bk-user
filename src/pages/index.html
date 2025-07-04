@@ -25,6 +25,7 @@
         window.ENABLE_VIRTUAL_USER = '<%= process.env.BK_ENABLE_VIRTUAL_USER %>';
         window.ENABLE_CREATE_TENANT = '<%= process.env.BK_ENABLE_CREATE_TENANT %>';
         window.BK_USER_WEB_APIGW_URL = '<%= process.env.BK_USER_WEB_APIGW_URL %>';
+        window.ENABLE_COLLABORATION_TENANT = '<%= process.env.BK_ENABLE_COLLABORATION_TENANT %>';
         console.log(
           `%c版本信息%c${ BK_BUILD_VERSION }%c >> ${new Date().toString().slice(0, 16)}<<`,
           'padding: 2px 5px; background: #ea3636; color: #fff; border-radius: 3px 0 0 3px;',
@@ -32,5 +33,6 @@
           'background-color: #3A84FF; color: #fff; padding: 2px 5px; border-radius: 3px; font-weight: bold;margin-left: 16px;',
         );
       </script>
+      <script src="<%= process.env.BK_STATIC_URL %>/js/particles.js"></script>
     </body>
 </html>

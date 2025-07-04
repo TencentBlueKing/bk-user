@@ -23,11 +23,11 @@
           immediate
           :min="140"
           :max="900"
-          :initial-divide="'50%'">
+          :initial-divide="isShowCollaboration ? '50%' : '100%'">
           <template #aside>
             <aside-tenant />
           </template>
-          <template #main>
+          <template #main v-if="isShowCollaboration">
             <aside-collaboration />
           </template>
         </bk-resize-layout>
@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
@@ -64,6 +64,7 @@ const appStore = useAppStore();
 const isShow = ref(null);
 const isLoading = ref(false);
 const tableListRef = ref();
+const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
 const getList = async () => {
   isLoading.value = true;

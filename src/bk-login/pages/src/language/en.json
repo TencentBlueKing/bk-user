@@ -9,7 +9,7 @@
   "请输入您所属的企业": "Please enter the company you belong to",
   "请选择租户或输入租户ID": "Please select a tenant or enter a tenant ID",
   "匹配到以下租户: ": "The following tenants are matched: ",
-  "未匹配到相应企业": "No matching company",
+  "未匹配到相应企业，请检查输入内容是否完整和正确": "No matching company, please check if the input content is complete and correct",
   "请选择用户来源": "Please select a user source",
   "成员": " member",
   "记住我的选择": "Remember my choice",
@@ -34,5 +34,6 @@
   "请输入企业ID或名称": "Please enter the company ID or name",
   "切换企业": "Switch company",
   "该企业未完成用户登录配置": "The company has not completed the user login configuration",
-  "上次登录": "Last login"
+  "最近登录": "Recently logged in",
+  "清空": "Clear"
 }

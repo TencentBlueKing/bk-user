@@ -30,6 +30,12 @@ export const useValidate = () => {
     trigger: 'blur',
   };
 
+  const fullName = {
+    validator: (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value),
+    message: t('数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
+    trigger: 'blur',
+  };
+
   const email = {
     validator: (value: string) => /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.[A-Za-z]+$/.test(value),
     message: t('请输入正确的邮箱地址'),
@@ -111,6 +117,7 @@ export const useValidate = () => {
     name,
     loginName,
     id,
+    fullName,
     userName,
     email,
     emailNotRequired,

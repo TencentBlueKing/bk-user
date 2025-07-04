@@ -1,8 +1,10 @@
 <template>
   <bk-form ref="formRef" form-type="vertical" :model="formData" :rules="rules">
+    <div v-if="isAdmin" class="login-title">{{ $t('管理员登录') }}</div>
     <bk-form-item property="username">
       <bk-input
         size="large"
+        class="login-input"
         v-model="formData.username"
         :placeholder="isAdmin ? $t('请输入管理员账号') : $t('请输入用户名')"
       >
@@ -12,6 +14,7 @@
     <bk-form-item property="password">
       <bk-input
         size="large"
+        class="login-input"
         v-model="formData.password"
         type="password"
         :placeholder="$t('请输入密码')"
@@ -35,9 +38,9 @@
 </template>
 
 <script setup lang="ts">
-import { signInByPassword } from '@/http/api';
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { signInByPassword, signInByAdmin } from '@/http/api';
+import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import useAppStore from '@/store/app';
 import { t } from '@/language/index';
 
@@ -48,13 +51,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
 });
 
-const router = useRouter();
+const route = useRoute();
+const isAdmin = computed(() => route.name === 'admin');
 
 const loading = ref(false);
 const formRef = ref();
@@ -76,28 +76,62 @@ const handleLogin = () => {
   errorMessage.value = '';
   formRef.value.validate().then(() => {
     loading.value = true;
-    signInByPassword(
-      appStore.tenantId,
-      props.idpId,
-      {
-        username: formData.value.username,
-        password: formData.value.password,
-      },
-    ).then(() => {
-      window.location.href = `${window.SITE_URL}/page/users/`;
-    })
-      .catch((error) => {
-        errorMessage.value = error?.message || t('登录失败');
+    if (isAdmin.value) {
+      const idpId = route.params.id as string;
+      signInByAdmin(
+        idpId,
+        {
+          username: formData.value.username,
+          password: formData.value.password,
+        },
+      ).then((res) => {
+        window.location.href = res.redirect_uri;
       })
-      .finally(() => {
-        loading.value = false;
-      });
+        .catch((error) => {
+          errorMessage.value = error?.message || t('登录失败');
+        })
+        .finally(() => {
+          loading.value = false;
+        });
+    } else {
+      signInByPassword(
+        appStore.tenantId,
+        props.idpId,
+        {
+          username: formData.value.username,
+          password: formData.value.password,
+        },
+      ).then(() => {
+        window.location.href = `${window.SITE_URL}/page/users/`;
+      })
+        .catch((error) => {
+          errorMessage.value = error?.message || t('登录失败');
+        })
+        .finally(() => {
+          loading.value = false;
+        });
+    }
   });
 };
 
 </script>
 
 <style scoped lang="postcss">
+.login-input {
+  :deep(.bk-input--text) {
+    background: #F0F1F5;
+  }
+  :deep(.bk-input--suffix-icon) {
+    background: #F0F1F5;
+  }
+}
+.login-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-top: -12px;
+  margin-bottom: 24px;
+  color: #313238;
+}
 .login-btn {
   width: 100%;
   margin-top: 10px;

@@ -23,7 +23,13 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.permission.constants import PermAction, UserRole
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantManager, TenantUser
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    Tenant,
+    TenantManager,
+    TenantUser,
+    VirtualUserOwnerRelation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +66,8 @@ def perm_class(action: PermAction):  # noqa: C901
                 if not isinstance(obj, TenantUser):
                     return False
 
-                return is_same_nature_user(obj.id, cur_tenant_id, username)
+                # 检查当前用户是否是虚拟用户的责任人，或是同一自然人用户（跨租户访问）
+                return is_same_nature_user(obj.id, cur_tenant_id, username) or is_virtual_user_owner(obj.id, username)
 
             # 租户权限与具体对象有关系的，需要根据具体对象确定关联的租户后再鉴权
             if action == PermAction.MANAGE_TENANT:
@@ -134,6 +141,15 @@ def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) ->
         natural_user=relation.natural_user
     ).values_list("data_source_user_id", flat=True)
     return TenantUser.objects.filter(id=req_username, data_source_user__in=data_source_user_ids).exists()
+
+
+def is_virtual_user_owner(virtual_user_id: str, owner: str) -> bool:
+    """判断当前用户是否为指定虚拟用户的责任人
+
+    :param virtual_user_id: 待检查的虚拟用户 ID
+    :param owner: 当前用户的用户 ID
+    """
+    return VirtualUserOwnerRelation.objects.filter(owner_id=owner, tenant_user_id=virtual_user_id).exists()
 
 
 def get_user_role(tenant_id: str, username: str) -> UserRole:

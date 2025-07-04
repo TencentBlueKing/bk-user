@@ -45,8 +45,8 @@ def forwards_func(apps, schema_editor):
         raise RuntimeError("INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD must be set in environment variables")
 
     # 根据是否开启多租户模式，选择初始化的租户（运营租户或默认租户）
-    enable_mutil_tenant_mode = os.getenv("ENABLE_MUTIL_TENANT_MODE", "false").lower() == "true"
-    if enable_mutil_tenant_mode:
+    enable_multi_tenant_mode = os.getenv("ENABLE_MULTI_TENANT_MODE", "false").lower() == "true"
+    if enable_multi_tenant_mode:
         first_tenant_id = BuiltInTenantIDEnum.SYSTEM
         first_tenant_name = BuiltInTenantIDEnum.get_choice_label(BuiltInTenantIDEnum.SYSTEM)
     else:

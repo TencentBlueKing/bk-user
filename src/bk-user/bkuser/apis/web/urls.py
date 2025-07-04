@@ -44,6 +44,8 @@ urlpatterns = [
     # ------------------------------------------ 面向个人 --------------------------------------------
     # 个人中心
     path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
+    # 个人管理
+    path("me/", include("bkuser.apis.web.me.urls")),
     # 忘记密码重置
     path("passwords/", include("bkuser.apis.web.password.urls")),
 ]

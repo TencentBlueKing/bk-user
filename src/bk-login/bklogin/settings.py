@@ -412,4 +412,4 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)

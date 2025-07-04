@@ -52,7 +52,9 @@ class TestVirtualUserCreateApi:
             VirtualUserOwnerRelation.objects.filter(tenant_user=tenant_user).values_list("owner", flat=True)
         ) == set(data["owners"])
 
+    @pytest.mark.usefixtures("_init_cross_tenant_user")
     def test_create_virtual_user_invalid_owner(self, api_client):
+        # 不存在的责任人
         data = {
             "username": "virtual_user_4",
             "full_name": "测试用户_4",
@@ -61,7 +63,13 @@ class TestVirtualUserCreateApi:
         }
         resp = api_client.post(reverse("virtual_user.list_create"), data=data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
+        assert "用户 {'zhangwei'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
+
+        # 不属于当前租户的责任人
+        data["owners"] = ["lisi", "wangwu", "cross_tenant_user"]
+        resp = api_client.post(reverse("virtual_user.list_create"), data=data)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户 {'cross_tenant_user'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
 
 
 class TestVirtualUserListApi:
@@ -69,7 +77,14 @@ class TestVirtualUserListApi:
     def test_list_virtual_user(self, api_client):
         resp = api_client.get(reverse("virtual_user.list_create"))
         assert resp.status_code == status.HTTP_200_OK
-        assert set(resp.data["results"][0].keys()) == {"id", "username", "full_name", "app_codes", "owners"}
+        assert set(resp.data["results"][0].keys()) == {
+            "id",
+            "username",
+            "full_name",
+            "app_codes",
+            "owners",
+            "created_at",
+        }
 
     @pytest.mark.usefixtures("_init_virtual_users")
     def test_list_virtual_user_with_pagination(self, api_client):
@@ -108,13 +123,13 @@ class TestVirtualUserListApi:
 @pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualUserGetApi:
     def test_get_virtual_user(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_2"})
+        url = reverse("virtual_user.retrieve_update", kwargs={"id": "virtual_user_2"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["username"] == "virtual_user_2"
 
     def test_get_virtual_user_not_exists(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_not_exist"})
+        url = reverse("virtual_user.retrieve_update", kwargs={"id": "virtual_user_not_exist"})
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
@@ -122,7 +137,7 @@ class TestVirtualUserGetApi:
 @pytest.mark.usefixtures("_init_virtual_users")
 class TestVirtualUserUpdateApi:
     def test_update_virtual_user(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
+        url = reverse("virtual_user.retrieve_update", kwargs={"id": "virtual_user_1"})
         resp = api_client.put(
             url,
             data={"full_name": "测试虚拟用户", "app_codes": ["app3", "app4"], "owners": ["freedom", "lushi"]},
@@ -141,8 +156,11 @@ class TestVirtualUserUpdateApi:
             "lushi",
         }
 
+    @pytest.mark.usefixtures("_init_cross_tenant_user")
     def test_update_virtual_user_with_invalid_owner(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
+        url = reverse("virtual_user.retrieve_update", kwargs={"id": "virtual_user_1"})
+
+        # 不存在的责任人
         resp = api_client.put(
             url,
             data={
@@ -152,21 +170,16 @@ class TestVirtualUserUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 {'zhangwei'} 不存在或不是实体用户" in resp.data["message"]
+        assert "用户 {'zhangwei'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]
 
-
-@pytest.mark.usefixtures("_init_virtual_users")
-class TestVirtualDeleteApi:
-    def test_delete_virtual_user(self, api_client):
-        url = reverse("virtual_user.retrieve_update_destroy", kwargs={"id": "virtual_user_1"})
-
-        resp = api_client.delete(url)
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not TenantUser.objects.filter(id="virtual_user_1").exists()
-        assert not DataSourceUser.objects.filter(username="virtual_user_1").exists()
-        assert not VirtualUserAppRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
-        assert not VirtualUserOwnerRelation.objects.filter(tenant_user_id="virtual_user_1").exists()
-
-        assert TenantUser.objects.filter(id="virtual_user_2").exists()
-        assert TenantUser.objects.filter(id="virtual_user_3").exists()
+        # 不属于当前租户的责任人
+        resp = api_client.put(
+            url,
+            data={
+                "full_name": "测试虚拟用户",
+                "app_codes": ["app3", "app4"],
+                "owners": ["freedom", "lushi", "cross_tenant_user"],
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户 {'cross_tenant_user'} 不存在、不是实体用户或不属于当前租户" in resp.data["message"]

@@ -169,7 +169,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         """获取租户部门的组织路径信息"""
         data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
 
-        # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
+        # 数据源用户 ID -> [数据源部门 ID1，数据源部门 ID2]
         user_dept_id_map = defaultdict(list)
         for relation in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
             user_dept_id_map[relation.user_id].append(relation.department_id)
@@ -1161,7 +1161,7 @@ class TenantUserLeaderBatchUpdateApi(
             for leader_id, user_id in itertools.product(leader_ids, data_source_user_ids)
         ]
 
-        # 【审计】创建用户-上级关系变更操作审计对象并记录变更前的用户-上级关系
+        # 【审计】创建用户 - 上级关系变更操作审计对象并记录变更前的用户 - 上级关系
         auditor = TenantUserLeaderRelationsUpdateAuditor(request.user.username, cur_tenant_id, data_source_user_ids)
         auditor.pre_record_data_before()
 
