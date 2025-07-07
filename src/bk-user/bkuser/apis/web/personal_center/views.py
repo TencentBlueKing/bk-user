@@ -63,7 +63,7 @@ from bkuser.biz.senders import (
     PhoneVerificationCodeSender,
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
-from bkuser.biz.weixin import WeixinBindHandler, WeixinConfigService
+from bkuser.biz.weixin import WeixinBindHandler, WeixinConfigService, get_tenant_user_by_ticket, xml_to_dict
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     EmailVerificationCodeManager,
@@ -701,7 +701,7 @@ class TenantUserWeixinMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPI
         nonce = request.query_params.get("nonce")
         tenant_id = self.kwargs["tenant_id"]
 
-        is_valid = WeixinConfigService.check_sign(signature, timestamp, nonce, tenant_id)
+        is_valid = WeixinConfigService(tenant_id).check_sign(signature, timestamp, nonce)
         if not is_valid:
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信签名验证失败"))
         return HttpResponse(request.query_params.get("echostr"))
@@ -713,15 +713,15 @@ class TenantUserWeixinMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPI
         nonce = request.query_params.get("nonce")
         tenant_id = self.kwargs["tenant_id"]
 
-        is_valid = WeixinConfigService.check_sign(signature, timestamp, nonce, tenant_id)
+        is_valid = WeixinConfigService(tenant_id).check_sign(signature, timestamp, nonce)
         if not is_valid:
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信签名验证失败"))
         # 解析微信推送的 XML 消息
         xml_data = request.body
-        data = WeixinConfigService.xml_to_dict(xml_data)
+        data = xml_to_dict(xml_data)
         # 通过生成二维码时候的 ticket 确认 tenant_user 对象
         ticket = str(data.get("Ticket"))
-        tenant_user = WeixinConfigService.get_tenant_user_by_ticket(ticket)
+        tenant_user = get_tenant_user_by_ticket(ticket)
 
         # 【审计】创建微信绑定审计对象并记录变更前的数据
         auditor = TenantUserWeixinBindAuditor(tenant_user.id, tenant_user.tenant_id)
