@@ -47,6 +47,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     RESET_PASSWORD_TOKEN = "rpt"
     # Workbook 临时存储
     WORKBOOK_TEMPORARY_STORE = "wts"
+    # 微信公众号二维码 临时存储
+    WEIXIN_QRCODE = "wp"
 
 
 def _default_key_function(*args, **kwargs):
@@ -67,7 +69,7 @@ def _method_key_function(_, *args, **kwargs):
 # cached 和 cachedmethod 其 key 的生成方法可以满足大部分情况下不冲突，但有以下几种情况可能会冲突
 # (1) 对于类的实例方法，由于缓存 key 只用到方法的自定义参数，
 #     若 key 的区分需要用到 self.{attr}，则需要重新自定义，否则相同方法参数时会冲突
-# (2) 虽然模块名+方法名作为了 key 的前缀，但由于是字符串拼接，
+# (2) 虽然模块名 + 方法名作为了 key 的前缀，但由于是字符串拼接，
 #     有极少概率会出现拼接出来的结果一样的情况而导致冲突
 # (3) key 的字符串拼接，若参数里的值包含分隔符 "|"，有可能出现冲突
 # (4) 生成 key 时做了字符串转换，对于某些对象可能 str() 后相同，
@@ -116,7 +118,7 @@ class Cache:
     """
     Cache 用于避免直接使用 Django Caches 时导致不同场景的前缀 Key 冲突问题，
     使用各个场景更专注于自身业务逻辑缓存和 key 生成，Cache 所有方法都基于
-    Django Cache 的 BaseCache ，只封装了项目所需方法
+    Django Cache 的 BaseCache，只封装了项目所需方法
     """
 
     def __init__(self, type_, key_prefix):

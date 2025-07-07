@@ -1159,3 +1159,36 @@ class TenantUserDisplayNameExpressionConfigUpdateAuditor:
             data_before=self.data_befores["config"],
             data_after=get_model_dict(config),
         )
+
+
+class TenantUserWeixinBindAuditor:
+    """用于记录租户用户微信绑定操作的审计"""
+
+    def __init__(self, operator: str, tenant_id: str):
+        self.operator = operator
+        self.tenant_id = tenant_id
+        self.data_befores: Dict[str, Any] = {}
+
+    def pre_record_data_before(self, tenant_user: TenantUser):
+        """记录变更前的相关数据记录"""
+        self.data_befores["wx_userid"] = tenant_user.wx_userid
+
+    def create_audit_record(self, tenant_user: TenantUser, operation: OperationEnum):
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=operation,
+            object_type=ObjectTypeEnum.TENANT_USER,
+            object_id=tenant_user.id,
+            object_name=tenant_user.data_source_user.username,
+            data_before=self.data_befores,
+            data_after={"wx_userid": tenant_user.wx_userid},
+        )
+
+    def record_bind(self, tenant_user: TenantUser):
+        """记录用户微信解绑操作"""
+        self.create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_BIND)
+
+    def record_unbind(self, tenant_user: TenantUser):
+        """记录用户微信解绑操作"""
+        self.create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_UNBIND)
