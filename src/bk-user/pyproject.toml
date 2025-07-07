@@ -24,7 +24,6 @@ dependencies = [
     "requests==2.32.3",
     "gunicorn==23.0.0",
     "gevent==24.11.1",
-    "defusedxml==0.7.1",
     "django-environ==0.11.2",
     "django-cors-headers==4.6.0",
     "django-prometheus==2.3.1",
@@ -58,7 +57,8 @@ dependencies = [
     "django-modeltranslation==0.18.11",
     "ldap3==2.9.1",
     "nanoid==2.0.0",
-    "apigw-manager[cryptography]==4.0.3"
+    "apigw-manager[cryptography]==4.0.3",
+    "defusedxml (==0.7.1)"
 ]
 
 [tool.poetry.requires-plugins]

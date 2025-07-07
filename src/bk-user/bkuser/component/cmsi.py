@@ -14,11 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from datetime import datetime
 from typing import Dict, List, Protocol
 
 from django.conf import settings
-from django.utils import timezone
 
 from bkuser.component.apigw import _call_apigw_api
 from bkuser.component.esb import _call_esb_api
@@ -92,26 +90,6 @@ class NotificationClient(Protocol):
         :param phone: 接收者手机号
         :param phone_country_code: 接收者手机国际区号
         :param receiver: 接收者的租户用户 ID (tenant_user_id)，与 手机号信息（phone、phone_country_code）参数二选一
-        """
-
-    def send_weixin(
-        self,
-        heading: str,
-        message: str,
-        date: datetime,
-        remark: str = "",
-        wx_userid: str = "",
-        receiver: str = "",
-    ):
-        """
-        发送微信消息，支持微信公众号和企业微信消息
-        支持通过接收者的微信 ID（openid/userid）或租户用户 ID 发送通知，当两者都存在时，优先使用微信 ID
-        :param heading: 通知标题
-        :param message: 通知内容
-        :param date: 通知发送时间，默认为当前时间
-        :param remark: 通知备注
-        :param wx_userid: 接收者微信 ID（openid/userid），与 receiver 参数二选一
-        :param receiver: 接收者的租户用户 ID (tenant_user_id)，与 wx_userid 参数二选一
         """
 
     def get_weixin_settings(self) -> Dict:
@@ -189,17 +167,6 @@ class BkEsbCmsiClient:
             urljoin(self.ESB_CMSI_URL_PATH, "send_sms/"),
             json=params,
         )
-
-    def send_weixin(
-        self,
-        heading: str,
-        message: str,
-        date: datetime,
-        remark: str = "",
-        wx_userid: str = "",
-        receiver: str = "",
-    ):
-        """发送微信消息"""
 
     def get_weixin_settings(self) -> Dict:
         """获取微信配置"""
@@ -285,40 +252,6 @@ class BkApigwCmsiClient:
         :return: 格式化后的手机号（"+手机区号 手机号"）
         """
         return f"+{phone_country_code} {phone}"
-
-    def send_weixin(
-        self,
-        heading: str,
-        message: str,
-        date: datetime,
-        remark: str = "",
-        wx_userid: str = "",
-        receiver: str = "",
-    ):
-        """发送微信消息"""
-        validate_weixin_params(wx_userid, receiver)
-        date = date if date else timezone.now()
-
-        # 当两者都存在时，优先使用 wx_userid
-        params: Dict[str, str | List[str]] = {
-            "heading": heading,
-            "message": message,
-            "date": date.strftime("%Y-%m-%d %H:%M"),
-        }
-        if remark:
-            params["remark"] = remark
-        if wx_userid:
-            params["receiver"] = [wx_userid]
-        else:
-            params["receiver__username"] = [receiver]
-
-        return _call_apigw_api(
-            http_post,
-            self.APIGW_NAME,
-            "/v1/send_weixin/",
-            self.tenant_id,
-            json=params,
-        )
 
     def get_weixin_settings(self) -> Dict:
         return _call_apigw_api(http_get, self.APIGW_NAME, "/v1/channels/weixin/settings/", self.tenant_id)
