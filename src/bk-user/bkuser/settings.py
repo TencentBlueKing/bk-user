@@ -751,7 +751,7 @@ ENABLE_CREATE_TENANT = ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_CREATE_TENA
 # bk-cmsi 网关是否有部署
 HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
 # bk-cmsi 网关部署环境
-BK_CMSI_APIGW_ENV = env.str("BK_CMSI_APIGW_ENV", "prod")
+BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 

@@ -29,8 +29,7 @@ logger = logging.getLogger("component")
 
 def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
     request_id = local.request_id
-    if "headers" not in kwargs:
-        kwargs["headers"] = {}
+    kwargs.setdefault("headers", {})
 
     # 应用认证 Header
     bkapi_authorization = {
@@ -48,7 +47,7 @@ def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
         }
     )
 
-    apigw_url = urljoin(settings.BK_API_URL_TMPL.format(api_name=apigw_name), settings.BK_CMSI_APIGW_ENV)
+    apigw_url = urljoin(settings.BK_API_URL_TMPL.format(api_name=apigw_name), settings.BK_CMSI_APIGW_STAGE)
     url = urljoin(apigw_url, url_path)
 
     ok, resp_data = http_func(url, **kwargs)
