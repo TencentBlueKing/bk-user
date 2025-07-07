@@ -748,6 +748,10 @@ ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
 ENABLE_CREATE_TENANT = ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
+# bk-cmsi 网关是否有部署
+HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
+# bk-cmsi 网关部署环境
+BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 

@@ -133,7 +133,9 @@ class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
 
         try:
-            PhoneVerificationCodeSender(VerificationCodeScene.RESET_PASSWORD).send(tenant_user, code)
+            PhoneVerificationCodeSender(VerificationCodeScene.RESET_PASSWORD, tenant_user.tenant_id).send(
+                phone, phone_country_code, code
+            )
         except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:

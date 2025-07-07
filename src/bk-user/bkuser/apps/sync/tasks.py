@@ -88,5 +88,6 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
     ).select_related("data_source_user")
     TenantUserNotifier(
         NotificationScene.USER_INITIALIZE,
+        tenant_id=data_source.owner_tenant_id,
         data_source_id=data_source.id,
     ).batch_send(tenant_users, user_passwd_map=user_passwd_map)

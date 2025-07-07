@@ -14,33 +14,218 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from .esb import _call_esb_api
-from .http import http_post
+from typing import Dict, List, Protocol
+
+from django.conf import settings
+
+from bkuser.component.apigw import _call_apigw_api
+from bkuser.component.esb import _call_esb_api
+from bkuser.component.http import http_post
+from bkuser.utils.url import urljoin
 
 
-def send_mail(receiver: str, sender: str, title: str, content: str):
+def validate_email_params(email: str, receiver: str):
     """
-    发送邮件（目前未支持抄送，附件等参数，如有需要可以添加）
-
-    :param receiver: 接收者租户用户 ID（用户管理理论上没有向多个用户发送相同邮件的需求）
-    :param sender: 发件人
-    :param title: 邮件标题
-    :param content: 邮件内容（HTML 格式）
+    校验邮件发送参数
+    :param email: 邮箱地址
+    :param receiver: 租户用户 ID
     """
-    url_path = "/api/c/compapi/cmsi/send_mail/"
-    return _call_esb_api(
-        http_post,
-        url_path,
-        data={"receiver__username": receiver, "sender": sender, "title": title, "content": content},
-    )
+    if not (email or receiver):
+        raise ValueError("params `email`(email address) or `receiver`(tenant_user_id) must be provided")
 
 
-def send_sms(receiver: str, content: str):
+def validate_sms_params(phone: str, phone_country_code: str, receiver: str):
     """
-    发送短信
-
-    :param receiver: 接收者租户用户 ID（用户管理理论上没有向多个用户发送相同短信的需求）
-    :param content: 短信内容
+    校验短信发送参数
+    :param phone: 手机号
+    :param phone_country_code: 手机国际区号
+    :param receiver: 租户用户 ID
     """
-    url_path = "/api/c/compapi/cmsi/send_sms/"
-    return _call_esb_api(http_post, url_path, data={"receiver__username": receiver, "content": content})
+    if not ((phone and phone_country_code) or receiver):
+        raise ValueError("params `phone` and `phone_country_code` or `receiver`(tenant_user_id) must be provided")
+
+
+class NotificationClient(Protocol):
+    """通知客户端基类"""
+
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        email: str = "",
+        receiver: str = "",
+    ) -> None:
+        """
+        发送邮件
+        支持通过接收者的邮箱地址 或 租户用户 ID 发送通知，当两者都存在时，优先使用邮箱地址
+        :param sender: 发件人，例如："蓝鲸智云"
+        :param title: 邮件标题
+        :param content: 邮件内容（HTML格式）
+        :param email: 接收者邮箱地址
+        :param receiver: 接收者的租户用户 ID(tenant_user_id)，与 email 参数二选一
+        """
+
+    def send_sms(
+        self,
+        content: str,
+        phone: str = "",
+        phone_country_code: str = "",
+        receiver: str = "",
+    ) -> None:
+        """
+        发送短信
+        支持通过接收者的手机号码信息（国际区号 + 手机号） 或 租户用户 ID 发送通知，当两者都存在时，优先使用手机号码信息
+        :param content: 短信内容
+        :param phone: 接收者手机号
+        :param phone_country_code: 接收者手机国际区号
+        :param receiver: 接收者的租户用户 ID (tenant_user_id)，与 手机号信息（phone、phone_country_code）参数二选一
+        """
+
+
+def get_notification_client(tenant_id: str) -> NotificationClient:
+    """
+    选择对应消息通知 API（ESB 或 API 网关）
+    :param tenant_id: 租户 ID
+    """
+    # 有单独部署 bk-cmsi 网关 或 开启多租户模式，使用 bk-cmsi 网关提供的消息通知 API
+    if settings.HAS_BK_CMSI_APIGW or settings.ENABLE_MULTI_TENANT_MODE:
+        return BkApigwCmsiClient(tenant_id)
+    # 否则使用 ESB 提供的消息通知 API
+    return BkEsbCmsiClient()
+
+
+class BkEsbCmsiClient:
+    """由 ESB 提供的消息通知 API"""
+
+    ESB_CMSI_URL_PATH = "/api/c/compapi/v2/cmsi/"
+
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        email: str = "",
+        receiver: str = "",
+    ):
+        """发送邮件"""
+        validate_email_params(email, receiver)
+
+        # 当两者都存在时，优先使用邮箱号
+        params: Dict[str, str] = {
+            "sender": sender,
+            "title": title,
+            "content": content,
+        }
+        if email:
+            params["receiver"] = email
+        else:
+            params["receiver__username"] = receiver
+
+        # NOTE: ESB 调用无需要传递 tenant_id，下同
+        return _call_esb_api(
+            http_post,
+            urljoin(self.ESB_CMSI_URL_PATH, "send_mail/"),
+            json=params,
+        )
+
+    def send_sms(
+        self,
+        content: str,
+        phone: str = "",
+        phone_country_code: str = "",
+        receiver: str = "",
+    ):
+        """发送短信"""
+        validate_sms_params(phone, phone_country_code, receiver)
+
+        # 当两者都存在时，优先使用手机号信息
+        params: Dict[str, str] = {"content": content}
+        if phone and phone_country_code:
+            params["receiver"] = phone
+        else:
+            params["receiver__username"] = receiver
+
+        return _call_esb_api(
+            http_post,
+            urljoin(self.ESB_CMSI_URL_PATH, "send_sms/"),
+            json=params,
+        )
+
+
+class BkApigwCmsiClient:
+    """由 API 网关提供的消息通知 API"""
+
+    APIGW_NAME = "bk-cmsi"
+
+    def __init__(self, tenant_id: str):
+        """
+        初始化客户端
+        :param tenant_id: 租户 ID
+        """
+        self.tenant_id = tenant_id
+
+    def send_mail(
+        self,
+        sender: str,
+        title: str,
+        content: str,
+        email: str = "",
+        receiver: str = "",
+    ):
+        """发送邮件"""
+        validate_email_params(email, receiver)
+
+        # 当两者都存在时，优先使用 email
+        params: Dict[str, str | List[str]] = {
+            "sender": sender,
+            "title": title,
+            "content": content,
+        }
+        if email:
+            params["receiver"] = [email]
+        else:
+            params["receiver__username"] = [receiver]
+
+        # NOTE: API 网关调用需要收件人所属租户 ID，下同
+        return _call_apigw_api(
+            http_post,
+            self.APIGW_NAME,
+            "/v1/send_mail/",
+            self.tenant_id,
+            json=params,
+        )
+
+    def send_sms(
+        self,
+        content: str,
+        phone: str = "",
+        phone_country_code: str = "",
+        receiver: str = "",
+    ):
+        """发送短信"""
+        validate_sms_params(phone, phone_country_code, receiver)
+
+        # 当两者都存在时，优先使用手机号信息
+        params: Dict[str, str | List[str]] = {"content": content}
+        if phone and phone_country_code:
+            params["receiver"] = [self._format_phone(phone, phone_country_code)]
+        else:
+            params["receiver__username"] = [receiver]
+
+        return _call_apigw_api(
+            http_post,
+            self.APIGW_NAME,
+            "/v1/send_sms/",
+            self.tenant_id,
+            json=params,
+        )
+
+    def _format_phone(self, phone: str, phone_country_code: str) -> str:
+        """
+        格式化手机号
+        :param phone: 手机号
+        :param phone_country_code: 手机国际区号
+        :return: 格式化后的手机号（"+手机区号 手机号"）
+        """
+        return f"+{phone_country_code} {phone}"

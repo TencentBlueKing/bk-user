@@ -51,11 +51,11 @@ class TestResetPasswordByPhoneAfterForget:
     def _mock_cmsi_component(self):
         with (
             mock.patch(
-                "bkuser.component.cmsi.send_mail",
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_mail",
                 return_value=None,
             ),
             mock.patch(
-                "bkuser.component.cmsi.send_sms",
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_sms",
                 return_value=None,
             ),
         ):
@@ -168,11 +168,11 @@ class TestResetPasswordByEmailAfterForget:
     def _mock_cmsi_component(self):
         with (
             mock.patch(
-                "bkuser.component.cmsi.send_mail",
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_mail",
                 return_value=None,
             ),
             mock.patch(
-                "bkuser.component.cmsi.send_sms",
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_sms",
                 return_value=None,
             ),
         ):

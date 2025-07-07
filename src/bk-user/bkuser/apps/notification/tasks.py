@@ -41,7 +41,9 @@ def send_reset_password_to_user(data_source_user_id: int, new_password: str):
     tenant_user = TenantUser.objects.get(
         data_source_user=data_source_user, tenant_id=data_source_user.data_source.owner_tenant_id
     )
-    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(tenant_user, passwd=new_password)
+    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD, tenant_user.tenant_id).send(
+        tenant_user, passwd=new_password
+    )
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -75,7 +77,9 @@ def notify_password_expiring_users(data_source_id: int):
     logger.info(
         "data source %s send password expiring notification to %d users...", data_source_id, tenant_users.count()
     )
-    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(tenant_users)
+    TenantUserNotifier(
+        NotificationScene.PASSWORD_EXPIRING, tenant_id=data_source.owner_tenant_id, data_source_id=data_source_id
+    ).batch_send(tenant_users)
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -113,7 +117,10 @@ def notify_password_expired_users(data_source_id: int):
     logger.info(
         "data source %s send password expired notification to %d users...", data_source_id, tenant_users.count()
     )
-    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(tenant_users)
+    data_source = DataSource.objects.get(id=data_source_id)
+    TenantUserNotifier(
+        NotificationScene.PASSWORD_EXPIRED, tenant_id=data_source.owner_tenant_id, data_source_id=data_source_id
+    ).batch_send(tenant_users)
 
 
 @app.task(base=BaseTask, ignore_result=True)
