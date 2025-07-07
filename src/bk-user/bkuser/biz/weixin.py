@@ -18,10 +18,10 @@ import hashlib
 import logging
 import time
 import uuid
+import xml.etree.ElementTree as ET
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 
-from defusedxml import ElementTree
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -184,7 +184,7 @@ class WeixinBindHandler:
 
         # 将用户信息与 ticket 关联存储到缓存中
         # 默认缓存过期时间为 7200 秒（与二维码过期时间保持一致)
-        store_qrcode_user_info(ticket, self.tenant_user.id)
+        WeixinConfigService.store_qrcode_user_info(ticket, self.tenant_user.id)
         logger.info("Successfully created WeCom temporary QR code, ticket: %s", ticket)
         return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=%s" % ticket
 
@@ -211,11 +211,10 @@ class WeixinBindHandler:
         return tpl.format(to_user=to_user, from_user=from_user, create_time=int(time.time()), content=_("绑定成功"))
 
 
-qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WEIXIN_QRCODE)
-
-
 class WeixinConfigService:
     """微信配置服务"""
+
+    qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WEIXIN_QRCODE)
 
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
@@ -254,34 +253,23 @@ class WeixinConfigService:
         return hashcode == signature
 
 
-def get_tenant_user_by_ticket(ticket: str) -> TenantUser:
-    """通过 ticket 获取到对应的 tenant_user 对象"""
-    user_info = qrcode_cache.get(ticket)
-    if not user_info:
-        logger.warning("Tenant User not found for ticket: %s", ticket)
-        raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码 ticket 无效或已过期"))
+    @classmethod
+    def get_tenant_user_by_ticket(cls, ticket: str) -> TenantUser:
+        """通过 ticket 获取到对应的 tenant_user 对象"""
+        user_info = cls.qrcode_cache.get(ticket)
+        if not user_info:
+            logger.warning("Tenant User not found for ticket: %s", ticket)
+            raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码 ticket 无效或已过期"))
 
-    tenant_user_id = user_info.get("tenant_user_id")
-    tenant_user = TenantUser.objects.get(id=tenant_user_id)
-    # 获取成功后删除缓存，避免重复使用
-    qrcode_cache.delete(ticket)
-    logger.info("Successfully retrieved tenant_user by ticket: %s", tenant_user_id)
-    return tenant_user
+        tenant_user_id = user_info.get("tenant_user_id")
+        tenant_user = TenantUser.objects.get(id=tenant_user_id)
+        # 获取成功后删除缓存，避免重复使用
+        cls.qrcode_cache.delete(ticket)
+        logger.info("Successfully retrieved tenant_user by ticket: %s", tenant_user_id)
+        return tenant_user
 
-
-def store_qrcode_user_info(ticket: str, tenant_user_id: str, timeout: int = 7200) -> None:
-    user_info = {"tenant_user_id": tenant_user_id}
-    qrcode_cache.set(ticket, user_info, timeout)
-
-
-def xml_to_dict(xml_data: str) -> Dict:
-    """纯工具方法，保持静态还是抽离出来？"""
-    try:
-        root = ElementTree.fromstring(xml_data)
-        result = {}
-        for child in root:
-            result[child.tag] = child.text
-        return result
-    except ElementTree.ParseError:
-        logger.exception("XML parse failed")
-        raise error_codes.WEIXIN_XML_PARSE_FAILED.f(_("XML 解析失败"))
+    @classmethod
+    def store_qrcode_user_info(cls, ticket: str, tenant_user_id: str, timeout: int = 7200) -> None:
+        """存储二维码用户信息到缓存"""
+        user_info = {"tenant_user_id": tenant_user_id, "created_at": int(time.time())}
+        cls.qrcode_cache.set(ticket, user_info, timeout=timeout)
