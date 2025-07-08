@@ -13,7 +13,7 @@ bk-user
 
 ## 前置准备
 
-在开始开发前，请确保您使用的 python 版本为 3.11（推荐使用 `pyenv` 来管理您本地的 Python 版本）：
+在开始开发前，请确保您使用的 python 版本为 3.11（下面文档以 3.11.2 举例，推荐使用 `pyenv` 来管理您本地的 Python 版本）：
 
 
 ``` bash
@@ -45,7 +45,7 @@ pip install uv
 uv pip install pre-commit && pre-commit install
 ```
 
-目前我们使用了两个工具: `ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。
+目前我们使用了两个工具：`ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。
 最后进入项目目录，将 `idp_plugin` 软链接到相应的代码目录：
 
 ``` bash
