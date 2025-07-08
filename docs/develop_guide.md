@@ -13,24 +13,36 @@ bk-user
 
 ## 前置准备
 
-在开始开发前，请确保您使用的 python 版本为 3.10（下面文档以3.10.12举例，推荐使用 `pyenv` 来管理您本地的 Python 版本）：
+在开始开发前，请确保您使用的 python 版本为 3.11（推荐使用 `pyenv` 来管理您本地的 Python 版本）：
 
 
 ``` bash
-pyenv install 3.10.12
+pyenv install 3.11.2
 ```
 
-准备 Python 虚拟环境（一项目一环境，互相隔离，推荐 `pyenv` 或者 `poetry` 等虚拟环境管理工具）：
+准备 Python 虚拟环境（一项目一环境，互相隔离，推荐使用 `uv` 作为包管理工具）：
 
 ``` bash
-virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-login-venv
-virtualenv -p ~/.pyenv/versions/3.10.12/bin/python3 bk-user-venv
+# 安装 uv（如果尚未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 或者使用 pip 安装
+pip install uv
 ```
+
+**注意：** 项目已配置为使用腾讯镜像源，uv 会自动使用 `pyproject.toml` 中配置的镜像源进行包安装。
+
+**uv 常用命令：**
+- `uv sync` - 安装项目依赖
+- `uv add <package>` - 添加新的依赖包
+- `uv remove <package>` - 移除依赖包
+- `uv run <command>` - 在虚拟环境中运行命令
+- `uv shell` - 激活虚拟环境
 
 此外，您还需要为整个项目安装并初始化 `pre-commit`：
 
 ``` bash
-pip install pre-commit && pre-commit install
+uv pip install pre-commit && pre-commit install
 ```
 
 目前我们使用了两个工具: `ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。
@@ -45,7 +57,7 @@ ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-user/bkuser
 
 ### 环境配置
 
-进入 `src/bk-login` 并进入虚拟环境
+进入 `src/bk-login` 目录
 
 ``` bash
 cd src/bk-login
@@ -54,7 +66,7 @@ cd src/bk-login
 安装项目所需的包
 
 ``` bash
-poetry install
+uv sync
 ```
 
 在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下
@@ -107,7 +119,7 @@ curl login.example.com:8000/ping # pong
 
 ### 环境配置
 
-进入 `src/bk-user` 并进入虚拟环境
+进入 `src/bk-user` 目录
 ``` bash
 cd src/bk-user
 ```
@@ -115,7 +127,7 @@ cd src/bk-user
 安装项目所需的包
 
 ``` bash
-poetry install
+uv sync
 ```
 
 在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下

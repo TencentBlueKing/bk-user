@@ -1,115 +1,360 @@
---index-url https://mirrors.tencent.com/pypi/simple
-
-amqp==5.3.1 ; python_version == "3.11"
-annotated-types==0.7.0 ; python_version == "3.11"
-apigw-manager==4.0.3 ; python_version == "3.11"
-asgiref==3.8.1 ; python_version == "3.11"
-async-timeout==5.0.1 ; python_version == "3.11" and python_full_version < "3.11.3"
-billiard==4.2.1 ; python_version == "3.11"
-bk-crypto-python-sdk==2.0.1 ; python_version == "3.11"
-bk-notice-sdk==1.3.2 ; python_version == "3.11"
-bkapi-bk-apigateway==1.0.11 ; python_version == "3.11"
-bkapi-client-core==1.2.0 ; python_version == "3.11"
-blue-krill==2.0.7 ; python_version == "3.11"
-celery==5.4.0 ; python_version == "3.11"
-certifi==2025.1.31 ; python_version == "3.11"
-cffi==1.17.1 ; python_version == "3.11"
-charset-normalizer==3.4.1 ; python_version == "3.11"
-click-didyoumean==0.3.1 ; python_version == "3.11"
-click-plugins==1.1.1 ; python_version == "3.11"
-click-repl==0.3.0 ; python_version == "3.11"
-click==8.1.8 ; python_version == "3.11"
-colorama==0.4.6 ; python_version == "3.11" and platform_system == "Windows"
-concurrent-log-handler==0.9.25 ; python_version == "3.11"
-cron-descriptor==1.4.5 ; python_version == "3.11"
-cryptography==44.0.2 ; python_version == "3.11"
-curlify==2.2.1 ; python_version == "3.11"
-dacite==1.9.2 ; python_version == "3.11"
-deprecated==1.2.18 ; python_version == "3.11"
-django-celery-beat==2.7.0 ; python_version == "3.11"
-django-celery-results==2.5.1 ; python_version == "3.11"
-django-cors-headers==4.6.0 ; python_version == "3.11"
-django-environ==0.11.2 ; python_version == "3.11"
-django-js-asset==3.1.2 ; python_version == "3.11"
-django-modeltranslation==0.18.11 ; python_version == "3.11"
-django-mptt==0.16.0 ; python_version == "3.11"
-django-prometheus==2.3.1 ; python_version == "3.11"
-django-redis==5.4.0 ; python_version == "3.11"
-django-timezone-field==7.1 ; python_version == "3.11"
-django==4.2.16 ; python_version == "3.11"
-djangorestframework==3.15.2 ; python_version == "3.11"
-drf-yasg==1.21.10 ; python_version == "3.11"
-et-xmlfile==2.0.0 ; python_version == "3.11"
-gevent==24.11.1 ; python_version == "3.11"
-googleapis-common-protos==1.70.0 ; python_version == "3.11"
-greenlet==3.2.0 ; python_version == "3.11" and platform_python_implementation == "CPython"
-grpcio==1.71.0 ; python_version == "3.11"
-gunicorn==23.0.0 ; python_version == "3.11"
-idna==3.10 ; python_version == "3.11"
-importlib-metadata==7.1.0 ; python_version == "3.11"
-inflection==0.5.1 ; python_version == "3.11"
-jsonref==1.1.0 ; python_version == "3.11"
-kombu==5.5.3 ; python_version == "3.11"
-ldap3==2.9.1 ; python_version == "3.11"
-markupsafe==3.0.2 ; python_version == "3.11"
-nanoid==2.0.0 ; python_version == "3.11"
-openpyxl==3.1.3 ; python_version == "3.11"
-opentelemetry-api==1.25.0 ; python_version == "3.11"
-opentelemetry-exporter-otlp-proto-common==1.25.0 ; python_version == "3.11"
-opentelemetry-exporter-otlp-proto-grpc==1.25.0 ; python_version == "3.11"
-opentelemetry-exporter-otlp-proto-http==1.25.0 ; python_version == "3.11"
-opentelemetry-exporter-otlp==1.25.0 ; python_version == "3.11"
-opentelemetry-instrumentation-celery==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-dbapi==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-django==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-logging==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-redis==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-requests==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation-wsgi==0.46b0 ; python_version == "3.11"
-opentelemetry-instrumentation==0.46b0 ; python_version == "3.11"
-opentelemetry-proto==1.25.0 ; python_version == "3.11"
-opentelemetry-sdk==1.25.0 ; python_version == "3.11"
-opentelemetry-semantic-conventions==0.46b0 ; python_version == "3.11"
-opentelemetry-util-http==0.46b0 ; python_version == "3.11"
-packaging==25.0 ; python_version == "3.11"
-phonenumbers==8.13.18 ; python_version == "3.11"
-portalocker==3.1.1 ; python_version == "3.11"
-prometheus-client==0.21.1 ; python_version == "3.11"
-prompt-toolkit==3.0.51 ; python_version == "3.11"
-protobuf==4.25.6 ; python_version == "3.11"
-pyasn1==0.6.1 ; python_version == "3.11"
-pycparser==2.22 ; python_version == "3.11"
-pycryptodomex==3.22.0 ; python_version == "3.11"
-pydantic-core==2.16.3 ; python_version == "3.11"
-pydantic==2.6.4 ; python_version == "3.11"
-pyjwt==2.10.1 ; python_version == "3.11"
-pymysql==1.1.1 ; python_version == "3.11"
-python-crontab==3.2.0 ; python_version == "3.11"
-python-dateutil==2.9.0.post0 ; python_version == "3.11"
-python-editor==1.0.4 ; python_version == "3.11"
-python-json-logger==2.0.7 ; python_version == "3.11"
-pytz==2025.2 ; python_version == "3.11"
-pywin32==310 ; python_version == "3.11" and platform_system == "Windows"
-pyyaml==6.0.2 ; python_version == "3.11"
-redis==5.2.0 ; python_version == "3.11"
-requests==2.32.3 ; python_version == "3.11"
-sentry-sdk==1.45.0 ; python_version == "3.11"
-setuptools==79.0.0 ; python_version == "3.11"
-six==1.17.0 ; python_version == "3.11"
-sqlparse==0.5.3 ; python_version == "3.11"
-toml==0.10.2 ; python_version == "3.11"
-tongsuopy-crayon==1.0.2b6 ; python_version == "3.11"
-typing-extensions==4.13.2 ; python_version == "3.11"
-tzdata==2025.2 ; python_version == "3.11"
-uritemplate==4.1.1 ; python_version == "3.11"
-urllib3==1.26.20 ; python_version == "3.11"
-vine==5.1.0 ; python_version == "3.11"
-watchdog==6.0.0 ; python_version == "3.11"
-wcwidth==0.2.13 ; python_version == "3.11"
-werkzeug==3.0.6 ; python_version == "3.11"
-whitenoise==6.8.2 ; python_version == "3.11"
-wrapt==1.17.2 ; python_version == "3.11"
-zipp==3.21.0 ; python_version == "3.11"
-zope-event==5.0 ; python_version == "3.11"
-zope-interface==7.2 ; python_version == "3.11"
-zxcvbn==4.4.28 ; python_version == "3.11"
+# This file was autogenerated by uv via the following command:
+#    uv export --no-dev --no-editable --no-hashes
+.
+amqp==5.3.1
+    # via kombu
+annotated-types==0.7.0
+    # via pydantic
+apigw-manager==4.0.3
+    # via bk-user
+asgiref==3.9.1
+    # via
+    #   django
+    #   django-cors-headers
+async-timeout==5.0.1 ; python_full_version < '3.11.3'
+    # via redis
+billiard==4.2.1
+    # via celery
+bk-crypto-python-sdk==2.0.1
+    # via blue-krill
+bk-notice-sdk==1.3.2
+    # via bk-user
+bkapi-bk-apigateway==1.0.11
+    # via apigw-manager
+bkapi-client-core==1.2.0
+    # via
+    #   apigw-manager
+    #   bk-notice-sdk
+    #   bkapi-bk-apigateway
+blue-krill==2.0.7
+    # via bk-user
+celery==5.4.0
+    # via
+    #   bk-user
+    #   django-celery-beat
+    #   django-celery-results
+certifi==2025.6.15
+    # via
+    #   requests
+    #   sentry-sdk
+cffi==1.17.1
+    # via
+    #   cryptography
+    #   gevent
+    #   tongsuopy-crayon
+charset-normalizer==3.4.2
+    # via requests
+click==8.2.1
+    # via
+    #   blue-krill
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+click-didyoumean==0.3.1
+    # via celery
+click-plugins==1.1.1.2
+    # via celery
+click-repl==0.3.0
+    # via celery
+colorama==0.4.6 ; sys_platform == 'win32'
+    # via click
+concurrent-log-handler==0.9.25
+    # via bk-user
+cron-descriptor==1.4.5
+    # via django-celery-beat
+cryptography==45.0.5
+    # via
+    #   apigw-manager
+    #   blue-krill
+curlify==2.2.1
+    # via
+    #   bkapi-client-core
+    #   blue-krill
+dacite==1.9.2
+    # via bk-crypto-python-sdk
+deprecated==1.2.18
+    # via
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+django==4.2.22
+    # via
+    #   bk-user
+    #   django-celery-beat
+    #   django-celery-results
+    #   django-cors-headers
+    #   django-js-asset
+    #   django-modeltranslation
+    #   django-redis
+    #   django-timezone-field
+    #   djangorestframework
+    #   drf-yasg
+django-celery-beat==2.7.0
+    # via bk-user
+django-celery-results==2.5.1
+    # via bk-user
+django-cors-headers==4.6.0
+    # via bk-user
+django-environ==0.11.2
+    # via
+    #   bk-user
+    #   blue-krill
+django-js-asset==3.1.2
+    # via django-mptt
+django-modeltranslation==0.18.11
+    # via bk-user
+django-mptt==0.16.0
+    # via bk-user
+django-prometheus==2.3.1
+    # via bk-user
+django-redis==5.4.0
+    # via bk-user
+django-timezone-field==7.1
+    # via django-celery-beat
+djangorestframework==3.15.2
+    # via
+    #   bk-user
+    #   drf-yasg
+drf-yasg==1.21.10
+    # via bk-user
+et-xmlfile==2.0.0
+    # via openpyxl
+gevent==24.11.1
+    # via bk-user
+googleapis-common-protos==1.70.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+greenlet==3.2.3 ; platform_python_implementation == 'CPython'
+    # via gevent
+grpcio==1.73.1
+    # via opentelemetry-exporter-otlp-proto-grpc
+gunicorn==23.0.0
+    # via bk-user
+idna==3.10
+    # via requests
+importlib-metadata==7.1.0
+    # via opentelemetry-api
+inflection==0.5.1
+    # via drf-yasg
+jsonref==1.1.0
+    # via bk-user
+kombu==5.5.4
+    # via celery
+ldap3==2.9.1
+    # via bk-user
+markupsafe==3.0.2
+    # via werkzeug
+nanoid==2.0.0
+    # via bk-user
+openpyxl==3.1.3
+    # via bk-user
+opentelemetry-api==1.25.0
+    # via
+    #   bk-user
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-celery
+    #   opentelemetry-instrumentation-dbapi
+    #   opentelemetry-instrumentation-django
+    #   opentelemetry-instrumentation-logging
+    #   opentelemetry-instrumentation-redis
+    #   opentelemetry-instrumentation-requests
+    #   opentelemetry-instrumentation-wsgi
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp==1.25.0
+    # via bk-user
+opentelemetry-exporter-otlp-proto-common==1.25.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc==1.25.0
+    # via opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http==1.25.0
+    # via opentelemetry-exporter-otlp
+opentelemetry-instrumentation==0.46b0
+    # via
+    #   opentelemetry-instrumentation-celery
+    #   opentelemetry-instrumentation-dbapi
+    #   opentelemetry-instrumentation-django
+    #   opentelemetry-instrumentation-logging
+    #   opentelemetry-instrumentation-redis
+    #   opentelemetry-instrumentation-requests
+    #   opentelemetry-instrumentation-wsgi
+opentelemetry-instrumentation-celery==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-dbapi==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-django==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-logging==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-redis==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-requests==0.46b0
+    # via bk-user
+opentelemetry-instrumentation-wsgi==0.46b0
+    # via opentelemetry-instrumentation-django
+opentelemetry-proto==1.25.0
+    # via
+    #   bk-user
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.25.0
+    # via
+    #   bk-user
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-semantic-conventions==0.46b0
+    # via
+    #   opentelemetry-instrumentation-celery
+    #   opentelemetry-instrumentation-dbapi
+    #   opentelemetry-instrumentation-django
+    #   opentelemetry-instrumentation-redis
+    #   opentelemetry-instrumentation-requests
+    #   opentelemetry-instrumentation-wsgi
+    #   opentelemetry-sdk
+opentelemetry-util-http==0.46b0
+    # via
+    #   opentelemetry-instrumentation-django
+    #   opentelemetry-instrumentation-requests
+    #   opentelemetry-instrumentation-wsgi
+packaging==25.0
+    # via
+    #   apigw-manager
+    #   drf-yasg
+    #   gunicorn
+    #   kombu
+phonenumbers==8.13.18
+    # via bk-user
+portalocker==3.2.0
+    # via concurrent-log-handler
+prometheus-client==0.22.1
+    # via django-prometheus
+prompt-toolkit==3.0.51
+    # via click-repl
+protobuf==4.25.8
+    # via
+    #   googleapis-common-protos
+    #   opentelemetry-proto
+pyasn1==0.6.1
+    # via ldap3
+pycparser==2.22
+    # via cffi
+pycryptodomex==3.23.0
+    # via bk-crypto-python-sdk
+pydantic==2.6.4
+    # via
+    #   bk-user
+    #   blue-krill
+pydantic-core==2.16.3
+    # via pydantic
+pyjwt==2.10.1
+    # via
+    #   apigw-manager
+    #   blue-krill
+pymysql==1.1.1
+    # via bk-user
+python-crontab==3.2.0
+    # via django-celery-beat
+python-dateutil==2.9.0.post0
+    # via
+    #   celery
+    #   python-crontab
+python-editor==1.0.4
+    # via blue-krill
+python-json-logger==2.0.7
+    # via bk-user
+pytz==2025.2
+    # via drf-yasg
+pywin32==310 ; sys_platform == 'win32'
+    # via portalocker
+pyyaml==6.0.2
+    # via
+    #   apigw-manager
+    #   drf-yasg
+redis==5.2.0
+    # via
+    #   bk-user
+    #   django-redis
+requests==2.32.4
+    # via
+    #   bk-user
+    #   bkapi-client-core
+    #   blue-krill
+    #   curlify
+    #   opentelemetry-exporter-otlp-proto-http
+sentry-sdk==1.45.0
+    # via bk-user
+setuptools==80.9.0
+    # via
+    #   apigw-manager
+    #   opentelemetry-instrumentation
+    #   zope-event
+    #   zope-interface
+six==1.17.0
+    # via
+    #   bkapi-client-core
+    #   blue-krill
+    #   python-dateutil
+sqlparse==0.5.3
+    # via django
+toml==0.10.2
+    # via blue-krill
+tongsuopy-crayon==1.0.2b6
+    # via
+    #   bk-crypto-python-sdk
+    #   bk-user
+typing-extensions==4.14.1
+    # via
+    #   bkapi-client-core
+    #   django-modeltranslation
+    #   opentelemetry-sdk
+    #   pydantic
+    #   pydantic-core
+tzdata==2025.2
+    # via
+    #   celery
+    #   django
+    #   django-celery-beat
+    #   kombu
+uritemplate==4.2.0
+    # via drf-yasg
+urllib3==1.26.20
+    # via
+    #   apigw-manager
+    #   blue-krill
+    #   requests
+    #   sentry-sdk
+vine==5.1.0
+    # via
+    #   amqp
+    #   celery
+    #   kombu
+watchdog==6.0.0
+    # via blue-krill
+wcwidth==0.2.13
+    # via prompt-toolkit
+werkzeug==3.0.6
+    # via bk-user
+whitenoise==6.8.2
+    # via bk-user
+wrapt==1.17.2
+    # via
+    #   bk-crypto-python-sdk
+    #   deprecated
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-dbapi
+    #   opentelemetry-instrumentation-redis
+zipp==3.23.0
+    # via importlib-metadata
+zope-event==5.1
+    # via gevent
+zope-interface==7.2
+    # via gevent
+zxcvbn==4.4.28
+    # via bk-user
