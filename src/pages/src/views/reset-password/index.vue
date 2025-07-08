@@ -271,6 +271,7 @@ const copyright = computed(() => platformConfigData.footerCopyrightContent);
   top: 35%;
   transform: translate(-50%, -35%);
   padding: 52px 40px 32px;
+  z-index: 2;
 
   .reset-password-header {
     color: #313238;
