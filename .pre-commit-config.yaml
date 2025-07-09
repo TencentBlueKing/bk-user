@@ -80,13 +80,13 @@ repos:
         language: system
         entry: bash -c "cd src/bk-user && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/bk-user/pyproject.toml$
+        files: ^src/bk-user/uv.lock$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
         entry: bash -c "cd src/bk-user && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/bk-user/pyproject.toml$
+        files: ^src/bk-user/uv.lock$
   - repo: local
     hooks:
       - id: format
@@ -117,13 +117,13 @@ repos:
         language: system
         entry: bash -c "cd src/bk-login && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/bk-login/pyproject.toml$
+        files: ^src/bk-login/uv.lock$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
         entry: bash -c "cd src/bk-login && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/bk-login/pyproject.toml$
+        files: ^src/bk-login/uv.lock$
   - repo: local
     hooks:
       - id: format
@@ -149,10 +149,10 @@ repos:
         language: system
         entry: bash -c "cd src/idp-plugins && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/idp-plugins/pyproject.toml$
+        files: ^src/idp-plugins/uv.lock$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
         entry: bash -c "cd src/idp-plugins && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
-        files: ^src/idp-plugins/pyproject.toml$
+        files: ^src/idp-plugins/uv.lock$
