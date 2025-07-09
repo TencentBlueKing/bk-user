@@ -32,7 +32,7 @@
     "axios": "^1.4.0",
     "bkui-vue": "2.0.1-beta.38",
     "connect-history-api-fallback": "^2.0.0",
-    "cookie": "^0.5.0",
+    "cookie": "^0.7.2",
     "cookie-parser": "^1.4.5",
     "dayjs": "^1.11.2",
     "dot-object": "^2.1.5",
