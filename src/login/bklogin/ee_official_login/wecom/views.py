@@ -16,7 +16,7 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 
 from . import settings as wecom_settings
-from .utils import gen_qr_login_url
+from .utils import gen_qr_login_url, login_failed_response
 from bklogin.bkauth import actions
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.views import _bk_login
@@ -67,14 +67,14 @@ def wecom_login(request):
             state,
             state_in_session,
         )
-        return actions.login_failed_response(request, redirect_to, app_id)
+        return login_failed_response(request, redirect_to, app_id)
 
     logger.debug("code=%s, redirect_to=%s, app_id=%s", code, redirect_to, app_id)
     # 验证用户登录
     user = authenticate(code=code)
     if user is None:
         logger.debug("wecom_login: user is None, will redirect_to=%s", redirect_to)
-        return actions.login_failed_response(request, redirect_to, app_id)
+        return login_failed_response(request, redirect_to, app_id)
 
     # 成功，则调用蓝鲸登录成功的处理函数，并返回响应
     logger.debug("wecom_login: login success, will redirect_to=%s", redirect_to)

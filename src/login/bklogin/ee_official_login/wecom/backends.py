@@ -13,20 +13,45 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
 from .utils import get_access_token, get_user_id_by_code, get_user_info_by_userid
+from bklogin.backends.bk import BkUserBackend
 from bklogin.common import usermgr
 from bklogin.common.log import logger
 
 
 class WecomQrBackend(ModelBackend):
     """
-    企业微信扫码登录认证方法
+    支持企业微信扫码登录认证 + 用户名密码登录认证
 
     注意: 打logger.debug用于调试, 可以在日志路径下login.log查看到对应日志
     """
 
-    def authenticate(self, request, code=None, **kwargs):
-        # 企业微信扫码登录验证
-        logger.debug("WecomQrBackend authenticate, code=%s", code)
+    def __init__(self):
+        super().__init__()
+        # 初始化BkUserBackend用于处理用户名密码认证
+        self.bk_backend = BkUserBackend()
+
+    def authenticate(self, request, username=None, password=None, code=None, **kwargs):
+        """
+        1. 如果提供了username和password，使用用户名密码认证
+        2. 如果提供了code，使用企业微信扫码登录认证
+        """
+        logger.debug("WecomQrBackend authenticate, username=%s, code=%s", username, code)
+
+        # 优先处理用户名密码认证
+        if username and password:
+            logger.debug("Using username/password authentication")
+            return self.bk_backend.authenticate(request, username=username, password=password, **kwargs)
+
+        # 处理企业微信扫码登录
+        if code:
+            logger.debug("Using WeChat QR code authentication")
+            return self._authenticate_wecom(code)
+
+        logger.debug("No valid authentication parameters provided")
+        return None
+
+    def _authenticate_wecom(self, code):
+        """企业微信扫码登录认证"""
         try:
             if not code:
                 logger.debug("no code provided")

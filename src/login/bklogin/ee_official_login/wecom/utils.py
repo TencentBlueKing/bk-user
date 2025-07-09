@@ -12,14 +12,16 @@ specific language governing permissions and limitations under the License.
 import random
 import string
 import urllib
+import urllib.parse
 from typing import Dict
-from urllib.parse import urlencode
 
 import requests
 from django.conf import settings as bk_settings
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
 
 from . import settings as settings
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.bkauth.utils import set_bk_token_invalid
 from bklogin.common.log import logger
 
 
@@ -135,3 +137,23 @@ def get_user_info_by_userid(access_token, userid):
     else:
         logger.error("get_user_info_by_userid failed: %s", data.get("errmsg", "Unknown error"))
         return None
+
+
+def login_failed_response(request, redirect_to, app_id):
+    """
+    登录失败跳转，目前重定向到登录，后续可返还支持自定义的错误页面
+    """
+    redirect_url = settings.LOGIN_URL
+    query = {}
+    if redirect_to:
+        query[REDIRECT_FIELD_NAME] = redirect_to
+    if app_id:
+        query["app_id"] = app_id
+
+    if query:
+        redirect_url = "%s?%s" % (settings.LOGIN_URL, urllib.parse.urlencode(query))
+
+    logger.debug("login_failed_response, redirect_to=%s, app_id=%s", redirect_to, app_id)
+    response = HttpResponseRedirect(redirect_url)
+    response = set_bk_token_invalid(request, response)
+    return response

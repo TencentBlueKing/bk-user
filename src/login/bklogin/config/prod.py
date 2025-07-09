@@ -14,8 +14,6 @@ from bkuser_global.logging import LoggingType, get_logging
 
 SITE_URL = "/login/"
 
-# 重新设置 LOGIN_URL 配置，因为 default.py 中的配置基于原来的 SITE_URL
-LOGIN_URL = SITE_URL
 LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
 LOGGING = get_logging(
     logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bklogin", formatter="verbose"

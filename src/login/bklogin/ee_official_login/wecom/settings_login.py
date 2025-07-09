@@ -23,7 +23,4 @@ LOGIN_TYPE = "custom_login"
 # 配置自定义登录请求和登录回调的响应函数, 如：CUSTOM_LOGIN_VIEW = 'bklogin.ee_official_login.oauth.google.views.login'
 CUSTOM_LOGIN_VIEW = "bklogin.ee_login.wecom.views.login"
 # 配置自定义验证是否登录的认证函数, 如：CUSTOM_AUTHENTICATION_BACKEND = 'bklogin.ee_official_login.oauth.google.backends.OauthBackend'
-CUSTOM_AUTHENTICATION_BACKEND = [
-    "bklogin.backends.bk.BkUserBackend",
-    "bklogin.ee_login.wecom.backends.WecomQrBackend",
-]
+CUSTOM_AUTHENTICATION_BACKEND = "bklogin.ee_login.wecom.backends.WecomQrBackend"
