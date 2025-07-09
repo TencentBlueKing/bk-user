@@ -59,7 +59,10 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
-        return queryset
+
+        # TODO: 后续需要支持排序
+        # 默认先按照创建时间倒序排列
+        return queryset.order_by("-created_at")
 
     @swagger_auto_schema(
         tags=["virtual_user"],
