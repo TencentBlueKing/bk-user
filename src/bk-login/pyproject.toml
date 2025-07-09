@@ -7,9 +7,9 @@ dynamic = ["classifiers"]
 authors = [{ name = "TencentBlueKing", email = "contactus_bk@tencent.com" }]
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "django==4.2.16",
+    "django==4.2.22",
     "pymysql==1.1.1",
-    "requests==2.32.3",
+    "requests==2.32.4",
     "gunicorn==23.0.0",
     "gevent==24.11.1",
     "django-environ==0.11.2",

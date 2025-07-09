@@ -13,14 +13,7 @@ bk-user
 
 ## 前置准备
 
-在开始开发前，请确保您使用的 python 版本为 3.11（下面文档以 3.11.2 举例，推荐使用 `pyenv` 来管理您本地的 Python 版本）：
-
-
-``` bash
-pyenv install 3.11.2
-```
-
-准备 Python 虚拟环境（一项目一环境，互相隔离，推荐使用 `uv` 作为包管理工具）：
+在开始开发前，请确保您使用的 python 版本为 3.11（下面文档以 3.11.2 举例，推荐使用 `uv` 来管理您本地的 Python 版本）：
 
 ``` bash
 # 安装 uv（如果尚未安装）
@@ -30,19 +23,14 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 pip install uv
 ```
 
-**注意：** 项目已配置为使用腾讯镜像源，uv 会自动使用 `pyproject.toml` 中配置的镜像源进行包安装。
-
-**uv 常用命令：**
-- `uv sync` - 安装项目依赖
-- `uv add <package>` - 添加新的依赖包
-- `uv remove <package>` - 移除依赖包
-- `uv run <command>` - 在虚拟环境中运行命令
-- `uv shell` - 激活虚拟环境
+``` bash
+uv python install 3.11.2
+```
 
 此外，您还需要为整个项目安装并初始化 `pre-commit`：
 
 ``` bash
-uv pip install pre-commit && pre-commit install
+pip install pre-commit && pre-commit install
 ```
 
 目前我们使用了两个工具：`ruff`、`mypy`，它们能保证您的每一次提交都符合预定的开发规范。

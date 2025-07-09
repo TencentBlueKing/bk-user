@@ -78,15 +78,15 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/bk-user && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        entry: bash -c "cd src/bk-user && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/bk-user/poetry.lock$
+        files: ^src/bk-user/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-user && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        entry: bash -c "cd src/bk-user && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/bk-user/poetry.lock$
+        files: ^src/bk-user/pyproject.toml$
   - repo: local
     hooks:
       - id: format
@@ -115,15 +115,15 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/bk-login && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        entry: bash -c "cd src/bk-login && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/bk-login/poetry.lock$
+        files: ^src/bk-login/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-login && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        entry: bash -c "cd src/bk-login && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/bk-login/poetry.lock$
+        files: ^src/bk-login/pyproject.toml$
   - repo: local
     hooks:
       - id: format
@@ -147,12 +147,12 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/idp-plugins && poetry export -f requirements.txt --output requirements.txt --without-hashes"
+        entry: bash -c "cd src/idp-plugins && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/idp-plugins/poetry.lock$
+        files: ^src/idp-plugins/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/idp-plugins && poetry export --with dev -f requirements.txt --output requirements_dev.txt --without-hashes"
+        entry: bash -c "cd src/idp-plugins && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
         pass_filenames: false
-        files: ^src/idp-plugins/poetry.lock$
+        files: ^src/idp-plugins/pyproject.toml$
