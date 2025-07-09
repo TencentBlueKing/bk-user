@@ -20,6 +20,7 @@ from typing import Any, Dict
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -204,7 +205,7 @@ def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_pl
         type=DataSourceTypeEnum.REAL,
         plugin=general_ds_plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
-        sync_config={"sync_period": 60},
+        sync_config={"period_type": DataSourceSyncPeriodType.MINUTE, "period_value": 60},
     )
 
 

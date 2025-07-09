@@ -15,6 +15,8 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from django_celery_beat.models import PeriodicTask
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -25,6 +27,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     DepartmentRelationMPTTTree,
 )
+from bkuser.apps.sync.handlers import gen_data_source_sync_periodic_task_name
 from bkuser.apps.tenant.models import (
     TenantDepartment,
     TenantDepartmentIDRecord,
@@ -66,5 +69,7 @@ class DataSourceHandler:
         DepartmentRelationMPTTTree.objects.filter(data_source=data_source).delete()
         # 7. 删除数据源敏感信息
         DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
-        # 8. 删除数据源
+        # 8. 删除数据源同步周期任务
+        PeriodicTask.objects.filter(name__startswith=gen_data_source_sync_periodic_task_name(data_source.id)).delete()
+        # 9. 删除数据源
         data_source.delete()

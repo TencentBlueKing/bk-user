@@ -17,6 +17,7 @@
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
@@ -51,7 +52,7 @@ def collaboration_data_source(default_tenant, random_tenant, general_ds_plugin_c
         type=DataSourceTypeEnum.REAL,
         plugin=general_ds_plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
-        sync_config={"sync_period": 60},
+        sync_config={"period_type": DataSourceSyncPeriodType.MINUTE, "period_value": 60},
     )
     init_data_source_users_depts_and_relations(data_source)
 
