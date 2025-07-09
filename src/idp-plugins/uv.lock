@@ -278,7 +278,6 @@ dev = [
     { name = "pytest" },
     { name = "pytest-django" },
     { name = "ruff" },
-    { name = "types-pymysql" },
     { name = "types-requests" },
 ]
 
@@ -287,13 +286,12 @@ requires-dist = [
     { name = "blue-krill", specifier = "==2.0.7" },
     { name = "django", specifier = "==4.2.22" },
     { name = "import-linter", marker = "extra == 'dev'", specifier = ">=2.1,<3.0.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.1,<2.0.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0,<2.0.0" },
     { name = "pydantic", specifier = "==2.6.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.3,<9.0.0" },
     { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.9.0,<5.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.1,<0.8.0" },
-    { name = "types-pymysql", marker = "extra == 'dev'", specifier = ">=1.1.0.20240524,<2.0.0" },
-    { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.31.0.2,<3.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.4,<0.8.0" },
+    { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.31.0.1,<3.0.0" },
 ]
 provides-extras = ["dev"]
 
@@ -331,20 +329,22 @@ wheels = [
 
 [[package]]
 name = "mypy"
-version = "1.10.1"
+version = "1.16.1"
 source = { registry = "https://mirrors.tencent.com/pypi/simple" }
 dependencies = [
     { name = "mypy-extensions" },
+    { name = "pathspec" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://mirrors.tencent.com/yun/pypi/packages/c7/b9/81e4c6dbb1ec1e72503de3ff2c5fe4b7f224e04613b670f8b9004cd8a4dd/mypy-1.10.1.tar.gz", hash = "sha256:1f8f492d7db9e3593ef42d4f115f04e556130f2819ad33ab84551403e97dd4c0" }
+sdist = { url = "https://mirrors.tencent.com/yun/pypi/packages/81/69/92c7fa98112e4d9eb075a239caa4ef4649ad7d441545ccffbd5e34607cbb/mypy-1.16.1.tar.gz", hash = "sha256:6bd00a0a2094841c5e47e7374bb42b83d64c527a502e3334e1173a0c24437bab" }
 wheels = [
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/38/cf/0645128c6edf70eb9b9687ad42fcb61ea344a7927ed2b78ce2275282fe87/mypy-1.10.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:bd6f629b67bb43dc0d9211ee98b96d8dabc97b1ad38b9b25f5e4c4d7569a0c6a" },
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/19/c9/10842953066265e6063c41a85bbee3b877501947c970ea84a1db5f11d32e/mypy-1.10.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a1bbb3a6f5ff319d2b9d40b4080d46cd639abe3516d5a62c070cf0114a457d84" },
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/e4/9e/551e897f67c5d67aa1976bc3b4951f297d1daf07250c421bb045b2613350/mypy-1.10.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b8edd4e9bbbc9d7b79502eb9592cab808585516ae1bcc1446eb9122656c6066f" },
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/2b/a4/55e3635253e5fa7051674dd5a67582f08b0ba8823e1fdbf7241ed5b32d4e/mypy-1.10.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:6166a88b15f1759f94a46fa474c7b1b05d134b1b61fca627dd7335454cc9aa6b" },
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/7a/cc/aa881ad051f99915887db0b5de8facc0e224295be22f92178c8f77fd8359/mypy-1.10.1-cp311-cp311-win_amd64.whl", hash = "sha256:5bb9cd11c01c8606a9d0b83ffa91d0b236a0e91bc4126d9ba9ce62906ada868e" },
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/2b/ee/d53a3d4792a09b6cd757978951d6dcf8b10825a8b8522b68e9b5eb53b9a1/mypy-1.10.1-py3-none-any.whl", hash = "sha256:71d8ac0b906354ebda8ef1673e5fde785936ac1f29ff6987c7483cfbd5a4235a" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/9a/61/ec1245aa1c325cb7a6c0f8570a2eee3bfc40fa90d19b1267f8e50b5c8645/mypy-1.16.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:472e4e4c100062488ec643f6162dd0d5208e33e2f34544e1fc931372e806c0cc" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/6b/bb/6eccc0ba0aa0c7a87df24e73f0ad34170514abd8162eb0c75fd7128171fb/mypy-1.16.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ea16e2a7d2714277e349e24d19a782a663a34ed60864006e8585db08f8ad1782" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/5f/80/b337a12e2006715f99f529e732c5f6a8c143bb58c92bb142d5ab380963a5/mypy-1.16.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:08e850ea22adc4d8a4014651575567b0318ede51e8e9fe7a68f25391af699507" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/d9/59/f7af072d09793d581a745a25737c7c0a945760036b16aeb620f658a017af/mypy-1.16.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:22d76a63a42619bfb90122889b903519149879ddbf2ba4251834727944c8baca" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/82/c4/607672f2d6c0254b94a646cfc45ad589dd71b04aa1f3d642b840f7cce06c/mypy-1.16.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:2c7ce0662b6b9dc8f4ed86eb7a5d505ee3298c04b40ec13b30e572c0e5ae17c4" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/b6/5e/136555ec1d80df877a707cebf9081bd3a9f397dedc1ab9750518d87489ec/mypy-1.16.1-cp311-cp311-win_amd64.whl", hash = "sha256:211287e98e05352a2e1d4e8759c5490925a7c784ddc84207f4714822f8cf99b6" },
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/cf/d3/53e684e78e07c1a2bf7105715e5edd09ce951fc3f47cf9ed095ec1b7a037/mypy-1.16.1-py3-none-any.whl", hash = "sha256:5fc2ac4027d0ef28d6ba69a0343737a23c4d1b83672bf38d1fe237bdc0643b37" },
 ]
 
 [[package]]
@@ -363,6 +363,15 @@ source = { registry = "https://mirrors.tencent.com/pypi/simple" }
 sdist = { url = "https://mirrors.tencent.com/yun/pypi/packages/a1/d4/1fc4078c65507b51b96ca8f8c3ba19e6a61c8253c72794544580a7b6c24d/packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f" }
 wheels = [
     { url = "https://mirrors.tencent.com/yun/pypi/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484" },
+]
+
+[[package]]
+name = "pathspec"
+version = "0.12.1"
+source = { registry = "https://mirrors.tencent.com/pypi/simple" }
+sdist = { url = "https://mirrors.tencent.com/yun/pypi/packages/ca/bc/f35b8446f4531a7cb215605d100cd88b7ac6f44ab3fc94870c120ab3adbf/pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712" }
+wheels = [
+    { url = "https://mirrors.tencent.com/yun/pypi/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08" },
 ]
 
 [[package]]
@@ -572,15 +581,6 @@ wheels = [
     { url = "https://mirrors.tencent.com/yun/pypi/packages/3f/e6/6f9fa36b108b6049b0d39adf61bfdc020820281c67e07be0662e466507e1/tongsuopy_crayon-1.0.2b6-cp36-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:ed9aaac16b3f04483ed241b90a8569ff0602b9788ffa3d3d0d822d54a8ca1d7f" },
     { url = "https://mirrors.tencent.com/yun/pypi/packages/95/96/598ed9914fba6ad948115c3bda348872cc00cb4206ac849c190b94e4e1a1/tongsuopy_crayon-1.0.2b6-cp36-abi3-win32.whl", hash = "sha256:33353365a7e33cec32cc6516ebe5994132c54a60826b49e2c6af69bbea66480e" },
     { url = "https://mirrors.tencent.com/yun/pypi/packages/c3/7f/69ad9442d30dc8eb28f85ee2703675ad357c52563283ca09a1146d89f377/tongsuopy_crayon-1.0.2b6-cp36-abi3-win_amd64.whl", hash = "sha256:8aa57bd5c7df7a9c658b1b1ef585b80f7d7a39ee23465db69f0d5222ac4aa339" },
-]
-
-[[package]]
-name = "types-pymysql"
-version = "1.1.0.20250708"
-source = { registry = "https://mirrors.tencent.com/pypi/simple" }
-sdist = { url = "https://mirrors.tencent.com/yun/pypi/packages/65/a3/db349a06c64b8c041c165fc470b81d37404ec342014625c7a6b7f7a4f680/types_pymysql-1.1.0.20250708.tar.gz", hash = "sha256:2cbd7cfcf9313eda784910578c4f1d06f8cc03a15cd30ce588aa92dd6255011d" }
-wheels = [
-    { url = "https://mirrors.tencent.com/yun/pypi/packages/88/e5/7f72c520f527175b6455e955426fd4f971128b4fa2f8ab2f505f254a1ddc/types_pymysql-1.1.0.20250708-py3-none-any.whl", hash = "sha256:9252966d2795945b2a7a53d5cdc49fe8e4e2f3dde4c104ed7fc782a83114e365" },
 ]
 
 [[package]]

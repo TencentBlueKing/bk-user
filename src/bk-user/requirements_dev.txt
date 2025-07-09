@@ -70,6 +70,8 @@ cryptography==45.0.5
     # via
     #   apigw-manager
     #   blue-krill
+    #   types-pyopenssl
+    #   types-redis
 curlify==2.2.1
     # via
     #   bkapi-client-core
@@ -335,10 +337,20 @@ tongsuopy-crayon==1.0.2b6
     # via
     #   bk-crypto-python-sdk
     #   bk-user
+types-cffi==1.17.0.20250523
+    # via types-pyopenssl
 types-pymysql==1.1.0.20250708
+    # via bk-user
+types-pyopenssl==24.1.0.20240722
+    # via types-redis
+types-pytz==2024.2.0.20241221
+    # via bk-user
+types-redis==4.6.0.20241004
     # via bk-user
 types-requests==2.31.0.6
     # via bk-user
+types-setuptools==80.9.0.20250529
+    # via types-cffi
 types-urllib3==1.26.25.14
     # via types-requests
 typing-extensions==4.14.1
