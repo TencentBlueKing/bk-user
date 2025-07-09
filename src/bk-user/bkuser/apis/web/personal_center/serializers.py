@@ -296,7 +296,7 @@ class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
 
 class TenantUserWeixinBindOutputSLZ(serializers.Serializer):
     bind_type = serializers.CharField(help_text="绑定类型：wecom(企业微信) 或 mp(微信公众号)")
-    login_url = serializers.CharField(help_text="登录 (二维码) URL")
+    bind_url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 
 class TenantUserWeiXinGetBindStatusOutputSLZ(serializers.Serializer):
@@ -305,5 +305,4 @@ class TenantUserWeiXinGetBindStatusOutputSLZ(serializers.Serializer):
 
 class TenantUserWecomLoginCallbackOutputSLZ(serializers.Serializer):
     success = serializers.BooleanField(help_text="是否绑定成功")
-    wx_userid = serializers.CharField(help_text="微信用户 ID")
     tenant_user_id = serializers.CharField(help_text="租户用户 ID")

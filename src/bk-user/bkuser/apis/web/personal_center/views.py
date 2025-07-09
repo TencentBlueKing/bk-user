@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -24,7 +24,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag, PhoneOrEmailUpdateRestrictionEnum
@@ -595,7 +596,7 @@ class TenantUserWeixinBindApi(generics.RetrieveAPIView):
 
 
 class TenantUserWeixinBindStatusApi(generics.RetrieveAPIView):
-    """个人中心 - 【公众号/企业微信】状态查询"""
+    """个人中心 - 微信绑定状态查询"""
 
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
@@ -690,10 +691,12 @@ class TenantUserWecomLoginCallbackApi(generics.RetrieveAPIView):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class TenantUserWeixinMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, generics.RetrieveAPIView):
+class TenantUserMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, generics.RetrieveAPIView):
     """个人中心 - 微信公众号回调接口"""
 
-    permission_classes = [AllowAny]
+    # 豁免认证 & 权限
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
 
     def get(self, request, *args, **kwargs):
         signature = request.query_params.get("signature")
@@ -717,7 +720,7 @@ class TenantUserWeixinMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPI
         if not is_valid:
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信签名验证失败"))
         # 解析微信推送的 XML 消息
-        xml_data = request.body
+        xml_data = request.data
         data = xml_to_dict(xml_data)
         # 通过生成二维码时候的 ticket 确认 tenant_user 对象
         ticket = str(data.get("Ticket"))

@@ -106,14 +106,14 @@ urlpatterns = [
     ),
     # 企业微信登录回调
     path(
-        "tenant-users/<str:tenant_id>/weixin/wecom/login-callback/",
+        "tenant-users/<str:tenant_id>/wecom/login-callback/",
         views.TenantUserWecomLoginCallbackApi.as_view(),
         name="personal_center.tenant_users.wecom.login_callback",
     ),
     # 微信公众号登录回调
     path(
-        "tenant-users/<str:tenant_id>/weixin/mp/callback/",
-        views.TenantUserWeixinMPCallbackApi.as_view(),
+        "tenant-users/<str:tenant_id>/mp/callback/",
+        views.TenantUserMPCallbackApi.as_view(),
         name="personal_center.tenant_users.mp.callback",
     ),
 ]

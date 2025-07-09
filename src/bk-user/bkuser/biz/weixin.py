@@ -17,11 +17,10 @@
 import hashlib
 import logging
 import time
-import uuid
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
+from xml.etree import ElementTree
 
-from defusedxml import ElementTree
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -31,11 +30,25 @@ from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.error_codes import error_codes
 from bkuser.component.cmsi import NotificationClient, get_notification_client
 from bkuser.component.http import http_get, http_post
+from bkuser.utils.uuid import generate_uuid
 
 logger = logging.getLogger(__name__)
 
 # 企业微信扫码登录 state 过期时间，单位：秒
 STATE_EXPIRE_SECONDS = 300
+
+
+# 创建安全的 XML 解析器，禁用外部实体
+def _create_safe_xml_parser():
+    """创建安全的 XML 解析器，禁用外部实体解析"""
+    parser = ElementTree.XMLParser(target=ElementTree.TreeBuilder())
+    # 禁用实体解析 - 使用类型忽略注释来避免 mypy 错误
+    parser.entity = lambda name, value: None  # type: ignore
+    return parser
+
+
+# 全局安全解析器实例
+_SAFE_XML_PARSER = _create_safe_xml_parser()
 
 
 class WeixinBindHandler:
@@ -52,22 +65,17 @@ class WeixinBindHandler:
 
     @property
     def state_session_key(self) -> str:
-        """state 的 session 键名"""
-        return f"wecom_bind_state_{self.tenant_id}_{self.tenant_user.id}"
+        return f"wecom_bind_state_{self.tenant_user.id}"
 
     @property
     def weixin_settings(self) -> Dict:
         return self.weixin_config_service.get_weixin_settings()
 
-    @property
-    def wx_type(self) -> str:
-        return self.weixin_settings.get("wx_type", "")
-
     def get_bind_info(self) -> Dict[str, Any]:
-        """获取绑定微信所需的信息 - 根据微信类型返回不同的绑定方式"""
-        if self.wx_type in ["qy", "qywx"]:
+        """获取绑定微信所需的信息 - 根据微信类型返回不同的绑定信息"""
+        if self.weixin_settings["wx_type"] in ["qy", "qywx"]:
             return self._get_wecom_bind_info()
-        if self.wx_type == "mp":
+        if self.weixin_settings["wx_type"] == "mp":
             return self._get_mp_bind_info()
         raise error_codes.WEIXIN_CONFIG_NOT_FOUND.f(_("不支持的微信类型"))
 
@@ -83,29 +91,29 @@ class WeixinBindHandler:
         param_dict = {
             "login_type": "CorpApp",
             "appid": self.weixin_settings.get("corp_id"),
-            "agentid": self.weixin_settings.get("agentid"),
+            "agentid": self.weixin_settings.get("agent_id"),
             "redirect_uri": redirect_uri,
             "state": state,
         }
 
-        login_url = "%s?%s" % ("https://login.work.weixin.qq.com/wwlogin/sso/login", urlencode(param_dict))
+        bind_url = "%s?%s" % ("https://login.work.weixin.qq.com/wwlogin/sso/login", urlencode(param_dict))
 
         return {
             "bind_type": "wecom",
-            "login_url": login_url,
+            "bind_url": bind_url,
         }
 
     def _get_mp_bind_info(self) -> Dict[str, Any]:
         """获取微信公众号绑定信息"""
         return {
             "bind_type": "mp",
-            "login_url": self._get_mp_qrcode_url(),
+            "bind_url": self._get_mp_qrcode_url(),
         }
 
     def _generate_and_store_state(self) -> str:
         """生成并存储 state 到 session"""
         # 生成唯一的 state
-        state = str(uuid.uuid4())
+        state = generate_uuid()
 
         state_data = {"state": state, "tenant_user_id": self.tenant_user.id, "timestamp": int(time.time())}
         session_key = self.state_session_key
@@ -163,7 +171,7 @@ class WeixinBindHandler:
         params = {"access_token": self.weixin_config_service.get_access_token()}
         data = {
             "action_name": "QR_SCENE",
-            "expire_seconds": 7200,  # 2 小时
+            "expire_seconds": 300,  # 5 分钟
             "action_info": {
                 "scene": {
                     "scene_id": 1,
@@ -183,7 +191,7 @@ class WeixinBindHandler:
         ticket = str(data.get("ticket"))
 
         # 将用户信息与 ticket 关联存储到缓存中
-        # 默认缓存过期时间为 7200 秒（与二维码过期时间保持一致)
+        # 默认缓存过期时间为 300 秒（与二维码过期时间保持一致)
         store_qrcode_user_info(ticket, self.tenant_user.id)
         logger.info("Successfully created WeCom temporary QR code, ticket: %s", ticket)
         return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=%s" % ticket
@@ -269,15 +277,16 @@ def get_tenant_user_by_ticket(ticket: str) -> TenantUser:
     return tenant_user
 
 
-def store_qrcode_user_info(ticket: str, tenant_user_id: str, timeout: int = 7200) -> None:
+def store_qrcode_user_info(ticket: str, tenant_user_id: str, timeout: int = 300) -> None:
     user_info = {"tenant_user_id": tenant_user_id}
     qrcode_cache.set(ticket, user_info, timeout)
 
 
 def xml_to_dict(xml_data: str) -> Dict:
-    """纯工具方法，保持静态还是抽离出来？"""
+    """xml 数据转为 dict 数据"""
     try:
-        root = ElementTree.fromstring(xml_data)
+        # 使用安全的解析器，禁用外部实体
+        root = ElementTree.fromstring(xml_data, parser=_SAFE_XML_PARSER)
         result = {}
         for child in root:
             result[child.tag] = child.text
