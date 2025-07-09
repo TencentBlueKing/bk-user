@@ -78,13 +78,13 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/bk-user && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/bk-user && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/bk-user/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-user && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
+        entry: bash -c "cd src/bk-user && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/bk-user/pyproject.toml$
   - repo: local
@@ -115,13 +115,13 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/bk-login && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/bk-login && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/bk-login/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-login && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
+        entry: bash -c "cd src/bk-login && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/bk-login/pyproject.toml$
   - repo: local
@@ -147,12 +147,12 @@ repos:
       - id: requirements-export
         name: requirements-export
         language: system
-        entry: bash -c "cd src/idp-plugins && uv export --format requirements.txt --output-file requirements.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/idp-plugins && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/idp-plugins/pyproject.toml$
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/idp-plugins && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
+        entry: bash -c "cd src/idp-plugins && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
         pass_filenames: false
         files: ^src/idp-plugins/pyproject.toml$
