@@ -9,14 +9,22 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from .default import *  # noqa
-from bkuser_global.logging import LoggingType, get_logging
 
-SITE_URL = "/login/"
+from django.conf import settings
 
-# 重新设置 LOGIN_URL 配置，因为 default.py 中的配置基于原来的 SITE_URL
-LOGIN_URL = SITE_URL
-LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
-LOGGING = get_logging(
-    logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bklogin", formatter="verbose"
-)
+# 企业微信扫码登录相关配置
+CORP_ID = settings.WECOM_CORP_ID
+CORP_SECRET = settings.WECOM_CORP_SECRET
+AGENT_ID = settings.WECOM_AGENT_ID
+
+# 企微扫码登陆 Base URL
+QR_LOGIN_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login"
+
+# 获取企业微信 access_token 的 API URL
+ACCESS_TOKEN_URL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
+
+# 获取企业微信用户登录身份的 API URL
+GET_USER_URL = "https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo"
+
+# 获取企业微信用户详细信息的 API URL
+GET_USER_INFO_URL = "https://qyapi.weixin.qq.com/cgi-bin/user/get"

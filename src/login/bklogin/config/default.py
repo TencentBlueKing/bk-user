@@ -201,6 +201,11 @@ except ImportError as e:
     print("load custom_login settings fail!", e)
     LOGIN_TYPE = "bk_login"
 
+# 企业微信配置
+WECOM_CORP_ID = env.str("WECOM_CORP_ID")
+WECOM_CORP_SECRET = env.str("WECOM_CORP_SECRET")
+WECOM_AGENT_ID = env.str("WECOM_AGENT_ID")
+
 # ************************************ platform settings ************************************
 # 用于加密登录态票据(bk_token)
 BKKRILL_ENCRYPT_SECRET_KEY = env.str("ENCRYPT_SECRET_KEY")
@@ -252,7 +257,7 @@ LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
 
 AUTHENTICATION_BACKENDS_DICT = {
     "bk_login": ["bklogin.backends.bk.BkUserBackend"],
-    "custom_login": [CUSTOM_AUTHENTICATION_BACKEND],
+    "custom_login": CUSTOM_AUTHENTICATION_BACKEND,
 }
 AUTHENTICATION_BACKENDS = AUTHENTICATION_BACKENDS_DICT.get(LOGIN_TYPE, ["bklogin.backends.bk.BkUserBackend"])
 

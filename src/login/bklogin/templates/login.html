@@ -23,6 +23,143 @@
               }
           </style>
         {% endif %}
+        
+        <style>
+            /* 登录选项卡样式 */
+            .login-tabs {
+                display: flex;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .login-tab {
+                flex: 1;
+                padding: 12px 20px;
+                text-align: center;
+                cursor: pointer;
+                background: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                border-bottom: none;
+                color: #666;
+                font-size: 14px;
+                transition: all 0.3s;
+                position: relative;
+            }
+            
+            .login-tab:first-child {
+                border-top-left-radius: 6px;
+                margin-right: 1px;
+            }
+            
+            .login-tab:last-child {
+                border-top-right-radius: 6px;
+            }
+            
+            .login-tab.active {
+                background: white;
+                color: #3a84ff;
+                font-weight: 600;
+                border-color: #3a84ff;
+                border-bottom: 1px solid white;
+                margin-bottom: -1px;
+                z-index: 1;
+            }
+            
+            .login-tab:hover:not(.active) {
+                background: #f0f1f5;
+                color: #313238;
+            }
+            
+            /* 登录内容区域 */
+            .login-content {
+                position: relative;
+                min-height: 212px;
+            }
+            
+            .login-panel {
+                display: none;
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            
+            .login-panel.active {
+                display: block;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            /* 企业微信登录样式 */
+            .wechat-login-container {
+                text-align: center;
+                padding: 40px 20px;
+            }
+            
+            .wechat-login-icon {
+                font-size: 64px;
+                color: #1aad19;
+                margin-bottom: 20px;
+            }
+            
+            .wechat-login-title {
+                font-size: 18px;
+                color: #313238;
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+            
+            .wechat-login-description {
+                font-size: 14px;
+                color: #63656e;
+                margin-bottom: 30px;
+                line-height: 1.5;
+            }
+            
+            .wechat-login-btn {
+                background: #1aad19;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 12px 32px;
+                font-size: 16px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s;
+                min-width: 160px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            
+            .wechat-login-btn:hover {
+                background: #179b16;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(26, 173, 25, 0.3);
+            }
+            
+            .wechat-login-btn:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 8px rgba(26, 173, 25, 0.3);
+            }
+            
+            .wechat-login-btn i {
+                font-size: 18px;
+            }
+            
+            /* 隐藏企业微信选项卡（如果未启用） */
+            {% if not enable_wechat_login %}
+            .login-tab[data-tab="wechat"],
+            .login-panel[data-panel="wechat"] {
+                display: none !important;
+            }
+            .login-tab[data-tab="local"] {
+                border-radius: 6px 6px 0 0;
+                margin-right: 0;
+            }
+            {% endif %}
+        </style>
     </head>
     <body>
         <div class="page-content">
@@ -42,45 +179,88 @@
                 </div>
                 <div class="from-detail">
                     <div class="form-login">
-                        <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
-                            <div class="account-content">
-                                {% if user_expired %}
-                                <p class="error-text">{% trans '该账户已到期，如需续期，请联系' %}<span id="admin">{% trans '管理员' %}</span></p>
-                                <p class="tips">
-                                    <span>{% trans '提示信息' %}</span>
-                                </p>
-                                {% endif %}
+                        <!-- 登录选项卡 -->
+                        {% if enable_wechat_login %}
+                        <div class="login-tabs">
+                            <div class="login-tab active" data-tab="local" onclick="switchTab('local')">
+                                <i class="bk-icon icon-user" style="margin-right: 6px;"></i>
+                                {% trans '账密登录' %}
                             </div>
-                            <div class="user group-control">
-                                <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}" autocomplete="off">
+                            <div class="login-tab" data-tab="wechat" onclick="switchTab('wechat')">
+                                <i class="bk-icon icon-wechat" style="margin-right: 6px;"></i>
+                                {% trans '企业微信' %}
                             </div>
-                            <div class="pwd group-control">
-                                <i class="bk-icon icon-invisible-eye" id="invisible"></i>
-                                <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '请输入密码' %}">
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 登录内容区域 -->
+                        <div class="login-content">
+                            <!-- 本地账密登录面板 -->
+                            <div class="login-panel active" data-panel="local">
+                                <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
+                                    <div class="account-content">
+                                        {% if user_expired %}
+                                        <p class="error-text">{% trans '该账户已到期，如需续期，请联系' %}<span id="admin">{% trans '管理员' %}</span></p>
+                                        <p class="tips">
+                                            <span>{% trans '提示信息' %}</span>
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="user group-control">
+                                        <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}" autocomplete="off">
+                                    </div>
+                                    <div class="pwd group-control">
+                                        <i class="bk-icon icon-invisible-eye" id="invisible"></i>
+                                        <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '请输入密码' %}">
+                                    </div>
+                                    <p class="change-password">
+                                        {% if error_message %}
+                                        <span>{{ error_message }}</span>
+                                            {% if token_set_password_url %}
+                                                ,<a href="{{ token_set_password_url }}" target="_blank">{% trans '请修改密码' %}</a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </p>
+                                    <div>
+                                        <input type="hidden" name="next" value="{{ next }}" />
+                                        <input type="hidden" name="app_id" value="{{ app_id }}">
+                                    </div>
+                                    <div class="btn-content clearfix">
+                                        <button class="login-btn" id="login-btn">{% trans '立即登录' %}</button>
+                                        <!-- <span class="protocol-btn">查看用户协议</span> -->
+                                    </div>
+                                    <div class="action clearfix">
+                                        <!-- {% if "/plain/" not in APP_PATH %} -->
+                                        <a href="javascript: void(0);" class="protocol-btn fl">{% trans '用户协议 >' %}</a>
+                                        <!-- {% endif %} -->
+                                        <a href="{{ forget_password_url }}" class="password-btn fr" target="_blank">{% trans '忘记密码？' %}</a>
+                                    </div>
+                                </form>
                             </div>
-                            <p class="change-password">
-                                {% if error_message %}
-                                <span>{{ error_message }}</span>
-                                    {% if token_set_password_url %}
-                                        ,<a href="{{ token_set_password_url }}" target="_blank">{% trans '请修改密码' %}</a>
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                            <div>
-                                <input type="hidden" name="next" value="{{ next }}" />
-                                <input type="hidden" name="app_id" value="{{ app_id }}">
+                            
+                            <!-- 企业微信登录面板 -->
+                            {% if enable_wechat_login %}
+                            <div class="login-panel" data-panel="wechat">
+                                <div class="wechat-login-container">
+                                    <div class="wechat-login-icon">
+                                        <i class="bk-icon icon-wechat"></i>
+                                    </div>
+                                    <div class="wechat-login-title">
+                                        {% trans '企业微信登录' %}
+                                    </div>
+                                    <div class="wechat-login-description">
+                                        {% trans '使用企业微信账号安全便捷登录' %}<br>
+                                        {% trans '无需记忆密码，扫码即可登录' %}
+                                    </div>
+                                    <button class="wechat-login-btn" onclick="loginWithWechat()">
+                                        <i class="bk-icon icon-wechat"></i>
+                                        {% trans '立即登录' %}
+                                    </button>
+                                </div>
                             </div>
-                            <div class="btn-content clearfix">
-                                <button class="login-btn" id="login-btn">{% trans '立即登录' %}</button>
-                                <!-- <span class="protocol-btn">查看用户协议</span> -->
-                            </div>
-                            <div class="action clearfix">
-                                <!-- {% if "/plain/" not in APP_PATH %} -->
-                                <a href="javascript: void(0);" class="protocol-btn fl">{% trans '用户协议 >' %}</a>
-                                <!-- {% endif %} -->
-                                <a href="{{ forget_password_url }}" class="password-btn fr" target="_blank">{% trans '忘记密码？' %}</a>
-                            </div>
-                        </form>
+                            {% endif %}
+                        </div>
+                        
                         <div class="language-switcher">
                             {% get_current_language as LANGUAGE_CODE %}
                             {% get_available_languages as LANGUAGES %}
@@ -136,6 +316,47 @@
     <script src="{{STATIC_URL}}js/particles.js"></script>
     <script src="{{STATIC_URL}}js/app.js"></script>
     <script src="{{STATIC_URL}}js/stats.js"></script>
+    
+    <!-- 选项卡切换脚本 -->
+    <script type="text/javascript">
+        function switchTab(tabName) {
+            // 移除所有选项卡的激活状态
+            document.querySelectorAll('.login-tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            
+            // 隐藏所有面板
+            document.querySelectorAll('.login-panel').forEach(function(panel) {
+                panel.classList.remove('active');
+            });
+            
+            // 激活当前选项卡
+            document.querySelector('.login-tab[data-tab="' + tabName + '"]').classList.add('active');
+            
+            // 显示当前面板
+            document.querySelector('.login-panel[data-panel="' + tabName + '"]').classList.add('active');
+            
+            // 如果切换到本地登录，聚焦用户名输入框
+            if (tabName === 'local') {
+                setTimeout(function() {
+                    var userInput = document.getElementById('user');
+                    if (userInput) {
+                        userInput.focus();
+                    }
+                }, 100);
+            }
+        }
+        
+        function loginWithWechat() {
+            // 构造企业微信登录URL
+            var currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('auth_method', 'wechat');
+            
+            // 直接跳转到企业微信登录
+            window.location.href = currentUrl.toString();
+        }
+    </script>
+    
     <script type="text/javascript">
         {% if login_redirect_to %}
         window.open("{{login_redirect_to}}");
