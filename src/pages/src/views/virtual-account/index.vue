@@ -28,7 +28,7 @@
       :border="['outer']"
       :pagination="pagination"
       :settings="settings"
-      show-overflow-tooltip
+      :show-overflow-tooltip="true"
       @select="handleSelect"
       @select-all="handleSelectAll"
       @page-limit-change="pageLimitChange"
@@ -65,6 +65,11 @@
       <bk-table-column prop="owners" :label="$t('账号责任人')">
         <template #default="{ row }">
           <bk-user-display-name :user-id="row.owners"></bk-user-display-name>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="created_at" :label="$t('创建时间')">
+        <template #default="{ row }">
+          <span>{{ row?.created_at || '--' }}</span>
         </template>
       </bk-table-column>
       <bk-table-column prop="action" :label="$t('操作')" width="160">
@@ -211,8 +216,12 @@ const settings = {
       label: t('账号责任人'),
       field: 'owners',
     },
+    {
+      label: t('创建时间'),
+      field: 'created_at',
+    },
   ],
-  checked: ['username', 'full_name', 'app_codes', 'owners'],
+  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at'],
 };
 
 const enumData = {
