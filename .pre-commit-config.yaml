@@ -84,7 +84,7 @@ repos:
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-user && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/bk-user && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
         pass_filenames: false
         files: ^src/bk-user/pyproject.toml$
   - repo: local
@@ -121,7 +121,7 @@ repos:
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/bk-login && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/bk-login && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
         pass_filenames: false
         files: ^src/bk-login/pyproject.toml$
   - repo: local
@@ -153,6 +153,6 @@ repos:
       - id: requirements-dev-export
         name: requirements-dev-export
         language: system
-        entry: bash -c "cd src/idp-plugins && uv export --dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-editable --no-hashes"
+        entry: bash -c "cd src/idp-plugins && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --quiet --no-hashes --no-editable"
         pass_filenames: false
         files: ^src/idp-plugins/pyproject.toml$
