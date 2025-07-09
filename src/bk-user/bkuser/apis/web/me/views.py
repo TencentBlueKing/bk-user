@@ -61,7 +61,7 @@ class MeVirtualUserListApi(generics.ListAPIView):
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
         # TODO: 后续需要支持排序
-        # 默认先按照时间倒序排列
+        # 默认先按照创建时间倒序排列
         return queryset.order_by("-created_at")
 
     @swagger_auto_schema(
