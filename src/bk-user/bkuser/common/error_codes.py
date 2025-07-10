@@ -127,17 +127,14 @@ class ErrorCodes:
     VERIFY_VERIFICATION_CODE_FAILED = ErrorCode(_("验证失败"))
 
     # 微信相关
-    WEIXIN_NOT_BOUND = ErrorCode(_("微信未绑定"))
     WEIXIN_ALREADY_UNBOUND = ErrorCode(_("微信已解绑"))
     WEIXIN_ALREADY_BOUND = ErrorCode(_("微信已绑定"))
-    WEIXIN_BIND_FAILED = ErrorCode(_("微信绑定失败"))
     WEIXIN_CONFIG_NOT_FOUND = ErrorCode(_("微信配置未找到"))
     WEIXIN_API_ERROR = ErrorCode(_("微信 API 调用失败"))
-    WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("微信二维码生成失败"))
-    WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("微信二维码 ticket 无效或已过期"))
-    WEIXIN_QRCODE_USER_NOT_FOUND = ErrorCode(_("微信二维码对应的用户不存在"))
-    WEIXIN_SIGN_INVALID = ErrorCode(_("微信签名验证失败"))
-    WEIXIN_XML_PARSE_FAILED = ErrorCode(_("微信 XML 解析失败"))
+    WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("二维码生成失败"))
+    WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("二维码无效"))
+    WEIXIN_SIGN_INVALID = ErrorCode(_("签名验证失败"))
+    WEIXIN_XML_PARSE_FAILED = ErrorCode(_("XML 解析失败"))
 
 
 # 实例化一个全局对象
