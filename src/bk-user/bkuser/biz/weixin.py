@@ -19,8 +19,8 @@ import logging
 import time
 from typing import Any, Dict
 from urllib.parse import urlencode
-from xml.etree import ElementTree
 
+from defusedxml import ElementTree
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
