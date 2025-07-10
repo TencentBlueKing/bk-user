@@ -65,7 +65,7 @@ class SafeTemplateRenderer:
     def is_external_template(scene: str) -> bool:
         """判断是否为外部模板
 
-        外部模板场景（来自管理员配置）：
+        外部模板场景（来自 管理员/租户 配置）：
         - 用户初始化 (USER_INITIALIZE) - 来自数据源插件配置
         - 重置密码 (RESET_PASSWORD) - 来自数据源插件配置
         - 密码即将过期 (PASSWORD_EXPIRING) - 来自数据源插件配置
