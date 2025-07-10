@@ -295,7 +295,7 @@ class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
 
 
 class TenantUserWeixinBindOutputSLZ(serializers.Serializer):
-    bind_type = serializers.CharField(help_text="绑定类型：wecom(企业微信) 或 mp(微信公众号)")
+    bind_type = serializers.CharField(help_text="绑定类型：wecom(企业微信) 或 weixin(微信)")
     bind_url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 

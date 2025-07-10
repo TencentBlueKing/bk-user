@@ -104,7 +104,7 @@ class WeixinBindHandler:
         if self.weixin_settings["wx_type"] in ["qy", "qywx"]:
             return self._get_wecom_bind_info()
         if self.weixin_settings["wx_type"] == "mp":
-            return self._get_mp_bind_info()
+            return self._get_weixin_bind_info()
         raise error_codes.WEIXIN_CONFIG_NOT_FOUND.f(_("不支持的微信类型"))
 
     def _get_wecom_bind_info(self) -> Dict[str, Any]:
@@ -131,10 +131,10 @@ class WeixinBindHandler:
             "bind_url": bind_url,
         }
 
-    def _get_mp_bind_info(self) -> Dict[str, Any]:
-        """获取微信公众号绑定信息"""
+    def _get_weixin_bind_info(self) -> Dict[str, Any]:
+        """获取微信绑定信息"""
         return {
-            "bind_type": "mp",
+            "bind_type": "weixin",
             "bind_url": self._get_mp_qrcode_url(),
         }
 

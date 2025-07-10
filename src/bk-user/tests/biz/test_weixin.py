@@ -123,9 +123,11 @@ class TestWeixinBindHandler:
 
     @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "mp"})
     @mock.patch.object(
-        WeixinBindHandler, "_get_mp_bind_info", return_value={"bind_type": "mp", "bind_url": "test_url"}
+        WeixinBindHandler, "_get_weixin_bind_info", return_value={"bind_type": "mp", "bind_url": "test_url"}
     )
-    def test_get_bind_info_mp(self, mock_get_mp_bind_info, mock_get_weixin_settings, weixin_handler, mock_request):
+    def test_get_bind_info_weixin(
+        self, mock_get_weixin_bind_info, mock_get_weixin_settings, weixin_handler, mock_request
+    ):
         result = weixin_handler.get_bind_info()
 
         assert result["bind_type"] == "mp"
