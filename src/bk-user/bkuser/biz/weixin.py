@@ -222,7 +222,10 @@ class WeixinBindHandler:
         # 默认缓存过期时间为 300 秒（与二维码过期时间保持一致)
         WeixinUtil.store_qrcode_user_info(ticket, self.tenant_user.id)
         logger.info("Successfully created WeCom temporary QR code, ticket: %s", ticket)
-        return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=%s" % ticket
+        return "%s?%s" % (
+            "https://mp.weixin.qq.com/cgi-bin/showqrcode",
+            urlencode({"ticket": ticket}),
+        )
 
     def handle_qrcode_event(self, data: Dict) -> str:
         """处理微信公众号 扫码/订阅 事件"""
