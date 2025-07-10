@@ -106,7 +106,7 @@ urlpatterns = [
     ),
     # 企业微信登录回调
     path(
-        "tenant-users/<str:tenant_id>/wecom/login-callback/",
+        "tenant-users/<str:tenant_id>/wecom/callback/",
         views.TenantUserWecomLoginCallbackApi.as_view(),
         name="personal_center.tenant_users.wecom.login_callback",
     ),

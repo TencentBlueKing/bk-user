@@ -85,10 +85,10 @@ class TenantCreateInputSLZ(serializers.Serializer):
         validators=[validate_logo],
     )
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
-    # [内置管理]类型的本地数据源配置
+    # [内置管理] 类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_methods = serializers.ListField(
-        help_text="通知方式(支持多选或不选)",
+        help_text="通知方式 (支持多选或不选)",
         child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
         required=False,
         default=[],
@@ -108,7 +108,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
                 _(
-                    "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)",  # noqa: E501
+                    "{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)",  # noqa: E501
                 ).format(id),
             )
 
@@ -197,10 +197,10 @@ class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
 
 
 class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
-    # [内置管理]类型的本地数据源配置
+    # [内置管理] 类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_methods = serializers.ListField(
-        help_text="通知方式(支持多选或不选)",
+        help_text="通知方式 (支持多选或不选)",
         child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
         required=False,
         default=[],

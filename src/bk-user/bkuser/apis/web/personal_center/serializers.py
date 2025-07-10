@@ -304,5 +304,4 @@ class TenantUserWeiXinGetBindStatusOutputSLZ(serializers.Serializer):
 
 
 class TenantUserWecomLoginCallbackOutputSLZ(serializers.Serializer):
-    success = serializers.BooleanField(help_text="是否绑定成功")
-    tenant_user_id = serializers.CharField(help_text="租户用户 ID")
+    result = serializers.BooleanField(help_text="是否绑定成功")

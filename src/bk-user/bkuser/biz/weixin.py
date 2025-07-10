@@ -17,7 +17,7 @@
 import hashlib
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from urllib.parse import urlencode
 from xml.etree import ElementTree
 
@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.error_codes import error_codes
-from bkuser.component.cmsi import NotificationClient, get_notification_client
+from bkuser.component.cmsi import get_notification_client
 from bkuser.component.http import http_get, http_post
 from bkuser.utils.uuid import generate_uuid
 
@@ -38,17 +38,45 @@ logger = logging.getLogger(__name__)
 STATE_EXPIRE_SECONDS = 300
 
 
-# 创建安全的 XML 解析器，禁用外部实体
-def _create_safe_xml_parser():
-    """创建安全的 XML 解析器，禁用外部实体解析"""
-    parser = ElementTree.XMLParser(target=ElementTree.TreeBuilder())
-    # 禁用实体解析 - 使用类型忽略注释来避免 mypy 错误
-    parser.entity = lambda name, value: None  # type: ignore
-    return parser
+class WeixinUtil:
+    """微信工具类，提供微信相关的通用功能"""
 
+    # 缓存实例
+    qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WEIXIN_QRCODE)
 
-# 全局安全解析器实例
-_SAFE_XML_PARSER = _create_safe_xml_parser()
+    @classmethod
+    def get_tenant_user_by_ticket(cls, ticket: str) -> TenantUser:
+        """通过 ticket 获取到对应的 tenant_user 对象"""
+        user_info = cls.qrcode_cache.get(ticket)
+        if not user_info:
+            logger.warning("Tenant User not found for ticket: %s", ticket)
+            raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码 ticket 无效或已过期"))
+
+        tenant_user_id = user_info.get("tenant_user_id")
+        tenant_user = TenantUser.objects.get(id=tenant_user_id)
+        # 获取成功后删除缓存，避免重复使用
+        cls.qrcode_cache.delete(ticket)
+        logger.info("Successfully retrieved tenant_user by ticket: %s", tenant_user_id)
+        return tenant_user
+
+    @classmethod
+    def store_qrcode_user_info(cls, ticket: str, tenant_user_id: str, timeout: int = 300) -> None:
+        """存储二维码用户信息到缓存"""
+        user_info = {"tenant_user_id": tenant_user_id}
+        cls.qrcode_cache.set(ticket, user_info, timeout)
+
+    @classmethod
+    def xml_to_dict(cls, xml_data: str) -> Dict:
+        """xml 数据转为 dict 数据"""
+        try:
+            root = ElementTree.fromstring(xml_data)
+            result = {}
+            for child in root:
+                result[child.tag] = child.text
+            return result
+        except ElementTree.ParseError:
+            logger.exception("XML parse failed")
+            raise error_codes.WEIXIN_XML_PARSE_FAILED
 
 
 class WeixinBindHandler:
@@ -192,14 +220,13 @@ class WeixinBindHandler:
 
         # 将用户信息与 ticket 关联存储到缓存中
         # 默认缓存过期时间为 300 秒（与二维码过期时间保持一致)
-        store_qrcode_user_info(ticket, self.tenant_user.id)
+        WeixinUtil.store_qrcode_user_info(ticket, self.tenant_user.id)
         logger.info("Successfully created WeCom temporary QR code, ticket: %s", ticket)
         return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=%s" % ticket
 
     def handle_qrcode_event(self, data: Dict) -> str:
-        """处理微信公众号扫码事件"""
-        tpl = """
-                <xml>
+        """处理微信公众号 扫码/订阅 事件"""
+        tpl = """<xml>
                 <ToUserName><![CDATA[{to_user}]]></ToUserName>
                 <FromUserName><![CDATA[{from_user}]]></FromUserName>
                 <CreateTime>{create_time}</CreateTime>
@@ -210,7 +237,7 @@ class WeixinBindHandler:
         from_user = data.get("FromUserName")
         to_user = data.get("ToUserName")
         event = data.get("Event")
-        if not any([msg_type, from_user, event, to_user]):
+        if not all([msg_type, from_user, event, to_user]):
             return ""
         if msg_type != "event" or event not in ("subscribe", "SCAN"):
             return ""
@@ -219,21 +246,12 @@ class WeixinBindHandler:
         return tpl.format(to_user=to_user, from_user=from_user, create_time=int(time.time()), content=_("绑定成功"))
 
 
-qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WEIXIN_QRCODE)
-
-
 class WeixinConfigService:
     """微信配置服务"""
 
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
-        self._client: Optional[NotificationClient] = None
-
-    @property
-    def client(self) -> NotificationClient:
-        if not self._client:
-            self._client = get_notification_client(self.tenant_id)
-        return self._client
+        self.client = get_notification_client(self.tenant_id)
 
     def get_weixin_settings(self) -> Dict:
         return self.client.get_weixin_settings()
@@ -260,37 +278,3 @@ class WeixinConfigService:
         hashcode = hashlib.sha1(s.encode("utf-8")).hexdigest()
 
         return hashcode == signature
-
-
-def get_tenant_user_by_ticket(ticket: str) -> TenantUser:
-    """通过 ticket 获取到对应的 tenant_user 对象"""
-    user_info = qrcode_cache.get(ticket)
-    if not user_info:
-        logger.warning("Tenant User not found for ticket: %s", ticket)
-        raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码 ticket 无效或已过期"))
-
-    tenant_user_id = user_info.get("tenant_user_id")
-    tenant_user = TenantUser.objects.get(id=tenant_user_id)
-    # 获取成功后删除缓存，避免重复使用
-    qrcode_cache.delete(ticket)
-    logger.info("Successfully retrieved tenant_user by ticket: %s", tenant_user_id)
-    return tenant_user
-
-
-def store_qrcode_user_info(ticket: str, tenant_user_id: str, timeout: int = 300) -> None:
-    user_info = {"tenant_user_id": tenant_user_id}
-    qrcode_cache.set(ticket, user_info, timeout)
-
-
-def xml_to_dict(xml_data: str) -> Dict:
-    """xml 数据转为 dict 数据"""
-    try:
-        # 使用安全的解析器，禁用外部实体
-        root = ElementTree.fromstring(xml_data, parser=_SAFE_XML_PARSER)
-        result = {}
-        for child in root:
-            result[child.tag] = child.text
-        return result
-    except ElementTree.ParseError:
-        logger.exception("XML parse failed")
-        raise error_codes.WEIXIN_XML_PARSE_FAILED.f(_("XML 解析失败"))
