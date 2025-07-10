@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
+import re
 from collections import Counter
 from typing import Dict, List
 
@@ -38,6 +39,35 @@ from bkuser.biz.validators import validate_tenant_custom_field_name
 logger = logging.getLogger(__name__)
 
 
+# 允许在外部模板中使用的安全变量列表
+SAFE_TEMPLATE_VARIABLES = {
+    "username",
+    "full_name",
+    "password",
+    "url",
+    "verification_code",
+    "valid_minutes",
+    "valid_days",
+}
+
+
+def _validate_template_content(content: str) -> str:
+    """验证模板内容，确保只包含安全的变量"""
+    # 查找所有模板变量 {{ variable }}
+    template_vars = re.findall(r"\{\{\s*(\w+)\s*\}\}", content)
+
+    # 检查是否包含不安全的变量
+    unsafe_vars = set(template_vars) - SAFE_TEMPLATE_VARIABLES
+    if unsafe_vars:
+        raise ValidationError(
+            _("模板内容包含不安全的变量：{}。只允许使用以下变量：{}").format(
+                ", ".join(unsafe_vars), ", ".join(sorted(SAFE_TEMPLATE_VARIABLES))
+            )
+        )
+
+    return content
+
+
 def _validate_options(options: List[Dict[str, str]]):
     """租户自定义字段，枚举类型字段<选项>设置校验"""
     if not options:
@@ -48,7 +78,7 @@ def _validate_options(options: List[Dict[str, str]]):
     except PDValidationError as e:
         raise ValidationError(_("枚举选项不合法：{}".format(e)))
 
-    # 判断重复枚举id
+    # 判断重复枚举 id
     option_ids = [obj.id for obj in opts]
     if duplicate_opt_ids := [opt_id for opt_id, cnt in Counter(option_ids).items() if cnt > 1]:
         raise ValidationError(_("存在重复枚举 ID：{}").format(duplicate_opt_ids))
@@ -75,7 +105,7 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
 
 
 class BuiltinFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -86,7 +116,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -105,7 +135,7 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class OptionInputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="枚举ID")
+    id = serializers.CharField(help_text="枚举 ID")
     value = serializers.CharField(help_text="枚举值")
 
 
@@ -250,6 +280,14 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
 
+    def validate_content(self, content: str) -> str:
+        """验证模板内容"""
+        return _validate_template_content(content)
+
+    def validate_content_html(self, content_html: str) -> str:
+        """验证 HTML 模板内容"""
+        return _validate_template_content(content_html)
+
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
     enabled = serializers.BooleanField(help_text="是否启用账户有效期")
@@ -307,7 +345,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         parsed_field_set = set(parsed_fields["builtin"] + parsed_fields["custom"] + parsed_fields["extra"])
         invalid_fields = [f for f in original_fields if f not in parsed_field_set]
         if invalid_fields:
-            raise ValidationError(_("表达式中存在无效字段: {}").format(", ".join(invalid_fields)))
+            raise ValidationError(_("表达式中存在无效字段：{}").format(", ".join(invalid_fields)))
 
         # 表达式字段必须存在唯一字段
         if not self._has_unique_field(parsed_fields):
