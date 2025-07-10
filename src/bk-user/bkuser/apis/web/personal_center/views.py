@@ -20,6 +20,7 @@ from typing import Dict, List
 
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg.utils import swagger_auto_schema
@@ -700,7 +701,7 @@ class TenantUserMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, 
         is_valid = WeixinConfigService(tenant_id).check_sign(signature, timestamp, nonce)
         if not is_valid:
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信签名验证失败"))
-        return HttpResponse(request.query_params.get("echostr"))
+        return HttpResponse(escape(request.query_params.get("echostr")))
 
     def post(self, request, *args, **kwargs):
         """处理微信公众号回调消息"""
