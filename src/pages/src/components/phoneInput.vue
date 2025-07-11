@@ -113,6 +113,9 @@ onMounted(async () => {
         emit('changeCountryCode', item.tel);
       }
     });
+  } else {
+    const defaultTel = '86';
+    emit('changeCountryCode', defaultTel);
   }
   initIntlTel();
 });
