@@ -37,10 +37,10 @@ class DjangoStyleTemplate(string.Template):
     # "named" and "braced" patterns are modified
     pattern = rf"""
         {delim}(?:
-            (?P<escaped>{delim})    |   # Escape sequence of two delimiters
-            \s*(?P<named>{id})\s*}} |   # delimiter, optional spaces, identifier, optional spaces, closing braces
-            (?P<braced>\b\B)        |   # delimiter and a braced identifier, **modified to never match anything**
-            (?P<invalid>)               # Other ill-formed delimiter exprs
+            (?P<escaped>{delim})        |   # Escape sequence of two delimiters
+            \s*(?P<named>{id})\s*\}}\}} |   # delimiter, optional spaces, identifier, optional spaces, closing braces
+            (?P<braced>\b\B)            |   # delimiter and a braced identifier, **modified to never match anything**
+            (?P<invalid>)               |   # Other ill-formed delimiter exprs
         )
         """  # type: ignore
 
