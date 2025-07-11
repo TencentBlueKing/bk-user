@@ -49,23 +49,25 @@ class OperationEnum(StrStructuredEnum):
     # 用户
     CREATE_DATA_SOURCE_USER = EnumField("create_data_source_user", label=_("创建数据源用户"))
     CREATE_TENANT_USER = EnumField("create_tenant_user", label=_("创建租户用户"))
-    CREATE_USER_DEPARTMENT = EnumField("create_user_department", label=_("创建用户-部门关系"))
+    CREATE_USER_DEPARTMENT = EnumField("create_user_department", label=_("创建用户 - 部门关系"))
     CREATE_COLLABORATION_TENANT_USER = EnumField("create_collaboration_tenant_user", label=_("创建协同租户用户"))
 
     MODIFY_DATA_SOURCE_USER = EnumField("modify_data_source_user", label=_("修改数据源用户"))
     MODIFY_TENANT_USER = EnumField("modify_tenant_user", label=_("修改租户用户"))
-    MODIFY_USER_LEADER = EnumField("modify_user_leader", label=_("修改用户-上级关系"))
-    MODIFY_USER_DEPARTMENT = EnumField("modify_user_department", label=_("修改用户-部门关系"))
+    MODIFY_USER_LEADER = EnumField("modify_user_leader", label=_("修改用户 - 上级关系"))
+    MODIFY_USER_DEPARTMENT = EnumField("modify_user_department", label=_("修改用户 - 部门关系"))
     MODIFY_USER_STATUS = EnumField("modify_user_status", label=_("修改用户状态"))
     MODIFY_USER_ACCOUNT_EXPIRED_AT = EnumField("modify_user_account_expired_at", label=_("修改用户账号过期时间"))
     MODIFY_USER_PASSWORD = EnumField("modify_user_password", label=_("修改用户密码"))
     MODIFY_USER_EMAIL = EnumField("modify_user_email", label=_("修改用户邮箱"))
     MODIFY_USER_PHONE = EnumField("modify_user_phone", label=_("修改用户电话号码"))
+    MODIFY_USER_WEIXIN_BIND = EnumField("modify_user_weixin_bind", label=_("绑定微信"))
+    MODIFY_USER_WEIXIN_UNBIND = EnumField("modify_user_weixin_unbind", label=_("解绑微信"))
 
     DELETE_DATA_SOURCE_USER = EnumField("delete_data_source_user", label=_("删除数据源用户"))
     DELETE_TENANT_USER = EnumField("delete_tenant_user", label=_("删除租户用户"))
-    DELETE_USER_LEADER = EnumField("delete_user_leader", label=_("删除用户-上级关系"))
-    DELETE_USER_DEPARTMENT = EnumField("delete_user_department", label=_("删除用户-部门关系"))
+    DELETE_USER_LEADER = EnumField("delete_user_leader", label=_("删除用户 - 上级关系"))
+    DELETE_USER_DEPARTMENT = EnumField("delete_user_department", label=_("删除用户 - 部门关系"))
     DELETE_COLLABORATION_TENANT_USER = EnumField("delete_collaboration_tenant_user", label=_("删除协同租户用户"))
 
     # 部门
@@ -74,16 +76,16 @@ class OperationEnum(StrStructuredEnum):
     CREATE_COLLABORATION_TENANT_DEPARTMENT = EnumField(
         "create_collaboration_tenant_department", label=_("创建协同租户部门")
     )
-    CREATE_PARENT_DEPARTMENT = EnumField("create_parent_department", label=_("创建部门-父部门关系"))
+    CREATE_PARENT_DEPARTMENT = EnumField("create_parent_department", label=_("创建部门 - 父部门关系"))
     MODIFY_DATA_SOURCE_DEPARTMENT = EnumField("modify_data_source_department", label=_("修改数据源部门"))
     MODIFY_TENANT_DEPARTMENT = EnumField("modify_tenant_department", label=_("修改租户部门"))
-    MODIFY_PARENT_DEPARTMENT = EnumField("modify_parent_department", label=_("修改部门-父部门关系"))
+    MODIFY_PARENT_DEPARTMENT = EnumField("modify_parent_department", label=_("修改部门 - 父部门关系"))
     DELETE_DATA_SOURCE_DEPARTMENT = EnumField("delete_data_source_department", label=_("删除数据源部门"))
     DELETE_TENANT_DEPARTMENT = EnumField("delete_tenant_department", label=_("删除租户部门"))
     DELETE_COLLABORATION_TENANT_DEPARTMENT = EnumField(
         "delete_collaboration_tenant_department", label=_("删除协同租户部门")
     )
-    DELETE_PARENT_DEPARTMENT = EnumField("delete_parent_department", label=_("删除部门-父部门关系"))
+    DELETE_PARENT_DEPARTMENT = EnumField("delete_parent_department", label=_("删除部门 - 父部门关系"))
 
     # 租户
     CREATE_TENANT = EnumField("create_tenant", label=_("创建租户"))

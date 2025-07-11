@@ -56,7 +56,7 @@ class IdpListOutputSLZ(serializers.Serializer):
 
 
 def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") -> str:
-    """校验IDP 是否重名"""
+    """校验 IDP 是否重名"""
     queryset = Idp.objects.filter(name=name, owner_tenant_id=tenant_id)
     # 过滤掉自身名称
     if idp_id:
@@ -76,7 +76,7 @@ def _validate_source_field(value):
     if not re.fullmatch(SOURCE_FIELD_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
+                "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
             ).format(value),
         )
 

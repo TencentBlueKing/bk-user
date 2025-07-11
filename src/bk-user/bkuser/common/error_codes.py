@@ -78,8 +78,8 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.RATE_LIMIT_EXCEED,
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     )
-    # 调用外部系统API
-    REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
+    # 调用外部系统 API
+    REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统 API 异常"))
 
     # 用户账密
     USERNAME_OR_PASSWORD_WRONG_ERROR = ErrorCode(_("用户名或密码错误"))
@@ -125,6 +125,16 @@ class ErrorCodes:
     SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
     SEND_RESET_PASSWORD_EMAIL_FAILED = ErrorCode(_("发送重置密码邮件失败"))
     VERIFY_VERIFICATION_CODE_FAILED = ErrorCode(_("验证失败"))
+
+    # 微信相关
+    WEIXIN_ALREADY_UNBOUND = ErrorCode(_("微信已解绑"))
+    WEIXIN_ALREADY_BOUND = ErrorCode(_("微信已绑定"))
+    WEIXIN_CONFIG_NOT_FOUND = ErrorCode(_("微信配置未找到"))
+    WEIXIN_API_ERROR = ErrorCode(_("微信 API 调用失败"))
+    WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("二维码生成失败"))
+    WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("二维码无效"))
+    WEIXIN_SIGN_INVALID = ErrorCode(_("签名验证失败"))
+    WEIXIN_XML_PARSE_FAILED = ErrorCode(_("XML 解析失败"))
 
 
 # 实例化一个全局对象
