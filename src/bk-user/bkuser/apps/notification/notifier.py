@@ -25,7 +25,7 @@ from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityIn
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.data_models import NotificationTemplate
 from bkuser.apps.notification.helpers import gen_reset_password_url
-from bkuser.apps.notification.utils import SafeTemplateRenderer
+from bkuser.apps.notification.utils import safe_django_template_substitute
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.component.cmsi import get_notification_client
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -359,11 +359,7 @@ class ContactNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: ContactTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        if SafeTemplateRenderer.is_external_template(self.scene.value):
-            # 外部场景（管理员配置/用户修改）：进行安全替换
-            return SafeTemplateRenderer.render_external_template(tmpl_content, ctx)
-        # 内部场景（硬编码模板）：使用 Django Template
-        return SafeTemplateRenderer.render_internal_template(tmpl_content, ctx)
+        return safe_django_template_substitute(tmpl_content, ctx)
 
 
 class TenantUserNotifier:
@@ -431,9 +427,4 @@ class TenantUserNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: UserTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        # 根据模板来源选择不同的渲染方式
-        if SafeTemplateRenderer.is_external_template(self.scene.value):
-            # 外部场景（管理员配置/用户修改）：进行安全替换
-            return SafeTemplateRenderer.render_external_template(tmpl_content, ctx)
-        # 内部场景（硬编码模板）：使用 Django Template
-        return SafeTemplateRenderer.render_internal_template(tmpl_content, ctx)
+        return safe_django_template_substitute(tmpl_content, ctx)

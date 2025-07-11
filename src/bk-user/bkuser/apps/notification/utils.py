@@ -14,75 +14,47 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-import re
+import string
 from typing import Dict
 
-from django.template import Context
-from django.template import Template as DjangoTemplate
 
+class DjangoStyleTemplate(string.Template):
+    """A template class similar to `string.Template`, but use `{{` and `}}` as delimiters.
 
-def safe_substitute_django_template(template_content: str, context: Dict[str, str]) -> str:
-    """安全替换 Django 格式的模板变量
+    This class supports Django-style template variables: `{{ variable }}`.
 
-    将 {{ variable }} 格式的变量替换为对应的值
-    如果变量不存在，保持原样，避免模板注入风险
+    - Use '{{{{' to escape a double brace
+    - Only '{{' need to be escaped, '}}' is treated as a normal character
     """
 
-    def replace_var(match):
-        var_name = match.group(1).strip()
-        return context.get(var_name, match.group(0))
+    # Override the delimiter property because `string.Template` uses it
+    delimiter = "{{"
 
-    # 使用正则表达式匹配 {{ variable }} 格式
-    pattern = r"\{\{\s*(\w+)\s*\}\}"
-    return re.sub(pattern, replace_var, template_content)
+    delim = delimiter
+    # The identifier is copied from `string.Template`
+    id = r"(?a:[_a-z][_a-z0-9]*)"
+
+    # "named" and "braced" patterns are modified
+    pattern = rf"""
+        {delim}(?:
+            (?P<escaped>{delim})    |   # Escape sequence of two delimiters
+            \s*(?P<named>{id})\s*}} |   # delimiter, optional spaces, identifier, optional spaces, closing braces
+            (?P<braced>\b\B)        |   # delimiter and a braced identifier, **modified to never match anything**
+            (?P<invalid>)               # Other ill-formed delimiter exprs
+        )
+        """  # type: ignore
 
 
-class SafeTemplateRenderer:
-    """安全的模板渲染器
+def safe_django_template_substitute(template: str, context: Dict[str, str]) -> str:
+    """Safely substitute Django-style template variables.
 
-    1. 内部场景（硬编码模板）：使用 Django Template 进行完整渲染
-    2. 外部场景（用户输入）：使用安全替换，避免模板注入风险
+    This function uses DjangoStyleTemplate to safely format a string with
+    Django-style template variables like {{ variable }}.
+    It is safer than Django Template engine because it does not allow
+    template injection.
+
+    :param template: The template string with {{ variable }} format.
+    :param context: The dictionary of variables to substitute.
+    :return: The formatted string.
     """
-
-    @staticmethod
-    def render_internal_template(template_content: str, context: Dict[str, str]) -> str:
-        """渲染内部模板（硬编码模板）
-
-        使用 Django Template 引擎，支持完整的模板语法
-        """
-        return DjangoTemplate(template_content).render(Context(context))
-
-    @staticmethod
-    def render_external_template(template_content: str, context: Dict[str, str]) -> str:
-        """渲染外部模板（用户输入模板）
-
-        使用安全替换，避免模板注入风险
-        只支持简单的变量替换，不支持复杂的模板语法
-        """
-        return safe_substitute_django_template(template_content, context)
-
-    @staticmethod
-    def is_external_template(scene: str) -> bool:
-        """判断是否为外部模板
-
-        外部模板场景（来自 管理员/租户 配置）：
-        - 用户初始化 (USER_INITIALIZE) - 来自数据源插件配置
-        - 重置密码 (RESET_PASSWORD) - 来自数据源插件配置
-        - 密码即将过期 (PASSWORD_EXPIRING) - 来自数据源插件配置
-        - 密码已过期 (PASSWORD_EXPIRED) - 来自数据源插件配置
-        - 租户用户即将过期 (TENANT_USER_EXPIRING) - 来自租户配置
-        - 租户用户已过期 (TENANT_USER_EXPIRED) - 来自租户配置
-
-        内部模板场景（硬编码，安全）：
-        - 管理员重置密码 (MANAGER_RESET_PASSWORD) - 硬编码模板
-        - 发送验证码 (SEND_VERIFICATION_CODE) - 硬编码模板
-        """
-        external_scenes = [
-            "user_initialize",
-            "reset_password",
-            "password_expiring",
-            "password_expired",
-            "tenant_user_expiring",
-            "tenant_user_expired",
-        ]
-        return scene in external_scenes
+    return DjangoStyleTemplate(template).substitute(context)
