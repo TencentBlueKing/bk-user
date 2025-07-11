@@ -66,7 +66,6 @@ def get_logined_profiles():
     )
     logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
 
-
     return logined_profiles
 
 
