@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-import re
 from collections import Counter
 from typing import Dict, List
 
@@ -37,35 +36,6 @@ from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
 
 logger = logging.getLogger(__name__)
-
-
-# 允许在外部模板中使用的安全变量列表
-SAFE_TEMPLATE_VARIABLES = {
-    "username",
-    "full_name",
-    "password",
-    "url",
-    "verification_code",
-    "valid_minutes",
-    "valid_days",
-}
-
-
-def _validate_template_content(content: str) -> str:
-    """验证模板内容，确保只包含安全的变量"""
-    # 查找所有模板变量 {{ variable }}
-    template_vars = re.findall(r"\{\{\s*(\w+)\s*\}\}", content)
-
-    # 检查是否包含不安全的变量
-    unsafe_vars = set(template_vars) - SAFE_TEMPLATE_VARIABLES
-    if unsafe_vars:
-        raise ValidationError(
-            _("模板内容包含不安全的变量：{}。只允许使用以下变量：{}").format(
-                ", ".join(unsafe_vars), ", ".join(sorted(SAFE_TEMPLATE_VARIABLES))
-            )
-        )
-
-    return content
 
 
 def _validate_options(options: List[Dict[str, str]]):
@@ -279,14 +249,6 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     sender = serializers.CharField(help_text="发送人")
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
-
-    def validate_content(self, content: str) -> str:
-        """验证模板内容"""
-        return _validate_template_content(content)
-
-    def validate_content_html(self, content_html: str) -> str:
-        """验证 HTML 模板内容"""
-        return _validate_template_content(content_html)
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
