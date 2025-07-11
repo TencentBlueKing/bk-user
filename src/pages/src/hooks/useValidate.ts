@@ -25,14 +25,14 @@ export const useValidate = () => {
   };
 
   const userName = {
-    validator: (value: string) => /^([a-zA-Z0-9])([a-zA-Z0-9._-]){0,31}$/.test(value),
-    message: t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
+    validator: (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value),
+    message: t('数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
     trigger: 'blur',
   };
 
   const fullName = {
-    validator: (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value),
-    message: t('数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
+    validator: (value: string) => /^[\u4e00-\u9fa5a-zA-Z0-9()_|[\]-]{1,64}$/.test(value),
+    message: t('由1-64位字符组成'),
     trigger: 'blur',
   };
 

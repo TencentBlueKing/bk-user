@@ -28,7 +28,7 @@
       :border="['outer']"
       :pagination="pagination"
       :settings="settings"
-      :show-overflow-tooltip="true"
+      show-overflow-tooltip
       @select="handleSelect"
       @select-all="handleSelectAll"
       @page-limit-change="pageLimitChange"
@@ -77,7 +77,6 @@
           <bk-button class="mr-[8px]" theme="primary" text @click="handleClick('edit', row.id)">
             {{ $t('编辑') }}
           </bk-button>
-          <bk-button theme="primary" text @click="handleDelete(row)">{{ $t('删除') }}</bk-button>
         </template>
       </bk-table-column>
     </bk-table>
@@ -114,14 +113,14 @@
 </template>
 
 <script setup lang="ts">
-import { InfoBox, Message } from 'bkui-vue';
+import { Message } from 'bkui-vue';
 import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 
 import EditDetails from './EditDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/SearchEmpty.vue';
-import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
+import { getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
 
@@ -292,25 +291,6 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
-
-const handleDelete = (item: any) => {
-  InfoBox({
-    width: 400,
-    title: `${t('确认删除')} ${item.username} ${t('用户')}？`,
-    confirmText: t('删除'),
-    onConfirm: () => {
-      deleteVirtualUsers(item.id)
-        .then(() => {
-          initVirtualUsers();
-          Message({ theme: 'success', message: t('删除成功') });
-        })
-        .catch((error) => {
-          console.warn(error);
-        });
-    },
-  });
-};
-
 const handleEnter = () => {
   pagination.current = 1;
   initVirtualUsers();
