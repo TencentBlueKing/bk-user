@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云 - 用户管理 (Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -26,6 +26,9 @@ from bkuser_core.user_settings.constants import (
 )
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting
+
+from src.api.bkuser_core.common.safe_template import safe_str_format
+from src.login.bklogin.components.usermgr_api import message
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +83,7 @@ def get_expiration_dates(notice_interval):
 
 # pylint: disable=function-name-too-long
 def get_config_from_all_local_categories():
-    """一次性拉取所有目录的ConfigProvider"""
+    """一次性拉取所有目录的 ConfigProvider"""
     category_config_map = {}
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
 
@@ -125,11 +128,10 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
     if NOTICE_METHOD_EMAIL in notice_methods:
         email_config = expired_email_config if expired_at.days < 0 else expiring_email_config
 
-        message = (
-            email_config["content"].format(username=profile["username"])
-            if expired_at.days < 0
-            else email_config["content"].format(username=profile["username"], expired_at=expired_at.days)
-        )
+        if expired_at.days < 0:
+            message = safe_str_format(email_config["content"], {"username": profile["username"]})
+        else:
+            message = safe_str_format(email_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
 
         notice_config.update(
             {
@@ -145,11 +147,10 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
     if NOTICE_METHOD_SMS in notice_methods:
         sms_config = expired_sms_config if expired_at.days < 0 else expiring_sms_config
 
-        message = (
-            sms_config["content"].format(username=profile["username"])
-            if expired_at.days < 0
-            else sms_config["content"].format(username=profile["username"], expired_at=expired_at.days)
-        )
+    if expired_at.days < 0:
+        message = safe_str_format(sms_config["content"], {"username": profile["username"]})
+    else:
+        message = safe_str_format(sms_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
 
         notice_config.update(
             {"send_sms": {"sender": sms_config["sender"], "receivers": [profile["telephone"]], "message": message}}
