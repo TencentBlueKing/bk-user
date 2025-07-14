@@ -117,14 +117,6 @@ const handleLogin = () => {
 </script>
 
 <style scoped lang="postcss">
-.login-input {
-  :deep(.bk-input--text) {
-    background: #F0F1F5;
-  }
-  :deep(.bk-input--suffix-icon) {
-    background: #F0F1F5;
-  }
-}
 .login-title {
   font-size: 32px;
   font-weight: 700;
