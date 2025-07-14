@@ -445,14 +445,6 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
 </script>
 
 <style lang="postcss" scoped>
-.bk-user-tenant-input {
-  :deep(.bk-input--text) {
-    background: #F0F1F5;
-  }
-  :deep(.bk-input--suffix-icon) {
-    background: #F0F1F5;
-  }
-}
 .switch-tenant {
   font-size: 14px;
   color: #4D4F56;
