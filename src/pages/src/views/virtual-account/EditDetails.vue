@@ -15,7 +15,7 @@
       <bk-form-item :label="$t('用户名')" property="username" required>
         <bk-input
           v-model="formData.username"
-          :placeholder="validate.fullName.message"
+          :placeholder="validate.userName.message"
           :disabled="formData.id"
           @focus="handleChange"
         />
@@ -80,7 +80,7 @@ watch(formData, () => {
 }, { deep: true, immediate: true });
 
 const rules = {
-  username: [validate.required, validate.fullName],
+  username: [validate.required, validate.userName],
   full_name: [validate.required, validate.fullName],
   app_codes: [validate.required],
   owners: [validate.required],
