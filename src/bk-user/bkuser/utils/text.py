@@ -18,7 +18,7 @@ import string
 from typing import Dict
 
 
-class DjangoStyleTemplate(string.Template):
+class TwoBraceTemplate(string.Template):
     """A template class similar to `string.Template`, but use `{{` and `}}` as delimiters.
 
     This class supports Django-style template variables: `{{ variable }}`.
@@ -45,16 +45,14 @@ class DjangoStyleTemplate(string.Template):
         """  # type: ignore
 
 
-def safe_django_template_substitute(template: str, context: Dict[str, str]) -> str:
-    """Safely substitute Django-style template variables.
+def basic_str_format(template: str, context: Dict[str, str]) -> str:
+    """Safely substitute Django-style template variables, only support basic string substitution,
+    features such as attribute access and slicing are not supported.
 
-    This function uses DjangoStyleTemplate to safely format a string with
-    Django-style template variables like {{ variable }}.
-    It is safer than Django Template engine because it does not allow
-    template injection.
+    It's recommended to use this function when the template is untrusted.
 
-    :param template: The template string with {{ variable }} format.
-    :param context: The dictionary of variables to substitute.
+    :param template: The template string.
+    :param context: The context dictionary.
     :return: The formatted string.
     """
-    return DjangoStyleTemplate(template).substitute(context)
+    return TwoBraceTemplate(template).substitute(context)

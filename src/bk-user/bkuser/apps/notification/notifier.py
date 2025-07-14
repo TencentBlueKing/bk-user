@@ -25,10 +25,10 @@ from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityIn
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.data_models import NotificationTemplate
 from bkuser.apps.notification.helpers import gen_reset_password_url
-from bkuser.apps.notification.utils import safe_django_template_substitute
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.component.cmsi import get_notification_client
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.utils.text import basic_str_format
 
 logger = logging.getLogger(__name__)
 
@@ -359,7 +359,7 @@ class ContactNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: ContactTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        return safe_django_template_substitute(tmpl_content, ctx)
+        return basic_str_format(tmpl_content, ctx)
 
 
 class TenantUserNotifier:
@@ -427,4 +427,4 @@ class TenantUserNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: UserTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        return safe_django_template_substitute(tmpl_content, ctx)
+        return basic_str_format(tmpl_content, ctx)
