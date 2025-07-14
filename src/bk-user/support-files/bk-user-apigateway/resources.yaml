@@ -282,9 +282,9 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
 
-  /api/v3/open/tenant/users/-/lookup-by-login-name/:
+  /api/v3/open/tenant/users/-/lookup/:
     get:
-      operationId: batch_lookup_user_by_login_name
+      operationId: batch_lookup_user
       description: 批量查询用户信息
       tags: []
       responses:
@@ -297,7 +297,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenant/users/-/lookup-by-login-name/
+          path: /api/v3/open/tenant/users/-/lookup/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []

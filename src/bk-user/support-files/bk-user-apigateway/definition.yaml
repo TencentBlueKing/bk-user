@@ -76,4 +76,4 @@ grant_permissions:
   - bk_app_code: "bk_job"
     grant_dimension: "resource"
     resource_names:
-      - "batch_lookup_user_by_login_name"
+      - "batch_lookup_user"

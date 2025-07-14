@@ -245,20 +245,18 @@ class TestTenantUserSensitiveInfoListApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserLoginNameLookupApi:
+class TestTenantUserLookupApi:
     def test_with_login_names(self, api_client, random_tenant):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
-        resp = api_client.get(
-            reverse("open_v3.tenant_user.lookup_by_login_name"), data={"login_names": "zhangsan,lisi"}
-        )
+        resp = api_client.get(reverse("open_v3.tenant_user.lookup"), data={"login_names": "zhangsan,lisi"})
         assert resp.status_code == status.HTTP_200_OK
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
 
     def test_with_no_match(self, api_client, random_tenant):
-        resp = api_client.get(reverse("open_v3.tenant_user.lookup_by_login_name"), data={"login_names": "not_exist"})
+        resp = api_client.get(reverse("open_v3.tenant_user.lookup"), data={"login_names": "not_exist"})
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
