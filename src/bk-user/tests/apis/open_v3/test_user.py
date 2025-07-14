@@ -109,16 +109,16 @@ class TestTenantUserDepartmentListApi:
     def test_with_ancestors(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门 A")
-        dept_aa = TenantDepartment.objects.get(data_source_department__name="中心 AA")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
+        dept_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
         resp = api_client.get(
             reverse("open_v3.tenant_user.department.list", kwargs={"id": lisi.id}), data={"with_ancestors": True}
         )
         assert resp.status_code == status.HTTP_200_OK
         assert {d["id"] for d in resp.data} == {dept_a.id, dept_aa.id}
-        assert {d["name"] for d in resp.data} == {"部门 A", "中心 AA"}
+        assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
         assert resp.data[0]["ancestors"] == [{"id": company.id, "name": "公司"}]
-        assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门 A"}]
+        assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门A"}]
 
     def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
