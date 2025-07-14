@@ -109,16 +109,16 @@ class TestTenantUserDepartmentListApi:
     def test_with_ancestors(self, api_client):
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         company = TenantDepartment.objects.get(data_source_department__name="公司")
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A")
-        dept_aa = TenantDepartment.objects.get(data_source_department__name="中心AA")
+        dept_a = TenantDepartment.objects.get(data_source_department__name="部门 A")
+        dept_aa = TenantDepartment.objects.get(data_source_department__name="中心 AA")
         resp = api_client.get(
             reverse("open_v3.tenant_user.department.list", kwargs={"id": lisi.id}), data={"with_ancestors": True}
         )
         assert resp.status_code == status.HTTP_200_OK
         assert {d["id"] for d in resp.data} == {dept_a.id, dept_aa.id}
-        assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
+        assert {d["name"] for d in resp.data} == {"部门 A", "中心 AA"}
         assert resp.data[0]["ancestors"] == [{"id": company.id, "name": "公司"}]
-        assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门A"}]
+        assert resp.data[1]["ancestors"] == [{"id": company.id, "name": "公司"}, {"id": dept_a.id, "name": "部门 A"}]
 
     def test_with_invalid_user(self, api_client):
         resp = api_client.get(reverse("open_v3.tenant_user.department.list", kwargs={"id": "a1e5b2f6c3g7d4h8"}))
@@ -242,6 +242,25 @@ class TestTenantUserSensitiveInfoListApi:
             data={"bk_usernames": ",".join(map(str, range(1, 102)))},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserLoginNameLookupApi:
+    def test_with_login_names(self, api_client, random_tenant):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.lookup_by_login_name"), data={"login_names": "zhangsan,lisi"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+
+    def test_with_no_match(self, api_client, random_tenant):
+        resp = api_client.get(reverse("open_v3.tenant_user.lookup_by_login_name"), data={"login_names": "not_exist"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
 
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")

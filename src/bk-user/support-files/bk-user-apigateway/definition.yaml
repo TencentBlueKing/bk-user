@@ -73,3 +73,7 @@ grant_permissions:
       - "list_department"
       - "list_department_relation"
       - "list_department_user_relation"
+  - bk_app_code: "bk_job"
+    grant_dimension: "resource"
+    resource_names:
+      - "batch_lookup_user_by_login_name"

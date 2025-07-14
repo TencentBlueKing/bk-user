@@ -32,6 +32,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
     TenantUserListOutputSLZ,
+    TenantUserLoginNameLookupInputSLZ,
+    TenantUserLoginNameLookupOutputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
@@ -298,6 +300,44 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserLoginNameLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据 login_name 批量查询本租户的实名用户信息
+    """
+
+    pagination_class = None
+    serializer_class = TenantUserLoginNameLookupOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserLoginNameLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 仅查询本租户的实名用户
+        return TenantUser.objects.filter(
+            data_source_user__username__in=data["login_names"],
+            tenant_id=self.tenant_id,
+            data_source_id=self.real_data_source_id,
+        ).select_related("data_source_user")
+
+    def get_serializer_context(self):
+        return {
+            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="batch_lookup_user_by_login_name",
+        operation_description="根据 login_name 批量查询实名用户信息",
+        query_serializer=TenantUserLoginNameLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserLoginNameLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

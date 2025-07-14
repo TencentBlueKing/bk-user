@@ -52,6 +52,11 @@ urlpatterns = [
                 ),
                 path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
+                    "users/-/lookup-by-login-name/",
+                    views.TenantUserLoginNameLookupApi.as_view(),
+                    name="open_v3.tenant_user.lookup_by_login_name",
+                ),
+                path(
                     "departments/<int:id>/",
                     views.TenantDepartmentRetrieveApi.as_view(),
                     name="open_v3.tenant_department.retrieve",
