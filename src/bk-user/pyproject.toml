@@ -68,19 +68,16 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/TencentBlueKing/bk-user"
 
-[tool.uv]
-# uv 特定配置
-index-url = "https://mirrors.tencent.com/pypi/simple/"
-
-[tool.uv.sources]
-# 配置腾讯镜像源
-tencent = { url = "https://mirrors.tencent.com/pypi/simple/" }
+[[tool.uv.index]]
+# url = "https://mirrors.tencent.com/pypi/simple"
+url = "https://pypi.org/simple/"
+default = true
 
 [tool.mypy]
 ignore_missing_imports = true
 show_error_codes = true
-strict_optional=true
-pretty=true
+strict_optional = true
+pretty = true
 check_untyped_defs = true
 namespace_packages = true
 

@@ -25,8 +25,8 @@ dev = [
 [tool.mypy]
 ignore_missing_imports = true
 show_error_codes = true
-strict_optional=true
-pretty=true
+strict_optional = true
+pretty = true
 check_untyped_defs = true
 namespace_packages = true
 
@@ -101,8 +101,10 @@ relative-imports-order = "closest-to-furthest"
 [tool.importlinter]
 root_package = "bklogin"
 
-[tool.uv]
-index-url = "https://mirrors.tencent.com/pypi/simple/"
+[[tool.uv.index]]
+# url = "https://mirrors.tencent.com/pypi/simple"
+url = "https://pypi.org/simple/"
+default = true
 
 [build-system]
 requires = ["hatchling"]

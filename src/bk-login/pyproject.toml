@@ -48,13 +48,10 @@ dev = [
     "types-pymysql>=1.1.0.20240524,<2.0.0"
 ]
 
-[tool.uv]
-# uv 特定配置
-index-url = "https://mirrors.tencent.com/pypi/simple/"
-
-[tool.uv.sources]
-# 配置腾讯镜像源
-tencent = { url = "https://mirrors.tencent.com/pypi/simple/" }
+[[tool.uv.index]]
+# url = "https://mirrors.tencent.com/pypi/simple"
+url = "https://pypi.org/simple/"
+default = true
 
 [tool.mypy]
 ignore_missing_imports = true
