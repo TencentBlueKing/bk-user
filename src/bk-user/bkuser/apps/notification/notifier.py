@@ -18,7 +18,6 @@ import logging
 from typing import Dict, List
 
 from django.conf import settings
-from django.template import Context, Template
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -29,6 +28,7 @@ from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.component.cmsi import get_notification_client
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.utils.text import basic_str_format
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class NotificationTmplsGetter:
                     sender="蓝鲸智云",
                     content=(
                         "<p>您好：</p>"
-                        + "<p>您的蓝鲸智云验证码为: {{ verification_code }}</p>"
+                        + "<p>您的蓝鲸智云验证码为：{{ verification_code }}</p>"
                         + "<p>该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码</p>"
                         + "<p>此邮件为系统自动发送，请勿回复。</p>"
                     ),
@@ -108,7 +108,7 @@ class NotificationTmplsGetter:
                     sender="蓝鲸智云",
                     content=(
                         "您好：\n"
-                        + "您的蓝鲸智云验证码为: {{ verification_code }}\n"
+                        + "您的蓝鲸智云验证码为：{{ verification_code }}\n"
                         + "该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码\n"
                         + "此短信为系统自动发送，请勿回复。"
                     ),
@@ -359,7 +359,7 @@ class ContactNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: ContactTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        return Template(tmpl_content).render(Context(ctx))
+        return basic_str_format(tmpl_content, ctx)
 
 
 class TenantUserNotifier:
@@ -385,7 +385,7 @@ class TenantUserNotifier:
         """
         批量发送通知到用户
         :param users: 租户用户列表
-        :param kwargs: 场景相关参数，如 user_passwd_map: {数据源用户ID: 密码} 映射表
+        :param kwargs: 场景相关参数，如 user_passwd_map: {数据源用户 ID: 密码} 映射表
         """
         for user in users:
             try:
@@ -427,4 +427,4 @@ class TenantUserNotifier:
     def _render_tmpl(self, tmpl_content: str, context_generator: UserTmplContextGenerator) -> str:
         """渲染模板"""
         ctx = context_generator.gen()
-        return Template(tmpl_content).render(Context(ctx))
+        return basic_str_format(tmpl_content, ctx)

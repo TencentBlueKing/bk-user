@@ -48,7 +48,7 @@ def _validate_options(options: List[Dict[str, str]]):
     except PDValidationError as e:
         raise ValidationError(_("枚举选项不合法：{}".format(e)))
 
-    # 判断重复枚举id
+    # 判断重复枚举 id
     option_ids = [obj.id for obj in opts]
     if duplicate_opt_ids := [opt_id for opt_id, cnt in Counter(option_ids).items() if cnt > 1]:
         raise ValidationError(_("存在重复枚举 ID：{}").format(duplicate_opt_ids))
@@ -75,7 +75,7 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
 
 
 class BuiltinFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -86,7 +86,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -105,7 +105,7 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class OptionInputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="枚举ID")
+    id = serializers.CharField(help_text="枚举 ID")
     value = serializers.CharField(help_text="枚举值")
 
 
@@ -307,7 +307,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         parsed_field_set = set(parsed_fields["builtin"] + parsed_fields["custom"] + parsed_fields["extra"])
         invalid_fields = [f for f in original_fields if f not in parsed_field_set]
         if invalid_fields:
-            raise ValidationError(_("表达式中存在无效字段: {}").format(", ".join(invalid_fields)))
+            raise ValidationError(_("表达式中存在无效字段：{}").format(", ".join(invalid_fields)))
 
         # 表达式字段必须存在唯一字段
         if not self._has_unique_field(parsed_fields):
