@@ -23,7 +23,7 @@ ENV LC_ALL=C.UTF-8 \
 
 RUN pip install --upgrade pip
 # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
-RUN pip install setuptools==80.8.0\
+RUN pip install setuptools==80.8.0
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
