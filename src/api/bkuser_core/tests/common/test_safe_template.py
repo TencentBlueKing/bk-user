@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 
-from src.api.bkuser_core.common.safe_template import safe_str_format, BraceOnlyTemplate
+from src.api.bkuser_core.common.safe_template import basic_str_format, BraceOnlyTemplate
 
 
 class TestBraceOnlyTemplate:
@@ -44,10 +44,10 @@ class TestBraceOnlyTemplate:
             template.substitute()
 
 
-class Test__safe_str_format:
+class Test__basic_str_format:
     def test_basic(self):
-        assert safe_str_format("Hello {name}!", {"name": "foo"}) == "Hello foo!"
+        assert basic_str_format("Hello {name}!", {"name": "foo"}) == "Hello foo!"
 
     def test_index_access_should_fail(self):
         with pytest.raises(ValueError, match="Invalid placeholder .*"):
-            safe_str_format("Hello {names[0]}!", {"names": "foobar"})
+            basic_str_format("Hello {names[0]}!", {"names": "foobar"})

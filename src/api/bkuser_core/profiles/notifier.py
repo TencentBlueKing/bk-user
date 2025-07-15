@@ -17,7 +17,7 @@ from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.notifier import send_mail, send_sms
-from bkuser_core.common.safe_template import safe_str_format
+from bkuser_core.common.safe_template import basic_str_format
 from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS, TypeOfExpiration
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.constants import (
@@ -127,10 +127,10 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         email_config = expired_email_config if expired_at.days < 0 else expiring_email_config
 
         if expired_at.days < 0:
-            message = safe_str_format(email_config["content"], {"username": profile["username"]})
+            message = basic_str_format(email_config["content"], {"username": profile["username"]})
         else:
-            message = safe_str_format(email_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
-            
+            message = basic_str_format(email_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
+
         notice_config.update(
             {
                 "send_email": {
@@ -146,9 +146,9 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         sms_config = expired_sms_config if expired_at.days < 0 else expiring_sms_config
 
         if expired_at.days < 0:
-            message = safe_str_format(sms_config["content"], {"username": profile["username"]})
+            message = basic_str_format(sms_config["content"], {"username": profile["username"]})
         else:
-            message = safe_str_format(sms_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
+            message = basic_str_format(sms_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
 
         notice_config.update(
             {"send_sms": {"sender": sms_config["sender"], "receivers": [profile["telephone"]], "message": message}}
