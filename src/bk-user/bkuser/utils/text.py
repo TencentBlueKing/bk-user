@@ -55,4 +55,4 @@ def basic_str_format(template: str, context: Dict[str, str]) -> str:
     :param context: The context dictionary.
     :return: The formatted string.
     """
-    return TwoBraceTemplate(template).substitute(context)
+    return TwoBraceTemplate(template).substitute(**context)
