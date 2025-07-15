@@ -6,7 +6,7 @@ WORKDIR /
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
-FROM python:3.11.10-slim-bullseye
+FROM python:3.11.13-slim-bullseye
 USER root
 
 RUN rm /etc/apt/sources.list && \
@@ -25,13 +25,17 @@ RUN pip install --upgrade pip
 # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
 RUN pip install setuptools==80.8.0
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 
 ARG BK_BUILD_VERSION="tag: null, commitID: ^HEAD, buildID: null, buildTime: null"
 ENV BK_BUILD_VERSION=${BK_BUILD_VERSION}
 
-COPY src/bk-user/requirements.txt /app
-RUN pip install -r requirements.txt
+COPY src/bk-user/pyproject.toml /app
+COPY src/bk-user/uv.lock /app
+
+RUN export UV_PROJECT_ENVIRONMENT=/usr/local/ && uv sync --locked --no-cache
 
 COPY src/bk-user/bkuser /app/bkuser
 COPY src/bk-user/bin /app/bin

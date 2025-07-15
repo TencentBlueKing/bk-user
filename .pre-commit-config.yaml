@@ -75,18 +75,6 @@ repos:
         require_serial: true
         language: system
         entry: bash -c "cd src/bk-user && lint-imports"
-      - id: requirements-export
-        name: requirements-export
-        language: system
-        entry: bash -c "cd src/bk-user && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/bk-user/uv.lock$
-      - id: requirements-dev-export
-        name: requirements-dev-export
-        language: system
-        entry: bash -c "cd src/bk-user && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/bk-user/uv.lock$
   - repo: local
     hooks:
       - id: format
@@ -112,18 +100,6 @@ repos:
         require_serial: true
         language: system
         entry: bash -c "cd src/bk-login && lint-imports"
-      - id: requirements-export
-        name: requirements-export
-        language: system
-        entry: bash -c "cd src/bk-login && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/bk-login/uv.lock$
-      - id: requirements-dev-export
-        name: requirements-dev-export
-        language: system
-        entry: bash -c "cd src/bk-login && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/bk-login/uv.lock$
   - repo: local
     hooks:
       - id: format
@@ -144,15 +120,3 @@ repos:
         types: [python]
         entry: mypy --config-file=src/idp-plugins/pyproject.toml
         files: src/idp-plugins/
-      - id: requirements-export
-        name: requirements-export
-        language: system
-        entry: bash -c "cd src/idp-plugins && uv export --format requirements.txt --output-file requirements.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/idp-plugins/uv.lock$
-      - id: requirements-dev-export
-        name: requirements-dev-export
-        language: system
-        entry: bash -c "cd src/idp-plugins && uv export --extra dev --format requirements.txt --output-file requirements_dev.txt --no-editable --no-hashes --quiet"
-        pass_filenames: false
-        files: ^src/idp-plugins/uv.lock$

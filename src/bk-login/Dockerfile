@@ -6,7 +6,7 @@ WORKDIR /
 RUN npm install
 RUN npm run build
 
-FROM python:3.11.10-slim-bullseye
+FROM python:3.11.13-slim-bullseye
 USER root
 
 RUN rm /etc/apt/sources.list && \
@@ -23,11 +23,15 @@ ENV LC_ALL=C.UTF-8 \
 
 RUN pip install --upgrade pip
 # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
-RUN pip install setuptools==80.8.0
+RUN pip install setuptools==80.8.0\
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
-COPY src/bk-login/requirements.txt /app
-RUN pip install -r requirements.txt
+COPY src/bk-login/pyproject.toml /app
+COPY src/bk-login/uv.lock /app
+
+RUN export UV_PROJECT_ENVIRONMENT=/usr/local/ && uv sync --locked --no-cache
 
 COPY src/bk-login/bklogin /app/bklogin
 COPY src/bk-login/bin /app/bin
