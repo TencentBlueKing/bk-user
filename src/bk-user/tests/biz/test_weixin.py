@@ -100,7 +100,7 @@ class TestWeixinBindHandler:
                 "corp_id": "test_corp_id",
                 "agent_id": "test_agent_id",
             }
-            return WeixinBindHandler(mock_tenant_user, mock_request)
+            return WeixinBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
 
     def test_tenant_id_property(self, weixin_handler, mock_tenant_user):
         assert weixin_handler.tenant_id == mock_tenant_user.tenant_id
@@ -123,14 +123,14 @@ class TestWeixinBindHandler:
 
     @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "mp"})
     @mock.patch.object(
-        WeixinBindHandler, "_get_weixin_bind_info", return_value={"bind_type": "mp", "bind_url": "test_url"}
+        WeixinBindHandler, "_get_weixin_bind_info", return_value={"bind_type": "weixin", "bind_url": "test_url"}
     )
     def test_get_bind_info_weixin(
         self, mock_get_weixin_bind_info, mock_get_weixin_settings, weixin_handler, mock_request
     ):
         result = weixin_handler.get_bind_info()
 
-        assert result["bind_type"] == "mp"
+        assert result["bind_type"] == "weixin"
         assert result["bind_url"] == "test_url"
 
     def test_generate_and_store_state(self, weixin_handler, mock_request):
@@ -186,14 +186,15 @@ class TestWeixinBindHandler:
         mock_tenant_user.refresh_from_db()
         assert mock_tenant_user.wx_userid == wx_userid
 
-    @mock.patch("bkuser.biz.weixin.http_get", return_value=(True, {"errcode": 0, "userid": "test_userid"}))
+    @mock.patch("bkuser.biz.weixin.weixin.http_get", return_value=(True, {"errcode": 0, "userid": "test_userid"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_wecom_userid_success(self, mock_get_access_token, mock_http_get, weixin_handler):
         """测试成功获取企业微信用户 ID"""
+        weixin_handler.weixin_config_service.get_access_token = mock_get_access_token
         result = weixin_handler.get_wecom_userid("test_code")
         assert result == "test_userid"
 
-    @mock.patch("bkuser.biz.weixin.http_get", return_value=(False, {"error": "network error"}))
+    @mock.patch("bkuser.biz.weixin.weixin.http_get", return_value=(False, {"error": "network error"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_wecom_userid_api_error(self, mock_get_access_token, mock_http_get, weixin_handler):
         """测试企业微信 API 错误"""
@@ -201,7 +202,7 @@ class TestWeixinBindHandler:
             weixin_handler.get_wecom_userid("test_code")
         assert "获取企业微信用户信息失败" in str(error.value.message)
 
-    @mock.patch("bkuser.biz.weixin.http_get", return_value=(True, {"errcode": 40013, "errmsg": "invalid appid"}))
+    @mock.patch("bkuser.component.http.http_get", return_value=(True, {"errcode": 40013, "errmsg": "invalid appid"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_wecom_userid_errcode_error(self, mock_get_access_token, mock_http_get, weixin_handler):
         with pytest.raises(APIError) as error:
@@ -267,7 +268,7 @@ class TestWeixinBindHandler:
         result = weixin_handler.handle_qrcode_event(event_data)
         assert result == ""
 
-    @mock.patch("bkuser.biz.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
+    @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     @mock.patch.object(WeixinUtil, "store_qrcode_user_info")
     def test_get_mp_qrcode_url_success(
@@ -282,7 +283,7 @@ class TestWeixinBindHandler:
         assert "test_ticket" in result
         assert "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" in result
 
-    @mock.patch("bkuser.biz.weixin.http_post", return_value=(False, {"error": "network error"}))
+    @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(False, {"error": "network error"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_mp_qrcode_url_api_error(self, mock_get_access_token, mock_http_post, weixin_handler):
         """测试微信公众号 API 错误"""
@@ -290,7 +291,9 @@ class TestWeixinBindHandler:
             weixin_handler._get_mp_qrcode_url()
         assert "创建微信临时二维码失败" in str(error.value.message)
 
-    @mock.patch("bkuser.biz.weixin.http_post", return_value=(True, {"errcode": 40013, "errmsg": "invalid appid"}))
+    @mock.patch(
+        "bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 40013, "errmsg": "invalid appid"})
+    )
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_mp_qrcode_url_errcode_error(self, mock_get_access_token, mock_http_post, weixin_handler):
         """测试微信公众号返回错误码"""

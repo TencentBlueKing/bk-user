@@ -591,7 +591,7 @@ class TenantUserWeixinBindApi(generics.RetrieveAPIView):
         if tenant_user.wx_userid:
             raise error_codes.WEIXIN_ALREADY_BOUND.f(_("当前账户已绑定微信"))
 
-        weixin_handler = WeixinBindHandler(tenant_user, request)
+        weixin_handler = WeixinBindHandler(tenant_user, request.build_absolute_uri, request.session)
         bind_info = weixin_handler.get_bind_info()
         return Response(TenantUserWeixinBindOutputSLZ(bind_info).data)
 
@@ -658,7 +658,7 @@ class TenantUserWecomLoginCallbackApi(generics.RetrieveAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_user = TenantUser.objects.get(id=request.user.username)
-        weixin_handler = WeixinBindHandler(tenant_user, request)
+        weixin_handler = WeixinBindHandler(tenant_user, request.build_absolute_uri, request.session)
 
         code = request.query_params.get("code")
         state = request.query_params.get("state")
@@ -725,7 +725,11 @@ class TenantUserMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, 
         auditor.pre_record_data_before(tenant_user)
 
         # 处理微信公众号回调消息
-        weixin_handler = WeixinBindHandler(tenant_user, request)
+        weixin_handler = WeixinBindHandler(
+            tenant_user=tenant_user,
+            build_absolute_uri=request.build_absolute_uri,
+            session=request.session,
+        )
         response = weixin_handler.handle_qrcode_event(data)
 
         # 【审计】记录绑定操作
