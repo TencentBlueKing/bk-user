@@ -4,15 +4,16 @@ Batch query the information of users
 
 ### Parameters
 
-| Name        | Type   | Required | Description                                                                                      |
-|-------------|--------|----------|--------------------------------------------------------------------------------------------------|
-| login_names | string | Yes      | User login names, multiple separated by comma, limit number is 100, maximum input length is 64   |
+| Name         | Type   | Required | Description                                                                                                                                     |
+|--------------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| lookups      | string | Yes      | Exact lookup values (can be bk_username、login_name), multiple separated by separator, limit number is 100, maximum input length per value is 64 |
+| lookup_field | string | Yes      | Lookup field, can be selected from the value of `bk_username`, `login_name`                                                                     |
 
 ### Request Example
 
 ```
-// URL Query Parameters
-login_names=zhangsan,lisi
+// URL Query Parameter
+lookups=zhangsan,lisi&lookup_field=login_name
 ```
 
 ### Response Example for Status Code 200

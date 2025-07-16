@@ -307,7 +307,7 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
 
 class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    批量查询本租户的实名用户信息
+    批量查询本租户的用户信息
     """
 
     pagination_class = None
@@ -318,16 +318,22 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        filter_args = {
+            "tenant_id": self.tenant_id,
+            "data_source_id": self.virtual_data_source_id,
+        }
+
+        if data["lookup_field"] == "login_name":
+            filter_args["data_source_user__username__in"] = data["lookups"]
+        else:
+            filter_args["id__in"] = data["lookups"]
+
         # 仅查询本租户的实名用户
-        return TenantUser.objects.filter(
-            data_source_user__username__in=data["login_names"],
-            tenant_id=self.tenant_id,
-            data_source_id=self.real_data_source_id,
-        ).select_related("data_source_user")
+        return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -335,7 +341,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="batch_lookup_user",
-        operation_description="批量查询实名用户信息",
+        operation_description="批量查询用户信息",
         query_serializer=TenantUserLookupInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
     )
