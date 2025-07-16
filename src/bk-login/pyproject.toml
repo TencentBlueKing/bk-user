@@ -34,7 +34,9 @@ dependencies = [
     "opentelemetry-instrumentation-logging==0.46b0",
     "bk-notice-sdk==1.3.2",
     "pyjwt[cryptography]==2.10.1",
-    "apigw-manager[cryptography]==4.0.3"
+    "apigw-manager[cryptography]==4.0.3",
+    # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
+    "setuptools==80.8.0",
 ]
 
 [dependency-groups]
@@ -137,7 +139,3 @@ relative-imports-order = "closest-to-furthest"
 
 [tool.importlinter]
 root_package = "bklogin"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
