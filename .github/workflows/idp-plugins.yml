@@ -18,10 +18,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'src/idp-plugins/requirements_dev.txt'
-      - name: Install dependencies
-        run: pip install -r src/idp-plugins/requirements_dev.txt
+      - name: Install a specific version of uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.19"
+          cache-dependency-glob: "src/idp-plugins/uv.lock"
+      - name: Install the project
+        run: cd src/idp-plugins && export UV_PROJECT_ENVIRONMENT="${pythonLocation}" && uv sync --locked --all-extras --dev
       - name: Format & Lint with ruff
         run: |
           ruff format src/idp-plugins --config=src/idp-plugins/pyproject.toml --no-cache
