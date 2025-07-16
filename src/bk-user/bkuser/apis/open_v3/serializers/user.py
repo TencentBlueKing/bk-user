@@ -107,7 +107,7 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_len=64)
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_length=64)
     lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
 
@@ -122,7 +122,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
 
 
 class VirtualUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_len=64)
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_length=64)
     lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
 
