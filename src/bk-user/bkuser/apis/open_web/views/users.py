@@ -103,7 +103,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -171,9 +171,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-            queryset
-        )
+        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -233,9 +231,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-            queryset
-        )
+        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -258,7 +254,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

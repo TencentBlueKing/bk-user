@@ -14,14 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
 
 from django.conf import settings
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import ChoiceField
 
-from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.constants import TenantUserStatus, UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
@@ -40,7 +37,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
@@ -78,7 +75,7 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
@@ -88,7 +85,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserSensitiveInfoListInputSLZ(serializers.Serializer):
@@ -109,19 +106,24 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
         return obj.phone_info[1]
 
 
-class VirtualUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_field = ChoiceField(help_text="匹配字段", choices=["login_name", "bk_username"])
+class TenantUserLookupInputSLZ(serializers.Serializer):
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_length=64)
+    lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
-    def validate_lookups(self, lookups: List[str]) -> List[str]:
-        max_length = 64
-        if invalid_lookups := [i for i in lookups if len(i) > max_length]:
-            raise ValidationError(
-                "The length of the specified lookup value {} exceeds the 64-character limit.".format(
-                    ", ".join(invalid_lookups)
-                )
-            )
-        return lookups
+
+class TenantUserLookupOutputSLZ(serializers.Serializer):
+    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return self.context["display_name_map"][obj.id]
+
+
+class VirtualUserLookupInputSLZ(serializers.Serializer):
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_length=64)
+    lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
 
 class VirtualUserLookupOutputSLZ(serializers.Serializer):
@@ -130,7 +132,7 @@ class VirtualUserLookupOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class VirtualUserListOutputSLZ(serializers.Serializer):
@@ -141,4 +143,4 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]

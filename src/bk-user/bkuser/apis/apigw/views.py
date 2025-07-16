@@ -61,7 +61,7 @@ class TenantUserContactInfoListApi(InnerApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }

@@ -32,6 +32,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
     TenantUserListOutputSLZ,
+    TenantUserLookupInputSLZ,
+    TenantUserLookupOutputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
@@ -44,6 +46,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.tenant.constants import UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -75,7 +78,7 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -226,7 +229,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -259,7 +262,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }
@@ -303,6 +306,50 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
+class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询本租户的用户信息
+    """
+
+    pagination_class = None
+    serializer_class = TenantUserLookupOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        filter_args = {
+            "tenant_id": self.tenant_id,
+            "data_source_id": self.real_data_source_id,
+        }
+
+        if data["lookup_field"] == UserLookupFieldEnum.LOGIN_NAME:
+            filter_args["data_source_user__username__in"] = data["lookups"]
+        else:
+            filter_args["id__in"] = data["lookups"]
+
+        # 仅查询本租户的实名用户
+        return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
+
+    def get_serializer_context(self):
+        return {
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                self.get_queryset()
+            )
+        }
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="batch_lookup_user",
+        operation_description="批量查询用户信息",
+        query_serializer=TenantUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
 class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     批量查询虚拟用户信息
@@ -322,7 +369,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
             "data_source_id": self.virtual_data_source_id,
         }
 
-        if data["lookup_field"] == "login_name":
+        if data["lookup_field"] == UserLookupFieldEnum.LOGIN_NAME:
             filter_args["data_source_user__username__in"] = data["lookups"]
         else:
             filter_args["id__in"] = data["lookups"]
@@ -331,7 +378,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -363,7 +410,7 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

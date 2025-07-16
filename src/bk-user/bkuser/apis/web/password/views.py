@@ -264,7 +264,7 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
                 tenant_users,
                 many=True,
                 context={
-                    "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                    "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                         tenant_users
                     )
                 },

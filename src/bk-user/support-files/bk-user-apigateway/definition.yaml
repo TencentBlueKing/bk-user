@@ -69,6 +69,7 @@ grant_permissions:
     resource_names:
       - "retrieve_user"
       - "list_user"
+      - "list_user_department"
       - "list_virtual_user"
       - "list_department"
       - "list_department_relation"
