@@ -54,7 +54,7 @@ cd src/bk-login
 安装项目所需的包
 
 ``` bash
-uv sync
+uv sync --dev
 ```
 
 在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下
@@ -115,7 +115,7 @@ cd src/bk-user
 安装项目所需的包
 
 ``` bash
-uv sync
+uv sync --dev
 ```
 
 在 `bklogin` 目录下添加 `.env` 文件，并在文件里定义环境变量，具体必填环境变量可参考以下
