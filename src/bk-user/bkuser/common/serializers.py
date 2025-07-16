@@ -60,9 +60,9 @@ class StringArrayField(fields.CharField):
 
         for item in data:
             if self.min_item_length is not None and len(item) < self.min_item_length:
-                self.fail("min_item_length", min_item_len=self.min_item_length)
+                self.fail("min_item_length", min_item_length=self.min_item_length)
             if self.max_item_length is not None and len(item) > self.max_item_length:
-                self.fail("max_item_length", max_item_len=self.max_item_length)
+                self.fail("max_item_length", max_item_length=self.max_item_length)
 
         return data
 
