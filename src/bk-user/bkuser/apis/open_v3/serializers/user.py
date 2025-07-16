@@ -21,7 +21,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ChoiceField
 
-from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.constants import LookupFieldEnum, TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
@@ -40,7 +40,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
@@ -78,7 +78,7 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
@@ -88,7 +88,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class TenantUserSensitiveInfoListInputSLZ(serializers.Serializer):
@@ -111,7 +111,7 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_field = ChoiceField(help_text="匹配字段", choices=["login_name", "bk_username"])
+    lookup_field = ChoiceField(help_text="匹配字段", choices=LookupFieldEnum.get_choices())
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
@@ -136,7 +136,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
 
 class VirtualUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_field = ChoiceField(help_text="匹配字段", choices=["login_name", "bk_username"])
+    lookup_field = ChoiceField(help_text="匹配字段", choices=LookupFieldEnum.get_choices())
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:
         max_length = 64
@@ -155,7 +155,7 @@ class VirtualUserLookupOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class VirtualUserListOutputSLZ(serializers.Serializer):
@@ -166,4 +166,4 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]

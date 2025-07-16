@@ -77,7 +77,7 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -228,7 +228,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -261,7 +261,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }
@@ -320,7 +320,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
         filter_args = {
             "tenant_id": self.tenant_id,
-            "data_source_id": self.virtual_data_source_id,
+            "data_source_id": self.real_data_source_id,
         }
 
         if data["lookup_field"] == "login_name":
@@ -377,7 +377,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -409,7 +409,7 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

@@ -199,3 +199,10 @@ class TenantUserIdRuleEnum(StrStructuredEnum):
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
     USERNAME = EnumField("username", label=_("用户名"))
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
+
+
+class LookupFieldEnum(StrStructuredEnum):
+    """用户查询匹配字段"""
+
+    LOGIN_NAME = EnumField("login_name", label=_("企业内用户唯一标识"))
+    BK_USERNAME = EnumField("bk_username", label=_("蓝鲸用户唯一标识"))
