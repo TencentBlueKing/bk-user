@@ -276,6 +276,14 @@ class TestTenantUserLookupApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
+    def test_with_max_item_length_exceeded(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.lookup"),
+            data={"lookups": "a" * 65, "lookup_field": "login_name"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "每个对象长度不能超过 64 个字符." in resp.data["message"]
+
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestVirtualUserLookupApi:

@@ -14,14 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
 
 from django.conf import settings
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import ChoiceField
 
-from bkuser.apps.tenant.constants import LookupFieldEnum, TenantUserStatus
+from bkuser.apps.tenant.constants import TenantUserStatus, UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
@@ -110,18 +107,8 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_field = ChoiceField(help_text="匹配字段", choices=LookupFieldEnum.get_choices())
-
-    def validate_lookups(self, lookups: List[str]) -> List[str]:
-        max_length = 64
-        if invalid_lookups := [i for i in lookups if len(i) > max_length]:
-            raise ValidationError(
-                "The length of the specified lookup value {} exceeds the 64-character limit.".format(
-                    ", ".join(invalid_lookups)
-                )
-            )
-        return lookups
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_len=64)
+    lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
 
 class TenantUserLookupOutputSLZ(serializers.Serializer):
@@ -135,18 +122,8 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
 
 
 class VirtualUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_field = ChoiceField(help_text="匹配字段", choices=LookupFieldEnum.get_choices())
-
-    def validate_lookups(self, lookups: List[str]) -> List[str]:
-        max_length = 64
-        if invalid_lookups := [i for i in lookups if len(i) > max_length]:
-            raise ValidationError(
-                "The length of the specified lookup value {} exceeds the 64-character limit.".format(
-                    ", ".join(invalid_lookups)
-                )
-            )
-        return lookups
+    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100, max_item_len=64)
+    lookup_field = serializers.ChoiceField(help_text="匹配字段", choices=UserLookupFieldEnum.get_choices())
 
 
 class VirtualUserLookupOutputSLZ(serializers.Serializer):

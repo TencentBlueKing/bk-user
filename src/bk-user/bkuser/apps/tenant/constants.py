@@ -201,7 +201,7 @@ class TenantUserIdRuleEnum(StrStructuredEnum):
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
 
 
-class LookupFieldEnum(StrStructuredEnum):
+class UserLookupFieldEnum(StrStructuredEnum):
     """用户查询匹配字段"""
 
     LOGIN_NAME = EnumField("login_name", label=_("企业内用户唯一标识"))

@@ -46,6 +46,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.tenant.constants import UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -323,7 +324,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
             "data_source_id": self.real_data_source_id,
         }
 
-        if data["lookup_field"] == "login_name":
+        if data["lookup_field"] == UserLookupFieldEnum.LOGIN_NAME:
             filter_args["data_source_user__username__in"] = data["lookups"]
         else:
             filter_args["id__in"] = data["lookups"]
@@ -368,7 +369,7 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
             "data_source_id": self.virtual_data_source_id,
         }
 
-        if data["lookup_field"] == "login_name":
+        if data["lookup_field"] == UserLookupFieldEnum.LOGIN_NAME:
             filter_args["data_source_user__username__in"] = data["lookups"]
         else:
             filter_args["id__in"] = data["lookups"]
