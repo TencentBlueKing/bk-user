@@ -27,23 +27,23 @@ class StringArrayField(fields.CharField):
     default_error_messages = {
         "max_items": _("至多包含 {max_items} 个对象."),
         "min_items": _("至少包含 {min_items} 个对象."),
-        "max_item_len": _("每个对象长度不能超过 {max_item_len} 个字符."),
-        "min_item_len": _("每个对象长度不能小于 {min_item_len} 个字符."),
+        "max_item_length": _("每个对象长度不能超过 {max_item_length} 个字符."),
+        "min_item_length": _("每个对象长度不能小于 {min_item_length} 个字符."),
     }
 
     def __init__(
         self,
         min_items: int | None = None,
         max_items: int | None = None,
-        min_item_len: int | None = None,
-        max_item_len: int | None = None,
+        min_item_length: int | None = None,
+        max_item_length: int | None = None,
         delimiter: str = ",",
         **kwargs,
     ):
         self.min_items = min_items
         self.max_items = max_items
-        self.min_item_len = min_item_len
-        self.max_item_len = max_item_len
+        self.min_item_length = min_item_length
+        self.max_item_length = max_item_length
         self.delimiter = delimiter
 
         super().__init__(**kwargs)
@@ -59,10 +59,10 @@ class StringArrayField(fields.CharField):
             self.fail("max_items", max_items=self.max_items)
 
         for item in data:
-            if self.min_item_len is not None and len(item) < self.min_item_len:
-                self.fail("min_item_len", min_item_len=self.min_item_len)
-            if self.max_item_len is not None and len(item) > self.max_item_len:
-                self.fail("max_item_len", max_item_len=self.max_item_len)
+            if self.min_item_length is not None and len(item) < self.min_item_length:
+                self.fail("min_item_length", min_item_len=self.min_item_length)
+            if self.max_item_length is not None and len(item) > self.max_item_length:
+                self.fail("max_item_length", max_item_len=self.max_item_length)
 
         return data
 
