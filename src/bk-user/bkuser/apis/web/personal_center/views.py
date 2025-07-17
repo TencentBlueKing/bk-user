@@ -685,7 +685,7 @@ class TenantUserWecomLoginCallbackApi(generics.RetrieveAPIView):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class TenantUserMPCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, generics.RetrieveAPIView):
+class TenantUserMPLoginCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIView, generics.RetrieveAPIView):
     """个人中心 - 微信公众号回调接口"""
 
     # 豁免认证 & 权限
