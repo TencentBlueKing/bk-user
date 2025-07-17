@@ -359,7 +359,10 @@ CACHES: Dict[str, Any] = {
             # Redis 连接池配置
             "CONNECTION_POOL_KWARGS": {
                 # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
-                "max_connections": REDIS_MAX_CONNECTIONS
+                "max_connections": REDIS_MAX_CONNECTIONS,
+                # redis-py will send SETINFO command, not valid for older version redis
+                "lib_name": None,
+                "lib_version": None,
             },
         },
     },
