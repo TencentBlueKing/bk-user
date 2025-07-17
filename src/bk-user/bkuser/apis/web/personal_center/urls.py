@@ -87,4 +87,33 @@ urlpatterns = [
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.email_verification_code.send",
     ),
+    path(
+        "tenant-users/<str:id>/weixin/bind/",
+        views.TenantUserWeixinBindApi.as_view(),
+        name="personal_center.tenant_users.weixin.bind",
+    ),
+    # 查询微信绑定状态
+    path(
+        "tenant-users/<str:id>/weixin/bind-status/",
+        views.TenantUserWeixinBindStatusApi.as_view(),
+        name="personal_center.tenant_users.weixin.bind_status",
+    ),
+    # 微信解绑
+    path(
+        "tenant-users/<str:id>/weixin/unbind/",
+        views.TenantUserWeixinUnbindApi.as_view(),
+        name="personal_center.tenant_users.weixin.unbind",
+    ),
+    # 企业微信登录回调
+    path(
+        "tenant-users/<str:tenant_id>/wecom/login-callback/",
+        views.TenantUserWecomLoginCallbackApi.as_view(),
+        name="personal_center.tenant_users.wecom.login_callback",
+    ),
+    # 微信公众号登录回调
+    path(
+        "tenant-users/<str:tenant_id>/mp/login-callback/",
+        views.TenantUserMPLoginCallbackApi.as_view(),
+        name="personal_center.tenant_users.mp.login_callback",
+    ),
 ]
