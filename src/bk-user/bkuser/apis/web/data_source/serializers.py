@@ -28,7 +28,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
-from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
@@ -91,7 +91,15 @@ def _validate_field_mapping_with_tenant_user_fields(
 class DataSourceSyncConfigSLZ(serializers.Serializer):
     """数据源同步配置"""
 
-    sync_period = serializers.ChoiceField(help_text="同步周期", choices=DataSourceSyncPeriod.get_choices())
+    period_type = serializers.ChoiceField(help_text="同步周期类型", choices=DataSourceSyncPeriodType.get_choices())
+    period_value = serializers.IntegerField(help_text="周期数值", min_value=1)
+    exec_times = serializers.ListField(
+        help_text="执行时间列表，支持多个起始时间点",
+        child=serializers.DateTimeField(),
+        required=False,
+        allow_empty=True,
+        default=list,
+    )
     sync_timeout = serializers.IntegerField(
         help_text="同步超时时间（单位：秒，范围：5m-12h）",
         required=False,
@@ -99,6 +107,22 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
         min_value=5 * 60,
         max_value=12 * 60 * 60,
     )
+
+    def validate(self, attrs):
+        period_type = attrs["period_type"]
+        exec_times = attrs.get("exec_times", [])
+
+        # 小时和天级别至少需要一个执行时间
+        if period_type in [DataSourceSyncPeriodType.HOUR, DataSourceSyncPeriodType.DAY] and not exec_times:
+            raise ValidationError(_("小时和天级别的同步必须至少提供一个执行时间"))
+
+        return attrs
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        if data.get("exec_times"):
+            data["exec_times"] = [t.isoformat() for t in data["exec_times"]]
+        return data
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):

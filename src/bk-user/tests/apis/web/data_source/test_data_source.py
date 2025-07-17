@@ -22,7 +22,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOp
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
-from bkuser.apps.sync.constants import SyncTaskStatus
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
@@ -224,11 +224,11 @@ class TestDataSourceCreateApi:
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
-                "sync_config": {"sync_period": -1},
+                "sync_config": {"period_type": DataSourceSyncPeriodType.MINUTE, "period_value": -1},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "sync_config.sync_period: “-1” 不是合法选项。" in resp.data["message"]
+        assert "参数校验不通过: sync_config.period_value: 请确保该值大于或者等于 1。" in resp.data["message"]
 
 
 class TestDataSourceListApi:

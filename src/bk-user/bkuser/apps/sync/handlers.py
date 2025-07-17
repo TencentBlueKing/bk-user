@@ -20,12 +20,12 @@ import logging
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from django_celery_beat.models import PeriodicTask
 from pydantic import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.constants import DataSourceSyncPeriod
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
@@ -87,6 +87,13 @@ def sync_identity_infos_and_notify_after_modify_data_source(sender, instance: Da
     transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(instance.id))
 
 
+def gen_data_source_sync_periodic_task_name_with_time(data_source_id: int, time_index: str = "") -> str:
+    """生成带索引后缀的数据源同步任务名称"""
+    # 若固定时间点数量为 1，则不生成索引后缀，使用默认任务名
+    base_name = gen_data_source_sync_periodic_task_name(data_source_id)
+    return f"{base_name}_{time_index}" if time_index else base_name
+
+
 @receiver(post_save, sender=DataSource)
 def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
     """在创建/修改数据源后，需要设置定时同步的任务"""
@@ -99,7 +106,7 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
     # 没有同步配置，抛出 warning 并且跳过
     if not data_source.sync_config:
         logger.warning("data source %s hasn't sync_config, remove sync periodic task...", data_source.id)
-        PeriodicTask.objects.filter(name=periodic_task_name).delete()
+        PeriodicTask.objects.filter(name__startswith=periodic_task_name).delete()
         return
 
     try:
@@ -109,31 +116,99 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         return
 
     # sync_period 为 Never 时，表示当前数据源数据不会定时同步，只能通过手动同步
-    if cfg.sync_period == DataSourceSyncPeriod.NEVER:
+    if cfg.period_type == DataSourceSyncPeriodType.NEVER:
         logger.info(
-            "data source %s has sync_period -> never (0). Any existing periodic tasks will be removed.",
+            "data source %s has period_type -> never. Any existing periodic tasks will be removed.",
             data_source.id,
         )
-        PeriodicTask.objects.filter(name=periodic_task_name).delete()
+        PeriodicTask.objects.filter(name__startswith=periodic_task_name).delete()
         return
 
-    interval_schedule, _ = IntervalSchedule.objects.get_or_create(
-        every=cfg.sync_period,
-        period=IntervalSchedule.MINUTES,
-    )
-    periodic_task, task_created = PeriodicTask.objects.get_or_create(
-        name=periodic_task_name,
+    # 在事务中处理任务的创建和删除，避免并发修改
+    with transaction.atomic():
+        sync_periodic_tasks_for_data_source(data_source, cfg)
+
+
+def sync_periodic_tasks_for_data_source(data_source: DataSource, cfg: DataSourceSyncConfig):
+    """
+    同步数据源的定时任务
+
+    - 分钟级别：使用IntervalSchedule，每隔 N 分钟触发一次
+    - 小时级别：使用CrontabSchedule，每 N 小时在指定分钟触发
+    - 天级别：使用CrontabSchedule，每 N 天在指定时间触发
+    """
+    base_task_name = gen_data_source_sync_periodic_task_name(data_source.id)
+
+    try:
+        # 在事务中使用 select_for_update 锁定相关的 PeriodicTask，避免并发修改
+        tasks_to_delete = PeriodicTask.objects.select_for_update().filter(name__startswith=base_task_name)
+        tasks_to_delete.delete()
+
+        # 根据配置类型创建新任务
+        if cfg.period_type == DataSourceSyncPeriodType.MINUTE:
+            _create_interval_task(data_source, cfg, base_task_name)
+        else:
+            _create_crontab_tasks(data_source, cfg)
+
+    except Exception:
+        logger.exception("Failed to sync periodic tasks for data source %s", data_source.id)
+
+
+def _create_interval_task(data_source: DataSource, cfg: DataSourceSyncConfig, task_name: str):
+    """创建 interval 任务（分钟级别）"""
+    interval_schedule = cfg.get_interval_schedule()
+
+    PeriodicTask.objects.update_or_create(
+        name=task_name,
         defaults={
             "interval": interval_schedule,
             "task": "bkuser.apps.sync.periodic_tasks.build_and_run_data_source_sync_task",
             "kwargs": json.dumps({"data_source_id": data_source.id}),
         },
     )
-    if not task_created:
-        logger.info(
-            "update data source %s sync periodic task's period as %s",
-            data_source.id,
-            cfg.sync_period,
+
+    logger.info(
+        "created/updated data source %s sync periodic task: %s with interval %s minutes",
+        data_source.id,
+        task_name,
+        cfg.period_value,
+    )
+
+
+def _create_crontab_tasks(data_source: DataSource, cfg: DataSourceSyncConfig):
+    """创建 crontab 任务（小时/天级别）"""
+    crontab_schedules = cfg.get_crontab_schedules()
+
+    for i, schedule in enumerate(crontab_schedules):
+        # 为每个固定时间点生成唯一的任务名，用于区分多个执行时间点的任务
+        if len(crontab_schedules) > 1:
+            time_suffix = f"time_{i+1}"
+        else:
+            time_suffix = ""
+
+        task_name = gen_data_source_sync_periodic_task_name_with_time(data_source.id, time_suffix)
+
+        PeriodicTask.objects.update_or_create(
+            name=task_name,
+            defaults={
+                "crontab": schedule,
+                "task": "bkuser.apps.sync.periodic_tasks.build_and_run_data_source_sync_task",
+                "kwargs": json.dumps(
+                    {
+                        "data_source_id": data_source.id,
+                        "exec_time_index": i,
+                    }
+                ),
+            },
         )
-        periodic_task.interval = interval_schedule
-        periodic_task.save()
+
+        logger.info(
+            "created/updated data source %s sync periodic task: %s with crontab %s %s %s %s %s",
+            data_source.id,
+            task_name,
+            schedule.minute,
+            schedule.hour,
+            schedule.day_of_week,
+            schedule.day_of_month,
+            schedule.month_of_year,
+        )
