@@ -15,43 +15,53 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import threading
+from typing import Optional
 
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace import ReadableSpan, Span, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
 from opentelemetry.sdk.trace.sampling import _KNOWN_SAMPLERS
 
 from .instrumentor import BKUserInstrumentor
 
 
-class LazyBatchSpanProcessor(BatchSpanProcessor):
-    def __init__(self, *args, **kwargs):
-        super(LazyBatchSpanProcessor, self).__init__(*args, **kwargs)
-        # 停止默认线程
-        self.done = True
-        with self.condition:
-            self.condition.notify_all()
-        self.worker_thread.join()  # type: ignore
-        self.done = False
-        self.worker_thread = None  # type: ignore
+class LazyBatchSpanProcessor:
+    def __init__(self, span_exporter: SpanExporter, **kwargs):
+        self._span_exporter = span_exporter
+        self._kwargs = kwargs
+        self._inner: Optional[BatchSpanProcessor] = None
+        self._lock = threading.Lock()
+        self._started = False
+
+    def _ensure_started(self):
+        if not self._started:
+            with self._lock:
+                if not self._started:
+                    self._inner = BatchSpanProcessor(self._span_exporter, **self._kwargs)
+
+    def on_start(self, span: Span, parent_context=None):
+        self._ensure_started()
+        if self._inner:
+            self._inner.on_start(span, parent_context)
 
     def on_end(self, span: ReadableSpan) -> None:
-        if self.worker_thread is None:
-            self.worker_thread = threading.Thread(name=self.__class__.__name__, target=self.worker, daemon=True)
-            self.worker_thread.start()
-        super(LazyBatchSpanProcessor, self).on_end(span)
+        if not span.context.trace_flags.sampled:
+            return
+        self._ensure_started()
+        if self._inner:
+            self._inner.on_end(span)
 
     def shutdown(self) -> None:
-        # signal the worker thread to finish and then wait for it
-        self.done = True
-        with self.condition:
-            self.condition.notify_all()
-        if self.worker_thread:
-            self.worker_thread.join()
-        self.span_exporter.shutdown()
+        if self._inner:
+            self._inner.shutdown()
+
+    def force_flush(self, timeout_millis: Optional[int] = None) -> bool:
+        if self._inner:
+            return self._inner.force_flush(timeout_millis)
+        return True
 
 
 def setup_trace_config():
