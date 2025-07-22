@@ -29,6 +29,7 @@ from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, BuiltInTenantIDEnum
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.utils.nanoid import generate_nanoid
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ def forwards_func(apps, schema_editor):
         data_source=data_source,
         # FIXME (nan): 应该使用 TenantUserIDGenerator 生成，但相关表是在该 migration 之后创建的，会导致异常
         #  思考：是否初始化数据不应该使用 migration(只做表变更？)，而是使用 Django Command 呢？那如何记录是否初始化过了呢？
-        id=admin_username,
+        id=generate_nanoid(),
     )
     TenantManager.objects.create(tenant=first_tenant, tenant_user=tenant_user)
 
