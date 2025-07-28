@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 
-from src.api.bkuser_core.common.safe_template import basic_str_format, BraceOnlyTemplate
+from src.api.bkuser_core.common.safe_template import BraceOnlyTemplate, basic_str_format
 
 
 class TestBraceOnlyTemplate:

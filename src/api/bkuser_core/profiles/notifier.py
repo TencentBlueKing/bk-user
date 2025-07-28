@@ -129,7 +129,9 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         if expired_at.days < 0:
             message = basic_str_format(email_config["content"], {"username": profile["username"]})
         else:
-            message = basic_str_format(email_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
+            message = basic_str_format(
+                email_config["content"], {"username": profile["username"], "expired_at": expired_at.days}
+            )
 
         notice_config.update(
             {
@@ -148,7 +150,9 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         if expired_at.days < 0:
             message = basic_str_format(sms_config["content"], {"username": profile["username"]})
         else:
-            message = basic_str_format(sms_config["content"], {"username": profile["username"], "expired_at": expired_at.days})
+            message = basic_str_format(
+                sms_config["content"], {"username": profile["username"], "expired_at": expired_at.days}
+            )
 
         notice_config.update(
             {"send_sms": {"sender": sms_config["sender"], "receivers": [profile["telephone"]], "message": message}}
