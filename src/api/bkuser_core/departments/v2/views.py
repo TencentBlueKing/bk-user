@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云 - 用户管理 (Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -36,6 +36,7 @@ from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
 from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.utils import remove_sensitive_fields_for_profile
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, RapidProfileSerializer
 
 logger = logging.getLogger(__name__)
@@ -131,12 +132,12 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer.is_valid(raise_exception=True)
         instance = self.get_object()
 
-        # 这个参数esb文档中有, 有用户调用
+        # 这个参数 esb 文档中有，有用户调用
         recursive = serializer.validated_data["recursive"]
-        # FIXME: 这个在 esb 文档中没有提到, 需要确认是否可以下线
+        # FIXME: 这个在 esb 文档中没有提到，需要确认是否可以下线
         wildcard_search = serializer.validated_data.get("wildcard_search")
 
-        # 这个参数esb文档中有, 有用户调用
+        # 这个参数 esb 文档中有，有用户调用
         profiles = instance.get_profiles(recursive=recursive, wildcard_search=wildcard_search)
         # 当用户请求数据时，判断其是否强制输出原始 username
         # if not force_use_raw_username(request): # always be true
@@ -164,7 +165,9 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
-        return Response(data=list(profiles.only(*values_fields).values(*values_fields)))
+        data = list(profiles.only(*values_fields).values(*values_fields))
+        data = [remove_sensitive_fields_for_profile(request, d) for d in data]
+        return Response(data=data)
 
     @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
