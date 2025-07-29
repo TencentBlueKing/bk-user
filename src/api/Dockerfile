@@ -1,11 +1,10 @@
-FROM python:3.6.14-slim-buster
+FROM python:3.6.14-slim-bullseye
 USER root
 
 RUN rm /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/debian buster main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/debian buster-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb-src https://mirrors.cloud.tencent.com/debian buster main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb-src https://mirrors.cloud.tencent.com/debian buster-updates main contrib non-free" >> /etc/apt/sources.list
+    echo "deb https://mirrors.tencent.com/debian bullseye main" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tencent.com/debian-security bullseye-security main" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tencent.com/debian bullseye-updates main" >> /etc/apt/sources.list
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
