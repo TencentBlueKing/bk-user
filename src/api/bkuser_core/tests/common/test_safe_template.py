@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云 - 用户管理 (Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 
-from src.api.bkuser_core.common.safe_template import BraceOnlyTemplate, basic_str_format
+from bkuser_core.common.safe_template import BraceOnlyTemplate, basic_str_format
 
 
 class TestBraceOnlyTemplate:
@@ -44,7 +44,7 @@ class TestBraceOnlyTemplate:
             template.substitute()
 
 
-class Test__basic_str_format:
+class TestBasicStrFormat:
     def test_basic(self):
         assert basic_str_format("Hello {name}!", {"name": "foo"}) == "Hello foo!"
 
