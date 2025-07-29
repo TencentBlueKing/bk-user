@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云 - 用户管理 (Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -123,8 +123,8 @@ def make_password_by_config(category_id, return_raw: bool = False) -> Tuple[str,
 def align_country_iso_code(country_code: str, iso_code: str) -> Tuple[str, str]:
     """对齐 country code 与 iso code
 
-    iso code 支持大小写输入, 输出大写
-    country code 支持数字&字符串输入， 输出字符串
+    iso code 支持大小写输入，输出大写
+    country code 支持数字&字符串输入，输出字符串
     """
 
     def _is_unknown_code(country_code: str, iso_code: str):
@@ -168,11 +168,11 @@ def align_country_iso_code(country_code: str, iso_code: str) -> Tuple[str, str]:
 
 # def get_username(force_use_raw: bool, category_id: int, username: str, domain: str):
 def get_username(category_id: int, username: str, domain: str):
-    """获取用户名(通过请求头返回 username 形式)"""
+    """获取用户名 (通过请求头返回 username 形式)"""
     # if force_use_raw:
     #     return username
 
-    # NOTE: 存在放大查询, 每一个username处理都会带来一次查询
+    # NOTE: 存在放大查询，每一个 username 处理都会带来一次查询
     # if ProfileCategory.objects.get_default().id == category_id:
     if get_default_category_id_from_local_cache() == category_id:
         return username
@@ -232,9 +232,8 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
     if _is_saas_request(request):
         return data
 
-    # FIXME: currently get from request_param,
-    # will change to get from request after the inner env esb change from token to jwt
-    bk_app_code = _get_bk_app_code_from_request_param(request)
+    # get from request after the inner env esb change from token to jwt
+    bk_app_code = _get_bk_app_code_from_request(request)
 
     # remove sensitive fields, except the app_code in whitelist
     for key in settings.PROFILE_SENSITIVE_FIELDS:
