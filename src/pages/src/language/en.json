@@ -534,7 +534,7 @@
   "快速录入": "Quick entry",
   "确定录入": "Confirm entry",
   "录入格式：": "Input format:",
-  "输入案例：zhangsan, 张三, 10000@qq.com, 15709998877": "Input case: zhangsan, Zhang San, 10000{'@'}qq.com, 15709998877",
+  "输入案例：zhangsan, 张三, 10000@qq.com": "Input case: zhangsan, Zhang San, 10000{'@'}qq.com",
   "录入用户": "Enter user",
   "预览确认": "Appointment confirmation",
   "预览": "Preview",
