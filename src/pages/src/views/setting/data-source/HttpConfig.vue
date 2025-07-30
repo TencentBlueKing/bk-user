@@ -6,8 +6,68 @@
       ref="formRef1"
       :model="serverConfigData"
       :rules="rulesServerConfig">
+      <Row :title="$t('认证配置')">
+        <bk-form-item :label="$t('认证方式')" required>
+          <bk-radio-group
+            v-model="serverConfigData.auth_config.method"
+            @change="handleChange">
+            <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
+            <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
+            <bk-radio-button style="width: 120px;" label="bk_apigw">{{ $t('蓝鲸网关') }}</bk-radio-button>
+          </bk-radio-group>
+        </bk-form-item>
+        <bk-form-item
+          v-if="serverConfigData.auth_config.method === 'bearer_token'"
+          class="w-[560px]"
+          label="Token"
+          property="auth_config.bearer_token"
+          required>
+          <bk-input
+            type="password"
+            autocomplete="new-password"
+            v-model="serverConfigData.auth_config.bearer_token"
+            @focus="handleFocus"
+            @input="handleChange" />
+        </bk-form-item>
+        <div v-else-if="serverConfigData.auth_config.method === 'basic_auth'" class="item-flex w-[560px]">
+          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.username"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
+            <passwordInput
+              v-model="serverConfigData.auth_config.password"
+              @focus="handleFocus"
+              @input="inputPassword" />
+          </bk-form-item>
+        </div>
+        <div v-else-if="serverConfigData.auth_config.method === 'bk_apigw'" class="item-flex w-[560px]">
+          <bk-form-item label="gateway_name" property="auth_config.gateway_name" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.gateway_name"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+          <bk-form-item label="gateway_stage" property="auth_config.gateway_stage" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.gateway_stage"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+        </div>
+      </Row>
       <Row :title="$t('服务配置')">
-        <bk-form-item class="w-[560px]" :label="$t('服务地址')" property="server_config.server_base_url" required>
+        <bk-form-item
+          v-if="isShowServerConfig"
+          class="w-[560px]"
+          :label="$t('服务地址')"
+          property="server_config.server_base_url"
+          required>
           <bk-input
             v-model="serverConfigData.server_config.server_base_url"
             :placeholder="validate.serverBaseUrl.message"
@@ -87,45 +147,6 @@
               v-model="serverConfigData.server_config.retries"
               @change="handleChange"
             />
-          </bk-form-item>
-        </div>
-      </Row>
-      <Row :title="$t('认证配置')">
-        <bk-form-item :label="$t('认证方式')" required>
-          <bk-radio-group
-            v-model="serverConfigData.auth_config.method"
-            @change="handleChange"
-          >
-            <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
-            <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
-          </bk-radio-group>
-        </bk-form-item>
-        <bk-form-item
-          v-if="serverConfigData.auth_config.method === 'bearer_token'"
-          class="w-[560px]"
-          label="Token"
-          property="auth_config.bearer_token"
-          required>
-          <bk-input
-            type="password"
-            autocomplete="new-password"
-            v-model="serverConfigData.auth_config.bearer_token"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <div v-else class="item-flex w-[560px]">
-          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
-            <bk-input
-              v-model="serverConfigData.auth_config.username"
-              @focus="handleFocus"
-              @input="handleChange"
-            />
-          </bk-form-item>
-          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <passwordInput
-              v-model="serverConfigData.auth_config.password"
-              @focus="handleFocus"
-              @input="inputPassword" />
           </bk-form-item>
         </div>
         <div class="btn">
@@ -217,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 
@@ -234,6 +255,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
+import { useUser } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 const props = defineProps({
@@ -252,6 +274,7 @@ const props = defineProps({
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
 const validate = useValidate();
+const userStore = useUser();
 
 const isLoading = ref(false);
 const formRef1 = ref();
@@ -276,6 +299,9 @@ const defaultServerConfig = () => ({
     bearer_token: '',
     username: '',
     password: '',
+    gateway_name: '',
+    gateway_stage: '',
+    tenant_id: '',
   },
 });
 
@@ -294,6 +320,17 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+});
+
+/** 是否展示服务配置-服务地址 form-item */
+const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigw');
+
+watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigw') => {
+  if (curMethod === 'bk_apigw') {
+    serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
+  } else {
+    serverConfigData.value.auth_config.tenant_id = '';
+  }
 });
 
 // 重置数据
