@@ -40,7 +40,7 @@ resource_docs:
 
 # 主动授权，网关主动给应用，添加访问网关所有资源的权限
 grant_permissions:
-  - bk_app_code: "bk-cmsi"
+  - bk_app_code: "bk_cmsi"
     grant_dimension: "resource"
     resource_names:
       - "batch_query_user_sensitive_info"
