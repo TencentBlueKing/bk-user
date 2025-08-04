@@ -66,6 +66,7 @@ from bkuser.biz.senders import (
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.biz.weixin import WeixinBindHandler, WeixinConfigService, WeixinUtil
+from bkuser.biz.weixin.constants import WECHAT_BIND_TYPE_WECOM, WECHAT_BIND_TYPE_WEIXIN, WECHAT_TYPE_TO_BIND_TYPE
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     EmailVerificationCodeManager,
@@ -636,14 +637,27 @@ class TenantUserWeixinUnbindApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView
         auditor = TenantUserWeixinBindAuditor(request.user.username, tenant_user.tenant_id)
         auditor.pre_record_data_before(tenant_user)
 
+        # 获取微信类型以确定绑定类型
+        weixin_config_service = WeixinConfigService(tenant_user.tenant_id)
+        weixin_settings = weixin_config_service.get_weixin_settings()
+        bind_type = self._get_bind_type(str(weixin_settings.get("wx_type")))
+
         # 执行解绑操作
         tenant_user.wx_userid = ""
         tenant_user.save(update_fields=["wx_userid", "updated_at"])
 
         # 【审计】记录解绑操作
-        auditor.record_unbind(tenant_user)
+        auditor.record_unbind(tenant_user, extras={"bind_type": bind_type})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _get_bind_type(self, wx_type: str) -> str:
+        """根据微信类型获取绑定类型
+
+        :param wx_type: 微信类型，可能的值："qy"、"qywx"、"mp"
+        :return: 绑定类型：WECHAT_BIND_TYPE_WECOM(企业微信) 或 WECHAT_BIND_TYPE_WEIXIN(微信公众号)
+        """
+        return WECHAT_TYPE_TO_BIND_TYPE.get(wx_type, WECHAT_BIND_TYPE_WEIXIN)
 
 
 class TenantUserWecomLoginCallbackApi(generics.RetrieveAPIView):
@@ -678,8 +692,8 @@ class TenantUserWecomLoginCallbackApi(generics.RetrieveAPIView):
         # 执行绑定操作
         weixin_handler.bind_user(wx_userid)
 
-        # 【审计】记录绑定操作
-        auditor.record_bind(tenant_user)
+        # 【审计】记录绑定操作 - 企业微信类型
+        auditor.record_bind(tenant_user, extras={"bind_type": WECHAT_BIND_TYPE_WECOM})
 
         return Response(TenantUserWecomLoginCallbackOutputSLZ({"result": True}).data)
 
@@ -732,7 +746,7 @@ class TenantUserMPLoginCallbackApi(ExcludePatchAPIViewMixin, generics.CreateAPIV
         )
         response = weixin_handler.handle_qrcode_event(data)
 
-        # 【审计】记录绑定操作
-        auditor.record_bind(tenant_user)
+        # 【审计】记录绑定操作 - 微信公众号类型
+        auditor.record_bind(tenant_user, extras={"bind_type": WECHAT_BIND_TYPE_WEIXIN})
 
         return HttpResponse(content=response, content_type="application/xml", status=status.HTTP_200_OK)
