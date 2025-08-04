@@ -13,7 +13,7 @@
             @change="handleChange">
             <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
             <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
-            <bk-radio-button style="width: 120px;" label="bk_apigw">{{ $t('蓝鲸网关') }}</bk-radio-button>
+            <bk-radio-button style="width: 120px;" label="bk_apigateway">{{ $t('蓝鲸网关') }}</bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
         <bk-form-item
@@ -44,7 +44,7 @@
               @input="inputPassword" />
           </bk-form-item>
         </div>
-        <div v-else-if="serverConfigData.auth_config.method === 'bk_apigw'" class="item-flex w-[560px]">
+        <div v-else-if="serverConfigData.auth_config.method === 'bk_apigateway'" class="item-flex w-[560px]">
           <bk-form-item label="gateway_name" property="auth_config.gateway_name" required>
             <bk-input
               v-model="serverConfigData.auth_config.gateway_name"
@@ -323,10 +323,10 @@ const fieldSettingData = ref({
 });
 
 /** 是否展示服务配置-服务地址 form-item */
-const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigw');
+const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigateway');
 
-watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigw') => {
-  if (curMethod === 'bk_apigw') {
+watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigateway') => {
+  if (curMethod === 'bk_apigateway') {
     serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
   } else {
     serverConfigData.value.auth_config.tenant_id = '';
