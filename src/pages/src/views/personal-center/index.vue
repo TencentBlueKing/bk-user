@@ -326,6 +326,12 @@
             </li>
           </div>
         </InfoCard>
+        <InfoCard :title="$t('个人社交账号')">
+          <div class="grid grid-cols-1 p-[24px] mx-[40px] text-[14px]">
+            <WeChatLogin />
+          </div>
+        </InfoCard>
+
         <InfoCard :title="$t('语言和时区')">
           <bk-form
             class="item-content"
@@ -399,6 +405,7 @@ import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
 import { emailEditable, OpenDialogSelect, OpenDialogType, phoneEditable  } from './openDialogType';
 import PhoneVerify from './PhoneVerify.vue';
+import WeChatLogin from './social-media-account/wechat/WeChatLogin.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import InfoCard from '@/components/InfoCard.vue';
