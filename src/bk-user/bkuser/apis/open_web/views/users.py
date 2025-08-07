@@ -40,6 +40,8 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserSearchOutputSLZ,
     VirtualUserListOutputSLZ,
 )
+from bkuser.apps.audit.constants import OpenWebApiTypeEnum
+from bkuser.apps.audit.throttlings import OpenWebApiThrottling
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
@@ -124,6 +126,9 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     搜索用户（包括协同用户与虚拟用户）
     """
 
+    throttle_scope = OpenWebApiTypeEnum.SEARCH_USER
+    throttle_classes = [OpenWebApiThrottling]
+
     pagination_class = None
 
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
@@ -186,6 +191,9 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     批量查询用户（包括协同用户与虚拟用户）
     """
 
+    throttle_scope = OpenWebApiTypeEnum.BATCH_LOOKUP_USER
+    throttle_classes = [OpenWebApiThrottling]
+
     pagination_class = None
 
     @staticmethod
@@ -244,6 +252,9 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     查询虚拟用户列表
     """
+
+    throttle_scope = OpenWebApiTypeEnum.LIST_VIRTUAL_USER
+    throttle_classes = [OpenWebApiThrottling]
 
     serializer_class = VirtualUserListOutputSLZ
 

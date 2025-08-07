@@ -82,6 +82,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "bkuser.apps.audit.middlewares.OpenWebApiAuditMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -601,7 +602,7 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
     }
     # 生成指定 Logger 对应的 Handlers
     logger_handlers_map: Dict[str, List[str]] = {}
-    for logger_name in ["root", "component", "celery"]:
+    for logger_name in ["root", "component", "celery", "audit"]:
         handlers = []
 
         if to_console:
@@ -646,11 +647,12 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
             "django": {"handlers": ["null"], "level": "INFO", "propagate": True},
             "django.server": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
             "django.request": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
-            # 除 root 外的其他指定 Logger
+            "audit": {"handlers": logger_handlers_map["audit"], "level": "INFO", "propagate": False},
+            # 除 root 和 audit 外的其他指定 Logger
             **{
                 logger_name: {"handlers": handlers, "level": log_level, "propagate": False}
                 for logger_name, handlers in logger_handlers_map.items()
-                if logger_name != "root"
+                if logger_name not in ["root", "audit"]
             },
         },
     }
@@ -835,3 +837,6 @@ BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT = env.int("BATCH_QUERY_USER_D
 
 # 限制人员选择器用户/部门搜索 API 返回的最大条数，避免性能问题
 SELECTOR_SEARCH_API_LIMIT = env.int("SELECTOR_SEARCH_API_LIMIT", 100)
+
+# 限制 OpenWeb API 调用频率，避免恶意请求问题
+OPENWEB_API_THROTTLE_RATES = env.str("OPENWEB_API_THROTTLE_RATES", "100/minute")
