@@ -41,7 +41,7 @@ from bkuser.apis.open_web.serializers.users import (
     VirtualUserListOutputSLZ,
 )
 from bkuser.apps.audit.constants import OpenWebApiTypeEnum
-from bkuser.apps.audit.throttlings import OpenWebApiThrottling
+from bkuser.apps.audit.throttle import OpenWebApiThrottle
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
@@ -127,7 +127,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
 
     throttle_scope = OpenWebApiTypeEnum.SEARCH_USER
-    throttle_classes = [OpenWebApiThrottling]
+    throttle_classes = [OpenWebApiThrottle]
 
     pagination_class = None
 
@@ -192,7 +192,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
 
     throttle_scope = OpenWebApiTypeEnum.BATCH_LOOKUP_USER
-    throttle_classes = [OpenWebApiThrottling]
+    throttle_classes = [OpenWebApiThrottle]
 
     pagination_class = None
 
@@ -254,7 +254,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
 
     throttle_scope = OpenWebApiTypeEnum.LIST_VIRTUAL_USER
-    throttle_classes = [OpenWebApiThrottling]
+    throttle_classes = [OpenWebApiThrottle]
 
     serializer_class = VirtualUserListOutputSLZ
 

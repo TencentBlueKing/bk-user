@@ -20,7 +20,7 @@ from django.core.cache import caches
 from rest_framework.throttling import SimpleRateThrottle
 
 
-class OpenWebApiThrottling(SimpleRateThrottle):
+class OpenWebApiThrottle(SimpleRateThrottle):
     cache = caches["redis"]
 
     def get_cache_key(self, request, view):

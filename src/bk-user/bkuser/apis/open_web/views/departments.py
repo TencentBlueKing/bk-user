@@ -35,7 +35,7 @@ from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentUserListOutputSLZ,
 )
 from bkuser.apps.audit.constants import OpenWebApiTypeEnum
-from bkuser.apps.audit.throttlings import OpenWebApiThrottling
+from bkuser.apps.audit.throttle import OpenWebApiThrottle
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -53,7 +53,7 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
 
     throttle_scope = OpenWebApiTypeEnum.SEARCH_DEPARTMENT
-    throttle_classes = [OpenWebApiThrottling]
+    throttle_classes = [OpenWebApiThrottle]
 
     pagination_class = None
 
