@@ -38,6 +38,9 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
         if not self.is_open_web_api(request):
             return
 
+        # 解析 URL 路径
+        request.resolved_path = resolve(request.path)
+
         # TODO：校验是否请求来自浏览器，若不为浏览器则拒接访问
 
     def process_response(self, request, response):
@@ -62,7 +65,7 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
             "x_real_ip": request.META.get("HTTP_X_REAL_IP", ""),
             "remote_addr": request.META.get("REMOTE_ADDR", ""),
             "user_agent": request.META.get("HTTP_USER_AGENT", ""),
-            "path_params": list(resolve(request.path).kwargs.values()),
+            "path_params": list(request.resolved_path.kwargs.values()),
             "query_params": request.GET.dict(),
             # 响应信息
             "status_code": response.status_code,
@@ -91,7 +94,7 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
 
     def _get_api_type(self, request):
         # 获取 URL name 映射的 API 类型
-        url_name = resolve(request.path).url_name
+        url_name = request.resolved_path.url_name
         return OPENWEB_API_TYPE_MAPPING.get(url_name)
 
     def _is_paginated_api(self, response):
@@ -131,7 +134,7 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
             items = response.data
         # 否则一定为 retrieve 接口，从路径参数中获取
         else:
-            return list(resolve(request.path).kwargs.values())
+            return list(request.resolved_path.kwargs.values())
 
         # 提取用户 bk_username 或 部门 ID
         if not items:
