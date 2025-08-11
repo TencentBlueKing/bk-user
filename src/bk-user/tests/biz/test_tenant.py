@@ -22,10 +22,11 @@ from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import (
     Tenant,
     TenantManager,
+    TenantUser,
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.tenant import BuiltinManagerInfo, TenantCreator, TenantInfo
+from bkuser.biz.tenant import BuiltinManagerInfo, TenantCreator, TenantInfo, VirtualUserInfo
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 pytestmark = pytest.mark.django_db
@@ -128,10 +129,15 @@ class TestTenantCreator:
             plugin_id=DataSourcePluginEnum.LOCAL,
         )
 
-        tenant_user = TenantCreator.create_builtin_virtual_user(
-            tenant=tenant, data_source=data_source, username="bk_admin"
+        TenantCreator.create_builtin_virtual_user(
+            tenant=tenant, data_source=data_source, virtual_users=[VirtualUserInfo(username="bk_admin")]
         )
 
+        tenant_user = TenantUser.objects.filter(
+            tenant=tenant, data_source=data_source, data_source_user__username="bk_admin"
+        ).first()
+
+        assert tenant_user is not None
         assert tenant_user.tenant == tenant
         assert tenant_user.data_source == data_source
 

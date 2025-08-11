@@ -28,7 +28,7 @@ from django.utils import timezone
 from pydantic import BaseModel, Field
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import (
@@ -39,8 +39,6 @@ from bkuser.apps.tenant.constants import (
 )
 from bkuser.apps.tenant.display_name_cache import get_display_name_config
 from bkuser.apps.tenant.models import (
-    DataSource,
-    DataSourceUser,
     Tenant,
     TenantManager,
     TenantUser,
@@ -96,6 +94,9 @@ class VirtualUserInfo(BaseModel):
 
     username: str = "bk_admin"
 
+    # [非多租户] 兼容 2.x 版本 对于 admin 的内置用户特殊处理，支持指定 tenant_user_id
+    tenant_user_id: str = ""
+
 
 class TenantUserPhoneInfo(BaseModel):
     is_inherited_phone: bool
@@ -112,22 +113,28 @@ class TenantCreator:
     @staticmethod
     def create_tenant_base(info: TenantInfo) -> Tenant:
         """创建租户基础信息"""
-        return Tenant.objects.create(
+        tenant, _ = Tenant.objects.get_or_create(
             id=info.tenant_id,
-            name=info.tenant_name,
-            logo=info.logo,
-            status=info.status,
-            is_default=info.is_default,
+            defaults={
+                "name": info.tenant_name,
+                "logo": info.logo,
+                "status": info.status,
+                "is_default": info.is_default,
+            },
         )
+        return tenant
 
     @staticmethod
     def create_tenant_default_settings(tenant: Tenant) -> None:
         """创建租户默认配置"""
         # 账号有效期
-        TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
+        TenantUserValidityPeriodConfig.objects.get_or_create(
+            tenant=tenant,
+            defaults=DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
+        )
         # DisplayName 表达式
-        TenantUserDisplayNameExpressionConfig.objects.create(
-            tenant=tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
+        TenantUserDisplayNameExpressionConfig.objects.get_or_create(
+            tenant=tenant, defaults=DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
         )
 
     @staticmethod
@@ -139,7 +146,7 @@ class TenantCreator:
     ) -> DataSource:
         """创建内置管理数据源
 
-        :param tenant_id: 租户ID
+        :param tenant_id: 租户 ID
         :param enable_password: 是否启用密码功能
         :param fixed_password: 固定密码
         :param notification_methods: 通知方式列表
@@ -166,22 +173,28 @@ class TenantCreator:
                     NotificationMethod(n) for n in notification_methods
                 ]
 
-        return DataSource.objects.create(
+        ds, _ = DataSource.objects.get_or_create(
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
             owner_tenant_id=tenant_id,
-            plugin_id=plugin_id,
-            plugin_config=plugin_config,
+            defaults={
+                "plugin_id": plugin_id,
+                "plugin_config": plugin_config,
+            },
         )
+        return ds
 
     @staticmethod
     def create_virtual_data_source(tenant_id: str) -> DataSource:
         """创建虚拟数据源"""
-        return DataSource.objects.create(
+        ds, _ = DataSource.objects.get_or_create(
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
-            plugin_config=LocalDataSourcePluginConfig(enable_password=False),
-            plugin_id=DataSourcePluginEnum.LOCAL,
+            defaults={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
+            },
         )
+        return ds
 
     @staticmethod
     def create_builtin_manager(
@@ -191,18 +204,20 @@ class TenantCreator:
     ) -> TenantUser:
         """创建内置管理员"""
         # 创建数据源用户
-        data_source_user = DataSourceUser.objects.create(
+        data_source_user, created = DataSourceUser.objects.get_or_create(
             data_source=data_source,
-            code=built_manager.username,
             username=built_manager.username,
-            full_name=built_manager.username,
-            email=built_manager.email,
-            phone=built_manager.phone,
-            phone_country_code=built_manager.phone_country_code,
+            defaults={
+                "code": built_manager.username,
+                "full_name": built_manager.username,
+                "email": built_manager.email,
+                "phone": built_manager.phone,
+                "phone_country_code": built_manager.phone_country_code,
+            },
         )
 
         # 创建本地身份信息
-        if built_manager.password:
+        if built_manager.password and created:
             LocalDataSourceIdentityInfo.objects.create(
                 user=data_source_user,
                 password=make_password(built_manager.password),
@@ -213,97 +228,107 @@ class TenantCreator:
             )
 
         # 创建租户用户
-        tenant_user = TenantUser.objects.create(
+        tenant_user, _ = TenantUser.objects.get_or_create(
             tenant=tenant,
             data_source_user=data_source_user,
             data_source=data_source,
-            id=TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user),
+            defaults={"id": TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user)},
         )
 
         # 创建管理员关联
-        TenantManager.objects.create(tenant=tenant, tenant_user=tenant_user)
+        TenantManager.objects.get_or_create(tenant=tenant, tenant_user=tenant_user)
 
         return tenant_user
 
     @staticmethod
-    def create_builtin_virtual_user(tenant: Tenant, data_source: DataSource, username: str) -> TenantUser:
+    def create_builtin_virtual_user(tenant: Tenant, data_source: DataSource, virtual_users: List[VirtualUserInfo]):
         """创建内置虚拟用户"""
-        data_source_user = DataSourceUser.objects.create(
-            data_source=data_source,
-            username=username,
-            full_name=username,
-            code=username,
-        )
+        # 内置虚拟用户并不会很多，这里就不考虑批量创建
+        for vuser in virtual_users:
+            data_source_user, _ = DataSourceUser.objects.get_or_create(
+                data_source=data_source,
+                username=vuser.username,
+                defaults={"full_name": vuser.username, "code": vuser.username},
+            )
 
-        return TenantUser.objects.create(
-            id=TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user),
-            tenant_id=tenant.id,
-            data_source_user=data_source_user,
-            data_source=data_source,
-        )
+            # 若未指定 tenant_user_id，则自动生成
+            tenant_user_id = (
+                TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user)
+                if not vuser.tenant_user_id
+                else vuser.tenant_user_id
+            )
+
+            TenantUser.objects.get_or_create(
+                tenant_id=tenant.id,
+                data_source_user=data_source_user,
+                defaults={"data_source": data_source, "id": tenant_user_id},
+            )
 
     @staticmethod
     def create_builtin_idp(tenant_id: str, data_source_id: int, name: str = "Administrator") -> Idp:
         """创建内置管理员账密登录认证源"""
-        return Idp.objects.create(
-            name=name,
+        idp, _ = Idp.objects.get_or_create(
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
             owner_tenant_id=tenant_id,
-            plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source_id]),
-            data_source_match_rules=[gen_data_source_match_rule_of_local(data_source_id).model_dump()],
-            data_source_id=data_source_id,
+            defaults={
+                "name": name,
+                "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source_id]),
+                "data_source_match_rules": [gen_data_source_match_rule_of_local(data_source_id).model_dump()],
+                "data_source_id": data_source_id,
+            },
         )
+        return idp
 
     @staticmethod
     def create(
         tenant_info: TenantInfo,
         builtin_manager: BuiltinManagerInfo,
         builtin_ds_config: BuiltinManagementDataSourceConfig,
-        virtual_user: VirtualUserInfo | None = None,
+        virtual_users: List[VirtualUserInfo] | None = None,
     ) -> Tenant:
         """创建租户的统一入口方法
 
         :param tenant_info: 租户相关信息
         :param builtin_manager: 内置管理员信息
         :param builtin_ds_config: 内置数据源配置
-        :param virtual_user: 虚拟用户相关信息
+        :param virtual_users: 虚拟用户相关信息列表
         :return: 创建的租户对象
         """
 
         # 注意：校验应由上层完成；此处仅负责创建流程
 
         with transaction.atomic():
-            # 阶段1：创建租户基础信息
+            # 阶段 1：创建租户基础信息
             tenant = TenantCreator.create_tenant_base(tenant_info)
 
-            # 阶段2：初始化租户默认配置
+            # 阶段 2：初始化租户默认配置
             TenantCreator.create_tenant_default_settings(tenant)
 
-            # 阶段3：创建内置管理数据源
+            # 阶段 3：创建内置管理数据源
             data_source = TenantCreator.create_builtin_management_data_source(
                 tenant.id,
                 enable_password=True,
                 fixed_password=builtin_ds_config.fixed_password,
-                notification_methods=builtin_ds_config.notification_methods
-                if builtin_ds_config.send_password_notification
-                else None,
+                notification_methods=(
+                    builtin_ds_config.notification_methods if builtin_ds_config.send_password_notification else None
+                ),
             )
 
-            # 阶段4：创建虚拟数据源
-            virtual_data_source = TenantCreator.create_virtual_data_source(tenant.id)
-
-            # 阶段5：创建内置管理员
+            # 阶段 4：创建内置管理员
             TenantCreator.create_builtin_manager(
                 tenant=tenant,
                 data_source=data_source,
                 built_manager=builtin_manager,
             )
 
-            # 阶段6：创建内置虚拟用户
-            if virtual_user:
-                TenantCreator.create_builtin_virtual_user(tenant, virtual_data_source, virtual_user.username)
+            # 阶段 5：创建虚拟数据源
+            virtual_data_source = TenantCreator.create_virtual_data_source(tenant.id)
 
-            # 阶段7：创建内置认证源
+            # 阶段 6：创建内置虚拟用户
+            if virtual_users:
+                TenantCreator.create_builtin_virtual_user(tenant, virtual_data_source, virtual_users)
+
+            # 阶段 7：创建内置认证源
             TenantCreator.create_builtin_idp(tenant.id, data_source.id)
 
         return tenant

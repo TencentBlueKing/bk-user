@@ -48,6 +48,12 @@ class Command(BaseCommand):
         admin_username = settings.INITIAL_ADMIN_USERNAME
         admin_password = settings.INITIAL_ADMIN_PASSWORD
 
+        # 内置虚拟用户，非多租户需要兼容 2.x 版本内置的 admin 用户
+        virtual_users = [VirtualUserInfo(username="bk_admin")]
+        if not settings.ENABLE_MULTI_TENANT_MODE:
+            # Note: 仅在非多租户模式下，才需要兼容 2.x 版本的 admin 用户且指定 tenant_user_id
+            virtual_users.append(VirtualUserInfo(username="admin", tenant_user_id="admin"))
+
         self.stdout.write(
             f"start initialize first tenant[{tenant_id}] & data source with admin user [{admin_username}]..."
         )
@@ -57,7 +63,7 @@ class Command(BaseCommand):
             tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_name, is_default=True),
             builtin_manager=BuiltinManagerInfo(username=admin_username, password=admin_password),
             builtin_ds_config=BuiltinManagementDataSourceConfig(send_password_notification=False),
-            virtual_user=VirtualUserInfo(username="bk_admin"),
+            virtual_users=virtual_users,
         )
 
         self.stdout.write(f"Initialized first tenant [{tenant_id}] with admin user [{admin_username}] successfully")
