@@ -109,7 +109,7 @@ class OpenWebApiTypeEnum(StrStructuredEnum):
     """OpenWeb API 类型"""
 
     RETRIEVE_USER_DISPLAY_INFO = EnumField("retrieve_user_display_info", label=_("查询用户展示信息"))
-    BATCH_QUERY_USER_DISPLAY_INFO = EnumField("batch_query_user_display_info", label=_("批量匹配用户展示信息"))
+    BATCH_QUERY_USER_DISPLAY_INFO = EnumField("batch_query_user_display_info", label=_("批量查询用户展示信息"))
     SEARCH_USER = EnumField("search_user", label=_("搜索用户信息"))
     BATCH_LOOKUP_USER = EnumField("batch_lookup_user", label=_("批量匹配用户"))
     SEARCH_DEPARTMENT = EnumField("search_department", label=_("搜索部门信息"))
