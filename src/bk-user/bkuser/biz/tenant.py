@@ -270,11 +270,11 @@ class TenantCreator:
         idp, _ = Idp.objects.get_or_create(
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
             owner_tenant_id=tenant_id,
+            data_source_id=data_source_id,
             defaults={
                 "name": name,
                 "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source_id]),
                 "data_source_match_rules": [gen_data_source_match_rule_of_local(data_source_id).model_dump()],
-                "data_source_id": data_source_id,
             },
         )
         return idp
