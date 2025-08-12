@@ -261,6 +261,7 @@ BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
+BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
 # Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
@@ -359,7 +360,10 @@ CACHES: Dict[str, Any] = {
             # Redis 连接池配置
             "CONNECTION_POOL_KWARGS": {
                 # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
-                "max_connections": REDIS_MAX_CONNECTIONS
+                "max_connections": REDIS_MAX_CONNECTIONS,
+                # redis-py will send SETINFO command, not valid for older version redis
+                "lib_name": None,
+                "lib_version": None,
             },
         },
     },
@@ -479,7 +483,7 @@ RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
 RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
 RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
 RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
-RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_CERT_KEY_FILE", default="")
+RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_TLS_CERT_KEY_FILE", default="")
 if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
     CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
     if RABBITMQ_TLS_ENABLED:
@@ -528,7 +532,7 @@ if not CELERY_BROKER_URL:
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
-            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CERT_FILE
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
             # mTLS
             if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
                 CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
@@ -754,6 +758,10 @@ HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
 BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
+# 内置租户管理员 username
+INITIAL_ADMIN_USERNAME = env.str("INITIAL_ADMIN_USERNAME", "admin")
+# 内置租户管理员密码
+INITIAL_ADMIN_PASSWORD = env.str("INITIAL_ADMIN_PASSWORD", "")
 
 # logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)

@@ -47,7 +47,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         """获取部门信息"""
         cfg = self.plugin_config.server_config
         depts = fetch_all_data(
-            cfg.server_base_url + cfg.department_api_path,
+            self.plugin_config.server_base_url + cfg.department_api_path,
             gen_headers(self.plugin_config.auth_config),
             gen_query_params(cfg.department_api_query_params),
             cfg.page_size,
@@ -60,7 +60,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         """获取用户信息"""
         cfg = self.plugin_config.server_config
         users = fetch_all_data(
-            cfg.server_base_url + cfg.user_api_path,
+            self.plugin_config.server_base_url + cfg.user_api_path,
             gen_headers(self.plugin_config.auth_config),
             gen_query_params(cfg.user_api_query_params),
             cfg.page_size,
@@ -76,14 +76,14 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         user_data, dept_data = None, None
         try:
             user_data = fetch_first_item(
-                cfg.server_base_url + cfg.user_api_path,
+                self.plugin_config.server_base_url + cfg.user_api_path,
                 gen_headers(self.plugin_config.auth_config),
                 gen_query_params(cfg.user_api_query_params),
                 cfg.request_timeout,
             )
 
             dept_data = fetch_first_item(
-                cfg.server_base_url + cfg.department_api_path,
+                self.plugin_config.server_base_url + cfg.department_api_path,
                 gen_headers(self.plugin_config.auth_config),
                 gen_query_params(cfg.department_api_query_params),
                 cfg.request_timeout,

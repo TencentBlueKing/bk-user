@@ -22,10 +22,12 @@
     "data": [
         {
             "bk_username": "q9k6bhqks0ckl5ew",
+            "login_name": "zhangsan",
             "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "er0ugcammqwf1q5w",
+            "login_name": "lisi",
             "display_name": "lisi(李四)"
         }
     ]
@@ -34,7 +36,8 @@
 
 ### 响应参数说明
 
-| 参数名称         | 参数类型   | 描述       |
-|--------------|--------|----------|
-| bk_username  | string | 蓝鲸用户唯一标识 |
-| display_name | string | 用户展示名称   |
+| 参数名称         | 参数类型   | 描述        |
+|--------------|--------|-----------|
+| bk_username  | string | 蓝鲸用户唯一标识  |
+| login_name   | string | 企业内用户唯一标识 |
+| display_name | string | 用户展示名称    |

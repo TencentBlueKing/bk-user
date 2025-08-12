@@ -77,6 +77,7 @@ class TokenUserInfoRetrieveApiBase(View):
                 "bk_username": user.id,
                 "tenant_id": user.tenant_id,
                 # 基本信息
+                "login_name": user.username,
                 "display_name": user.display_name,
                 "language": user.language,
                 "time_zone": user.time_zone,

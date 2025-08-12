@@ -384,6 +384,7 @@ const changeTenant = () => {
   selectedTenant.value = null;
   inputTenant.value = null;
   popoverVisible.value = false;
+  searchTenantList.value = [];
 };
 
 /**
@@ -435,9 +436,6 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
   if (event.key === 'Enter') {
     if (searchTenantList.value.length === 1) {
       handleSelectTenant(searchTenantList.value[0]);
-      confirmTenant();
-    } else if (searchTenantList.value.length === 0 && tenantList.value.length === 1) {
-      handleSelectTenant(tenantList.value[0]);
       confirmTenant();
     }
   }

@@ -18,10 +18,14 @@ from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.tenant.models import Tenant, TenantUserDisplayNameExpressionConfig
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -42,7 +46,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None
 
-    DataSource.objects.get_or_create(
+    data_source, _ = DataSource.objects.get_or_create(
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
@@ -58,6 +62,17 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
             "extra": [],
         },
         version=1,
+    )
+
+    Idp.objects.get_or_create(
+        name="Administrator",
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        owner_tenant_id=tenant_id,
+        defaults={
+            "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source.id]),
+            "data_source_match_rules": [gen_data_source_match_rule_of_local(data_source.id).model_dump()],
+            "data_source_id": data_source.id,
+        },
     )
 
     return tenant

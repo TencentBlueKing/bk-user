@@ -13,13 +13,13 @@ export enum openDialogResult {
   fail = 'danger'
 };
 
-export enum emailEidtable {
+export enum emailEditable {
   YES = 'editable_directly',
   Verify = 'need_verify',
   No = 'not_editable'
 };
 
-export enum phoneEidtable {
+export enum phoneEditable {
   YES = 'editable_directly',
   Verify = 'need_verify',
   No = 'not_editable',

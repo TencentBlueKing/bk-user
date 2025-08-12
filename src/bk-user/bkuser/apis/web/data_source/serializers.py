@@ -35,12 +35,21 @@ from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.general.constants import AuthMethod
+from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import PasswordRuleConfig
 from bkuser.plugins.models import BasePluginConfig
 from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_general_plugin_tenant_id(plugin_config: GeneralDataSourcePluginConfig, tenant_id: str) -> None:
+    """校验通用数据源插件的租户 ID"""
+    auth_config = plugin_config.auth_config
+    if auth_config.method == AuthMethod.BK_APIGATEWAY and auth_config.tenant_id != tenant_id:
+        raise ValidationError(_("蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"))
 
 
 class DataSourceListInputSLZ(serializers.Serializer):
@@ -145,6 +154,10 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
 
+        if plugin_id == DataSourcePluginEnum.GENERAL:
+            assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
+            _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
+
         return attrs
 
 
@@ -189,9 +202,15 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
                 dictx.set_items(plugin_config, info.key, info.value)
 
         try:
-            return PluginConfigCls(**plugin_config)
+            plugin_config_instance = PluginConfigCls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        if self.context["plugin_id"] == DataSourcePluginEnum.GENERAL:
+            assert isinstance(plugin_config_instance, GeneralDataSourcePluginConfig)
+            _validate_general_plugin_tenant_id(plugin_config_instance, self.context["tenant_id"])
+
+        return plugin_config_instance
 
     def validate_field_mapping(self, field_mapping: List[Dict[str, str]]) -> List[Dict[str, str]]:
         # 遇到空的字段映射，直接返回即可，validate() 中会根据插件类型校验是否必须提供字段映射
@@ -265,6 +284,10 @@ class DataSourceTestConnectionInputSLZ(serializers.Serializer):
             attrs["plugin_config"] = PluginConfigCls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        if plugin_id == DataSourcePluginEnum.GENERAL:
+            assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
+            _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
 
         return attrs
 

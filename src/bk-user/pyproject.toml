@@ -49,7 +49,7 @@ dependencies = [
     "django-modeltranslation==0.18.11",
     "ldap3==2.9.1",
     "nanoid==2.0.0",
-    "apigw-manager[cryptography]==4.0.3",
+    "apigw-manager[cryptography]==4.1.0",
     "defusedxml==0.7.1",
     # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
     "setuptools==80.8.0",
@@ -178,6 +178,9 @@ layers = [
     "bkuser.component",
     "bkuser.common",
     "bkuser.utils",
+]
+ignore_imports = [
+    "bkuser.apps.tenant.management.commands.* -> bkuser.biz.tenant",
 ]
 
 # apps 分层

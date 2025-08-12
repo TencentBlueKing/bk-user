@@ -534,7 +534,7 @@
   "快速录入": "Quick entry",
   "确定录入": "Confirm entry",
   "录入格式：": "Input format:",
-  "输入案例：zhangsan, 张三, 10000@qq.com, 15709998877": "Input case: zhangsan, Zhang San, 10000{'@'}qq.com, 15709998877",
+  "输入案例：zhangsan, 张三, 10000@qq.com": "Input case: zhangsan, Zhang San, 10000{'@'}qq.com",
   "录入用户": "Enter user",
   "预览确认": "Appointment confirmation",
   "预览": "Preview",
@@ -696,5 +696,6 @@
   "删除虚拟用户": "Delete Virtual User",
   "修改用户展示名表达式配置": "Modify user display name expression configuration",
   "关注我们": "Follow us",
-  "保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效": "Saved successfully. The user display name configuration will take effect in 10 seconds, and other settings will take effect immediately."
+  "保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效": "Saved successfully. The user display name configuration will take effect in 10 seconds, and other settings will take effect immediately.",
+  "蓝鲸网关": "Bk Apigateway"
 }

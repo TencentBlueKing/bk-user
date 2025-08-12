@@ -14,8 +14,8 @@ export const useValidate = () => {
   };
 
   const loginName = {
-    validator: (value: string) => /^[\u4e00-\u9fa5a-zA-Z0-9\s\S]{1,8}$/.test(value),
-    message: t('由1-8位字符组成'),
+    validator: (value: string) => /^[\u4e00-\u9fa5a-zA-Z0-9\s\S]{1,16}$/.test(value),
+    message: t('由1-16位字符组成'),
     trigger: 'blur',
   };
   const id = {

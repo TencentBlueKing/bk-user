@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import List, Tuple
+from typing import Tuple
 
 from django.db import transaction
 from django.db.models import Q
@@ -26,38 +26,33 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourcePlugin, DataSourceUser
-from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import (
-    DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
-    DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
     TenantStatus,
 )
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     Tenant,
     TenantDepartment,
-    TenantManager,
     TenantUser,
-    TenantUserDisplayNameExpressionConfig,
-    TenantUserValidityPeriodConfig,
 )
-from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.auditor import TenantAuditor
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.tenant import (
+    BuiltinManagementDataSourceConfig,
+    BuiltinManagerInfo,
+    TenantCreator,
+    TenantInfo,
+)
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
-from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
-from bkuser.plugins.base import get_default_plugin_cfg
-from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import NEVER_EXPIRE_TIME, NotificationMethod, PasswordGenerateMethod
+from bkuser.plugins.local.constants import NotificationMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .serializers import (
@@ -99,25 +94,31 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        with transaction.atomic():
-            # 创建租户
-            tenant = Tenant.objects.create(id=data["id"], name=data["name"], logo=data["logo"], status=data["status"])
-            # 租户的一些默认配置初始化
-            self._init_default_settings(tenant)
+        # 创建租户
+        tenant = TenantCreator.create(
+            tenant_info=TenantInfo(
+                tenant_id=data["id"],
+                tenant_name=data["name"],
+                logo=data["logo"],
+                status=data["status"],
+                is_default=False,
+            ),
+            builtin_manager=BuiltinManagerInfo(
+                username="admin",
+                password="",
+                email=data["email"],
+                phone=data["phone"],
+                phone_country_code=data["phone_country_code"],
+            ),
+            builtin_ds_config=BuiltinManagementDataSourceConfig(
+                send_password_notification=True,
+                fixed_password=data["fixed_password"],
+                notification_methods=data["notification_methods"],
+            ),
+        )
 
-            # 创建内置管理的本地数据源
-            data_source = self._create_builtin_management_data_source(
-                tenant.id, data["fixed_password"], data["notification_methods"]
-            )
-
-            # 添加内置管理账号
-            self._add_builtin_management_user(
-                tenant, data_source, data["email"], data["phone"], data["phone_country_code"]
-            )
-
-            # 添加内置管理员账密登录认证源
-            self._add_builtin_management_local_idp(tenant.id, data_source.id)
-
+        # 获取租户的内置管理数据源
+        data_source = DataSource.objects.get(owner_tenant_id=tenant.id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
         # 对租户内置管理员进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
 
@@ -127,92 +128,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         auditor.record_create(tenant)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant.id}).data, status=status.HTTP_201_CREATED)
-
-    @staticmethod
-    def _init_default_settings(tenant: Tenant):
-        """初始化租户的默认配置"""
-        # 账号有效期
-        TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
-        # DisplayName 表达式
-        TenantUserDisplayNameExpressionConfig.objects.create(
-            tenant=tenant, **DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG
-        )
-
-    @staticmethod
-    def _create_builtin_management_data_source(
-        tenant_id: str, fixed_password: str, notification_methods: List[str]
-    ) -> DataSource:
-        """创建租户内建管理的本地数据源"""
-        # 获取本地数据源的默认配置
-        plugin_id = DataSourcePluginEnum.LOCAL
-        plugin_config = get_default_plugin_cfg(plugin_id)
-        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
-        assert plugin_config.password_initial is not None
-        assert plugin_config.login_limit is not None
-        assert plugin_config.password_expire is not None
-
-        # 启用密码功能
-        plugin_config.enable_password = True
-        # 密码有效期为永久，不会有过期续期的功能
-        plugin_config.password_expire.valid_time = NEVER_EXPIRE_TIME
-
-        # 固定密码
-        plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
-        plugin_config.password_initial.fixed_password = fixed_password
-        # 设置通知方式
-        plugin_config.password_initial.notification.enabled_methods = [
-            NotificationMethod(n) for n in notification_methods
-        ]
-
-        return DataSource.objects.create(
-            type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-            owner_tenant_id=tenant_id,
-            plugin=DataSourcePlugin.objects.get(id=plugin_id),
-            plugin_config=plugin_config,
-        )
-
-    @staticmethod
-    def _add_builtin_management_user(
-        tenant: Tenant, data_source: DataSource, email: str, phone: str, phone_country_code: str
-    ):
-        """添加内置管理账号"""
-        assert data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT
-
-        # 所有租户的内置管理员 Username 默认为 admin
-        username = "admin"
-        # 创建数据源用户
-        data_source_user = DataSourceUser.objects.create(
-            data_source=data_source,
-            code=username,
-            username=username,
-            full_name=username,
-            email=email,
-            phone=phone,
-            phone_country_code=phone_country_code,
-        )
-
-        # 创建对应的租户用户
-        tenant_user = TenantUser.objects.create(
-            id=TenantUserIDGenerator(tenant.id, data_source).gen(data_source_user),
-            data_source_user=data_source_user,
-            tenant=tenant,
-            data_source=data_source,
-        )
-
-        # 添加为租户管理员
-        TenantManager.objects.create(tenant=tenant, tenant_user=tenant_user)
-
-    @staticmethod
-    def _add_builtin_management_local_idp(tenant_id: str, data_source_id: int):
-        """添加内置管理员的账密登录认证源"""
-        Idp.objects.create(
-            name=_("管理员账密登录"),
-            plugin_id=BuiltinIdpPluginEnum.LOCAL,
-            owner_tenant_id=tenant_id,
-            plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source_id]),
-            data_source_match_rules=[gen_data_source_match_rule_of_local(data_source_id).model_dump()],
-            data_source_id=data_source_id,
-        )
 
 
 class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView):
