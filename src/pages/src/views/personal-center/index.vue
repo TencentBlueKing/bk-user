@@ -48,7 +48,9 @@
                   {{ currentTenantInfo.tenant?.id }}
                 </div>
               </div>
-              <!-- <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p> -->
+              <p class="text-[14px] text-[#313238] leading-[24px]">
+                {{ $t('用户ID') }}：{{ currentUserInfo.id || '--' }}
+              </p>
             </div>
           </div>
           <div class="header-right">
@@ -236,6 +238,10 @@
               </li>
             </div>
             <div class="item-div">
+              <li>
+                <span class="key">{{ $t('用户ID') }}：</span>
+                <span class="value">{{ currentUserInfo.id || '--' }}</span>
+              </li>
               <li>
                 <span class="key">{{ $t('所属租户') }}：</span>
                 <span class="value">
@@ -1020,10 +1026,6 @@ const hidePasswordModal = () => {
               background: #3A84FF;
             }
           }
-        }
-
-        .login-time {
-          font-size: 14px;
         }
       }
     }
