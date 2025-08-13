@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
@@ -29,7 +29,21 @@ class AuditRecordListInputSLZ(serializers.Serializer):
     )
     object_name = serializers.CharField(help_text="操作对象名称", required=False, allow_blank=True)
     creator = serializers.CharField(help_text="操作人", required=False, allow_blank=True)
-    created_at = serializers.DateTimeField(help_text="操作时间", required=False)
+    start_at = serializers.DateTimeField(help_text="开始时间", required=False)
+    end_at = serializers.DateTimeField(help_text="结束时间", required=False)
+
+    def validate(self, attrs):
+        start_at = attrs.get("start_at")
+        end_at = attrs.get("end_at")
+
+        # 开始时间和结束时间不能只存在一个
+        if bool(start_at) != bool(end_at):
+            raise serializers.ValidationError(_("开始时间和结束时间不能只存在一个"))
+
+        if start_at and end_at and start_at > end_at:
+            raise serializers.ValidationError(_("开始时间不能大于结束时间"))
+
+        return attrs
 
 
 class AuditRecordListOutputSLZ(serializers.Serializer):
