@@ -36,9 +36,8 @@ class AuditRecordListInputSLZ(serializers.Serializer):
         start_at = attrs.get("start_at")
         end_at = attrs.get("end_at")
 
-        # 开始时间和结束时间不能只存在一个
-        if bool(start_at) != bool(end_at):
-            raise serializers.ValidationError(_("开始时间和结束时间不能只存在一个"))
+        if (start_at and not end_at) or (not start_at and end_at):
+            raise serializers.ValidationError(_("开始时间和结束时间参数不能仅提供其中一个"))
 
         if start_at and end_at and start_at > end_at:
             raise serializers.ValidationError(_("开始时间不能大于结束时间"))
