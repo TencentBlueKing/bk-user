@@ -22,13 +22,13 @@ from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-def open_web_api_throttle_class(api_type: OpenWebApiEnum):
+def open_web_api_throttle_class(api: OpenWebApiEnum):
     class OpenWebApiThrottle(SimpleRateThrottle):
         cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.OPEN_WEB_API_THROTTLE)
 
         def get_cache_key(self, request, view):
             # 缓存 key 为 scope（调用接口类型） + 调用者 bk_username
-            return self.cache_format % {"scope": api_type, "ident": request.user.username}
+            return self.cache_format % {"scope": api, "ident": request.user.username}
 
         def get_rate(self):
             # 直接从环境变量中读取 rate

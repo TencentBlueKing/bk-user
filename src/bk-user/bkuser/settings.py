@@ -82,11 +82,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "bkuser.apis.open_web.middlewares.OpenWebApiAuditMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
+    "bkuser.apis.open_web.middlewares.OpenWebApiAuditMiddleware",
     "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]

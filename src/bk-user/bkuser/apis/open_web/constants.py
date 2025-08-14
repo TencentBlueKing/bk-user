@@ -19,7 +19,7 @@ from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 
 
 class OpenWebApiEnum(StrStructuredEnum):
-    """OpenWeb API 类型"""
+    """OpenWeb API 枚举"""
 
     RETRIEVE_USER_DISPLAY_INFO = EnumField("retrieve_user_display_info", label="查询用户展示信息")
     BATCH_QUERY_USER_DISPLAY_INFO = EnumField("batch_query_user_display_info", label="批量查询用户展示信息")

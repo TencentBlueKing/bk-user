@@ -17,27 +17,23 @@
 
 import logging
 
-from django.utils.deprecation import MiddlewareMixin
 from rest_framework import status
 
 from bkuser.apis.open_web.constants import OpenWebApiEnum
 
 logger = logging.getLogger("open_web_api_access")
 
-OPEN_WEB_API_TYPE_MAPPING = {
-    "open_web.tenant_user.display_info.retrieve": OpenWebApiEnum.RETRIEVE_USER_DISPLAY_INFO,
-    "open_web.tenant_user.display_info.list": OpenWebApiEnum.BATCH_QUERY_USER_DISPLAY_INFO,
+OPEN_WEB_API_MAPPING = {
     "open_web.tenant_user.search": OpenWebApiEnum.SEARCH_USER,
     "open_web.tenant_user.lookup": OpenWebApiEnum.BATCH_LOOKUP_USER,
     "open_web.tenant_department.search": OpenWebApiEnum.SEARCH_DEPARTMENT,
-    "open_web.tenant_department.lookup": OpenWebApiEnum.BATCH_LOOKUP_DEPARTMENT,
     "open_web.tenant.virtual_user.list": OpenWebApiEnum.LIST_VIRTUAL_USER,
     "open_web.tenant_department.child.list": OpenWebApiEnum.LIST_DEPARTMENT_CHILD,
     "open_web.tenant_department.user.list": OpenWebApiEnum.LIST_DEPARTMENT_USER,
 }
 
 
-class OpenWebApiAuditMiddleware(MiddlewareMixin):
+class OpenWebApiAuditMiddleware:
     """OpenWeb API 审计中间件"""
 
     def __init__(self, get_response):
@@ -45,9 +41,8 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
 
     def __call__(self, request):
         response = self.get_response(request)
-
-        if api_type := OPEN_WEB_API_TYPE_MAPPING.get(request.resolver_match.url_name):
-            self.api_type = api_type
+        if api := OPEN_WEB_API_MAPPING.get(request.resolver_match.url_name):
+            self.api = api
             self._create_log(request, response)
 
         return response
@@ -58,7 +53,7 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
         extra = {
             "bk_username": request.user.username,
             "tenant_id": request.META.get("HTTP_X_BK_TENANT_ID", ""),
-            "api_type": self.api_type,
+            "api": self.api,
             # 请求信息
             "request_path": request.path,
             "x_forwarded_for": request.META.get("HTTP_X_FORWARDED_FOR", ""),
@@ -81,31 +76,42 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
 
         # 请求成功时，提取结果数量
         # 若为 list 分页接口，则返回分页结果数量
-        if self.api_type == OpenWebApiEnum.LIST_VIRTUAL_USER:
+        if self.api == OpenWebApiEnum.LIST_VIRTUAL_USER:
             return len(response.data["results"])
 
-        # 查询用户展示信息接口为 retrieve 接口，返回 1
-        if self.api_type == OpenWebApiEnum.RETRIEVE_USER_DISPLAY_INFO:
-            return 1
+        # 若为 list 非分页接口，则直接返回结果数量
+        if self.api in [
+            OpenWebApiEnum.SEARCH_USER,
+            OpenWebApiEnum.BATCH_LOOKUP_USER,
+            OpenWebApiEnum.LIST_DEPARTMENT_USER,
+            OpenWebApiEnum.SEARCH_DEPARTMENT,
+            OpenWebApiEnum.LIST_DEPARTMENT_CHILD,
+        ]:
+            return len(response.data)
 
-        # 否则一定为 list 非分页接口，则直接返回结果数量
-        return len(response.data)
+        return 0
 
     def _get_object_ids(self, request, response):
         if not status.is_success(response.status_code):
             return []
 
-        if self.api_type == OpenWebApiEnum.LIST_VIRTUAL_USER:
+        # 若为 list 分页接口
+        if self.api == OpenWebApiEnum.LIST_VIRTUAL_USER:
             return [item["bk_username"] for item in response.data["results"]]
 
-        if self.api_type == OpenWebApiEnum.RETRIEVE_USER_DISPLAY_INFO:
-            return list(request.resolver_match.kwargs.values())
-
-        if self.api_type in [
+        # 若为 list 非分页接口（部门相关）
+        if self.api in [
             OpenWebApiEnum.SEARCH_DEPARTMENT,
-            OpenWebApiEnum.BATCH_LOOKUP_DEPARTMENT,
             OpenWebApiEnum.LIST_DEPARTMENT_CHILD,
         ]:
             return [item["id"] for item in response.data]
 
-        return [item["bk_username"] for item in response.data]
+        # 若为 list 非分页接口（用户相关）
+        if self.api in [
+            OpenWebApiEnum.SEARCH_USER,
+            OpenWebApiEnum.BATCH_LOOKUP_USER,
+            OpenWebApiEnum.LIST_DEPARTMENT_USER,
+        ]:
+            return [item["bk_username"] for item in response.data]
+
+        return []
