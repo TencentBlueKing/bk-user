@@ -19,7 +19,6 @@ import logging
 
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework import status
-from rest_framework.response import Response
 
 from bkuser.apis.open_web.constants import OpenWebApiEnum
 
@@ -44,21 +43,11 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def is_open_web_api(self, request):
-        return request.path.startswith("/api/v3/open-web/") and request.method == "GET"
-
-    def _get_api_type(self, request):
-        # 获取 URL name 映射的 API 类型
-        url_name = request.resolver_match.url_name
-        return OPEN_WEB_API_TYPE_MAPPING.get(url_name)
-
     def __call__(self, request):
         response = self.get_response(request)
 
-        # 若接口路径匹配错误，则会返回 TemplateResponse，此时不记录日志
-        # 故需要判断 response 是否为 drf Response 类型
-        if self.is_open_web_api(request) and isinstance(response, Response):
-            self.api_type = self._get_api_type(request)
+        if api_type := OPEN_WEB_API_TYPE_MAPPING.get(request.resolver_match.url_name):
+            self.api_type = api_type
             self._create_log(request, response)
 
         return response
