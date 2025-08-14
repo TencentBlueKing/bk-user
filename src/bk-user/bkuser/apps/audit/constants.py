@@ -103,30 +103,3 @@ class OperationEnum(StrStructuredEnum):
     CREATE_VIRTUAL_USER = EnumField("create_virtual_user", label=_("创建虚拟用户"))
     MODIFY_VIRTUAL_USER = EnumField("modify_virtual_user", label=_("修改虚拟用户"))
     DELETE_VIRTUAL_USER = EnumField("delete_virtual_user", label=_("删除虚拟用户"))
-
-
-class OpenWebApiTypeEnum(StrStructuredEnum):
-    """OpenWeb API 类型"""
-
-    RETRIEVE_USER_DISPLAY_INFO = EnumField("retrieve_user_display_info", label=_("查询用户展示信息"))
-    BATCH_QUERY_USER_DISPLAY_INFO = EnumField("batch_query_user_display_info", label=_("批量查询用户展示信息"))
-    SEARCH_USER = EnumField("search_user", label=_("搜索用户信息"))
-    BATCH_LOOKUP_USER = EnumField("batch_lookup_user", label=_("批量匹配用户"))
-    SEARCH_DEPARTMENT = EnumField("search_department", label=_("搜索部门信息"))
-    BATCH_LOOKUP_DEPARTMENT = EnumField("batch_lookup_department", label=_("批量匹配部门"))
-    LIST_DEPARTMENT_CHILD = EnumField("list_department_child", label=_("查询部门子部门信息"))
-    LIST_DEPARTMENT_USER = EnumField("list_department_user", label=_("查询部门所属用户信息"))
-    LIST_VIRTUAL_USER = EnumField("list_virtual_user", label=_("查询虚拟用户信息"))
-
-
-OPENWEB_API_TYPE_MAPPING = {
-    "open_web.tenant_user.display_info.retrieve": OpenWebApiTypeEnum.RETRIEVE_USER_DISPLAY_INFO,
-    "open_web.tenant_user.display_info.list": OpenWebApiTypeEnum.BATCH_QUERY_USER_DISPLAY_INFO,
-    "open_web.tenant_user.search": OpenWebApiTypeEnum.SEARCH_USER,
-    "open_web.tenant_user.lookup": OpenWebApiTypeEnum.BATCH_LOOKUP_USER,
-    "open_web.tenant_department.search": OpenWebApiTypeEnum.SEARCH_DEPARTMENT,
-    "open_web.tenant_department.lookup": OpenWebApiTypeEnum.BATCH_LOOKUP_DEPARTMENT,
-    "open_web.tenant.virtual_user.list": OpenWebApiTypeEnum.LIST_VIRTUAL_USER,
-    "open_web.tenant_department.child.list": OpenWebApiTypeEnum.LIST_DEPARTMENT_CHILD,
-    "open_web.tenant_department.user.list": OpenWebApiTypeEnum.LIST_DEPARTMENT_USER,
-}

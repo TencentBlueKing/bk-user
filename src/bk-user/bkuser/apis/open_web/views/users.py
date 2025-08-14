@@ -27,6 +27,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     CurrentUserLanguageUpdateInputSLZ,
@@ -40,8 +41,7 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserSearchOutputSLZ,
     VirtualUserListOutputSLZ,
 )
-from bkuser.apps.audit.constants import OpenWebApiTypeEnum
-from bkuser.apps.audit.throttle import OpenWebApiThrottle
+from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
@@ -126,8 +126,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     搜索用户（包括协同用户与虚拟用户）
     """
 
-    throttle_scope = OpenWebApiTypeEnum.SEARCH_USER
-    throttle_classes = [OpenWebApiThrottle]
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_USER)]
 
     pagination_class = None
 
@@ -191,8 +190,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     批量查询用户（包括协同用户与虚拟用户）
     """
 
-    throttle_scope = OpenWebApiTypeEnum.BATCH_LOOKUP_USER
-    throttle_classes = [OpenWebApiThrottle]
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_USER)]
 
     pagination_class = None
 
@@ -253,8 +251,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     查询虚拟用户列表
     """
 
-    throttle_scope = OpenWebApiTypeEnum.LIST_VIRTUAL_USER
-    throttle_classes = [OpenWebApiThrottle]
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.LIST_VIRTUAL_USER)]
 
     serializer_class = VirtualUserListOutputSLZ
 

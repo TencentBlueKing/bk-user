@@ -47,6 +47,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     RESET_PASSWORD_TOKEN = "rpt"
     # Workbook 临时存储
     WORKBOOK_TEMPORARY_STORE = "wts"
+    # OpenWeb API 限流
+    OPEN_WEB_API_THROTTLE = "owat"
 
 
 def _default_key_function(*args, **kwargs):

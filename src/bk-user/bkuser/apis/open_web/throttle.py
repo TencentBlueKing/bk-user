@@ -16,18 +16,22 @@
 # to the current version of the project delivered to anyone in the future.
 
 from django.conf import settings
-from django.core.cache import caches
 from rest_framework.throttling import SimpleRateThrottle
 
+from bkuser.apis.open_web.constants import OpenWebApiEnum
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
-class OpenWebApiThrottle(SimpleRateThrottle):
-    cache = caches["redis"]
 
-    def get_cache_key(self, request, view):
-        # 缓存 key 为 scope（调用接口类型） + 调用者 bk_username
-        scope = getattr(view, "throttle_scope", self.scope)
-        return self.cache_format % {"scope": scope, "ident": request.user.username}
+def open_web_api_throttle_class(api_type: OpenWebApiEnum):
+    class OpenWebApiThrottle(SimpleRateThrottle):
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.OPEN_WEB_API_THROTTLE)
 
-    def get_rate(self):
-        # 直接从环境变量中读取 rate
-        return settings.OPENWEB_API_THROTTLE_RATES
+        def get_cache_key(self, request, view):
+            # 缓存 key 为 scope（调用接口类型） + 调用者 bk_username
+            return self.cache_format % {"scope": api_type, "ident": request.user.username}
+
+        def get_rate(self):
+            # 直接从环境变量中读取 rate
+            return settings.OPEN_WEB_API_THROTTLE_RATES
+
+    return OpenWebApiThrottle
