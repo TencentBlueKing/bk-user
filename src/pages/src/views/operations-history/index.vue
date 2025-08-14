@@ -331,6 +331,9 @@ const handleFetchAudit = async (type = '') => {
       if (formData.operation_time.every(item => item !== '')) {
         curSearchParams.start_at = dayjs(formData.operation_time[0]).format('YYYY-MM-DD HH:mm:ss');
         curSearchParams.end_at = dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss');
+      } else {
+        curSearchParams.start_at = '';
+        curSearchParams.end_at = '';
       }
     }
     const params = {
