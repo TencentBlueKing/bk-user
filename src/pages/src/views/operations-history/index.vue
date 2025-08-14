@@ -17,7 +17,7 @@
                 :state="realUsers"
                 :params="params"
                 :show-on-init="false"
-                v-model:modelValue="curMember"
+                v-model:model-value="curMember"
                 :disabled="true"
                 :multiple="false"
                 :clearable="true"
@@ -48,7 +48,10 @@
               <bk-input class="items-input" clearable v-model="formData.object_name" />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作时间')">
-              <bk-date-picker class="items-picker" v-model="formData.created_at" type="datetime" />
+              <bk-date-picker
+                class="items-picker"
+                v-model="formData.operation_time"
+                type="datetimerange" />
             </bk-form-item>
             <bk-form-item class="ml-[24px]">
               <bk-button
@@ -227,22 +230,28 @@ interface SearchParams {
   operation: string,
   object_type: string,
   object_name: string,
-  created_at: string,
+  start_at: string,
+  end_at: string,
 }
 
-const formData = reactive<SearchParams>({
+type SearchFromData = Omit<SearchParams, 'start_at' | 'end_at'> & {
+  operation_time: [string, string]
+};
+
+const formData = reactive<SearchFromData>({
   creator: '',  // 操作人
   operation: '', // 操作类型
   object_type: '', // 操作对象
   object_name: '', // 操作实例
-  created_at: '', // 操作时间
+  operation_time: ['', ''], // 操作时间
 });
 const curSearchParams: SearchParams = {
   creator: '',  // 操作人
   operation: '', // 操作类型
   object_type: '', // 操作对象
   object_name: '', // 操作实例
-  created_at: '', // 操作时间
+  start_at: '',
+  end_at: '',
 };
 
 const sortType = ref('null');
@@ -319,7 +328,10 @@ const handleFetchAudit = async (type = '') => {
       curSearchParams.object_type = formData.object_type;
       curSearchParams.object_name = formData.object_name;
       curSearchParams.creator = formData.creator;
-      curSearchParams.created_at = formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DD HH:mm:ss') : '';
+      if (formData.operation_time.every(item => item !== '')) {
+        curSearchParams.start_at = dayjs(formData.operation_time[0]).format('YYYY-MM-DD HH:mm:ss');
+        curSearchParams.end_at = dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss');
+      }
     }
     const params = {
       page: pagination.current,
@@ -362,7 +374,7 @@ const toggleFold = () => {
 };
 
 const handleReset = () => {
-  formData.created_at = '';
+  formData.operation_time = ['', ''];
   formData.creator = '';
   formData.object_name = '';
   formData.object_type = '';
