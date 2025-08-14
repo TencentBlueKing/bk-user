@@ -47,6 +47,11 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
     def is_open_web_api(self, request):
         return request.path.startswith("/api/v3/open-web/") and request.method == "GET"
 
+    def _get_api_type(self, request):
+        # 获取 URL name 映射的 API 类型
+        url_name = request.resolver_match.url_name
+        return OPEN_WEB_API_TYPE_MAPPING.get(url_name)
+
     def __call__(self, request):
         response = self.get_response(request)
 
@@ -80,11 +85,6 @@ class OpenWebApiAuditMiddleware(MiddlewareMixin):
         }
 
         logger.info("", extra=extra)
-
-    def _get_api_type(self, request):
-        # 获取 URL name 映射的 API 类型
-        url_name = request.resolver_match.url_name
-        return OPEN_WEB_API_TYPE_MAPPING.get(url_name)
 
     def _get_result_count(self, response):
         if not status.is_success(response.status_code):
