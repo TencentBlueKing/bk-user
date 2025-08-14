@@ -65,7 +65,7 @@ class OpenWebApiAuditMiddleware:
             # 响应信息
             "status_code": response.status_code,
             "result_count": self._get_result_count(response),
-            "object_ids": self._get_object_ids(request, response),
+            "object_ids": self._get_object_ids(response),
         }
 
         logger.info("", extra=extra)
@@ -91,7 +91,7 @@ class OpenWebApiAuditMiddleware:
 
         return 0
 
-    def _get_object_ids(self, request, response):
+    def _get_object_ids(self, response):
         if not status.is_success(response.status_code):
             return []
 
