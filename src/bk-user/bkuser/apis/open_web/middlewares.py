@@ -23,7 +23,7 @@ from bkuser.apis.open_web.constants import OpenWebApiEnum
 
 logger = logging.getLogger("open_web_api_access")
 
-OPEN_WEB_API_MAPPING = {
+OPEN_WEB_API_MAP = {
     "open_web.tenant_user.search": OpenWebApiEnum.SEARCH_USER,
     "open_web.tenant_user.lookup": OpenWebApiEnum.BATCH_LOOKUP_USER,
     "open_web.tenant_department.search": OpenWebApiEnum.SEARCH_DEPARTMENT,
@@ -41,7 +41,7 @@ class OpenWebApiAuditMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        if api := OPEN_WEB_API_MAPPING.get(request.resolver_match.url_name):
+        if api := OPEN_WEB_API_MAP.get(request.resolver_match.url_name):
             self.api = api
             self._create_log(request, response)
 
