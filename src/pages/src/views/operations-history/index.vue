@@ -225,18 +225,13 @@ const handleSettingChange = (data: { height: number; }) => {
   lineHeight.value = data.height;
 };
 
-interface SearchParams {
+interface SearchFromData {
   creator: string,
   operation: string,
   object_type: string,
   object_name: string,
-  start_at: string,
-  end_at: string,
-}
-
-type SearchFromData = Omit<SearchParams, 'start_at' | 'end_at'> & {
   operation_time: [string, string]
-};
+}
 
 const formData = reactive<SearchFromData>({
   creator: '',  // 操作人
@@ -245,14 +240,6 @@ const formData = reactive<SearchFromData>({
   object_name: '', // 操作实例
   operation_time: ['', ''], // 操作时间
 });
-const curSearchParams: SearchParams = {
-  creator: '',  // 操作人
-  operation: '', // 操作类型
-  object_type: '', // 操作对象
-  object_name: '', // 操作实例
-  start_at: '',
-  end_at: '',
-};
 
 const sortType = ref('null');
 const sortConfig = computed(() => ({ SortScope: 'all', value: sortType.value }));
@@ -324,22 +311,16 @@ const handleFetchAudit = async (type = '') => {
     if (type === 'search') {
       pagination.count = 0;
       pagination.current = 1;
-      curSearchParams.operation = formData.operation;
-      curSearchParams.object_type = formData.object_type;
-      curSearchParams.object_name = formData.object_name;
-      curSearchParams.creator = formData.creator;
-      if (formData.operation_time.every(item => item !== '')) {
-        curSearchParams.start_at = dayjs(formData.operation_time[0]).format('YYYY-MM-DD HH:mm:ss');
-        curSearchParams.end_at = dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss');
-      } else {
-        curSearchParams.start_at = '';
-        curSearchParams.end_at = '';
-      }
     }
     const params = {
       page: pagination.current,
-      pageSize: pagination.limit,
-      ...curSearchParams,
+      page_size: pagination.limit,
+      operation: formData.operation,
+      object_type: formData.object_type,
+      object_name: formData.object_name,
+      creator: formData.creator,
+      start_at: formData.operation_time[0] ? dayjs(formData.operation_time[0]).format('YYYY-MM-DD HH:mm:ss') : '',
+      end_at: formData.operation_time[1] ? dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
     pagination.count = res.data?.count;
