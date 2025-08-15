@@ -335,6 +335,7 @@ const handleFetchAudit = async (type = '') => {
 // pageSize更改回调方法
 const pageLimitChange = (pageSize: number) => {
   pagination.limit = pageSize;
+  pagination.current = 1;
   handleFetchAudit();
 };
 
