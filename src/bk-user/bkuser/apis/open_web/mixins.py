@@ -36,6 +36,13 @@ class OpenWebApiCommonMixin:
 
     TenantHeaderKey = "HTTP_X_BK_TENANT_ID"
 
+    def dispatch(self, request, *args, **kwargs):
+        # 校验浏览器请求
+        if not self._is_browser_request(request):
+            return HttpResponseForbidden("OpenWeb APIs are only allowed from browser requests")
+
+        return super().dispatch(request, *args, **kwargs)  # type: ignore
+
     def _is_browser_request(self, request) -> bool:
         """校验是否为浏览器请求"""
         # 校验必要请求头
@@ -55,13 +62,6 @@ class OpenWebApiCommonMixin:
             and request.META.get("HTTP_SEC_FETCH_MODE") == "cors"
             and request.META.get("HTTP_SEC_FETCH_SITE") == "same-site"
         )
-
-    def dispatch(self, request, *args, **kwargs):
-        # 校验浏览器请求
-        if not self._is_browser_request(request):
-            return HttpResponseForbidden("OpenWeb APIs are only allowed from browser requests")
-
-        return super().dispatch(request, *args, **kwargs)  # type: ignore
 
     @cached_property
     def tenant_id(self) -> str:
