@@ -80,7 +80,7 @@ class OpenWebApiCommonMixin:
 
         return super().dispatch(request, *args, **kwargs)  # type: ignore
 
-    def _is_valid_browser_request(self, request):
+    def _is_valid_browser_request(self, request) -> bool:
         """校验是否为合法的浏览器请求"""
         # 校验 User-Agent
         user_agent = request.META.get("HTTP_USER_AGENT")
