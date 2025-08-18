@@ -848,3 +848,23 @@ SELECTOR_SEARCH_API_LIMIT = env.int("SELECTOR_SEARCH_API_LIMIT", 100)
 
 # 限制 OpenWeb API 调用频率，避免恶意请求问题
 OPEN_WEB_API_THROTTLE_RATES = env.str("OPEN_WEB_API_THROTTLE_RATES", "100/minute")
+
+# 限制浏览器访问 OpenWeb API 的请求头
+OPEN_WEB_API_ALLOW_BROWSER_HEADERS = env.list(
+    "OPEN_WEB_API_ALLOW_BROWSER_HEADERS",
+    default=[
+        "HTTP_ACCEPT",
+        "HTTP_ACCEPT_LANGUAGE",
+        "HTTP_ACCEPT_ENCODING",
+        "HTTP_REFERER",
+        "HTTP_USER_AGENT",
+        "HTTP_SEC_FETCH_DEST",
+        "HTTP_SEC_FETCH_MODE",
+        "HTTP_SEC_FETCH_SITE",
+    ],
+)
+
+# 限制浏览器访问 OpenWeb API 白名单
+OPEN_WEB_API_ALLOW_BROWSER_WHITELIST = env.list(
+    "OPEN_WEB_API_ALLOW_BROWSER_WHITELIST", default=["Chrome", "Firefox", "Safari", "Edg"]
+)

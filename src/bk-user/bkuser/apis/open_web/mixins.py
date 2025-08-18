@@ -18,6 +18,8 @@
 from functools import cached_property
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
+from django.conf import settings
+from django.http import HttpResponseForbidden
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -66,3 +68,28 @@ class OpenWebApiCommonMixin:
             return 0
 
         return data_source.id
+
+    def dispatch(self, request, *args, **kwargs):
+        # 校验请求头
+        if not all(request.META.get(key) for key in settings.OPEN_WEB_API_ALLOW_BROWSER_HEADERS):
+            return HttpResponseForbidden()
+
+        # 校验浏览器请求
+        if not self._is_valid_browser_request(request):
+            return HttpResponseForbidden()
+
+        return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+    def _is_valid_browser_request(self, request):
+        """校验是否为合法的浏览器请求"""
+        # 校验 User-Agent
+        user_agent = request.META.get("HTTP_USER_AGENT")
+        if not any(browser in user_agent for browser in settings.OPEN_WEB_API_ALLOW_BROWSER_WHITELIST):
+            return False
+
+        # 校验 Sec-Fetch-* 请求头
+        return (
+            request.META.get("HTTP_SEC_FETCH_DEST") == "empty"
+            and request.META.get("HTTP_SEC_FETCH_MODE") == "cors"
+            and request.META.get("HTTP_SEC_FETCH_SITE") == "same-site"
+        )
