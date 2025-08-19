@@ -45,7 +45,7 @@ class OpenWebApiCommonMixin:
 
     def _is_browser_request(self, request) -> bool:
         """校验是否为浏览器请求"""
-        # 校验必要请求头
+        # 校验必要请求头存在且值为非空
         if not all(request.META.get(key) for key in settings.OPEN_WEB_API_REQUIRED_BROWSER_HEADERS):
             return False
 
