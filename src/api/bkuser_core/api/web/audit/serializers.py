@@ -64,7 +64,7 @@ class GeneralLogOutputSLZ(serializers.Serializer):
         display_name = operator_profile.display_name if operator_profile else ""
 
         return {
-            "datetime": datetime.datetime.strptime(instance["create_time"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+            "datetime": datetime.datetime.strptime(instance["create_time"], "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S"),
             "operator": instance["operator"],
             "target_obj": instance["target_obj"],
             "category_display_name": category_display_name,

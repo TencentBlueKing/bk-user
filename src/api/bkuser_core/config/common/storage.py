@@ -12,7 +12,6 @@ import ssl
 
 from . import env
 from bkuser_global.config import get_db_config
-
 # ==============================================================================
 # 数据库
 # ==============================================================================
@@ -38,6 +37,12 @@ REDIS_TLS_CERT_CA_FILE = env.str("CACHE_REDIS_TLS_CERT_CA_FILE", default="")
 REDIS_TLS_CERT_FILE = env.str("CACHE_REDIS_TLS_CERT_FILE", default="")
 REDIS_TLS_CERT_KEY_FILE = env.str("CACHE_REDIS_TLS_CERT_KEY_FILE", default="")
 
+# redis sentinel配置
+REDIS_SENTINEL = env.bool("CACHE_REDIS_SENTINEL_ENABLED", False)
+REDIS_SENTINEL_MASTER_NAME = env("CACHE_REDIS_SENTINEL_MASTER_NAME", default="bk-redis-master-0")
+REDIS_SENTINEL_PASSWORD = env("CACHE_REDIS_SENTINEL_PASSWORD", default="")
+REDIS_SENTINEL_NODES = env.list("CACHE_REDIS_SENTINEL_NODES", default=[])
+
 # ==============================================================================
 # Celery
 # ==============================================================================
@@ -50,19 +55,49 @@ CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", defau
 CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
 CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
 
-# celery broker tls : 仅仅支持 rabbitmq 和 单例 redis 作为 celery broker 时开启 TLS
-if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
-    ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
-    CELERY_BROKER_USE_SSL = {
-        f"{ssl_key_prefix}cert_reqs": ssl.CERT_REQUIRED,
-        f"{ssl_key_prefix}ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+# Celery sentinel配置
+if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("redis"):
+    # 转换 Sentinel 节点格式
+    sentinel_nodes = []
+    for node in REDIS_SENTINEL_NODES:
+        host, port = node.split(":")
+        sentinel_nodes.append((host, int(port)))
+
+    # 更新 Celery broker URL
+    CELERY_BROKER_URL = (
+        f"sentinel://:{REDIS_PASSWORD}@{';'.join(REDIS_SENTINEL_NODES)}"
+        f"/{REDIS_DB}"
+    )
+
+    # 添加 Sentinel 配置
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        "master_name": REDIS_SENTINEL_MASTER_NAME,
+        "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
     }
-    # mTLS
-    if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
-        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = CELERY_BROKER_TLS_CERT_FILE
-        CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
 
-
+    # 如果启用 TLS
+    if CELERY_BROKER_TLS_ENABLED:
+        CELERY_BROKER_TRANSPORT_OPTIONS.update({
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+        })
+        if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_TRANSPORT_OPTIONS.update({
+                "ssl_certfile": CELERY_BROKER_TLS_CERT_FILE,
+                "ssl_keyfile": CELERY_BROKER_TLS_CERT_KEY_FILE,
+            })
+else:
+    # celery broker tls : 仅仅支持 rabbitmq 和 单例 redis 作为 celery broker 时开启 TLS
+    if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
+        ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
+        CELERY_BROKER_USE_SSL = {
+            f"{ssl_key_prefix}cert_reqs": ssl.CERT_REQUIRED,
+            f"{ssl_key_prefix}ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+        }
+        # mTLS
+        if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = CELERY_BROKER_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
 # ==============================================================================
 # 缓存配置
 # ==============================================================================
@@ -73,6 +108,7 @@ CACHES = {
     "locmem": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "memory_cache_0",
+        "TIMEOUT": 60,
         "KEY_PREFIX": "bk_user",
     },
     "verification_code": {
@@ -81,29 +117,74 @@ CACHES = {
         "TIMEOUT": 30 * 60,
         "KEY_PREFIX": f"{REDIS_KEY_PREFIX}verification_code",
         "VERSION": 1,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
+            "SOCKET_TIMEOUT": 3,  # 更短的超时时间
+            "WRITE_RETRY": True,  # 启用写入重试
+            "WRITE_RETRY_DELAY": 0.1,  # 重试间隔
+            "WRITE_RETRY_ATTEMPTS": 3,  # 重试次数
+        },
         "SOCKET_CONNECT_TIMEOUT": 5,  # socket 建立连接超时设置，单位秒
-        "SOCKET_TIMEOUT": 5,  # 连接建立后的读写操作超时设置，单位秒
         "IGNORE_EXCEPTIONS": True,  # redis 只作为缓存使用，触发异常不能影响正常逻辑，可能只是稍微慢点而已
     },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)
 
-# redis tls : 仅仅支持 redis 单例模式
-if REDIS_TLS_ENABLED:
-    CACHES["verification_code"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+# redis sentinel配置
+if REDIS_SENTINEL and REDIS_SENTINEL_NODES:
+    # Sentinel 模式配置
+    sentinel_nodes = []
+    for node in REDIS_SENTINEL_NODES:
+        host, port = node.split(":")
+        sentinel_nodes.append((host, int(port)))
 
-    if "CONNECTION_POOL_KWARGS" not in CACHES["verification_code"]["OPTIONS"]:
-        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {}
+    CACHES["verification_code"] = {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+        "TIMEOUT": 30 * 60,
+        "KEY_PREFIX": f"{REDIS_KEY_PREFIX}verification_code",
+        "VERSION": 1,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.SentinelClient",
+            "SENTINELS": sentinel_nodes,
+            "SENTINEL_KWARGS": {
+                "password": REDIS_SENTINEL_PASSWORD,
+            },
+            "MASTER_NAME": REDIS_SENTINEL_MASTER_NAME,
+            "PASSWORD": REDIS_PASSWORD,
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
+            "IGNORE_EXCEPTIONS": True,
+        },
+    }
 
-    CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
-    CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
-    # mTLS
-    if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
-        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
-        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
+    # 如果启用 TLS
+    if REDIS_TLS_ENABLED:
+        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
+        }
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"].update({
+                "ssl_certfile": REDIS_TLS_CERT_FILE,
+                "ssl_keyfile": REDIS_TLS_CERT_KEY_FILE,
+            })
+else:
+    # redis tls : 仅仅支持 redis 单例模式
+    if REDIS_TLS_ENABLED:
+        CACHES["verification_code"]["LOCATION"] = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
+        if "CONNECTION_POOL_KWARGS" not in CACHES["verification_code"]["OPTIONS"]:
+            CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {}
+
+        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+        CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
+        # mTLS
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
+            CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"]["ssl_keyfile"] = REDIS_TLS_CERT_KEY_FILE
 # 快捷单元测试 dummy cache 标记
 USE_DUMMY_CACHE_FOR_TEST = True
 

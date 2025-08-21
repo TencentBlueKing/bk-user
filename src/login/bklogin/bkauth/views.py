@@ -103,6 +103,33 @@ def _bk_login(request):
             error_message = e.message
         except PasswordNeedReset as e:
             token_set_password_url = e.reset_password_url
+                        
+            # 构建需要携带的参数
+            query_params = {}
+            if redirect_to:
+                query_params[REDIRECT_FIELD_NAME] = redirect_to
+            if app_id:
+                query_params["app_id"] = app_id
+            
+            if query_params:
+                import urllib.parse
+                parsed_url = urllib.parse.urlparse(token_set_password_url)
+                existing_params = urllib.parse.parse_qs(parsed_url.query)
+                
+                # 合并参数
+                for key, value in query_params.items():
+                    existing_params[key] = [value]
+                
+                # 重新构建URL
+                new_query = urllib.parse.urlencode(existing_params, doseq=True)
+                token_set_password_url = urllib.parse.urlunparse((
+                    parsed_url.scheme,
+                    parsed_url.netloc,
+                    parsed_url.path,
+                    parsed_url.params,
+                    new_query,
+                    parsed_url.fragment
+                ))
             error_message = e.message
         except UserExpiredException as e:
             login_redirect_to = e.redirect_to

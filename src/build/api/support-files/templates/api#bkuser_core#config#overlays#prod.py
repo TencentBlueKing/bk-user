@@ -62,15 +62,66 @@ ESB_TOKEN = "__BK_PAAS_APP_SECRET__"
 CERTIFICATE_DIR = "__BK_CERT_PATH__"
 CERTIFICATE_SERVER_DOMAIN = "__BK_LICENSE_PRIVATE_ADDR__"
 
-# redis, NOTE: NOT SUPPORT REDIS SENTINEL NOW
-REDIS_MODE = "__BK_USERMGR_REDIS_MODE__"
+# redis配置，支持单机和哨兵模式
+REDIS_MODE = "__BK_USERMGR_REDIS_MODE__"  
 REDIS_HOST = "__BK_USERMGR_REDIS_HOST__"
 REDIS_PORT = "__BK_USERMGR_REDIS_PORT__"
 REDIS_PASSWORD = "__BK_USERMGR_REDIS_PASSWORD__"
 REDIS_DB = 0
 REDIS_KEY_PREFIX = "bk-user-"
 
-REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+# 哨兵模式配置
+REDIS_SENTINEL_HOSTS = "__BK_USERMGR_REDIS_SENTINEL_HOSTS__"
+REDIS_SENTINEL_MASTER_NAME = "__BK_USERMGR_REDIS_SENTINEL_MASTER_NAME__"
+REDIS_SENTINEL_PASSWORD = "__BK_USERMGR_REDIS_SENTINEL_PASSWORD__"
+
+# 根据模式构建Redis URL
+if REDIS_MODE == "sentinel":
+    # 哨兵模式
+    REDIS_URL = f"redis+sentinel://:{REDIS_PASSWORD}@{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"
+else:
+    # 单机模式（默认）
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+
+def _get_redis_cache_options():
+    """根据Redis模式返回相应的缓存配置选项"""
+    if REDIS_MODE == "sentinel":
+        # 解析哨兵主机列表
+        sentinel_hosts = []
+        if REDIS_SENTINEL_HOSTS:
+            for host_port in REDIS_SENTINEL_HOSTS.split(','):
+                host_port = host_port.strip()
+                if ':' in host_port:
+                    host, port = host_port.split(':', 1)
+                    sentinel_hosts.append((host.strip(), int(port.strip())))
+                else:
+                    sentinel_hosts.append((host_port, 26379))  # 默认哨兵端口
+        
+        options = {
+            "CLIENT_CLASS": "django_redis.client.SentinelClient",
+            "CONNECTION_POOL_KWARGS": {
+                "service_name": REDIS_SENTINEL_MASTER_NAME,
+                "sentinels": sentinel_hosts,
+                "password": REDIS_PASSWORD,
+                "db": REDIS_DB,
+                "SOCKET_CONNECT_TIMEOUT": 5,  # socket 建立连接超时设置，单位秒
+                "SOCKET_TIMEOUT": 5,  # 连接建立后的读写操作超时设置，单位秒
+            },
+        }
+        
+        if REDIS_SENTINEL_PASSWORD:
+            options["CONNECTION_POOL_KWARGS"]["sentinel_kwargs"] = {
+                "password": REDIS_SENTINEL_PASSWORD
+            }
+        
+        return options
+    else:
+        # 单机模式
+        return {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
+        }
 
 CACHES = {
     "default": {
@@ -86,9 +137,7 @@ CACHES = {
         "TIMEOUT": 30 * 60,
         "KEY_PREFIX": f"{REDIS_KEY_PREFIX}verification_code",
         "VERSION": 1,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
-        "SOCKET_CONNECT_TIMEOUT": 5,  # socket 建立连接超时设置，单位秒
-        "SOCKET_TIMEOUT": 5,  # 连接建立后的读写操作超时设置，单位秒
+        "OPTIONS": _get_redis_cache_options(),
         "IGNORE_EXCEPTIONS": True,  # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
     },
 }
@@ -104,7 +153,6 @@ FORCE_NO_CACHE_HEADER = "HTTP_FORCE_NO_CACHE"
 ##########
 # Celery #
 ##########
-REDIS_URL = ""
 REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 CELERY_BROKER_URL = "amqp://__BK_USERMGR_RABBITMQ_USERNAME__:__BK_USERMGR_RABBITMQ_PASSWORD__@__BK_USERMGR_RABBITMQ_HOST__:__BK_USERMGR_RABBITMQ_PORT__/__BK_USERMGR_RABBITMQ_VHOST__"  # pylint: disable=line-too-long
 CELERY_RESULT_BACKEND = "amqp://__BK_USERMGR_RABBITMQ_USERNAME__:__BK_USERMGR_RABBITMQ_PASSWORD__@__BK_USERMGR_RABBITMQ_HOST__:__BK_USERMGR_RABBITMQ_PORT__/__BK_USERMGR_RABBITMQ_VHOST__"  # pylint: disable=line-too-long

@@ -248,6 +248,26 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             count = self.paginator.page.paginator.count
+            # 对邮箱和手机号进行脱敏处理
+            for item in serializer.data:
+                # 邮箱脱敏处理: wan***@chinatelecom.cn (保持原始域名)
+                if 'email' in item and item['email']:
+                    email = item['email']
+                    if '@' in email:
+                        name, domain = email.split('@', 1)
+                        if len(name) > 2:
+                            item['email'] = name[:2] + '***@' + domain
+                        else:
+                            item['email'] = name[0] + '***@' + domain
+
+                # 手机号脱敏处理: 138****1167
+                if 'telephone' in item and item['telephone']:
+                    phone = item['telephone']
+                    if len(phone) >= 7:
+                        item['telephone'] = phone[:3] + '****' + phone[-4:]
+                    elif len(phone) >= 3:
+                        item['telephone'] = phone[:2] + '****' + phone[-3:]
+
             return Response(
                 {
                     "count": count,
