@@ -17,7 +17,17 @@
       <div class="login-content">
         <div class="reset-pw">
           <div class="reset-content" v-if="hasSet === false">
-            <h4 class="common-title">{{$t('设置新密码')}}</h4>
+            <h4 class="common-title">{{$t('设置新密码')}}
+              <bk-popover
+                theme="dark"
+                style="margin-left: 5px;"
+                placement="right">
+                <i class="bk-icon icon-question-circle"></i>
+                <template #content>
+                  <div class="popover-content-params">{{getPasswordRules()}}</div>
+                </template>
+              </bk-popover>
+            </h4>
             <p
               v-if="setPasswordText"
               :class="['text', isError && 'show-error-info']">{{setPasswordText}}{{$t('_需要设置新密码')}}</p>
@@ -93,10 +103,12 @@ export default {
         passwordMustIncludes: [],
       },
       isCorrectPw: false,
+      redirect_to: '',
     };
   },
   mounted() {
     this.initRsa();
+    this.getPasswordRules();
     // this.initToken()
   },
   methods: {
@@ -116,6 +128,9 @@ export default {
     //         })
     //     }
     // },
+    getPasswordRules() {
+      return this.$getMessageByRules(this, this.passwordRules);
+    },
     async initRsa() {
       try {
         const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
@@ -170,7 +185,20 @@ export default {
       }
     },
     register() {
-      window.location.href = window.login_url;
+      const urlParams = new URLSearchParams(window.location.search);
+      const cUrl = urlParams.get('c_url');
+      let redirectUrl = window.login_url;
+      if (cUrl) {
+        const separator = window.login_url.includes('?') ? '&' : '?';
+        redirectUrl = `${window.login_url}${separator}c_url=${encodeURIComponent(cUrl)}`;
+      }
+      const appId = urlParams.get('app_id');
+      if (appId) {
+        const separator = redirectUrl.includes('?') ? '&' : '?';
+        redirectUrl = `${redirectUrl}${separator}app_id=${encodeURIComponent(appId)}`;
+      }
+      console.log('重置密码完成，跳转到:', redirectUrl);
+      window.location.href = redirectUrl;
     },
     handleFocus() {
       this.isError = false;

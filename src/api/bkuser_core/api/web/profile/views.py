@@ -140,6 +140,12 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if not ProfileCategory.objects.check_writable(instance.category_id):
             raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
+        # 检查email和telephone字段是否包含***
+        def should_skip_field(field_name):
+            value = validated_data.get(field_name, "")
+            return isinstance(value, str) and "***" in value
+
+
         # FIXME: 可以简化, 不要搞那么复杂
         # 提前将多对多字段拿出
         # Django 2.2 以后不能直接设置
@@ -155,6 +161,8 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         # NOTE: do not change the order here
         # 普通字段
         for key, value in validated_data.items():
+            if key in ["email", "telephone"] and should_skip_field(key):
+                continue
             setattr(instance, key, value)
         # 多对多字段
         for key, value in m2m_fields.items():

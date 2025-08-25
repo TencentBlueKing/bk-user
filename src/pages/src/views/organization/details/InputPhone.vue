@@ -102,9 +102,18 @@ export default {
       if (item.value === '') {
         return this.$emit('phone', true);
       }
-      const validation = item.iso_code.toLowerCase() === 'cn'
-        ? /^1[3-9]\d{9}$/.test(item.value)
-        : this.iti.isValidNumber();
+      const validation = () => {
+        if ('****' in item.value) {
+          return true;
+        }
+        const isoCode = item.iso_code.toLowerCase();
+        if (isoCode === 'cn') {
+          return /^1[3-9]\d{9}$/.test(item.value);
+        } if (isoCode === 'mo') {
+          return /^6\d{7}$/.test(item.value);
+        }
+        return this.iti.isValidNumber(); // 其他国家走默认校验
+      };
       !validation && (item.isError = true);
       return !validation;
     },

@@ -29,6 +29,7 @@ OPERATION_NAME_TUPLE = (
     ("update", _("更新")),
     ("delete", _("删除")),
     ("retrieve", _("获取")),
+    ("view", _("查看")),
     ("sync", _("同步")),
     ("export", _("导出")),
     ("import", _("导入")),
