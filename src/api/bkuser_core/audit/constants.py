@@ -50,6 +50,7 @@ class OperationType(AutoLowerEnum):
     UPDATE = auto()
     DELETE = auto()
     RETRIEVE = auto()
+    VIEW = auto()  # 查看
 
     SYNC = auto()
     IMPORT = auto()
@@ -68,6 +69,7 @@ class OperationType(AutoLowerEnum):
         (UPDATE, "更新"),
         (DELETE, "删除"),
         (RETRIEVE, "获取"),
+        (VIEW, "查看"),
         (SYNC, "同步"),
         (EXPORT, "导出"),
         (IMPORT, "导入"),

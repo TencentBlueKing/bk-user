@@ -340,7 +340,7 @@ export default {
       });
     }
     // 进入页面获取数据
-    this.searchValue = '';
+    this.searchValue = this.currentProfile.username || '';
     this.paginationConfig.current = 1;
     this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
