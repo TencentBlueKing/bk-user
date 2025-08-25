@@ -9,9 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import os
-import environ
 from celery import Celery
-env = environ.Env()
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bkuser_core.config.overlays.prod")
@@ -24,21 +22,6 @@ app = Celery("bkuser_core")
 #   should have a `CELERY_` prefix.
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
-app.conf.update(
-    broker_transport_options={
-        'visibility_timeout': 3600,
-        'fanout_prefix': True,
-        'master_name': env("CACHE_REDIS_SENTINEL_MASTER_NAME", default="bk-redis-master-0"),
-        'socket_timeout': 5,
-        'retry_policy': {
-            'interval_start': 0,
-            'interval_step': 0.2,
-            'max_retries': 3,
-        }
-    },
-    task_acks_late=True,
-    task_reject_on_worker_lost=True
-)
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 app.autodiscover_tasks(related_name="extra_tasks")

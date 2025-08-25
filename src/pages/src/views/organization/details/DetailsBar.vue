@@ -259,7 +259,7 @@ export default {
             trigger: 'blur',
           },
           {
-            regex: /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.[A-Za-z]+$|^[A-Za-z0-9_\-.]{1,2}\*{3}@([A-Za-z0-9_\-.])+\.[A-Za-z]+$/,
+            regex: /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.[A-Za-z]+$|^[A-Za-z0-9_\-.]{1,2}\*{4}@([A-Za-z0-9_\-.])+\.[A-Za-z]+$/,
             message: this.$t('请输入正确的邮箱地址'),
             trigger: 'blur',
           },

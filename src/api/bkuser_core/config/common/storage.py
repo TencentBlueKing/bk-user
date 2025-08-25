@@ -39,7 +39,7 @@ REDIS_TLS_CERT_KEY_FILE = env.str("CACHE_REDIS_TLS_CERT_KEY_FILE", default="")
 
 # redis sentinel配置
 REDIS_SENTINEL = env.bool("CACHE_REDIS_SENTINEL_ENABLED", False)
-REDIS_SENTINEL_MASTER_NAME = env("CACHE_REDIS_SENTINEL_MASTER_NAME", default="bk-redis-master-0")
+REDIS_SENTINEL_MASTER_NAME = env("CACHE_REDIS_SENTINEL_MASTER_NAME", default="")
 REDIS_SENTINEL_PASSWORD = env("CACHE_REDIS_SENTINEL_PASSWORD", default="")
 REDIS_SENTINEL_NODES = env.list("CACHE_REDIS_SENTINEL_NODES", default=[])
 
@@ -80,12 +80,23 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("red
         CELERY_BROKER_TRANSPORT_OPTIONS.update({
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
             "ssl_ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+            "visibility_timeout": 3600,
+            "fanout_prefix": True,
+            "socket_timeout": 5,
+            "retry_policy": {
+                "interval_start": 0,
+                "interval_step": 0.2,
+                "max_retries": 3,
+            },
         })
         if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
             CELERY_BROKER_TRANSPORT_OPTIONS.update({
                 "ssl_certfile": CELERY_BROKER_TLS_CERT_FILE,
                 "ssl_keyfile": CELERY_BROKER_TLS_CERT_KEY_FILE,
             })
+    # 额外的 Celery 任务配置
+    CELERY_TASK_ACKS_LATE = True
+    CELERY_TASK_REJECT_ON_WORKER_LOST = True
 else:
     # celery broker tls : 仅仅支持 rabbitmq 和 单例 redis 作为 celery broker 时开启 TLS
     if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:

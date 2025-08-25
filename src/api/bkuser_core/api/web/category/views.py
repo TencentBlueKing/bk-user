@@ -18,6 +18,7 @@ from openpyxl import load_workbook
 from rest_framework import generics, status
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
+from bkuser_core.audit.utils import create_general_log
 
 from .serializers import (
     CategoryCreateInputSLZ,
@@ -579,7 +580,6 @@ class CategoryProfileListApi(generics.ListAPIView):
         if keyword:
             # NOTE: 这里相对原来的差异, 抹掉了 id__icontains 的搜索
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
-        from bkuser_core.audit.utils import create_general_log
         create_general_log(
             operator = self.request.operator,
             operate_type = OperationType.VIEW.value,

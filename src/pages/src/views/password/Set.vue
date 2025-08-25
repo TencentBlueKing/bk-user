@@ -197,7 +197,6 @@ export default {
         const separator = redirectUrl.includes('?') ? '&' : '?';
         redirectUrl = `${redirectUrl}${separator}app_id=${encodeURIComponent(appId)}`;
       }
-      console.log('重置密码完成，跳转到:', redirectUrl);
       window.location.href = redirectUrl;
     },
     handleFocus() {
