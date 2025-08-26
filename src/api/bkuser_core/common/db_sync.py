@@ -233,7 +233,8 @@ class SyncModelManager:
             # 每个批次都新建一个事务，避免污染后续操作
             try:
                 with transaction.atomic():
-                    getattr(getattr(self.meta.target_model, manager), method)(part, **extra_params)
+                    sync_method = getattr(getattr(self.meta.target_model, manager), method)
+                    sync_method(part, **extra_params)
             except Exception as e:
                 logger.warning(
                     "%s %s failed, count=%d, extra_params=%s, will try to sync one by one. Error: %s",
