@@ -282,7 +282,7 @@ class TestTenantUserLookupApi:
             data={"lookups": "a" * 65, "lookup_field": "login_name"},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "每个对象长度不能超过 64 个字符。" in resp.data["message"]
+        assert "每个对象长度不能超过 64 个字符." in resp.data["message"]
 
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
