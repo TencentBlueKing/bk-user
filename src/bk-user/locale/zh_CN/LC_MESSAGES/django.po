@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-27 11:41+0800\n"
+"POT-Creation-Date: 2025-08-25 11:05+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bkuser/apis/login/serializers.py:54 bkuser/common/error_codes.py:85
+#: bkuser/apis/login/serializers.py:55 bkuser/common/error_codes.py:85
 msgid "用户名或密码错误"
 msgstr "用户名或密码错误"
 
-#: bkuser/apis/login/views.py:226
+#: bkuser/apis/login/views.py:224
 msgid "租户 {} 不存在"
 msgstr "租户 {} 不存在"
 
-#: bkuser/apis/login/views.py:231
+#: bkuser/apis/login/views.py:229
 msgid "认证源 {} 不存在"
 msgstr "认证源 {} 不存在"
 
@@ -41,6 +41,14 @@ msgstr "指定查询的值 {} 长度超过 64 个字符限制"
 #: bkuser/apis/open_web/serializers/users.py:122
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 msgstr "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
+
+#: bkuser/apis/web/audit/serializers.py:40
+msgid "开始时间和结束时间参数不能仅提供其中一个"
+msgstr "开始时间和结束时间参数不能仅提供其中一个"
+
+#: bkuser/apis/web/audit/serializers.py:43
+msgid "开始时间不能大于结束时间"
+msgstr "开始时间不能大于结束时间"
 
 #: bkuser/apis/web/collaboration/serializers.py:75
 #: bkuser/apis/web/collaboration/serializers.py:118
@@ -105,73 +113,77 @@ msgstr "无法进行确认，请联系分享方租户管理员启用该策略"
 msgid "请先确认策略，再尝试修改状态"
 msgstr "请先确认策略，再尝试修改状态"
 
-#: bkuser/apis/web/data_source/serializers.py:79
+#: bkuser/apis/web/data_source/serializers.py:52
+msgid "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
+msgstr "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
+
+#: bkuser/apis/web/data_source/serializers.py:88
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 
-#: bkuser/apis/web/data_source/serializers.py:86
+#: bkuser/apis/web/data_source/serializers.py:95
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "必填目标字段 {} 缺少字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:114
+#: bkuser/apis/web/data_source/serializers.py:123
 msgid "数据源插件不存在"
 msgstr "数据源插件不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:128
+#: bkuser/apis/web/data_source/serializers.py:137
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "租户至多拥有一个实体类型的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:134
-#: bkuser/apis/web/data_source/serializers.py:206
+#: bkuser/apis/web/data_source/serializers.py:143
+#: bkuser/apis/web/data_source/serializers.py:225
 msgid "当前数据源类型必须配置字段映射"
 msgstr "当前数据源类型必须配置字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:137
-#: bkuser/apis/web/data_source/serializers.py:209
+#: bkuser/apis/web/data_source/serializers.py:146
+#: bkuser/apis/web/data_source/serializers.py:228
 msgid "当前数据源类型必须提供同步配置"
 msgstr "当前数据源类型必须提供同步配置"
 
-#: bkuser/apis/web/data_source/serializers.py:140
-#: bkuser/apis/web/data_source/serializers.py:247
+#: bkuser/apis/web/data_source/serializers.py:149
+#: bkuser/apis/web/data_source/serializers.py:266
 msgid "数据源插件 {} 不存在"
 msgstr "数据源插件 {} 不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:146
-#: bkuser/apis/web/data_source/serializers.py:194
-#: bkuser/apis/web/data_source/serializers.py:267
+#: bkuser/apis/web/data_source/serializers.py:155
+#: bkuser/apis/web/data_source/serializers.py:207
+#: bkuser/apis/web/data_source/serializers.py:286
 msgid "插件配置不合法：{}"
 msgstr "插件配置不合法：{}"
 
-#: bkuser/apis/web/data_source/serializers.py:244
+#: bkuser/apis/web/data_source/serializers.py:263
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "本地数据源不支持连通性测试"
 
-#: bkuser/apis/web/data_source/serializers.py:255
+#: bkuser/apis/web/data_source/serializers.py:274
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:290
+#: bkuser/apis/web/data_source/serializers.py:313
 msgid "密码规则配置不合法: {}"
 msgstr "密码规则配置不合法：{}"
 
-#: bkuser/apis/web/data_source/serializers.py:298
+#: bkuser/apis/web/data_source/serializers.py:321
 msgid "指定数据源不存在"
 msgstr "指定数据源不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:302
+#: bkuser/apis/web/data_source/serializers.py:325
 msgid "无法使用该数据源生成随机密码"
 msgstr "无法使用该数据源生成随机密码"
 
-#: bkuser/apis/web/data_source/serializers.py:328
+#: bkuser/apis/web/data_source/serializers.py:351
 msgid "待导入文件必须为 Excel 格式"
 msgstr "待导入文件必须为 Excel 格式"
 
-#: bkuser/apis/web/data_source/serializers.py:331
+#: bkuser/apis/web/data_source/serializers.py:354
 msgid "待导入文件大小不得超过 {} M"
 msgstr "待导入文件大小不得超过 {} M"
 
-#: bkuser/apis/web/data_source/serializers.py:337
+#: bkuser/apis/web/data_source/serializers.py:360
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "出于安全考虑，全量导入模式暂不可用"
 
@@ -221,11 +233,11 @@ msgstr "同名认证源已存在"
 
 #: bkuser/apis/web/idp/serializers.py:79
 msgid ""
-"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组"
+"{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组"
 "成，以字母开头并以字母或数字结尾"
 msgstr ""
-"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组"
-"成，以字母开头并以字母或数字结尾"
+"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) "
+"字符组成，以字母开头并以字母或数字结尾"
 
 #: bkuser/apis/web/idp/serializers.py:101
 msgid "当前租户下不存在 ID 为 {} 的实名数据源"
@@ -269,8 +281,8 @@ msgstr "数据源未配置或非本地类型数据源"
 msgid "本地账密登录已存在"
 msgstr "本地账密登录已存在"
 
-#: bkuser/apis/web/me/serializers.py:61
-#: bkuser/apis/web/virtual_user/serializers.py:56
+#: bkuser/apis/web/me/serializers.py:60
+#: bkuser/apis/web/virtual_user/serializers.py:55
 msgid "用户 {} 不存在、不是实体用户或不属于当前租户"
 msgstr "用户 {} 不存在、不是实体用户或不属于当前租户"
 
@@ -301,7 +313,7 @@ msgid "不能移动至自己的子部门下"
 msgstr "不能移动至自己的子部门下"
 
 #: bkuser/apis/web/organization/serializers/relations.py:34
-#: bkuser/apis/web/organization/serializers/users.py:627
+#: bkuser/apis/web/organization/serializers/users.py:630
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "用户 ID {} 在当前租户中不存在"
 
@@ -314,8 +326,8 @@ msgid "部门不存在"
 msgstr "部门不存在"
 
 #: bkuser/apis/web/organization/serializers/users.py:132
-#: bkuser/apis/web/organization/serializers/users.py:595
-#: bkuser/apis/web/virtual_user/serializers.py:38
+#: bkuser/apis/web/organization/serializers/users.py:598
+#: bkuser/apis/web/virtual_user/serializers.py:37
 msgid "用户名 {} 已存在"
 msgstr "用户名 {} 已存在"
 
@@ -340,40 +352,40 @@ msgstr "账号有效期时间不能早于当前时间"
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:509
+#: bkuser/apis/web/organization/serializers/users.py:510
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "第 {} 行，手机号 {} 格式不正确"
 
-#: bkuser/apis/web/organization/serializers/users.py:551
+#: bkuser/apis/web/organization/serializers/users.py:554
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 
-#: bkuser/apis/web/organization/serializers/users.py:559
-#: bkuser/apis/web/organization/serializers/users.py:572
+#: bkuser/apis/web/organization/serializers/users.py:562
+#: bkuser/apis/web/organization/serializers/users.py:575
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 
-#: bkuser/apis/web/organization/serializers/users.py:590
+#: bkuser/apis/web/organization/serializers/users.py:593
 msgid "用户名 {} 重复"
 msgstr "用户名 {} 重复"
 
-#: bkuser/apis/web/organization/serializers/users.py:702
+#: bkuser/apis/web/organization/serializers/users.py:705
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "用户 {} 不能设置为自己的直属上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:713
+#: bkuser/apis/web/organization/serializers/users.py:716
 msgid "一次只能批量更新一个自定义字段"
 msgstr "一次只能批量更新一个自定义字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:721
+#: bkuser/apis/web/organization/serializers/users.py:724
 msgid "请提供自定义字段 {} 的值"
 msgstr "请提供自定义字段 {} 的值"
 
-#: bkuser/apis/web/organization/serializers/users.py:729
+#: bkuser/apis/web/organization/serializers/users.py:732
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:733
+#: bkuser/apis/web/organization/serializers/users.py:736
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
@@ -421,15 +433,15 @@ msgstr "当前租户不存在实名用户数据源"
 msgid "当前租户不存在本地实名用户数据源"
 msgstr "当前租户不存在本地实名用户数据源"
 
-#: bkuser/apis/web/organization/views/tenants.py:101
+#: bkuser/apis/web/organization/views/tenants.py:100
 msgid "单选枚举，可选值：{}"
 msgstr "单选枚举，可选值：{}"
 
-#: bkuser/apis/web/organization/views/tenants.py:103
+#: bkuser/apis/web/organization/views/tenants.py:102
 msgid "多选枚举，多个值以 / 分隔，可选值：{}"
 msgstr "多选枚举，多个值以 / 分隔，可选值：{}"
 
-#: bkuser/apis/web/organization/views/tenants.py:105
+#: bkuser/apis/web/organization/views/tenants.py:104
 msgid "数据类型：{}"
 msgstr "数据类型：{}"
 
@@ -462,7 +474,7 @@ msgid "该租户用户没有可用的密码规则"
 msgstr "该租户用户没有可用的密码规则"
 
 #: bkuser/apis/web/organization/views/users.py:683
-#: bkuser/apis/web/personal_center/views.py:538
+#: bkuser/apis/web/personal_center/views.py:536
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 
@@ -499,47 +511,47 @@ msgid "邮箱 {} 在租户 {} 中匹配不到用户"
 msgstr "邮箱 {} 在租户 {} 中匹配不到用户"
 
 #: bkuser/apis/web/password/views.py:133
-#: bkuser/apis/web/personal_center/views.py:264
+#: bkuser/apis/web/personal_center/views.py:265
 msgid "发送短信验证码过于频繁，请稍后再试"
 msgstr "发送短信验证码过于频繁，请稍后再试"
 
-#: bkuser/apis/web/password/views.py:138
+#: bkuser/apis/web/password/views.py:140
 #: bkuser/apis/web/personal_center/views.py:270
-#: bkuser/apis/web/personal_center/views.py:371
+#: bkuser/apis/web/personal_center/views.py:369
 msgid "今日发送验证码次数超过上限，请明天再试"
 msgstr "今日发送验证码次数超过上限，请明天再试"
 
-#: bkuser/apis/web/password/views.py:141 bkuser/apis/web/password/views.py:235
+#: bkuser/apis/web/password/views.py:143 bkuser/apis/web/password/views.py:237
 #: bkuser/apis/web/personal_center/views.py:273
-#: bkuser/apis/web/personal_center/views.py:374
+#: bkuser/apis/web/personal_center/views.py:372
 msgid "请联系管理员处理"
 msgstr "请联系管理员处理"
 
-#: bkuser/apis/web/password/views.py:169
+#: bkuser/apis/web/password/views.py:171
 msgid "手机号码或验证码错误"
 msgstr "手机号码或验证码错误"
 
-#: bkuser/apis/web/password/views.py:182
+#: bkuser/apis/web/password/views.py:184
 #: bkuser/apis/web/personal_center/views.py:221
 #: bkuser/apis/web/personal_center/views.py:324
 msgid "验证码错误"
 msgstr "验证码错误"
 
-#: bkuser/apis/web/password/views.py:185
+#: bkuser/apis/web/password/views.py:187
 #: bkuser/apis/web/personal_center/views.py:226
 #: bkuser/apis/web/personal_center/views.py:329
 msgid "验证码校验失败，请联系管理员处理"
 msgstr "验证码校验失败，请联系管理员处理"
 
-#: bkuser/apis/web/password/views.py:191 bkuser/apis/web/password/views.py:227
+#: bkuser/apis/web/password/views.py:193 bkuser/apis/web/password/views.py:229
 msgid "请稍后再试"
 msgstr "请稍后再试"
 
-#: bkuser/apis/web/password/views.py:232
+#: bkuser/apis/web/password/views.py:234
 msgid "今日发送次数超过上限，请明天再试"
 msgstr "今日发送次数超过上限，请明天再试"
 
-#: bkuser/apis/web/password/views.py:293
+#: bkuser/apis/web/password/views.py:295
 msgid "租户用户不存在"
 msgstr "租户用户不存在"
 
@@ -606,7 +618,7 @@ msgstr "邮箱不可编辑"
 msgid "当前租户更新邮箱不允许发送验证码"
 msgstr "当前租户更新邮箱不允许发送验证码"
 
-#: bkuser/apis/web/personal_center/views.py:366
+#: bkuser/apis/web/personal_center/views.py:364
 msgid "发送邮箱验证码过于频繁，请稍后再试"
 msgstr "发送邮箱验证码过于频繁，请稍后再试"
 
@@ -624,29 +636,25 @@ msgstr "租户 ID {} 已被使用"
 
 #: bkuser/apis/web/platform_management/serializers.py:111
 msgid ""
-"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
+"{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
+"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
 msgstr ""
-"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
+"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，"
+"以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
 
 #: bkuser/apis/web/platform_management/serializers.py:124
 msgid "密码不符合密码规则：{}"
 msgstr "密码不符合密码规则：{}"
 
-#: bkuser/apis/web/platform_management/views.py:209
-msgid "管理员账密登录"
-msgstr "管理员账密登录"
-
-#: bkuser/apis/web/platform_management/views.py:268
+#: bkuser/apis/web/platform_management/views.py:183
 msgid "默认租户不能删除"
 msgstr "默认租户不能删除"
 
-#: bkuser/apis/web/platform_management/views.py:271
+#: bkuser/apis/web/platform_management/views.py:186
 msgid "需要先停用租户才能删除"
 msgstr "需要先停用租户才能删除"
 
-#: bkuser/apis/web/platform_management/views.py:317
+#: bkuser/apis/web/platform_management/views.py:232
 msgid "默认租户不能停用"
 msgstr "默认租户不能停用"
 
@@ -757,7 +765,7 @@ msgid "表达式中非字段部分的字符数不能超过 16 个"
 msgstr "表达式中非字段部分的字符数不能超过 16 个"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:310
-msgid "表达式中存在无效字段: {}"
+msgid "表达式中存在无效字段：{}"
 msgstr "表达式中存在无效字段：{}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:314
@@ -1268,29 +1276,37 @@ msgstr "用户名"
 msgid "用户名@域名"
 msgstr "用户名@域名"
 
-#: bkuser/biz/senders.py:43 bkuser/biz/senders.py:73
+#: bkuser/apps/tenant/constants.py:207
+msgid "企业内用户唯一标识"
+msgstr "企业内用户唯一标识"
+
+#: bkuser/apps/tenant/constants.py:208
+msgid "蓝鲸用户唯一标识"
+msgstr "蓝鲸用户唯一标识"
+
+#: bkuser/biz/senders.py:44 bkuser/biz/senders.py:75
 msgid "今日发送验证码次数超过上限"
 msgstr "今日发送验证码次数超过上限"
 
-#: bkuser/biz/senders.py:101
+#: bkuser/biz/senders.py:103
 msgid "超过发送次数限制"
 msgstr "超过发送次数限制"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-)"
+"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
 "字符组成，以字母或数字开头及结尾"
 msgstr ""
-"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-)"
-"字符组成，以字母或数字开头及结尾"
+"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接"
+"符 (-)字符组成，以字母或数字开头及结尾"
 
 #: bkuser/biz/validators.py:55
 msgid ""
-"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，以字"
+"{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字"
 "母开头，字母或数字结尾"
 msgstr ""
-"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，以字"
-"母开头，字母或数字结尾"
+"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，"
+"以字母开头，字母或数字结尾"
 
 #: bkuser/biz/validators.py:66
 msgid "Logo 文件只能为 png 或 jpg 格式"
@@ -1730,6 +1746,16 @@ msgstr "至多包含 {max_items} 个对象。"
 msgid "至少包含 {min_items} 个对象."
 msgstr "至少包含 {min_items} 个对象。"
 
+#: bkuser/common/serializers.py:30
+#, python-brace-format
+msgid "每个对象长度不能超过 {max_item_length} 个字符."
+msgstr "每个对象长度不能超过 {max_item_length} 个字符."
+
+#: bkuser/common/serializers.py:31
+#, python-brace-format
+msgid "每个对象长度不能小于 {min_item_length} 个字符."
+msgstr "每个对象长度不能小于 {min_item_length} 个字符."
+
 #: bkuser/common/verification_code/constants.py:25
 msgid "忘记密码后申请重置"
 msgstr "忘记密码后申请重置"
@@ -1820,29 +1846,41 @@ msgstr ""
 "API 请求未到达，请检查用户管理服务与实现的 API 服务之间网络是否联通，API 服务"
 "是否能正确响应"
 
-#: bkuser/plugins/general/http.py:70
+#: bkuser/plugins/general/constants.py:69
+msgid "蓝鲸网关"
+msgstr "蓝鲸网关"
+
+#: bkuser/plugins/general/http.py:81
 msgid ""
 "实现的 API 服务异常，请检查实现的 API 服务是否正常或通过日志排查问题原因"
 msgstr ""
 "实现的 API 服务异常，请检查实现的 API 服务是否正常或通过日志排查问题原因"
 
-#: bkuser/plugins/general/http.py:74
+#: bkuser/plugins/general/http.py:85
 msgid "请求异常，请检查 API 路径和查询参数是否正确，并确保符合 API 文档的要求"
 msgstr "请求异常，请检查 API 路径和查询参数是否正确，并确保符合 API 文档的要求"
 
-#: bkuser/plugins/general/http.py:112 bkuser/plugins/general/http.py:169
+#: bkuser/plugins/general/http.py:123 bkuser/plugins/general/http.py:180
 msgid ""
 "请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}"
 msgstr ""
 "请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}"
 
-#: bkuser/plugins/general/http.py:125 bkuser/plugins/general/http.py:182
+#: bkuser/plugins/general/http.py:136 bkuser/plugins/general/http.py:193
 msgid "数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}"
 msgstr "数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}"
 
+#: bkuser/plugins/general/models.py:117
+msgid "蓝鲸网关认证时，gateway_name 和 gateway_stage 不能为空"
+msgstr "蓝鲸网关认证时，gateway_name 和 gateway_stage 不能为空"
+
+#: bkuser/plugins/general/models.py:123
+msgid "服务地址格式不正确"
+msgstr "服务地址格式不正确"
+
 #: bkuser/plugins/general/plugin.py:95
 msgid ""
-"连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
+"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
 "{}"
 msgstr ""
 "连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
@@ -2002,11 +2040,11 @@ msgstr "待导入文件中必填字段 {} 存在空值"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符"
+"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
 "组成，以字母或数字开头及结尾"
 msgstr ""
-"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符"
-"组成，以字母或数字开头及结尾"
+"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 "
+"(-) 字符组成，以字母或数字开头及结尾"
 
 #: bkuser/plugins/local/parser.py:180
 msgid "待导入文件中用户 {} 不能是自己的直接上级"
@@ -2020,6 +2058,28 @@ msgstr "待导入文件中存在重复用户名：{}（该检查大小写不敏�
 msgid "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符"
 msgstr "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符"
 
+#: bkuser/plugins/wecom/models.py:44
+msgid "指定部门同步时，需要提供部门 ID"
+msgstr "指定部门同步时，需要提供部门 ID"
+
+#: bkuser/plugins/wecom/plugin.py:67
+msgid "获取到的部门列表为空，请检查企业微信配置"
+msgstr "获取到的部门列表为空，请检查企业微信配置"
+
+#: bkuser/plugins/wecom/plugin.py:76
+msgid ""
+"连接测试失败: 无法连接企业微信服务或认证失败，请检查 corp_id 和 corp_secret "
+"配置。异常信息：{}"
+msgstr "连接测试失败: 无法连接企业微信服务或认证失败，请检查 corp_id 和 corp_secret 配置。异常信息：{}"
+
+#: bkuser/plugins/wecom/plugin.py:84
+msgid "获取到的企业微信部门/用户数据为空，请检查企业微信服务配置"
+msgstr "获取到的企业微信部门/用户数据为空，请检查企业微信服务配置"
+
+#: bkuser/plugins/wecom/plugin.py:90
+msgid "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
+msgstr "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
+
 #: tests/utils/test_std_error.py:80
 msgid "message"
 msgstr "message"
@@ -2027,6 +2087,9 @@ msgstr "message"
 #: tests/utils/test_std_error.py:81
 msgid "new message"
 msgstr "new message"
+
+#~ msgid "管理员账密登录"
+#~ msgstr "管理员账密登录"
 
 #~ msgid "租户用户 ID"
 #~ msgstr "租户用户 ID"

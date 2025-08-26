@@ -242,3 +242,17 @@ def ldap_ds_plugin_cfg() -> Dict[str, Any]:
             "leader_field": "manager",
         },
     }
+
+
+@pytest.fixture
+def wecom_ds_plugin_cfg() -> Dict[str, Any]:
+    return {
+        "server_config": {
+            "corp_id": "test_corp_id",
+            "corp_secret": "test_corp_secret",
+            "request_timeout": 30,
+            "retries": 1,
+            "sync_scope": "specific_dept",
+            "sync_dept_id": 1,
+        },
+    }

@@ -49,6 +49,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     WORKBOOK_TEMPORARY_STORE = "wts"
     # OpenWeb API 限流
     OPEN_WEB_API_THROTTLE = "owat"
+    # 企业微信 API access_token
+    WECOM_API_ACCESS_TOKEN = "wecom_api_access_token"
 
 
 def _default_key_function(*args, **kwargs):

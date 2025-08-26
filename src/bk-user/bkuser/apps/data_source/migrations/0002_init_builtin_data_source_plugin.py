@@ -68,6 +68,19 @@ def forwards_func(apps, schema_editor):
         },
     )
 
+    DataSourcePlugin.objects.get_or_create(
+        id=DataSourcePluginEnum.WECOM,
+        defaults={
+            "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.WECOM),
+            "name_zh_cn": "企业微信数据源",
+            "name_en_us": "WeCom Data Source",
+            "description": "企业微信是腾讯微信团队为企业打造的专业办公工具，支持企业微信用户数据同步和登录认证",
+            "description_zh_cn": "企业微信是腾讯微信团队为企业打造的专业办公工具，支持企业微信用户数据同步和登录认证",
+            "description_en_us": "WeCom is a professional office tool developed by Tencent's WeChat team for enterprises, supporting WeCom user data synchronization and login authentication.",
+            "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/wecom/logo.png"),
+        },
+    )
+
 
 class Migration(migrations.Migration):
     dependencies = [

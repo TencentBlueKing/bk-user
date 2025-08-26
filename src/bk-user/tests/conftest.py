@@ -37,6 +37,7 @@ from tests.fixtures.data_source import (  # noqa: F401
     ldap_ds_plugin_cfg,
     local_ds_plugin,
     local_ds_plugin_cfg,
+    wecom_ds_plugin_cfg,
 )
 from tests.fixtures.tenant import tenant_user_custom_fields  # noqa: F401
 from tests.test_utils.auth import create_user
