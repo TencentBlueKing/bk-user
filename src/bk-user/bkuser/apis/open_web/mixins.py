@@ -18,6 +18,8 @@
 from functools import cached_property
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
+from django.conf import settings
+from django.http import HttpResponseForbidden
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -33,6 +35,33 @@ class OpenWebApiCommonMixin:
     request: Request
 
     TenantHeaderKey = "HTTP_X_BK_TENANT_ID"
+
+    def dispatch(self, request, *args, **kwargs):
+        # 校验浏览器请求
+        if not self._is_browser_request(request):
+            return HttpResponseForbidden("OpenWeb APIs are only allowed from browser requests")
+
+        return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+    def _is_browser_request(self, request) -> bool:
+        """校验是否为浏览器请求"""
+        # 校验必要请求头存在且值为非空
+        if not all(request.META.get(key) for key in settings.OPEN_WEB_API_REQUIRED_BROWSER_HEADERS):
+            return False
+
+        # 校验 User-Agent 请求头（忽略大小写）
+        user_agent = request.META.get("HTTP_USER_AGENT").lower()
+        whitelist = [browser.lower() for browser in settings.OPEN_WEB_API_USER_AGENT_WHITELIST]
+
+        if not any(browser in user_agent for browser in whitelist):
+            return False
+
+        # 校验 Sec-Fetch-* 请求头
+        return (
+            request.META.get("HTTP_SEC_FETCH_DEST") == "empty"
+            and request.META.get("HTTP_SEC_FETCH_MODE") == "cors"
+            and request.META.get("HTTP_SEC_FETCH_SITE") == "same-site"
+        )
 
     @cached_property
     def tenant_id(self) -> str:
