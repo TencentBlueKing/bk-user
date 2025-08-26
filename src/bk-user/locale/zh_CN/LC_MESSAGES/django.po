@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-25 11:05+0800\n"
+"POT-Creation-Date: 2025-08-26 15:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2058,25 +2058,27 @@ msgstr "待导入文件中存在重复用户名：{}（该检查大小写不敏�
 msgid "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符"
 msgstr "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符"
 
-#: bkuser/plugins/wecom/models.py:44
+#: bkuser/plugins/wecom/models.py:53
 msgid "指定部门同步时，需要提供部门 ID"
 msgstr "指定部门同步时，需要提供部门 ID"
 
-#: bkuser/plugins/wecom/plugin.py:67
+#: bkuser/plugins/wecom/plugin.py:68
 msgid "获取到的部门列表为空，请检查企业微信配置"
 msgstr "获取到的部门列表为空，请检查企业微信配置"
 
-#: bkuser/plugins/wecom/plugin.py:76
+#: bkuser/plugins/wecom/plugin.py:77
 msgid ""
-"连接测试失败: 无法连接企业微信服务或认证失败，请检查 corp_id 和 corp_secret "
+"连接测试失败: 无法连接企业微信服务，请检查 corp_id 和 corp_secret 配置。异常"
+"信息：{}"
+msgstr ""
+"连接测试失败: 无法连接企业微信服务，请检查 corp_id 和 corp_secret "
 "配置。异常信息：{}"
-msgstr "连接测试失败: 无法连接企业微信服务或认证失败，请检查 corp_id 和 corp_secret 配置。异常信息：{}"
 
-#: bkuser/plugins/wecom/plugin.py:84
+#: bkuser/plugins/wecom/plugin.py:87
 msgid "获取到的企业微信部门/用户数据为空，请检查企业微信服务配置"
 msgstr "获取到的企业微信部门/用户数据为空，请检查企业微信服务配置"
 
-#: bkuser/plugins/wecom/plugin.py:90
+#: bkuser/plugins/wecom/plugin.py:93
 msgid "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
 msgstr "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-25 11:05+0800\n"
+"POT-Creation-Date: 2025-08-26 15:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1982,7 +1982,9 @@ msgstr ""
 
 #: bkuser/plugins/general/models.py:117
 msgid "蓝鲸网关认证时，gateway_name 和 gateway_stage 不能为空"
-msgstr "When authenticating the BlueKing API Gateway, gateway_name and gateway_stage cannot be empty."
+msgstr ""
+"When authenticating the BlueKing API Gateway, gateway_name and gateway_stage "
+"cannot be empty."
 
 #: bkuser/plugins/general/models.py:123
 msgid "服务地址格式不正确"
@@ -2199,32 +2201,37 @@ msgstr ""
 "User {} organization path {} is invalid: must not start or end with / or "
 "contain consecutive / characters"
 
-#: bkuser/plugins/wecom/models.py:44
+#: bkuser/plugins/wecom/models.py:53
 msgid "指定部门同步时，需要提供部门 ID"
-msgstr "When synchronising designated departments, you need to provide the department ID."
+msgstr ""
+"When synchronising designated departments, you need to provide the "
+"department ID."
 
-#: bkuser/plugins/wecom/plugin.py:67
+#: bkuser/plugins/wecom/plugin.py:68
 msgid "获取到的部门列表为空，请检查企业微信配置"
 msgstr ""
 "The retrieved department list is empty, please check the WeCom configuration."
 
-#: bkuser/plugins/wecom/plugin.py:76
+#: bkuser/plugins/wecom/plugin.py:77
 msgid ""
-"连接测试失败: 无法连接企业微信服务，请检查 corp_id 和 corp_secret "
-"配置。异常信息：{}"
+"连接测试失败: 无法连接企业微信服务，请检查 corp_id 和 corp_secret 配置。异常"
+"信息：{}"
 msgstr ""
 "Connection test failed: unable to establish connection for WeCom service, "
-"please check the corp_id and corp_secret configuration. Exception information: {}"
+"please check the corp_id and corp_secret configuration. Exception "
+"information: {}"
 
-#: bkuser/plugins/wecom/plugin.py:84
+#: bkuser/plugins/wecom/plugin.py:87
 msgid "获取到的企业微信部门/用户数据为空，请检查企业微信服务配置"
 msgstr ""
-"The retrieved department/user data is empty, please check the WeCom configuration."
+"The retrieved department/user data is empty, please check the WeCom "
+"configuration."
 
-#: bkuser/plugins/wecom/plugin.py:90
+#: bkuser/plugins/wecom/plugin.py:93
 msgid "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
 msgstr ""
-"Failed to parse WeCom user/department data, please ensure the returns data format. Exception information: {}"
+"Failed to parse WeCom data, please ensure the returns data "
+"format. Exception information: {}"
 
 #: tests/utils/test_std_error.py:80
 msgid "message"
