@@ -29,6 +29,7 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -51,7 +52,7 @@ from bkuser.biz.validators import (
     validate_user_new_password,
 )
 from bkuser.common.constants import ALLOWED_DATETIME_MAX_OFFSET, PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
-from bkuser.common.serializers import PasswordRuleSerializer, StringArrayField
+from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -473,7 +474,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 注：raw_info 格式是以英文逗号 (,)、中文逗号 (，)、英文分号 (;) 或中文分号 (；)
             # 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email gender region hobbies
-            # 示例：kafka, 卡芙卡，kafka@starrail.com, 女，StarCoreHunter, 狩猎/阅读
+            # 示例：kafka, 卡芙卡, kafka@starrail.com, 女, StarCoreHunter, 狩猎/阅读
             data: List[str] = [s.strip() for s in re.split(r"[,，;；]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(

@@ -17,7 +17,7 @@
 from typing import List
 
 from django.utils.translation import gettext_lazy as _
-from rest_framework import fields, serializers
+from rest_framework import fields
 from rest_framework.fields import empty
 
 
@@ -25,10 +25,10 @@ class StringArrayField(fields.CharField):
     """String representation of an array field"""
 
     default_error_messages = {
-        "max_items": _("至多包含 {max_items} 个对象。"),
-        "min_items": _("至少包含 {min_items} 个对象。"),
-        "max_item_length": _("每个对象长度不能超过 {max_item_length} 个字符。"),
-        "min_item_length": _("每个对象长度不能小于 {min_item_length} 个字符。"),
+        "max_items": _("至多包含 {max_items} 个对象."),
+        "min_items": _("至少包含 {min_items} 个对象."),
+        "max_item_length": _("每个对象长度不能超过 {max_item_length} 个字符."),
+        "min_item_length": _("每个对象长度不能小于 {min_item_length} 个字符."),
     }
 
     def __init__(
@@ -70,24 +70,3 @@ class StringArrayField(fields.CharField):
         # convert string to list
         data = super().to_internal_value(data)
         return [x.strip() for x in data.split(self.delimiter) if x]
-
-
-class PasswordRuleSerializer(serializers.Serializer):
-    """密码规则序列化器"""
-
-    # --- 长度限制类 ---
-    min_length = fields.IntegerField(help_text="密码最小长度")
-    max_length = fields.IntegerField(help_text="密码最大长度")
-    # --- 字符限制类 ---
-    contain_lowercase = fields.BooleanField(help_text="必须包含小写字母")
-    contain_uppercase = fields.BooleanField(help_text="必须包含大写字母")
-    contain_digit = fields.BooleanField(help_text="必须包含数字")
-    contain_punctuation = fields.BooleanField(help_text="必须包含特殊字符（标点符号）")
-    # --- 连续性限制类 ---
-    not_continuous_count = fields.IntegerField(help_text="密码不允许连续 N 位出现")
-    not_keyboard_order = fields.BooleanField(help_text="不允许键盘序")
-    not_continuous_letter = fields.BooleanField(help_text="不允许连续字母序")
-    not_continuous_digit = fields.BooleanField(help_text="不允许连续数字序")
-    not_repeated_symbol = fields.BooleanField(help_text="重复字母，数字，特殊字符")
-    # --- 规则提示 ---
-    rule_tips = fields.ListField(help_text="用户密码规则提示", child=fields.CharField(), source="tips")

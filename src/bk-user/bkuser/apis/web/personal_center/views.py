@@ -565,9 +565,10 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
 
 
 class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],

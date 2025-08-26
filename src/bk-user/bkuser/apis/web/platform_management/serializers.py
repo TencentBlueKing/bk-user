@@ -22,12 +22,12 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.notification.constants import NotificationMethod
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX, TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.validators import validate_duplicate_tenant_name, validate_logo, validate_user_new_password
 from bkuser.common.passwd import PasswordValidator
-from bkuser.common.serializers import PasswordRuleSerializer
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
