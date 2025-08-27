@@ -23,7 +23,6 @@ from bkuser.common.passwd import PasswordRule
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from rest_framework.exceptions import ValidationError
 
 pytestmark = pytest.mark.django_db
 
@@ -62,10 +61,8 @@ class TestPasswordRuleHandler:
             plugin_config=cfg,
         )
 
-        with pytest.raises(ValidationError) as e:
-            PasswordRuleHandler.get_data_source_password_rule(data_source)
-
-        assert "仅支持本地实名数据源的密码规则获取" in str(e.value)
+        result = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        assert result is None
 
     def test_get_data_source_password_rule_disabled(self, random_tenant):
         """测试未启用密码的数据源失败"""
@@ -78,7 +75,5 @@ class TestPasswordRuleHandler:
             plugin_config=cfg,
         )
 
-        with pytest.raises(ValidationError) as e:
-            PasswordRuleHandler.get_data_source_password_rule(data_source)
-
-        assert "该数据源未启用密码" in str(e.value)
+        result = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        assert result is None
