@@ -394,6 +394,8 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
 class DefaultPasswordRuleRetrieveApi(generics.RetrieveAPIView):
     """获取默认密码规则"""
 
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
+
     @swagger_auto_schema(
         tags=["platform_management.tenant"],
         operation_description="默认密码规则",
