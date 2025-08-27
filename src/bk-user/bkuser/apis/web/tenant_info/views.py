@@ -218,7 +218,7 @@ class TenantBuiltinManagerPasswordRuleRetrieveApi(CurrentTenantBuiltinDataSource
         # 内建数据源
         data_source, _ = self.get_builtin_data_source_and_user()
 
-        # Note: 理论上内置管理数据源的密码规则不可能为空
+        # Note: 理论上内建数据源的密码规则不可能为空
         password_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
         return Response(
             status=status.HTTP_200_OK, data=TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(password_rule).data
