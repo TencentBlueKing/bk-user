@@ -46,7 +46,11 @@
           <span>{{ row.target_status === 'enabled' ? $t('已接收') : $t('待接收')}}</span>
         </template>
       </bk-table-column>
-      <bk-table-column prop="creator" :label="$t('创建人')" />
+      <bk-table-column prop="creator" :label="$t('创建人')">
+        <template #default="{ row }">
+          <bk-user-display-name :user-id="row.creator"></bk-user-display-name>
+        </template>
+      </bk-table-column>
       <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
       <bk-table-column
         prop="source_status" :label="$t('启/停')" :filter="{ list: statusFilters }">

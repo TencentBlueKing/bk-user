@@ -26,7 +26,7 @@
         </bk-table-column>
         <bk-table-column prop="operator" :label="$t('操作人')">
           <template #default="{ row }">
-            <span>{{ row.operator || '--' }}</span>
+            <bk-user-display-name :user-id="row.operator"></bk-user-display-name>
           </template>
         </bk-table-column>
         <bk-table-column prop="trigger" :label="$t('触发类型')">

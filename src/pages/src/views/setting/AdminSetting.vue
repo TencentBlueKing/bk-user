@@ -65,7 +65,7 @@
             <template #icon>
               <i class="user-icon icon-yonghu" />
             </template>
-            {{ `${item.username}（${item.full_name}）` }}
+            <bk-user-display-name :user-id="item.id"></bk-user-display-name>
           </bk-tag>
           <i
             class="user-icon icon-add-2"

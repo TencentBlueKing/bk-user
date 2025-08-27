@@ -101,7 +101,7 @@
           >
             <div
               :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <span class="help-info-name">{{ userInfo.display_name }}</span>
+              <bk-user-display-name :user-id="userInfo.username" class="help-info-name"></bk-user-display-name>
               <DownShape class="help-info-icon" />
             </div>
             <template #content>

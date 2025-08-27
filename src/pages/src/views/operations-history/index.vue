@@ -12,19 +12,10 @@
             :model="formData"
             class="w-full mt-[24px]">
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作人')">
-              <MemberSelector
-                class="w-[300px]"
-                :state="realUsers"
-                :params="params"
-                :show-on-init="false"
-                v-model:model-value="curMember"
-                :disabled="true"
-                :multiple="false"
-                :clearable="true"
-                @change-select-list="changeSelectList"
-                @search-user-list="fetchRealUsers"
-                @scroll-change="scrollChange"
-              />
+              <UserSelector
+                class="!w-[300px]"
+                v-model:value="formData.creator"
+                :multiple="false" />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
               <bk-select class="items-select" v-model="formData.object_type">
@@ -147,7 +138,7 @@
           </bk-table-column>
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
-              <span>{{ row.creator || '--' }}</span>
+              <bk-user-display-name :user-id="row.creator"></bk-user-display-name>
             </template>
           </bk-table-column>
           <bk-table-column
@@ -171,26 +162,12 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { getCurrentOperationOptions, operationType } from './operations';
 
-import MemberSelector from '@/components/MemberSelector.vue';
 import Empty from '@/components/SearchEmpty.vue';
+import UserSelector from '@/components/UserSelector.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getAudit } from '@/http/operationHistoryFiles';
-import { getRealUsers } from '@/http/settingFiles';
 import { t } from '@/language';
 
-// 人员选择器
-const curMember = ref('');
-const realUsers = ref({
-  count: 0,
-  results: [],
-});
-// 请求人员数据参数
-const params = reactive({
-  page: 1,
-  page_size: 10,
-  keyword: '',
-  exclude_manager: true,
-});
 
 const isHover = ref(false);
 const isFold = reactive({
@@ -285,34 +262,6 @@ const pagination = reactive({
   limitList: [10, 20, 50],
 });
 
-// 获取人员选择器数据
-const initCreator = async () => {
-  const res = await getRealUsers({
-    exclude_manager: params.exclude_manager,
-  });
-  realUsers.value = res.data;
-};
-
-// 人员选择器选择回调方法
-const changeSelectList = (values: string) => {
-  formData.creator = values;
-};
-// 人员选择器分页请求数据处理
-const scrollChange = () => {
-  params.page += 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value.count = res.data.count;
-    realUsers.value.results.push(...res.data.results);
-  });
-};
-// 获取人员选择器列表
-const fetchRealUsers = (value: string) => {
-  params.keyword = value;
-  params.page = 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value = res.data;
-  });
-};
 const isDataEmpty = ref(false);
 const isEmptySearch = ref(false);
 const isDataError = ref(false);
@@ -386,7 +335,6 @@ const handleReset = () => {
   formData.object_name = '';
   formData.object_type = '';
   formData.operation = '';
-  curMember.value = '';
   handleFetchAudit('search');
 };
 
@@ -450,7 +398,6 @@ watch(() => formData.object_type, (value) => {
 
 onMounted(() => {
   handleFetchAudit();
-  initCreator();
 });
 
 </script>
