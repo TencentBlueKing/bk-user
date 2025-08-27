@@ -21,7 +21,6 @@ from typing import Dict
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -35,7 +34,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserFieldOutputSLZ,
     TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
-    TenantUserPasswordRuleRetrieveOutputSLZ,
+    TenantUserPasswordRuleOutputSLZ,
     TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserPhoneVerificationCodeSendInputSLZ,
@@ -573,16 +572,15 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="获取租户用户密码规则提示",
-        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleOutputSLZ()},
     )
     def get(self, *args, **kwargs):
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
         data_source = data_source_user.data_source
 
-        try:
-            passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
-        except ValidationError:
+        passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        if passwd_rule is None:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
 
-        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
+        return Response(TenantUserPasswordRuleOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)

@@ -14,8 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.utils.translation import gettext_lazy as _
-from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.common.passwd import PasswordRule
@@ -32,14 +30,14 @@ class PasswordRuleHandler:
         return cfg.password_rule.to_rule()
 
     @staticmethod
-    def get_data_source_password_rule(data_source: DataSource) -> PasswordRule:
+    def get_data_source_password_rule(data_source: DataSource) -> PasswordRule | None:
         if not (data_source.is_local and data_source.is_real_type):
-            raise ValidationError(_("仅支持本地实名数据源的密码规则获取"))
+            return None
         plugin_config = data_source.get_plugin_cfg()
 
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_rule is not None
         if not plugin_config.enable_password:
-            raise ValidationError(_("该数据源未启用密码"))
+            return None
 
         return plugin_config.password_rule.to_rule()

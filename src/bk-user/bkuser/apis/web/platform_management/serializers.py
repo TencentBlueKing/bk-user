@@ -235,5 +235,5 @@ class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class TenantPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+class DefaultPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
     pass
