@@ -34,7 +34,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserFieldOutputSLZ,
     TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
-    TenantUserPasswordRuleOutputSLZ,
+    TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserPhoneVerificationCodeSendInputSLZ,
@@ -572,7 +572,7 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="获取租户用户密码规则提示",
-        responses={status.HTTP_200_OK: TenantUserPasswordRuleOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
     )
     def get(self, *args, **kwargs):
         tenant_user = self.get_object()
@@ -583,4 +583,4 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
         if passwd_rule is None:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
 
-        return Response(TenantUserPasswordRuleOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)

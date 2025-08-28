@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceTypeEnum
 from bkuser.common.passwd import PasswordRule
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -31,13 +31,17 @@ class PasswordRuleHandler:
 
     @staticmethod
     def get_data_source_password_rule(data_source: DataSource) -> PasswordRule | None:
-        if not (data_source.is_local and data_source.is_real_type):
+        # 只有本地数据源支持获取密码规则
+        if not data_source.is_local:
             return None
+
+        # 仅支持实体数据源和内建管理数据源
+        if not (data_source.is_real_type or data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT):
+            return None
+
         plugin_config = data_source.get_plugin_cfg()
 
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_rule is not None
-        if not plugin_config.enable_password:
-            return None
 
         return plugin_config.password_rule.to_rule()

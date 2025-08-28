@@ -235,5 +235,10 @@ class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
+class TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "platform_management.TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ"
+
+
 class DefaultPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
     pass

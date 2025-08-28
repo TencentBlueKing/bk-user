@@ -276,9 +276,9 @@ class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class TenantUserPasswordRuleOutputSLZ(PasswordRuleSerializer):
-    # Note: 这里为了防止命名冲突，没有使用 TenantUserPasswordRuleRetrieveOutputSLZ
-    pass
+class TenantUserPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "personal_center.TenantUserPasswordRuleRetrieveOutputSLZ"
 
 
 class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):

@@ -51,7 +51,7 @@ class TestPasswordRuleHandler:
         assert password_rule.contain_lowercase is True
 
     def test_get_data_source_password_rule_not_local(self, random_tenant):
-        """测试非本地数据源失败"""
+        """测试虚拟数据源失败"""
         # 创建虚拟数据源
         cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
         data_source = DataSource.objects.create(
@@ -65,7 +65,7 @@ class TestPasswordRuleHandler:
         assert result is None
 
     def test_get_data_source_password_rule_disabled(self, random_tenant):
-        """测试未启用密码的数据源失败"""
+        """测试未启用密码的数据源成功"""
         cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
         cfg.enable_password = False
         data_source = DataSource.objects.create(
@@ -75,5 +75,7 @@ class TestPasswordRuleHandler:
             plugin_config=cfg,
         )
 
-        result = PasswordRuleHandler.get_data_source_password_rule(data_source)
-        assert result is None
+        password_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        assert isinstance(password_rule, PasswordRule)
+        assert password_rule.min_length == 12
+        assert password_rule.contain_lowercase is True

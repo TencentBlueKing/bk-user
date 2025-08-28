@@ -58,6 +58,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .serializers import (
     DefaultPasswordRuleRetrieveOutputSLZ,
+    TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ,
     TenantBuiltinManagerRetrieveOutputSLZ,
     TenantBuiltinManagerUpdateInputSLZ,
     TenantCreateInputSLZ,
@@ -391,14 +392,39 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
         return Response(TenantRelatedResourceStatsOutputSLZ(resources).data)
 
 
+class TenantBuiltinManagerPasswordRuleRetrieveApi(generics.RetrieveAPIView):
+    """获取租户内建管理数据源密码规则"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
+
+    queryset = Tenant.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="内置管理账户密码规则提示",
+        responses={status.HTTP_200_OK: TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant = self.get_object()
+        # 内建数据源
+        data_source = DataSource.objects.get(owner_tenant_id=tenant.id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+
+        # Note: 理论上内建数据源的密码规则不可能为空
+        password_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        return Response(
+            status=status.HTTP_200_OK, data=TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(password_rule).data
+        )
+
+
 class DefaultPasswordRuleRetrieveApi(generics.RetrieveAPIView):
-    """获取默认密码规则"""
+    """获取租户默认密码规则"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["platform_management.tenant"],
-        operation_description="默认密码规则",
+        operation_description="默认密码规则提示",
         responses={status.HTTP_200_OK: DefaultPasswordRuleRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
