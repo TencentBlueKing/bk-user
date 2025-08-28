@@ -21,8 +21,8 @@ from typing import Any, Dict, List, Tuple
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+from bkuser.plugins.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.utils import urljoin
-from bkuser.plugins.wecom.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.wecom.cmsi import get_access_token_from_cmsi, get_wecom_config_from_cmsi
 from bkuser.plugins.wecom.constants import WECOM_API_BASE_URL, WeComDataType, WeComUserStatus
 from bkuser.plugins.wecom.exceptions import RequestAPIError

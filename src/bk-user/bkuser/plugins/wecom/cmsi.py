@@ -18,17 +18,20 @@
 import json
 import logging
 from typing import Any, Dict
+from urllib.parse import urlparse
 
 from django.conf import settings
 
+from bkuser.plugins.common import local
+from bkuser.plugins.http import http_get
 from bkuser.plugins.utils import scrub_data, urljoin
 from bkuser.plugins.wecom.exceptions import RequestAPIError
-from bkuser.plugins.wecom.http import http_get
 
 logger = logging.getLogger(__name__)
 
 
 def _call_esb_api(http_func, url_path, **kwargs):
+    request_id = local.request_id
     if "headers" not in kwargs:
         kwargs["headers"] = {}
 
@@ -52,6 +55,7 @@ def _call_esb_api(http_func, url_path, **kwargs):
     kwargs["headers"].update(
         {
             "Content-Type": "application/json",
+            "X-Request-Id": request_id,
             "X-Bkapi-Authorization": json.dumps(bkapi_authorization),
         }
     )
@@ -61,13 +65,18 @@ def _call_esb_api(http_func, url_path, **kwargs):
     ok, resp_data = http_func(url, **kwargs)
     if not ok:
         logger.error(
-            "esb api failed! %s %s, kwargs: %s, error: %s",
+            "esb api failed! %s %s, kwargs: %s, request_id: %s, error: %s",
             http_func.__name__,
             url,
-            scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization"]),
+            scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization", "X-Request-Id"]),
+            request_id,
             resp_data["error"],
         )
-        raise RequestAPIError(f"request esb error! Request=[{http_func.__name__} {url} error={resp_data['error']}")
+        raise RequestAPIError(
+            f"request esb fail! "
+            f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}]"
+            f"error={resp_data['error']}"
+        )
 
     code = resp_data.get("code", -1)
     message = resp_data.get("message", "unknown")
@@ -81,18 +90,24 @@ def _call_esb_api(http_func, url_path, **kwargs):
         return resp_data["data"]
 
     logger.error(
-        "esb api error! %s %s, data: %s, code: %s, message: %s",
+        "esb api error! %s %s, data: %s, request_id: %s, code: %s, message: %s",
         http_func.__name__,
         url,
-        scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization"]),
+        scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization", "X-Request-Id"]),
+        request_id,
         code,
         message,
     )
 
-    raise RequestAPIError(f"request esb error! Request=[{http_func.__name__} {url} error={resp_data['error']}")
+    raise RequestAPIError(
+        f"request esb error! "
+        f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}] "
+        f"Response[code={code}, message={message}]"
+    )
 
 
 def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
+    request_id = local.request_id
     kwargs.setdefault("headers", {})
 
     # 应用认证 Header
@@ -105,6 +120,7 @@ def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
     kwargs["headers"].update(
         {
             "Content-Type": "application/json",
+            "X-Request-Id": request_id,
             "X-Bkapi-Authorization": json.dumps(bkapi_authorization),
             "X-Bk-Tenant-Id": tenant_id,
         }
@@ -116,12 +132,17 @@ def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
     ok, resp_data = http_func(url, **kwargs)
     if not ok:
         logger.error(
-            "apigw api failed! %s %s, error: %s",
+            "apigw api failed! %s %s, request_id: %s, error: %s",
             http_func.__name__,
             url,
+            request_id,
             resp_data["error"],
         )
-        raise RequestAPIError(f"request apigw fail! Request=[{http_func.__name__} {url} error={resp_data['error']}")
+        raise RequestAPIError(
+            f"request apigw fail! "
+            f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}]"
+            f"error={resp_data['error']}"
+        )
     return resp_data["data"]
 
 
