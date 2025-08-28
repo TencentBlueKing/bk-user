@@ -23,7 +23,7 @@ from requests.adapters import HTTPAdapter, Retry
 
 from bkuser.plugins.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.utils import urljoin
-from bkuser.plugins.wecom.cmsi import get_access_token_from_cmsi, get_wecom_config_from_cmsi
+from bkuser.plugins.wecom.cmsi import get_access_token_from_cmsi, get_wecom_config
 from bkuser.plugins.wecom.constants import WECOM_API_BASE_URL, WeComDataType, WeComUserStatus
 from bkuser.plugins.wecom.exceptions import RequestAPIError
 from bkuser.plugins.wecom.models import ServerConfig
@@ -59,7 +59,7 @@ class WeComAPIClient:
 
         if not access_token:
             # 获取蓝鲸 CMSI 微信配置
-            wecom_config = get_wecom_config_from_cmsi(self.server_config.tenant_id)
+            wecom_config = get_wecom_config(self.server_config.tenant_id)
             corp_id = wecom_config.get("corp_id", "")
             corp_secret = wecom_config.get("corp_secret", "")
 

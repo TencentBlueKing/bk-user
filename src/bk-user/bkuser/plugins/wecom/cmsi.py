@@ -146,7 +146,7 @@ def _call_apigw_api(http_func, apigw_name, url_path, tenant_id, **kwargs):
     return resp_data["data"]
 
 
-def get_wecom_config_from_cmsi(tenant_id: str) -> Dict[str, Any]:
+def get_wecom_config(tenant_id: str) -> Dict[str, Any]:
     """获取蓝鲸 CMSI 中的微信配置"""
     if settings.ENABLE_MULTI_TENANT_MODE:
         return _call_apigw_api(http_get, "bk-cmsi", "/v1/channels/weixin/settings/", tenant_id)
