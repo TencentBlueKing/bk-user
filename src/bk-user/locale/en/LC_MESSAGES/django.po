@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-26 15:00+0800\n"
+"POT-Creation-Date: 2025-08-28 15:56+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -131,80 +131,84 @@ msgstr ""
 msgid "请先确认策略，再尝试修改状态"
 msgstr "Please confirm the strategy before attempting to modify the status"
 
-#: bkuser/apis/web/data_source/serializers.py:52
+#: bkuser/apis/web/data_source/serializers.py:53
 msgid "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
-msgstr ""
+msgstr "In BlueKing API Gateway authentication methods, the tenant_id must correspond to the current tenant."
 
-#: bkuser/apis/web/data_source/serializers.py:88
+#: bkuser/apis/web/data_source/serializers.py:59
+msgid "企业微信数据源插件的租户 ID 必须与当前租户保持一致"
+msgstr "The tenant ID of the WeCom data source plugin must match the current tenant."
+
+#: bkuser/apis/web/data_source/serializers.py:95
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr ""
 "Target field {} in the field mapping does not belong to either custom or "
 "built-in fields"
 
-#: bkuser/apis/web/data_source/serializers.py:95
+#: bkuser/apis/web/data_source/serializers.py:102
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "Required target field {} is missing a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:123
+#: bkuser/apis/web/data_source/serializers.py:130
 msgid "数据源插件不存在"
 msgstr "Date source plugin does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:137
+#: bkuser/apis/web/data_source/serializers.py:144
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "A tenant can only have one data source of the real type"
 
-#: bkuser/apis/web/data_source/serializers.py:143
-#: bkuser/apis/web/data_source/serializers.py:225
+#: bkuser/apis/web/data_source/serializers.py:150
+#: bkuser/apis/web/data_source/serializers.py:236
 msgid "当前数据源类型必须配置字段映射"
 msgstr "The current date source type must be configured with a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:146
-#: bkuser/apis/web/data_source/serializers.py:228
+#: bkuser/apis/web/data_source/serializers.py:153
+#: bkuser/apis/web/data_source/serializers.py:239
 msgid "当前数据源类型必须提供同步配置"
 msgstr ""
 "The current date source type must provide a synchronization configuration"
 
-#: bkuser/apis/web/data_source/serializers.py:149
-#: bkuser/apis/web/data_source/serializers.py:266
+#: bkuser/apis/web/data_source/serializers.py:156
+#: bkuser/apis/web/data_source/serializers.py:277
 msgid "数据源插件 {} 不存在"
 msgstr "Data source plugin {} does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:155
-#: bkuser/apis/web/data_source/serializers.py:207
-#: bkuser/apis/web/data_source/serializers.py:286
+#: bkuser/apis/web/data_source/serializers.py:162
+#: bkuser/apis/web/data_source/serializers.py:218
+#: bkuser/apis/web/data_source/serializers.py:297
 msgid "插件配置不合法：{}"
 msgstr "Plugin configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:263
+#: bkuser/apis/web/data_source/serializers.py:274
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "Local data source does not support connectivity test"
 
-#: bkuser/apis/web/data_source/serializers.py:274
+#: bkuser/apis/web/data_source/serializers.py:285
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "The current user tenant {} does not have a data source with ID {}"
 
-#: bkuser/apis/web/data_source/serializers.py:313
+#: bkuser/apis/web/data_source/serializers.py:324
 msgid "密码规则配置不合法: {}"
 msgstr "Password rule configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:321
+#: bkuser/apis/web/data_source/serializers.py:332
 msgid "指定数据源不存在"
 msgstr "The specified data source does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:325
+#: bkuser/apis/web/data_source/serializers.py:336
 msgid "无法使用该数据源生成随机密码"
 msgstr "Unable to generate a random password using this data source"
 
-#: bkuser/apis/web/data_source/serializers.py:351
+#: bkuser/apis/web/data_source/serializers.py:362
 msgid "待导入文件必须为 Excel 格式"
 msgstr "The file to be imported must be in Excel format"
 
-#: bkuser/apis/web/data_source/serializers.py:354
+#: bkuser/apis/web/data_source/serializers.py:365
 msgid "待导入文件大小不得超过 {} M"
 msgstr "The file to be imported must not exceed {} M in size"
 
-#: bkuser/apis/web/data_source/serializers.py:360
+#: bkuser/apis/web/data_source/serializers.py:371
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "Full import mode is temporarily unavailable for security reasons"
 
@@ -2201,7 +2205,7 @@ msgstr ""
 "User {} organization path {} is invalid: must not start or end with / or "
 "contain consecutive / characters"
 
-#: bkuser/plugins/wecom/models.py:53
+#: bkuser/plugins/wecom/models.py:55
 msgid "指定部门同步时，需要提供部门 ID"
 msgstr ""
 "When synchronising designated departments, you need to provide the "
@@ -2230,8 +2234,8 @@ msgstr ""
 #: bkuser/plugins/wecom/plugin.py:93
 msgid "解析企业微信数据失败，请检查返回的数据格式。异常信息：{}"
 msgstr ""
-"Failed to parse WeCom data, please ensure the returns data "
-"format. Exception information: {}"
+"Failed to parse WeCom data, please ensure the returns data format. Exception "
+"information: {}"
 
 #: tests/utils/test_std_error.py:80
 msgid "message"

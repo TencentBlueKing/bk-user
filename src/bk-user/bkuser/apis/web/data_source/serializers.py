@@ -39,6 +39,7 @@ from bkuser.plugins.general.constants import AuthMethod
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import PasswordRuleConfig
 from bkuser.plugins.models import BasePluginConfig
+from bkuser.plugins.wecom.models import WeComDataSourcePluginConfig
 from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
 
@@ -50,6 +51,13 @@ def _validate_general_plugin_tenant_id(plugin_config: GeneralDataSourcePluginCon
     auth_config = plugin_config.auth_config
     if auth_config.method == AuthMethod.BK_APIGATEWAY and auth_config.tenant_id != tenant_id:
         raise ValidationError(_("蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"))
+
+
+def _validate_wecom_plugin_tenant_id(plugin_config: WeComDataSourcePluginConfig, tenant_id: str) -> None:
+    """校验企业微信数据源插件的租户 ID"""
+    server_config = plugin_config.server_config
+    if server_config.tenant_id != tenant_id:
+        raise ValidationError(_("企业微信数据源插件的租户 ID 必须与当前租户保持一致"))
 
 
 class DataSourceListInputSLZ(serializers.Serializer):
@@ -157,6 +165,10 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         if plugin_id == DataSourcePluginEnum.GENERAL:
             assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
             _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
+
+        if plugin_id == DataSourcePluginEnum.WECOM:
+            assert isinstance(attrs["plugin_config"], WeComDataSourcePluginConfig)
+            _validate_wecom_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
 
         return attrs
 

@@ -21,12 +21,12 @@ from typing import Any, Dict, List, Tuple
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
-from bkuser.component.http import http_get
+from bkuser.plugins.utils import urljoin
+from bkuser.plugins.wecom.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.plugins.wecom.cmsi import get_access_token_from_cmsi, get_wecom_config_from_cmsi
 from bkuser.plugins.wecom.constants import WECOM_API_BASE_URL, WeComDataType, WeComUserStatus
 from bkuser.plugins.wecom.exceptions import RequestAPIError
 from bkuser.plugins.wecom.models import ServerConfig
-from bkuser.utils.url import urljoin
 
 logger = logging.getLogger(__name__)
 
@@ -45,24 +45,37 @@ class WeComAPIClient:
         """
         params = {"corpid": self.server_config.corp_id, "corpsecret": self.server_config.corp_secret}
 
-        resp_data = self._call(http_get, "/gettoken", params=params)
+        resp_data = self._call("/gettoken", params=params)
         return resp_data["access_token"], resp_data["expires_in"]
 
     @property
     def access_token(self) -> str:
-        # 先从缓存获取，获取不到再调用接口查询
-        cache_key = f"{self.server_config.corp_id}:access_token"
+        """
+        获取企业微信 access_token
+        """
+        # 先从缓存获取 access_token
+        cache_key = f"{self.server_config.corp_id}_{self.server_config.corp_secret}:access_token"
         access_token = self.cache.get(cache_key)
+
         if not access_token:
-            access_token, expires_in = self._get_access_token()
-            self.cache.set(cache_key, access_token, expires_in - 60)
+            # 获取蓝鲸 CMSI 微信配置
+            wecom_config = get_wecom_config_from_cmsi(self.server_config.tenant_id)
+            corp_id = wecom_config.get("corp_id", "")
+            corp_secret = wecom_config.get("corp_secret", "")
+
+            # 如果用户输入的 corp_id 和 corp_secret 与蓝鲸 CMSI 配置一致，则使用蓝鲸 CMSI 接口获取 access_token
+            if corp_id == self.server_config.corp_id and corp_secret == self.server_config.corp_secret:
+                access_token = get_access_token_from_cmsi(self.server_config.tenant_id)
+            else:
+                # 否则直接使用用户输入的 corp_id 和 corp_secret 请求 access_token
+                access_token, expires_in = self._get_access_token()
+                self.cache.set(cache_key, access_token, expires_in - 60)
+
         return access_token
 
-    def _call(self, http_func, url_path, params: Dict[str, Any], **kwargs):
+    def _call(self, url_path: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """调用企业微信接口"""
         url = urljoin(WECOM_API_BASE_URL, url_path)
-
-        # 使用 requests 会话和重试机制
         with requests.Session() as session:
             adapter = HTTPAdapter(
                 max_retries=Retry(
@@ -76,27 +89,25 @@ class WeComAPIClient:
             resp = session.get(url, timeout=self.server_config.request_timeout, params=params, **kwargs)
             if not resp.ok:
                 raise RequestAPIError(
-                    f"request wecom api fail! Request=[{http_func.__name__} {url} "
+                    f"request wecom api fail! Request=[GET {url}] "
                     f"status_code={resp.status_code}, content={resp.text}"
                 )
 
             resp_data = resp.json()
 
-        errcode = resp_data.get("errcode") or 0
-        # 出错返回码，为 0 表示成功，非 0 表示调用失败
-        if not errcode:
-            return resp_data
+            errcode = resp_data.get("errcode") or 0
+            # 出错返回码，为 0 表示成功，非 0 表示调用失败
+            if not errcode:
+                return resp_data
 
-        errmsg = resp_data.get("errmsg", "unknown")
-        raise RequestAPIError(
-            f"request wecom api error! "
-            f"Request=[{http_func.__name__} {url} Response[code={errcode}, message={errmsg}]"
-        )
+            errmsg = resp_data.get("errmsg", "unknown")
+            raise RequestAPIError(
+                f"request wecom api error! " f"Request=[GET {url}] Response[code={errcode}, message={errmsg}]"
+            )
 
     def fetch_department_list(self) -> List[int]:
         """获取子部门 ID 列表"""
         resp_data = self._call(
-            http_get,
             "/department/simplelist",
             params={"access_token": self.access_token, "id": self.server_config.sync_dept_id},
         )
@@ -107,13 +118,13 @@ class WeComAPIClient:
 
     def fetch_department_info(self, id: int) -> Dict[str, Any]:
         """获取部门信息"""
-        resp_data = self._call(http_get, "/department/get", params={"access_token": self.access_token, "id": id})
+        resp_data = self._call("/department/get", params={"access_token": self.access_token, "id": id})
         return resp_data.get("department", {})
 
     def fetch_user_info(self, department_id: int) -> List[Dict[str, Any]]:
         """获取部门所属用户信息"""
         resp_data = self._call(
-            http_get, "/user/list", params={"access_token": self.access_token, "department_id": department_id}
+            "/user/list", params={"access_token": self.access_token, "department_id": department_id}
         )
         users = resp_data.get("userlist", [])
 

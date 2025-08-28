@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 
 
+from django.conf import settings
+
 from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
 from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
 
@@ -27,5 +29,6 @@ DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
         retries=DEFAULT_RETRIES,
         sync_scope=WeComSyncScope.SPECIFIC_DEPT,
         sync_dept_id=1,
+        tenant_id=settings.DEFAULT_TENANT_ID,
     ),
 )
