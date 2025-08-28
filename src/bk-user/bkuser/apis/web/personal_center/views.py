@@ -574,7 +574,7 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
         operation_description="获取租户用户密码规则提示",
         responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
     )
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
         data_source = data_source_user.data_source
