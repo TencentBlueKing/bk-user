@@ -35,6 +35,7 @@ from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.tenant.utils import is_username_frozen
 from bkuser.plugins.models import RawDataSourceUser
+from bkuser.utils.name import generate_chinese_name_initial
 
 
 class DataSourceUserSyncer:
@@ -89,7 +90,16 @@ class DataSourceUserSyncer:
             waiting_delete_users.delete()
             DataSourceUser.objects.bulk_update(
                 waiting_update_users,
-                fields=["username", "full_name", "email", "phone", "phone_country_code", "extras", "updated_at"],
+                fields=[
+                    "username",
+                    "full_name",
+                    "email",
+                    "phone",
+                    "phone_country_code",
+                    "chinese_name_initial",
+                    "extras",
+                    "updated_at",
+                ],
                 batch_size=self.batch_size,
             )
             DataSourceUser.objects.bulk_create(waiting_create_users, batch_size=self.batch_size)
@@ -138,6 +148,9 @@ class DataSourceUserSyncer:
 
             if self.enable_update_username:
                 u.username = target_user.username
+
+            if u.full_name != target_user.full_name:
+                u.chinese_name_initial = generate_chinese_name_initial(target_user.full_name)
 
             u.full_name = target_user.full_name
             u.email = target_user.email

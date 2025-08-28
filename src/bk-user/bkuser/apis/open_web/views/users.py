@@ -156,6 +156,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(tenant_id=self.tenant_id),
             Q(data_source_user__username__icontains=keyword)
             | Q(data_source_user__full_name__icontains=keyword)
+            | Q(data_source_user__chinese_name_initial__icontains=keyword)
             | search_conditions,
         ]
 

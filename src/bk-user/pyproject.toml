@@ -52,6 +52,7 @@ dependencies = [
     "apigw-manager[cryptography]==4.1.0",
     # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
     "setuptools==80.8.0",
+    "pypinyin>=0.55.0",
 ]
 
 [dependency-groups]

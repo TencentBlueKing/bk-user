@@ -68,6 +68,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="张三",
         email="zhangsan@m.com",
         phone="13512345671",
+        chinese_name_initial="zs",
         data_source=ds,
     )
     lisi = DataSourceUser.objects.create(
@@ -76,6 +77,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="李四",
         email="lisi@m.com",
         phone="13512345672",
+        chinese_name_initial="ls",
         data_source=ds,
     )
     wangwu = DataSourceUser.objects.create(
@@ -84,6 +86,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="王五",
         email="wangwu@m.com",
         phone="13512345673",
+        chinese_name_initial="ww",
         data_source=ds,
     )
     zhaoliu = DataSourceUser.objects.create(
@@ -92,6 +95,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="赵六",
         email="zhaoliu@m.com",
         phone="13512345674",
+        chinese_name_initial="zl",
         data_source=ds,
     )
     liuqi = DataSourceUser.objects.create(
@@ -100,6 +104,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="柳七",
         email="liuqi@m.com",
         phone="13512345675",
+        chinese_name_initial="lq",
         data_source=ds,
     )
     maiba = DataSourceUser.objects.create(
@@ -108,6 +113,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="麦八",
         email="maiba@m.com",
         phone="13512345676",
+        chinese_name_initial="mb",
         data_source=ds,
     )
     yangjiu = DataSourceUser.objects.create(
@@ -116,6 +122,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="杨九",
         email="yangjiu@m.com",
         phone="13512345677",
+        chinese_name_initial="yj",
         data_source=ds,
     )
     lushi = DataSourceUser.objects.create(
@@ -124,6 +131,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="鲁十",
         email="lushi@m.com",
         phone="13512345678",
+        chinese_name_initial="ls",
         data_source=ds,
     )
     linshiyi = DataSourceUser.objects.create(
@@ -132,6 +140,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="林十一",
         email="linshiyi@m.com",
         phone="13512345679",
+        chinese_name_initial="lsy",
         data_source=ds,
     )
     baishier = DataSourceUser.objects.create(
@@ -140,6 +149,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="白十二",
         email="baishier@m.com",
         phone="13512345670",
+        chinese_name_initial="bs",
         data_source=ds,
     )
     # 不属于任何组织，没有上下级的自由人
@@ -149,6 +159,7 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         full_name="自由人",
         email="freedom@m.com",
         phone="1351234567X",
+        chinese_name_initial="zyr",
         data_source=ds,
     )
 
@@ -244,6 +255,7 @@ def init_virtual_data_source_users(ds: DataSource) -> None:
         full_name="张三",
         email="zhangsan@m.com",
         phone="13512345671",
+        chinese_name_initial="zs",
         data_source=ds,
     )
     DataSourceUser.objects.create(
@@ -252,5 +264,6 @@ def init_virtual_data_source_users(ds: DataSource) -> None:
         full_name="李四",
         email="lisi@m.com",
         phone="13512345672",
+        chinese_name_initial="ls",
         data_source=ds,
     )

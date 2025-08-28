@@ -32,6 +32,7 @@ from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
+from bkuser.utils.name import generate_chinese_name_initial
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
@@ -80,6 +81,9 @@ class DataSourceUserConverter:
         else:
             country_code = ""
 
+        # 5. 生成中文姓名首字母缩写（只有中文全名才会生成，否则为 ""）
+        chinese_name_initial = generate_chinese_name_initial(full_name)
+
         return DataSourceUser(
             data_source=self.data_source,
             code=user.code,
@@ -88,6 +92,7 @@ class DataSourceUserConverter:
             email=email,
             phone=phone,
             phone_country_code=country_code,
+            chinese_name_initial=chinese_name_initial,
             extras=self._build_extras(username, props, mapping),
         )
 

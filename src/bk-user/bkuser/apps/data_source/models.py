@@ -152,6 +152,7 @@ class DataSourceUser(TimestampedModel):
 
     # ----------------------- 其他 -----------------------
     extras = models.JSONField("自定义字段", default=dict)
+    chinese_name_initial = models.CharField("中文名首字母缩写", max_length=16, null=True, blank=True, default="")
 
     # ----------------------- 状态相关 -----------------------
     # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态

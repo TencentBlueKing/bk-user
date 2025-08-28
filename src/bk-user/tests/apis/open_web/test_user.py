@@ -163,6 +163,22 @@ class TestTenantUserSearchApi:
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
         assert resp.data[0]["status"] == TenantUserStatus.ENABLED
 
+    def test_with_chinese_name_initial(self, api_client, random_tenant):
+        baishier = TenantUser.objects.get(
+            data_source_user__username="baishier",
+            data_source__type="real",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "bs", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == baishier.id
+
     def test_with_login_name(self, api_client, random_tenant):
         lisi = TenantUser.objects.get(
             data_source_user__username="lisi",
