@@ -33,6 +33,7 @@ from rest_framework.exceptions import (
     NotFound,
     ParseError,
     PermissionDenied,
+    Throttled,
     UnsupportedMediaType,
     ValidationError,
 )
@@ -82,6 +83,10 @@ def _handle_exception(request, exc) -> APIError:
 
     if isinstance(exc, ValidationError):
         return error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
+
+    if isinstance(exc, Throttled):
+        # 处理限流异常，返回429状态码
+        return error_codes.TOO_FREQUENTLY.f(exc.detail)
 
     if isinstance(exc, APIError):
         # 回滚事务

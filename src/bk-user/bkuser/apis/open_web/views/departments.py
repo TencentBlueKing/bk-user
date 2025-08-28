@@ -23,6 +23,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentChildrenListInputSLZ,
@@ -34,6 +35,7 @@ from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentUserListInputSLZ,
     TenantDepartmentUserListOutputSLZ,
 )
+from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -49,6 +51,8 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     搜索部门
     """
+
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_DEPARTMENT)]
 
     pagination_class = None
 

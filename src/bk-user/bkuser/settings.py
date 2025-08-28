@@ -86,6 +86,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
+    "bkuser.apis.open_web.middlewares.OpenWebApiAuditMiddleware",
     "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
@@ -601,7 +602,7 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
     }
     # 生成指定 Logger 对应的 Handlers
     logger_handlers_map: Dict[str, List[str]] = {}
-    for logger_name in ["root", "component", "celery"]:
+    for logger_name in ["root", "component", "celery", "open_web_api_access"]:
         handlers = []
 
         if to_console:
@@ -646,11 +647,16 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
             "django": {"handlers": ["null"], "level": "INFO", "propagate": True},
             "django.server": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
             "django.request": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
-            # 除 root 外的其他指定 Logger
+            "open_web_api_access": {
+                "handlers": logger_handlers_map["open_web_api_access"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            # 除 root 和 open_web_api_access 外的其他指定 Logger
             **{
                 logger_name: {"handlers": handlers, "level": log_level, "propagate": False}
                 for logger_name, handlers in logger_handlers_map.items()
-                if logger_name != "root"
+                if logger_name not in ["root", "open_web_api_access"]
             },
         },
     }
@@ -839,3 +845,26 @@ BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT = env.int("BATCH_QUERY_USER_D
 
 # 限制人员选择器用户/部门搜索 API 返回的最大条数，避免性能问题
 SELECTOR_SEARCH_API_LIMIT = env.int("SELECTOR_SEARCH_API_LIMIT", 100)
+
+# 限制 OpenWeb API 调用频率，避免恶意请求问题
+OPEN_WEB_API_THROTTLE_RATES = env.str("OPEN_WEB_API_THROTTLE_RATES", "100/minute")
+
+# 为避免 OpenWebAPI 被滥用，调用方必须有基于浏览器请求的必要 Headers
+OPEN_WEB_API_REQUIRED_BROWSER_HEADERS = env.list(
+    "OPEN_WEB_API_REQUIRED_BROWSER_HEADERS",
+    default=[
+        "HTTP_ACCEPT",
+        "HTTP_ACCEPT_LANGUAGE",
+        "HTTP_ACCEPT_ENCODING",
+        "HTTP_REFERER",
+        "HTTP_USER_AGENT",
+        "HTTP_SEC_FETCH_DEST",
+        "HTTP_SEC_FETCH_MODE",
+        "HTTP_SEC_FETCH_SITE",
+    ],
+)
+
+# 限制 USER_AGENT 只能是来自于浏览器
+OPEN_WEB_API_USER_AGENT_WHITELIST = env.list(
+    "OPEN_WEB_API_USER_AGENT_WHITELIST", default=["Chrome", "Firefox", "Safari", "Edg"]
+)
