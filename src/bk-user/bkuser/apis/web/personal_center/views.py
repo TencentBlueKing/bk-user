@@ -683,15 +683,11 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         tenant_user = TenantUser.objects.get(id=request.user.username)
         weixin_handler = WecomBindHandler(tenant_user, request.build_absolute_uri, request.session)
 
-        slz = TenantUserWecomCallbackInputSLZ(data=request.query_params)
+        slz = TenantUserWecomCallbackInputSLZ(data=request.query_params, context={"weixin_handler": weixin_handler})
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
         code = data["code"]
-        state = data["state"]
-
-        if not weixin_handler.check_state(state):
-            raise error_codes.INVALID_ARGUMENT.f(_("state 无效"))
 
         wx_userid = weixin_handler.get_wecom_userid(code)
 

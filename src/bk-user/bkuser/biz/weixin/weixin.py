@@ -49,18 +49,20 @@ class WecomBindHandler:
         self.tenant_user = tenant_user
         self.build_absolute_uri = build_absolute_uri
         self.session = session
-        self.weixin_config_service = WeixinConfigService(self.tenant_user.tenant_id)
+        self.weixin_config_service = WeixinConfigService(self.tenant_id)
 
     @property
     def state_session_key(self) -> str:
         return WeixinUtil.get_state_session_key(self.tenant_user.id)
 
+    @property
+    def tenant_id(self) -> str:
+        return self.tenant_user.tenant_id
+
     def get_bind_info(self) -> Dict[str, str]:
         """获取企业微信绑定信息"""
         redirect_uri = self.build_absolute_uri(
-            reverse(
-                "personal_center.tenant_users.wecom.login_callback", kwargs={"tenant_id": self.tenant_user.tenant_id}
-            )
+            reverse("personal_center.tenant_users.wecom.login_callback", kwargs={"tenant_id": self.tenant_id})
         )
 
         state = self._generate_and_store_state()
@@ -137,7 +139,11 @@ class MpBindHandler:
         self.tenant_user = tenant_user
         self.build_absolute_uri = build_absolute_uri
         self.session = session
-        self.weixin_config_service = WeixinConfigService(self.tenant_user.tenant_id)
+        self.weixin_config_service = WeixinConfigService(self.tenant_id)
+
+    @property
+    def tenant_id(self) -> str:
+        return self.tenant_user.tenant_id
 
     def get_bind_info(self) -> Dict[str, str]:
         """获取微信公众号绑定信息"""

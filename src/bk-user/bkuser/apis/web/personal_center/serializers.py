@@ -317,6 +317,19 @@ class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="企业微信授权 code")
     state = serializers.CharField(help_text="state")
 
+    def validate(self, attrs):
+        # 从 context 中获取 weixin_handler
+        weixin_handler = self.context.get("weixin_handler")
+        if not weixin_handler:
+            raise ValidationError(_("缺少 weixin_handler 上下文"))
+
+        # 验证 state 参数
+        state = attrs.get("state")
+        if not weixin_handler.check_state(state):
+            raise ValidationError(_("state 无效"))
+
+        return attrs
+
 
 class TenantUserMPCallbackInputSLZ(serializers.Serializer):
     signature = serializers.CharField(help_text="微信公众号回调签名")
