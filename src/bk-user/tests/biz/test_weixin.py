@@ -21,7 +21,13 @@ from unittest import mock
 
 import pytest
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.weixin import WeixinBindHandler, WeixinConfigService, WeixinUtil
+from bkuser.biz.weixin import (
+    MpBindHandler,
+    WecomBindHandler,
+    WeixinConfigService,
+    WeixinUtil,
+    get_weixin_bind_handler,
+)
 from bkuser.utils.std_error import APIError
 from django.test import RequestFactory
 
@@ -79,8 +85,54 @@ class TestWeixinUtil:
             WeixinUtil.xml_to_dict(invalid_xml)
         assert "XML 解析失败" in error.value.message
 
+    def test_check_weixin_signature_valid(self):
+        """测试有效的微信签名验证"""
+        token = "test_token"
+        timestamp = "1234567890"
+        nonce = "test_nonce"
 
-class TestWeixinBindHandler:
+        # 计算正确的签名
+        params = [token, timestamp, nonce]
+        params.sort()
+        s = "".join(params)
+        correct_signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
+
+        result = WeixinUtil.check_weixin_signature(token, correct_signature, timestamp, nonce)
+        assert result is True
+
+    def test_check_weixin_signature_invalid(self):
+        """测试无效的微信签名验证"""
+        token = "test_token"
+        timestamp = "1234567890"
+        nonce = "test_nonce"
+        invalid_signature = "invalid_signature"
+
+        result = WeixinUtil.check_weixin_signature(token, invalid_signature, timestamp, nonce)
+        assert result is False
+
+    def test_check_weixin_signature_no_token(self):
+        """测试没有 token 的微信签名验证"""
+        token = ""
+        timestamp = "1234567890"
+        nonce = "test_nonce"
+        signature = "some_signature"
+
+        result = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
+        assert result is False
+
+    def test_check_weixin_signature_empty_params(self):
+        """测试空参数的微信签名验证"""
+        token = "test_token"
+        timestamp = ""
+        nonce = ""
+        signature = "some_signature"
+
+        # 空参数会导致排序后的字符串为空，签名验证失败
+        result = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
+        assert result is False
+
+
+class TestWecomBindHandler:
     @pytest.fixture
     def mock_request(self):
         factory = RequestFactory()
@@ -100,7 +152,7 @@ class TestWeixinBindHandler:
                 "corp_id": "test_corp_id",
                 "agent_id": "test_agent_id",
             }
-            return WeixinBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
+            return WecomBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
 
     def test_tenant_id_property(self, weixin_handler, mock_tenant_user):
         assert weixin_handler.tenant_id == mock_tenant_user.tenant_id
@@ -109,29 +161,17 @@ class TestWeixinBindHandler:
         expected_key = f"wecom_bind_state_{mock_tenant_user.id}"
         assert weixin_handler.state_session_key == expected_key
 
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "qy"})
     @mock.patch.object(
-        WeixinBindHandler, "_get_wecom_bind_info", return_value={"bind_type": "wecom", "bind_url": "test_url"}
+        WeixinConfigService,
+        "get_weixin_settings",
+        return_value={"wx_type": "qy", "corp_id": "test_corp_id", "agent_id": "test_agent_id"},
     )
-    def test_get_bind_info_wecom(
-        self, mock_get_wecom_bind_info, mock_get_weixin_settings, weixin_handler, mock_request
-    ):
+    def test_get_bind_info_wecom(self, mock_get_weixin_settings, weixin_handler, mock_request):
         result = weixin_handler.get_bind_info()
 
-        assert result["bind_type"] == "wecom"
-        assert result["bind_url"] == "test_url"
-
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "mp"})
-    @mock.patch.object(
-        WeixinBindHandler, "_get_weixin_bind_info", return_value={"bind_type": "weixin", "bind_url": "test_url"}
-    )
-    def test_get_bind_info_weixin(
-        self, mock_get_weixin_bind_info, mock_get_weixin_settings, weixin_handler, mock_request
-    ):
-        result = weixin_handler.get_bind_info()
-
-        assert result["bind_type"] == "weixin"
-        assert result["bind_url"] == "test_url"
+        assert "bind_url" in result
+        assert "test_corp_id" in result["bind_url"]
+        assert "test_agent_id" in result["bind_url"]
 
     def test_generate_and_store_state(self, weixin_handler, mock_request):
         state = weixin_handler._generate_and_store_state()
@@ -176,16 +216,6 @@ class TestWeixinBindHandler:
         result = weixin_handler.check_state(state)
         assert result is False
 
-    def test_bind_user(self, weixin_handler, mock_tenant_user):
-        """测试绑定用户"""
-        wx_userid = "test_wx_userid"
-
-        weixin_handler.bind_user(wx_userid)
-
-        # 验证用户已被绑定
-        mock_tenant_user.refresh_from_db()
-        assert mock_tenant_user.wx_userid == wx_userid
-
     @mock.patch("bkuser.biz.weixin.weixin.http_get", return_value=(True, {"errcode": 0, "userid": "test_userid"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_wecom_userid_success(self, mock_get_access_token, mock_http_get, weixin_handler):
@@ -209,8 +239,48 @@ class TestWeixinBindHandler:
             weixin_handler.get_wecom_userid("test_code")
         assert "企业微信 API 调用失败" in str(error.value.message)
 
-    @mock.patch.object(WeixinBindHandler, "bind_user")
-    def test_handle_qrcode_event_subscribe(self, mock_bind_user, weixin_handler):
+
+class TestMpBindHandler:
+    @pytest.fixture
+    def mock_request(self):
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.session = {}
+        return request
+
+    @pytest.fixture
+    def mock_tenant_user(self, _init_tenant_users_depts, random_tenant):
+        return TenantUser.objects.first()
+
+    @pytest.fixture
+    def weixin_handler(self, mock_tenant_user, mock_request):
+        with (
+            mock.patch.object(WeixinConfigService, "get_weixin_settings") as mock_get_weixin_settings,
+            mock.patch.object(WeixinConfigService, "get_access_token") as mock_get_access_token,
+        ):
+            mock_get_weixin_settings.return_value = {
+                "wx_type": "mp",
+            }
+            mock_get_access_token.return_value = "test_access_token"
+            return MpBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
+
+    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "mp"})
+    @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
+    @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
+    def test_get_bind_info_mp(
+        self, mock_http_post, mock_get_access_token, mock_get_weixin_settings, weixin_handler, mock_request
+    ):
+        result = weixin_handler.get_bind_info()
+
+        assert "bind_url" in result
+        assert "test_ticket" in result["bind_url"]
+
+    @mock.patch.object(TenantUser, "save")
+    def test_handle_qrcode_event_subscribe(self, mock_save, mock_tenant_user, weixin_handler):
+        """测试处理订阅事件"""
+        # 设置初始状态
+        weixin_handler.tenant_user.wx_userid = ""
+
         event_data = {
             "MsgType": "event",
             "Event": "subscribe",
@@ -220,16 +290,23 @@ class TestWeixinBindHandler:
 
         result = weixin_handler.handle_qrcode_event(event_data)
 
-        # 验证绑定被调用
-        mock_bind_user.assert_called_once_with("test_from_user")
+        # 验证 wx_userid 被设置
+        assert weixin_handler.tenant_user.wx_userid == "test_from_user"
+
+        # 验证 save 方法被调用
+        mock_save.assert_called_once_with(update_fields=["wx_userid", "updated_at"])
 
         # 验证返回的 XML 包含正确内容
         assert "test_to_user" in result
         assert "test_from_user" in result
         assert "绑定成功" in result
 
-    @mock.patch.object(WeixinBindHandler, "bind_user")
-    def test_handle_qrcode_event_scan(self, mock_bind_user, weixin_handler):
+    @mock.patch.object(TenantUser, "save")
+    def test_handle_qrcode_event_scan(self, mock_save, mock_tenant_user, weixin_handler):
+        """测试处理扫码事件"""
+        # 设置初始状态
+        weixin_handler.tenant_user.wx_userid = ""
+
         event_data = {
             "MsgType": "event",
             "Event": "SCAN",
@@ -239,8 +316,11 @@ class TestWeixinBindHandler:
 
         result = weixin_handler.handle_qrcode_event(event_data)
 
-        # 验证绑定被调用
-        mock_bind_user.assert_called_once_with("test_from_user")
+        # 验证 wx_userid 被设置
+        assert weixin_handler.tenant_user.wx_userid == "test_from_user"
+
+        # 验证 save 方法被调用
+        mock_save.assert_called_once_with(update_fields=["wx_userid", "updated_at"])
 
         # 验证返回的 XML 包含正确内容
         assert "test_to_user" in result
@@ -323,31 +403,40 @@ class TestWeixinConfigService:
         result = weixin_config_service.get_access_token()
         assert result == "test_access_token"
 
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_token": "test_token"})
-    def test_check_sign_valid(self, mock_get_weixin_settings, weixin_config_service):
-        token = "test_token"
-        timestamp = "1234567890"
-        nonce = "test_nonce"
 
-        # 计算正确的签名
-        params = [token, timestamp, nonce]
-        params.sort()
-        s = "".join(params)
-        correct_signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
+class TestGetWeixinBindHandler:
+    """测试工厂方法"""
 
-        result = weixin_config_service.check_sign(correct_signature, timestamp, nonce)
-        assert result is True
+    @pytest.fixture
+    def mock_tenant_user(self, _init_tenant_users_depts, random_tenant):
+        return TenantUser.objects.first()
 
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_token": "test_token"})
-    def test_check_sign_invalid(self, mock_get_weixin_settings, weixin_config_service):
-        timestamp = "1234567890"
-        nonce = "test_nonce"
-        invalid_signature = "invalid_signature"
+    @pytest.fixture
+    def mock_request(self):
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.session = {}
+        return request
 
-        result = weixin_config_service.check_sign(invalid_signature, timestamp, nonce)
-        assert result is False
+    def test_get_wecom_handler(self, mock_tenant_user, mock_request):
+        handler = get_weixin_bind_handler(
+            "qy", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
+        )
+        assert isinstance(handler, WecomBindHandler)
 
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={})
-    def test_check_sign_no_token(self, mock_get_weixin_settings, weixin_config_service):
-        result = weixin_config_service.check_sign("signature", "timestamp", "nonce")
-        assert result is False
+    def test_get_mp_handler(self, mock_tenant_user, mock_request):
+        handler = get_weixin_bind_handler(
+            "mp", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
+        )
+        assert isinstance(handler, MpBindHandler)
+
+    def test_get_handler_with_qywx_type(self, mock_tenant_user, mock_request):
+        handler = get_weixin_bind_handler(
+            "qywx", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
+        )
+        assert isinstance(handler, WecomBindHandler)
+
+    def test_get_handler_with_invalid_type(self, mock_tenant_user, mock_request):
+        with pytest.raises(APIError) as error:
+            get_weixin_bind_handler("invalid", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
+        assert "不支持的微信类型" in str(error.value.message)

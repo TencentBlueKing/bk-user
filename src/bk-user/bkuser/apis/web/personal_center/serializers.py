@@ -34,6 +34,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
+from bkuser.biz.weixin import WeixinConfigService, WeixinUtil
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
@@ -301,13 +302,35 @@ class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
 
 
 class TenantUserWeixinBindOutputSLZ(serializers.Serializer):
-    bind_type = serializers.CharField(help_text="绑定类型：wecom(企业微信) 或 weixin(微信)")
     bind_url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 
-class TenantUserWeiXinGetBindStatusOutputSLZ(serializers.Serializer):
-    result = serializers.BooleanField(help_text="是否已绑定微信")
+class TenantUserWeixinOutputSLZ(serializers.Serializer):
+    wx_userid = serializers.BooleanField(help_text="微信用户 ID")
 
 
 class TenantUserWecomLoginCallbackOutputSLZ(serializers.Serializer):
     result = serializers.BooleanField(help_text="是否绑定成功")
+
+
+class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="企业微信授权 code")
+    state = serializers.CharField(help_text="state")
+
+
+class TenantUserMPCallbackInputSLZ(serializers.Serializer):
+    signature = serializers.CharField(help_text="微信公众号回调签名")
+    timestamp = serializers.CharField(help_text="时间戳")
+    nonce = serializers.CharField(help_text="随机数")
+
+    def validate(self, attrs):
+        signature = attrs.get("signature")
+        timestamp = attrs.get("timestamp")
+        nonce = attrs.get("nonce")
+
+        tenant_id = self.context["tenant_id"]
+
+        token = WeixinConfigService(tenant_id).get_weixin_settings()["wx_token"]
+        is_valid = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
+        if not is_valid:
+            raise ValidationError(_("微信公众号签名验证失败"))

@@ -1173,12 +1173,11 @@ class TenantUserWeixinBindAuditor:
         """记录变更前的相关数据记录"""
         self.data_befores["wx_userid"] = tenant_user.wx_userid
 
-    def create_audit_record(self, tenant_user: TenantUser, operation: OperationEnum, extras: Dict[str, Any] | None):
+    def _create_audit_record(self, tenant_user: TenantUser, operation: OperationEnum):
         """创建审计记录
 
         :param tenant_user: 租户用户对象
         :param operation: 操作类型
-        :param extras: 额外信息
         """
 
         add_audit_record(
@@ -1190,21 +1189,18 @@ class TenantUserWeixinBindAuditor:
             object_name=tenant_user.data_source_user.username,
             data_before=self.data_befores,
             data_after={"wx_userid": tenant_user.wx_userid},
-            extras=extras or {},
         )
 
-    def record_bind(self, tenant_user: TenantUser, extras: Dict[str, Any] | None):
+    def record_bind(self, tenant_user: TenantUser):
         """记录用户微信绑定操作
 
         :param tenant_user: 租户用户对象
-        :param extras: 额外信息
         """
-        self.create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_BIND, extras=extras)
+        self._create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_BIND)
 
-    def record_unbind(self, tenant_user: TenantUser, extras: Dict[str, Any] | None):
+    def record_unbind(self, tenant_user: TenantUser):
         """记录用户微信解绑操作
 
         :param tenant_user: 租户用户对象
-        :param extras: 额外信息
         """
-        self.create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_UNBIND, extras=extras)
+        self._create_audit_record(tenant_user, operation=OperationEnum.MODIFY_USER_WEIXIN_UNBIND)

@@ -21,6 +21,7 @@ import time
 from typing import Dict
 
 from defusedxml import ElementTree
+from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.tenant.models import TenantUser
@@ -82,7 +83,7 @@ class WeixinUtil:
         # 2. 拼接字符串
         s = "".join(params)
         # 3. 使用 sha1 加密
-        hashcode = hashlib.sha1(s.encode("utf-8")).hexdigest()
+        hashcode = hashlib.sha1(force_bytes(s)).hexdigest()
 
         return hashcode == signature
 

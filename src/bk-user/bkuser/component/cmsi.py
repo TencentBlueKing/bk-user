@@ -93,10 +93,30 @@ class NotificationClient(Protocol):
         """
 
     def get_weixin_settings(self) -> Dict:
-        """获取微信配置"""
+        """获取微信配置
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - wx_type (str): 微信类型
+            - agent_id (str): 企业微信应用ID
+            - corp_id (str): 企业微信企业ID
+            - corp_secret (str): 企业微信企业密钥
+            - to_user (str): 接收用户
+            - wx_app_id (str): 微信公众号AppID
+            - wx_secret (str): 微信公众号密钥
+            - wx_template_id (str): 微信公众号模版ID
+            - wx_token (str): 微信公众号验证令牌
+            - custom_channel_url (str): 自定义渠道URL
+        """
 
     def get_weixin_token(self) -> Dict:
-        """获取微信 token"""
+        """获取微信 access_token
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - access_token (str): 微信授权令牌
+            - expires_in (int): 微信授权令牌过期时间
+        """
 
 
 def get_notification_client(tenant_id: str) -> NotificationClient:
@@ -169,10 +189,31 @@ class BkEsbCmsiClient:
         )
 
     def get_weixin_settings(self) -> Dict:
-        """获取微信配置"""
+        """获取微信配置
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - wx_type (str): 微信类型
+            - agent_id (str): 企业微信应用ID
+            - corp_id (str): 企业微信企业ID
+            - corp_secret (str): 企业微信企业密钥
+            - to_user (str): 接收用户
+            - wx_app_id (str): 微信公众号AppID
+            - wx_secret (str): 微信公众号密钥
+            - wx_template_id (str): 微信公众号模版ID
+            - wx_token (str): 微信公众号验证令牌
+            - custom_channel_url (str): 自定义渠道URL
+        """
         return _call_esb_api(http_get, "/api/c/compapi/esb/get_weixin_config/")
 
     def get_weixin_token(self) -> Dict:
+        """获取微信 access_token
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - access_token (str): 微信授权令牌
+            - expires_in (int): 微信授权令牌过期时间
+        """
         return _call_esb_api(http_get, "/api/c/compapi/weixin/get_token/")
 
 
@@ -254,7 +295,29 @@ class BkApigwCmsiClient:
         return f"+{phone_country_code} {phone}"
 
     def get_weixin_settings(self) -> Dict:
+        """获取微信配置
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - wx_type (str): 微信类型
+            - agent_id (str): 企业微信应用ID
+            - corp_id (str): 企业微信企业ID
+            - corp_secret (str): 企业微信企业密钥
+            - to_user (str): 接收用户
+            - wx_app_id (str): 微信公众号AppID
+            - wx_secret (str): 微信公众号密钥
+            - wx_template_id (str): 微信公众号模版ID
+            - wx_token (str): 微信公众号验证令牌
+            - custom_channel_url (str): 自定义渠道URL
+        """
         return _call_apigw_api(http_get, self.APIGW_NAME, "/v1/channels/weixin/settings/", self.tenant_id)
 
     def get_weixin_token(self) -> Dict:
+        """获取微信 access_token
+
+        Returns:
+            Dict: 包含以下字段的字典：
+            - access_token (str): 微信授权令牌
+            - expires_in (int): 微信授权令牌过期时间
+        """
         return _call_apigw_api(http_get, self.APIGW_NAME, "/v1/channels/weixin/token/", self.tenant_id)

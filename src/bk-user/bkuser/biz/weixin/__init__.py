@@ -16,6 +16,19 @@
 # to the current version of the project delivered to anyone in the future.
 
 from .utils import WeixinUtil
-from .weixin import WeixinBindHandler, WeixinConfigService
+from .weixin import (
+    BaseWeixinBindHandler,
+    MpBindHandler,
+    WecomBindHandler,
+    WeixinConfigService,
+    get_weixin_bind_handler,
+)
 
-__all__ = ["WeixinBindHandler", "WeixinConfigService", "WeixinUtil"]
+__all__ = [
+    "BaseWeixinBindHandler",
+    "WecomBindHandler",
+    "MpBindHandler",
+    "WeixinConfigService",
+    "WeixinUtil",
+    "get_weixin_bind_handler",
+]

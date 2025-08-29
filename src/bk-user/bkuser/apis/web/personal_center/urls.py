@@ -93,32 +93,25 @@ urlpatterns = [
         name="personal_center.tenant_users.email_verification_code.send",
     ),
     path(
-        "tenant-users/<str:id>/weixin/bind/",
+        "tenant-users/<str:id>/weixin/to-bind-info/",
         views.TenantUserWeixinBindApi.as_view(),
         name="personal_center.tenant_users.weixin.bind",
     ),
-    # 查询微信绑定状态
     path(
-        "tenant-users/<str:id>/weixin/bind-status/",
-        views.TenantUserWeixinBindStatusApi.as_view(),
-        name="personal_center.tenant_users.weixin.bind_status",
+        "tenant-users/<str:id>/wx_userid/",
+        views.TenantUserWeixinApi.as_view(),
+        name="personal_center.tenant_users.wx_userid",
     ),
-    # 微信解绑
+    # 企业微信绑定回调
     path(
-        "tenant-users/<str:id>/weixin/unbind/",
-        views.TenantUserWeixinUnbindApi.as_view(),
-        name="personal_center.tenant_users.weixin.unbind",
-    ),
-    # 企业微信登录回调
-    path(
-        "tenant-users/<str:tenant_id>/wecom/login-callback/",
-        views.TenantUserWecomLoginCallbackApi.as_view(),
+        "tenants/<str:tenant_id>/wecom/bind-callback/",
+        views.TenantUserWecomCallbackApi.as_view(),
         name="personal_center.tenant_users.wecom.login_callback",
     ),
-    # 微信公众号登录回调
+    # 微信公众号绑定回调
     path(
-        "tenant-users/<str:tenant_id>/mp/login-callback/",
-        views.TenantUserMPLoginCallbackApi.as_view(),
+        "tenant/<str:tenant_id>/mp/bind-callback/",
+        views.TenantUserMPCallbackApi.as_view(),
         name="personal_center.tenant_users.mp.login_callback",
     ),
 ]
