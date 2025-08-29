@@ -671,7 +671,7 @@ class TenantUserWeixinApi(generics.RetrieveDestroyAPIView):
 class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
     """个人中心 - 企业微信登录回调接口"""
 
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    permission_classes = [IsAuthenticated]
     queryset = TenantUser.objects.all()
 
     @swagger_auto_schema(

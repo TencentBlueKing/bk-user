@@ -17,7 +17,6 @@
 
 from .utils import WeixinUtil
 from .weixin import (
-    BaseWeixinBindHandler,
     MpBindHandler,
     WecomBindHandler,
     WeixinConfigService,
@@ -25,7 +24,6 @@ from .weixin import (
 )
 
 __all__ = [
-    "BaseWeixinBindHandler",
     "WecomBindHandler",
     "MpBindHandler",
     "WeixinConfigService",
