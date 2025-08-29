@@ -36,7 +36,7 @@ class PasswordRuleHandler:
             return None
 
         # 仅支持实体数据源和内建管理数据源
-        if not (data_source.is_real_type or data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT):
+        if data_source.type not in [DataSourceTypeEnum.BUILTIN_MANAGEMENT, DataSourceTypeEnum.REAL]:
             return None
 
         plugin_config = data_source.get_plugin_cfg()
