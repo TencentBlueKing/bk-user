@@ -714,7 +714,10 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
     permission_classes: List[BasePermission] = []
 
     def get(self, request, *args, **kwargs):
-        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"tenant_id": self.kwargs["tenant_id"]})
+        weixin_config_service = WeixinConfigService(self.kwargs["tenant_id"])
+        wx_token = weixin_config_service.get_weixin_settings()["wx_token"]
+
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
         slz.is_valid(raise_exception=True)
 
         return HttpResponse(escape(request.query_params.get("echostr")))
@@ -722,7 +725,10 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
     def post(self, request, *args, **kwargs):
         """处理微信公众号回调消息"""
 
-        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"tenant_id": self.kwargs["tenant_id"]})
+        weixin_config_service = WeixinConfigService(self.kwargs["tenant_id"])
+        wx_token = weixin_config_service.get_weixin_settings()["wx_token"]
+
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
         slz.is_valid(raise_exception=True)
         # 解析微信公众号推送的 XML 消息
         data = WeixinUtil.xml_to_dict(request.data)

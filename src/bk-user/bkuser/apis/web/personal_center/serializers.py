@@ -34,7 +34,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
-from bkuser.biz.weixin import WeixinConfigService, WeixinUtil
+from bkuser.biz.weixin import WeixinUtil
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
@@ -341,9 +341,7 @@ class TenantUserMPCallbackInputSLZ(serializers.Serializer):
         timestamp = attrs.get("timestamp")
         nonce = attrs.get("nonce")
 
-        tenant_id = self.context["tenant_id"]
-
-        token = WeixinConfigService(tenant_id).get_weixin_settings()["wx_token"]
-        is_valid = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
+        wx_token = self.context["wx_token"]
+        is_valid = WeixinUtil.check_weixin_signature(wx_token, signature, timestamp, nonce)
         if not is_valid:
             raise ValidationError(_("微信公众号签名验证失败"))
