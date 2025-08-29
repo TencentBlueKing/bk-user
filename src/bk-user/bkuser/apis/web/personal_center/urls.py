@@ -98,7 +98,7 @@ urlpatterns = [
         name="personal_center.tenant_users.weixin.bind",
     ),
     path(
-        "tenant-users/<str:id>/wx_userid/",
+        "tenant-users/<str:id>/weixin/wx_userid/",
         views.TenantUserWeixinApi.as_view(),
         name="personal_center.tenant_users.wx_userid",
     ),
