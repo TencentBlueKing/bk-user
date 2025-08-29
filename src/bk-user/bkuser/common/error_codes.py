@@ -133,7 +133,6 @@ class ErrorCodes:
     WEIXIN_API_ERROR = ErrorCode(_("微信 API 调用失败"))
     WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("二维码生成失败"))
     WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("二维码无效"))
-    WEIXIN_SIGN_INVALID = ErrorCode(_("签名验证失败"))
     WEIXIN_XML_PARSE_FAILED = ErrorCode(_("XML 解析失败"))
 
 
