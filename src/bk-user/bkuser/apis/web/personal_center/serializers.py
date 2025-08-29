@@ -24,6 +24,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
@@ -273,6 +274,11 @@ class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
         )
 
         return attrs
+
+
+class TenantUserPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "personal_center.TenantUserPasswordRuleRetrieveOutputSLZ"
 
 
 class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):

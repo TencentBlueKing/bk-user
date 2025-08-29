@@ -89,6 +89,7 @@ from bkuser.biz.auditor import (
     TenantUserUpdateAuditor,
 )
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -640,15 +641,11 @@ class TenantUserPasswordRuleRetrieveApi(CurrentUserTenantMixin, generics.Retriev
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
         data_source = tenant_user.data_source
-        plugin_config = data_source.get_plugin_cfg()
 
-        if not (data_source.is_local and data_source.is_real_type and plugin_config.enable_password):
+        passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        if passwd_rule is None:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
 
-        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
-        assert plugin_config.password_rule is not None
-
-        passwd_rule = plugin_config.password_rule.to_rule()
         return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 

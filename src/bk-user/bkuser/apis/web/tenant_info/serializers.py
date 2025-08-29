@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.validators import (
@@ -79,6 +80,10 @@ class TenantBuiltinManagerPasswordUpdateInputSLZ(serializers.Serializer):
             data_source_user_id=self.context["data_source_user_id"],
             plugin_config=self.context["plugin_config"],
         )
+
+
+class TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    pass
 
 
 class TenantRealManagerListOutputSLZ(serializers.Serializer):

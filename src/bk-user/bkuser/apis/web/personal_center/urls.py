@@ -78,6 +78,11 @@ urlpatterns = [
         name="personal_center.tenant_users.password.update",
     ),
     path(
+        "tenant-users/<str:id>/password-rule/",
+        views.TenantUserPasswordRuleRetrieveApi.as_view(),
+        name="personal_center.tenant_users.password_rule.retrieve",
+    ),
+    path(
         "tenant-users/<str:id>/phone-verification-code/",
         views.TenantUserPhoneVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.phone_verification_code.send",

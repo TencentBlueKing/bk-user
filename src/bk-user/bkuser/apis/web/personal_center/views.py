@@ -39,6 +39,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserFieldOutputSLZ,
     TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
+    TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserPhoneVerificationCodeSendInputSLZ,
@@ -59,6 +60,7 @@ from bkuser.biz.auditor import (
 )
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.biz.senders import (
     EmailVerificationCodeSender,
     ExceedSendRateLimit,
@@ -573,6 +575,29 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         auditor.record(tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="获取租户用户密码规则提示",
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source_user = tenant_user.data_source_user
+        data_source = data_source_user.data_source
+
+        passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        if passwd_rule is None:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
+
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 
 class TenantUserWeixinBindApi(generics.RetrieveAPIView):

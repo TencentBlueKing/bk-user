@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.notification.constants import NotificationMethod
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX, TenantStatus
 from bkuser.apps.tenant.models import Tenant
@@ -232,3 +233,12 @@ class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
         attrs["email"], attrs["phone"], attrs["phone_country_code"] = email, phone, phone_country_code
 
         return attrs
+
+
+class TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "platform_management.TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ"
+
+
+class DefaultPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    pass
