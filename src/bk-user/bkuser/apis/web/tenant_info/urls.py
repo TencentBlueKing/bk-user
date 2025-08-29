@@ -32,6 +32,11 @@ urlpatterns = [
         views.TenantBuiltinManagerPasswordUpdateApi.as_view(),
         name="tenant_info.update_builtin_manager_password",
     ),
+    path(
+        "builtin-manager/password-rule/",
+        views.TenantBuiltinManagerPasswordRuleRetrieveApi.as_view(),
+        name="tenant_info.retrieve_builtin_manager_password_rule",
+    ),
     # 租户实名管理员
     path(
         "real-managers/",

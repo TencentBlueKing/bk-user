@@ -164,7 +164,7 @@ dev = [
 requires-dist = [
     { name = "apigw-manager", extras = ["cryptography"], specifier = "==4.1.0" },
     { name = "bk-notice-sdk", specifier = "==1.4.2" },
-    { name = "blue-krill", specifier = "==2.1.2" },
+    { name = "blue-krill", specifier = "==2.1.3" },
     { name = "celery", specifier = "==5.5.3" },
     { name = "concurrent-log-handler", specifier = "==0.9.25" },
     { name = "django", specifier = "==4.2.23" },
@@ -246,7 +246,7 @@ wheels = [
 
 [[package]]
 name = "blue-krill"
-version = "2.1.2"
+version = "2.1.3"
 source = { registry = "https://pypi.org/simple/" }
 dependencies = [
     { name = "bk-crypto-python-sdk" },
@@ -263,9 +263,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/df/ed1cabd6846517e99e0742d1c587ca5a18bb1d4597bda10027ab6e249a59/blue_krill-2.1.2.tar.gz", hash = "sha256:c3ed6baf0e00a6da9b95d4fe68a7198e0ad872cd0fae4508ff3a4a85825a09e2", size = 65156, upload-time = "2025-03-20T11:29:30.547Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/b1/675e156302b8094ba55ed56c3305648df63bd09297d46c6d09818709bc10/blue_krill-2.1.3.tar.gz", hash = "sha256:1fad21114fff88aa085d7de9e8b137d324e8efd95d19ec3df484b746e9d6d2ab", size = 63823, upload-time = "2025-08-13T06:55:09.639Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/24/f032d798d23de0235bc2e08a98457cfb8818039d5a6ea38b4ce425cc7b7f/blue_krill-2.1.2-py3-none-any.whl", hash = "sha256:25cd214a4746a421550b034f7145df45c30ccc854115e1043b11486b16fb7bb0", size = 103478, upload-time = "2025-03-20T11:29:28.816Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/32/1947db9db0c4912473d156da600498f1c5030378b30dc970f3ca278b0e1a/blue_krill-2.1.3-py3-none-any.whl", hash = "sha256:b513a5b0fce9a9c0fcf66644cbc454f1e311b39a1ca4b9cf4588687fef8b3c37", size = 98233, upload-time = "2025-08-13T06:55:01.315Z" },
 ]
 
 [[package]]
