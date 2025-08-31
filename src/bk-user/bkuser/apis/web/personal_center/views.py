@@ -637,7 +637,7 @@ class TenantUserWeixinApi(generics.RetrieveDestroyAPIView):
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心 - 查询微信用户 ID",
+        operation_description="个人中心 - 查询用户微信 ID",
         responses={status.HTTP_200_OK: TenantUserWeixinOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):

@@ -318,10 +318,7 @@ class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
     state = serializers.CharField(help_text="state")
 
     def validate(self, attrs):
-        # 从 context 中获取 weixin_handler
-        weixin_handler = self.context.get("weixin_handler")
-        if not weixin_handler:
-            raise ValidationError(_("缺少 weixin_handler 上下文"))
+        weixin_handler = self.context["weixin_handler"]
 
         # 验证 state 参数
         state = attrs.get("state")

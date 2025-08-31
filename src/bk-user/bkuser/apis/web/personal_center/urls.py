@@ -110,7 +110,7 @@ urlpatterns = [
     ),
     # 微信公众号绑定回调
     path(
-        "tenant/<str:tenant_id>/mp/bind-callback/",
+        "tenants/<str:tenant_id>/mp/bind-callback/",
         views.TenantUserMPCallbackApi.as_view(),
         name="personal_center.tenant_users.mp.login_callback",
     ),
