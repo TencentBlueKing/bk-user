@@ -309,10 +309,6 @@ class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
     wx_userid = serializers.BooleanField(help_text="微信用户 ID")
 
 
-class TenantUserWecomCallbackOutputSLZ(serializers.Serializer):
-    result = serializers.BooleanField(help_text="是否绑定成功")
-
-
 class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="企业微信授权 code")
     state = serializers.CharField(help_text="企业微信 OAuth2.0 流程中的防 CSRF 令牌")
@@ -326,6 +322,10 @@ class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
             raise ValidationError(_("state 无效"))
 
         return attrs
+
+
+class TenantUserWecomCallbackOutputSLZ(serializers.Serializer):
+    result = serializers.BooleanField(help_text="是否绑定成功")
 
 
 class TenantUserMPCallbackInputSLZ(serializers.Serializer):
