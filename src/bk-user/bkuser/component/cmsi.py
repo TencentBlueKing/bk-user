@@ -45,16 +45,6 @@ def validate_sms_params(phone: str, phone_country_code: str, receiver: str):
         raise ValueError("params `phone` and `phone_country_code` or `receiver`(tenant_user_id) must be provided")
 
 
-def validate_weixin_params(wx_userid: str, receiver: str):
-    """
-    校验微信发送参数
-    :param wx_userid: 微信用户 ID
-    :param receiver: 租户用户 ID
-    """
-    if not (wx_userid or receiver):
-        raise ValueError("params `wx_userid` or `receiver`(tenant_user_id) must be provided")
-
-
 class NotificationClient(Protocol):
     """通知客户端基类"""
 

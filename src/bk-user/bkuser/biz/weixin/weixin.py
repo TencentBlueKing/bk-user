@@ -74,10 +74,8 @@ class WecomBindHandler:
             "state": state,
         }
 
-        bind_url = "%s?%s" % (WECOM_LOGIN_URL, urlencode(param_dict))
-
         return {
-            "bind_url": bind_url,
+            "bind_url": "%s?%s" % (WECOM_LOGIN_URL, urlencode(param_dict)),
         }
 
     def _generate_and_store_state(self) -> str:

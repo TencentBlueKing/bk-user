@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class WeixinUtil:
-    qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WEIXIN_QRCODE)
+    qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
 
     @classmethod
     def get_tenant_user_by_ticket(cls, ticket: str) -> TenantUser:

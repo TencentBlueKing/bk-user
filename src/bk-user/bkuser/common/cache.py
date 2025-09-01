@@ -50,7 +50,7 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     # OpenWeb API 限流
     OPEN_WEB_API_THROTTLE = "owat"
     # 微信公众号二维码 临时存储
-    WEIXIN_QRCODE = "wp"
+    MP_QRCODE = "wp"
 
 
 def _default_key_function(*args, **kwargs):
