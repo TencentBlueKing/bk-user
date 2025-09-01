@@ -315,7 +315,7 @@ class TenantUserWecomLoginCallbackOutputSLZ(serializers.Serializer):
 
 class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="企业微信授权 code")
-    state = serializers.CharField(help_text="state")
+    state = serializers.CharField(help_text="企业微信 OAuth2.0 流程中的防 CSRF 令牌")
 
     def validate(self, attrs):
         weixin_handler = self.context["weixin_handler"]
