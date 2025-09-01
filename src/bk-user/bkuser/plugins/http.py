@@ -223,15 +223,11 @@ def _call_bk_user_api(http_func, url_path: str, **kwargs):
     headers = kwargs.setdefault("headers", {})
     headers["X-Internal-Call"] = "bk-user-plugin"
 
-    status, resp_data = http_func(url, **kwargs)
-    if status.is_invalid:
+    ok, resp_data = http_func(url, **kwargs)
+    if not ok:
         logger.error(
             "bk_user api failed, %s %s, kwargs: %s, error: %s", http_func.__name__, url, kwargs, resp_data["error"]
         )
+        return None
 
-    if status.is_success:
-        return resp_data["data"]
-
-    error = resp_data.get("error")
-    logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
-    return None
+    return resp_data["data"]
