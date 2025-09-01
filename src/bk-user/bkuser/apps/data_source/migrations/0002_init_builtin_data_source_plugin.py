@@ -68,6 +68,7 @@ def forwards_func(apps, schema_editor):
         },
     )
 
+    # 企业微信数据源插件
     DataSourcePlugin.objects.get_or_create(
         id=DataSourcePluginEnum.WECOM,
         defaults={

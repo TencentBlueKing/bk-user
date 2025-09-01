@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 
 # 最小请求超时时间
 MIN_REQ_TIMEOUT = 5
@@ -35,14 +35,14 @@ DEFAULT_RETRIES = 1
 WECOM_API_BASE_URL = "https://qyapi.weixin.qq.com/cgi-bin"
 
 
-class WeComDataType(str, StructuredEnum):
+class WeComDataType(StrStructuredEnum):
     """企业微信数据类型"""
 
     DEPARTMENT = EnumField("department", label="部门")
     USER = EnumField("user", label="用户")
 
 
-class WeComUserStatus(str, StructuredEnum):
+class WeComUserStatus(StrStructuredEnum):
     """企业微信用户状态"""
 
     ACTIVE = EnumField("1", label="已激活")
@@ -51,7 +51,7 @@ class WeComUserStatus(str, StructuredEnum):
     EXITED = EnumField("5", label="退出企业")
 
 
-class WeComSyncScope(str, StructuredEnum):
+class WeComSyncScope(StrStructuredEnum):
     """企业微信同步范围"""
 
     ALL = EnumField("all", label="全量")

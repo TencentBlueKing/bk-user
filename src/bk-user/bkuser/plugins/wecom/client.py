@@ -94,7 +94,7 @@ class WeComAPIClient:
             params={"access_token": self.access_token, "id": self.server_config.sync_dept_id},
         )
 
-        dept_list = resp_data.get("department_list", [])
+        dept_list = resp_data.get("department_id", [])
 
         return [dept_info["id"] for dept_info in dept_list]
 
@@ -113,7 +113,7 @@ class WeComAPIClient:
         result = []
         for user in users:
             # 只获取激活企业微信的用户
-            if user["status"] != WeComUserStatus.ACTIVE:
+            if str(user["status"]) != WeComUserStatus.ACTIVE:
                 continue
 
             result.append(user)
