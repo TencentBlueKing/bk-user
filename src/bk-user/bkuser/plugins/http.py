@@ -23,6 +23,8 @@ import requests
 from django.conf import settings
 from requests.adapters import HTTPAdapter
 
+from .utils import urljoin
+
 logger = logging.getLogger(__name__)
 # 定义慢请求耗时，单位毫秒
 SLOW_REQUEST_LATENCY = 100
@@ -91,3 +93,25 @@ def _http_request(method, url, **kwargs):
 
 def http_get(url, **kwargs):
     return _http_request(method="GET", url=url, **kwargs)
+
+
+def _call_bk_user_api(http_func, url_path: str, **kwargs):
+    """调用用户管理接口"""
+    url = urljoin(settings.BK_USER_API_URL, url_path)
+
+    # 为内部插件调用添加专用标识头，允许访问插件API
+    headers = kwargs.setdefault("headers", {})
+    headers["X-Internal-Call"] = "bk-user-plugin"
+
+    status, resp_data = http_func(url, **kwargs)
+    if status.is_invalid:
+        logger.error(
+            "bk_user api failed, %s %s, kwargs: %s, error: %s", http_func.__name__, url, kwargs, resp_data["error"]
+        )
+
+    if status.is_success:
+        return resp_data
+
+    error = resp_data.get("error")
+    logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
+    return None

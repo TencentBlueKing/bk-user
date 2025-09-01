@@ -15,20 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from django.urls import path
 
-from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
-from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
+from . import views
 
-DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
-    server_config=ServerConfig(
-        corp_id="corp_id",
-        corp_secret="corp_secret",
-        request_timeout=DEFAULT_REQ_TIMEOUT,
-        retries=DEFAULT_RETRIES,
-        sync_scope=WeComSyncScope.SPECIFIC_DEPT,
-        sync_dept_id=1,
+urlpatterns = [
+    path(
+        "access-token/",
+        views.WeComAccessTokenApi.as_view(),
+        name="plugin.wecom.access_token",
     ),
-    context={
-        "tenant_id": "default",
-    },
-)
+]

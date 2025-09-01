@@ -15,20 +15,13 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+import pytest
+from rest_framework.test import APIClient
 
-from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
-from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
 
-DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
-    server_config=ServerConfig(
-        corp_id="corp_id",
-        corp_secret="corp_secret",
-        request_timeout=DEFAULT_REQ_TIMEOUT,
-        retries=DEFAULT_RETRIES,
-        sync_scope=WeComSyncScope.SPECIFIC_DEPT,
-        sync_dept_id=1,
-    ),
-    context={
-        "tenant_id": "default",
-    },
-)
+@pytest.fixture
+def api_client():
+    client = APIClient()
+    # 设置内部插件调用标识头，这样会通过内部认证
+    client.defaults["HTTP_X_INTERNAL_CALL"] = "bk-user-plugin"
+    return client

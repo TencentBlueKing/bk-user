@@ -31,6 +31,8 @@ urlpatterns = [
     path("api/v3/login/", include("bkuser.apis.login.urls")),
     # 提供给网关使用的内部 API
     path("api/v3/apigw/", include("bkuser.apis.apigw.urls")),
+    # 提供给插件使用的 API
+    path("api/v3/plugin/", include("bkuser.apis.plugin.urls")),
     # 对外开放的 API
     path("api/v3/open/", include("bkuser.apis.open_v3.urls")),
     # 提供给前端使用的开放 API

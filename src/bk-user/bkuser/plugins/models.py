@@ -36,6 +36,9 @@ class BasePluginConfig(BaseModel):
     # 字段路径中不支持列表下标，只能是字典 key
     sensitive_fields: ClassVar[List[str]] = []
 
+    # 插件运行时上下文，例如：插件需要获取当前租户 ID 时，可以在此处获取
+    context: Dict[str, Any] = {}
+
 
 class RawDataSourceUser(BaseModel):
     """原始数据源用户信息"""

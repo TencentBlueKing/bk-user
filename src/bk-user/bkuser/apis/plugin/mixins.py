@@ -14,21 +14,15 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from rest_framework.permissions import IsAuthenticated
+
+from .authentications import InnerPluginAuthentication
 
 
-from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
-from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
+class PluginApiAccessControlMixin:
+    """
+    Plugin API 的访问权限控制
+    """
 
-DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
-    server_config=ServerConfig(
-        corp_id="corp_id",
-        corp_secret="corp_secret",
-        request_timeout=DEFAULT_REQ_TIMEOUT,
-        retries=DEFAULT_RETRIES,
-        sync_scope=WeComSyncScope.SPECIFIC_DEPT,
-        sync_dept_id=1,
-    ),
-    context={
-        "tenant_id": "default",
-    },
-)
+    authentication_classes = [InnerPluginAuthentication]
+    permission_classes = [IsAuthenticated]

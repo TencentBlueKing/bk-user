@@ -105,12 +105,12 @@ wecom_users = [
 def _mock_wecom_client():
     """模拟企业微信客户端"""
     with (
-        mock.patch.object(WeComAPIClient, "_get_access_token") as mock_get_access_token,
+        mock.patch.object(WeComAPIClient, "access_token") as mock_access_token,
         mock.patch.object(WeComAPIClient, "fetch_department_list") as mock_dept_list,
         mock.patch.object(WeComAPIClient, "fetch_department_info") as mock_dept_info,
         mock.patch.object(WeComAPIClient, "fetch_user_info") as mock_user_info,
     ):
-        mock_get_access_token.return_value = ("test_access_token", 7200)
+        mock_access_token.return_value = "test_access_token"
 
         # Mock 部门列表
         mock_dept_list.return_value = [1, 2, 3, 4, 5]

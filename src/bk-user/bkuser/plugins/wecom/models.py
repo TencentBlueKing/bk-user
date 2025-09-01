@@ -45,8 +45,6 @@ class ServerConfig(BaseModel):
     sync_scope: WeComSyncScope
     # 同步部门 ID （全量同步时，令同步部门 ID 为 0）
     sync_dept_id: int = Field(default=0)
-    # 租户 ID（由于多租户版本需要调用蓝鲸 CMSI 接口，所以需要前端透传租户 ID）
-    tenant_id: str
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "ServerConfig":

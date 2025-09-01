@@ -16,14 +16,13 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-from bkuser.plugins.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.plugins.http import _call_bk_user_api, http_get
 from bkuser.plugins.utils import urljoin
-from bkuser.plugins.wecom.cmsi import get_access_token_from_cmsi, get_wecom_config
 from bkuser.plugins.wecom.constants import WECOM_API_BASE_URL, WeComDataType, WeComUserStatus
 from bkuser.plugins.wecom.exceptions import RequestAPIError
 from bkuser.plugins.wecom.models import ServerConfig
@@ -34,44 +33,27 @@ logger = logging.getLogger(__name__)
 class WeComAPIClient:
     """企业微信API客户端"""
 
-    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.WECOM_API_ACCESS_TOKEN)
-
-    def __init__(self, server_config: ServerConfig):
+    def __init__(self, server_config: ServerConfig, context: Dict[str, Any]):
         self.server_config = server_config
-
-    def _get_access_token(self) -> Tuple[str, int]:
-        """
-        获取企业微信的 access_token
-        """
-        params = {"corpid": self.server_config.corp_id, "corpsecret": self.server_config.corp_secret}
-
-        resp_data = self._call("/gettoken", params=params)
-        return resp_data["access_token"], resp_data["expires_in"]
+        self.context = context
 
     @property
     def access_token(self) -> str:
-        """
-        获取企业微信 access_token
-        """
-        # 先从缓存获取 access_token
-        cache_key = f"{self.server_config.corp_id}_{self.server_config.corp_secret}:access_token"
-        access_token = self.cache.get(cache_key)
+        """获取企业微信 access_token"""
+        # 从插件配置的上下文中获取 tenant_id
+        tenant_id = self.context.get("tenant_id")
 
-        if not access_token:
-            # 获取蓝鲸 CMSI 微信配置
-            wecom_config = get_wecom_config(self.server_config.tenant_id)
-            corp_id = wecom_config.get("corp_id", "")
-            corp_secret = wecom_config.get("corp_secret", "")
-
-            # 如果用户输入的 corp_id 和 corp_secret 与蓝鲸 CMSI 配置一致，则使用蓝鲸 CMSI 接口获取 access_token
-            if corp_id == self.server_config.corp_id and corp_secret == self.server_config.corp_secret:
-                access_token = get_access_token_from_cmsi(self.server_config.tenant_id)
-            else:
-                # 否则直接使用用户输入的 corp_id 和 corp_secret 请求 access_token
-                access_token, expires_in = self._get_access_token()
-                self.cache.set(cache_key, access_token, expires_in - 60)
-
-        return access_token
+        # 从用户管理中调用 API 获取 access_token
+        resp = _call_bk_user_api(
+            http_get,
+            url_path="/api/v3/plugin/wecom/access-token/",
+            params={
+                "corp_id": self.server_config.corp_id,
+                "corp_secret": self.server_config.corp_secret,
+                "tenant_id": tenant_id,
+            },
+        )
+        return resp["access_token"]
 
     def _call(self, url_path: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """调用企业微信接口"""

@@ -132,6 +132,8 @@ class DataSource(AuditedModel):
             )
             dictx.set_items(plugin_cfg, field, SENSITIVE_MASK)
 
+        plugin_cfg["context"] = {"tenant_id": self.owner_tenant_id}
+
         self.plugin_config = plugin_cfg
         self.save(update_fields=["plugin_config", "updated_at"])
 

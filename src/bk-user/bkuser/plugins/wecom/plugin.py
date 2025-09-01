@@ -38,9 +38,8 @@ class WeComDataSourcePlugin(BaseDataSourcePlugin):
     config_class = WeComDataSourcePluginConfig
 
     def __init__(self, plugin_config: WeComDataSourcePluginConfig, logger: PluginLogger):
-        self.plugin_config = plugin_config
         self.logger = logger
-        self.client = WeComAPIClient(self.plugin_config.server_config)
+        self.client = WeComAPIClient(plugin_config.server_config, plugin_config.context)
         self._cached_dept_ids: List[int] = []
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:

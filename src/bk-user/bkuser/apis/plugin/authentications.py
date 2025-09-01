@@ -16,19 +16,21 @@
 # to the current version of the project delivered to anyone in the future.
 
 
-from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
-from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
+from django.contrib.auth import get_user_model
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
-DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
-    server_config=ServerConfig(
-        corp_id="corp_id",
-        corp_secret="corp_secret",
-        request_timeout=DEFAULT_REQ_TIMEOUT,
-        retries=DEFAULT_RETRIES,
-        sync_scope=WeComSyncScope.SPECIFIC_DEPT,
-        sync_dept_id=1,
-    ),
-    context={
-        "tenant_id": "default",
-    },
-)
+
+class InnerPluginAuthentication(BasicAuthentication):
+    """对于用户管理内部插件调用，使用特定的内部认证标识"""
+
+    def authenticate(self, request):
+        # 检查是否为内部插件调用（通过特定的请求头标识）
+        if not request.META.get("HTTP_X_INTERNAL_CALL") == "bk-user-plugin":
+            raise AuthenticationFailed("Invalid authentication header X-Internal-Call.")
+
+        user_model = get_user_model()
+        user, _ = user_model.objects.get_or_create(
+            username="admin", defaults={"is_active": True, "is_staff": False, "is_superuser": False}
+        )
+        return user, None

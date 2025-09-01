@@ -15,20 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from rest_framework import serializers
 
-from bkuser.plugins.wecom.constants import DEFAULT_REQ_TIMEOUT, DEFAULT_RETRIES, WeComSyncScope
-from bkuser.plugins.wecom.models import ServerConfig, WeComDataSourcePluginConfig
 
-DEFAULT_PLUGIN_CONFIG = WeComDataSourcePluginConfig(
-    server_config=ServerConfig(
-        corp_id="corp_id",
-        corp_secret="corp_secret",
-        request_timeout=DEFAULT_REQ_TIMEOUT,
-        retries=DEFAULT_RETRIES,
-        sync_scope=WeComSyncScope.SPECIFIC_DEPT,
-        sync_dept_id=1,
-    ),
-    context={
-        "tenant_id": "default",
-    },
-)
+class WeComAccessTokenInputSLZ(serializers.Serializer):
+    corp_id = serializers.CharField(help_text="企业 ID", max_length=128)
+    corp_secret = serializers.CharField(help_text="应用密钥", max_length=128)
+    tenant_id = serializers.CharField(help_text="租户 ID", max_length=128)
+
+
+class WeComAccessTokenOutputSLZ(serializers.Serializer):
+    access_token = serializers.CharField(help_text="企业微信 access_token")
