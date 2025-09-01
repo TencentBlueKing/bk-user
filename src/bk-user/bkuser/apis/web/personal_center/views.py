@@ -672,7 +672,6 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
     """个人中心 - 企业微信绑定回调接口"""
 
     permission_classes = [IsAuthenticated]
-    queryset = TenantUser.objects.all()
 
     @swagger_auto_schema(
         tags=["personal_center"],
