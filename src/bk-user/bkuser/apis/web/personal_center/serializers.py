@@ -309,7 +309,7 @@ class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
     wx_userid = serializers.BooleanField(help_text="微信用户 ID")
 
 
-class TenantUserWecomLoginCallbackOutputSLZ(serializers.Serializer):
+class TenantUserWecomCallbackOutputSLZ(serializers.Serializer):
     result = serializers.BooleanField(help_text="是否绑定成功")
 
 

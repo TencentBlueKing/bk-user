@@ -47,7 +47,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
     TenantUserWecomCallbackInputSLZ,
-    TenantUserWecomLoginCallbackOutputSLZ,
+    TenantUserWecomCallbackOutputSLZ,
     TenantUserWeixinBindOutputSLZ,
     TenantUserWeixinInfoOutputSLZ,
 )
@@ -677,7 +677,7 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心 - 企业微信扫码绑定回调",
-        responses={status.HTTP_200_OK: TenantUserWecomLoginCallbackOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserWecomCallbackOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = TenantUser.objects.get(id=request.user.username)
@@ -702,7 +702,7 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)
 
-        return Response(TenantUserWecomLoginCallbackOutputSLZ({"result": True}).data)
+        return Response(TenantUserWecomCallbackOutputSLZ({"result": True}).data)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
