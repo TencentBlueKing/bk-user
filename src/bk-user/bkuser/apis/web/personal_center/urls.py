@@ -99,7 +99,7 @@ urlpatterns = [
     ),
     path(
         "tenant-users/<str:id>/weixin/wx_userid/",
-        views.TenantUserWeixinApi.as_view(),
+        views.TenantUserWeixinInfoApi.as_view(),
         name="personal_center.tenant_users.wx_userid",
     ),
     # 企业微信绑定回调

@@ -305,7 +305,7 @@ class TenantUserWeixinBindOutputSLZ(serializers.Serializer):
     bind_url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 
-class TenantUserWeixinOutputSLZ(serializers.Serializer):
+class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
     wx_userid = serializers.BooleanField(help_text="微信用户 ID")
 
 

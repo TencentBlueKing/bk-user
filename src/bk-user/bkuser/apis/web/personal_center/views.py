@@ -49,7 +49,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserWecomCallbackInputSLZ,
     TenantUserWecomLoginCallbackOutputSLZ,
     TenantUserWeixinBindOutputSLZ,
-    TenantUserWeixinOutputSLZ,
+    TenantUserWeixinInfoOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -630,7 +630,7 @@ class TenantUserWeixinBindApi(generics.RetrieveAPIView):
         return Response(TenantUserWeixinBindOutputSLZ(bind_info).data)
 
 
-class TenantUserWeixinApi(generics.RetrieveDestroyAPIView):
+class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
@@ -638,15 +638,15 @@ class TenantUserWeixinApi(generics.RetrieveDestroyAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心 - 查询用户微信 ID",
-        responses={status.HTTP_200_OK: TenantUserWeixinOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserWeixinInfoOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        return Response(TenantUserWeixinOutputSLZ({"wx_userid": tenant_user.wx_userid}).data)
+        return Response(TenantUserWeixinInfoOutputSLZ({"wx_userid": tenant_user.wx_userid}).data)
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心 - 删除微信用户 ID",
+        operation_description="个人中心 - 删除用户微信 ID",
     )
     def delete(self, request, *args, **kwargs):
         tenant_user = self.get_object()
@@ -669,14 +669,14 @@ class TenantUserWeixinApi(generics.RetrieveDestroyAPIView):
 
 
 class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
-    """个人中心 - 企业微信登录回调接口"""
+    """个人中心 - 企业微信绑定回调接口"""
 
     permission_classes = [IsAuthenticated]
     queryset = TenantUser.objects.all()
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心 - 企业微信扫码登录回调",
+        operation_description="个人中心 - 企业微信扫码绑定回调",
         responses={status.HTTP_200_OK: TenantUserWecomLoginCallbackOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):

@@ -28,7 +28,7 @@ MP_QRCODE_SHOW_URL = "https://mp.weixin.qq.com/cgi-bin/showqrcode"
 MP_EVENT_SUBSCRIBE = "subscribe"
 MP_EVENT_SCAN = "SCAN"
 
-# 二维码过期时间（秒）
+# 二维码过期时间，单位：秒
 MP_QRCODE_EXPIRE_SECONDS = 300
 
 # 微信公众号消息模板
