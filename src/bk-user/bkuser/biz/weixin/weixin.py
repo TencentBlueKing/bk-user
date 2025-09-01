@@ -62,7 +62,7 @@ class WecomBindHandler:
     def get_bind_info(self) -> Dict[str, str]:
         """获取企业微信绑定信息"""
         redirect_uri = self.build_absolute_uri(
-            reverse("personal_center.tenant_users.wecom.login_callback", kwargs={"tenant_id": self.tenant_id})
+            reverse("personal_center.tenant_users.wecom.bind_callback", kwargs={"tenant_id": self.tenant_id})
         )
 
         state = self._generate_and_store_state()

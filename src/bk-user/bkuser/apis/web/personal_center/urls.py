@@ -102,16 +102,14 @@ urlpatterns = [
         views.TenantUserWeixinInfoApi.as_view(),
         name="personal_center.tenant_users.wx_userid",
     ),
-    # 企业微信绑定回调
     path(
         "tenants/<str:tenant_id>/wecom/bind-callback/",
         views.TenantUserWecomCallbackApi.as_view(),
-        name="personal_center.tenant_users.wecom.login_callback",
+        name="personal_center.tenant_users.wecom.bind_callback",
     ),
-    # 微信公众号绑定回调
     path(
         "tenants/<str:tenant_id>/mp/bind-callback/",
         views.TenantUserMPCallbackApi.as_view(),
-        name="personal_center.tenant_users.mp.login_callback",
+        name="personal_center.tenant_users.mp.bind_callback",
     ),
 ]
