@@ -47,9 +47,8 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
     TenantUserWecomCallbackInputSLZ,
-    TenantUserWecomCallbackOutputSLZ,
-    TenantUserWeixinBindOutputSLZ,
     TenantUserWeixinInfoOutputSLZ,
+    TenantUserWeixinRetrieveToBindInfoOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -69,8 +68,8 @@ from bkuser.biz.senders import (
     PhoneVerificationCodeSender,
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
-from bkuser.biz.weixin import WeixinConfigService, WeixinUtil
-from bkuser.biz.weixin.weixin import MpBindHandler, WecomBindHandler, get_weixin_bind_handler
+from bkuser.biz.weixin import WeixinConfigService
+from bkuser.biz.weixin.weixin import MpBindHandler, WecomBindHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     EmailVerificationCodeManager,
@@ -602,7 +601,7 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
         return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 
-class TenantUserWeixinBindApi(generics.RetrieveAPIView):
+class TenantUserWeixinRetrieveToBindInfoApi(generics.RetrieveAPIView):
     """个人中心 - 统一的绑定接口"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -612,7 +611,7 @@ class TenantUserWeixinBindApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心 - 微信绑定",
-        responses={status.HTTP_200_OK: TenantUserWeixinBindOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserWeixinRetrieveToBindInfoOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
@@ -620,14 +619,18 @@ class TenantUserWeixinBindApi(generics.RetrieveAPIView):
             raise error_codes.WEIXIN_ALREADY_BOUND.f(_("当前账户已绑定微信"))
 
         # 获取微信类型
-        weixin_config_service = WeixinConfigService(tenant_user.tenant_id)
-        weixin_settings = weixin_config_service.get_weixin_settings()
-        wx_type = str(weixin_settings.get("wx_type"))
+        wx_type = WeixinConfigService(tenant_user.tenant_id).get_wx_type()
 
-        # 根据微信类型获取对应的处理器
-        weixin_handler = get_weixin_bind_handler(wx_type, tenant_user, request.build_absolute_uri, request.session)
-        bind_info = weixin_handler.get_bind_info()
-        return Response(TenantUserWeixinBindOutputSLZ(bind_info).data)
+        if wx_type in ["qy", "qywx"]:
+            wecom_handler = WecomBindHandler(tenant_user)
+            url = wecom_handler.get_authorization_url(request.session)
+        elif wx_type == "mp":
+            mp_handler = MpBindHandler(tenant_user)
+            url = mp_handler.get_mp_qrcode_url()
+        else:
+            raise error_codes.WEIXIN_TYPE_UNSUPPORTED.f(_("请联系管理员处理"))
+
+        return Response(TenantUserWeixinRetrieveToBindInfoOutputSLZ({"url": url}).data)
 
 
 class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
@@ -642,7 +645,7 @@ class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        return Response(TenantUserWeixinInfoOutputSLZ({"wx_userid": tenant_user.wx_userid}).data)
+        return Response(TenantUserWeixinInfoOutputSLZ(tenant_user).data)
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -654,13 +657,13 @@ class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
         if not tenant_user.wx_userid:
             raise error_codes.WEIXIN_ALREADY_UNBOUND.f(_("当前账号未绑定微信"))
 
-        # 解绑逻辑
-        tenant_user.wx_userid = ""
-        tenant_user.save(update_fields=["wx_userid", "updated_at"])
-
         # 【审计】创建微信绑定审计对象并记录变更前的数据
         auditor = TenantUserWeixinBindAuditor(request.user.username, tenant_user.tenant_id)
         auditor.pre_record_data_before(tenant_user)
+
+        # 解绑逻辑
+        tenant_user.wx_userid = ""
+        tenant_user.save(update_fields=["wx_userid", "updated_at"])
 
         # 【审计】记录解绑操作
         auditor.record_unbind(tenant_user)
@@ -676,19 +679,24 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心 - 企业微信扫码绑定回调",
-        responses={status.HTTP_200_OK: TenantUserWecomCallbackOutputSLZ()},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = TenantUser.objects.get(id=request.user.username)
-        weixin_handler = WecomBindHandler(tenant_user, request.build_absolute_uri, request.session)
+        wecom_handler = WecomBindHandler(tenant_user)
 
-        slz = TenantUserWecomCallbackInputSLZ(data=request.query_params, context={"weixin_handler": weixin_handler})
+        slz = TenantUserWecomCallbackInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
         code = data["code"]
+        state = data["state"]
 
-        wx_userid = weixin_handler.get_wecom_userid(code)
+        is_valid = wecom_handler.check_state(state, request.session)
+        if not is_valid:
+            raise error_codes.WEIXIN_STATE_INVALID
+
+        wx_userid = wecom_handler.get_wecom_userid(code)
 
         # 【审计】创建企业微信绑定审计对象并记录变更前的数据
         auditor = TenantUserWeixinBindAuditor(request.user.username, tenant_user.tenant_id)
@@ -701,7 +709,7 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)
 
-        return Response(TenantUserWecomCallbackOutputSLZ({"result": True}).data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -730,22 +738,18 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
         slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
         slz.is_valid(raise_exception=True)
         # 解析微信公众号推送的 XML 消息
-        data = WeixinUtil.xml_to_dict(request.data)
+        data = MpBindHandler.xml_to_dict(request.data)
         # 通过生成二维码时候的 ticket 确认 tenant_user 对象
         ticket = str(data.get("Ticket"))
-        tenant_user = WeixinUtil.get_tenant_user_by_ticket(ticket)
+        tenant_user = MpBindHandler.get_tenant_user_by_ticket(ticket)
 
         # 【审计】创建微信绑定审计对象并记录变更前的数据
         auditor = TenantUserWeixinBindAuditor(tenant_user.id, tenant_user.tenant_id)
         auditor.pre_record_data_before(tenant_user)
 
         # 处理微信公众号回调消息
-        weixin_handler = MpBindHandler(
-            tenant_user=tenant_user,
-            build_absolute_uri=request.build_absolute_uri,
-            session=request.session,
-        )
-        response = weixin_handler.handle_qrcode_event(data)
+        mp_handler = MpBindHandler(tenant_user=tenant_user)
+        response = mp_handler.handle_qrcode_event(data)
 
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)

@@ -18,13 +18,15 @@
 # 企业微信扫码登录 state 过期时间，单位：秒
 WECOM_STATE_EXPIRE_SECONDS = 300
 
-# 微信 API 相关常量
+# 企业微信 API 相关常量
 WECOM_LOGIN_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login"
 WECOM_USERINFO_URL = "https://qyapi.weixin.qq.com/cgi-bin/auth/getuserinfo"
+
+# 微信公众号 API 相关常量
 MP_QRCODE_CREATE_URL = "https://api.weixin.qq.com/cgi-bin/qrcode/create"
 MP_QRCODE_SHOW_URL = "https://mp.weixin.qq.com/cgi-bin/showqrcode"
 
-# 微信事件类型
+# 微信公众号事件类型
 MP_EVENT_SUBSCRIBE = "subscribe"
 MP_EVENT_SCAN = "SCAN"
 

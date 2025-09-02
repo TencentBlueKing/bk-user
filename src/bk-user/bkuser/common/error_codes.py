@@ -134,6 +134,8 @@ class ErrorCodes:
     WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("二维码生成失败"))
     WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("二维码无效"))
     WEIXIN_XML_PARSE_FAILED = ErrorCode(_("XML 解析失败"))
+    WEIXIN_STATE_INVALID = ErrorCode(_("state 无效"))
+    WEIXIN_TYPE_UNSUPPORTED = ErrorCode(_("不支持的微信类型"))
 
 
 # 实例化一个全局对象

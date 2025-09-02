@@ -25,111 +25,12 @@ from bkuser.biz.weixin import (
     MpBindHandler,
     WecomBindHandler,
     WeixinConfigService,
-    WeixinUtil,
-    get_weixin_bind_handler,
 )
+from bkuser.biz.weixin.constants import WECOM_LOGIN_URL
 from bkuser.utils.std_error import APIError
 from django.test import RequestFactory
 
 pytestmark = pytest.mark.django_db
-
-
-class TestWeixinUtil:
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_store_and_get_qrcode_user_info(self, random_tenant):
-        tenant_user = TenantUser.objects.first()
-        ticket = "test_ticket_123"
-
-        # 存储用户信息
-        WeixinUtil.store_qrcode_user_info(ticket, tenant_user.id)
-
-        # 获取用户信息
-        retrieved_user = WeixinUtil.get_tenant_user_by_ticket(ticket)
-        assert retrieved_user.id == tenant_user.id
-
-        # 验证缓存已被删除
-        with pytest.raises(APIError) as error:
-            WeixinUtil.get_tenant_user_by_ticket(ticket)
-        assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
-
-    def test_get_tenant_user_by_invalid_ticket(self):
-        with pytest.raises(APIError) as error:
-            WeixinUtil.get_tenant_user_by_ticket("invalid_ticket")
-        assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
-
-    def test_xml_to_dict_success(self):
-        xml_data = """<xml>
-            <ToUserName><![CDATA[toUser]]></ToUserName>
-            <FromUserName><![CDATA[fromUser]]></FromUserName>
-            <CreateTime>1348831860</CreateTime>
-            <MsgType><![CDATA[text]]></MsgType>
-            <Content><![CDATA[this is a test]]></Content>
-            <MsgId>1234567890123456</MsgId>
-        </xml>"""
-
-        result = WeixinUtil.xml_to_dict(xml_data)
-        expected = {
-            "ToUserName": "toUser",
-            "FromUserName": "fromUser",
-            "CreateTime": "1348831860",
-            "MsgType": "text",
-            "Content": "this is a test",
-            "MsgId": "1234567890123456",
-        }
-        assert result == expected
-
-    def test_xml_to_dict_invalid_xml(self):
-        invalid_xml = "<xml><invalid>"
-
-        with pytest.raises(APIError) as error:
-            WeixinUtil.xml_to_dict(invalid_xml)
-        assert "XML 解析失败" in error.value.message
-
-    def test_check_weixin_signature_valid(self):
-        """测试有效的微信签名验证"""
-        token = "test_token"
-        timestamp = "1234567890"
-        nonce = "test_nonce"
-
-        # 计算正确的签名
-        params = [token, timestamp, nonce]
-        params.sort()
-        s = "".join(params)
-        correct_signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
-
-        result = WeixinUtil.check_weixin_signature(token, correct_signature, timestamp, nonce)
-        assert result is True
-
-    def test_check_weixin_signature_invalid(self):
-        """测试无效的微信签名验证"""
-        token = "test_token"
-        timestamp = "1234567890"
-        nonce = "test_nonce"
-        invalid_signature = "invalid_signature"
-
-        result = WeixinUtil.check_weixin_signature(token, invalid_signature, timestamp, nonce)
-        assert result is False
-
-    def test_check_weixin_signature_no_token(self):
-        """测试没有 token 的微信签名验证"""
-        token = ""
-        timestamp = "1234567890"
-        nonce = "test_nonce"
-        signature = "some_signature"
-
-        result = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
-        assert result is False
-
-    def test_check_weixin_signature_empty_params(self):
-        """测试空参数的微信签名验证"""
-        token = "test_token"
-        timestamp = ""
-        nonce = ""
-        signature = "some_signature"
-
-        # 空参数会导致排序后的字符串为空，签名验证失败
-        result = WeixinUtil.check_weixin_signature(token, signature, timestamp, nonce)
-        assert result is False
 
 
 class TestWecomBindHandler:
@@ -152,7 +53,7 @@ class TestWecomBindHandler:
                 "corp_id": "test_corp_id",
                 "agent_id": "test_agent_id",
             }
-            return WecomBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
+            return WecomBindHandler(mock_tenant_user)
 
     def test_tenant_id_property(self, weixin_handler, mock_tenant_user):
         assert weixin_handler.tenant_id == mock_tenant_user.tenant_id
@@ -166,15 +67,15 @@ class TestWecomBindHandler:
         "get_weixin_settings",
         return_value={"wx_type": "qy", "corp_id": "test_corp_id", "agent_id": "test_agent_id"},
     )
-    def test_get_bind_info_wecom(self, mock_get_weixin_settings, weixin_handler, mock_request):
-        result = weixin_handler.get_bind_info()
+    def test_get_authorization_url(self, mock_get_weixin_settings, weixin_handler, mock_request):
+        result = weixin_handler.get_authorization_url(mock_request.session)
 
-        assert "bind_url" in result
-        assert "test_corp_id" in result["bind_url"]
-        assert "test_agent_id" in result["bind_url"]
+        assert WECOM_LOGIN_URL in result
+        assert "test_corp_id" in result
+        assert "test_agent_id" in result
 
     def test_generate_and_store_state(self, weixin_handler, mock_request):
-        state = weixin_handler._generate_and_store_state()
+        state = weixin_handler._generate_and_store_state(mock_request.session)
 
         # 验证 state 不为空
         assert state
@@ -189,10 +90,10 @@ class TestWecomBindHandler:
 
     def test_check_state_valid(self, weixin_handler, mock_request):
         # 生成并存储 state
-        state = weixin_handler._generate_and_store_state()
+        state = weixin_handler._generate_and_store_state(mock_request.session)
 
         # 检查 state
-        result = weixin_handler.check_state(state)
+        result = weixin_handler.check_state(state, mock_request.session)
         assert result is True
 
         # 验证 session 已被清理
@@ -200,12 +101,12 @@ class TestWecomBindHandler:
         assert session_key not in mock_request.session
 
     def test_check_state_invalid(self, weixin_handler, mock_request):
-        result = weixin_handler.check_state("invalid_state")
+        result = weixin_handler.check_state("invalid_state", mock_request.session)
         assert result is False
 
     def test_check_state_expired(self, weixin_handler, mock_request):
         # 生成并存储 state
-        state = weixin_handler._generate_and_store_state()
+        state = weixin_handler._generate_and_store_state(mock_request.session)
 
         # 模拟时间过期
         session_key = weixin_handler.state_session_key
@@ -213,7 +114,7 @@ class TestWecomBindHandler:
         state_data["timestamp"] = int(time.time()) - 301  # 超过 300 秒
         mock_request.session[session_key] = state_data
 
-        result = weixin_handler.check_state(state)
+        result = weixin_handler.check_state(state, mock_request.session)
         assert result is False
 
     @mock.patch("bkuser.biz.weixin.weixin.http_get", return_value=(True, {"errcode": 0, "userid": "test_userid"}))
@@ -262,18 +163,7 @@ class TestMpBindHandler:
                 "wx_type": "mp",
             }
             mock_get_access_token.return_value = "test_access_token"
-            return MpBindHandler(mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
-
-    @mock.patch.object(WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "mp"})
-    @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
-    @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
-    def test_get_bind_info_mp(
-        self, mock_http_post, mock_get_access_token, mock_get_weixin_settings, weixin_handler, mock_request
-    ):
-        result = weixin_handler.get_bind_info()
-
-        assert "bind_url" in result
-        assert "test_ticket" in result["bind_url"]
+            return MpBindHandler(mock_tenant_user)
 
     @mock.patch.object(TenantUser, "save")
     def test_handle_qrcode_event_subscribe(self, mock_save, mock_tenant_user, weixin_handler):
@@ -350,25 +240,27 @@ class TestMpBindHandler:
 
     @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
-    @mock.patch.object(WeixinUtil, "store_qrcode_user_info")
-    def test_get_mp_qrcode_url_success(
-        self, mock_store_qrcode_user_info, mock_get_access_token, mock_http_post, weixin_handler
-    ):
-        result = weixin_handler._get_mp_qrcode_url()
-
-        # 验证存储被调用
-        mock_store_qrcode_user_info.assert_called_once_with("test_ticket", weixin_handler.tenant_user.id)
+    def test_get_mp_qrcode_url_success(self, mock_get_access_token, mock_http_post, weixin_handler):
+        result = weixin_handler.get_mp_qrcode_url()
 
         # 验证返回的 URL
         assert "test_ticket" in result
         assert "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" in result
+
+        # 验证 http_post 被调用时使用了动态的 scene_id
+        call_args = mock_http_post.call_args
+        post_data = call_args[1]["data"]
+        scene_id = post_data["action_info"]["scene"]["scene_id"]
+        # scene_id 应该是基于用户ID的哈希值
+        expected_scene_id = hash(weixin_handler.tenant_user.id) % 100000
+        assert scene_id == expected_scene_id
 
     @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(False, {"error": "network error"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_mp_qrcode_url_api_error(self, mock_get_access_token, mock_http_post, weixin_handler):
         """测试微信公众号 API 错误"""
         with pytest.raises(APIError) as error:
-            weixin_handler._get_mp_qrcode_url()
+            weixin_handler.get_mp_qrcode_url()
         assert "创建微信临时二维码失败" in str(error.value.message)
 
     @mock.patch(
@@ -378,8 +270,118 @@ class TestMpBindHandler:
     def test_get_mp_qrcode_url_errcode_error(self, mock_get_access_token, mock_http_post, weixin_handler):
         """测试微信公众号返回错误码"""
         with pytest.raises(APIError) as error:
-            weixin_handler._get_mp_qrcode_url()
+            weixin_handler.get_mp_qrcode_url()
         assert "微信公众号 API 调用失败" in error.value.message
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_store_and_get_qrcode_user_info(self, random_tenant):
+        """测试存储和获取二维码用户信息"""
+        from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+
+        tenant_user = TenantUser.objects.first()
+        ticket = "test_ticket_123"
+
+        # 直接使用缓存存储用户信息（模拟业务代码中的存储逻辑）
+        user_info = {"tenant_user_id": tenant_user.id}
+        qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
+        qrcode_cache.set(ticket, user_info, 300)
+
+        # 获取用户信息
+        retrieved_user = MpBindHandler.get_tenant_user_by_ticket(ticket)
+        assert retrieved_user.id == tenant_user.id
+
+        # 验证缓存已被删除（get_tenant_user_by_ticket 会删除缓存）
+        with pytest.raises(APIError) as error:
+            MpBindHandler.get_tenant_user_by_ticket(ticket)
+        assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
+
+    def test_get_tenant_user_by_invalid_ticket(self):
+        """测试无效ticket获取用户信息"""
+        with pytest.raises(APIError) as error:
+            MpBindHandler.get_tenant_user_by_ticket("invalid_ticket")
+        assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
+
+    def test_get_tenant_user_by_ticket_user_not_exist(self):
+        """测试ticket对应的用户不存在"""
+        from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+
+        ticket = "test_ticket_nonexistent_user"
+        # 存储一个不存在的用户ID
+        user_info = {"tenant_user_id": "nonexistent_user_id"}
+        qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
+        qrcode_cache.set(ticket, user_info, 300)
+
+        with pytest.raises(APIError) as error:
+            MpBindHandler.get_tenant_user_by_ticket(ticket)
+        assert "微信二维码对应的用户不存在" in str(error.value.message)
+
+        # 验证缓存已被清理
+        assert qrcode_cache.get(ticket) is None
+
+    def test_xml_to_dict_success(self):
+        """测试XML转字典成功"""
+        xml_data = """<xml>
+            <ToUserName><![CDATA[toUser]]></ToUserName>
+            <FromUserName><![CDATA[fromUser]]></FromUserName>
+            <CreateTime>1348831860</CreateTime>
+            <MsgType><![CDATA[text]]></MsgType>
+            <Content><![CDATA[this is a test]]></Content>
+            <MsgId>1234567890123456</MsgId>
+        </xml>"""
+
+        result = MpBindHandler.xml_to_dict(xml_data)
+        expected = {
+            "ToUserName": "toUser",
+            "FromUserName": "fromUser",
+            "CreateTime": "1348831860",
+            "MsgType": "text",
+            "Content": "this is a test",
+            "MsgId": "1234567890123456",
+        }
+        assert result == expected
+
+    def test_xml_to_dict_invalid_xml(self):
+        """测试无效XML解析"""
+        invalid_xml = "<xml><invalid>"
+
+        with pytest.raises(APIError) as error:
+            MpBindHandler.xml_to_dict(invalid_xml)
+        assert "微信XML数据解析失败" in str(error.value.message)
+
+    def test_check_weixin_signature_valid(self):
+        """测试有效的微信签名验证"""
+        token = "test_token"
+        timestamp = "1234567890"
+        nonce = "test_nonce"
+
+        # 计算正确的签名
+        params = [token, timestamp, nonce]
+        params.sort()
+        s = "".join(params)
+        correct_signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
+
+        result = MpBindHandler.check_weixin_signature(token, correct_signature, timestamp, nonce)
+        assert result is True
+
+    def test_check_weixin_signature_invalid(self):
+        """测试无效的微信签名验证"""
+        token = "test_token"
+        timestamp = "1234567890"
+        nonce = "test_nonce"
+        invalid_signature = "invalid_signature"
+
+        result = MpBindHandler.check_weixin_signature(token, invalid_signature, timestamp, nonce)
+        assert result is False
+
+    def test_check_weixin_signature_no_token(self):
+        """测试没有 token 的微信签名验证"""
+        token = ""
+        timestamp = "1234567890"
+        nonce = "test_nonce"
+        signature = "some_signature"
+
+        result = MpBindHandler.check_weixin_signature(token, signature, timestamp, nonce)
+        assert result is False
 
 
 class TestWeixinConfigService:
@@ -402,41 +404,3 @@ class TestWeixinConfigService:
     def test_get_access_token(self, mock_get_access_token, weixin_config_service):
         result = weixin_config_service.get_access_token()
         assert result == "test_access_token"
-
-
-class TestGetWeixinBindHandler:
-    """测试工厂方法"""
-
-    @pytest.fixture
-    def mock_tenant_user(self, _init_tenant_users_depts, random_tenant):
-        return TenantUser.objects.first()
-
-    @pytest.fixture
-    def mock_request(self):
-        factory = RequestFactory()
-        request = factory.get("/")
-        request.session = {}
-        return request
-
-    def test_get_wecom_handler(self, mock_tenant_user, mock_request):
-        handler = get_weixin_bind_handler(
-            "qy", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
-        )
-        assert isinstance(handler, WecomBindHandler)
-
-    def test_get_mp_handler(self, mock_tenant_user, mock_request):
-        handler = get_weixin_bind_handler(
-            "mp", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
-        )
-        assert isinstance(handler, MpBindHandler)
-
-    def test_get_handler_with_qywx_type(self, mock_tenant_user, mock_request):
-        handler = get_weixin_bind_handler(
-            "qywx", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session
-        )
-        assert isinstance(handler, WecomBindHandler)
-
-    def test_get_handler_with_invalid_type(self, mock_tenant_user, mock_request):
-        with pytest.raises(APIError) as error:
-            get_weixin_bind_handler("invalid", mock_tenant_user, mock_request.build_absolute_uri, mock_request.session)
-        assert "不支持的微信类型" in str(error.value.message)

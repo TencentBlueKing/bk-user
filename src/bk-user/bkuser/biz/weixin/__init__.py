@@ -15,18 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from .utils import WeixinUtil
 from .weixin import (
     MpBindHandler,
     WecomBindHandler,
     WeixinConfigService,
-    get_weixin_bind_handler,
 )
 
 __all__ = [
     "WecomBindHandler",
     "MpBindHandler",
     "WeixinConfigService",
-    "WeixinUtil",
-    "get_weixin_bind_handler",
 ]

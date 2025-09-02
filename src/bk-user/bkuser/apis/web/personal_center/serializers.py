@@ -34,7 +34,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
-from bkuser.biz.weixin import WeixinUtil
+from bkuser.biz.weixin import MpBindHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
@@ -301,31 +301,17 @@ class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="用户邮箱")
 
 
-class TenantUserWeixinBindOutputSLZ(serializers.Serializer):
-    bind_url = serializers.CharField(help_text="绑定 (二维码) URL")
+class TenantUserWeixinRetrieveToBindInfoOutputSLZ(serializers.Serializer):
+    url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 
 class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
-    wx_userid = serializers.BooleanField(help_text="微信用户 ID")
+    wx_userid = serializers.CharField(help_text="微信用户 ID", allow_blank=True)
 
 
 class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="企业微信授权 code")
     state = serializers.CharField(help_text="企业微信 OAuth2.0 流程中的防 CSRF 令牌")
-
-    def validate(self, attrs):
-        weixin_handler = self.context["weixin_handler"]
-
-        # 验证 state 参数
-        state = attrs.get("state")
-        if not weixin_handler.check_state(state):
-            raise ValidationError(_("state 无效"))
-
-        return attrs
-
-
-class TenantUserWecomCallbackOutputSLZ(serializers.Serializer):
-    result = serializers.BooleanField(help_text="是否绑定成功")
 
 
 class TenantUserMPCallbackInputSLZ(serializers.Serializer):
@@ -334,11 +320,13 @@ class TenantUserMPCallbackInputSLZ(serializers.Serializer):
     nonce = serializers.CharField(help_text="随机数")
 
     def validate(self, attrs):
-        signature = attrs.get("signature")
-        timestamp = attrs.get("timestamp")
-        nonce = attrs.get("nonce")
+        signature = attrs["signature"]
+        timestamp = attrs["timestamp"]
+        nonce = attrs["nonce"]
 
         wx_token = self.context["wx_token"]
-        is_valid = WeixinUtil.check_weixin_signature(wx_token, signature, timestamp, nonce)
+        is_valid = MpBindHandler.check_weixin_signature(wx_token, signature, timestamp, nonce)
         if not is_valid:
             raise ValidationError(_("微信公众号签名验证失败"))
+
+        return attrs
