@@ -22,7 +22,6 @@ from urllib.parse import urlencode
 
 from defusedxml import ElementTree
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 
@@ -226,7 +225,7 @@ class MpBindHandler:
 
         try:
             tenant_user = TenantUser.objects.get(id=tenant_user_id)
-        except ObjectDoesNotExist:
+        except TenantUser.DoesNotExist:
             logger.exception("TenantUser with id %s does not exist", tenant_user_id)
             qrcode_cache.delete(ticket)
             raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码对应的用户不存在"))
