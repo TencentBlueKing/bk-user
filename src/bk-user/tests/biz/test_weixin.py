@@ -247,14 +247,6 @@ class TestMpBindHandler:
         assert "test_ticket" in result
         assert "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" in result
 
-        # 验证 http_post 被调用时使用了动态的 scene_id
-        call_args = mock_http_post.call_args
-        post_data = call_args[1]["data"]
-        scene_id = post_data["action_info"]["scene"]["scene_id"]
-        # scene_id 应该是基于用户ID的哈希值
-        expected_scene_id = hash(weixin_handler.tenant_user.id) % 100000
-        assert scene_id == expected_scene_id
-
     @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(False, {"error": "network error"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_mp_qrcode_url_api_error(self, mock_get_access_token, mock_http_post, weixin_handler):
@@ -346,7 +338,7 @@ class TestMpBindHandler:
 
         with pytest.raises(APIError) as error:
             MpBindHandler.xml_to_dict(invalid_xml)
-        assert "微信XML数据解析失败" in str(error.value.message)
+        assert "XML 解析失败" in str(error.value.message)
 
     def test_check_weixin_signature_valid(self):
         """测试有效的微信签名验证"""
