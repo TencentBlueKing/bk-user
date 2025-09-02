@@ -298,3 +298,23 @@ class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
 
 class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="用户邮箱")
+
+
+class TenantUserWeixinRetrieveToBindInfoOutputSLZ(serializers.Serializer):
+    url = serializers.CharField(help_text="绑定 (二维码) URL")
+
+
+class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
+    wx_userid = serializers.CharField(help_text="微信用户 ID", allow_blank=True)
+    type = serializers.CharField(help_text="微信类型(企业微信或者微信公众号)", allow_blank=True)
+
+
+class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="企业微信授权 code")
+    state = serializers.CharField(help_text="企业微信 OAuth2.0 流程中的防 CSRF 令牌")
+
+
+class TenantUserMPCallbackInputSLZ(serializers.Serializer):
+    signature = serializers.CharField(help_text="微信公众号回调签名")
+    timestamp = serializers.CharField(help_text="时间戳")
+    nonce = serializers.CharField(help_text="随机数")

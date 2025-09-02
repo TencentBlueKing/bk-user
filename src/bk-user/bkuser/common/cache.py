@@ -49,6 +49,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     WORKBOOK_TEMPORARY_STORE = "wts"
     # OpenWeb API 限流
     OPEN_WEB_API_THROTTLE = "owat"
+    # 微信公众号二维码 临时存储
+    MP_QRCODE = "mq"
 
 
 def _default_key_function(*args, **kwargs):

@@ -13,7 +13,7 @@ dependencies = [
     "django-celery-beat==2.8.1",
     "django-celery-results==2.6.0",
     "pymysql==1.1.1",
-    "requests==2.32.4",
+    "requests==2.32.5",
     "gunicorn==23.0.0",
     "gevent==25.5.1",
     "django-environ==0.12.0",
@@ -50,6 +50,7 @@ dependencies = [
     "ldap3==2.9.1",
     "nanoid==2.0.0",
     "apigw-manager[cryptography]==4.1.0",
+    "defusedxml==0.7.1",
     # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
     "setuptools==80.8.0",
 ]

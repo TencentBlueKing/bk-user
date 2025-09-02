@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -91,5 +91,32 @@ urlpatterns = [
         "tenant-users/<str:id>/email-verification-code/",
         views.TenantUserEmailVerificationCodeSendApi.as_view(),
         name="personal_center.tenant_users.email_verification_code.send",
+    ),
+    path(
+        "weixin/",
+        include(
+            [
+                path(
+                    "tenant-users/<str:id>/to-bind-info/",
+                    views.TenantUserWeixinRetrieveToBindInfoApi.as_view(),
+                    name="personal_center.tenant_users.weixin.to_bind_info",
+                ),
+                path(
+                    "tenant-users/<str:id>/wx_userid/",
+                    views.TenantUserWeixinInfoApi.as_view(),
+                    name="personal_center.tenant_users.wx_userid",
+                ),
+                path(
+                    "tenants/<str:tenant_id>/wecom/bind-callback/",
+                    views.TenantUserWecomCallbackApi.as_view(),
+                    name="personal_center.tenant_users.wecom.bind_callback",
+                ),
+                path(
+                    "tenants/<str:tenant_id>/mp/bind-callback/",
+                    views.TenantUserMPCallbackApi.as_view(),
+                    name="personal_center.tenant_users.mp.bind_callback",
+                ),
+            ]
+        ),
     ),
 ]
