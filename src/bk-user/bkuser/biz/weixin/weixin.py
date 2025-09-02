@@ -233,10 +233,10 @@ class MpBindHandler:
         event = data.get("Event")
         # 检查必要的字段
         if not all([msg_type, from_user, event, to_user]):
-            return None, str(from_user), ""
+            return None, "", ""
         # 检查事件类型
         if msg_type != "event" or event not in (MP_EVENT_SUBSCRIBE, MP_EVENT_SCAN):
-            return None, str(from_user), ""
+            return None, "", ""
 
         # 根据 ticket 获取租户用户
         ticket = str(data.get("Ticket"))
