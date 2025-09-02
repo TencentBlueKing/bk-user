@@ -325,8 +325,7 @@ class TenantUserMPCallbackInputSLZ(serializers.Serializer):
         nonce = attrs["nonce"]
 
         wx_token = self.context["wx_token"]
-        is_valid = MpBindHandler.check_weixin_signature(wx_token, signature, timestamp, nonce)
-        if not is_valid:
+        if not MpBindHandler.check_weixin_signature(wx_token, signature, timestamp, nonce):
             raise ValidationError(_("微信公众号签名验证失败"))
 
         return attrs

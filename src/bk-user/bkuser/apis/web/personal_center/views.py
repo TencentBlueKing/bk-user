@@ -692,8 +692,7 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         code = data["code"]
         state = data["state"]
 
-        is_valid = wecom_handler.check_state(state, request.session)
-        if not is_valid:
+        if not wecom_handler.check_state(state, request.session):
             raise error_codes.WEIXIN_STATE_INVALID
 
         wx_userid = wecom_handler.get_wecom_userid(code)
