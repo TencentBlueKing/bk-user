@@ -71,13 +71,16 @@ class WecomBindHandler:
         )
 
         state = self._generate_and_store_state(session)
+        weixin_settings = self.weixin_config_service.get_weixin_settings()
         param_dict = {
             "login_type": "CorpApp",
-            "appid": self.weixin_config_service.get_weixin_settings().get("corp_id"),
-            "agentid": self.weixin_config_service.get_weixin_settings().get("agent_id"),
+            "appid": weixin_settings.get("corp_id"),
             "redirect_uri": redirect_uri,
             "state": state,
         }
+
+        if agent_id := weixin_settings.get("agent_id"):
+            param_dict["agentid"] = agent_id
 
         return "%s?%s" % (WECOM_LOGIN_URL, urlencode(param_dict))
 
@@ -277,6 +280,9 @@ class WeixinConfigService:
 
     def get_wx_type(self) -> str:
         return self.get_weixin_settings()["wx_type"]
+
+    def get_wx_token(self) -> str:
+        return self.get_weixin_settings()["wx_token"]
 
     def get_access_token(self) -> str:
         """获取 access_token"""

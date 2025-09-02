@@ -721,8 +721,7 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
     permission_classes: List[BasePermission] = []
 
     def get(self, request, *args, **kwargs):
-        weixin_config_service = WeixinConfigService(self.kwargs["tenant_id"])
-        wx_token = weixin_config_service.get_weixin_settings()["wx_token"]
+        wx_token = WeixinConfigService(self.kwargs["tenant_id"]).get_wx_token()
 
         slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
         slz.is_valid(raise_exception=True)
@@ -731,9 +730,7 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
 
     def post(self, request, *args, **kwargs):
         """处理微信公众号回调消息"""
-
-        weixin_config_service = WeixinConfigService(self.kwargs["tenant_id"])
-        wx_token = weixin_config_service.get_weixin_settings()["wx_token"]
+        wx_token = WeixinConfigService(self.kwargs["tenant_id"]).get_wx_token()
 
         slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
         slz.is_valid(raise_exception=True)
