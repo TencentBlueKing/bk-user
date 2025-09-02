@@ -69,6 +69,7 @@ from bkuser.biz.senders import (
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.biz.weixin import WeixinConfigService
+from bkuser.biz.weixin.constants import WeixinTypeEnum
 from bkuser.biz.weixin.weixin import MpBindHandler, WecomBindHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
@@ -621,14 +622,15 @@ class TenantUserWeixinRetrieveToBindInfoApi(generics.RetrieveAPIView):
         # 获取微信类型
         wx_type = WeixinConfigService(tenant_user.tenant_id).get_wx_type()
 
-        if wx_type in ["qy", "qywx"]:
+        if wx_type in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX]:
             wecom_handler = WecomBindHandler(tenant_user)
             url = wecom_handler.get_authorization_url(request.session)
-        elif wx_type == "mp":
+        elif wx_type == WeixinTypeEnum.MP:
             mp_handler = MpBindHandler(tenant_user)
             url = mp_handler.get_mp_qrcode_url()
         else:
-            raise error_codes.WEIXIN_TYPE_UNSUPPORTED.f(_("请联系管理员处理"))
+            # 微信类型为 None
+            raise error_codes.WEIXIN_TYPE_UNSUPPORTED.f(_("请联系管理员"))
 
         return Response(TenantUserWeixinRetrieveToBindInfoOutputSLZ({"url": url}).data)
 
@@ -645,7 +647,10 @@ class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        return Response(TenantUserWeixinInfoOutputSLZ(tenant_user).data)
+        wx_type = WeixinConfigService(tenant_user.tenant_id).get_wx_type()
+
+        data = {"wx_userid": tenant_user.wx_userid if wx_type else "", "type": wx_type.value if wx_type else ""}
+        return Response(TenantUserWeixinInfoOutputSLZ(data).data)
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -720,32 +725,40 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
     permission_classes: List[BasePermission] = []
 
     def get(self, request, *args, **kwargs):
-        wx_token = WeixinConfigService(self.kwargs["tenant_id"]).get_wx_token()
-
-        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        if not MpBindHandler.check_mp_signature(
+            self.kwargs["tenant_id"], data["signature"], data["timestamp"], data["nonce"]
+        ):
+            raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
 
         return HttpResponse(escape(request.query_params.get("echostr")))
 
     def post(self, request, *args, **kwargs):
         """处理微信公众号回调消息"""
-        wx_token = WeixinConfigService(self.kwargs["tenant_id"]).get_wx_token()
-
-        slz = TenantUserMPCallbackInputSLZ(data=request.query_params, context={"wx_token": wx_token})
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
-        # 解析微信公众号推送的 XML 消息
-        data = MpBindHandler.xml_to_dict(request.data)
-        # 通过生成二维码时候的 ticket 确认 tenant_user 对象
-        ticket = str(data.get("Ticket"))
-        tenant_user = MpBindHandler.get_tenant_user_by_ticket(ticket)
+        data = slz.validated_data
+
+        if not MpBindHandler.check_mp_signature(
+            self.kwargs["tenant_id"], data["signature"], data["timestamp"], data["nonce"]
+        ):
+            raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
+
+        tenant_user, wx_userid, response = MpBindHandler.process_mp_callback_event(request.data)
+        # 处理回调事件出错,应该返回空响应作为 fallback，防止微信公众号服务器重复推送
+        if not tenant_user:
+            return HttpResponse(content="", content_type="application/xml", status=status.HTTP_200_OK)
 
         # 【审计】创建微信绑定审计对象并记录变更前的数据
         auditor = TenantUserWeixinBindAuditor(tenant_user.id, tenant_user.tenant_id)
         auditor.pre_record_data_before(tenant_user)
 
-        # 处理微信公众号回调消息
-        mp_handler = MpBindHandler(tenant_user=tenant_user)
-        response = mp_handler.handle_qrcode_event(data)
+        # 执行绑定操作
+        tenant_user.wx_userid = wx_userid
+        tenant_user.save(update_fields=["wx_userid", "updated_at"])
 
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)

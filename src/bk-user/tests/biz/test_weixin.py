@@ -47,7 +47,7 @@ class TestWecomBindHandler:
 
     @pytest.fixture
     def weixin_handler(self, mock_tenant_user, mock_request):
-        with mock.patch.object(WeixinConfigService, "get_weixin_settings") as mock_get_weixin_settings:
+        with mock.patch.object(WeixinConfigService, "_get_weixin_settings") as mock_get_weixin_settings:
             mock_get_weixin_settings.return_value = {
                 "wx_type": "qy",
                 "corp_id": "test_corp_id",
@@ -64,15 +64,14 @@ class TestWecomBindHandler:
 
     @mock.patch.object(
         WeixinConfigService,
-        "get_weixin_settings",
-        return_value={"wx_type": "qy", "corp_id": "test_corp_id", "agent_id": "test_agent_id"},
+        "_get_weixin_settings",
+        return_value={"wx_type": "qy", "corp_id": "test_corp_id", "corp_secret": "test_corp_secret"},
     )
     def test_get_authorization_url(self, mock_get_weixin_settings, weixin_handler, mock_request):
         result = weixin_handler.get_authorization_url(mock_request.session)
 
         assert WECOM_LOGIN_URL in result
         assert "test_corp_id" in result
-        assert "test_agent_id" in result
 
     def test_generate_and_store_state(self, weixin_handler, mock_request):
         state = weixin_handler._generate_and_store_state(mock_request.session)
@@ -156,7 +155,7 @@ class TestMpBindHandler:
     @pytest.fixture
     def weixin_handler(self, mock_tenant_user, mock_request):
         with (
-            mock.patch.object(WeixinConfigService, "get_weixin_settings") as mock_get_weixin_settings,
+            mock.patch.object(WeixinConfigService, "_get_weixin_settings") as mock_get_weixin_settings,
             mock.patch.object(WeixinConfigService, "get_access_token") as mock_get_access_token,
         ):
             mock_get_weixin_settings.return_value = {
@@ -164,79 +163,6 @@ class TestMpBindHandler:
             }
             mock_get_access_token.return_value = "test_access_token"
             return MpBindHandler(mock_tenant_user)
-
-    @mock.patch.object(TenantUser, "save")
-    def test_handle_qrcode_event_subscribe(self, mock_save, mock_tenant_user, weixin_handler):
-        """测试处理订阅事件"""
-        # 设置初始状态
-        weixin_handler.tenant_user.wx_userid = ""
-
-        event_data = {
-            "MsgType": "event",
-            "Event": "subscribe",
-            "FromUserName": "test_from_user",
-            "ToUserName": "test_to_user",
-        }
-
-        result = weixin_handler.handle_qrcode_event(event_data)
-
-        # 验证 wx_userid 被设置
-        assert weixin_handler.tenant_user.wx_userid == "test_from_user"
-
-        # 验证 save 方法被调用
-        mock_save.assert_called_once_with(update_fields=["wx_userid", "updated_at"])
-
-        # 验证返回的 XML 包含正确内容
-        assert "test_to_user" in result
-        assert "test_from_user" in result
-        assert "绑定成功" in result
-
-    @mock.patch.object(TenantUser, "save")
-    def test_handle_qrcode_event_scan(self, mock_save, mock_tenant_user, weixin_handler):
-        """测试处理扫码事件"""
-        # 设置初始状态
-        weixin_handler.tenant_user.wx_userid = ""
-
-        event_data = {
-            "MsgType": "event",
-            "Event": "SCAN",
-            "FromUserName": "test_from_user",
-            "ToUserName": "test_to_user",
-        }
-
-        result = weixin_handler.handle_qrcode_event(event_data)
-
-        # 验证 wx_userid 被设置
-        assert weixin_handler.tenant_user.wx_userid == "test_from_user"
-
-        # 验证 save 方法被调用
-        mock_save.assert_called_once_with(update_fields=["wx_userid", "updated_at"])
-
-        # 验证返回的 XML 包含正确内容
-        assert "test_to_user" in result
-        assert "test_from_user" in result
-        assert "绑定成功" in result
-
-    def test_handle_qrcode_event_invalid_event(self, weixin_handler):
-        event_data = {
-            "MsgType": "event",
-            "Event": "unsubscribe",
-            "FromUserName": "test_from_user",
-            "ToUserName": "test_to_user",
-        }
-
-        result = weixin_handler.handle_qrcode_event(event_data)
-        assert result == ""
-
-    def test_handle_qrcode_event_missing_data(self, weixin_handler):
-        event_data = {
-            "MsgType": "event",
-            "Event": "subscribe",
-            # 缺少 FromUserName 和 ToUserName
-        }
-
-        result = weixin_handler.handle_qrcode_event(event_data)
-        assert result == ""
 
     @mock.patch("bkuser.biz.weixin.weixin.http_post", return_value=(True, {"errcode": 0, "ticket": "test_ticket"}))
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
@@ -279,18 +205,18 @@ class TestMpBindHandler:
         qrcode_cache.set(ticket, user_info, 300)
 
         # 获取用户信息
-        retrieved_user = MpBindHandler.get_tenant_user_by_ticket(ticket)
+        retrieved_user = MpBindHandler._get_tenant_user_by_ticket(ticket)
         assert retrieved_user.id == tenant_user.id
 
         # 验证缓存已被删除（get_tenant_user_by_ticket 会删除缓存）
         with pytest.raises(APIError) as error:
-            MpBindHandler.get_tenant_user_by_ticket(ticket)
+            MpBindHandler._get_tenant_user_by_ticket(ticket)
         assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
 
     def test_get_tenant_user_by_invalid_ticket(self):
         """测试无效ticket获取用户信息"""
         with pytest.raises(APIError) as error:
-            MpBindHandler.get_tenant_user_by_ticket("invalid_ticket")
+            MpBindHandler._get_tenant_user_by_ticket("invalid_ticket")
         assert "微信二维码 ticket 无效或已过期" in str(error.value.message)
 
     def test_get_tenant_user_by_ticket_user_not_exist(self):
@@ -304,7 +230,7 @@ class TestMpBindHandler:
         qrcode_cache.set(ticket, user_info, 300)
 
         with pytest.raises(APIError) as error:
-            MpBindHandler.get_tenant_user_by_ticket(ticket)
+            MpBindHandler._get_tenant_user_by_ticket(ticket)
         assert "微信二维码对应的用户不存在" in str(error.value.message)
 
         # 验证缓存已被清理
@@ -321,7 +247,7 @@ class TestMpBindHandler:
             <MsgId>1234567890123456</MsgId>
         </xml>"""
 
-        result = MpBindHandler.xml_to_dict(xml_data)
+        result = MpBindHandler._xml_to_dict(xml_data)
         expected = {
             "ToUserName": "toUser",
             "FromUserName": "fromUser",
@@ -337,10 +263,11 @@ class TestMpBindHandler:
         invalid_xml = "<xml><invalid>"
 
         with pytest.raises(APIError) as error:
-            MpBindHandler.xml_to_dict(invalid_xml)
+            MpBindHandler._xml_to_dict(invalid_xml)
         assert "XML 解析失败" in str(error.value.message)
 
-    def test_check_weixin_signature_valid(self):
+    @mock.patch.object(WeixinConfigService, "get_wx_token", return_value="test_token")
+    def test_check_mp_signature_valid(self, mock_get_wx_token):
         """测试有效的微信签名验证"""
         token = "test_token"
         timestamp = "1234567890"
@@ -350,29 +277,19 @@ class TestMpBindHandler:
         params = [token, timestamp, nonce]
         params.sort()
         s = "".join(params)
-        correct_signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
+        signature = hashlib.sha1(s.encode("utf-8")).hexdigest()
 
-        result = MpBindHandler.check_weixin_signature(token, correct_signature, timestamp, nonce)
+        result = MpBindHandler.check_mp_signature("test_tenant_id", signature, timestamp, nonce)
         assert result is True
 
-    def test_check_weixin_signature_invalid(self):
+    @mock.patch.object(WeixinConfigService, "get_wx_token", return_value="test_token")
+    def test_check_mp_signature_invalid(self, mock_get_wx_token):
         """测试无效的微信签名验证"""
-        token = "test_token"
         timestamp = "1234567890"
         nonce = "test_nonce"
         invalid_signature = "invalid_signature"
 
-        result = MpBindHandler.check_weixin_signature(token, invalid_signature, timestamp, nonce)
-        assert result is False
-
-    def test_check_weixin_signature_no_token(self):
-        """测试没有 token 的微信签名验证"""
-        token = ""
-        timestamp = "1234567890"
-        nonce = "test_nonce"
-        signature = "some_signature"
-
-        result = MpBindHandler.check_weixin_signature(token, signature, timestamp, nonce)
+        result = MpBindHandler.check_mp_signature("test_tenant_id", invalid_signature, timestamp, nonce)
         assert result is False
 
 
@@ -384,13 +301,16 @@ class TestWeixinConfigService:
         return WeixinConfigService(random_tenant.id)
 
     @mock.patch.object(
-        WeixinConfigService, "get_weixin_settings", return_value={"wx_type": "qy", "corp_id": "test_corp_id"}
+        WeixinConfigService,
+        "_get_weixin_settings",
+        return_value={"wx_type": "qy", "corp_id": "test_corp_id", "corp_secret": "test_corp_secret"},
     )
     def test_get_weixin_settings(self, mock_get_weixin_settings, weixin_config_service):
-        result = weixin_config_service.get_weixin_settings()
+        result = weixin_config_service._get_weixin_settings()
 
         assert result["wx_type"] == "qy"
         assert result["corp_id"] == "test_corp_id"
+        assert result["corp_secret"] == "test_corp_secret"
 
     @mock.patch.object(WeixinConfigService, "get_access_token", return_value="test_access_token")
     def test_get_access_token(self, mock_get_access_token, weixin_config_service):

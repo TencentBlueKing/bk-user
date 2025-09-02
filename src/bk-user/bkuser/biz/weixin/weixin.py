@@ -17,7 +17,7 @@
 import hashlib
 import logging
 import time
-from typing import Dict
+from typing import Dict, Tuple
 from urllib.parse import urlencode
 
 from defusedxml import ElementTree
@@ -36,6 +36,7 @@ from bkuser.biz.weixin.constants import (
     WECOM_LOGIN_URL,
     WECOM_STATE_EXPIRE_SECONDS,
     WECOM_USERINFO_URL,
+    WeixinTypeEnum,
 )
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.error_codes import error_codes
@@ -70,16 +71,16 @@ class WecomBindHandler:
         )
 
         state = self._generate_and_store_state(session)
-        weixin_settings = self.weixin_config_service.get_weixin_settings()
+        corp_id = self.weixin_config_service.get_corp_id()
+        if not corp_id:
+            logger.exception("Failed to get corp_id for tenant %s", self.tenant_id)
+            raise error_codes.WEIXIN_CONFIG_NOT_FOUND.f(_("无法获取企业微信配置中的 corp_id"))
         param_dict = {
             "login_type": "CorpApp",
-            "appid": weixin_settings.get("corp_id"),
+            "appid": self.weixin_config_service.get_corp_id(),
             "redirect_uri": redirect_uri,
             "state": state,
         }
-
-        if agent_id := weixin_settings.get("agent_id"):
-            param_dict["agentid"] = agent_id
 
         return "%s?%s" % (WECOM_LOGIN_URL, urlencode(param_dict))
 
@@ -193,27 +194,60 @@ class MpBindHandler:
             urlencode({"ticket": ticket}),
         )
 
-    def handle_qrcode_event(self, data: Dict) -> str:
-        """处理微信公众号 扫码/订阅 事件"""
+    @staticmethod
+    def check_mp_signature(tenant_id: str, signature: str, timestamp: str, nonce: str) -> bool:
+        if not all([signature, timestamp, nonce]):
+            return False
+
+        # 获取微信 token
+        wx_token = WeixinConfigService(tenant_id).get_wx_token()
+        if not wx_token:
+            return False
+
+        # 1. 字典序排序
+        params = [wx_token, timestamp, nonce]
+        params.sort()
+        # 2. 拼接字符串
+        s = "".join(params)
+        # 3. 使用 sha1 加密
+        hashcode = hashlib.sha1(force_bytes(s)).hexdigest()
+
+        return hashcode == signature
+
+    @staticmethod
+    def process_mp_callback_event(event_content: str) -> Tuple[TenantUser | None, str, str]:
+        """从事件内容中解析并获取租户用户
+
+        Returns:
+            Tuple: 包含以下字段的元组：
+                - tenantUser (TenantUser): 租户用户
+                - wx_userid (str): 微信 ID
+                - response (str): 需要返回给微信公众号的 XML 数据
+        """
+        # 解析微信公众号推送的 XML 消息
+        data = MpBindHandler._xml_to_dict(event_content)
+
         msg_type = data.get("MsgType")
         from_user = data.get("FromUserName")
         to_user = data.get("ToUserName")
         event = data.get("Event")
+        # 检查必要的字段
         if not all([msg_type, from_user, event, to_user]):
-            return ""
+            return None, str(from_user), ""
+        # 检查事件类型
         if msg_type != "event" or event not in (MP_EVENT_SUBSCRIBE, MP_EVENT_SCAN):
-            return ""
+            return None, str(from_user), ""
 
-        # 执行绑定逻辑
-        self.tenant_user.wx_userid = str(from_user)
-        self.tenant_user.save(update_fields=["wx_userid", "updated_at"])
-
-        return MP_MESSAGE_TEMPLATE.format(
-            to_user=to_user, from_user=from_user, create_time=int(time.time()), content=_("绑定成功")
+        # 根据 ticket 获取租户用户
+        ticket = str(data.get("Ticket"))
+        tenant_user = MpBindHandler._get_tenant_user_by_ticket(ticket)
+        response = MP_MESSAGE_TEMPLATE.format(
+            from_user=from_user, to_user=to_user, createtime=int(time.time()), content=_("绑定成功")
         )
+        return tenant_user, str(from_user), response
 
     @staticmethod
-    def get_tenant_user_by_ticket(ticket: str) -> TenantUser:
+    def _get_tenant_user_by_ticket(ticket: str) -> TenantUser:
         """通过 ticket 获取到对应的 tenant_user 对象"""
         qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
         user_info = qrcode_cache.get(ticket)
@@ -236,25 +270,7 @@ class MpBindHandler:
         return tenant_user
 
     @staticmethod
-    def check_weixin_signature(token: str, signature: str, timestamp: str, nonce: str) -> bool:
-        """
-        微信服务器回调后的签名认证
-        """
-        if not token:
-            return False
-
-        # 1. 字典序排序
-        params = [token, timestamp, nonce]
-        params.sort()
-        # 2. 拼接字符串
-        s = "".join(params)
-        # 3. 使用 sha1 加密
-        hashcode = hashlib.sha1(force_bytes(s)).hexdigest()
-
-        return hashcode == signature
-
-    @staticmethod
-    def xml_to_dict(xml_data: str) -> Dict:
+    def _xml_to_dict(xml_data: str) -> Dict:
         """xml 数据转为 dict 数据"""
         try:
             root = ElementTree.fromstring(xml_data)
@@ -274,14 +290,56 @@ class WeixinConfigService:
         self.tenant_id = tenant_id
         self.client = get_notification_client(self.tenant_id)
 
-    def get_weixin_settings(self) -> Dict:
-        return self.client.get_weixin_settings()
+    def _get_weixin_settings(self) -> Dict | None:
+        weixin_settings = self.client.get_weixin_settings()
+        wx_type = weixin_settings["wx_type"]
 
-    def get_wx_type(self) -> str:
-        return self.get_weixin_settings()["wx_type"]
+        if not wx_type:
+            logger.warning("wx_type is missing in weixin settings")
+            return None
+        if wx_type not in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX, WeixinTypeEnum.MP]:
+            logger.warning("wx_type is not correct in weixin settings")
+            return None
 
-    def get_wx_token(self) -> str:
-        return self.get_weixin_settings()["wx_token"]
+        if wx_type in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX] and not self._validate_wecom_config(weixin_settings):
+            return None
+        if wx_type == WeixinTypeEnum.MP and not self._validate_mp_config(weixin_settings):
+            return None
+
+        return weixin_settings
+
+    @staticmethod
+    def _validate_wecom_config(weixin_settings: Dict) -> bool:
+        """校验企业微信配置的完整性"""
+        required_fields = ["corp_id", "corp_secret"]
+        return all(weixin_settings.get(field) for field in required_fields)
+
+    @staticmethod
+    def _validate_mp_config(weixin_settings: Dict) -> bool:
+        """校验微信公众号配置的完整性"""
+        required_fields = ["wx_app_id", "wx_secret", "wx_token"]
+        return all(weixin_settings.get(field) for field in required_fields)
+
+    def get_wx_type(self) -> WeixinTypeEnum | None:
+        weixin_settings = self._get_weixin_settings()
+        if weixin_settings is None:
+            return None
+        return WeixinTypeEnum(weixin_settings["wx_type"])
+
+    def get_wx_token(self) -> str | None:
+        """获取微信公众号配置的 token"""
+        weixin_settings = self._get_weixin_settings()
+        if weixin_settings is None:
+            return None
+        if weixin_settings["wx_type"] != WeixinTypeEnum.MP:
+            return None
+        return weixin_settings["wx_token"]
+
+    def get_corp_id(self) -> str | None:
+        weixin_settings = self._get_weixin_settings()
+        if weixin_settings is None or self.get_wx_type() not in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX]:
+            return None
+        return weixin_settings["corp_id"]
 
     def get_access_token(self) -> str:
         """获取 access_token"""

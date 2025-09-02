@@ -14,6 +14,17 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
+from django.utils.translation import gettext_lazy as _
+
+
+class WeixinTypeEnum(StrStructuredEnum):
+    """微信类型枚举"""
+
+    QY = EnumField("qy", label=_("企业微信"))
+    QYWX = EnumField("qywx", label=_("企业微信(旧版)"))
+    MP = EnumField("mp", label=_("微信公众号"))
+
 
 # 企业微信扫码登录 state 过期时间，单位：秒
 WECOM_STATE_EXPIRE_SECONDS = 300

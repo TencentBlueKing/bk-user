@@ -34,7 +34,6 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
-from bkuser.biz.weixin import MpBindHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
@@ -307,6 +306,7 @@ class TenantUserWeixinRetrieveToBindInfoOutputSLZ(serializers.Serializer):
 
 class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
     wx_userid = serializers.CharField(help_text="微信用户 ID", allow_blank=True)
+    type = serializers.CharField(help_text="微信类型(企业微信或者微信公众号)", allow_blank=True)
 
 
 class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
@@ -318,14 +318,3 @@ class TenantUserMPCallbackInputSLZ(serializers.Serializer):
     signature = serializers.CharField(help_text="微信公众号回调签名")
     timestamp = serializers.CharField(help_text="时间戳")
     nonce = serializers.CharField(help_text="随机数")
-
-    def validate(self, attrs):
-        signature = attrs["signature"]
-        timestamp = attrs["timestamp"]
-        nonce = attrs["nonce"]
-
-        wx_token = self.context["wx_token"]
-        if not MpBindHandler.check_weixin_signature(wx_token, signature, timestamp, nonce):
-            raise ValidationError(_("微信公众号签名验证失败"))
-
-        return attrs
