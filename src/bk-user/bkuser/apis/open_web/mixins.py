@@ -26,6 +26,7 @@ from rest_framework.request import Request
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 
 
 class OpenWebApiCommonMixin:
@@ -65,6 +66,9 @@ class OpenWebApiCommonMixin:
 
     @cached_property
     def tenant_id(self) -> str:
+        if not settings.ENABLE_MULTI_TENANT_MODE:
+            return BuiltInTenantIDEnum.DEFAULT
+
         tenant_id = self.request.META.get(self.TenantHeaderKey)
 
         if not tenant_id:
