@@ -80,7 +80,7 @@ def send_password_by_email(
 
     send_mail(
         sender=email_config["sender"],
-        receiver__username=[profile.username],
+        receiver_usernames=[profile.username],
         message=message,
         title=email_config["title"],
     )
