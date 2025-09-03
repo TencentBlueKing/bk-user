@@ -94,7 +94,6 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("red
                 "ssl_certfile": CELERY_BROKER_TLS_CERT_FILE,
                 "ssl_keyfile": CELERY_BROKER_TLS_CERT_KEY_FILE,
             })
-    # 额外的 Celery 任务配置
     CELERY_TASK_ACKS_LATE = True
     CELERY_TASK_REJECT_ON_WORKER_LOST = True
 else:
