@@ -103,7 +103,7 @@ export default {
         return this.$emit('phone', true);
       }
       const validation = () => {
-        if ('****' in item.value) {
+        if (item.value.includes('****')) {
           return true;
         }
         const isoCode = item.iso_code.toLowerCase();
