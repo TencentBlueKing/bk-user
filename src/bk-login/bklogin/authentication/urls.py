@@ -47,6 +47,9 @@ urlpatterns = [
 # ------------------------------------------ 内置管理员登录 ------------------------------------------
 urlpatterns += [
     # 内置管理员登录
-    path("builtin-management-auth/idps/<str:idp_id>/", views.BuiltinManagementLoginView.as_view()),
-    path("builtin-management-auth/idps/<str:idp_id>/authenticate/", views.BuiltinManagementAuthenticateView.as_view()),
+    path("builtin-management-auth/<str:token>/idps/<str:idp_id>/", views.BuiltinManagementLoginView.as_view()),
+    path(
+        "builtin-management-auth/<str:token>/idps/<str:idp_id>/authenticate/",
+        views.BuiltinManagementAuthenticateView.as_view(),
+    ),
 ]

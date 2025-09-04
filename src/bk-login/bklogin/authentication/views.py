@@ -507,7 +507,16 @@ class BuiltinManagementLoginView(View):
 
     def get(self, request, *args, **kwargs):
         """登录页面"""
-        # 返回登录页面
+        # 从路径参数获取 token 和 idp_id
+        token = kwargs["token"]
+        idp_id = kwargs["idp_id"]
+
+        is_valid, error_message = bk_user_api.verify_builtin_management_login_url_token(token, idp_id)
+
+        if not is_valid:
+            raise error_codes.NO_PERMISSION.f(_("访问被拒绝: {}").format(error_message))
+
+        # token验证通过，返回登录页面
         return render(request, self.template_name)
 
 

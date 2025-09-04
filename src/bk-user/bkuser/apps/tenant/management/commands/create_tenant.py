@@ -26,9 +26,10 @@ from bkuser.biz.tenant import (
     TenantCreator,
     TenantInfo,
 )
-from bkuser.common.passwd.validator import PasswordValidator
+from bkuser.common.passwd.generator import PasswordGenerator
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.constants import MAX_PASSWORD_VALID_TIME
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
@@ -40,7 +41,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--tenant_id", type=str, help="Tenant ID", required=True)
-        parser.add_argument("--password", type=str, help="Built-In Manager - admin password", required=True)
+        parser.add_argument("--password_valid_time", type=int, help="Password valid time", default=7)
 
     @staticmethod
     def _check_tenant(tenant_id: str):
@@ -58,24 +59,34 @@ class Command(BaseCommand):
             raise ValueError(f"Tenant {tenant_id} is reserved")
 
     @staticmethod
-    def _check_password(password: str):
+    def _check_password_valid_time(password_valid_time: int):
+        if password_valid_time <= 0:
+            raise ValueError("Password valid time must be greater than 0")
+
+        if password_valid_time > MAX_PASSWORD_VALID_TIME:
+            raise ValueError("Password valid time must be less than 10 years")
+
+    @staticmethod
+    def _generate_password():
         cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
-        ret = PasswordValidator(cfg.password_rule.to_rule()).validate(password)  # type: ignore
-        if not ret.ok:
-            raise ValueError(f"The password does not meet the password rules.:{ret.exception_message}")
+        return PasswordGenerator(cfg.password_rule.to_rule()).generate()  # type: ignore
 
     def handle(self, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
-        password = kwargs["password"]
+        password_valid_time = kwargs["password_valid_time"]
 
         # 校验
         self._check_tenant(tenant_id)
-        self._check_password(password)
+        self._check_password_valid_time(password_valid_time)
+        # 随机生成密码
+        password = self._generate_password()
 
         # 创建租户
         tenant = TenantCreator.create(
             tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_id, is_default=False),
-            builtin_manager=BuiltinManagerInfo(username="admin", password=password),
+            builtin_manager=BuiltinManagerInfo(
+                username="admin", password=password, password_valid_time=password_valid_time
+            ),
             builtin_ds_config=BuiltinManagementDataSourceConfig(send_password_notification=False),
         )
 

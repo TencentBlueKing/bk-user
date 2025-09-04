@@ -50,4 +50,9 @@ urlpatterns = [
         views.TenantUserLanguageUpdateApi.as_view(),
         name="login.tenant_user.language.update",
     ),
+    path(
+        "builtin-management-login-url-token/verify/",
+        views.BuiltinManagementLoginUrlTokenVerifyApi.as_view(),
+        name="login.builtin_management.url_token.verify",
+    ),
 ]

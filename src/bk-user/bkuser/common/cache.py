@@ -51,6 +51,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     OPEN_WEB_API_THROTTLE = "owat"
     # 微信公众号二维码 临时存储
     MP_QRCODE = "mq"
+    # 内置管理员登录 URL Token
+    BUILTIN_MANAGEMENT_LOGIN_URL_TOKEN = "bmlut"
 
 
 def _default_key_function(*args, **kwargs):

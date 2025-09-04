@@ -15,16 +15,20 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+import datetime
 import logging
 import operator
+import random
+import string
 from functools import reduce
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
@@ -48,13 +52,13 @@ from bkuser.apps.tenant.models import (
     UserBuiltinField,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
-from bkuser.common.constants import PERMANENT_TIME
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.hashers import make_password
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import NEVER_EXPIRE_TIME, NotificationMethod, PasswordGenerateMethod
+from bkuser.plugins.local.constants import NotificationMethod, PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.settings import DEFAULT_TENANT_LOGO
 
@@ -76,6 +80,7 @@ class BuiltinManagerInfo(BaseModel):
 
     username: str = "admin"
     password: str = ""
+    password_valid_time: int
     email: str = ""
     phone: str = ""
     phone_country_code: str = settings.DEFAULT_PHONE_COUNTRY_CODE
@@ -140,6 +145,7 @@ class TenantCreator:
     @staticmethod
     def create_builtin_management_data_source(
         tenant_id: str,
+        password_valid_time: int,
         enable_password: bool = True,
         fixed_password: str = "",
         notification_methods: Optional[List[str]] = None,
@@ -162,7 +168,7 @@ class TenantCreator:
         # 根据参数配置插件
         if enable_password:
             plugin_config.enable_password = True
-            plugin_config.password_expire.valid_time = NEVER_EXPIRE_TIME
+            plugin_config.password_expire.valid_time = password_valid_time
 
             if fixed_password:
                 plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
@@ -222,7 +228,7 @@ class TenantCreator:
                 user=data_source_user,
                 password=make_password(built_manager.password),
                 password_updated_at=timezone.now(),
-                password_expired_at=PERMANENT_TIME,
+                password_expired_at=timezone.now() + datetime.timedelta(days=built_manager.password_valid_time),
                 data_source=data_source,
                 username=built_manager.username,
             )
@@ -307,6 +313,7 @@ class TenantCreator:
             # 阶段 3：创建内置管理数据源
             data_source = TenantCreator.create_builtin_management_data_source(
                 tenant.id,
+                password_valid_time=builtin_manager.password_valid_time,
                 enable_password=True,
                 fixed_password=builtin_ds_config.fixed_password,
                 notification_methods=(
@@ -544,3 +551,50 @@ class TenantUserDisplayNameHandler:
                 email="zhangsan@m.com",
             ),
         )
+
+
+class BuiltinManagementLoginUrlTokenManager:
+    """内置管理员登录 URL Token 管理器"""
+
+    def __init__(self):
+        self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.BUILTIN_MANAGEMENT_LOGIN_URL_TOKEN)
+
+    @staticmethod
+    def _generate_random_string(length: int = 8) -> str:
+        """生成随机字符串"""
+        allow_chars = string.ascii_letters + string.digits
+        return "".join([random.choice(allow_chars) for __ in range(length)])
+
+    def generate_login_url_token(self, idp_id: str, expires_in_seconds: int) -> str:
+        """生成内置管理员登录 URL Token"""
+        # 生成随机字符串
+        token = self._generate_random_string()
+
+        # 缓存 key 为 idp_id
+        cache_key = idp_id
+
+        self.cache.set(cache_key, token, timeout=expires_in_seconds)
+
+        logger.info(
+            "Generated builtin management token for idp_id=%s, expires_in=%d seconds", idp_id, expires_in_seconds
+        )
+
+        return token
+
+    def get_login_url_token(self, cache_key: str) -> str | None:
+        """获取内置管理员登录 URL Token"""
+
+        # 缓存 key 为 cache_key
+        return self.cache.get(cache_key)
+
+    def verify_login_url_token(self, cur_token: str, idp_id: str) -> Tuple[bool, str]:
+        """验证内置管理员登录 URL Token"""
+        # 获取内置管理员登录 URL Token
+        token = self.get_login_url_token(idp_id)
+        if not token:
+            return False, _("登录 URL 已过期，请重新生成")
+
+        if token != cur_token:
+            return False, _("登录 URL 错误")
+
+        return True, ""

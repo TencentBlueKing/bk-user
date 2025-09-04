@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 from django.conf import settings
 from requests.auth import HTTPBasicAuth
@@ -114,3 +114,16 @@ def update_tenant_user_language(tenant_user_id: str, language: str) -> None:
         f"/api/v3/login/tenant-users/{tenant_user_id}/language/",
         json={"language": language},
     )
+
+
+def verify_builtin_management_login_url_token(token: str, idp_id: str) -> Tuple[bool, str]:
+    """验证内置管理员登录 URL Token"""
+    try:
+        _call_bk_user_api_20x(
+            http_post,
+            "/api/v3/login/builtin-management-login-url-token/verify/",
+            json={"token": token, "idp_id": idp_id},
+        )
+        return True, ""
+    except Exception as e:
+        return False, str(e)

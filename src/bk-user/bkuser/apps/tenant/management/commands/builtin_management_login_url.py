@@ -16,22 +16,36 @@
 # to the current version of the project delivered to anyone in the future.
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 from bkuser.apps.tenant.models import Tenant
+from bkuser.biz.tenant import BuiltinManagementLoginUrlTokenManager
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.utils.url import urljoin
 
 
 class Command(BaseCommand):
-    """获取内置管理员登录地址"""
+    """内置管理员登录URL
+    $（生成内置管理员登录 URL）python manage.py builtin_management_login_url generate
+    $（获取内置管理员登录 URL）python manage.py builtin_management_login_url get
+    """
 
     def add_arguments(self, parser):
-        parser.add_argument("--tenant_id", type=str, help="Tenant ID (required in multi-tenant mode)")
+        # 定义子命令
+        subparsers = parser.add_subparsers(dest="subcommand", required=True)
+
+        # generate 子命令
+        generate_parser = subparsers.add_parser("generate", help="Generate builtin management login URL")
+        generate_parser.add_argument("--tenant_id", type=str, help="Tenant ID")
+        generate_parser.add_argument("--expires_in", type=int, help="Token expiration time in days", default=7)
+
+        # get 子命令
+        get_parser = subparsers.add_parser("get", help="Get builtin management login URL")
+        get_parser.add_argument("--tenant_id", type=str, help="Tenant ID")
 
     @staticmethod
     def _check_tenant_id(tenant_id: str | None):
@@ -48,13 +62,21 @@ class Command(BaseCommand):
             raise ValueError(f"tenant {tenant_id} is not existed")
 
     def handle(self, *args, **options):
-        tenant_id = options.get("tenant_id")
+        # 子命令校验
+        subcommand = options["subcommand"]
+        if subcommand not in ("generate", "get"):
+            raise CommandError(f"subcommand {options['subcommand']} is not supported, only support generate/get")
+
+        # 公共参数
+        tenant_id = options["tenant_id"]
+        # 校验
         self._check_tenant_id(tenant_id)
 
         # 非多租户模式：始终使用 DEFAULT
         if not settings.ENABLE_MULTI_TENANT_MODE:
             tenant_id = BuiltInTenantIDEnum.DEFAULT
 
+        # 获取数据源和认证源
         data_source = DataSource.objects.get(
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
@@ -66,6 +88,32 @@ class Command(BaseCommand):
             data_source_id=data_source.id,
         )
 
-        login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/idps/{idp.id}/")
+        # 子命令处理
+        getattr(self, f"handle_{subcommand}")(idp, options)
+
+    def handle_generate(self, idp: Idp, options: dict):
+        expires_in_days = options.get("expires_in", 1)
+
+        # 将过期时间转换为秒
+        expires_in = expires_in_days * 3600 * 24
+
+        # 生成token
+        token_manager = BuiltinManagementLoginUrlTokenManager()
+        token = token_manager.generate_login_url_token(idp.id, expires_in)
+
+        # 构建登录URL
+        login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")
+        self.stdout.write(f"Login URL: {login_url}, 过期时间为 {expires_in_days} 天")
+
+    def handle_get(self, idp: Idp, options: dict):
+        # 生成token并构建完整的登录URL
+        token_manager = BuiltinManagementLoginUrlTokenManager()
+        token = token_manager.get_login_url_token(idp.id)
+
+        if not token:
+            self.stdout.write("Login URL 无效或已过期，请重新生成")
+            return
+
+        login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")
 
         self.stdout.write(login_url)

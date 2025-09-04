@@ -30,10 +30,12 @@ from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
+from bkuser.biz.tenant import BuiltinManagementLoginUrlTokenManager
 from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
+    BuiltinManagementLoginUrlTokenVerifyInputSLZ,
     GlobalSettingOutputSLZ,
     IdpListOutputSLZ,
     IdpRetrieveOutputSLZ,
@@ -264,5 +266,28 @@ class TenantUserLanguageUpdateApi(LoginApiAccessControlMixin, generics.UpdateAPI
 
         tenant_user.language = data["language"]
         tenant_user.save(update_fields=["language", "updated_at"])
+
+        return Response()
+
+
+class BuiltinManagementLoginUrlTokenVerifyApi(LoginApiAccessControlMixin, generics.CreateAPIView):
+    """内置管理员登录 URL Token 验证"""
+
+    def post(self, request, *args, **kwargs):
+        slz = BuiltinManagementLoginUrlTokenVerifyInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        idp_id = data["idp_id"]
+        token = data["token"]
+
+        if not Idp.objects.filter(id=idp_id).exists():
+            raise error_codes.OBJECT_NOT_FOUND.f(_("认证源 {} 不存在").format(idp_id))
+
+        token_manager = BuiltinManagementLoginUrlTokenManager()
+        is_valid, error_message = token_manager.verify_login_url_token(token, idp_id)
+
+        if not is_valid:
+            raise error_codes.NO_PERMISSION.f(f"访问被拒绝: {error_message}")
 
         return Response()

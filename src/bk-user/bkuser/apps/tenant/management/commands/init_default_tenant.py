@@ -27,6 +27,11 @@ from bkuser.biz.tenant import (
     TenantInfo,
     VirtualUserInfo,
 )
+from bkuser.common.passwd.generator import PasswordGenerator
+from bkuser.plugins.base import get_default_plugin_cfg
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.constants import MAX_PASSWORD_VALID_TIME
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class Command(BaseCommand):
@@ -35,7 +40,25 @@ class Command(BaseCommand):
     $ python manage.py init_default_tenant
     """
 
+    def add_arguments(self, parser):
+        parser.add_argument("--password_valid_time", type=int, help="Password valid time", default=7)
+
+    @staticmethod
+    def _check_password_valid_time(password_valid_time: int):
+        if password_valid_time <= 0:
+            raise ValueError("Password valid time must be greater than 0")
+
+        if password_valid_time > MAX_PASSWORD_VALID_TIME:
+            raise ValueError("Password valid time must be less than 10 years")
+
+    @staticmethod
+    def _generate_password():
+        cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
+        return PasswordGenerator(cfg.password_rule.to_rule()).generate()  # type: ignore
+
     def handle(self, *args, **options):
+        self._check_password_valid_time(options["password_valid_time"])
+
         # 根据是否开启多租户模式，选择初始化的租户（运营租户或默认租户）
         if settings.ENABLE_MULTI_TENANT_MODE:
             tenant_id = BuiltInTenantIDEnum.SYSTEM
@@ -46,7 +69,7 @@ class Command(BaseCommand):
 
         # 获取管理员账号密码
         admin_username = settings.INITIAL_ADMIN_USERNAME
-        admin_password = settings.INITIAL_ADMIN_PASSWORD
+        admin_password = self._generate_password()
 
         # 内置虚拟用户，非多租户需要兼容 2.x 版本内置的 admin 用户
         virtual_users = [VirtualUserInfo(username="bk_admin")]
@@ -61,9 +84,14 @@ class Command(BaseCommand):
         # 创建租户
         TenantCreator.create(
             tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_name, is_default=True),
-            builtin_manager=BuiltinManagerInfo(username=admin_username, password=admin_password),
+            builtin_manager=BuiltinManagerInfo(
+                username=admin_username, password=admin_password, password_valid_time=options["password_valid_time"]
+            ),
             builtin_ds_config=BuiltinManagementDataSourceConfig(send_password_notification=False),
             virtual_users=virtual_users,
         )
 
-        self.stdout.write(f"Initialized first tenant [{tenant_id}] with admin user [{admin_username}] successfully")
+        self.stdout.write(
+            f"Initialized first tenant [{tenant_id}] with admin user [{admin_username}] "
+            f"password [{admin_password}] successfully"
+        )

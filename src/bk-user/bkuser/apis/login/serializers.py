@@ -160,3 +160,11 @@ class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
 
     class Meta:
         ref_name = "login.TenantUserLanguageUpdateInputSLZ"
+
+
+class BuiltinManagementLoginUrlTokenVerifyInputSLZ(serializers.Serializer):
+    idp_id = serializers.CharField(help_text="认证源 ID")
+    token = serializers.CharField(help_text="Token")
+
+    class Meta:
+        ref_name = "login.BuiltinManagementLoginUrlTokenVerifyInputSLZ"
