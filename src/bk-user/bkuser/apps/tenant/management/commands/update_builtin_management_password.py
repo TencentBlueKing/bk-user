@@ -74,7 +74,7 @@ class Command(BaseCommand):
         operator: str,
     ):
         """
-        更新某个用户的密码
+        更新密码
         """
         identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
         deprecated_password = identify_info.password

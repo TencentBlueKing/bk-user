@@ -58,7 +58,11 @@ from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import NotificationMethod, PasswordGenerateMethod
+from bkuser.plugins.local.constants import (
+    BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
+    NotificationMethod,
+    PasswordGenerateMethod,
+)
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.settings import DEFAULT_TENANT_LOGO
 
@@ -80,7 +84,7 @@ class BuiltinManagerInfo(BaseModel):
 
     username: str = "admin"
     password: str = ""
-    password_valid_time: int
+    password_valid_time: int = BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME
     email: str = ""
     phone: str = ""
     phone_country_code: str = settings.DEFAULT_PHONE_COUNTRY_CODE

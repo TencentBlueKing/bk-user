@@ -30,7 +30,7 @@ from bkuser.biz.tenant import (
 from bkuser.common.passwd.generator import PasswordGenerator
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import MAX_PASSWORD_VALID_TIME
+from bkuser.plugins.local.constants import BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME, MAX_PASSWORD_VALID_TIME
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
@@ -41,7 +41,12 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument("--password_valid_time", type=int, help="Password valid time", default=7)
+        parser.add_argument(
+            "--password_valid_time",
+            type=int,
+            help="Password valid time",
+            default=BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
+        )
 
     @staticmethod
     def _check_password_valid_time(password_valid_time: int):
