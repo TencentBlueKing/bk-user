@@ -29,9 +29,10 @@ from bkuser.utils.url import urljoin
 
 
 class Command(BaseCommand):
-    """内置管理员登录URL
-    $（生成内置管理员登录 URL）python manage.py builtin_management_login_url generate
-    $（获取内置管理员登录 URL）python manage.py builtin_management_login_url get
+    """
+    内置管理员登录地址
+    $（生成内置管理员登录地址）python manage.py builtin_management_login_url generate
+    $（获取内置管理员登录地址）python manage.py builtin_management_login_url get
     """
 
     def add_arguments(self, parser):
@@ -103,7 +104,7 @@ class Command(BaseCommand):
 
         # 构建登录URL
         login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")
-        self.stdout.write(f"Login URL: {login_url}, 过期时间为 {expires_in_days} 天")
+        self.stdout.write(f"登录地址为: {login_url}, 过期时间为 {expires_in_days} 天")
 
     def handle_get(self, idp: Idp, options: dict):
         # 生成token并构建完整的登录URL
@@ -111,7 +112,7 @@ class Command(BaseCommand):
         token = token_manager.get_login_url_token(idp.id)
 
         if not token:
-            self.stdout.write("Login URL 无效或已过期，请重新生成")
+            self.stdout.write("登录地址无效或已过期，请重新生成")
             return
 
         login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")

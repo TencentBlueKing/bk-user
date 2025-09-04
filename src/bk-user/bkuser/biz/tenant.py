@@ -592,9 +592,9 @@ class BuiltinManagementLoginUrlTokenManager:
         # 获取内置管理员登录 URL Token
         token = self.get_login_url_token(idp_id)
         if not token:
-            return False, _("登录 URL 已过期，请重新生成")
+            return False, _("登录地址已过期，请重新生成")
 
         if token != cur_token:
-            return False, _("登录 URL 错误")
+            return False, _("登录地址错误")
 
         return True, ""
