@@ -83,7 +83,7 @@ class BuiltinManagerInfo(BaseModel):
 
     username: str = "admin"
     password: str = ""
-    password_valid_time: int = settings.BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME
+    password_valid_time: int = settings.DEFAULT_BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME
     email: str = ""
     phone: str = ""
     phone_country_code: str = settings.DEFAULT_PHONE_COUNTRY_CODE
@@ -148,7 +148,7 @@ class TenantCreator:
     @staticmethod
     def create_builtin_management_data_source(
         tenant_id: str,
-        password_valid_time: int = settings.BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
+        password_valid_time: int = settings.DEFAULT_BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
         enable_password: bool = True,
         fixed_password: str = "",
         notification_methods: Optional[List[str]] = None,

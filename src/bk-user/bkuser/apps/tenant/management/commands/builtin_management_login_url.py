@@ -46,7 +46,7 @@ class Command(BaseCommand):
             "--valid_time",
             type=int,
             help="Token valid time in days",
-            default=settings.BUILTIN_MANAGEMENT_LOGIN_URL_VALID_TIME,
+            default=settings.DEFAULT_BUILTIN_MANAGEMENT_LOGIN_URL_VALID_TIME,
         )
 
         # get 子命令

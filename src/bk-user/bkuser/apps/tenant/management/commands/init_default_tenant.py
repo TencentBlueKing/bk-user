@@ -45,7 +45,7 @@ class Command(BaseCommand):
             "--valid_time",
             type=int,
             help="Password valid time in days",
-            default=settings.BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
+            default=settings.DEFAULT_BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
         )
 
     @staticmethod
