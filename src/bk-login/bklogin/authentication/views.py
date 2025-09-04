@@ -516,7 +516,7 @@ class BuiltinManagementLoginView(View):
         if not is_valid:
             raise error_codes.NO_PERMISSION.f(_("访问被拒绝: {}").format(error_message))
 
-        # token验证通过，返回登录页面
+        # token 验证通过，返回登录页面
         return render(request, self.template_name)
 
 
