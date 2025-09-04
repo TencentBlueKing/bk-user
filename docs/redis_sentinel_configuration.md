@@ -125,7 +125,7 @@ BK_USERMGR_REDIS_SENTINEL_PASSWORD="sentinel_password"  # 可选
     - name: CACHE_REDIS_SENTINEL_ENABLED
         value: "true"
     - name: CACHE_REDIS_SENTINEL_MASTER_NAME
-        value: "bk-redis-master-0"
+        value: ""
     - name: CACHE_REDIS_SENTINEL_NODES
         value: "redis-sentinel-0:26379,redis-sentinel-1:26379,redis-sentinel-2:26379"
     - name: CACHE_REDIS_SENTINEL_PASSWORD
@@ -154,7 +154,7 @@ BK_USERMGR_REDIS_SENTINEL_PASSWORD="sentinel_password"  # 可选
 | 参数 | 说明 | 默认值 | 示例 |
 |------|------|--------|------|
 | `CACHE_REDIS_SENTINEL_ENABLED` | 启用哨兵模式 | `false` | `true` |
-| `CACHE_REDIS_SENTINEL_MASTER_NAME` | 主节点名称 | `bk-redis-master-0` | `bk-redis-master-0` |
+| `CACHE_REDIS_SENTINEL_MASTER_NAME` | 主节点名称 | `` | `` |
 | `CACHE_REDIS_SENTINEL_NODES` | 哨兵节点列表 | `[]` | `["sentinel1:26379", "sentinel2:26379"]` |
 | `CACHE_REDIS_SENTINEL_PASSWORD` | 哨兵密码 | 无 | `sentinel_password` |
 

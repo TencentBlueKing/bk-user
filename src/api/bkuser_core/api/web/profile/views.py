@@ -143,7 +143,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         # 检查email和telephone字段是否包含***
         def should_skip_field(field_name):
             value = validated_data.get(field_name, "")
-            return isinstance(value, str) and "***" in value
+            return isinstance(value, str) and "****" in value
 
 
         # FIXME: 可以简化, 不要搞那么复杂

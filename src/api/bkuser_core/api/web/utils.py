@@ -199,6 +199,33 @@ def get_profile_by_telephone(telephone: str):
     return Profile.objects.get(telephone=telephone)
 
 
+def mask_email(email: str) -> str:
+    if '@' in email:
+        name, domain = email.split('@', 1)
+        if len(name) > 2:
+            return name[:2] + '****@' + domain
+        else:
+            return name[0] + '****@' + domain
+    return email
+
+
+def mask_telephone(phone: str) -> str:
+    if len(phone) >= 7:
+        return phone[:3] + '****' + phone[-4:]
+    else:
+        return phone[:2] + '****' + phone[-3:]
+
+
+def mask_sensitive_data(data: dict) -> dict:
+    if data.get('email', ''):
+        data['email'] = mask_email(data['email'])
+
+    if data.get('telephone', ''):
+        data['telephone'] = mask_telephone(data['telephone'])
+    
+    return data
+
+
 def escape_value(input_value: str) -> str:
     """Replace special characters "&", "<" and ">" to HTML-safe sequences.
     If the optional flag quote is true, the quotation mark character (")
