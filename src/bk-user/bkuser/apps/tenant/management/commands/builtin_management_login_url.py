@@ -42,7 +42,12 @@ class Command(BaseCommand):
         # generate 子命令
         generate_parser = subparsers.add_parser("generate", help="Generate builtin management login URL")
         generate_parser.add_argument("--tenant_id", type=str, help="Tenant ID")
-        generate_parser.add_argument("--expires_in", type=int, help="Token expiration time in days", default=7)
+        generate_parser.add_argument(
+            "--valid_time",
+            type=int,
+            help="Token valid time in days",
+            default=settings.BUILTIN_MANAGEMENT_LOGIN_URL_VALID_TIME,
+        )
 
         # get 子命令
         get_parser = subparsers.add_parser("get", help="Get builtin management login URL")
@@ -93,10 +98,10 @@ class Command(BaseCommand):
         getattr(self, f"handle_{subcommand}")(idp, options)
 
     def handle_generate(self, idp: Idp, options: dict):
-        expires_in_days = options.get("expires_in", 1)
+        valid_time = options["valid_time"]
 
-        # 将过期时间转换为秒
-        expires_in = expires_in_days * 3600 * 24
+        # 将有效时间转换为秒
+        expires_in = valid_time * 3600 * 24
 
         # 生成 token
         token_manager = BuiltinManagementLoginUrlTokenManager()
@@ -104,7 +109,7 @@ class Command(BaseCommand):
 
         # 构建登录 URL
         login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")
-        self.stdout.write(f"登录地址为: {login_url}, 过期时间为 {expires_in_days} 天")
+        self.stdout.write(f"登录地址为: {login_url}, 过期时间为 {valid_time} 天")
 
     def handle_get(self, idp: Idp, options: dict):
         # 生成 token 并构建完整的登录 URL

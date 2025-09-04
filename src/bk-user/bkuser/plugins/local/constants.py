@@ -43,9 +43,6 @@ PASSWORD_MAX_RETRIES = 10
 # 保留的历史密码上限
 MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
 
-# 内置管理员密码默认有效期
-BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME = 7
-
 # 数据源用户名规则
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,30}[a-zA-Z0-9]$")
 

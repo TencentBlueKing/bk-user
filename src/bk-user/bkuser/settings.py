@@ -780,6 +780,10 @@ DEFAULT_TENANT_LOGO = ""
 DEFAULT_DATA_SOURCE_USER_LOGO = ""
 # 默认手机国际区号
 DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")
+# 默认内置管理员密码有效期，单位为天
+BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME = env.int("BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME", 7)
+# 默认内置管理员登录地址过期时间，单位为天
+BUILTIN_MANAGEMENT_LOGIN_URL_VALID_TIME = env.int("BUILTIN_MANAGEMENT_LOGIN_URL_VALID_TIME", 7)
 
 # 密码强度相关限制
 # 最小密码长度，过小的下限会导致在选择严格的规则后，难以生成/设置合法的密码（建议最低值 9）

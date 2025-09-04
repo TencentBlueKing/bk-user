@@ -30,7 +30,7 @@ from bkuser.biz.tenant import (
 from bkuser.common.passwd.generator import PasswordGenerator
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME, MAX_PASSWORD_VALID_TIME
+from bkuser.plugins.local.constants import MAX_PASSWORD_VALID_TIME
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
@@ -42,18 +42,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--password_valid_time",
+            "--valid_time",
             type=int,
-            help="Password valid time",
-            default=BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
+            help="Password valid time in days",
+            default=settings.BUILTIN_MANAGEMENT_PASSWORD_VALID_TIME,
         )
 
     @staticmethod
-    def _check_password_valid_time(password_valid_time: int):
-        if password_valid_time <= 0:
+    def _check_password_valid_time(valid_time: int):
+        if valid_time <= 0:
             raise ValueError("Password valid time must be greater than 0")
 
-        if password_valid_time > MAX_PASSWORD_VALID_TIME:
+        if valid_time > MAX_PASSWORD_VALID_TIME:
             raise ValueError("Password valid time must be less than 10 years")
 
     @staticmethod
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         return PasswordGenerator(cfg.password_rule.to_rule()).generate()  # type: ignore
 
     def handle(self, *args, **options):
-        self._check_password_valid_time(options["password_valid_time"])
+        self._check_password_valid_time(options["valid_time"])
 
         # 根据是否开启多租户模式，选择初始化的租户（运营租户或默认租户）
         if settings.ENABLE_MULTI_TENANT_MODE:
@@ -90,7 +90,7 @@ class Command(BaseCommand):
         TenantCreator.create(
             tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_name, is_default=True),
             builtin_manager=BuiltinManagerInfo(
-                username=admin_username, password=admin_password, password_valid_time=options["password_valid_time"]
+                username=admin_username, password=admin_password, password_valid_time=options["valid_time"]
             ),
             builtin_ds_config=BuiltinManagementDataSourceConfig(send_password_notification=False),
             virtual_users=virtual_users,
