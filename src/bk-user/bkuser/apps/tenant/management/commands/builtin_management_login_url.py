@@ -98,16 +98,16 @@ class Command(BaseCommand):
         # 将过期时间转换为秒
         expires_in = expires_in_days * 3600 * 24
 
-        # 生成token
+        # 生成 token
         token_manager = BuiltinManagementLoginUrlTokenManager()
         token = token_manager.generate_login_url_token(idp.id, expires_in)
 
-        # 构建登录URL
+        # 构建登录 URL
         login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/{token}/idps/{idp.id}/")
         self.stdout.write(f"登录地址为: {login_url}, 过期时间为 {expires_in_days} 天")
 
     def handle_get(self, idp: Idp, options: dict):
-        # 生成token并构建完整的登录URL
+        # 生成 token 并构建完整的登录 URL
         token_manager = BuiltinManagementLoginUrlTokenManager()
         token = token_manager.get_login_url_token(idp.id)
 
