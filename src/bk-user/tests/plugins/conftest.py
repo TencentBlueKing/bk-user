@@ -19,6 +19,8 @@ import pytest
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.plugins.models import PluginContext
 
+from tests.test_utils.helpers import generate_random_string
+
 
 @pytest.fixture
 def logger() -> TaskLogger:
@@ -26,5 +28,5 @@ def logger() -> TaskLogger:
 
 
 @pytest.fixture
-def context(random_tenant) -> PluginContext:
-    return PluginContext(tenant_id=random_tenant.id)
+def context() -> PluginContext:
+    return PluginContext(tenant_id=generate_random_string())
