@@ -26,7 +26,6 @@ from rest_framework.request import Request
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 
 
 class OpenWebApiCommonMixin:
@@ -69,9 +68,6 @@ class OpenWebApiCommonMixin:
         tenant_id = self.request.META.get(self.TenantHeaderKey)
 
         if not tenant_id:
-            # 若未开启多租户模式且没有传递租户 ID，则返回默认租户 ID
-            if not settings.ENABLE_MULTI_TENANT_MODE:
-                return BuiltInTenantIDEnum.DEFAULT
             raise ValidationError("X-Bk-Tenant-Id header is required")
 
         return tenant_id

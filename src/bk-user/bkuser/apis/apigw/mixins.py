@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 from functools import cached_property
 
-from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.translation import override
 from rest_framework.exceptions import ValidationError
@@ -24,7 +23,6 @@ from rest_framework.request import Request
 
 from bkuser.apis.apigw.authentications import InnerBearerTokenAuthentication
 from bkuser.apis.apigw.permissions import IsInnerBearerTokenAuthenticated
-from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 
 
 class InnerApiCommonMixin:
@@ -40,9 +38,6 @@ class InnerApiCommonMixin:
         tenant_id = self.request.META.get(self.TenantHeaderKey)
 
         if not tenant_id:
-            # 若未开启多租户模式且没有传递租户 ID，则返回默认租户 ID
-            if not settings.ENABLE_MULTI_TENANT_MODE:
-                return BuiltInTenantIDEnum.DEFAULT
             raise ValidationError("X-Bk-Tenant-Id header is required")
 
         return tenant_id

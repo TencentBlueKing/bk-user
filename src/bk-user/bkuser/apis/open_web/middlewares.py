@@ -17,9 +17,11 @@
 
 import logging
 
+from django.conf import settings
 from rest_framework import status
 
 from bkuser.apis.open_web.constants import OpenWebApiEnum
+from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 
 logger = logging.getLogger("open_web_api_access")
 
@@ -115,3 +117,15 @@ class OpenWebApiAuditMiddleware:
             return [item["bk_username"] for item in response.data]
 
         return []
+
+
+class ApiGatewayTenantHeaderMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # 若未开启多租户模式且没有传递租户 ID，则返回默认租户 ID
+        if not settings.ENABLE_MULTI_TENANT_MODE:
+            request.META["HTTP_X_BK_TENANT_ID"] = BuiltInTenantIDEnum.DEFAULT
+
+        return self.get_response(request)
