@@ -120,6 +120,8 @@ class OpenWebApiAuditMiddleware:
 
 
 class ApiGatewayTenantHeaderMiddleware:
+    """API Gateway 租户 ID Header 中间件"""
+
     def __init__(self, get_response):
         self.get_response = get_response
 
