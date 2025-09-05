@@ -254,8 +254,5 @@ def wecom_ds_plugin_cfg() -> Dict[str, Any]:
             "retries": 1,
             "sync_scope": "specific_dept",
             "sync_dept_id": 1,
-        },
-        "context": {
-            "tenant_id": "default",
-        },
+        }
     }

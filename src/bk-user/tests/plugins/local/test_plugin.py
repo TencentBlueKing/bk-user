@@ -26,14 +26,14 @@ def local_ds_cfg(local_ds_plugin_cfg):
 
 
 class TestLocalDataSourcePlugin:
-    def test_get_departments(self, local_ds_cfg, logger, user_workbook):
-        plugin = LocalDataSourcePlugin(local_ds_cfg, logger, user_workbook)
+    def test_get_departments(self, local_ds_cfg, logger, context, user_workbook):
+        plugin = LocalDataSourcePlugin(local_ds_cfg, logger, context, user_workbook)
         assert len(plugin.fetch_departments()) == 12  # noqa: PLR2004
 
-    def test_get_users(self, local_ds_cfg, logger, user_workbook):
-        plugin = LocalDataSourcePlugin(local_ds_cfg, logger, user_workbook)
+    def test_get_users(self, local_ds_cfg, logger, context, user_workbook):
+        plugin = LocalDataSourcePlugin(local_ds_cfg, logger, context, user_workbook)
         assert len(plugin.fetch_users()) == 12  # noqa: PLR2004
 
-    def test_test_connection(self, local_ds_cfg, logger, user_workbook):
+    def test_test_connection(self, local_ds_cfg, logger, context, user_workbook):
         with pytest.raises(NotImplementedError):
-            LocalDataSourcePlugin(local_ds_cfg, logger, user_workbook).test_connection()
+            LocalDataSourcePlugin(local_ds_cfg, logger, context, user_workbook).test_connection()

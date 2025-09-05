@@ -24,9 +24,9 @@ class TestWeComDataSourcePlugin:
     """测试企业微信数据源插件"""
 
     @pytest.mark.usefixtures("_mock_wecom_client")
-    def test_fetch_departments(self, wecom_ds_cfg, logger):
+    def test_fetch_departments(self, wecom_ds_cfg, logger, context):
         """测试获取部门信息"""
-        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger)
+        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger, context)
         departments = plugin.fetch_departments()
 
         assert len(departments) == 5
@@ -50,9 +50,9 @@ class TestWeComDataSourcePlugin:
         )
 
     @pytest.mark.usefixtures("_mock_wecom_client")
-    def test_fetch_users(self, wecom_ds_cfg, logger):
+    def test_fetch_users(self, wecom_ds_cfg, logger, context):
         """测试获取用户信息"""
-        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger)
+        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger, context)
         users = plugin.fetch_users()
 
         assert len(users) == 3
@@ -88,9 +88,9 @@ class TestWeComDataSourcePlugin:
         )
 
     @pytest.mark.usefixtures("_mock_wecom_client")
-    def test_test_connection_success(self, wecom_ds_cfg, logger):
+    def test_test_connection_success(self, wecom_ds_cfg, logger, context):
         """测试连接成功的情况"""
-        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger)
+        plugin = WeComDataSourcePlugin(wecom_ds_cfg, logger, context)
         result = plugin.test_connection()
 
         assert not result.error_message
