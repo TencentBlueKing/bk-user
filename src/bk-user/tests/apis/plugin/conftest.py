@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from django.conf import settings
 from rest_framework.test import APIClient
 
 
@@ -23,5 +24,5 @@ from rest_framework.test import APIClient
 def api_client():
     client = APIClient()
     # 设置内部插件调用标识头，这样会通过内部认证
-    client.defaults["HTTP_X_INTERNAL_CALL"] = "bk-user-plugin"
+    client.defaults["HTTP_X_INTERNAL_CALL"] = settings.INTERNAL_PLUGIN_API_TOKEN
     return client
