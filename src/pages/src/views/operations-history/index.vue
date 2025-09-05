@@ -121,6 +121,15 @@
           @setting-change="handleSettingChange"
           @column-sort="handleSortBy"
         >
+          <template #empty>
+            <Empty
+              :is-data-empty="isDataEmpty"
+              :is-search-empty="isEmptySearch"
+              :is-data-error="isDataError"
+              @handle-empty="handleReset"
+              @handle-update="handleFetchAudit('search')"
+            />
+          </template>
           <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
             <template #default="{ row }">
               <span>{{ getOperationLabel(row.operation) }}</span>
@@ -163,6 +172,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { getCurrentOperationOptions, operationType } from './operations';
 
 import MemberSelector from '@/components/MemberSelector.vue';
+import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getAudit } from '@/http/operationHistoryFiles';
 import { getRealUsers } from '@/http/settingFiles';
@@ -303,12 +313,19 @@ const fetchRealUsers = (value: string) => {
     realUsers.value = res.data;
   });
 };
+const isDataEmpty = ref(false);
+const isEmptySearch = ref(false);
+const isDataError = ref(false);
 
 // 获取audit数据
 const handleFetchAudit = async (type = '') => {
   try {
     isLoading.value = true;
-    if (type === 'search') {
+    isDataEmpty.value = false;
+    isEmptySearch.value = false;
+    isDataError.value = false;
+    const isSearch = type === 'search';
+    if (isSearch) {
       pagination.count = 0;
       pagination.current = 1;
     }
@@ -323,10 +340,15 @@ const handleFetchAudit = async (type = '') => {
       end_at: formData.operation_time[1] ? dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
+    if (res.data?.count === 0) {
+      isDataEmpty.value = !isSearch;
+      isEmptySearch.value = isSearch;
+    }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
   } catch (e) {
     console.warn(e);
+    isDataError.value = true;
   } finally {
     isLoading.value = false;
   }

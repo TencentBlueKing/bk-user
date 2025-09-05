@@ -49,6 +49,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     WORKBOOK_TEMPORARY_STORE = "wts"
     # OpenWeb API 限流
     OPEN_WEB_API_THROTTLE = "owat"
+    # 微信公众号二维码 临时存储
+    MP_QRCODE = "mq"
     # 企业微信 API access_token
     WECOM_API_ACCESS_TOKEN = "wecom_api_access_token"
 
