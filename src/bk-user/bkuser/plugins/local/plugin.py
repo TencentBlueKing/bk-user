@@ -24,6 +24,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
 from bkuser.plugins.models import (
+    PluginContext,
     RawDataSourceDepartment,
     RawDataSourceUser,
     TestConnectionResult,
@@ -36,8 +37,15 @@ class LocalDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.LOCAL
     config_class = LocalDataSourcePluginConfig
 
-    def __init__(self, plugin_config: LocalDataSourcePluginConfig, logger: PluginLogger, workbook: Workbook):
+    def __init__(
+        self,
+        plugin_config: LocalDataSourcePluginConfig,
+        logger: PluginLogger,
+        context: PluginContext,
+        workbook: Workbook,
+    ):
         self.plugin_config = plugin_config
+        self.context = context
         self.parser = LocalDataSourceDataParser(logger, workbook)
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:

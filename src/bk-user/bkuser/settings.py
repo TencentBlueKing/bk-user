@@ -211,6 +211,10 @@ REQUESTS_POOL_MAXSIZE = env.int("REQUESTS_POOL_MAXSIZE", default=20)
 
 BK_APP_CODE = env.str("BK_APP_CODE", default="bkuser")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
+
+# 内置插件 API 调用认证标识
+INTERNAL_PLUGIN_API_TOKEN = env.str("INTERNAL_PLUGIN_API_TOKEN")
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
 

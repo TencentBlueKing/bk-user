@@ -219,9 +219,9 @@ def _call_bk_user_api(http_func, url_path: str, **kwargs):
     """调用用户管理接口"""
     url = urljoin(settings.BK_USER_URL, url_path)
 
-    # 为内部插件调用添加专用标识头，允许访问插件API
+    # 为内部插件 API 接口调用添加专用标识头，允许访问插件 API
     headers = kwargs.setdefault("headers", {})
-    headers["X-Internal-Call"] = "bk-user-plugin"
+    headers["X-Internal-Call"] = settings.INTERNAL_PLUGIN_API_TOKEN
 
     ok, resp_data = http_func(url, **kwargs)
     if not ok:

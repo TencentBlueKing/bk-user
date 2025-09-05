@@ -78,3 +78,10 @@ class TestConnectionResult(BaseModel):
     department: RawDataSourceDepartment | None = None
     # 可能便于排查问题的额外数据
     extras: Dict[str, Any] | None = None
+
+
+class PluginContext(BaseModel):
+    """插件上下文信息"""
+
+    # 租户 ID
+    tenant_id: str

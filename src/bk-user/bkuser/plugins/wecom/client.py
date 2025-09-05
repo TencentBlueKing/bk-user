@@ -22,6 +22,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from bkuser.plugins.http import _call_bk_user_api, http_get_20x
+from bkuser.plugins.models import PluginContext
 from bkuser.plugins.utils import urljoin
 from bkuser.plugins.wecom.constants import WECOM_API_BASE_URL, WeComDataType, WeComUserStatus
 from bkuser.plugins.wecom.exceptions import RequestAPIError
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 class WeComAPIClient:
     """企业微信API客户端"""
 
-    def __init__(self, server_config: ServerConfig, context: Dict[str, Any]):
+    def __init__(self, server_config: ServerConfig, context: PluginContext):
         self.server_config = server_config
         self.context = context
 
@@ -41,7 +42,7 @@ class WeComAPIClient:
     def access_token(self) -> str:
         """获取企业微信 access_token"""
         # 从插件配置的上下文中获取 tenant_id
-        tenant_id = self.context.get("tenant_id")
+        tenant_id = self.context.tenant_id
 
         # 从用户管理中调用 API 获取 access_token
         resp = _call_bk_user_api(

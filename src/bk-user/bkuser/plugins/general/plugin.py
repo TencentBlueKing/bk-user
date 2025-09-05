@@ -25,6 +25,7 @@ from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatErr
 from bkuser.plugins.general.http import fetch_all_data, fetch_first_item, gen_headers, gen_query_params
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.models import (
+    PluginContext,
     RawDataSourceDepartment,
     RawDataSourceUser,
     TestConnectionResult,
@@ -39,9 +40,10 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.GENERAL
     config_class = GeneralDataSourcePluginConfig
 
-    def __init__(self, plugin_config: GeneralDataSourcePluginConfig, logger: PluginLogger):
+    def __init__(self, plugin_config: GeneralDataSourcePluginConfig, logger: PluginLogger, context: PluginContext):
         self.plugin_config = plugin_config
         self.logger = logger
+        self.context = context
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""

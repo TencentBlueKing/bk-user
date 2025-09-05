@@ -36,6 +36,7 @@ from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_plugin_cls
+from bkuser.plugins.models import PluginContext
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,11 @@ class DataSourceSyncTaskRunner:
             return
 
         with DataSourceSyncTaskContext(self.task) as ctx:
-            self._initial_plugin(ctx, self.plugin_init_extra_kwargs)
+            self._initial_plugin(
+                ctx,
+                plugin_context=PluginContext(tenant_id=self.data_source.owner_tenant_id),
+                plugin_init_extra_kwargs=self.plugin_init_extra_kwargs,
+            )
             self._sync_departments(ctx)
             self._sync_users(ctx)
             self._validate_unique_fields(ctx)
@@ -71,12 +76,14 @@ class DataSourceSyncTaskRunner:
 
         return False
 
-    def _initial_plugin(self, ctx: DataSourceSyncTaskContext, plugin_init_extra_kwargs: Dict[str, Any]):
+    def _initial_plugin(
+        self, ctx: DataSourceSyncTaskContext, plugin_context: PluginContext, plugin_init_extra_kwargs: Dict[str, Any]
+    ):
         """初始化数据源插件"""
         plugin_cfg = self.data_source.get_plugin_cfg()
 
         PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
-        self.plugin = PluginCls(plugin_cfg, ctx.logger, **plugin_init_extra_kwargs)
+        self.plugin = PluginCls(plugin_cfg, ctx.logger, plugin_context, **plugin_init_extra_kwargs)
 
     def _sync_departments(self, ctx: DataSourceSyncTaskContext):
         """同步部门信息"""

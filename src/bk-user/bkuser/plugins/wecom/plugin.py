@@ -22,7 +22,7 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.base import BaseDataSourcePlugin, PluginLogger
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
+from bkuser.plugins.models import PluginContext, RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 from bkuser.plugins.wecom.client import WeComAPIClient
 from bkuser.plugins.wecom.constants import WeComDataType
 from bkuser.plugins.wecom.exceptions import RequestAPIError
@@ -37,9 +37,9 @@ class WeComDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.WECOM
     config_class = WeComDataSourcePluginConfig
 
-    def __init__(self, plugin_config: WeComDataSourcePluginConfig, logger: PluginLogger):
+    def __init__(self, plugin_config: WeComDataSourcePluginConfig, logger: PluginLogger, context: PluginContext):
         self.logger = logger
-        self.client = WeComAPIClient(plugin_config.server_config, plugin_config.context)
+        self.client = WeComAPIClient(plugin_config.server_config, context)
         self._cached_dept_ids: List[int] = []
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:

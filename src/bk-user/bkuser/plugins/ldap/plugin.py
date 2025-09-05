@@ -29,7 +29,7 @@ from bkuser.plugins.ldap import utils
 from bkuser.plugins.ldap.client import LDAPClient
 from bkuser.plugins.ldap.exceptions import DataNotFoundError
 from bkuser.plugins.ldap.models import LDAPDataSourcePluginConfig, LDAPObject
-from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
+from bkuser.plugins.models import PluginContext, RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +40,10 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.LDAP
     config_class = LDAPDataSourcePluginConfig
 
-    def __init__(self, plugin_config: LDAPDataSourcePluginConfig, logger: PluginLogger):
+    def __init__(self, plugin_config: LDAPDataSourcePluginConfig, logger: PluginLogger, context: PluginContext):
         self.plugin_config = plugin_config
         self.logger = logger
+        self.context = context
         # 缓存部门相关信息，解析用户时候需要使用，可避免重复拉取 & 计算
         self.dept_dn_code_map: Dict[str, str] = {}
         self.user_group_dns_map: DefaultDict[str, List[str]] = defaultdict(list)

@@ -16,18 +16,23 @@
 # to the current version of the project delivered to anyone in the future.
 
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
 class InnerPluginAuthentication(BasicAuthentication):
-    """对于用户管理内部插件调用，使用特定的内部认证标识"""
+    """对于用户管理内部插件 API 调用，使用特定的内部认证标识"""
 
     def authenticate(self, request):
-        # 检查是否为内部插件调用（通过特定的请求头标识）
-        if not request.META.get("HTTP_X_INTERNAL_CALL") == "bk-user-plugin":
-            raise AuthenticationFailed("Invalid authentication header X-Internal-Call.")
+        auth_token = request.META.get("HTTP_X_INTERNAL_CALL")
+
+        if not auth_token:
+            raise AuthenticationFailed("Missing required authentication header: X-Internal-Call.")
+
+        if auth_token != settings.INTERNAL_PLUGIN_API_TOKEN:
+            raise AuthenticationFailed("Invalid internal authentication token.")
 
         user_model = get_user_model()
         user, _ = user_model.objects.get_or_create(
