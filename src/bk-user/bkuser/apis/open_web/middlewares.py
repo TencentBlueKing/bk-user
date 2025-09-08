@@ -119,14 +119,14 @@ class OpenWebApiAuditMiddleware:
         return []
 
 
-class ApiGatewayTenantHeaderMiddleware:
-    """API Gateway 租户 ID Header 中间件"""
+class TenantIdHeaderMiddleware:
+    """租户 ID Header 中间件"""
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # 若未开启多租户模式且没有传递租户 ID，则返回默认租户 ID
+        # 若未开启多租户模式，则返回默认租户 ID
         if not settings.ENABLE_MULTI_TENANT_MODE:
             request.META["HTTP_X_BK_TENANT_ID"] = BuiltInTenantIDEnum.DEFAULT
 

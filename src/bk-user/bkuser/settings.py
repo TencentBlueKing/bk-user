@@ -86,7 +86,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
-    "bkuser.apis.open_web.middlewares.ApiGatewayTenantHeaderMiddleware",
+    "bkuser.apis.open_web.middlewares.TenantIdHeaderMiddleware",
     "bkuser.apis.open_web.middlewares.OpenWebApiAuditMiddleware",
     "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
