@@ -200,7 +200,8 @@ class TenantDepartmentHandler:
         data_source_departments = DataSourceDepartment.objects.filter(id__in=descendant_ids)
         for dept in data_source_departments:
             dept.code = dept_code_map[dept.id]
-        DataSourceDepartment.objects.bulk_update(data_source_departments, ["code"])
+            dept.updated_at = timezone.now()
+        DataSourceDepartment.objects.bulk_update(data_source_departments, fields=["code", "updated_at"])
 
         # 获取所有数据源部门对应的租户部门
         tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
@@ -215,7 +216,8 @@ class TenantDepartmentHandler:
         dept_id_records = TenantDepartmentIDRecord.objects.filter(tenant_department_id__in=tenant_dept_code_map.keys())
         for dept_id_record in dept_id_records:
             dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
-        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, ["code"])
+            dept_id_record.updated_at = timezone.now()
+        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, fields=["code", "updated_at"])
 
 
 class TenantOrgPathHandler:
