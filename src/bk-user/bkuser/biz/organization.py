@@ -185,23 +185,24 @@ class TenantDepartmentHandler:
         更新数据源部门 code, 必须在事务内调用该方法
         """
 
-        # 获取部门的所有子部门
+        # 获取数据源部门的所有子部门
         rel = DataSourceDepartmentRelation.objects.filter(department_id=data_source_department.id).first()
         descendant_ids = list(rel.get_descendants(include_self=True).values_list("department_id", flat=True))
 
-        # 获取部门及子部门组织路径
+        # 获取数据源部门及子部门组织路径
+        # TODO: 这里存在 N + 1 问题，后续添加缓存优化
         org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(descendant_ids, include_self=True)
 
-        # 构建部门 ID 到新 code 的映射
+        # 构建数据源部门 ID 到新 code 的映射
         dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in descendant_ids}
 
-        # 批量更新部门 code
+        # 批量更新数据源部门 code
         data_source_departments = DataSourceDepartment.objects.filter(id__in=descendant_ids)
         for dept in data_source_departments:
             dept.code = dept_code_map[dept.id]
         DataSourceDepartment.objects.bulk_update(data_source_departments, ["code"])
 
-        # 获取所有部门对应的租户部门
+        # 获取所有数据源部门对应的租户部门
         tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
 
         # 构建租户部门 ID 到新 code 的映射
@@ -209,7 +210,8 @@ class TenantDepartmentHandler:
             tenant_dept.id: dept_code_map[tenant_dept.data_source_department_id] for tenant_dept in tenant_departments
         }
 
-        # 批量更新租户部门 ID 记录
+        # 需要批量更新租户部门 ID 记录中的 code
+        # 否则会导致部门修改名称后 code 不一致的情况，引起租户部门同步失败
         dept_id_records = TenantDepartmentIDRecord.objects.filter(tenant_department_id__in=tenant_dept_code_map.keys())
         for dept_id_record in dept_id_records:
             dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
