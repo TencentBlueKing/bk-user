@@ -119,14 +119,16 @@ class OpenWebApiAuditMiddleware:
         return []
 
 
-class TenantIdHeaderMiddleware:
+class TenantIDHeaderMiddleware:
     """租户 ID Header 中间件"""
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # 若未开启多租户模式，则返回默认租户 ID
+        # 不开启多租户模式下，不可依赖调用方是否有传递或是否传递正确 TenantID Header
+        # 所以这里需要主动设置 TenantID Header 为默认租户
+        # 保证后续依赖 TenantID Header 的处理逻辑一致
         if not settings.ENABLE_MULTI_TENANT_MODE:
             request.META["HTTP_X_BK_TENANT_ID"] = BuiltInTenantIDEnum.DEFAULT
 
