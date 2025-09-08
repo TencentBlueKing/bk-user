@@ -23,15 +23,17 @@ from django.db import transaction
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 class DataSourceUserHandler:
@@ -177,14 +179,52 @@ class TenantDepartmentHandler:
 
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
+    @staticmethod
+    def update_department_code(data_source_department: DataSourceDepartment):
+        """
+        更新数据源部门 code, 必须在事务内调用该方法
+        """
+
+        # 获取部门的所有子部门
+        rel = DataSourceDepartmentRelation.objects.filter(department_id=data_source_department.id).first()
+        descendant_ids = list(rel.get_descendants(include_self=True).values_list("department_id", flat=True))
+
+        # 获取部门及子部门组织路径
+        org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(descendant_ids, include_self=True)
+
+        # 构建部门 ID 到新 code 的映射
+        dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in descendant_ids}
+
+        # 批量更新部门 code
+        data_source_departments = DataSourceDepartment.objects.filter(id__in=descendant_ids)
+        for dept in data_source_departments:
+            dept.code = dept_code_map[dept.id]
+        DataSourceDepartment.objects.bulk_update(data_source_departments, ["code"])
+
+        # 获取所有部门对应的租户部门
+        tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
+
+        # 构建租户部门 ID 到新 code 的映射
+        tenant_dept_code_map = {
+            tenant_dept.id: dept_code_map[tenant_dept.data_source_department_id] for tenant_dept in tenant_departments
+        }
+
+        # 批量更新租户部门 ID 记录
+        dept_id_records = TenantDepartmentIDRecord.objects.filter(tenant_department_id__in=tenant_dept_code_map.keys())
+        for dept_id_record in dept_id_records:
+            dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
+        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, ["code"])
+
 
 class TenantOrgPathHandler:
     @staticmethod
-    def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
+    def get_dept_organization_path_map(
+        data_source_department_ids: List[int], include_self: bool = False
+    ) -> Dict[int, str]:
         """获取部门的组织路径信息"""
 
         # 数据源部门 ID -> 组织路径
-        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
+        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=include_self)
 
         return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
