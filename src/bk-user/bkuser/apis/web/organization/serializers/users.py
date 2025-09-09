@@ -87,7 +87,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"].get(obj.id, [])
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
 
 class TenantUserListInputSLZ(serializers.Serializer):

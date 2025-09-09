@@ -31,6 +31,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.models import RawDataSourceDepartment
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
 
@@ -237,6 +238,17 @@ class DataSourceDepartmentRelationSyncer:
 
         self.ctx.logger.info(f"re-create {len(dept_code_rel_map)} department relations")
         self.ctx.logger.info(f"data source has {len(mptt_tree_ids)} department tree(s) currently")
+
+        # 同步完成后，清理部门关系缓存
+        self._clear_department_tree_cache()
+
+    def _clear_department_tree_cache(self):
+        """清理部门关系缓存"""
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_RELATION)
+        cache_key = f"dept_relation_data:{self.data_source.id}"
+        cache.delete(cache_key)
+
+        self.ctx.logger.info(f"cleared department relation cache for data source {self.data_source.id}")
 
     @staticmethod
     def _generate_tree_id(data_source: DataSource) -> int:

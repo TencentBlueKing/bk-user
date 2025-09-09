@@ -30,8 +30,10 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
+from bkuser.utils.tree import Tree
 
 
 class DataSourceUserHandler:
@@ -179,12 +181,14 @@ class TenantDepartmentHandler:
 
 
 class TenantOrgPathHandler:
+    cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_RELATION)
+
     @staticmethod
-    def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
+    def get_dept_organization_path_map(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """获取部门的组织路径信息"""
 
         # 数据源部门 ID -> 组织路径
-        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
+        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=include_self)
 
         return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
@@ -212,12 +216,54 @@ class TenantOrgPathHandler:
     @staticmethod
     def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """构建数据源部门 ID -> 组织路径映射"""
-        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
-            department_id__in=data_source_department_ids
+        # 获取所有部门的数据源 ID 集合
+        data_source_ids = set(
+            DataSourceDepartmentRelation.objects.select_related("department")
+            .filter(department_id__in=data_source_department_ids)
+            .values_list("data_source_id", flat=True)
         )
+
+        all_tree_relations = []
+        all_dept_name_map = {}
+
+        # 按数据源分别处理
+        for data_source_id in data_source_ids:
+            cache_key = f"dept_relation_data:{data_source_id}"
+            cached_data = TenantOrgPathHandler.cache.get(cache_key)
+
+            if cached_data:
+                tree_relations, dept_name_map = cached_data
+            else:
+                relations = (
+                    DataSourceDepartmentRelation.objects.filter(data_source_id=data_source_id)
+                    .select_related("department")
+                    .only("department_id", "parent_id", "department__name")
+                )
+
+                tree_relations = []
+                dept_name_map = {}
+                for relation in relations:
+                    tree_relations.append((relation.department_id, relation.parent_id))
+                    dept_name_map[relation.department_id] = relation.department.name
+
+                TenantOrgPathHandler.cache.set(cache_key, (tree_relations, dept_name_map), timeout=60 * 60 * 24 * 30)
+
+            all_tree_relations.extend(tree_relations)
+            all_dept_name_map.update(dept_name_map)
+
+        # 构建树结构
+        rel_tree = Tree(all_tree_relations)
+
+        # 构建所有部门 ID -> 组织路径映射
         org_path_map = {}
-        # TODO: 这里存在 N + 1 问题，后续添加缓存优化或其他方式优化祖先路径的批量快速获取
-        for rel in relations:
-            dept_names = list(rel.get_ancestors(include_self=include_self).values_list("department__name", flat=True))
-            org_path_map[rel.department_id] = "/".join(dept_names)
+        for dept_id in data_source_department_ids:
+            ancestors = rel_tree.get_ancestors(dept_id, include_self=include_self)
+            org_path_map[dept_id] = "/".join([all_dept_name_map[ancestor] for ancestor in ancestors])
+
         return org_path_map
+
+    @staticmethod
+    def clear_department_tree_cache(data_source_id: int):
+        """清理部门关系缓存"""
+        cache_key = f"dept_relation_data:{data_source_id}"
+        TenantOrgPathHandler.cache.delete(cache_key)
