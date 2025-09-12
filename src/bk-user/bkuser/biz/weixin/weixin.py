@@ -24,6 +24,7 @@ from defusedxml import ElementTree
 from django.conf import settings
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
+from pydantic import BaseModel
 
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.weixin.constants import (
@@ -34,7 +35,6 @@ from bkuser.biz.weixin.constants import (
     MP_QRCODE_EXPIRE_SECONDS,
     MP_QRCODE_SHOW_URL,
     WECOM_LOGIN_URL,
-    WECOM_STATE_EXPIRE_SECONDS,
     WECOM_USERINFO_URL,
     WeixinTypeEnum,
 )
@@ -48,119 +48,151 @@ from bkuser.utils.uuid import generate_uuid
 logger = logging.getLogger(__name__)
 
 
+class WeComConfig(BaseModel):
+    """企业微信配置"""
+
+    corp_id: str
+    corp_secret: str
+    agent_id: str
+
+
+class MpConfig(BaseModel):
+    """微信公众号配置"""
+
+    wx_app_id: str
+    wx_secret: str
+    wx_token: str
+
+
+class WeixinConfigProvider:
+    """微信配置提供者"""
+
+    def __init__(self, tenant_id: str):
+        self.tenant_id = tenant_id
+        self.client = get_notification_client(self.tenant_id)
+
+    def _get_weixin_config(self) -> WeComConfig | MpConfig | None:
+        cfg = self.client.get_weixin_settings()
+        wx_type = cfg["wx_type"]
+
+        # 校验企业微信配置的完整性
+        if wx_type in ["qy", "qywx"] and all([cfg.get("corp_id"), cfg.get("corp_secret"), cfg.get("agent_id")]):
+            return WeComConfig(**cfg)
+
+        # 校验微信公众号配置的完整性
+        if wx_type == "mp" and all([cfg.get("wx_app_id"), cfg.get("wx_secret"), cfg.get("wx_token")]):
+            return MpConfig(**cfg)
+
+        return None
+
+    def get_wx_type(self) -> str:
+        cfg = self._get_weixin_config()
+
+        if isinstance(cfg, WeComConfig):
+            return WeixinTypeEnum.WeCom.value
+
+        if isinstance(cfg, MpConfig):
+            return WeixinTypeEnum.MP.value
+
+        return ""
+
+    def get_wecom_config(self) -> WeComConfig:
+        cfg = self._get_weixin_config()
+        # Note: 调用方只有明确是企业微信后，才能获取到对应的配置
+        assert isinstance(cfg, WeComConfig)
+        return cfg
+
+    def get_mp_config(self) -> MpConfig:
+        cfg = self._get_weixin_config()
+        # Note: 调用方只有明确是微信公众号后，才能获取到对应的配置
+        assert isinstance(cfg, MpConfig)
+        return cfg
+
+    def get_access_token(self) -> str:
+        """获取 access_token"""
+        return self.client.get_weixin_token()["access_token"]
+
+
 class WecomBindHandler:
     """企业微信绑定处理器"""
 
     def __init__(self, tenant_user: TenantUser):
         self.tenant_user = tenant_user
-        self.weixin_config_service = WeixinConfigService(self.tenant_id)
+        self.tenant_id = tenant_user.tenant_id
 
-    @property
-    def state_session_key(self) -> str:
-        """获取 state session key"""
-        return f"wecom_bind_state_{self.tenant_user.id}"
+        self.cfg_provider = WeixinConfigProvider(self.tenant_id)
+        self.cfg = self.cfg_provider.get_wecom_config()
 
-    @property
-    def tenant_id(self) -> str:
-        return self.tenant_user.tenant_id
+        self.state_session_key = f"wecom_bind_state_{self.tenant_user.id}"
 
     def get_authorization_url(self, session: Dict) -> str:
         """获取企业微信授权地址"""
         redirect_uri = urljoin(
-            settings.BK_USER_URL, f"/api/v1/web/personal-center/weixin/tenants/{self.tenant_id}/wecom/bind-callback/"
+            settings.BK_USER_URL, f"/api/v3/web/personal-center/weixin/tenants/{self.tenant_id}/wecom/bind-callback/"
         )
 
-        state = self._generate_and_store_state(session)
-        corp_id = self.weixin_config_service.get_corp_id()
-        if not corp_id:
-            logger.exception("Failed to get corp_id for tenant %s", self.tenant_id)
-            raise error_codes.WEIXIN_CONFIG_NOT_FOUND.f(_("无法获取企业微信配置中的 corp_id"))
-        param_dict = {
+        # 生成唯一的 state
+        state = generate_uuid()
+        # 存储 state 到 session
+        session[self.state_session_key] = state
+
+        params = {
             "login_type": "CorpApp",
-            "appid": self.weixin_config_service.get_corp_id(),
+            "appid": self.cfg.corp_id,
+            "agentid": self.cfg.agent_id,
             "redirect_uri": redirect_uri,
             "state": state,
         }
 
-        return "%s?%s" % (WECOM_LOGIN_URL, urlencode(param_dict))
+        return "%s?%s" % (WECOM_LOGIN_URL, urlencode(params))
 
     def check_state(self, state: str, session: Dict) -> bool:
-        """检查 state 是否合法，state 有效期为 5 分钟"""
-        session_key = self.state_session_key
-        # 从 session 中获取 state 数据
-        state_data = session.get(session_key)
-        current_time = int(time.time())
-
-        if not state_data:
-            return False
-        if state_data.get("state") != state:
-            return False
-        if current_time - state_data.get("timestamp", 0) >= WECOM_STATE_EXPIRE_SECONDS:
+        """检查 state 是否合法"""
+        # 从 session 中获取 state 数据并对比
+        if session.get(self.state_session_key) != state:
             return False
 
         # 清理 state 数据
-        self._cleanup_state(session)
+        del session[self.state_session_key]
+
         return True
 
     def get_wecom_userid(self, code: str) -> str:
-        """获取企业微信用户ID"""
-        access_token = self.weixin_config_service.get_access_token()
+        """获取企业微信用户 ID"""
+        params = {"access_token": self.cfg_provider.get_access_token(), "code": code}
 
-        params = {"access_token": access_token, "code": code}
-
-        success, data = http_get(WECOM_USERINFO_URL, params=params)
-        if not success:
-            logger.exception("Failed to get wecom userid: %s", data.get("error"))
+        ok, data = http_get(WECOM_USERINFO_URL, params=params)
+        if not ok:
+            logger.error("get wecom userid api failed, user: %s, error: %s", self.tenant_user.id, data.get("error"))
             raise error_codes.WEIXIN_API_ERROR.f(_("获取企业微信用户信息失败"))
 
         # 检查企业微信 API 返回的错误码
         if data.get("errcode") != 0:
-            logger.exception("Wecom API error: %s (errcode: %s)", data.get("errmsg"), data.get("errcode"))
+            logger.error(
+                "get wecom userid api error, user: %s, errmsg: %s, errcode: %s",
+                self.tenant_user.id,
+                data.get("errmsg"),
+                data.get("errcode"),
+            )
             raise error_codes.WEIXIN_API_ERROR.f(_("企业微信 API 调用失败：{}").format(data.get("errmsg")))
-        return data.get("userid")
 
-    def _generate_and_store_state(self, session: Dict) -> str:
-        """生成并存储 state 到 session"""
-        # 生成唯一的 state
-        state = self._generate_state()
-
-        state_data = self._create_state_data(state, self.tenant_user.id)
-        session_key = self.state_session_key
-        session[session_key] = state_data
-
-        return state
-
-    def _cleanup_state(self, session: Dict):
-        """清理 session 中的 state 数据"""
-        session_key = self.state_session_key
-        if session_key in session:
-            del session[session_key]
-
-    @staticmethod
-    def _generate_state() -> str:
-        """生成唯一的 state"""
-        return generate_uuid()
-
-    @staticmethod
-    def _create_state_data(state: str, tenant_user_id: str) -> Dict:
-        """创建 state 数据"""
-        return {"state": state, "tenant_user_id": tenant_user_id, "timestamp": int(time.time())}
+        return data["userid"]
 
 
 class MpBindHandler:
     """微信公众号绑定处理器"""
 
-    def __init__(self, tenant_user: TenantUser):
-        self.tenant_user = tenant_user
-        self.weixin_config_service = WeixinConfigService(self.tenant_id)
+    def __init__(self, tenant_id: str):
+        self.tenant_id = tenant_id
 
-    @property
-    def tenant_id(self) -> str:
-        return self.tenant_user.tenant_id
+        self.cfg_provider = WeixinConfigProvider(self.tenant_id)
+        self.cfg = self.cfg_provider.get_mp_config()
 
-    def get_mp_qrcode_url(self) -> str:
+        self.qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
+
+    def get_mp_qrcode_url(self, tenant_user: TenantUser) -> str:
         """创建微信临时二维码"""
-        params = {"access_token": self.weixin_config_service.get_access_token()}
+        params = {"access_token": self.cfg_provider.get_access_token()}
         data = {
             "action_name": "QR_SCENE",
             "expire_seconds": MP_QRCODE_EXPIRE_SECONDS,  # 5 分钟
@@ -170,37 +202,38 @@ class MpBindHandler:
                 }
             },
         }
-        success, data = http_post(MP_QRCODE_CREATE_URL, params=params, data=data)
-        if not success:
-            logger.exception("Failed to create wecom temporary QR code")
+        ok, data = http_post(MP_QRCODE_CREATE_URL, params=params, data=data)
+        if not ok:
+            logger.error(
+                "create wecom temporary qrcode api failed, user: %s, error: %s", tenant_user.id, data.get("error")
+            )
             raise error_codes.WEIXIN_QRCODE_CREATE_FAILED.f(_("创建微信临时二维码失败"))
 
         if data.get("errcode") != 0:
-            logger.exception("WeChat API error: %s (errcode: %s)", data.get("errmsg"), data.get("errcode"))
+            logger.error(
+                "create wecom temporary qrcode api failed, user: %s, errmsg:%s, errcode: %s",
+                tenant_user.id,
+                data.get("errmsg"),
+                data.get("errcode"),
+            )
             raise error_codes.WEIXIN_API_ERROR.f(_("微信公众号 API 调用失败：{}").format(data.get("errmsg")))
 
         # 获取 ticket
-        ticket = str(data.get("ticket"))
+        ticket = str(data.get("ticket") or "")
 
         # 将用户信息与 ticket 关联存储到缓存中
-        user_info = {"tenant_user_id": self.tenant_user.id}
-        qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
         # 缓存过期时间为 300 秒（与二维码过期时间保持一致)
-        qrcode_cache.set(ticket, user_info, 300)
+        self.qrcode_cache.set(ticket, {"tenant_user_id": tenant_user.id}, 300)
 
-        logger.info("Successfully created MP temporary QR code, ticket: %s", ticket)
-        return "%s?%s" % (
-            MP_QRCODE_SHOW_URL,
-            urlencode({"ticket": ticket}),
-        )
+        logger.info("successfully created mp temporary qrcode, ticket: %s", ticket)
+        return "%s?%s" % (MP_QRCODE_SHOW_URL, urlencode({"ticket": ticket}))
 
-    @staticmethod
-    def check_mp_signature(tenant_id: str, signature: str, timestamp: str, nonce: str) -> bool:
+    def check_mp_signature(self, signature: str, timestamp: str, nonce: str) -> bool:
         if not all([signature, timestamp, nonce]):
             return False
 
         # 获取微信 token
-        wx_token = WeixinConfigService(tenant_id).get_wx_token()
+        wx_token = self.cfg.wx_token
         if not wx_token:
             return False
 
@@ -214,8 +247,7 @@ class MpBindHandler:
 
         return hashcode == signature
 
-    @staticmethod
-    def process_mp_callback_event(event_content: str) -> Tuple[TenantUser | None, str, str]:
+    def process_mp_callback_event(self, event_content: str) -> Tuple[TenantUser | None, str, str]:
         """从事件内容中解析并获取租户用户
 
         Returns:
@@ -225,7 +257,7 @@ class MpBindHandler:
                 - response (str): 需要返回给微信公众号的 XML 数据
         """
         # 解析微信公众号推送的 XML 消息
-        data = MpBindHandler._xml_to_dict(event_content)
+        data = self._xml_to_dict(event_content)
 
         msg_type = data.get("MsgType")
         from_user = data.get("FromUserName")
@@ -239,108 +271,34 @@ class MpBindHandler:
             return None, "", ""
 
         # 根据 ticket 获取租户用户
-        ticket = str(data.get("Ticket"))
-        tenant_user = MpBindHandler._get_tenant_user_by_ticket(ticket)
+        ticket = str(data.get("Ticket") or "")
+        tenant_user = self._get_tenant_user_by_ticket(ticket)
         response = MP_MESSAGE_TEMPLATE.format(
-            from_user=from_user, to_user=to_user, createtime=int(time.time()), content=_("绑定成功")
+            from_user=from_user, to_user=to_user, create_time=int(time.time()), content=_("绑定成功")
         )
         return tenant_user, str(from_user), response
 
-    @staticmethod
-    def _get_tenant_user_by_ticket(ticket: str) -> TenantUser:
+    def _get_tenant_user_by_ticket(self, ticket: str) -> TenantUser:
         """通过 ticket 获取到对应的 tenant_user 对象"""
-        qrcode_cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.MP_QRCODE)
-        user_info = qrcode_cache.get(ticket)
+        user_info = self.qrcode_cache.get(ticket)
         if not user_info:
-            logger.warning("Tenant User not found for ticket: %s", ticket)
+            logger.warning("tenant user not found for ticket: %s", ticket)
             raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码 ticket 无效或已过期"))
 
-        tenant_user_id = user_info.get("tenant_user_id")
-
-        try:
-            tenant_user = TenantUser.objects.get(id=tenant_user_id)
-        except TenantUser.DoesNotExist:
-            logger.exception("TenantUser with id %s does not exist", tenant_user_id)
-            qrcode_cache.delete(ticket)
-            raise error_codes.WEIXIN_QRCODE_TICKET_INVALID.f(_("微信二维码对应的用户不存在"))
-
+        tenant_user_id = user_info["tenant_user_id"]
         # 获取成功后删除缓存，避免重复使用
-        qrcode_cache.delete(ticket)
-        logger.info("Successfully retrieved tenant_user by ticket: %s", tenant_user_id)
-        return tenant_user
+        self.qrcode_cache.delete(ticket)
+
+        logger.info("successfully retrieved tenant_user by ticket: %s", tenant_user_id)
+
+        return TenantUser.objects.get(id=tenant_user_id)
 
     @staticmethod
     def _xml_to_dict(xml_data: str) -> Dict:
         """xml 数据转为 dict 数据"""
         try:
             root = ElementTree.fromstring(xml_data)
-            result = {}
-            for child in root:
-                result[child.tag] = child.text
-            return result
+            return {child.tag: child.text for child in root}
         except ElementTree.ParseError:
-            logger.exception("XML parse failed")
+            logger.exception("XML parse failed, xml_data: %s", xml_data)
             raise error_codes.WEIXIN_XML_PARSE_FAILED
-
-
-class WeixinConfigService:
-    """微信配置服务"""
-
-    def __init__(self, tenant_id: str):
-        self.tenant_id = tenant_id
-        self.client = get_notification_client(self.tenant_id)
-
-    def _get_weixin_settings(self) -> Dict | None:
-        weixin_settings = self.client.get_weixin_settings()
-        wx_type = weixin_settings["wx_type"]
-
-        if not wx_type:
-            logger.warning("wx_type is missing in weixin settings")
-            return None
-        if wx_type not in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX, WeixinTypeEnum.MP]:
-            logger.warning("wx_type is not correct in weixin settings")
-            return None
-
-        if wx_type in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX] and not self._validate_wecom_config(weixin_settings):
-            return None
-        if wx_type == WeixinTypeEnum.MP and not self._validate_mp_config(weixin_settings):
-            return None
-
-        return weixin_settings
-
-    @staticmethod
-    def _validate_wecom_config(weixin_settings: Dict) -> bool:
-        """校验企业微信配置的完整性"""
-        required_fields = ["corp_id", "corp_secret"]
-        return all(weixin_settings.get(field) for field in required_fields)
-
-    @staticmethod
-    def _validate_mp_config(weixin_settings: Dict) -> bool:
-        """校验微信公众号配置的完整性"""
-        required_fields = ["wx_app_id", "wx_secret", "wx_token"]
-        return all(weixin_settings.get(field) for field in required_fields)
-
-    def get_wx_type(self) -> WeixinTypeEnum | None:
-        weixin_settings = self._get_weixin_settings()
-        if weixin_settings is None:
-            return None
-        return WeixinTypeEnum(weixin_settings["wx_type"])
-
-    def get_wx_token(self) -> str | None:
-        """获取微信公众号配置的 token"""
-        weixin_settings = self._get_weixin_settings()
-        if weixin_settings is None:
-            return None
-        if weixin_settings["wx_type"] != WeixinTypeEnum.MP:
-            return None
-        return weixin_settings["wx_token"]
-
-    def get_corp_id(self) -> str | None:
-        weixin_settings = self._get_weixin_settings()
-        if weixin_settings is None or self.get_wx_type() not in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX]:
-            return None
-        return weixin_settings["corp_id"]
-
-    def get_access_token(self) -> str:
-        """获取 access_token"""
-        return self.client.get_weixin_token()["access_token"]
