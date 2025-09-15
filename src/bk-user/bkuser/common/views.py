@@ -209,6 +209,8 @@ class VueTemplateView(TemplateView):
                 "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
                 # 是否启用协同租户功能
                 "ENABLE_COLLABORATION_TENANT": settings.ENABLE_COLLABORATION_TENANT,
+                # 是否开启多租户功能
+                "ENABLE_MULTI_TENANT_MODE": settings.ENABLE_MULTI_TENANT_MODE,
                 # 前端服务 API 网关（bk-user-web）正式环境（prod) URL
                 "BK_USER_WEB_APIGW_URL": urljoin(settings.BK_API_URL_TMPL.format(api_name="bk-user-web"), "/prod"),
             }
