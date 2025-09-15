@@ -229,7 +229,7 @@ class TenantOrgPathHandler:
 
         # 按数据源分别处理
         for data_source_id in data_source_ids:
-            cache_key = f"dept_relation_data:{data_source_id}"
+            cache_key = f"dept_relation:{data_source_id}"
             cached_data = TenantOrgPathHandler.cache.get(cache_key)
 
             if cached_data:
@@ -268,5 +268,5 @@ class TenantOrgPathHandler:
     @staticmethod
     def clear_department_tree_cache(data_source_id: int):
         """清理部门关系缓存"""
-        cache_key = f"dept_relation_data:{data_source_id}"
+        cache_key = f"dept_relation:{data_source_id}"
         TenantOrgPathHandler.cache.delete(cache_key)

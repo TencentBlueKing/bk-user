@@ -245,7 +245,7 @@ class DataSourceDepartmentRelationSyncer:
     def _clear_department_tree_cache(self):
         """清理部门关系缓存"""
         cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_RELATION)
-        cache_key = f"dept_relation_data:{self.data_source.id}"
+        cache_key = f"dept_relation:{self.data_source.id}"
         cache.delete(cache_key)
 
         self.ctx.logger.info(f"cleared department relation cache for data source {self.data_source.id}")
