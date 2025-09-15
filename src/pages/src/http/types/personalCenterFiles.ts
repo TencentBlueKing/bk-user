@@ -51,9 +51,13 @@ export interface postPersonalCenterUserEmailCaptchaParams {
   email: string,
 }
 
+export interface WechatBindStatusData {
+  type: 'wecom' | 'mp'
+  wx_userid: string
+}
+
 export interface WechatBindingData {
-  bind_type: 'wecom' | 'weixin'
-  bind_url: string
+  url: string
 }
 /**
  * 关联账户列表数据
