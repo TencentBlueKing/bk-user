@@ -182,6 +182,7 @@ class TenantDepartmentHandler:
 
 class TenantOrgPathHandler:
     cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_RELATION)
+    cache_timeout = 60 * 60 * 24 * 30
 
     @staticmethod
     def get_dept_organization_path_map(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
@@ -218,9 +219,9 @@ class TenantOrgPathHandler:
         """构建数据源部门 ID -> 组织路径映射"""
         # 获取所有部门的数据源 ID 集合
         data_source_ids = set(
-            DataSourceDepartmentRelation.objects.select_related("department")
-            .filter(department_id__in=data_source_department_ids)
-            .values_list("data_source_id", flat=True)
+            DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_department_ids).values_list(
+                "data_source_id", flat=True
+            )
         )
 
         all_tree_relations = []
@@ -246,7 +247,9 @@ class TenantOrgPathHandler:
                     tree_relations.append((relation.department_id, relation.parent_id))
                     dept_name_map[relation.department_id] = relation.department.name
 
-                TenantOrgPathHandler.cache.set(cache_key, (tree_relations, dept_name_map), timeout=60 * 60 * 24 * 30)
+                TenantOrgPathHandler.cache.set(
+                    cache_key, (tree_relations, dept_name_map), timeout=TenantOrgPathHandler.cache_timeout
+                )
 
             all_tree_relations.extend(tree_relations)
             all_dept_name_map.update(dept_name_map)
