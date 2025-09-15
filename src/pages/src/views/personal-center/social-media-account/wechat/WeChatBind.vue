@@ -112,6 +112,10 @@ const handleFetchBindStatus = async () => {
 const handleBinding = async () => {
   const res = await wechatBinding(userStore.user.username);
   window.open(res.data?.url, '_blank');
+  // 清除轮询
+  stopPolling();
+  // 再次发起轮询
+  startPolling();
 };
 
 /** 解除微信绑定 */
@@ -125,10 +129,6 @@ const handleUnbind = async () => {
   handleCancel();
   // 获取最新状态
   handleFetchBindStatus();
-  // 清除轮询
-  stopPolling();
-  // 再次发起轮询
-  startPolling();
 };
 
 const popoverRef = ref();
