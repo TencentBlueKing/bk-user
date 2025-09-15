@@ -12,6 +12,8 @@ import type {
   postPersonalCenterUserEmailCaptchaParams,
   postPersonalCenterUserPhoneCaptchaParams,
   PutUserPasswordParams,
+  WechatBindingData,
+  WechatBindStatusData,
 } from './types/personalCenterFiles';
 interface Config extends AxiosRequestConfig {
   globalError?: boolean
@@ -82,4 +84,19 @@ export const postPersonalCenterUserPhoneCaptcha = (id: string, params: postPerso
 /**
  * 个人中心-租户修改邮箱时，发送验证码
  */
-export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/ `, params, config);
+export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/`, params, config);
+
+/**
+ * 个人中心-查询用户微信 ID
+ */
+export const getWechatBindStatus = (id: string) => http.get<ResponseData<WechatBindStatusData>>(`/api/v3/web/personal-center/weixin/tenant-users/${id}/wx_userid/`);
+
+/**
+ * 个人中心-微信绑定
+ */
+export const wechatBinding = (id: string) => http.get<ResponseData<WechatBindingData>>(`/api/v3/web/personal-center/weixin/tenant-users/${id}/to-bind-info/`);
+
+/**
+ * 个人中心-删除用户微信 ID
+ */
+export const putWechatUnbind = (id: string) => http.delete(`/api/v3/web/personal-center/weixin/tenant-users/${id}/wx_userid/`);
