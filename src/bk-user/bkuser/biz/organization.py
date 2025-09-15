@@ -185,7 +185,9 @@ class TenantOrgPathHandler:
     cache_timeout = 60 * 60 * 24 * 30
 
     @staticmethod
-    def get_dept_organization_path_map(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
+    def get_dept_organization_path_map(
+        data_source_department_ids: List[int], include_self: bool = False
+    ) -> Dict[int, str]:
         """获取部门的组织路径信息"""
 
         # 数据源部门 ID -> 组织路径
