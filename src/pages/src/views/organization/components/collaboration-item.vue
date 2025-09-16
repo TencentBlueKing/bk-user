@@ -1,6 +1,7 @@
 <template>
-  <div class="">
+  <div>
     <div
+      v-is-multiple-tenant
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full
        cursor-pointer relative org-node hover:bg-[#F0F1F5]"
       :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"

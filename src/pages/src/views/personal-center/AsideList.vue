@@ -50,6 +50,7 @@
             </span>
             <span
               class="inline-block text-[#ff9c01] text-overflow"
+              v-is-multiple-tenant
               v-bk-tooltips="{ content: `@ ${item.tenant.name}（${item.tenant.id}）` }">
               {{ `@ ${item.tenant.name}（${item.tenant.id}）` }}
             </span>

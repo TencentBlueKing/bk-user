@@ -43,7 +43,7 @@
             <div>
               <div class="user-info">
                 <span class="name">{{ currentTenantInfo.username }}</span>
-                <div>
+                <div v-is-multiple-tenant>
                   <span class="span-logo">T</span>
                   {{ currentTenantInfo.tenant?.id }}
                 </div>
@@ -242,7 +242,7 @@
                 <span class="key">{{ $t('用户ID') }}：</span>
                 <span class="value">{{ currentUserInfo.id || '--' }}</span>
               </li>
-              <li>
+              <li v-is-multiple-tenant>
                 <span class="key">{{ $t('所属租户') }}：</span>
                 <span class="value">
                   {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
