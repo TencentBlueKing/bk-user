@@ -301,7 +301,7 @@ class TenantDepartmentUpdateDestroyApi(
         tenant_dept.data_source_department.name = data["name"]
         tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
 
-        TenantOrgPathHandler.clear_department_tree_cache(tenant_dept.data_source.id)
+        TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_dept)
@@ -498,7 +498,7 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
 
         cur_dept_relation.move_to(parent_dept_relation)
 
-        TenantOrgPathHandler.clear_department_tree_cache(tenant_dept.data_source.id)
+        TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
 
         # 【审计】记录变更后的数据
         auditor.record_update_parent_department(tenant_dept)

@@ -239,16 +239,22 @@ class DataSourceDepartmentRelationSyncer:
         self.ctx.logger.info(f"re-create {len(dept_code_rel_map)} department relations")
         self.ctx.logger.info(f"data source has {len(mptt_tree_ids)} department tree(s) currently")
 
-        # 同步完成后，清理部门关系缓存
-        self._clear_department_tree_cache()
+        # 同步完成后，清理数据源内原有部门路径缓存
+        self._clear_department_path_cache()
 
-    def _clear_department_tree_cache(self):
-        """清理部门关系缓存"""
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_RELATION)
-        cache_key = f"dept_relation:{self.data_source.id}"
-        cache.delete(cache_key)
+    def _clear_department_path_cache(self):
+        """清理数据源内原有部门路径缓存"""
+        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_PATH)
+        # 获取该数据源的所有部门ID
+        dept_ids = DataSourceDepartmentRelation.objects.filter(data_source_id=self.data_source.id).values_list(
+            "department_id", flat=True
+        )
 
-        self.ctx.logger.info(f"cleared department relation cache for data source {self.data_source.id}")
+        # 批量删除相关缓存键
+        cache_keys = [f"dept_path:{dept_id}" for dept_id in dept_ids]
+        cache.delete_many(cache_keys)
+
+        self.ctx.logger.info(f"cleared department path cache for data source {self.data_source.id}")
 
     @staticmethod
     def _generate_tree_id(data_source: DataSource) -> int:
