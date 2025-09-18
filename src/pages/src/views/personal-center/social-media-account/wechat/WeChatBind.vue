@@ -99,11 +99,16 @@ const fieldLabelMap: FieldLabelMap = {
 
 /** 获取微信绑定状态 */
 const handleFetchBindStatus = async () => {
-  const res = await getWechatBindStatus(userStore.user.username);
-  bindInfo.type = res.data.type;
-  bindInfo.wx_userid = res.data.wx_userid;
-  // 若已有绑定状态，停止轮询
-  if (bindInfo.type && bindInfo.wx_userid) {
+  try {
+    const res = await getWechatBindStatus(userStore.user.username);
+    bindInfo.type = res.data.type;
+    bindInfo.wx_userid = res.data.wx_userid;
+    // 若已有绑定状态，停止轮询
+    if (bindInfo.type && bindInfo.wx_userid) {
+      stopPolling();
+    }
+  } catch (err) {
+    console.error(err);
     stopPolling();
   }
 };
