@@ -21,7 +21,12 @@ const route = useRoute();
 const showName = ref(null);
 // 判断是否是重置密码的路由
 watch(() => route.name, (val) => {
-  if (val === 'password' || val === 'resetPassword') {
+  const filterRoutes = [
+    'password',
+    'resetPassword',
+    'bindResult',
+  ];
+  if (filterRoutes.includes(val as string)) {
     isLoading.value = false;
     return;
   }
