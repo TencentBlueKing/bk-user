@@ -86,13 +86,11 @@ onBeforeMount(async () => {
   currentTenant.value = tenantData?.data;
   appStore.currentTenant = tenantData?.data;
   await getTreeData();
-  if (window.ENABLE_MULTI_TENANT_MODE === 'False') {
+  if (window.ENABLE_MULTI_TENANT_MODE === 'False' && treeData.value.length !== 0) {
     // 不支持多租户则默认展开第一项
-    if (treeData.value.length !== 0) {
-      handleNodeClick(treeData.value[0], currentTenant.value.id);
-    } else {
-      appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
-    }
+    handleNodeClick(treeData.value[0], currentTenant.value.id);
+  } else {
+    appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
   }
   loading.value = false;
 });
