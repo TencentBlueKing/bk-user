@@ -18,7 +18,7 @@
 import logging
 from typing import Dict, List
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -709,8 +709,8 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)
 
-        # TODO: 这里应该与前端配合，返回绑定成功的页面且 5 秒后自动关闭页面
-        return Response(data={"wx_userid": wx_userid, "message": "Wecom bind success"})
+        # Note: 这里与前端配合，重新向到绑定成功且 5 秒后自动关闭页面
+        return HttpResponseRedirect(redirect_to="/bind-result?status=1")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
