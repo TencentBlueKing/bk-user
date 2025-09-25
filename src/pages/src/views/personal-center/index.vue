@@ -326,7 +326,7 @@
             </li>
           </div>
         </InfoCard>
-        <InfoCard>
+        <InfoCard v-if="bindInfo.type">
           <template #title>
             <span>{{ $t('个人社交账号') }}</span>
             <i
@@ -337,7 +337,12 @@
             </span>
           </template>
           <div class="grid grid-cols-1 p-[24px] mx-[40px] text-[14px]">
-            <WeChatBind />
+            <WeChatBind
+              :type="bindInfo.type"
+              :wx_userid="bindInfo.wx_userid"
+              @bind="handleBindWx"
+              @unbind="handleFetchBindStatus"
+            />
           </div>
         </InfoCard>
 
@@ -408,7 +413,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { UploadRequestOptions } from 'bkui-vue/lib/upload/upload.type';
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
@@ -425,6 +430,7 @@ import {
   getPersonalCenterUserFeature,
   getPersonalCenterUsers,
   getPersonalCenterUserVisibleFields,
+  getWechatBindStatus,
   patchTenantUsersLogo,
   patchUsersEmail,
   patchUsersPhone,
@@ -432,7 +438,7 @@ import {
   putUserLanguage,
   putUserTimeZone,
 } from '@/http';
-import { CurrentNaturalUserData, PersonalCenterUsersData } from '@/http/types/personalCenterFiles';
+import { CurrentNaturalUserData, PersonalCenterUsersData, WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
@@ -481,73 +487,6 @@ const canChangePassword = ref(false);
 const emailUpdateRestriction = ref<emailEditable>(emailEditable.Verify);
 // 是否可以修改手机
 const phoneUpdateRestriction = ref<phoneEditable>(phoneEditable.Verify);
-
-
-onMounted(() => {
-  getNaturalUser();
-});
-
-const getNaturalUser = () => {
-  isLoading.value = true;
-  // 关联账户列表
-  getCurrentNaturalUser().then((res) => {
-    currentNaturalUser.value = res.data;
-    isLoading.value = false;
-    getCurrentUser(currentNaturalUser.value.tenant_users[0].id);
-  });
-};
-
-const getCurrentUser = async (id: string) => {
-  try {
-    infoLoading.value = true;
-    isEditEmail.value = false;
-    isEditPhone.value = false;
-    currentNaturalUser.value?.tenant_users.forEach((item) => {
-      if (item.id === id) {
-        currentTenantInfo.value = item;
-      }
-    });
-    // 关联账户详情
-    const [userRes, featureRes, fieldsRes] = await Promise.all([
-      getPersonalCenterUsers(id),
-      getPersonalCenterUserFeature(id),
-      getPersonalCenterUserVisibleFields(id),
-    ]);
-
-    currentUserInfo.value = {
-      ...userRes.data,
-      extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
-    };
-    canChangePassword.value = featureRes.data.can_change_password;
-    emailUpdateRestriction.value = featureRes.data.email_update_restriction as emailEditable;
-    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction as phoneEditable;
-    extrasList.value = [...currentUserInfo.value.extras];
-    // 初始化时读取custom data
-    customEmail.value = userRes.data.custom_email;
-    customPhone.value = userRes.data.custom_phone;
-    customPhoneCode.value = userRes.data.custom_phone_country_code;
-    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-    originalValue.value = {
-      language: currentUserInfo.value.language,
-      time_zone: currentUserInfo.value.time_zone,
-    };
-
-    // 根据当前用户是否继承了邮箱和手机，决定是否重置custom缓存
-    if (currentUserInfo.value.is_inherited_email) {
-      currentUserInfo.value.custom_email = '';
-      customEmail.value = '';
-    }
-    if (currentUserInfo.value.is_inherited_phone) {
-      currentUserInfo.value.custom_phone = '';
-      customPhone.value = '';
-    }
-  } catch (error) {
-    console.warn(error);
-  } finally {
-    infoLoading.value = false;
-  }
-};
 
 // 获取当前编辑框焦点
 const editExtra = (item: OperateExtrasCustomFields, index: number) => {
@@ -915,6 +854,113 @@ const showPasswordModal = () => {
 const hidePasswordModal = () => {
   passwordModalConfig.value.isShow = false;
 };
+
+
+const getCurrentUser = async (id: string) => {
+  try {
+    infoLoading.value = true;
+    isEditEmail.value = false;
+    isEditPhone.value = false;
+    currentNaturalUser.value?.tenant_users.forEach((item) => {
+      if (item.id === id) {
+        currentTenantInfo.value = item;
+      }
+    });
+    // 关联账户详情
+    const [userRes, featureRes, fieldsRes] = await Promise.all([
+      getPersonalCenterUsers(id),
+      getPersonalCenterUserFeature(id),
+      getPersonalCenterUserVisibleFields(id),
+    ]);
+
+    currentUserInfo.value = {
+      ...userRes.data,
+      extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
+    };
+    canChangePassword.value = featureRes.data.can_change_password;
+    emailUpdateRestriction.value = featureRes.data.email_update_restriction as emailEditable;
+    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction as phoneEditable;
+    extrasList.value = [...currentUserInfo.value.extras];
+    // 初始化时读取custom data
+    customEmail.value = userRes.data.custom_email;
+    customPhone.value = userRes.data.custom_phone;
+    customPhoneCode.value = userRes.data.custom_phone_country_code;
+    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+    originalValue.value = {
+      language: currentUserInfo.value.language,
+      time_zone: currentUserInfo.value.time_zone,
+    };
+
+    // 根据当前用户是否继承了邮箱和手机，决定是否重置custom缓存
+    if (currentUserInfo.value.is_inherited_email) {
+      currentUserInfo.value.custom_email = '';
+      customEmail.value = '';
+    }
+    if (currentUserInfo.value.is_inherited_phone) {
+      currentUserInfo.value.custom_phone = '';
+      customPhone.value = '';
+    }
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    infoLoading.value = false;
+  }
+};
+
+const getNaturalUser = async () => {
+  isLoading.value = true;
+  // 关联账户列表
+  const res = await getCurrentNaturalUser().finally(() => isLoading.value = false);
+  currentNaturalUser.value = res.data;
+  // 获取当前账号信息
+  await getCurrentUser(currentNaturalUser.value.tenant_users[0].id);
+};
+
+const bindInfo = reactive<WechatBindStatusData>({
+  type: '' as WechatBindStatusData['type'],
+  wx_userid: '',
+});
+
+const interval = ref(null);
+const startPolling = () => {
+  interval.value = setInterval(handleFetchBindStatus, 5000);
+};
+const stopPolling = () => {
+  clearInterval(interval.value);
+};
+
+/** 获取微信绑定状态 */
+const handleFetchBindStatus = async () => {
+  try {
+    const res = await getWechatBindStatus(currentUserInfo.value.id);
+    bindInfo.type = res.data.type;
+    bindInfo.wx_userid = res.data.wx_userid;
+    // 若已有绑定状态或没有type，停止轮询
+    if ((bindInfo.type && bindInfo.wx_userid) || !bindInfo.type) {
+      stopPolling();
+    }
+  } catch (err) {
+    console.error(err);
+    stopPolling();
+  }
+};
+
+const handleBindWx = () => {
+  // 清除轮询
+  stopPolling();
+  // 再次发起轮询
+  startPolling();
+};
+
+onMounted(async () => {
+  await getNaturalUser();
+  await handleFetchBindStatus();
+});
+
+onUnmounted(() => {
+  stopPolling();
+});
 </script>
 
 <style lang="less" scoped>
