@@ -56,12 +56,16 @@ class OpenWebApiCommonMixin:
         if not any(browser in user_agent for browser in whitelist):
             return False
 
-        # 校验 Sec-Fetch-* 请求头
-        return (
-            request.META.get("HTTP_SEC_FETCH_DEST") == "empty"
-            and request.META.get("HTTP_SEC_FETCH_MODE") == "cors"
-            and request.META.get("HTTP_SEC_FETCH_SITE") == "same-site"
-        )
+        # 若为 https 协议，则校验 Sec-Fetch-* 请求头
+        if settings.BK_DOMAIN_SCHEME == "https":
+            # 校验 Sec-Fetch-* 请求头
+            return (
+                request.META.get("HTTP_SEC_FETCH_DEST") == "empty"
+                and request.META.get("HTTP_SEC_FETCH_MODE") == "cors"
+                and request.META.get("HTTP_SEC_FETCH_SITE") == "same-site"
+            )
+        # 如果为 http 协议，则不校验 Sec-Fetch-* 请求头
+        return True
 
     @cached_property
     def tenant_id(self) -> str:

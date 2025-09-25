@@ -42,7 +42,7 @@ from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 @pytest.fixture
 def api_client(random_tenant, browser_headers):
-    with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+    with override_settings(ENABLE_MULTI_TENANT_MODE=True, BK_DOMAIN_SCHEME="https"):
         client = APIClient()
         client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
         client.defaults.update(browser_headers)
@@ -65,7 +65,6 @@ def browser_headers() -> Dict[str, str]:
         "HTTP_ACCEPT": "application/json",
         "HTTP_ACCEPT_LANGUAGE": "zh-CN,zh;q=0.9",
         "HTTP_ACCEPT_ENCODING": "gzip, deflate",
-        "HTTP_REFERER": "http://bk.example.com",
         "HTTP_USER_AGENT": (
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
