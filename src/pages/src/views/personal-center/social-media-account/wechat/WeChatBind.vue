@@ -1,13 +1,11 @@
 <template>
-  <div
-    v-if="bindInfo.type"
-    class="flex items-center">
+  <div class="flex items-center">
     <i
-      class="mr-[8px]"
-      :class="fieldLabelMap[bindInfo.type]?.icon || ''">
+      class="mr-[8px] mt-[4px]"
+      :class="fieldLabelMap[type]?.icon || ''">
     </i>
     <span class="text-[#4D4F56] mr-[36px]">
-      {{ fieldLabelMap[bindInfo.type]?.label || '' }}
+      {{ fieldLabelMap[type]?.label || '' }}
     </span>
 
     <div class="flex items-center">
@@ -30,7 +28,7 @@
         placement="right-start">
         <div class="flex items-center">
           <span class="text-[#313238] mr-[12px]">
-            {{ bindInfo.wx_userid || '--' }}
+            {{ wx_userid || '--' }}
           </span>
           <bk-tag
             theme="success"
@@ -67,20 +65,20 @@
 
 <script lang="ts" setup>
 import { Message } from 'bkui-vue';
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 
-import { getWechatBindStatus, putWechatUnbind, wechatBinding } from '@/http/personalCenterFiles';
+import { putWechatUnbind, wechatBinding } from '@/http/personalCenterFiles';
 import { WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language';
 import { useUser } from '@/store/user';
 
-const userStore = useUser();
-const bindInfo = reactive<WechatBindStatusData>({
-  type: '' as WechatBindStatusData['type'],
-  wx_userid: '',
-});
+// eslint-disable-next-line vue/prop-name-casing
+const props = defineProps<WechatBindStatusData>();
 
-const isBinding = computed(() => (bindInfo.type && bindInfo.wx_userid));
+const emit = defineEmits(['bind', 'unbind']);
+const userStore = useUser();
+
+const isBinding = computed(() => (props.type && props.wx_userid));
 
 type FieldLabelMap = Record<WechatBindStatusData['type'], {
   icon: string
@@ -97,30 +95,11 @@ const fieldLabelMap: FieldLabelMap = {
   },
 };
 
-/** 获取微信绑定状态 */
-const handleFetchBindStatus = async () => {
-  try {
-    const res = await getWechatBindStatus(userStore.user.username);
-    bindInfo.type = res.data.type;
-    bindInfo.wx_userid = res.data.wx_userid;
-    // 若已有绑定状态，停止轮询
-    if (bindInfo.type && bindInfo.wx_userid) {
-      stopPolling();
-    }
-  } catch (err) {
-    console.error(err);
-    stopPolling();
-  }
-};
-
 /** 绑定微信 */
 const handleBinding = async () => {
   const res = await wechatBinding(userStore.user.username);
   window.open(res.data?.url, '_blank');
-  // 清除轮询
-  stopPolling();
-  // 再次发起轮询
-  startPolling();
+  emit('bind');
 };
 
 /** 解除微信绑定 */
@@ -132,32 +111,13 @@ const handleUnbind = async () => {
   });
   // 隐藏popover
   handleCancel();
-  // 获取最新状态
-  handleFetchBindStatus();
+  emit('unbind');
 };
 
 const popoverRef = ref();
 const handleCancel = () => {
   popoverRef.value.hide();
 };
-
-const interval = ref(null);
-const startPolling = () => {
-  interval.value = setInterval(handleFetchBindStatus, 5000);
-};
-const stopPolling = () => {
-  clearInterval(interval.value);
-};
-
-onMounted(() => {
-  handleFetchBindStatus();
-  // 页面初始化开启轮询
-  startPolling();
-});
-
-onUnmounted(() => {
-  stopPolling();
-});
 </script>
 
 <style lang="less" scoped>
