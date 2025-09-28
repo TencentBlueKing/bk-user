@@ -185,7 +185,7 @@ class TenantDepartmentHandler:
         更新数据源部门 code, 必须在事务内调用该方法
         """
 
-        # 初始化 org_path_map 为当前部门组织路径
+        # 初始化 org_path_map 为当前部门 id -> 组织路径的映射
         org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(
             [data_source_department.id], include_self=True
         )
