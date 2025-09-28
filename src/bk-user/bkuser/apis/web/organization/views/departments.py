@@ -186,8 +186,11 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 则将部门关联到父部门（根部门也需要关联到 None）
+        # 设置默认值（若父部门不存在，则所创建的部门为根部门）
         parent_dept_relation = None
+        data_source_dept_org_path = data["name"]
+
+        # 若父部门存在，则更新父部门关系与组织路径变量
         if parent_tenant_dept_id := data["parent_department_id"]:
             # 从租户部门 ID 找数据源部门
             parent_data_source_dept = TenantDepartment.objects.get(
@@ -200,9 +203,6 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 [parent_data_source_dept.id], include_self=True
             )
             data_source_dept_org_path = parent_dept_org_path[parent_data_source_dept.id] + "/" + data["name"]
-        else:
-            # 若创建根部门，则部门组织路径为部门名称
-            data_source_dept_org_path = data["name"]
 
         with transaction.atomic():
             data_source_dept = DataSourceDepartment.objects.create(

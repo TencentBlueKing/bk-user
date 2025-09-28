@@ -185,23 +185,42 @@ class TenantDepartmentHandler:
         更新数据源部门 code, 必须在事务内调用该方法
         """
 
-        # 获取数据源部门的所有子部门
-        rel = DataSourceDepartmentRelation.objects.filter(department_id=data_source_department.id).first()
-        descendant_ids = list(rel.get_descendants(include_self=True).values_list("department_id", flat=True))
+        # 初始化 org_path_map 为当前部门组织路径
+        org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(
+            [data_source_department.id], include_self=True
+        )
 
-        # 获取数据源部门及子部门组织路径
-        # TODO: 这里存在 N + 1 问题，后续添加缓存优化
-        org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(descendant_ids, include_self=True)
+        # 获取数据源部门的所有子部门
+        # TODO: 由于数据源部门同步过程存在两阶段：
+        # 1.同步数据源部门 2.同步数据源部门关系
+        # 所以可能存在数据源部门存在，而数据源部门关系不存在的情况
+        # 但是出现这种情况概率极低，后续考虑如何处理
+        rel = DataSourceDepartmentRelation.objects.get(department_id=data_source_department.id)
+
+        # 本身 MPTT 树的遍历排序保证父节点在子节点之前，这里为了防止数据库查询优化导致顺序不一致
+        # 故采用 order_by 排序，确保层级顺序正确
+        descendants_data = (
+            rel.get_descendants()
+            .select_related("department")
+            .order_by("level", "lft")
+            .values_list("department_id", "parent_id", "department__name")
+        )
+
+        # 按层级顺序遍历每个子孙部门，部门 org_path = 父部门 org_path + "/" + 部门名称
+        for dept_id, parent_id, dept_name in descendants_data:
+            org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
 
         # 构建数据源部门 ID 到新 code 的映射
-        dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in descendant_ids}
+        dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in org_path_map}
 
         # 批量更新数据源部门 code
-        data_source_departments = DataSourceDepartment.objects.filter(id__in=descendant_ids)
+        data_source_departments = DataSourceDepartment.objects.filter(id__in=org_path_map.keys())
         for dept in data_source_departments:
             dept.code = dept_code_map[dept.id]
             dept.updated_at = timezone.now()
-        DataSourceDepartment.objects.bulk_update(data_source_departments, fields=["code", "updated_at"])
+        DataSourceDepartment.objects.bulk_update(
+            data_source_departments, fields=["code", "updated_at"], batch_size=250
+        )
 
         # 获取所有数据源部门对应的租户部门
         tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
@@ -217,7 +236,7 @@ class TenantDepartmentHandler:
         for dept_id_record in dept_id_records:
             dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
             dept_id_record.updated_at = timezone.now()
-        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, fields=["code", "updated_at"])
+        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, fields=["code", "updated_at"], batch_size=250)
 
 
 class TenantOrgPathHandler:
