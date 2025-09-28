@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "bk-cli-service-webpack dev",
+    "dev": "node ./env-assign.js && bk-cli-service-webpack dev",
     "build": "bk-cli-service-webpack build",
     "server": "node ./paas-server/index.js",
     "lint": "eslint --ext .js,.vue,.ts ./src",
