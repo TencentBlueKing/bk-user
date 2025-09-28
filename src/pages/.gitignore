@@ -75,5 +75,6 @@ test/unit/coverage
 *.sln
 dist/
 
-.bk.local.env
+.bk.local*.env
+.bk.custom.env
 .codecc
