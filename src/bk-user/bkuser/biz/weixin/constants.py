@@ -21,13 +21,9 @@ from django.utils.translation import gettext_lazy as _
 class WeixinTypeEnum(StrStructuredEnum):
     """微信类型枚举"""
 
-    QY = EnumField("qy", label=_("企业微信"))
-    QYWX = EnumField("qywx", label=_("企业微信(旧版)"))
+    WeCom = EnumField("wecom", label=_("企业微信"))
     MP = EnumField("mp", label=_("微信公众号"))
 
-
-# 企业微信扫码登录 state 过期时间，单位：秒
-WECOM_STATE_EXPIRE_SECONDS = 300
 
 # 企业微信 API 相关常量
 WECOM_LOGIN_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login"
@@ -36,14 +32,11 @@ WECOM_USERINFO_URL = "https://qyapi.weixin.qq.com/cgi-bin/auth/getuserinfo"
 # 微信公众号 API 相关常量
 MP_QRCODE_CREATE_URL = "https://api.weixin.qq.com/cgi-bin/qrcode/create"
 MP_QRCODE_SHOW_URL = "https://mp.weixin.qq.com/cgi-bin/showqrcode"
-
 # 微信公众号事件类型
 MP_EVENT_SUBSCRIBE = "subscribe"
 MP_EVENT_SCAN = "SCAN"
-
 # 二维码过期时间，单位：秒
 MP_QRCODE_EXPIRE_SECONDS = 300
-
 # 微信公众号消息模板
 MP_MESSAGE_TEMPLATE = """<xml>
                 <ToUserName><![CDATA[{to_user}]]></ToUserName>

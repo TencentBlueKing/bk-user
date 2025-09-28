@@ -697,5 +697,14 @@
   "修改用户展示名表达式配置": "Modify user display name expression configuration",
   "关注我们": "Follow us",
   "保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效": "Saved successfully. The user display name configuration will take effect in 10 seconds, and other settings will take effect immediately.",
-  "蓝鲸网关": "Bk Apigateway"
+  "蓝鲸网关": "Bk Apigateway",
+  "个人社交账号": "Personal social media account",
+  "企业微信消息通知": "WeCom message notification",
+  "微信公众号消息通知": "WeChat official account message notification",
+  "绑定": "Binding",
+  "已绑定": "Already Bound",
+  "当前账号已绑定，可手动进行账号的解绑": "The current account has been bound and can be manually unbound",
+  "解除绑定": "Unbind",
+  "解绑成功": "Unbind successfully",
+  "已绑定的个人社交账号，将会被用于消息通知、快捷登录等用途。（快捷登录需当前租户开启相关功能）": "The bound personal social account will be used for message notifications, quick login, and other purposes. (Quick login requires the current tenant to enable relevant functions)"
 }

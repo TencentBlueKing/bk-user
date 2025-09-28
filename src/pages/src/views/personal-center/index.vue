@@ -31,7 +31,7 @@
               v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
             >
               <template #trigger>
-                <div class="logo-box" v-if="currentUserInfo.logo">
+                <div v-if="currentUserInfo.logo" class="logo-box">
                   <img :src="currentUserInfo.logo" />
                   <div class="logo-hover">
                     <i class="user-icon icon-edit" @click="customRequest" />
@@ -102,7 +102,7 @@
                   <span class="required-icon"> * </span>
                   {{ $t('邮箱') }}：</span>
                 <div class="value-content">
-                  <div class="value-edit" v-if="isEditEmail">
+                  <div v-if="isEditEmail" class="value-edit">
                     <bk-select
                       class="bk-select"
                       v-model="emailSelect"
@@ -120,22 +120,22 @@
                       <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
                     </bk-form-item>
                     <bk-button
-                      text theme="primary" class="ml-[12px] mr-[12px]"
-                      @click="changeEmail"
                       v-if="emailUpdateRestriction === emailEditable.YES
-                        || emailSelect === OpenDialogSelect.inherit">
+                        || emailSelect === OpenDialogSelect.inherit"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="changeEmail">
                       {{ $t('确定') }}
                     </bk-button>
                     <bk-button
+                      v-if="emailUpdateRestriction === emailEditable.Verify
+                        && emailSelect === OpenDialogSelect.custom"
                       text theme="primary" class="ml-[12px] mr-[12px]"
                       @click="verifyIdentityInfo(
                         OpenDialogType.email,
                         {
                           email: currentUserInfo.custom_email
                         }
-                      )"
-                      v-if="emailUpdateRestriction === emailEditable.Verify
-                        && emailSelect === OpenDialogSelect.custom">
+                      )">
                       {{ $t('验证') }}
                     </bk-button>
                     <bk-button text theme="primary" @click="cancelEditEmail" class="leading-[19px]">
@@ -164,7 +164,7 @@
                   <span class="required-icon"> * </span>
                   {{ $t('手机号') }}：</span>
                 <div class="value-content">
-                  <div class="value-edit" v-if="isEditPhone">
+                  <div v-if="isEditPhone" class="value-edit">
                     <bk-select
                       class="bk-select"
                       v-model="phoneSelect"
@@ -196,13 +196,15 @@
                         @keydown.enter="changePhone" />
                     </bk-form-item>
                     <bk-button
-                      text theme="primary" class="ml-[12px] mr-[12px]"
-                      @click="changePhone"
                       v-if="phoneUpdateRestriction === phoneEditable.YES
-                        || phoneSelect === OpenDialogSelect.inherit">
+                        || phoneSelect === OpenDialogSelect.inherit"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="changePhone">
                       {{ $t('确定') }}
                     </bk-button>
                     <bk-button
+                      v-if="phoneUpdateRestriction === phoneEditable.Verify
+                        && phoneSelect === OpenDialogSelect.custom"
                       text theme="primary" class="ml-[12px] mr-[12px]"
                       @click="verifyIdentityInfo(
                         OpenDialogType.phone,
@@ -210,9 +212,7 @@
                           phone: currentUserInfo.custom_phone,
                           phone_country_code: currentUserInfo.custom_phone_country_code
                         }
-                      )"
-                      v-if="phoneUpdateRestriction === phoneEditable.Verify
-                        && phoneSelect === OpenDialogSelect.custom">
+                      )">
                       {{ $t('验证') }}
                     </bk-button>
                     <bk-button text theme="primary" @click="cancelEditPhone" class="leading-[19px]">
@@ -326,6 +326,21 @@
             </li>
           </div>
         </InfoCard>
+        <InfoCard>
+          <template #title>
+            <span>{{ $t('个人社交账号') }}</span>
+            <i
+              class="user-icon icon-info-i text-[14px] text-[#979BA5] ml-[12px] mr-[8px]">
+            </i>
+            <span class="text-[12px] font-normal">
+              {{ $t('已绑定的个人社交账号，将会被用于消息通知、快捷登录等用途。（快捷登录需当前租户开启相关功能）') }}
+            </span>
+          </template>
+          <div class="grid grid-cols-1 p-[24px] mx-[40px] text-[14px]">
+            <WeChatBind />
+          </div>
+        </InfoCard>
+
         <InfoCard :title="$t('语言和时区')">
           <bk-form
             class="item-content"
@@ -399,6 +414,7 @@ import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
 import { emailEditable, OpenDialogSelect, OpenDialogType, phoneEditable  } from './openDialogType';
 import PhoneVerify from './PhoneVerify.vue';
+import WeChatBind from './social-media-account/wechat/WeChatBind.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import InfoCard from '@/components/InfoCard.vue';

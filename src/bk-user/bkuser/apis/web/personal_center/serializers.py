@@ -304,9 +304,9 @@ class TenantUserWeixinRetrieveToBindInfoOutputSLZ(serializers.Serializer):
     url = serializers.CharField(help_text="绑定 (二维码) URL")
 
 
-class TenantUserWeixinInfoOutputSLZ(serializers.Serializer):
+class TenantUserWeixinInfoRetrieveOutputSLZ(serializers.Serializer):
     wx_userid = serializers.CharField(help_text="微信用户 ID", allow_blank=True)
-    type = serializers.CharField(help_text="微信类型(企业微信或者微信公众号)", allow_blank=True)
+    type = serializers.CharField(help_text="微信类型（企业微信或者微信公众号）", allow_blank=True)
 
 
 class TenantUserWecomCallbackInputSLZ(serializers.Serializer):

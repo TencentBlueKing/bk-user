@@ -96,21 +96,25 @@ urlpatterns = [
         "weixin/",
         include(
             [
-                path(
-                    "tenant-users/<str:id>/to-bind-info/",
-                    views.TenantUserWeixinRetrieveToBindInfoApi.as_view(),
-                    name="personal_center.tenant_users.weixin.to_bind_info",
-                ),
+                # 用户绑定的信息
                 path(
                     "tenant-users/<str:id>/wx_userid/",
-                    views.TenantUserWeixinInfoApi.as_view(),
+                    views.TenantUserWeixinInfoRetrieveDestroyApi.as_view(),
                     name="personal_center.tenant_users.wx_userid",
                 ),
+                # 获取去绑定的必要信息
+                path(
+                    "tenant-users/<str:id>/to-bind-info/",
+                    views.TenantUserWeixinToBindInfoRetrieveApi.as_view(),
+                    name="personal_center.tenant_users.weixin.to_bind_info",
+                ),
+                # 企业微信登录绑定回调
                 path(
                     "tenants/<str:tenant_id>/wecom/bind-callback/",
                     views.TenantUserWecomCallbackApi.as_view(),
                     name="personal_center.tenant_users.wecom.bind_callback",
                 ),
+                # 微信公众号消息事件绑定回调
                 path(
                     "tenants/<str:tenant_id>/mp/bind-callback/",
                     views.TenantUserMPCallbackApi.as_view(),
