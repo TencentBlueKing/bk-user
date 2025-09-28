@@ -97,7 +97,7 @@ export default {
   启用目录: 'Enable category',
   启用目录提示: 'Users can only log in normally if the directory is enabled',
   登录域: 'Login domain',
-  登录域错误: 'Consists of 1-16 letters, numbers, periods (.), And minus (-) characters, beginning with a letter or number',
+  登录域错误: 'Consists of 1-32 letters, numbers, periods (.), And minus (-) characters, beginning with a letter or number',
   登录域描述: 'Domain names are used to distinguish user sources, such as qiye.com, which cannot be modified after saving.',
   // 新增 mad 用户
   连接地址: 'Connection url',

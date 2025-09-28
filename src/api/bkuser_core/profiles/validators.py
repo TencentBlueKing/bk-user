@@ -20,9 +20,9 @@ from typing_extensions import Protocol
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 
 USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
-DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
+DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,31}"
 # for part domain which is not start with
-DOMAIN_PART_REGEX = r"(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
+DOMAIN_PART_REGEX = r"(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,31}"
 
 
 def validate_username(value):
@@ -37,7 +37,7 @@ def validate_username(value):
 def validate_domain(value):
     if not re.fullmatch(re.compile(DOMAIN_REGEX), value):
         raise ValidationError(
-            _("{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母或数字开头").format(value)
+            _("{} 不符合 domain 命名规范: 由1-32位字母、数字、点(.)、减号(-)字符组成，以字母或数字开头").format(value)
         )
 
 

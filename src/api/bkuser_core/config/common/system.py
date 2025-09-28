@@ -91,6 +91,9 @@ MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=10000)
 # 登录次数统计时间周期, 默认为一个月
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
 
+# 更新不活跃状态的时间间隔
+BK_INACTIVE_UPDATE_INTERVAL = env.int("BK_PAAS_LOGIN_INACTIVE_UPDATE_INTERVAL", 60 * 10)
+
 # 重置密码次数统计时间周期, 默认为十分钟
 RESET_PASSWORD_RECORD_COUNT_SECONDS = env.int("RESET_PASSWORD_RECORD_COUNT_SECONDS", default=60 * 10)
 
