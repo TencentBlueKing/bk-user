@@ -2,7 +2,6 @@
 const mockServer = require('./mock-server');
 
 module.exports = {
-  customEnv: './.bk.custom.env',
   host: process.env.BK_APP_HOST,
   port: process.env.BK_APP_PORT,
   publicPath: process.env.BK_STATIC_URL,
