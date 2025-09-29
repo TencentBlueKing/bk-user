@@ -1,6 +1,7 @@
 <template>
   <div>
     <div
+      v-is-multiple-tenant
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
     >
       <img v-if="appStore.currentOrg?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="appStore.currentOrg?.logo" />
