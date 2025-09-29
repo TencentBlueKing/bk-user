@@ -180,35 +180,39 @@ class TenantDepartmentHandler:
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
     @staticmethod
+    def get_dept_descendant_org_path_map(department_id: int) -> Dict[int, str]:
+        """
+        获取指定部门以及子孙部门的组织路径信息
+        """
+        rel = DataSourceDepartmentRelation.objects.get(department_id=department_id)
+
+        # 查询祖先（包括自身）
+        ancestor_names = list(rel.get_ancestors(include_self=True).values_list("department__name", flat=True))
+        org_path_map = {department_id: "/".join(ancestor_names)}
+
+        # Q: 查询子孙时为什么要按照层级排序
+        # A: 按层级排序后，父节点一定是比子节点先被遍历，
+        # 这样在计算 org_path 时，可直接使用父节点的 org_path + 自身 name 即可
+        descendants = (
+            rel.get_descendants()
+            .select_related("department")
+            .order_by("level")
+            .values_list("department_id", "parent_id", "department__name")
+        )
+
+        # 按层级顺序遍历每个子孙部门
+        for dept_id, parent_id, dept_name in descendants:
+            org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
+
+        return org_path_map
+
+    @staticmethod
     def update_department_code(data_source_department: DataSourceDepartment):
         """
         更新数据源部门 code, 必须在事务内调用该方法
         """
 
-        # 初始化 org_path_map 为当前部门 id -> 组织路径的映射
-        org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(
-            [data_source_department.id], include_self=True
-        )
-
-        # 获取数据源部门的所有子部门
-        # TODO: 由于数据源部门同步过程存在两阶段：
-        # 1.同步数据源部门 2.同步数据源部门关系
-        # 所以可能存在数据源部门存在，而数据源部门关系不存在的情况
-        # 但是出现这种情况概率极低，后续考虑如何处理
-        rel = DataSourceDepartmentRelation.objects.get(department_id=data_source_department.id)
-
-        # 本身 MPTT 树的遍历排序保证父节点在子节点之前，这里为了防止数据库查询优化导致顺序不一致
-        # 故采用 order_by 排序，确保层级顺序正确
-        descendants_data = (
-            rel.get_descendants()
-            .select_related("department")
-            .order_by("level", "lft")
-            .values_list("department_id", "parent_id", "department__name")
-        )
-
-        # 按层级顺序遍历每个子孙部门，部门 org_path = 父部门 org_path + "/" + 部门名称
-        for dept_id, parent_id, dept_name in descendants_data:
-            org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
+        org_path_map = TenantDepartmentHandler.get_dept_descendant_org_path_map(data_source_department.id)
 
         # 构建数据源部门 ID 到新 code 的映射
         dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in org_path_map}
