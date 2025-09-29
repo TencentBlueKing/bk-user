@@ -23,6 +23,7 @@ from typing import Any, Dict, List
 import phonenumbers
 from django.conf import settings
 from django.db.models import QuerySet
+from django.forms import model_to_dict
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
@@ -41,13 +42,14 @@ from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     TenantDepartment,
     TenantUser,
+    TenantUserBuiltinField,
     TenantUserCustomField,
-    UserBuiltinField,
 )
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
     validate_type_and_convert_field_data,
+    validate_user_builtins,
     validate_user_extras,
     validate_user_new_password,
 )
@@ -197,13 +199,15 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
         return validate_user_extras(extras, custom_fields, self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果提供了手机号，则校验手机号是否合法
-        if attrs["phone"]:
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
+        builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
 
+        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
+        builtins = validate_user_builtins(
+            builtin_attrs, builtin_fields, self.context["data_source_id"], self.context["data_source_user_id"]
+        )
+
+        # 将 builtins 合并到 attrs 中
+        attrs.update(builtins)
         return attrs
 
 
@@ -371,6 +375,25 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
         return expired_at
 
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
+
+        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
+        builtins = validate_user_builtins(
+            builtin_attrs, builtin_fields, self.context["data_source_id"], self.context["data_source_user_id"]
+        )
+
+        # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
+        # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
+        exists_builtins = model_to_dict(DataSourceUser.objects.get(id=self.context["data_source_user_id"]))
+        for f in builtin_fields.filter(manager_editable=False):
+            if f.name in exists_builtins:
+                builtins[f.name] = exists_builtins[f.name]
+
+        # 将 builtins 合并到 attrs 中
+        attrs.update(builtins)
+        return attrs
+
 
 class TenantUserAccountExpiredAtUpdateInputSLZ(serializers.Serializer):
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
@@ -427,6 +450,12 @@ class TenantUserInfoSLZ(serializers.Serializer):
         return validate_user_extras(extras, self.context["custom_fields"], self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 提取校验内置字段进行内置字段验证
+        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
+        builtins = validate_user_builtins(
+            builtin_attrs, self.context["builtin_fields"], self.context["data_source_id"]
+        )
+
         # 校验手机号是否合法
         if attrs.get("phone") and attrs.get("phone_country_code"):
             try:
@@ -434,6 +463,8 @@ class TenantUserInfoSLZ(serializers.Serializer):
             except ValueError as e:
                 raise ValidationError(str(e))
 
+        # 将 builtins 合并到 attrs 中
+        attrs.update(builtins)
         return attrs
 
 
@@ -447,17 +478,17 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
     department_id = serializers.IntegerField(help_text="目标租户部门 ID")
 
     def validate_user_infos(self, raw_user_infos: List[str]) -> List[Dict[str, Any]]:
-        builtin_fields = UserBuiltinField.objects.all()
+        builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
 
         user_infos = self._parse_user_infos(raw_user_infos, builtin_fields, custom_fields)
-        self._validate_user_infos(user_infos, custom_fields)
+        self._validate_user_infos(user_infos, builtin_fields, custom_fields)
         return user_infos
 
     def _parse_user_infos(
         self,
         raw_user_infos: List[str],
-        builtin_fields: QuerySet[UserBuiltinField],
+        builtin_fields: QuerySet[TenantUserBuiltinField],
         custom_fields: QuerySet[TenantUserCustomField],
     ) -> List[Dict[str, Any]]:
         required_builtin_field_names = [f.name for f in builtin_fields if f.required]
@@ -569,7 +600,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         return extras
 
     def _validate_user_infos(
-        self, user_infos: List[Dict[str, Any]], custom_fields: QuerySet[TenantUserCustomField]
+        self,
+        user_infos: List[Dict[str, Any]],
+        builtin_fields: QuerySet[TenantUserBuiltinField],
+        custom_fields: QuerySet[TenantUserCustomField],
     ) -> None:
         """校验用户信息列表中数据是否合法"""
         usernames = [u["username"].lower() for u in user_infos]
@@ -589,6 +623,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             context={
                 "tenant_id": self.context["tenant_id"],
                 "data_source_id": self.context["data_source_id"],
+                "builtin_fields": builtin_fields,
                 "custom_fields": custom_fields,
             },
             many=True,

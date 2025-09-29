@@ -18,7 +18,7 @@
 import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.loggers import TaskLogger
-from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
+from bkuser.apps.sync.validators import DataSourceUserFieldUniqueValidator
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -67,12 +67,12 @@ class TestDataSourceUserExtrasUniqueValidator:
         )
 
     def test_validate_without_custom_fields(self, random_tenant, random_ds, user_lisi, user_wangwu, logger):
-        DataSourceUserExtrasUniqueValidator(random_ds, logger).validate()
+        DataSourceUserFieldUniqueValidator(random_ds, logger).validate()
 
     def test_validate_with_custom_fields(
         self, random_tenant, random_ds, user_lisi, user_wangwu, logger, tenant_user_custom_field
     ):
-        DataSourceUserExtrasUniqueValidator(random_ds, logger).validate()
+        DataSourceUserFieldUniqueValidator(random_ds, logger).validate()
 
     def test_validate_with_duplicate_unique(
         self, random_tenant, random_ds, user_lisi, user_wangwu, logger, tenant_user_custom_field
@@ -81,4 +81,4 @@ class TestDataSourceUserExtrasUniqueValidator:
         user_lisi.save()
 
         with pytest.raises(ValueError, match="duplicate unique values found"):
-            DataSourceUserExtrasUniqueValidator(random_ds, logger).validate()
+            DataSourceUserFieldUniqueValidator(random_ds, logger).validate()

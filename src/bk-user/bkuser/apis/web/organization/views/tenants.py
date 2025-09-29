@@ -30,7 +30,7 @@ from bkuser.apis.web.organization.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserBuiltinField, TenantUserCustomField
 
 
 class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
@@ -91,7 +91,9 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
         # 手机国际区号与手机号合并，不需要单独提供
         field_infos = [
             {"name": f.name, "display_name": f.display_name, "tips": ""}
-            for f in UserBuiltinField.objects.filter(required=True).exclude(name="phone_country_code")
+            for f in TenantUserBuiltinField.objects.filter(tenant_id=cur_tenant_id, required=True).exclude(
+                name="phone_country_code"
+            )
         ]
         for f in TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True):
             opts = ", ".join(opt["value"] for opt in f.options)

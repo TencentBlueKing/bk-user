@@ -138,6 +138,10 @@ class ErrorCodes:
     WEIXIN_TYPE_UNSUPPORTED = ErrorCode(_("不支持的微信类型"))
     WEIXIN_SIGN_INVALID = ErrorCode(_("微信签名无效"))
 
+    # 租户字段设置
+    TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED = ErrorCode(_("字段必填检查失败"))
+    TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED = ErrorCode(_("字段唯一性检查失败"))
+
 
 # 实例化一个全局对象
 error_codes = ErrorCodes()

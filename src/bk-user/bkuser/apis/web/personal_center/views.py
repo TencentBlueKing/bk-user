@@ -53,7 +53,7 @@ from bkuser.apis.web.personal_center.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUser, TenantUserBuiltinField, TenantUserCustomField
 from bkuser.biz.auditor import (
     TenantUserPasswordResetAuditor,
     TenantUserPersonalInfoUpdateAuditor,
@@ -498,7 +498,10 @@ class TenantUserFieldListApi(generics.ListAPIView):
                 f.options = [opt for opt in f.options if opt["id"] in selected]
 
         slz = TenantUserFieldOutputSLZ(
-            {"builtin_fields": UserBuiltinField.objects.all(), "custom_fields": custom_fields}
+            {
+                "builtin_fields": TenantUserBuiltinField.objects.filter(tenant_id=tenant_user.tenant_id),
+                "custom_fields": custom_fields,
+            }
         )
         return Response(slz.data)
 

@@ -30,7 +30,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOp
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -77,7 +77,7 @@ def _validate_field_mapping_with_tenant_user_fields(
 ) -> List[Dict[str, str]]:
     target_fields = {m.get("target_field") for m in field_mapping}
 
-    builtin_fields = UserBuiltinField.objects.all()
+    builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=tenant_id)
     tenant_user_custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
 
     allowed_target_fields = set(builtin_fields.values_list("name", flat=True)) | set(

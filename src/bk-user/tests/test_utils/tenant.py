@@ -23,11 +23,12 @@ from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
-from bkuser.apps.tenant.models import Tenant, TenantUserDisplayNameExpressionConfig
+from bkuser.apps.tenant.models import Tenant, TenantUserBuiltinField, TenantUserDisplayNameExpressionConfig
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
+from django.conf import settings
 
 # 默认租户 ID & 名称
 DEFAULT_TENANT = "default"
@@ -74,6 +75,90 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
             "data_source_id": data_source.id,
         },
     )
+
+    builtin_fields = [
+        {
+            "tenant": tenant,
+            "name": "username",
+            "display_name": "用户名",
+            "data_type": "string",
+            "required": True,
+            "unique": True,
+            "default": "",
+            "options": [],
+            "personal_center_visible": True,
+            "personal_center_editable": False,
+            "manager_editable": False,
+        },
+        {
+            "tenant": tenant,
+            "name": "full_name",
+            "display_name": "姓名",
+            "data_type": "string",
+            "required": True,
+            "unique": False,
+            "default": "",
+            "options": [],
+            "personal_center_visible": True,
+            "personal_center_editable": False,
+            "manager_editable": True,
+        },
+        {
+            "tenant": tenant,
+            "name": "email",
+            "display_name": "邮箱",
+            "data_type": "string",
+            "required": True,
+            "unique": False,
+            "default": "",
+            "options": [],
+            "personal_center_visible": True,
+            "personal_center_editable": True,
+            "manager_editable": True,
+        },
+        {
+            "tenant": tenant,
+            "name": "phone",
+            "display_name": "手机号",
+            "data_type": "string",
+            "required": False,
+            "unique": False,
+            "default": "",
+            "options": [],
+            "personal_center_visible": True,
+            "personal_center_editable": True,
+            "manager_editable": True,
+        },
+        {
+            "tenant": tenant,
+            "name": "phone_country_code",
+            "display_name": "手机国际区号",
+            "data_type": "string",
+            "required": False,
+            "unique": False,
+            "default": settings.DEFAULT_PHONE_COUNTRY_CODE,
+            "options": [],
+            "personal_center_visible": True,
+            "personal_center_editable": True,
+            "manager_editable": True,
+        },
+    ]
+    for field in builtin_fields:
+        TenantUserBuiltinField.objects.get_or_create(
+            tenant=field["tenant"],
+            name=field["name"],
+            defaults={
+                "display_name": field["display_name"],
+                "data_type": field["data_type"],
+                "required": field["required"],
+                "unique": field["unique"],
+                "default": field["default"],
+                "options": field["options"],
+                "personal_center_visible": field["personal_center_visible"],
+                "personal_center_editable": field["personal_center_editable"],
+                "manager_editable": field["manager_editable"],
+            },
+        )
 
     return tenant
 

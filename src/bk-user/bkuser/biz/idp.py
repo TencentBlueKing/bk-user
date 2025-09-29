@@ -24,7 +24,7 @@ from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.idp.data_models import DataSourceMatchRule
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 
 
 class AuthenticationMatcher:
@@ -33,7 +33,9 @@ class AuthenticationMatcher:
     def __init__(self, idp_id: str):
         self.idp = Idp.objects.get(id=idp_id)
         # 内置字段
-        self.builtin_field_data_type_map = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
+        self.builtin_field_data_type_map = dict(
+            TenantUserBuiltinField.objects.filter(tenant_id=self.idp.owner_tenant_id).values_list("name", "data_type")
+        )
         # Note: Local登录允许匹配ID
         self.builtin_field_data_type_map["id"] = UserFieldDataType.NUMBER
         # 自定义字段

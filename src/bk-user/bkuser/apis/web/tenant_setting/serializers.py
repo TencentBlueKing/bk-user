@@ -31,7 +31,7 @@ from bkuser.apps.tenant.constants import (
     UserFieldDataType,
 )
 from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField, TenantUserCustomFieldOption
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
 
@@ -81,6 +81,9 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     unique = serializers.BooleanField(help_text="是否唯一")
+    personal_center_visible = serializers.BooleanField(help_text="是否在个人中心可见")
+    personal_center_editable = serializers.BooleanField(help_text="是否在个人中心可编辑")
+    manager_editable = serializers.BooleanField(help_text="租户管理员是否可重复编辑")
     default = serializers.JSONField(help_text="默认值")
     options = serializers.JSONField(help_text="选项")
 
@@ -129,7 +132,9 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         ).exists():
             raise ValidationError(_("字段名称 {} 已存在").format(display_name))
 
-        if UserBuiltinField.objects.filter(display_name=display_name).exists():
+        if TenantUserBuiltinField.objects.filter(
+            tenant_id=self.context["tenant_id"], display_name=display_name
+        ).exists():
             raise ValidationError(_("字段名称 {} 与内置字段冲突").format(display_name))
 
         return display_name
@@ -138,7 +143,7 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
             raise ValidationError(_("英文标识 {} 已存在").format(name))
 
-        if UserBuiltinField.objects.filter(name=name).exists():
+        if TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
             raise ValidationError(_("英文标识 {} 与内置字段冲突").format(name))
 
         return name
@@ -206,7 +211,9 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         ):
             raise ValidationError(_("展示用名称 {} 已存在").format(display_name))
 
-        if UserBuiltinField.objects.filter(display_name=display_name).exists():
+        if TenantUserBuiltinField.objects.filter(
+            tenant_id=self.context["tenant_id"], display_name=display_name
+        ).exists():
             raise ValidationError(_("展示用名称 {} 与内置字段冲突").format(display_name))
 
         return display_name
@@ -238,6 +245,25 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             for opt in options:
                 if not opt["id"].isdigit():
                     raise ValidationError(_("枚举选项 ID 必须是数字，值 {} 不合法").format(opt["id"]))
+
+        return attrs
+
+
+class TenantUserBuiltinFieldUpdateInputSLZ(serializers.Serializer):
+    required = serializers.BooleanField(help_text="是否必填")
+    unique = serializers.BooleanField(help_text="是否唯一")
+    personal_center_visible = serializers.BooleanField(help_text="是否在个人中心可见")
+    personal_center_editable = serializers.BooleanField(help_text="是否在个人中心可编辑")
+    manager_editable = serializers.BooleanField(help_text="租户管理员是否可重复编辑")
+
+    def validate(self, attrs):
+        tenant_id = self.context["tenant_id"]
+        builtin_field_id = self.context["builtin_field_id"]
+
+        builtin_field = TenantUserBuiltinField.objects.get(tenant_id=tenant_id, id=builtin_field_id)
+
+        if builtin_field.name in ["username", "full_name"]:
+            raise ValidationError(_("内置字段 {} 配置不允许修改").format(builtin_field.name))
 
         return attrs
 
@@ -320,7 +346,9 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         # 检查内置字段中的唯一字段
         if (
             parsed_fields["builtin"]
-            and UserBuiltinField.objects.filter(name__in=parsed_fields["builtin"], unique=True).exists()
+            and TenantUserBuiltinField.objects.filter(
+                tenant_id=tenant_id, name__in=parsed_fields["builtin"], unique=True
+            ).exists()
         ):
             return True
 

@@ -21,10 +21,10 @@ from collections import defaultdict
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.loggers import TaskLogger
-from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 
 
-class DataSourceUserExtrasUniqueValidator:
+class DataSourceUserFieldUniqueValidator:
     """数据源用户转换器"""
 
     def __init__(self, data_source: DataSource, logger: TaskLogger):
@@ -33,15 +33,71 @@ class DataSourceUserExtrasUniqueValidator:
         self.has_duplicate_unique_value = False
 
     def validate(self):
+        # 验证内置字段的唯一性
+        self._validate_builtin_fields()
+
+        # 验证自定义字段的唯一性
+        self._validate_custom_fields()
+
+        if self.has_duplicate_unique_value:
+            raise ValueError("duplicate unique values found")
+
+    def _validate_builtin_fields(self):
+        """验证内置字段的唯一性"""
+        unique_builtin_fields = TenantUserBuiltinField.objects.filter(
+            tenant_id=self.data_source.owner_tenant_id, unique=True
+        )
+
+        if not unique_builtin_fields.exists():
+            self.logger.info(f"no unique builtin fields found in tenant {self.data_source.owner_tenant_id}")
+            return
+
+        # 获取需要验证的字段名列表
+        unique_field_names = [f.name for f in unique_builtin_fields]
+
+        # 使用 values 返回字典，便于按字段名访问
+        user_builtin_map = DataSourceUser.objects.filter(data_source=self.data_source).values(*unique_field_names)
+
+        for field_config in unique_builtin_fields:
+            self.logger.info(f"checking unique builtin field {field_config.display_name}({field_config.name})...")
+
+            # 收集该字段的所有非空值
+            counter = defaultdict(list)
+            for user_data in user_builtin_map:
+                username = user_data["username"]
+                field_value = user_data.get(field_config.name)
+
+                # 跳过空值
+                if field_value in ["", None]:
+                    continue
+
+                counter[field_value].append(username)
+
+            # 检查重复值
+            for val, usernames in counter.items():
+                if len(usernames) == 1:
+                    continue
+
+                self.has_duplicate_unique_value = True
+                self.logger.error(
+                    f"builtin field {field_config.display_name}({field_config.name}) \
+                    has duplicate unique value {val}, usernames: {usernames}"
+                )
+
+    def _validate_custom_fields(self):
+        """验证自定义字段的唯一性"""
         unique_custom_fields = TenantUserCustomField.objects.filter(
             tenant_id=self.data_source.owner_tenant_id, unique=True
         )
+
         if not unique_custom_fields.exists():
-            self.logger.info(f"no unique custom fields found in tenant {self.data_source.owner_tenant_id}, skip...")
+            self.logger.info(f"no unique custom fields found in tenant {self.data_source.owner_tenant_id}")
+            return
 
         user_extras_map = dict(
             DataSourceUser.objects.filter(data_source=self.data_source).values_list("username", "extras")
         )
+
         for f in unique_custom_fields:
             self.logger.info(f"checking unique custom field {f.display_name}({f.name})...")
             counter = defaultdict(list)
@@ -58,6 +114,3 @@ class DataSourceUserExtrasUniqueValidator:
                 self.logger.error(
                     f"custom field {f.display_name}({f.name}) has duplicate unique value {val}, usernames: {usernames}"
                 )
-
-        if self.has_duplicate_unique_value:
-            raise ValueError("duplicate unique values found")

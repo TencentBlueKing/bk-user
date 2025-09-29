@@ -17,6 +17,7 @@
 
 import logging
 import operator
+from collections import defaultdict
 from functools import reduce
 from typing import Dict, List, Optional
 
@@ -42,10 +43,10 @@ from bkuser.apps.tenant.models import (
     Tenant,
     TenantManager,
     TenantUser,
+    TenantUserBuiltinField,
     TenantUserCustomField,
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
-    UserBuiltinField,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.common.constants import PERMANENT_TIME
@@ -280,6 +281,81 @@ class TenantCreator:
         return idp
 
     @staticmethod
+    def create_builtin_fields(tenant_id: str):
+        """创建内置字段"""
+
+        builtin_fields = [
+            TenantUserBuiltinField(
+                tenant_id=tenant_id,
+                name="username",
+                display_name="用户名",
+                display_name_zh_cn="用户名",
+                display_name_en_us="Username",
+                data_type="string",
+                required=True,
+                unique=True,
+                personal_center_visible=True,
+                personal_center_editable=False,
+                manager_editable=False,
+            ),
+            TenantUserBuiltinField(
+                tenant_id=tenant_id,
+                name="full_name",
+                display_name="姓名",
+                display_name_zh_cn="姓名",
+                display_name_en_us="Full Name",
+                data_type="string",
+                required=True,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=False,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant_id=tenant_id,
+                name="email",
+                display_name="邮箱",
+                display_name_zh_cn="邮箱",
+                display_name_en_us="Email",
+                data_type="string",
+                required=True,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant_id=tenant_id,
+                name="phone",
+                display_name="手机号",
+                display_name_zh_cn="手机号",
+                display_name_en_us="Phone Number",
+                data_type="string",
+                required=False,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant_id=tenant_id,
+                name="phone_country_code",
+                display_name="手机国际区号",
+                display_name_zh_cn="手机国际区号",
+                display_name_en_us="Phone Country Code",
+                data_type="string",
+                required=False,
+                unique=False,
+                default=settings.DEFAULT_PHONE_COUNTRY_CODE,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+            ),
+        ]
+        TenantUserBuiltinField.objects.bulk_create(builtin_fields)
+        return builtin_fields
+
+    @staticmethod
     def create(
         tenant_info: TenantInfo,
         builtin_manager: BuiltinManagerInfo,
@@ -330,6 +406,9 @@ class TenantCreator:
 
             # 阶段 7：创建内置认证源
             TenantCreator.create_builtin_idp(tenant.id, data_source.id)
+
+            # 阶段 8：创建内置字段
+            TenantCreator.create_builtin_fields(tenant.id)
 
         return tenant
 
@@ -410,7 +489,7 @@ class TenantUserDisplayNameHandler:
         fields = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.findall(expression)
 
         # TODO: 后续需要过滤敏感字段，敏感字段不支持展示
-        builtin_field_names = {field.name for field in UserBuiltinField.objects.all()}
+        builtin_field_names = {field.name for field in TenantUserBuiltinField.objects.filter(tenant_id=tenant_id)}
 
         custom_field_names = {field.name for field in TenantUserCustomField.objects.filter(tenant_id=tenant_id)}
 
@@ -544,3 +623,75 @@ class TenantUserDisplayNameHandler:
                 email="zhangsan@m.com",
             ),
         )
+
+
+class TenantUserBuiltinFieldHandler:
+    @staticmethod
+    def get_tenant_builtin_field_configs(tenant_id: str) -> Dict[str, Dict[str, bool]]:
+        """获取租户的内置字段配置"""
+        return {
+            config.name: {
+                "required": config.required,
+                "unique": config.unique,
+                "personal_center_visible": config.personal_center_visible,
+                "personal_center_editable": config.personal_center_editable,
+                "manager_editable": config.manager_editable,
+            }
+            for config in TenantUserBuiltinField.objects.filter(tenant_id=tenant_id)
+        }
+
+    @staticmethod
+    def get_users_with_missing_field_value(tenant_id: str, field_name: str) -> List[str]:
+        """
+        获取租户中缺少必填内置字段值的用户名列表
+        """
+        if field_name not in ["email", "phone"]:
+            return []
+
+        real_data_source = DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL).first()
+        if not real_data_source:
+            return []
+
+        # 构建查询条件：自定义字段和数据源字段都为空
+        filter_conditions = {
+            "data_source": real_data_source,
+            "tenant_id": tenant_id,
+            f"custom_{field_name}": "",
+            f"data_source_user__{field_name}": "",
+        }
+
+        return list(
+            TenantUser.objects.filter(**filter_conditions).values_list("data_source_user__username", flat=True)
+        )
+
+    @staticmethod
+    def get_users_with_duplicate_field_value(tenant_id: str, field_name: str) -> List[str]:
+        """
+        获取租户中存在重复指定内置字段值的用户名列表
+        """
+        # 目前只支持 email 和 phone 字段
+        if field_name not in ["email", "phone"]:
+            return []
+
+        real_data_source = DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL).first()
+        if not real_data_source:
+            return []
+
+        # 一次性查询所有用户的指定字段数据（排除空值）
+        users_data = (
+            DataSourceUser.objects.filter(data_source=real_data_source)
+            .exclude(**{f"{field_name}__in": ["", None]})
+            .values_list("username", field_name)
+        )
+
+        field_counter = defaultdict(list)
+        for username, field_value in users_data:
+            field_counter[field_value].append(username)
+
+        # 返回所有有重复值的用户名
+        duplicate_users = []
+        for usernames in field_counter.values():
+            if len(usernames) > 1:
+                duplicate_users.extend(usernames)
+
+        return duplicate_users

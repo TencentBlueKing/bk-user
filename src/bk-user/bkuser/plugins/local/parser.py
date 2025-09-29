@@ -78,20 +78,14 @@ class LocalDataSourceDataParser:
     # 有效字段列长度（内建字段 + 自定义字段）
     valid_col_length = 0
 
-    # 必填字段列名，自定义必填字段不在解析器中校验
-    required_field_names = [
-        "username",
-        "full_name",
-        "email",
-    ]
-    # TODO: 后续支持根据字段设置的必填情况，调整必填字段
-
     def __init__(self, logger: PluginLogger, workbook: Workbook):
         self.logger = logger
         self.workbook = workbook
         self.departments: List[RawDataSourceDepartment] = []
         self.users: List[RawDataSourceUser] = []
         self.is_parsed = False
+        # TODO：后续通过 context 中传入的 tenant_id 查询该租户的必填字段
+        self.required_field_names = ["username", "full_name", "email"]
 
     def parse(self):
         """预解析部门 & 用户数据"""

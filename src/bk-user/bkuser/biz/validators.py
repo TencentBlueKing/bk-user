@@ -17,7 +17,7 @@
 
 import logging
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.db.models import QuerySet
@@ -31,7 +31,7 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX, UserFieldDataType
-from bkuser.apps.tenant.models import Tenant, TenantUserCustomField
+from bkuser.apps.tenant.models import Tenant, TenantUserBuiltinField, TenantUserCustomField
 from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -173,7 +173,42 @@ def validate_type_and_convert_field_data(field: TenantUserCustomField, value: An
     raise ValidationError(_("字段类型 {} 不被支持").format(field.data_type))
 
 
-def _validate_unique_and_required(
+def _validate_builtin_field_unique_and_required(
+    field: TenantUserBuiltinField, data_source_id: int, data_source_user_id: int | None, value: Any
+) -> Any:
+    """对内置字段的值进行唯一性检查 & 必填性检查"""
+    if field.required and value in ["", None]:
+        raise ValidationError(_("字段 {} 必须填值").format(field.display_name))
+
+    if field.unique:
+        # 唯一性检查，由于添加 / 修改用户一般不会有并发操作，因此这里没有对并发的情况进行预防
+        queryset = DataSourceUser.objects.filter(data_source_id=data_source_id, **{field.name: value})
+        if data_source_user_id:
+            queryset = queryset.exclude(id=data_source_user_id)
+
+        if queryset.exists():
+            raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
+
+    return value
+
+
+def validate_user_builtins(
+    builtins: Dict[str, Any],
+    builtin_fields: List[TenantUserBuiltinField],
+    data_source_id: int,
+    data_source_user_id: int | None = None,
+) -> Dict[str, Any]:
+    """检验内置字段的值是否合法"""
+    for field in builtin_fields:
+        value = _validate_builtin_field_unique_and_required(
+            field, data_source_id, data_source_user_id, builtins[field.name]
+        )
+        builtins[field.name] = value
+
+    return builtins
+
+
+def _validate_custom_field_unique_and_required(
     field: TenantUserCustomField, data_source_id: int, data_source_user_id: int | None, value: Any
 ) -> Any:
     """对自定义字段的值进行唯一性检查 & 必填性检查"""
@@ -209,7 +244,7 @@ def validate_user_extras(
 
     for field in custom_fields:
         value = validate_type_and_convert_field_data(field, extras[field.name])
-        value = _validate_unique_and_required(field, data_source_id, data_source_user_id, value)
+        value = _validate_custom_field_unique_and_required(field, data_source_id, data_source_user_id, value)
         extras[field.name] = value
 
     return extras

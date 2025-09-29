@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
@@ -22,6 +23,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
+    TenantUserBuiltinFieldUpdateInputSLZ,
     TenantUserCustomFieldCreateInputSLZ,
     TenantUserCustomFieldUpdateInputSLZ,
     TenantUserDisplayNameExpressionConfigPreviewInputSLZ,
@@ -43,17 +45,18 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import (
     TenantUser,
+    TenantUserBuiltinField,
     TenantUserCustomField,
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
-    UserBuiltinField,
 )
 from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaboration_strategy_field_mapping
 from bkuser.biz.auditor import (
     TenantUserDisplayNameExpressionConfigUpdateAuditor,
     TenantUserValidityPeriodConfigUpdateAuditor,
 )
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserBuiltinFieldHandler, TenantUserDisplayNameHandler
+from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -72,7 +75,7 @@ class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         slz = TenantUserFieldOutputSLZ(
             instance={
-                "builtin_fields": UserBuiltinField.objects.all(),
+                "builtin_fields": TenantUserBuiltinField.objects.filter(tenant_id=tenant_id),
                 "custom_fields": TenantUserCustomField.objects.filter(tenant_id=tenant_id),
             }
         )
@@ -298,3 +301,86 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         ]
 
         return Response(TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(user_display_names, many=True).data)
+
+
+class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantUserBuiltinField.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["tenant-setting"],
+        operation_description="更新当前租户的内置字段配置",
+        request_body=TenantUserBuiltinFieldUpdateInputSLZ(),
+        responses={
+            status.HTTP_204_NO_CONTENT: "",
+        },
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_id = self.get_current_tenant_id()
+        slz = TenantUserBuiltinFieldUpdateInputSLZ(
+            data=request.data, context={"tenant_id": tenant_id, "builtin_field_id": kwargs["id"]}
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        required = data["required"]
+        unique = data["unique"]
+        builtin_field = self.get_object()
+
+        # 如果要将字段设为必填，需要检查现有用户是否都有该字段的值
+        if required:
+            missing_users = TenantUserBuiltinFieldHandler.get_users_with_missing_field_value(
+                tenant_id, builtin_field.name
+            )
+            if missing_users:
+                user_list = ", ".join(missing_users[:5])  # 最多显示5个用户名
+                suffix = f" 等 {len(missing_users)} 个用户" if len(missing_users) > 5 else ""  # noqa: PLR2004
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(
+                    f"无法将字段 '{builtin_field.name}' 设为必填：\
+                    用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
+                )
+
+        # 如果要将 email 或 phone 设为非必填，检查另一个字段是否为必填
+        elif builtin_field.name in ["email", "phone"]:
+            target_field_name = "phone" if builtin_field.name == "email" else "email"
+            target_field = TenantUserBuiltinField.objects.filter(tenant_id=tenant_id, name=target_field_name).first()
+
+            if not target_field.required:
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(
+                    f"无法将字段 '{builtin_field.name}' 设为非必填：另一个字段 '{target_field_name}' 已为非必填。"
+                )
+
+        # 如果要将字段设为唯一，需要检查现有用户该字段是否存在重复值
+        if unique:
+            duplicate_users = TenantUserBuiltinFieldHandler.get_users_with_duplicate_field_value(
+                tenant_id, builtin_field.name
+            )
+            if duplicate_users:
+                user_list = ", ".join(duplicate_users[:5])  # 最多显示5个用户名
+                suffix = f" 等 {len(duplicate_users)} 个用户" if len(duplicate_users) > 5 else ""  # noqa: PLR2004
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(
+                    f"无法将字段 '{builtin_field.name}' 设为唯一：\
+                    用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
+                )
+
+        builtin_field.required = required
+        builtin_field.unique = unique
+        builtin_field.personal_center_visible = data["personal_center_visible"]
+        builtin_field.personal_center_editable = data["personal_center_editable"]
+        builtin_field.manager_editable = data["manager_editable"]
+        builtin_field.updater = request.user.username
+        builtin_field.save(
+            update_fields=[
+                "required",
+                "unique",
+                "personal_center_visible",
+                "personal_center_editable",
+                "manager_editable",
+                "updater",
+            ]
+        )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

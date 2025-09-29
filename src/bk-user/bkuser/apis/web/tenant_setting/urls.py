@@ -20,6 +20,7 @@ from . import views
 
 urlpatterns = [
     path("fields/", views.TenantUserFieldListApi.as_view(), name="tenant_setting_fields.list"),
+    path("builtin-fields/<int:id>/", views.TenantBuiltinFieldUpdateApi.as_view(), name="tenant_builtin_fields.update"),
     path("custom-fields/", views.TenantUserCustomFieldCreateApi.as_view(), name="tenant_setting_custom_fields.create"),
     path(
         "custom-fields/<int:id>/",

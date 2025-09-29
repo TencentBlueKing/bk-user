@@ -32,7 +32,7 @@ from bkuser.apps.sync.syncers import (
     DataSourceUserLeaderRelationSyncer,
     DataSourceUserSyncer,
 )
-from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
+from bkuser.apps.sync.validators import DataSourceUserFieldUniqueValidator
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_plugin_cls
@@ -133,8 +133,8 @@ class DataSourceSyncTaskRunner:
         ctx.logger.info("succeed to sync users and their leader & dept relations from data source plugin")
 
     def _validate_unique_fields(self, ctx: DataSourceSyncTaskContext):
-        """对有唯一性要求的自定义字段的校验"""
-        DataSourceUserExtrasUniqueValidator(self.data_source, ctx.logger).validate()
+        """对有唯一性要求的内置字段和自定义字段的校验"""
+        DataSourceUserFieldUniqueValidator(self.data_source, ctx.logger).validate()
 
     def _send_signal(self, ctx: DataSourceSyncTaskContext):
         """若符合准出条件，则发送数据源同步完成信号，触发后续流程

@@ -29,7 +29,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -41,6 +41,7 @@ class DataSourceUserConverter:
     def __init__(self, data_source: DataSource, logger: TaskLogger):
         self.data_source = data_source
         self.logger = logger
+        self.builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
         self.field_mapping = self._get_field_mapping()
 
@@ -48,6 +49,16 @@ class DataSourceUserConverter:
         # TODO (su) 支持复杂字段映射类型，如表达式，目前都当作直接映射处理（目前只支持直接映射）
         mapping = {m.target_field: m.source_field for m in self.field_mapping}
         props = user.properties
+        builtin_field_configs = {
+            f.name: {
+                "required": f.required,
+                "unique": f.unique,
+                "personal_center_visible": f.personal_center_visible,
+                "personal_center_editable": f.personal_center_editable,
+                "manager_editable": f.manager_editable,
+            }
+            for f in self.builtin_fields
+        }
 
         username = props.get(mapping["username"])
         # 1. 用户名是必须提供的，而且需要满足正则校验规则
@@ -63,14 +74,18 @@ class DataSourceUserConverter:
             raise ValueError(f"username {username}, full_name is required")
 
         email = props.get(mapping.get("email")) or ""  # type: ignore
-        # 3. 如果提供了邮箱，则必须满足正则校验规则
+        # 3. 根据租户配置检查邮箱是否必填，如果提供了邮箱，则必须满足正则校验规则
+        if builtin_field_configs["email"]["required"] and not email:
+            raise ValueError(f"username {username}, email is required")
         if email and not re.fullmatch(EMAIL_REGEX, email):
             raise ValueError(
                 f"username {username}, email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}"
             )
 
         phone = props.get(mapping.get("phone")) or ""  # type: ignore
-        # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
+        # 4. 根据租户配置检查手机号是否必填，如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
+        if builtin_field_configs["phone"]["required"] and not phone:
+            raise ValueError(f"username {username}, phone is required")
         if phone:
             country_code = (
                 props.get(mapping.get("phone_country_code"))  # type: ignore
@@ -131,7 +146,10 @@ class DataSourceUserConverter:
                 mapping_operation=FieldMappingOperation.DIRECT,
                 target_field=f.name,
             )
-            for fields in [UserBuiltinField.objects.all(), self.custom_fields]
+            for fields in [
+                TenantUserBuiltinField.objects.filter(tenant_id=self.data_source.owner_tenant_id),
+                self.custom_fields,
+            ]
             for f in fields
         ]
 

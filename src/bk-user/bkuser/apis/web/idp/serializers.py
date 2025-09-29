@@ -27,7 +27,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserBuiltinField, TenantUserCustomField
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -101,7 +101,7 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
             raise ValidationError(_("当前租户下不存在 ID 为 {} 的实名数据源").format(attrs["data_source_id"]))
 
         # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
-        builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+        builtin_fields = set(TenantUserBuiltinField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
         custom_fields = set(TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
         allowed_target_fields = builtin_fields | custom_fields
 
