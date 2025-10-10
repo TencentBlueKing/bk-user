@@ -51,8 +51,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     OPEN_WEB_API_THROTTLE = "owat"
     # 微信公众号二维码 临时存储
     MP_QRCODE = "mq"
-    # 部门路径缓存
-    DEPT_PATH = "dp"
+    # 部门祖先
+    DEPT_ANCESTOR = "da"
 
 
 def _default_key_function(*args, **kwargs):

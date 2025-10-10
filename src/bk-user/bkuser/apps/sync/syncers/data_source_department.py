@@ -23,6 +23,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from bkuser.apps.data_source.managers import DepartmentAncestorManager
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -31,7 +32,6 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.models import RawDataSourceDepartment
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
 
@@ -239,22 +239,23 @@ class DataSourceDepartmentRelationSyncer:
         self.ctx.logger.info(f"re-create {len(dept_code_rel_map)} department relations")
         self.ctx.logger.info(f"data source has {len(mptt_tree_ids)} department tree(s) currently")
 
-        # 同步完成后，清理数据源内原有部门路径缓存
-        self._clear_department_path_cache()
+        # 同步完成后，清理数据源内原有部门祖先 ID 缓存
+        self._clear_department_ancestor_cache()
 
-    def _clear_department_path_cache(self):
-        """清理数据源内原有部门路径缓存"""
-        cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_PATH)
-        # 获取该数据源的所有部门ID
-        dept_ids = DataSourceDepartmentRelation.objects.filter(data_source_id=self.data_source.id).values_list(
-            "department_id", flat=True
+    def _clear_department_ancestor_cache(self):
+        """清理数据源内原有部门祖先 ID 缓存"""
+        # 获取该数据源的所有部门 ID
+        dept_ids = list(
+            DataSourceDepartmentRelation.objects.filter(data_source_id=self.data_source.id).values_list(
+                "department_id", flat=True
+            )
         )
 
-        # 批量删除相关缓存键
-        cache_keys = [f"dept_path:{dept_id}" for dept_id in dept_ids]
-        cache.delete_many(cache_keys)
+        # 批量删除部门祖先 ID 缓存
+        dept_ancestor_manager = DepartmentAncestorManager()
+        dept_ancestor_manager.batch_delete_ancestor_ids(dept_ids)
 
-        self.ctx.logger.info(f"cleared department path cache for data source {self.data_source.id}")
+        self.ctx.logger.info(f"cleared department ancestor ids cache for data source {self.data_source.id}")
 
     @staticmethod
     def _generate_tree_id(data_source: DataSource) -> int:

@@ -311,7 +311,7 @@ class TenantDepartmentUpdateDestroyApi(
             # 更新部门 code 值
             TenantDepartmentHandler.update_department_code(tenant_dept.data_source_department)
 
-        TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
+        TenantOrgPathHandler.clear_department_ancestor_cache([tenant_dept.data_source_department_id])
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_dept)
@@ -356,6 +356,8 @@ class TenantDepartmentUpdateDestroyApi(
             # 涉及到的部门关联边都要删除，然后再重建
             DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
             DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+
+        TenantOrgPathHandler.clear_department_ancestor_cache(data_source_dept_ids)
 
         # 【审计】将审计记录保存至数据库
         auditor.record_delete()
@@ -511,7 +513,7 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             # 更新部门 code 值
             TenantDepartmentHandler.update_department_code(data_source_dept)
 
-        TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
+        TenantOrgPathHandler.clear_department_ancestor_cache([tenant_dept.data_source_department_id])
 
         # 【审计】记录变更后的数据
         auditor.record_update_parent_department(tenant_dept)
