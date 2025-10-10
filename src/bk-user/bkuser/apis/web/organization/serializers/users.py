@@ -55,7 +55,6 @@ from bkuser.biz.validators import (
 )
 from bkuser.common.constants import ALLOWED_DATETIME_MAX_OFFSET, PERMANENT_TIME, TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
-from bkuser.common.validators import validate_phone_with_country_code
 
 
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
@@ -202,9 +201,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
         builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
 
         builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
-        builtins = validate_user_builtins(
-            builtin_attrs, builtin_fields, self.context["data_source_id"], self.context["data_source_user_id"]
-        )
+        builtins = validate_user_builtins(builtin_attrs, builtin_fields, self.context["data_source_id"])
 
         # 将 builtins 合并到 attrs 中
         attrs.update(builtins)
@@ -383,7 +380,7 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
             builtin_attrs, builtin_fields, self.context["data_source_id"], self.context["data_source_user_id"]
         )
 
-        # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
+        # 更新模式下，一些内置字段是不允许修改的（前端也需要禁用）
         # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
         exists_builtins = model_to_dict(DataSourceUser.objects.get(id=self.context["data_source_user_id"]))
         for f in builtin_fields.filter(manager_editable=False):
@@ -455,13 +452,6 @@ class TenantUserInfoSLZ(serializers.Serializer):
         builtins = validate_user_builtins(
             builtin_attrs, self.context["builtin_fields"], self.context["data_source_id"]
         )
-
-        # 校验手机号是否合法
-        if attrs.get("phone") and attrs.get("phone_country_code"):
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
 
         # 将 builtins 合并到 attrs 中
         attrs.update(builtins)

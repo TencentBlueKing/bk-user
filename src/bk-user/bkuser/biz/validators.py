@@ -34,6 +34,7 @@ from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX, Us
 from bkuser.apps.tenant.models import Tenant, TenantUserBuiltinField, TenantUserCustomField
 from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
+from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 logger = logging.getLogger(__name__)
@@ -204,6 +205,13 @@ def validate_user_builtins(
             field, data_source_id, data_source_user_id, builtins[field.name]
         )
         builtins[field.name] = value
+
+    # 校验手机号是否合法
+    if builtins.get("phone") and builtins.get("phone_country_code"):
+        try:
+            validate_phone_with_country_code(phone=builtins["phone"], country_code=builtins["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
 
     return builtins
 

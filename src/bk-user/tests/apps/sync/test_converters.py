@@ -190,7 +190,13 @@ class TestDataSourceUserConverter:
     def test_convert_with_invalid_phone_number(self, bare_local_data_source, logger):
         raw_user = RawDataSourceUser(
             code="test",
-            properties={"username": "test", "full_name": "test", "phone": "1", "phone_country_code": "44"},
+            properties={
+                "username": "test",
+                "full_name": "test",
+                "email": "test@example.com",
+                "phone": "1",
+                "phone_country_code": "44",
+            },
             leaders=[],
             departments=[],
         )

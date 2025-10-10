@@ -338,10 +338,11 @@ class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView
             if missing_users:
                 user_list = ", ".join(missing_users[:5])  # 最多显示5个用户名
                 suffix = f" 等 {len(missing_users)} 个用户" if len(missing_users) > 5 else ""  # noqa: PLR2004
-                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(
-                    f"无法将字段 '{builtin_field.name}' 设为必填：\
-                    用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
+                error_msg = (
+                    f"无法将字段 '{builtin_field.name}' 设为必填："
+                    f"用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
                 )
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(error_msg)
 
         # 如果要将 email 或 phone 设为非必填，检查另一个字段是否为必填
         elif builtin_field.name in ["email", "phone"]:
@@ -361,10 +362,11 @@ class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView
             if duplicate_users:
                 user_list = ", ".join(duplicate_users[:5])  # 最多显示5个用户名
                 suffix = f" 等 {len(duplicate_users)} 个用户" if len(duplicate_users) > 5 else ""  # noqa: PLR2004
-                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(
-                    f"无法将字段 '{builtin_field.name}' 设为唯一：\
-                    用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
+                error_msg = (
+                    f"无法将字段 '{builtin_field.name}' 设为唯一："
+                    f"用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
                 )
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(error_msg)
 
         builtin_field.required = required
         builtin_field.unique = unique
