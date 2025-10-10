@@ -53,10 +53,10 @@ from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantDepartmentIDRecord
 from bkuser.apps.tenant.utils import TenantDeptIDGenerator
 from bkuser.biz.auditor import TenantDepartmentAuditor
-from bkuser.biz.organization import TenantOrgPathHandler
+from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.utils.uuid import generate_uuid
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -186,8 +186,11 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 则将部门关联到父部门（根部门也需要关联到 None）
+        # 设置默认值（若父部门不存在，则所创建的部门为根部门）
         parent_dept_relation = None
+        data_source_dept_org_path = data["name"]
+
+        # 若父部门存在，则更新父部门关系与组织路径变量
         if parent_tenant_dept_id := data["parent_department_id"]:
             # 从租户部门 ID 找数据源部门
             parent_data_source_dept = TenantDepartment.objects.get(
@@ -196,10 +199,14 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(
                 department=parent_data_source_dept, data_source=data_source
             )
+            parent_dept_org_path = TenantOrgPathHandler.get_dept_organization_path_map(
+                [parent_data_source_dept.id], include_self=True
+            )
+            data_source_dept_org_path = parent_dept_org_path[parent_data_source_dept.id] + "/" + data["name"]
 
         with transaction.atomic():
             data_source_dept = DataSourceDepartment.objects.create(
-                data_source=data_source, code=generate_uuid(), name=data["name"]
+                data_source=data_source, code=gen_dept_code(data_source_dept_org_path), name=data["name"]
             )
             # 将新的数据源部门和父部门关联起来
             DataSourceDepartmentRelation.objects.create(
@@ -298,8 +305,11 @@ class TenantDepartmentUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_dept.data_source_department.name = data["name"]
-        tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+        with transaction.atomic():
+            tenant_dept.data_source_department.name = data["name"]
+            tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+            # 更新部门 code 值
+            TenantDepartmentHandler.update_department_code(tenant_dept.data_source_department)
 
         TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
 
@@ -496,7 +506,10 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
                 department=parent_data_source_dept, data_source=tenant_dept.data_source
             )
 
-        cur_dept_relation.move_to(parent_dept_relation)
+        with transaction.atomic():
+            cur_dept_relation.move_to(parent_dept_relation)
+            # 更新部门 code 值
+            TenantDepartmentHandler.update_department_code(data_source_dept)
 
         TenantOrgPathHandler.clear_department_path_cache([tenant_dept.data_source_department_id])
 

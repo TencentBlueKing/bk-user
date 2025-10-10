@@ -20,6 +20,7 @@ from unittest import mock
 import pytest
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apps.tenant.models import TenantCommonVariable
+from django.test.utils import override_settings
 from rest_framework.test import APIClient
 
 from tests.test_utils.tenant import sync_users_depts_to_tenant
@@ -27,13 +28,14 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 @pytest.fixture
 def api_client(random_tenant):
-    client = APIClient()
-    client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-    with (
-        mock.patch.object(OpenApiCommonMixin, "authentication_classes", []),
-        mock.patch.object(OpenApiCommonMixin, "permission_classes", []),
-    ):
-        yield client
+    with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+        client = APIClient()
+        client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
+        with (
+            mock.patch.object(OpenApiCommonMixin, "authentication_classes", []),
+            mock.patch.object(OpenApiCommonMixin, "permission_classes", []),
+        ):
+            yield client
 
 
 @pytest.fixture

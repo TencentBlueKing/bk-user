@@ -23,16 +23,18 @@ from django.db import transaction
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 class DataSourceUserHandler:
@@ -178,6 +180,42 @@ class TenantDepartmentHandler:
 
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
+    @staticmethod
+    def update_department_code(data_source_department: DataSourceDepartment):
+        """
+        更新数据源部门 code, 必须在事务内调用该方法
+        """
+
+        org_path_map = TenantOrgPathHandler.get_dept_descendant_org_path_map(data_source_department.id)
+
+        # 构建数据源部门 ID 到新 code 的映射
+        dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in org_path_map}
+
+        # 批量更新数据源部门 code
+        data_source_departments = DataSourceDepartment.objects.filter(id__in=org_path_map.keys())
+        for dept in data_source_departments:
+            dept.code = dept_code_map[dept.id]
+            dept.updated_at = timezone.now()
+        DataSourceDepartment.objects.bulk_update(
+            data_source_departments, fields=["code", "updated_at"], batch_size=250
+        )
+
+        # 获取所有数据源部门对应的租户部门
+        tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
+
+        # 构建租户部门 ID 到新 code 的映射
+        tenant_dept_code_map = {
+            tenant_dept.id: dept_code_map[tenant_dept.data_source_department_id] for tenant_dept in tenant_departments
+        }
+
+        # 需要批量更新租户部门 ID 记录中的 code
+        # 否则会导致部门修改名称后 code 不一致的情况，引起租户部门同步失败
+        dept_id_records = TenantDepartmentIDRecord.objects.filter(tenant_department_id__in=tenant_dept_code_map.keys())
+        for dept_id_record in dept_id_records:
+            dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
+            dept_id_record.updated_at = timezone.now()
+        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, fields=["code", "updated_at"], batch_size=250)
+
 
 class TenantOrgPathHandler:
     cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.DEPT_PATH)
@@ -255,6 +293,33 @@ class TenantOrgPathHandler:
                 # 3.缓存路径信息
                 cache_key = f"dept_path:{rel.department_id}"
                 TenantOrgPathHandler.cache.set(cache_key, path, timeout=TenantOrgPathHandler.cache_timeout)
+
+        return org_path_map
+
+    @staticmethod
+    def get_dept_descendant_org_path_map(department_id: int) -> Dict[int, str]:
+        """
+        获取指定部门以及子孙部门的组织路径信息
+        """
+        rel = DataSourceDepartmentRelation.objects.get(department_id=department_id)
+
+        # 查询祖先（包括自身）
+        ancestor_names = list(rel.get_ancestors(include_self=True).values_list("department__name", flat=True))
+        org_path_map = {department_id: "/".join(ancestor_names)}
+
+        # Q: 查询子孙时为什么要按照层级排序
+        # A: 按层级排序后，父节点一定是比子节点先被遍历，
+        # 这样在计算 org_path 时，可直接使用父节点的 org_path + 自身 name 即可
+        descendants = (
+            rel.get_descendants()
+            .select_related("department")
+            .order_by("level")
+            .values_list("department_id", "parent_id", "department__name")
+        )
+
+        # 按层级顺序遍历每个子孙部门
+        for dept_id, parent_id, dept_name in descendants:
+            org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
 
         return org_path_map
 
