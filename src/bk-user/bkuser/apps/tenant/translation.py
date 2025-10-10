@@ -17,9 +17,14 @@
 
 from modeltranslation.translator import TranslationOptions, register
 
-from .models import UserBuiltinField
+from .models import TenantUserBuiltinField, UserBuiltinField
 
 
 @register(UserBuiltinField)
 class UserBuiltinFieldTranslationOptions(TranslationOptions):
+    fields = ("display_name",)
+
+
+@register(TenantUserBuiltinField)
+class TenantUserBuiltinFieldTranslationOptions(TranslationOptions):
     fields = ("display_name",)

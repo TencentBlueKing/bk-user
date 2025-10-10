@@ -28,93 +28,81 @@ def forwards_func(apps, schema_editor):
     # 获取所有现有租户
     tenants = Tenant.objects.all()
 
+    all_builtin_fields = []
+
     for tenant in tenants:
         # 为每个租户创建默认的内置字段配置
-        builtin_fields = [
-            {
-                "tenant": tenant,
-                "name": "username",
-                "display_name": "用户名",
-                "data_type": "string",
-                "required": True,
-                "unique": True,
-                "default": "",
-                "options": [],
-                "personal_center_visible": True,
-                "personal_center_editable": False,
-                "manager_editable": False,
-            },
-            {
-                "tenant": tenant,
-                "name": "full_name",
-                "display_name": "姓名",
-                "data_type": "string",
-                "required": True,
-                "unique": False,
-                "default": "",
-                "options": [],
-                "personal_center_visible": True,
-                "personal_center_editable": False,
-                "manager_editable": True,
-            },
-            {
-                "tenant": tenant,
-                "name": "email",
-                "display_name": "邮箱",
-                "data_type": "string",
-                "required": True,
-                "unique": False,
-                "default": "",
-                "options": [],
-                "personal_center_visible": True,
-                "personal_center_editable": True,
-                "manager_editable": True,
-            },
-            {
-                "tenant": tenant,
-                "name": "phone",
-                "display_name": "手机号",
-                "data_type": "string",
-                "required": False,
-                "unique": False,
-                "default": "",
-                "options": [],
-                "personal_center_visible": True,
-                "personal_center_editable": True,
-                "manager_editable": True,
-            },
-            {
-                "tenant": tenant,
-                "name": "phone_country_code",
-                "display_name": "手机国际区号",
-                "data_type": "string",
-                "required": False,
-                "unique": False,
-                "default": settings.DEFAULT_PHONE_COUNTRY_CODE,
-                "options": [],
-                "personal_center_visible": True,
-                "personal_center_editable": True,
-                "manager_editable": True,
-            },
-        ]
+        all_builtin_fields.extend([
+            TenantUserBuiltinField(
+                tenant=tenant,
+                name="username",
+                display_name="用户名",
+                display_name_zh_cn="用户名",
+                display_name_en_us="Username",
+                data_type="string",
+                required=True,
+                unique=True,
+                personal_center_visible=True,
+                personal_center_editable=False,
+                manager_editable=False,
+            ),
+            TenantUserBuiltinField(
+                tenant=tenant,
+                name="full_name",
+                display_name="姓名",
+                display_name_zh_cn="姓名",
+                display_name_en_us="Full Name",
+                data_type="string",
+                required=True,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=False,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant=tenant,
+                name="email",
+                display_name="邮箱",
+                display_name_zh_cn="邮箱",
+                display_name_en_us="Email",
+                data_type="string",
+                required=True,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant=tenant,
+                name="phone",
+                display_name="手机号",
+                display_name_zh_cn="手机号",
+                display_name_en_us="Phone Number",
+                data_type="string",
+                required=False,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+            ),
+            TenantUserBuiltinField(
+                tenant=tenant,
+                name="phone_country_code",
+                display_name="手机国际区号",
+                display_name_zh_cn="手机国际区号",
+                display_name_en_us="Phone Country Code",
+                data_type="string",
+                required=False,
+                unique=False,
+                personal_center_visible=True,
+                personal_center_editable=True,
+                manager_editable=True,
+                default=settings.DEFAULT_PHONE_COUNTRY_CODE,
+            ),
+        ])
 
-        # 使用 get_or_create 避免重复创建
-        for field in builtin_fields:
-            TenantUserBuiltinField.objects.get_or_create(
-                tenant=field["tenant"],
-                name=field["name"],
-                defaults={
-                    "display_name": field["display_name"],
-                    "data_type": field["data_type"],
-                    "required": field["required"],
-                    "unique": field["unique"],
-                    "default": field["default"],
-                    "options": field["options"],
-                    "personal_center_visible": field["personal_center_visible"],
-                    "personal_center_editable": field["personal_center_editable"],
-                    "manager_editable": field["manager_editable"],
-                }
-            )
+    # 批量创建所有字段
+    TenantUserBuiltinField.objects.bulk_create(all_builtin_fields, batch_size=100)
 
 
 class Migration(migrations.Migration):

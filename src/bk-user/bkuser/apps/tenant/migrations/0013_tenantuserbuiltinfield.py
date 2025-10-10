@@ -21,6 +21,8 @@ class Migration(migrations.Migration):
                 ('updater', models.CharField(blank=True, max_length=128, null=True)),
                 ('name', models.CharField(max_length=128, verbose_name='字段名称')),
                 ('display_name', models.CharField(max_length=128, verbose_name='展示用名称')),
+                ('display_name_zh_cn', models.CharField(max_length=128, null=True, verbose_name='展示用名称')),
+                ('display_name_en_us', models.CharField(max_length=128, null=True, verbose_name='展示用名称')),
                 ('data_type', models.CharField(choices=[('string', '字符串'), ('number', '数字'), ('enum', '枚举'), ('multi_enum', '多选枚举')], max_length=32, verbose_name='数据类型')),
                 ('required', models.BooleanField(verbose_name='是否必填')),
                 ('unique', models.BooleanField(verbose_name='是否唯一')),
