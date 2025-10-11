@@ -28,10 +28,10 @@ pytestmark = pytest.mark.django_db
 class TestTenantOrgPathHandler:
     """组织路径处理器测试"""
 
-    def test_query_org_path_include_self(self, full_local_data_source):
+    def test_query_org_path_include_self(self):
         """测试包含自身的组织路径"""
-        group_aaa = DataSourceDepartment.objects.get(data_source=full_local_data_source, code="group_aaa")
-        group_aba = DataSourceDepartment.objects.get(data_source=full_local_data_source, code="group_aba")
+        group_aaa = DataSourceDepartment.objects.get(code="group_aaa")
+        group_aba = DataSourceDepartment.objects.get(code="group_aba")
 
         data_source_department_ids = [group_aaa.id, group_aba.id]
 
@@ -40,10 +40,10 @@ class TestTenantOrgPathHandler:
         assert result[group_aaa.id] == "公司/部门A/中心AA/小组AAA"
         assert result[group_aba.id] == "公司/部门A/中心AB/小组ABA"
 
-    def test_query_org_path_exclude_self(self, full_local_data_source):
+    def test_query_org_path_exclude_self(self):
         """测试不包含自身的组织路径"""
-        group_aaa = DataSourceDepartment.objects.get(data_source=full_local_data_source, code="group_aaa")
-        center_ab = DataSourceDepartment.objects.get(data_source=full_local_data_source, code="center_ab")
+        group_aaa = DataSourceDepartment.objects.get(code="group_aaa")
+        center_ab = DataSourceDepartment.objects.get(code="center_ab")
 
         data_source_department_ids = [group_aaa.id, center_ab.id]
 
@@ -52,9 +52,9 @@ class TestTenantOrgPathHandler:
         assert result[group_aaa.id] == "公司/部门A/中心AA"
         assert result[center_ab.id] == "公司/部门A"
 
-    def test_query_org_path_root_department(self, full_local_data_source):
+    def test_query_org_path_root_department(self):
         """测试根部门的组织路径"""
-        company = DataSourceDepartment.objects.get(data_source=full_local_data_source, code="company")
+        company = DataSourceDepartment.objects.get(code="company")
 
         data_source_department_ids = [company.id]
 
