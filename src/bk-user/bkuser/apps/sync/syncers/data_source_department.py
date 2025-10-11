@@ -23,7 +23,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from bkuser.apps.data_source.managers import DepartmentAncestorManager
+from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -252,8 +252,7 @@ class DataSourceDepartmentRelationSyncer:
         )
 
         # 批量删除部门祖先 ID 缓存
-        dept_ancestor_manager = DepartmentAncestorManager()
-        dept_ancestor_manager.batch_delete_ancestor_ids(dept_ids)
+        DepartmentAncestorCache().batch_delete(dept_ids)
 
         self.ctx.logger.info(f"cleared department ancestor ids cache for data source {self.data_source.id}")
 

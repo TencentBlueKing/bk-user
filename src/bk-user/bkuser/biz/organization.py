@@ -22,7 +22,7 @@ from typing import Dict, List, Set
 from django.db import transaction
 from django.utils import timezone
 
-from bkuser.apps.data_source.managers import DepartmentAncestorManager
+from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
@@ -254,64 +254,22 @@ class TenantOrgPathHandler:
     def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """构建数据源部门 ID -> 组织路径映射"""
         org_path_map = {}
-        uncached_dept_ids = []
-
-        dept_ancestor_manager = DepartmentAncestorManager()
 
         # 1. 从缓存获取祖先 ID 列表
-        cached_ancestor_id_map = dept_ancestor_manager.batch_get_ancestor_ids(data_source_department_ids)
+        ancestor_id_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
 
-        # 2. 分别处理缓存命中和未命中的部门
-        all_cached_dept_ids = set()
+        # 2. 批量查询部门名称
+        dept_ids = set().union(*ancestor_id_map.values())
+        dept_ids.update(data_source_department_ids)
 
-        for dept_id in data_source_department_ids:
-            if dept_id in cached_ancestor_id_map:
-                ancestor_ids = cached_ancestor_id_map[dept_id]
-                all_cached_dept_ids.update(ancestor_ids)
+        id_name_map = dict(DataSourceDepartment.objects.filter(id__in=dept_ids).values_list("id", "name"))
 
-                if include_self:
-                    all_cached_dept_ids.add(dept_id)
-            else:
-                uncached_dept_ids.append(dept_id)
-
-        # 3. 处理被缓存的部门 - 批量查询部门名称
-        if all_cached_dept_ids:
-            id_name_map = dict(
-                DataSourceDepartment.objects.filter(id__in=all_cached_dept_ids).values_list("id", "name")
-            )
-
-            # 构建缓存部门的组织路径
-            for dept_id, ancestor_ids in cached_ancestor_id_map.items():
-                dept_names = [id_name_map.get(ancestor_id, "") for ancestor_id in ancestor_ids]
-                if include_self:
-                    dept_names.append(id_name_map.get(dept_id, ""))
-                org_path_map[dept_id] = "/".join(dept_names)
-
-        # 4. 针对未被缓存的部门
-        if uncached_dept_ids:
-            uncached_ancestor_id_map = {}
-
-            relations = DataSourceDepartmentRelation.objects.filter(department_id__in=uncached_dept_ids)
-
-            for rel in relations:
-                # NOTE: 这里首次查询在没有缓存的情况下存在 N + 1 问题，但是后续查询时会命中缓存，避免性能问题
-                ancestor_id_name_map = dict(
-                    rel.get_ancestors(include_self=True).values_list("department_id", "department__name")
-                )
-
-                # 只缓存祖先 ID 列表
-                ancestor_ids = list(ancestor_id_name_map.keys())
-                ancestor_ids.remove(rel.department_id)
-                uncached_ancestor_id_map[rel.department_id] = ancestor_ids
-
-                # 构建路径
-                dept_names = list(ancestor_id_name_map.values())
-                if not include_self:
-                    dept_names.remove(ancestor_id_name_map[rel.department_id])
-                org_path_map[rel.department_id] = "/".join(dept_names)
-
-            # 批量缓存祖先 ID 列表
-            dept_ancestor_manager.batch_set_ancestor_ids(uncached_ancestor_id_map)
+        # 3. 构建缓存部门的组织路径
+        for dept_id, ancestor_ids in ancestor_id_map.items():
+            dept_names = [id_name_map.get(ancestor_id, "") for ancestor_id in ancestor_ids]
+            if include_self:
+                dept_names.append(id_name_map.get(dept_id, ""))
+            org_path_map[dept_id] = "/".join(dept_names)
 
         return org_path_map
 
@@ -343,13 +301,12 @@ class TenantOrgPathHandler:
         return org_path_map
 
     @staticmethod
-    def clear_department_ancestor_cache(data_source_department_ids: List[int]):
-        """清理指定数据源部门的祖先 ID 缓存"""
+    def clear_department_descendants_ancestor_cache(data_source_department_ids: List[int]):
+        """清理指定数据源部门及其子孙的祖先 ID 缓存"""
         relations = DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_department_ids)
 
         descendant_ids = set()
         for rel in relations:
             descendant_ids.update(rel.get_descendants(include_self=True).values_list("department_id", flat=True))
 
-        dept_ancestor_manager = DepartmentAncestorManager()
-        dept_ancestor_manager.batch_delete_ancestor_ids(list(descendant_ids))
+        DepartmentAncestorCache().batch_delete(list(descendant_ids))

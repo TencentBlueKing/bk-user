@@ -52,7 +52,7 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     # 微信公众号二维码 临时存储
     MP_QRCODE = "mq"
     # 部门祖先
-    DEPT_ANCESTOR = "da"
+    DEPARTMENT_ANCESTOR = "da"
 
 
 def _default_key_function(*args, **kwargs):
