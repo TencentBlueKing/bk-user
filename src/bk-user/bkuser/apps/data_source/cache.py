@@ -37,7 +37,8 @@ class DepartmentAncestorCache:
         uncached_department_ids = []
 
         for dept_id in department_ids:
-            if dept_id in cache_data:
+            cached_key = str(dept_id)
+            if cached_key in cache_data:
                 department_ancestor_map[dept_id] = cache_data[dept_id]
             else:
                 uncached_department_ids.append(dept_id)

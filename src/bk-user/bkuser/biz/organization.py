@@ -259,9 +259,7 @@ class TenantOrgPathHandler:
         ancestor_id_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
 
         # 2. 批量查询部门名称
-        dept_ids = set().union(*ancestor_id_map.values())
-        dept_ids.update(data_source_department_ids)
-
+        dept_ids = set(data_source_department_ids).union(*ancestor_id_map.values())
         id_name_map = dict(DataSourceDepartment.objects.filter(id__in=dept_ids).values_list("id", "name"))
 
         # 3. 构建缓存部门的组织路径
