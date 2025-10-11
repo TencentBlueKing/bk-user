@@ -509,7 +509,7 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             # 更新部门 code 值
             TenantDepartmentHandler.update_department_code(data_source_dept)
 
-        TenantOrgPathHandler.clear_department_descendants_ancestor_cache([tenant_dept.data_source_department_id])
+        TenantOrgPathHandler.clear_department_descendants_ancestor_cache(tenant_dept.data_source_department_id)
 
         # 【审计】记录变更后的数据
         auditor.record_update_parent_department(tenant_dept)

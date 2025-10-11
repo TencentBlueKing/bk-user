@@ -299,12 +299,9 @@ class TenantOrgPathHandler:
         return org_path_map
 
     @staticmethod
-    def clear_department_descendants_ancestor_cache(data_source_department_ids: List[int]):
-        """清理指定数据源部门及其子孙的祖先 ID 缓存"""
-        relations = DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_department_ids)
+    def clear_department_descendants_ancestor_cache(data_source_department_id: int):
+        """清理指定数据源部门及其子孙部门的祖先 ID 缓存"""
+        relation = DataSourceDepartmentRelation.objects.get(department_id=data_source_department_id)
 
-        descendant_ids = set()
-        for rel in relations:
-            descendant_ids.update(rel.get_descendants(include_self=True).values_list("department_id", flat=True))
-
-        DepartmentAncestorCache().batch_delete(list(descendant_ids))
+        descendant_ids = list(relation.get_descendants(include_self=True).values_list("department_id", flat=True))
+        DepartmentAncestorCache().batch_delete(descendant_ids)
