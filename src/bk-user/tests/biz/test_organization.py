@@ -25,8 +25,8 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantOrgPathHandler:
-    """组织路径处理器测试"""
+class TestQueryOrganizationPath:
+    """组织路径查询测试"""
 
     def test_query_org_path_include_self(self):
         """测试包含自身的组织路径"""
