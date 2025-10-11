@@ -30,6 +30,7 @@ class DepartmentAncestorCache:
 
     def batch_get(self, department_ids: List[int]) -> Dict[int, List[int]]:
         """批量获取部门的祖先 ID 列表"""
+        # 1. 批量获取已缓存的部门祖先 ID 列表
         cache_keys = [str(dept_id) for dept_id in department_ids]
         cache_data = self.cache.get_many(cache_keys)
 
@@ -43,7 +44,7 @@ class DepartmentAncestorCache:
             else:
                 uncached_department_ids.append(dept_id)
 
-        # 缓存未命中的部门祖先 ID 列表
+        # 2. 查询未命中的部门祖先 ID 列表，并缓存
         if uncached_department_ids:
             uncached_department_ancestor_map = {}
 
@@ -53,7 +54,6 @@ class DepartmentAncestorCache:
                     rel.get_ancestors().values_list("department_id", flat=True)
                 )
 
-            # 批量缓存祖先 ID 列表
             self._batch_set(uncached_department_ancestor_map)
 
             department_ancestor_map.update(uncached_department_ancestor_map)
