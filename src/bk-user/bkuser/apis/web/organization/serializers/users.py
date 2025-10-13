@@ -199,8 +199,9 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
+        builtin_fields_names = {f.name for f in builtin_fields}
 
-        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
+        builtin_attrs = {k: v for k, v in attrs.items() if k in builtin_fields_names}
         builtins = validate_user_builtins(builtin_attrs, builtin_fields, self.context["data_source_id"])
 
         # 将 builtins 合并到 attrs 中
@@ -374,11 +375,10 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
+        builtin_fields_names = {f.name for f in builtin_fields}
 
-        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
-        builtins = validate_user_builtins(
-            builtin_attrs, builtin_fields, self.context["data_source_id"], self.context["data_source_user_id"]
-        )
+        builtin_attrs = {k: v for k, v in attrs.items() if k in builtin_fields_names}
+        builtins = validate_user_builtins(builtin_attrs, builtin_fields, self.context["data_source_id"])
 
         # 更新模式下，一些内置字段是不允许修改的（前端也需要禁用）
         # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
@@ -448,10 +448,11 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 提取校验内置字段进行内置字段验证
-        builtin_attrs = {k: v for k, v in attrs.items() if k != "extras"}
-        builtins = validate_user_builtins(
-            builtin_attrs, self.context["builtin_fields"], self.context["data_source_id"]
-        )
+        builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
+        builtin_fields_names = {f.name for f in builtin_fields}
+
+        builtin_attrs = {k: v for k, v in attrs.items() if k in builtin_fields_names}
+        builtins = validate_user_builtins(builtin_attrs, builtin_fields, self.context["data_source_id"])
 
         # 将 builtins 合并到 attrs 中
         attrs.update(builtins)
