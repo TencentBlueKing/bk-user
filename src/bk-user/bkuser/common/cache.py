@@ -51,6 +51,8 @@ class CacheKeyPrefixEnum(StrStructuredEnum):
     OPEN_WEB_API_THROTTLE = "owat"
     # 微信公众号二维码 临时存储
     MP_QRCODE = "mq"
+    # 部门祖先
+    DEPARTMENT_ANCESTOR = "da"
 
 
 def _default_key_function(*args, **kwargs):
@@ -163,6 +165,10 @@ class Cache:
     def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):
         map_key_data = {self._make_key(key): value for key, value in data.items()}
         self.cache.set_many(map_key_data, timeout, version)
+
+    def delete_many(self, keys, version=None):
+        keys = [self._make_key(key) for key in keys]
+        self.cache.delete_many(keys, version)
 
     def lock(self, key, version=None, timeout=None, sleep=0.1, blocking_timeout=None, client=None):
         if not self.lock_supported:

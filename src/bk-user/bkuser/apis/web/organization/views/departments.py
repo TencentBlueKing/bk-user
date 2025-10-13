@@ -361,29 +361,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDeptOrgPathMapMixin:
-    def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
-        """获取租户部门的组织路径信息"""
-        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
-
-        # 数据源部门 ID -> 组织路径
-        org_path_map = {}
-        for dept_relation in DataSourceDepartmentRelation.objects.filter(
-            department_id__in=data_source_dept_ids
-        ).select_related("department"):
-            dept_names = list(
-                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
-            )
-            org_path_map[dept_relation.department_id] = "/".join(dept_names)
-
-        # 租户部门 ID -> 组织路径
-        return {
-            dept.id: org_path_map.get(dept.data_source_department_id, dept.data_source_department.name)
-            for dept in tenant_depts
-        }
-
-
-class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     """搜索租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -411,15 +389,18 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixi
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
         context = {
             "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
-            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(
+                data_source_dept_ids, include_self=True
+            ),
         }
         resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """可选租户部门列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -452,7 +433,12 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
-        context = {"org_path_map": self._get_dept_organization_path_map(tenant_depts)}
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+        context = {
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(
+                data_source_dept_ids, include_self=True
+            )
+        }
         resp_data = OptionalTenantDepartmentListOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
 
@@ -522,6 +508,8 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
             cur_dept_relation.move_to(parent_dept_relation)
             # 更新部门 code 值
             TenantDepartmentHandler.update_department_code(data_source_dept)
+
+        TenantOrgPathHandler.clear_department_descendants_ancestor_cache(tenant_dept.data_source_department_id)
 
         # 【审计】记录变更后的数据
         auditor.record_update_parent_department(tenant_dept)

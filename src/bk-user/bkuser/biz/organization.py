@@ -22,6 +22,7 @@ from typing import Dict, List, Set
 from django.db import transaction
 from django.utils import timezone
 
+from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
@@ -252,14 +253,22 @@ class TenantOrgPathHandler:
     @staticmethod
     def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """构建数据源部门 ID -> 组织路径映射"""
-        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
-            department_id__in=data_source_department_ids
-        )
         org_path_map = {}
-        # TODO: 这里存在 N + 1 问题，后续添加缓存优化或其他方式优化祖先路径的批量快速获取
-        for rel in relations:
-            dept_names = list(rel.get_ancestors(include_self=include_self).values_list("department__name", flat=True))
-            org_path_map[rel.department_id] = "/".join(dept_names)
+
+        # 1. 从缓存获取祖先 ID 列表
+        ancestor_id_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
+
+        # 2. 批量查询部门名称
+        dept_ids = set(data_source_department_ids).union(*ancestor_id_map.values())
+        id_name_map = dict(DataSourceDepartment.objects.filter(id__in=dept_ids).values_list("id", "name"))
+
+        # 3. 构建缓存部门的组织路径
+        for dept_id, ancestor_ids in ancestor_id_map.items():
+            dept_names = [id_name_map.get(ancestor_id, "") for ancestor_id in ancestor_ids]
+            if include_self:
+                dept_names.append(id_name_map.get(dept_id, ""))
+            org_path_map[dept_id] = "/".join(dept_names)
+
         return org_path_map
 
     @staticmethod
@@ -288,3 +297,11 @@ class TenantOrgPathHandler:
             org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
 
         return org_path_map
+
+    @staticmethod
+    def clear_department_descendants_ancestor_cache(data_source_department_id: int):
+        """清理指定数据源部门及其子孙部门的祖先 ID 缓存"""
+        relation = DataSourceDepartmentRelation.objects.get(department_id=data_source_department_id)
+
+        descendant_ids = list(relation.get_descendants(include_self=True).values_list("department_id", flat=True))
+        DepartmentAncestorCache().batch_delete(descendant_ids)
