@@ -31,24 +31,18 @@ class DepartmentAncestorCache:
     def batch_get(self, dept_ids: List[int]) -> Dict[int, List[int]]:
         """批量获取部门的祖先 ID 列表"""
         # 1. 批量获取已缓存的部门祖先 ID 列表
-        cache_data = self.cache.get_many(dept_ids)
+        hit_data = self.cache.get_many(dept_ids)
 
-        dept_ancestor_map = {}
-        cache_miss_dept_ids = []
+        # 2. 全部都命中缓存
+        miss_dept_ids = list(set(dept_ids) - set(hit_data.keys()))
+        if not miss_dept_ids:
+            return hit_data
 
-        for dept_id in dept_ids:
-            if dept_id in cache_data:
-                dept_ancestor_map[dept_id] = cache_data[dept_id]
-            else:
-                cache_miss_dept_ids.append(dept_id)
+        # 3. 未命中缓存的部门 ID，需 DB 查询并添加到缓存里
+        miss_data = self._fetch_dept_ancestors_map(miss_dept_ids)
+        self._batch_set(miss_data)
 
-        # 2. 查询缓存未命中的部门祖先 ID 列表，并缓存
-        if cache_miss_dept_ids:
-            cache_miss_ancestor_map = self._fetch_dept_ancestors_map(cache_miss_dept_ids)
-            self._batch_set(cache_miss_ancestor_map)
-            dept_ancestor_map.update(cache_miss_ancestor_map)
-
-        return dept_ancestor_map
+        return hit_data | miss_data
 
     def _batch_set(self, dept_ancestor_map: Dict[int, List[int]]) -> None:
         """批量缓存部门的祖先 ID 列表"""
@@ -60,10 +54,6 @@ class DepartmentAncestorCache:
 
     def _fetch_dept_ancestors_map(self, dept_ids: List[int]) -> Dict[int, List[int]]:
         """批量查询部门与其祖先 ID 列表之间的映射"""
-        dept_ancestor_map = {}
+        rels = DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids)
 
-        relations = DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids)
-        for rel in relations:
-            dept_ancestor_map[rel.department_id] = list(rel.get_ancestors().values_list("department_id", flat=True))
-
-        return dept_ancestor_map
+        return {r.department_id: list(r.get_ancestors().values_list("department_id", flat=True)) for r in rels}
