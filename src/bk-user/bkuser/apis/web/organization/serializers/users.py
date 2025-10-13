@@ -448,11 +448,14 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 提取校验内置字段进行内置字段验证
-        builtin_fields = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"])
-        builtin_fields_names = {f.name for f in builtin_fields}
+        builtin_fields_names = TenantUserBuiltinField.objects.filter(tenant_id=self.context["tenant_id"]).values_list(
+            "name", flat=True
+        )
 
         builtin_attrs = {k: v for k, v in attrs.items() if k in builtin_fields_names}
-        builtins = validate_user_builtins(builtin_attrs, builtin_fields, self.context["data_source_id"])
+        builtins = validate_user_builtins(
+            builtin_attrs, self.context["builtin_fields"], self.context["data_source_id"]
+        )
 
         # 将 builtins 合并到 attrs 中
         attrs.update(builtins)
