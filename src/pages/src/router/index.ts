@@ -135,6 +135,11 @@ export default createRouter({
       component: () => import('@/views/personal-center/index.vue'),
     },
     {
+      path: '/bind-result',
+      name: 'bindResult',
+      component: () => import('@/views/personal-center/BindResult.vue'),
+    },
+    {
       path: '/password/:tenantId?',
       name: 'password',
       component: () => import('@/views/reset-password/index.vue'),

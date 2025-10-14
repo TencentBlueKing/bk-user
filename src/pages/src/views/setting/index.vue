@@ -114,23 +114,60 @@ const menuData = reactive([
   },
 ]);
 
-onMounted(() => {
-  if (window.ENABLE_COLLABORATION_TENANT === 'False') {
-    const COLLABORATION_KEY = 'collaboration';
-    // 菜单移除
-    const collaborationMenuIndex = menuData.findIndex(item => item.key === COLLABORATION_KEY);
-    if (collaborationMenuIndex > -1) {
-      menuData.splice(collaborationMenuIndex, 1);
+// 递归查找并移除子菜单项
+const removeMenuItem = (menuList: any[], targetKey: string) => {
+  for (let i = 0; i < menuList.length; i++) {
+    const menu = menuList[i];
+    // 检查当前菜单项
+    if (menu.key === targetKey) {
+      menuList.splice(i, 1);
+      return true;
     }
-    // 路由移除
-    if (router.hasRoute(COLLABORATION_KEY)) {
-      router.removeRoute(COLLABORATION_KEY);
-
-      if (route.name === COLLABORATION_KEY) {
-        router.push('/setting');
+    // 检查子菜单
+    if (menu.children) {
+      if (removeMenuItem(menu.children, targetKey)) {
+        // 如果子菜单被清空，移除父菜单
+        if (menu.children.length === 0) {
+          menuList.splice(i, 1);
+        }
+        return true;
       }
     }
   }
+  return false;
+};
+
+onMounted(() => {
+  const filterList = {
+    // 协同租户
+    ENABLE_COLLABORATION_TENANT: 'collaboration',
+    // 是否支持多租户
+    ENABLE_MULTI_TENANT_MODE: 'other.basics',
+  };
+
+  Object.entries(filterList).forEach(([key, path]) => {
+    if (window?.[key] === 'False') {
+      const keys = path.split('.');
+      // 处理菜单移除
+      if (keys.length === 1) {
+        // 顶级菜单
+        removeMenuItem(menuData, keys[0]);
+      } else {
+        // 嵌套子菜单 (如 'other.basics')
+        removeMenuItem(menuData, keys[keys.length - 1]);
+      }
+
+      const routeKey = keys[keys.length - 1]; // 使用最后一级作为路由key
+      // 路由移除
+      if (router.hasRoute(routeKey)) {
+        router.removeRoute(routeKey);
+
+        if (route.name === routeKey) {
+          router.push('/setting');
+        }
+      }
+    }
+  });
 });
 
 </script>

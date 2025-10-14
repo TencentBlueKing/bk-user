@@ -18,7 +18,7 @@
 import logging
 from typing import Dict, List
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -47,7 +47,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
     TenantUserWecomCallbackInputSLZ,
-    TenantUserWeixinInfoOutputSLZ,
+    TenantUserWeixinInfoRetrieveOutputSLZ,
     TenantUserWeixinRetrieveToBindInfoOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -68,7 +68,7 @@ from bkuser.biz.senders import (
     PhoneVerificationCodeSender,
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
-from bkuser.biz.weixin import WeixinConfigService
+from bkuser.biz.weixin import WeixinConfigProvider
 from bkuser.biz.weixin.constants import WeixinTypeEnum
 from bkuser.biz.weixin.weixin import MpBindHandler, WecomBindHandler
 from bkuser.common.error_codes import error_codes
@@ -602,40 +602,7 @@ class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
         return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 
-class TenantUserWeixinRetrieveToBindInfoApi(generics.RetrieveAPIView):
-    """个人中心 - 统一的绑定接口"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
-    queryset = TenantUser.objects.all()
-    lookup_url_kwarg = "id"
-
-    @swagger_auto_schema(
-        tags=["personal_center"],
-        operation_description="个人中心 - 微信绑定",
-        responses={status.HTTP_200_OK: TenantUserWeixinRetrieveToBindInfoOutputSLZ()},
-    )
-    def get(self, request, *args, **kwargs):
-        tenant_user = self.get_object()
-        if tenant_user.wx_userid:
-            raise error_codes.WEIXIN_ALREADY_BOUND.f(_("当前账户已绑定微信"))
-
-        # 获取微信类型
-        wx_type = WeixinConfigService(tenant_user.tenant_id).get_wx_type()
-
-        if wx_type in [WeixinTypeEnum.QY, WeixinTypeEnum.QYWX]:
-            wecom_handler = WecomBindHandler(tenant_user)
-            url = wecom_handler.get_authorization_url(request.session)
-        elif wx_type == WeixinTypeEnum.MP:
-            mp_handler = MpBindHandler(tenant_user)
-            url = mp_handler.get_mp_qrcode_url()
-        else:
-            # 微信类型为 None
-            raise error_codes.WEIXIN_TYPE_UNSUPPORTED.f(_("请联系管理员"))
-
-        return Response(TenantUserWeixinRetrieveToBindInfoOutputSLZ({"url": url}).data)
-
-
-class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
+class TenantUserWeixinInfoRetrieveDestroyApi(generics.RetrieveDestroyAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
@@ -643,14 +610,14 @@ class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心 - 查询用户微信 ID",
-        responses={status.HTTP_200_OK: TenantUserWeixinInfoOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserWeixinInfoRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        wx_type = WeixinConfigService(tenant_user.tenant_id).get_wx_type()
+        wx_type = WeixinConfigProvider(tenant_user.tenant_id).get_wx_type()
 
-        data = {"wx_userid": tenant_user.wx_userid if wx_type else "", "type": wx_type.value if wx_type else ""}
-        return Response(TenantUserWeixinInfoOutputSLZ(data).data)
+        data = {"wx_userid": tenant_user.wx_userid, "type": wx_type}
+        return Response(TenantUserWeixinInfoRetrieveOutputSLZ(data).data)
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -674,6 +641,35 @@ class TenantUserWeixinInfoApi(generics.RetrieveDestroyAPIView):
         auditor.record_unbind(tenant_user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserWeixinToBindInfoRetrieveApi(generics.RetrieveAPIView):
+    """个人中心 - 统一的绑定接口"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心 - 微信绑定",
+        responses={status.HTTP_200_OK: TenantUserWeixinRetrieveToBindInfoOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        if tenant_user.wx_userid:
+            raise error_codes.WEIXIN_ALREADY_BOUND.f(_("当前账户已绑定微信"))
+
+        # 获取微信类型
+        wx_type = WeixinConfigProvider(tenant_user.tenant_id).get_wx_type()
+
+        url = ""
+        if wx_type == WeixinTypeEnum.WeCom.value:
+            url = WecomBindHandler(tenant_user).get_authorization_url(request.session)
+        elif wx_type == WeixinTypeEnum.MP.value:
+            url = MpBindHandler(tenant_user.tenant_id).get_mp_qrcode_url(tenant_user)
+
+        return Response(TenantUserWeixinRetrieveToBindInfoOutputSLZ({"url": url}).data)
 
 
 class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
@@ -713,7 +709,8 @@ class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
         # 【审计】记录绑定操作
         auditor.record_bind(tenant_user)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        # Note: 这里与前端配合，重新向到绑定成功且 5 秒后自动关闭页面
+        return HttpResponseRedirect(redirect_to="/bind-result?status=1")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -729,8 +726,8 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        if not MpBindHandler.check_mp_signature(
-            self.kwargs["tenant_id"], data["signature"], data["timestamp"], data["nonce"]
+        if not MpBindHandler(self.kwargs["tenant_id"]).check_mp_signature(
+            data["signature"], data["timestamp"], data["nonce"]
         ):
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
 
@@ -742,13 +739,12 @@ class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        if not MpBindHandler.check_mp_signature(
-            self.kwargs["tenant_id"], data["signature"], data["timestamp"], data["nonce"]
-        ):
+        mp_handler = MpBindHandler(self.kwargs["tenant_id"])
+        if not mp_handler.check_mp_signature(data["signature"], data["timestamp"], data["nonce"]):
             raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
 
-        tenant_user, wx_userid, response = MpBindHandler.process_mp_callback_event(request.data)
-        # 处理回调事件出错,应该返回空响应作为 fallback，防止微信公众号服务器重复推送
+        tenant_user, wx_userid, response = mp_handler.process_mp_callback_event(request.data)
+        # 处理回调事件出错，应该返回空响应作为 fallback，防止微信公众号服务器重复推送
         if not tenant_user:
             return HttpResponse(content="", content_type="application/xml", status=status.HTTP_200_OK)
 

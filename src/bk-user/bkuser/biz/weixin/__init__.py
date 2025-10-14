@@ -18,11 +18,11 @@
 from .weixin import (
     MpBindHandler,
     WecomBindHandler,
-    WeixinConfigService,
+    WeixinConfigProvider,
 )
 
 __all__ = [
     "WecomBindHandler",
     "MpBindHandler",
-    "WeixinConfigService",
+    "WeixinConfigProvider",
 ]

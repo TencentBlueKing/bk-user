@@ -2,6 +2,7 @@
   <section class="bg-white h-full pl-[6px]">
     <div class="h-[calc(100%-36px)]" v-bkloading="{ loading: loading }">
       <div
+        v-is-multiple-tenant
         class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
         @click="handleNodeClick(currentTenant, currentTenant.id, true)"
@@ -84,8 +85,13 @@ onBeforeMount(async () => {
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
   appStore.currentTenant = tenantData?.data;
-  appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
-  getTreeData();
+  await getTreeData();
+  if (window.ENABLE_MULTI_TENANT_MODE === 'False' && treeData.value.length !== 0) {
+    // 不支持多租户则默认展开第一项
+    handleNodeClick(treeData.value[0], currentTenant.value.id);
+  } else {
+    appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
+  }
   loading.value = false;
 });
 

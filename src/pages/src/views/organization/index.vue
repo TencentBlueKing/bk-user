@@ -34,7 +34,10 @@
       </template>
       <template #main>
         <section>
-          <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
+          <div
+            class="
+            text-[#313238] leading-[52px] h-[52px] px-[24px]
+              text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
             {{ appStore.currentOrg?.name }}
           </div>
           <div class="table-main">

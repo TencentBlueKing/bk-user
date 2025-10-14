@@ -88,15 +88,15 @@ class NotificationClient(Protocol):
         Returns:
             Dict: 包含以下字段的字典：
             - wx_type (str): 微信类型
-            - agent_id (str): 企业微信应用ID
-            - corp_id (str): 企业微信企业ID
+            - agent_id (str): 企业微信应用 ID
+            - corp_id (str): 企业微信企业 ID
             - corp_secret (str): 企业微信企业密钥
             - to_user (str): 接收用户
-            - wx_app_id (str): 微信公众号AppID
+            - wx_app_id (str): 微信公众号 AppID
             - wx_secret (str): 微信公众号密钥
-            - wx_template_id (str): 微信公众号模版ID
+            - wx_template_id (str): 微信公众号模版 ID
             - wx_token (str): 微信公众号验证令牌
-            - custom_channel_url (str): 自定义渠道URL
+            - custom_channel_url (str): 自定义渠道 URL
         """
 
     def get_weixin_token(self) -> Dict:
@@ -184,15 +184,15 @@ class BkEsbCmsiClient:
         Returns:
             Dict: 包含以下字段的字典：
             - wx_type (str): 微信类型
-            - agent_id (str): 企业微信应用ID
-            - corp_id (str): 企业微信企业ID
+            - agent_id (str): 企业微信应用 ID
+            - corp_id (str): 企业微信企业 ID
             - corp_secret (str): 企业微信企业密钥
             - to_user (str): 接收用户
-            - wx_app_id (str): 微信公众号AppID
+            - wx_app_id (str): 微信公众号 AppID
             - wx_secret (str): 微信公众号密钥
-            - wx_template_id (str): 微信公众号模版ID
+            - wx_template_id (str): 微信公众号模版 ID
             - wx_token (str): 微信公众号验证令牌
-            - custom_channel_url (str): 自定义渠道URL
+            - custom_channel_url (str): 自定义渠道 URL
         """
         return _call_esb_api(http_get, "/api/c/compapi/esb/get_weixin_config/")
 
@@ -290,15 +290,15 @@ class BkApigwCmsiClient:
         Returns:
             Dict: 包含以下字段的字典：
             - wx_type (str): 微信类型
-            - agent_id (str): 企业微信应用ID
-            - corp_id (str): 企业微信企业ID
+            - agent_id (str): 企业微信应用 ID
+            - corp_id (str): 企业微信企业 ID
             - corp_secret (str): 企业微信企业密钥
             - to_user (str): 接收用户
-            - wx_app_id (str): 微信公众号AppID
+            - wx_app_id (str): 微信公众号 AppID
             - wx_secret (str): 微信公众号密钥
-            - wx_template_id (str): 微信公众号模版ID
+            - wx_template_id (str): 微信公众号模版 ID
             - wx_token (str): 微信公众号验证令牌
-            - custom_channel_url (str): 自定义渠道URL
+            - custom_channel_url (str): 自定义渠道 URL
         """
         return _call_apigw_api(http_get, self.APIGW_NAME, "/v1/channels/weixin/settings/", self.tenant_id)
 

@@ -203,6 +203,8 @@ class VueTemplateView(TemplateView):
                 "BK_BUILD_VERSION": settings.BK_BUILD_VERSION,
                 # footer / logo / title 等全局配置
                 "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
+                # 是否开启多租户功能
+                "ENABLE_MULTI_TENANT_MODE": settings.ENABLE_MULTI_TENANT_MODE,
                 # 是否启用虚拟账号功能
                 "ENABLE_VIRTUAL_USER": settings.ENABLE_VIRTUAL_USER,
                 # 是否启用新建租户功能
