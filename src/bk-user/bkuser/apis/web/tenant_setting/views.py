@@ -303,7 +303,7 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         return Response(TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(user_display_names, many=True).data)
 
 
-class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView):
+class TenantUserBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     lookup_url_kwarg = "id"
 
