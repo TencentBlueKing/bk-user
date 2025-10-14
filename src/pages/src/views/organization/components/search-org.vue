@@ -49,10 +49,7 @@
               @click="handleUserSelect(item)"
             >
               <div class="leading-[20px]">
-                <span class="text-[#313238] pr-[8px]">
-                  {{ item.username }}
-                  ({{ item.full_name }})
-                </span>
+                <DisplayName :user-id="item.id" class="text-[#313238] pr-[8px]" />
                 <span v-is-multiple-tenant class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
               <div class="inline-flex w-full">
@@ -121,6 +118,7 @@ import { defineEmits, inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
 
+import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
 import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';

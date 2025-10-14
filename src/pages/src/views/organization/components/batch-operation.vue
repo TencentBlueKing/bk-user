@@ -137,12 +137,14 @@
             multiple-mode="tag"
             collapse-tags
             id-key="id">
+            <template #tagRender="{ value }">
+              <DisplayName :user-id="value" />
+            </template>
             <bk-option
               v-for="item in leaderList"
               :key="item.id"
-              :value="item.id"
-              :name="`${item.username}(${item.full_name})`"
-              :label="`${item.username}(${item.full_name})`">
+              :value="item.id">
+              <DisplayName :user-id="item.id" />
             </bk-option>
           </bk-select>
         </bk-form-item>
@@ -167,14 +169,13 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import batchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
+import DisplayName from '@/components/display-name.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { randomPasswords } from '@/http';
 import { batchAccountExpired, batchCreate, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
-
-const appStore = useAppStore();
 
 const props = defineProps({
   selectList: {
@@ -184,6 +185,10 @@ const props = defineProps({
     type: Boolean,
   },
 });
+
+const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 'reloadList']);
+
+const appStore = useAppStore();
 
 /** 是否为本地数据源 */
 const isLocalDataSource = computed(() => appStore.currentTenant?.data_source?.plugin_id === 'local');
@@ -210,8 +215,6 @@ const infoFormData = ref({});
 const leaderList = ref([]);
 const rules = ref({});
 const infoFormRef = ref();
-const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 'reloadList']);
-
 const dropdownVisible = ref(false);
 const isShowRenewal = ref(false);
 

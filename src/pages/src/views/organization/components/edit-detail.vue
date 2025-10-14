@@ -90,12 +90,15 @@
             :scroll-loading="scrollLoading"
             @scroll-end="leadersScrollEnd"
             @change="handleChange">
+            <template #tagRender="{ value }">
+              <DisplayName :user-id="value" />
+            </template>
             <bk-option
               v-for="item in leaderList"
               :key="item.id"
-              :value="item.id"
-              :name="`${item.username}(${item.full_name})`"
-              :label="`${item.username}(${item.full_name})`" />
+              :value="item.id">
+              <DisplayName :user-id="item.id" />
+            </bk-option>
           </bk-select>
         </bk-form-item>
       </div>
@@ -137,6 +140,7 @@ import { Message } from 'bkui-vue';
 import { computed,  onMounted, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
+import DisplayName from '@/components/display-name.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useValidate } from '@/hooks';
 import {
