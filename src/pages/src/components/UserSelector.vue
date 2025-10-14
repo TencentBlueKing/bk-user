@@ -32,7 +32,7 @@ const apiBaseUrl = ref(window.BK_USER_WEB_APIGW_URL);
 const userGroupName = ref(t('内置管理员'));
 const userGroup = computed(() => [
   {
-    id: userStore.admin?.bk_username,
+    id: userStore.admin?.id,
     name: userStore.admin?.username,
   },
 ]);

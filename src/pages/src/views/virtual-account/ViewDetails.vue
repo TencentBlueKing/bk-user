@@ -7,12 +7,13 @@
       <span>{{ detailsInfo?.app_codes }}</span>
     </LabelContent>
     <LabelContent :label="$t('账号责任人')">
-      <bk-user-display-name :user-id="detailsInfo?.owners"></bk-user-display-name>
+      <DisplayName :user-id="detailsInfo?.owners" />
     </LabelContent>
   </div>
 </template>
 
 <script lang="ts" setup>
+import DisplayName from '@/components/display-name.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 defineProps({
   detailsInfo: {

@@ -26,7 +26,7 @@
         </bk-table-column>
         <bk-table-column prop="operator" :label="$t('操作人')">
           <template #default="{ row }">
-            <bk-user-display-name :user-id="row.operator"></bk-user-display-name>
+            <DisplayName :user-id="row.operator" />
           </template>
         </bk-table-column>
         <bk-table-column prop="trigger" :label="$t('触发类型')">
@@ -92,6 +92,8 @@ import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
+
+import DisplayName from './display-name.vue';
 
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';

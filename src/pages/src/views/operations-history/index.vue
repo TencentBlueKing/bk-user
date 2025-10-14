@@ -138,7 +138,7 @@
           </bk-table-column>
           <bk-table-column :label="$t('操作人')" prop="creator" width="100">
             <template #default="{ row }">
-              <bk-user-display-name :user-id="row.creator"></bk-user-display-name>
+              <DisplayName :user-id="row.creator" />
             </template>
           </bk-table-column>
           <bk-table-column
@@ -162,6 +162,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { getCurrentOperationOptions, operationType } from './operations';
 
+import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import UserSelector from '@/components/UserSelector.vue';
 import { useTableMaxHeight } from '@/hooks';

@@ -101,7 +101,7 @@
           >
             <div
               :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <bk-user-display-name :user-id="userInfo.username" class="help-info-name"></bk-user-display-name>
+              <DisplayName :user-id="userInfo.username" class="help-info-name" />
               <DownShape class="help-info-icon" />
             </div>
             <template #content>
@@ -145,6 +145,7 @@ import logo from '../../static/images/logo.png';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
+import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import { locale, t } from '@/language/index';
 import router from '@/router';
