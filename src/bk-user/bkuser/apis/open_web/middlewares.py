@@ -17,9 +17,11 @@
 
 import logging
 
+from django.conf import settings
 from rest_framework import status
 
 from bkuser.apis.open_web.constants import OpenWebApiEnum
+from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 
 logger = logging.getLogger("open_web_api_access")
 
@@ -115,3 +117,19 @@ class OpenWebApiAuditMiddleware:
             return [item["bk_username"] for item in response.data]
 
         return []
+
+
+class TenantIDHeaderMiddleware:
+    """租户 ID Header 中间件"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # 不开启多租户模式下，不可依赖调用方是否有传递或是否传递正确 TenantID Header
+        # 所以这里需要主动设置 TenantID Header 为默认租户
+        # 保证后续依赖 TenantID Header 的处理逻辑一致
+        if not settings.ENABLE_MULTI_TENANT_MODE:
+            request.META["HTTP_X_BK_TENANT_ID"] = BuiltInTenantIDEnum.DEFAULT
+
+        return self.get_response(request)

@@ -19,7 +19,10 @@
           <div class="w-[28px]"><img :src="appLogo" /></div>
           <span class="title-desc">{{ appName}}</span>
         </div>
-        <div class="tenant-style" v-if="!isTenant && role !== 'natural_user'">
+        <div
+          v-if="!isTenant && role !== 'natural_user'"
+          v-is-multiple-tenant
+          class="tenant-style">
           <div class="logo">
             <img v-if="userData.logo" :src="userData.logo" alt="">
             <span v-else>{{logoConvert(userData?.name) }}</span>
@@ -206,6 +209,7 @@ const toIndividualCenter = () => {
 };
 
 const toTenant = () => {
+  if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
@@ -222,6 +226,7 @@ onMounted(() => {
 
 const onGoBack = () => {
   if (role.value === 'super_manager' && route.name !== 'tenant') {
+    if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
     router.push({ name: 'tenant' });
     headerNav.value = [];
   } else if (role.value === 'tenant_manager' && route.name !== 'organization') {

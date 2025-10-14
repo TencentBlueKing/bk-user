@@ -15,14 +15,15 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from .weixin import (
-    MpBindHandler,
-    WecomBindHandler,
-    WeixinConfigProvider,
-)
 
-__all__ = [
-    "WecomBindHandler",
-    "MpBindHandler",
-    "WeixinConfigProvider",
-]
+import pytest
+
+from tests.test_utils.tenant import sync_users_depts_to_tenant
+
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
