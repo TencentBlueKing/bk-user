@@ -145,3 +145,9 @@ export interface RealUsersData {
     full_name: string,
   }[],
 }
+
+export interface BuiltinManagerData {
+  bk_username: string
+  enable_login: boolean
+  username: string
+}

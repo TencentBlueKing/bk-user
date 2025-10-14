@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  BuiltinManagerData,
   CollaborationSyncRecordsParams,
   FromStrategiesConfirmParams,
   NewCustomFieldsParams,
@@ -53,7 +54,7 @@ export const putTenantUserValidityPeriod = (params: PutUserValidityParams) => ht
 /**
  * 管理员配置-租户内置管理账号信息
  */
-export const getBuiltinManager = () => http.get('/api/v3/web/tenant-info/builtin-manager/');
+export const getBuiltinManager = () => http.get<ResponseData<BuiltinManagerData>>('/api/v3/web/tenant-info/builtin-manager/');
 
 /**
  * 管理员配置-变更内置管理账号密码相关信息

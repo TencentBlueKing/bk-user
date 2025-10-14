@@ -4,12 +4,14 @@
     :api-base-url="apiBaseUrl"
     :tenant-id="userStore.user.tenant_id"
     :multiple="multiple"
+    :user-group="userGroup"
+    :user-group-name="userGroupName"
   />
 
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import BkUserSelector from '@blueking/bk-user-selector';
 
@@ -24,4 +26,13 @@ defineProps({
 });
 const userStore = useUser();
 const apiBaseUrl = ref(window.BK_USER_WEB_APIGW_URL);
+
+// 用户组名称
+const userGroupName = ref('内置管理员');
+const userGroup = computed(() => [
+  {
+    id: userStore.admin?.bk_username,
+    name: userStore.admin?.username,
+  },
+]);
 </script>
