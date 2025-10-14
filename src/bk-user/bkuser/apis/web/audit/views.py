@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from datetime import timedelta
-from typing import Any, Dict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -25,7 +24,6 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 from .serializers import AuditRecordListInputSLZ, AuditRecordListOutputSLZ
 
@@ -65,16 +63,6 @@ class AuditRecordListAPIView(CurrentUserTenantMixin, generics.ListAPIView):
             filters["object_name__icontains"] = object_name
 
         return OperationAuditRecord.objects.filter(**filters)
-
-    def get_serializer_context(self) -> Dict[str, Any]:
-        # 对于 tenant_user_id 的查询也采取分页的方式，不需要全表查询
-        tenant_user_ids = self.paginate_queryset(self.get_queryset().values_list("creator", flat=True))
-
-        return {
-            "user_display_name_map": TenantUserDisplayNameHandler.get_tenant_user_display_name_map_by_ids(
-                tenant_user_ids
-            ),
-        }
 
     @swagger_auto_schema(
         tags=["audit"],

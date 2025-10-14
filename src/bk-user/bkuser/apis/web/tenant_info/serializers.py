@@ -60,6 +60,7 @@ class TenantUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantBuiltinManagerRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名")
     enable_login = serializers.BooleanField(help_text="是否启用账密登录")
 
