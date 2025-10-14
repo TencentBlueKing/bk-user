@@ -351,6 +351,18 @@ class TenantUserBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPI
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @staticmethod
+    def _summarize_error_user_names(usernames: list[str], limit: int = 5) -> str:
+        # 整理异常的用户名列表为字符串信息，最多展示 `limit` 个用户名
+        if not usernames:
+            return ""
+
+        message = ", ".join(usernames[:limit])
+        if len(usernames) <= limit:
+            return message
+
+        return f"{message} 等 {len(usernames)} 个用户"
+
     def _validate_builtin_field_required(self, tenant_id: str, builtin_field: TenantUserBuiltinField, required: bool):
         # 如果要将字段设为必填，需要检查现有用户是否都有该字段的值
         if required:
@@ -358,11 +370,10 @@ class TenantUserBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPI
                 tenant_id, builtin_field.name
             )
             if missing_users:
-                user_list = ", ".join(missing_users[:5])
-                suffix = f" 等 {len(missing_users)} 个用户" if len(missing_users) > 5 else ""  # noqa: PLR2004
+                user_list = self._summarize_error_user_names(missing_users)
                 error_msg = (
                     f"无法将字段 '{builtin_field.name}' 设为必填："
-                    f"用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
+                    f"{user_list} 未填写该字段的值。请先完善这些用户的字段数据。"
                 )
                 raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(error_msg)
             return
@@ -387,10 +398,8 @@ class TenantUserBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPI
             tenant_id, builtin_field.name
         )
         if duplicate_users:
-            user_list = ", ".join(duplicate_users[:5])
-            suffix = f" 等 {len(duplicate_users)} 个用户" if len(duplicate_users) > 5 else ""  # noqa: PLR2004
+            user_list = self._summarize_error_user_names(duplicate_users)
             error_msg = (
-                f"无法将字段 '{builtin_field.name}' 设为唯一："
-                f"用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
+                f"无法将字段 '{builtin_field.name}' 设为唯一：" f"{user_list} 存在重复的字段值。请先修正这些重复数据。"
             )
             raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(error_msg)

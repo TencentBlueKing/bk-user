@@ -75,7 +75,7 @@ class TestTenantUserBuiltinFieldUpdateApi:
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert (
-            "无法将字段 'phone' 设为必填：用户 zhangsan 未填写该字段的值。请先完善这些用户的字段数据。"
+            "无法将字段 'phone' 设为必填：zhangsan 未填写该字段的值。请先完善这些用户的字段数据。"
             in resp.data["message"]
         )
 
@@ -105,7 +105,7 @@ class TestTenantUserBuiltinFieldUpdateApi:
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert (
-            "无法将字段 'email' 设为唯一：用户 zhangsan, lisi 存在重复的字段值。请先修正这些重复数据。"
+            "无法将字段 'email' 设为唯一：zhangsan, lisi 存在重复的字段值。请先修正这些重复数据。"
             in resp.data["message"]
         )
 

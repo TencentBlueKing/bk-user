@@ -80,8 +80,10 @@ class DataSourceUserFieldUniqueValidator:
 
                 self.has_duplicate_unique_value = True
                 self.logger.error(
-                    f"builtin field {field_config.display_name}({field_config.name}) \
-                    has duplicate unique value {val}, usernames: {usernames}"
+                    (
+                        f"builtin field {field_config.display_name}({field_config.name}) "
+                        f"has duplicate unique value {val}, usernames: {usernames}"
+                    )
                 )
 
     def _validate_custom_fields(self):
