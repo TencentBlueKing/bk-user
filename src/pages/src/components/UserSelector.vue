@@ -16,6 +16,7 @@ import { computed, ref } from 'vue';
 import BkUserSelector from '@blueking/bk-user-selector';
 
 import '@blueking/bk-user-selector/vue3/vue3.css';
+import { t } from '@/language';
 import { useUser } from '@/store';
 const value = defineModel<string | string[]>('value');
 defineProps({
@@ -28,7 +29,7 @@ const userStore = useUser();
 const apiBaseUrl = ref(window.BK_USER_WEB_APIGW_URL);
 
 // 用户组名称
-const userGroupName = ref('内置管理员');
+const userGroupName = ref(t('内置管理员'));
 const userGroup = computed(() => [
   {
     id: userStore.admin?.bk_username,
