@@ -326,50 +326,14 @@ class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        required = data["required"]
-        unique = data["unique"]
         builtin_field = self.get_object()
 
-        # 如果要将字段设为必填，需要检查现有用户是否都有该字段的值
-        if required:
-            missing_users = TenantUserBuiltinFieldHandler.get_users_with_missing_field_value(
-                tenant_id, builtin_field.name
-            )
-            if missing_users:
-                user_list = ", ".join(missing_users[:5])  # 最多显示5个用户名
-                suffix = f" 等 {len(missing_users)} 个用户" if len(missing_users) > 5 else ""  # noqa: PLR2004
-                error_msg = (
-                    f"无法将字段 '{builtin_field.name}' 设为必填："
-                    f"用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
-                )
-                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(error_msg)
+        # 对字段配置中的唯一与必填属性进行校验
+        self._validate_builtin_field_required(tenant_id, builtin_field, data["required"])
+        self._validate_builtin_field_unique(tenant_id, builtin_field, data["unique"])
 
-        # 如果要将 email 或 phone 设为非必填，检查另一个字段是否为必填
-        elif builtin_field.name in ["email", "phone"]:
-            target_field_name = "phone" if builtin_field.name == "email" else "email"
-            target_field = TenantUserBuiltinField.objects.filter(tenant_id=tenant_id, name=target_field_name).first()
-
-            if not target_field.required:
-                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(
-                    f"无法将字段 '{builtin_field.name}' 设为非必填：另一个字段 '{target_field_name}' 已为非必填。"
-                )
-
-        # 如果要将字段设为唯一，需要检查现有用户该字段是否存在重复值
-        if unique:
-            duplicate_users = TenantUserBuiltinFieldHandler.get_users_with_duplicate_field_value(
-                tenant_id, builtin_field.name
-            )
-            if duplicate_users:
-                user_list = ", ".join(duplicate_users[:5])  # 最多显示5个用户名
-                suffix = f" 等 {len(duplicate_users)} 个用户" if len(duplicate_users) > 5 else ""  # noqa: PLR2004
-                error_msg = (
-                    f"无法将字段 '{builtin_field.name}' 设为唯一："
-                    f"用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
-                )
-                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(error_msg)
-
-        builtin_field.required = required
-        builtin_field.unique = unique
+        builtin_field.required = data["required"]
+        builtin_field.unique = data["unique"]
         builtin_field.personal_center_visible = data["personal_center_visible"]
         builtin_field.personal_center_editable = data["personal_center_editable"]
         builtin_field.manager_editable = data["manager_editable"]
@@ -386,3 +350,47 @@ class TenantBuiltinFieldUpdateApi(CurrentUserTenantMixin, generics.UpdateAPIView
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _validate_builtin_field_required(self, tenant_id: str, builtin_field: TenantUserBuiltinField, required: bool):
+        # 如果要将字段设为必填，需要检查现有用户是否都有该字段的值
+        if required:
+            missing_users = TenantUserBuiltinFieldHandler.get_users_with_missing_field_value(
+                tenant_id, builtin_field.name
+            )
+            if missing_users:
+                user_list = ", ".join(missing_users[:5])
+                suffix = f" 等 {len(missing_users)} 个用户" if len(missing_users) > 5 else ""  # noqa: PLR2004
+                error_msg = (
+                    f"无法将字段 '{builtin_field.name}' 设为必填："
+                    f"用户 {user_list}{suffix} 未填写该字段的值。请先完善这些用户的字段数据。"
+                )
+                raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(error_msg)
+            return
+
+        if builtin_field.name not in ["email", "phone"]:
+            return
+
+        # 如果要将 email 或 phone 设为非必填，检查另一个字段是否为必填
+        target_field_name = "phone" if builtin_field.name == "email" else "email"
+        target_field = TenantUserBuiltinField.objects.filter(tenant_id=tenant_id, name=target_field_name).first()
+        if not target_field.required:
+            raise error_codes.TENANT_SETTING_BUILTIN_FIELD_REQUIRED_CHECK_FAILED.f(
+                f"无法将字段 '{builtin_field.name}' 设为非必填：另一个字段 '{target_field_name}' 已为非必填。"
+            )
+
+    def _validate_builtin_field_unique(self, tenant_id: str, builtin_field: TenantUserBuiltinField, unique: bool):
+        if not unique:
+            return
+
+        # 如果要将字段设为唯一，需要检查现有用户该字段是否存在重复值
+        duplicate_users = TenantUserBuiltinFieldHandler.get_users_with_duplicate_field_value(
+            tenant_id, builtin_field.name
+        )
+        if duplicate_users:
+            user_list = ", ".join(duplicate_users[:5])
+            suffix = f" 等 {len(duplicate_users)} 个用户" if len(duplicate_users) > 5 else ""  # noqa: PLR2004
+            error_msg = (
+                f"无法将字段 '{builtin_field.name}' 设为唯一："
+                f"用户 {user_list}{suffix} 存在重复的字段值。请先修正这些重复数据。"
+            )
+            raise error_codes.TENANT_SETTING_BUILTIN_FIELD_UNIQUENESS_CHECK_FAILED.f(error_msg)
