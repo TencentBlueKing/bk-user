@@ -39,9 +39,9 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class Command(BaseCommand):
-    """内置管理员密码
-    $ (生成内置管理员密码)python manage.py builtin_management_password generate
-    $ (获取内置管理员密码)python manage.py builtin_management_password get
+    """
+    更新内置管理员密码
+    $ python manage.py update_builtin_management_password
     """
 
     def add_arguments(self, parser):

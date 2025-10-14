@@ -97,5 +97,5 @@ class Command(BaseCommand):
         # 创建租户成功提示
         self.stdout.write(
             f"create tenant [{tenant.id}] successfully, "
-            "you can use admin/password to login and manage tenant organization data"
+            f"you can use admin, password {password} to login and manage tenant organization data"
         )

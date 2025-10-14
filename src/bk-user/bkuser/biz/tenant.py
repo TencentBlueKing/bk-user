@@ -18,7 +18,7 @@
 import datetime
 import logging
 import operator
-import random
+import secrets
 import string
 from functools import reduce
 from typing import Dict, List, Optional, Tuple
@@ -563,10 +563,10 @@ class BuiltinManagementLoginUrlTokenManager:
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.BUILTIN_MANAGEMENT_LOGIN_URL_TOKEN)
 
     @staticmethod
-    def _generate_random_string(length: int = 8) -> str:
+    def _generate_random_string(length: int = 32) -> str:
         """生成随机字符串"""
         allow_chars = string.ascii_letters + string.digits
-        return "".join([random.choice(allow_chars) for __ in range(length)])
+        return "".join([secrets.choice(allow_chars) for __ in range(length)])
 
     def generate_login_url_token(self, idp_id: str, expires_in_seconds: int) -> str:
         """生成内置管理员登录 URL Token"""

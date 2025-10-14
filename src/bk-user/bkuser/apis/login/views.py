@@ -288,6 +288,6 @@ class BuiltinManagementLoginUrlTokenVerifyApi(LoginApiAccessControlMixin, generi
         is_valid, error_message = token_manager.verify_login_url_token(token, idp_id)
 
         if not is_valid:
-            raise error_codes.NO_PERMISSION.f(f"访问被拒绝: {error_message}")
+            raise error_codes.NO_PERMISSION.f(_("访问被拒绝: {}").format(error_message))
 
         return Response()
