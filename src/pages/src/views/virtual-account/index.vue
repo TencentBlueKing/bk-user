@@ -64,7 +64,7 @@
       </bk-table-column>
       <bk-table-column prop="owners" :label="$t('账号责任人')">
         <template #default="{ row }">
-          <bk-user-display-name :user-id="row.owners"></bk-user-display-name>
+          <DisplayName :user-id="row.owners" />
         </template>
       </bk-table-column>
       <bk-table-column prop="created_at" :label="$t('创建时间')">
@@ -119,6 +119,7 @@ import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 import EditDetails from './EditDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
+import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';

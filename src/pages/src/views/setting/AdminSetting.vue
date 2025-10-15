@@ -65,7 +65,7 @@
             <template #icon>
               <i class="user-icon icon-yonghu" />
             </template>
-            {{ `${item.username}（${item.full_name}）` }}
+            <DisplayName :user-id="item.id" />
           </bk-tag>
           <i
             class="user-icon icon-add-2"
@@ -134,6 +134,7 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import DisplayName from '@/components/display-name.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import MemberSelector from '@/components/MemberSelector.vue';

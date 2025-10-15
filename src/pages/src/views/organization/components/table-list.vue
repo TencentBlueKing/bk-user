@@ -98,7 +98,7 @@
       >
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option pt-[5px] pb-[5px]">
-            <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
+            <DisplayName :user-id="item.id" class="text-[#313238]" />
             <p class="text-[#979BA5] mt-[6px]">
                 <bk-overflow-title
                   :style="{display: 'inline-block'}"
@@ -267,6 +267,7 @@
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
 import { useTableMaxHeight } from '@/hooks';
+import DisplayName from '@/components/display-name.vue';
 
   const appStore = useAppStore();
   const recursive = ref(true);

@@ -10,7 +10,7 @@ import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/
 
 import HeaderBox from './views/MainHeader.vue';
 
-import { currentUser } from '@/http';
+import { currentUser, getBuiltinManager } from '@/http';
 import { locale as i18nLocal, t } from '@/language/index';
 import { platformConfig, useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
@@ -19,39 +19,6 @@ import ResetPassword from '@/views/reset-password/newPassword.vue';
 const route = useRoute();
 
 const showName = ref(null);
-// 判断是否是重置密码的路由
-watch(() => route.name, (val) => {
-  const filterRoutes = [
-    'password',
-    'resetPassword',
-    'bindResult',
-  ];
-  if (filterRoutes.includes(val as string)) {
-    isLoading.value = false;
-    return;
-  }
-
-  // 先检查store中是否已有用户信息
-  if (user.user.username) {
-    isLoading.value = false;
-    return;
-  }
-
-  currentUser()
-    .then((res) => {
-      user.setUser(res.data);
-      BkUserDisplayName.configure({
-        tenantId: res.data.tenant_id,
-        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
-      });
-    })
-    .catch(() => {
-      Message(t('获取用户信息失败，请检查后再试'));
-    })
-    .finally(() => {
-      isLoading.value = false;
-    });
-});
 
 // 加载完用户数据才会展示页面
 const isLoading = ref(true);
@@ -86,6 +53,45 @@ const getConfigData = async () => {
   platformConfigData.update(config);
 };
 getConfigData();
+
+
+// 判断是否是重置密码的路由
+watch(() => route.name, (val) => {
+  const filterRoutes = [
+    'password',
+    'resetPassword',
+    'bindResult',
+  ];
+  if (filterRoutes.includes(val as string)) {
+    isLoading.value = false;
+    return;
+  }
+
+  // 先检查store中是否已有用户信息
+  if (user.user.username) {
+    isLoading.value = false;
+    return;
+  }
+
+  currentUser()
+    .then(async (res) => {
+      user.setUser(res.data);
+      BkUserDisplayName.configure({
+        tenantId: res.data.tenant_id,
+        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
+      });
+      const managerData = await getBuiltinManager();
+      if (managerData?.data) {
+        user.admin = managerData?.data;
+      }
+    })
+    .catch(() => {
+      Message(t('获取用户信息失败，请检查后再试'));
+    })
+    .finally(() => {
+      isLoading.value = false;
+    });
+});
 </script>
 
 <template>
