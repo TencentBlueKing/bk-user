@@ -45,4 +45,9 @@ urlpatterns = [
     ),
     # 查询租户用户
     path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="login.tenant_user.retrieve"),
+    path(
+        "tenant-users/<str:id>/language/",
+        views.TenantUserLanguageUpdateApi.as_view(),
+        name="login.tenant_user.language.update",
+    ),
 ]

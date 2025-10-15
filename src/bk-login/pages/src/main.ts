@@ -9,7 +9,7 @@ import VueDOMPurifyHTML from 'vue-dompurify-html';
 // 全量引入 bkui-vue
 import bkui from 'bkui-vue';
 // 全量引入 bkui-vue 样式
-import 'bkui-vue/dist/style.css';
+import 'bkui-vue/dist/style.variable.css';
 
 createApp(App)
   .use(router)

@@ -22,6 +22,7 @@ bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAz
   "data": {
     "bk_username": "nteuuhzxlh0jcanw",
     "tenant_id": "system",
+    "login_name": "admin",
     "display_name": "admin",
     "language": "zh-cn",
     "time_zone": "Asia/Shanghai"
@@ -36,6 +37,7 @@ bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAz
 |--------------|--------|----------------------------------------------|
 | bk_username  | string | User unique identifier, globally unique      |
 | tenant_id    | string | User's tenant ID                             |
+| login_name   | string | Unique ID of the user within the enterprise  |
 | display_name | string | User display name                            |
 | language     | string | User language, enumerated values: zh-cn / en |
 | time_zone    | string | User's time zone                             |

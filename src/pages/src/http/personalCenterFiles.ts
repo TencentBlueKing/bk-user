@@ -2,25 +2,34 @@ import { AxiosRequestConfig } from 'axios';
 
 import http from './fetch';
 import type {
+  CurrentNaturalUserData,
   PatchUserEmailParams,
   PatchUserLogoParams,
   PatchUserPhoneParams,
+  PersonalCenterUserFeatureData,
+  PersonalCenterUsersData,
+  PersonalCenterUserVisibleFieldsData,
   postPersonalCenterUserEmailCaptchaParams,
   postPersonalCenterUserPhoneCaptchaParams,
   PutUserPasswordParams,
+  WechatBindingData,
+  WechatBindStatusData,
 } from './types/personalCenterFiles';
 interface Config extends AxiosRequestConfig {
   globalError?: boolean
 }
+interface ResponseData<T> {
+  data: T
+}
 /**
  *个人中心-关联账户列表
  */
-export const getCurrentNaturalUser = () => http.get('/api/v3/web/personal-center/current-natural-user/');
+export const getCurrentNaturalUser = () => http.get<ResponseData<CurrentNaturalUserData>>('/api/v3/web/personal-center/current-natural-user/');
 
 /**
  * 个人中心-关联账户详情
  */
-export const getPersonalCenterUsers = (id: string) => http.get(`/api/v3/web/personal-center/tenant-users/${id}/`);
+export const getPersonalCenterUsers = (id: string) => http.get<ResponseData<PersonalCenterUsersData>>(`/api/v3/web/personal-center/tenant-users/${id}/`);
 
 /**
  * 租户用户更新邮箱
@@ -40,7 +49,7 @@ export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.put(`/
 /**
  * 个人中心-用户可见字段列表
  */
-export const getPersonalCenterUserVisibleFields = (id: string) => http.get(`/api/v3/web/personal-center/tenant-users/${id}/fields/`);
+export const getPersonalCenterUserVisibleFields = (id: string) => http.get<ResponseData<PersonalCenterUserVisibleFieldsData>>(`/api/v3/web/personal-center/tenant-users/${id}/fields/`);
 
 /**
  * 修改用户自定义字段
@@ -65,7 +74,7 @@ export const putPersonalCenterUserPassword = (params: PutUserPasswordParams) => 
 /**
  * 个人中心-用户功能特性-当前用户是否支持修改密码
  */
-export const getPersonalCenterUserFeature = (id: string) => http.get(`/api/v3/web/personal-center/tenant-users/${id}/feature-flags/`);
+export const getPersonalCenterUserFeature = (id: string) => http.get<ResponseData<PersonalCenterUserFeatureData>>(`/api/v3/web/personal-center/tenant-users/${id}/feature-flags/`);
 
 /**
  * 个人中心-租户修改手机号时，发送验证码
@@ -75,4 +84,19 @@ export const postPersonalCenterUserPhoneCaptcha = (id: string, params: postPerso
 /**
  * 个人中心-租户修改邮箱时，发送验证码
  */
-export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/ `, params, config);
+export const postPersonalCenterUserEmailCaptcha = (id: string, params: postPersonalCenterUserEmailCaptchaParams, config?: Config) => http.post(`/api/v3/web/personal-center/tenant-users/${id}/email-verification-code/`, params, config);
+
+/**
+ * 个人中心-查询用户微信 ID
+ */
+export const getWechatBindStatus = (id: string) => http.get<ResponseData<WechatBindStatusData>>(`/api/v3/web/personal-center/weixin/tenant-users/${id}/wx_userid/`);
+
+/**
+ * 个人中心-微信绑定
+ */
+export const wechatBinding = (id: string) => http.get<ResponseData<WechatBindingData>>(`/api/v3/web/personal-center/weixin/tenant-users/${id}/to-bind-info/`);
+
+/**
+ * 个人中心-删除用户微信 ID
+ */
+export const putWechatUnbind = (id: string) => http.delete(`/api/v3/web/personal-center/weixin/tenant-users/${id}/wx_userid/`);

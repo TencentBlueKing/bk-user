@@ -20,13 +20,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'src/bk-login/requirements_dev.txt'
       - name: create idp plugin symbolic link
         run: |
           ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-login/bklogin
-      - name: Install dependencies
-        run: pip install -r src/bk-login/requirements_dev.txt
+      - name: Install a specific version of uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.19"
+          enable-cache: true
+          cache-dependency-glob: "src/bk-login/uv.lock"
+      - name: Install the project
+        run: cd src/bk-login && export UV_PROJECT_ENVIRONMENT="${pythonLocation}" && uv sync --locked --all-extras --dev
       - name: Format & Lint with ruff
         run: |
           ruff format src/bk-login --config=src/bk-login/pyproject.toml --no-cache
@@ -51,18 +55,22 @@ jobs:
         uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: "3.2.0"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'src/bk-login/requirements_dev.txt'
       - name: create idp plugin symbolic link
         run: |
           ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-login/bklogin
-      - name: Install dependencies
-        run: pip install -r src/bk-login/requirements_dev.txt
+      - name: Install a specific version of uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.19"
+          enable-cache: true
+          cache-dependency-glob: "src/bk-login/uv.lock"
+      - name: Install the project
+        run: cd src/bk-login && export UV_PROJECT_ENVIRONMENT="${pythonLocation}" && uv sync --locked --all-extras --dev
       - name: Run unittest
         working-directory: src/bk-login
         run: |

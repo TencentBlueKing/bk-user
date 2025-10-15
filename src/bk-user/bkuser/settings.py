@@ -86,6 +86,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bkuser.auth.middlewares.LoginMiddleware",
+    "bkuser.apis.open_web.middlewares.TenantIDHeaderMiddleware",
+    "bkuser.apis.open_web.middlewares.OpenWebApiAuditMiddleware",
     "bkuser.common.middlewares.TimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
@@ -261,6 +263,7 @@ BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
+BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
 # bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
 # Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
@@ -359,7 +362,10 @@ CACHES: Dict[str, Any] = {
             # Redis 连接池配置
             "CONNECTION_POOL_KWARGS": {
                 # redis-py 默认不会关闭连接，可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
-                "max_connections": REDIS_MAX_CONNECTIONS
+                "max_connections": REDIS_MAX_CONNECTIONS,
+                # redis-py will send SETINFO command, not valid for older version redis
+                "lib_name": None,
+                "lib_version": None,
             },
         },
     },
@@ -479,7 +485,7 @@ RABBITMQ_PASSWORD = env.str("RABBITMQ_PASSWORD", default="")
 RABBITMQ_TLS_ENABLED = env.bool("RABBITMQ_TLS_ENABLED", default=False)
 RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
 RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
-RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_CERT_KEY_FILE", default="")
+RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_TLS_CERT_KEY_FILE", default="")
 if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
     CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
     if RABBITMQ_TLS_ENABLED:
@@ -524,11 +530,11 @@ if not CELERY_BROKER_URL:
             "socket_keepalive": True,
         }
         if REDIS_TLS_ENABLED:
-            # 用于与 Sentinel 节点之间的TLS通信
+            # 用于与 Sentinel 节点之间的 TLS 通信
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl"] = True
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_ca_certs"] = REDIS_TLS_CERT_CA_FILE
             CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_cert_reqs"] = ssl.CERT_REQUIRED
-            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CERT_FILE
+            CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_check_hostname"] = REDIS_TLS_CHECK_HOSTNAME
             # mTLS
             if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
                 CELERY_BROKER_TRANSPORT_OPTIONS["sentinel_kwargs"]["ssl_certfile"] = REDIS_TLS_CERT_FILE
@@ -597,7 +603,7 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
     }
     # 生成指定 Logger 对应的 Handlers
     logger_handlers_map: Dict[str, List[str]] = {}
-    for logger_name in ["root", "component", "celery"]:
+    for logger_name in ["root", "component", "celery", "open_web_api_access"]:
         handlers = []
 
         if to_console:
@@ -642,11 +648,16 @@ def build_logging_config(log_level: str, to_console: bool, file_directory: Optio
             "django": {"handlers": ["null"], "level": "INFO", "propagate": True},
             "django.server": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
             "django.request": {"handlers": logger_handlers_map["root"], "level": log_level, "propagate": False},
-            # 除 root 外的其他指定 Logger
+            "open_web_api_access": {
+                "handlers": logger_handlers_map["open_web_api_access"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            # 除 root 和 open_web_api_access 外的其他指定 Logger
             **{
                 logger_name: {"handlers": handlers, "level": log_level, "propagate": False}
                 for logger_name, handlers in logger_handlers_map.items()
-                if logger_name != "root"
+                if logger_name not in ["root", "open_web_api_access"]
             },
         },
     }
@@ -743,11 +754,21 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
 # 是否启用虚拟账号页面功能
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
-ENABLE_CREATE_TENANT = ENABLE_MUTIL_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
+ENABLE_CREATE_TENANT = ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_CREATE_TENANT", default=False)
+# bk-cmsi 网关是否有部署
+HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
+# bk-cmsi 网关部署环境
+BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
+# 是否启用协同租户功能
+ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
+# 内置租户管理员 username
+INITIAL_ADMIN_USERNAME = env.str("INITIAL_ADMIN_USERNAME", "admin")
+# 内置租户管理员密码
+INITIAL_ADMIN_PASSWORD = env.str("INITIAL_ADMIN_PASSWORD", "")
 
 # logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
@@ -825,3 +846,25 @@ BATCH_QUERY_USER_DISPLAY_INFO_BY_BK_USERNAME_LIMIT = env.int("BATCH_QUERY_USER_D
 
 # 限制人员选择器用户/部门搜索 API 返回的最大条数，避免性能问题
 SELECTOR_SEARCH_API_LIMIT = env.int("SELECTOR_SEARCH_API_LIMIT", 100)
+
+# 限制 OpenWeb API 调用频率，避免恶意请求问题
+OPEN_WEB_API_THROTTLE_RATES = env.str("OPEN_WEB_API_THROTTLE_RATES", "100/minute")
+
+# 为避免 OpenWebAPI 被滥用，调用方必须有基于浏览器请求的必要 Headers
+OPEN_WEB_API_REQUIRED_BROWSER_HEADERS = env.list(
+    "OPEN_WEB_API_REQUIRED_BROWSER_HEADERS",
+    default=[
+        "HTTP_ACCEPT",
+        "HTTP_ACCEPT_LANGUAGE",
+        "HTTP_ACCEPT_ENCODING",
+        "HTTP_USER_AGENT",
+        "HTTP_SEC_FETCH_DEST",
+        "HTTP_SEC_FETCH_MODE",
+        "HTTP_SEC_FETCH_SITE",
+    ],
+)
+
+# 限制 USER_AGENT 只能是来自于浏览器
+OPEN_WEB_API_USER_AGENT_WHITELIST = env.list(
+    "OPEN_WEB_API_USER_AGENT_WHITELIST", default=["Chrome", "Firefox", "Safari", "Edg"]
+)

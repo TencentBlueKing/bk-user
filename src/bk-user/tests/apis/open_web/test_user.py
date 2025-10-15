@@ -61,6 +61,17 @@ class TestTenantUserDisplayInfoRetrieveApi:
             assert resp.status_code == status.HTTP_200_OK
             assert resp.data["display_name"] == "13512345671-zhangsan--张三"
 
+    @pytest.mark.usefixtures("_init_virtual_tenant_users")
+    def test_with_virtual_user(self, api_client):
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        resp = api_client.get(
+            reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": virtual_zhangsan.id})
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["display_name"] == "zhangsan(张三)"
+        assert resp.data["login_name"] == "zhangsan"
+        assert resp.data["full_name"] == "张三"
+
     def test_with_invalid_bk_username(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": "invalid"}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -82,6 +93,19 @@ class TestTenantUserDisplayInfoListApi:
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
+
+    @pytest.mark.usefixtures("_init_virtual_tenant_users")
+    def test_with_virtual_user(self, api_client):
+        virtual_zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
+        virtual_lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
+        resp = api_client.get(
+            reverse("open_web.tenant_user.display_info.list"),
+            data={"bk_usernames": ",".join([virtual_zhangsan.id, virtual_lisi.id])},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {virtual_zhangsan.id, virtual_lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
 
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
@@ -253,7 +277,7 @@ class TestTenantUserSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id}
-        assert {t["display_name"] for t in resp.data} == {"86-13512345671--zhangsan@m.com"}
+        assert {t["display_name"] for t in resp.data} == {"86-13512345671--zhangsan@m.com", "zhangsan(张三)"}
 
     def test_with_collaboration_tenant_by_other_expression(
         self, api_client, collaboration_tenant, display_name_expression_config_with_collaboration_tenant_user

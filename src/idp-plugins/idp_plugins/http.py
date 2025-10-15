@@ -134,12 +134,15 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
             resp.status_code,
             content,
         )
-        return INVALID_JSON_STATUS_CODE, {
-            "error": (
-                f"http response body not json, http status code is {resp.status_code}! "  # type: ignore
-                f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
-            )
-        }
+        return (
+            INVALID_JSON_STATUS_CODE,
+            {
+                "error": (
+                    f"http response body not json, http status code is {resp.status_code}! "  # type: ignore
+                    f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
+                )
+            },
+        )
 
 
 def _http_request_only_20x(method: str, url: str, **kwargs) -> Tuple[bool, Dict]:

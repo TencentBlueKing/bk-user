@@ -20,7 +20,5 @@ from . import views
 
 urlpatterns = [
     path("", views.VirtualUserListCreateApi.as_view(), name="virtual_user.list_create"),
-    path(
-        "<str:id>/", views.VirtualUserRetrieveUpdateDestroyApi.as_view(), name="virtual_user.retrieve_update_destroy"
-    ),
+    path("<str:id>/", views.VirtualUserRetrieveUpdateApi.as_view(), name="virtual_user.retrieve_update"),
 ]

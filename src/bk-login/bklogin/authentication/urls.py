@@ -43,3 +43,10 @@ urlpatterns = [
     # 确认登录的用户
     path("sign-in-users/", views.SignInTenantUserCreateApi.as_view()),
 ]
+
+# ------------------------------------------ 内置管理员登录 ------------------------------------------
+urlpatterns += [
+    # 内置管理员登录
+    path("builtin-management-auth/idps/<str:idp_id>/", views.BuiltinManagementLoginView.as_view()),
+    path("builtin-management-auth/idps/<str:idp_id>/authenticate/", views.BuiltinManagementAuthenticateView.as_view()),
+]

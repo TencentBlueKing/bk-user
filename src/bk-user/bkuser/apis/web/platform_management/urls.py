@@ -39,7 +39,17 @@ urlpatterns = [
                     views.TenantRelatedResourceStatsApi.as_view(),
                     name="tenant.related_resource_stats",
                 ),
-            ]
+                path(
+                    "<str:id>/builtin-manager/password-rule/",
+                    views.TenantBuiltinManagerPasswordRuleRetrieveApi.as_view(),
+                    name="tenant.builtin_manager_password_rule",
+                ),
+                path(
+                    "default-password-rule/",
+                    views.DefaultPasswordRuleRetrieveApi.as_view(),
+                    name="tenant.default_password_rule",
+                ),
+            ],
         ),
     ),
 ]

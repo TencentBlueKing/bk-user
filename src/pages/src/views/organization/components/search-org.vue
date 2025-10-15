@@ -29,7 +29,7 @@
             >
               <div class="leading-[20px]">
                 <span class="text-[#313238] pr-[8px]">{{ item.name }}</span>
-                <span class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
+                <span v-is-multiple-tenant class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
               <bk-overflow-title class="text-[#979BA5] leading-[20px]">
                 {{ item.organization_path }}
@@ -53,7 +53,7 @@
                   {{ item.username }}
                   ({{ item.full_name }})
                 </span>
-                <span class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
+                <span v-is-multiple-tenant class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
               <div class="inline-flex w-full">
                 <bk-overflow-title

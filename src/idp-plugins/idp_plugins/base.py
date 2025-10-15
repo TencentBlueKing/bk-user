@@ -49,8 +49,7 @@ class BaseIdpPlugin(ABC):
     dispatch_configs: List[DispatchConfigItem]
 
     @abstractmethod
-    def __init__(self, *args, **kwargs):
-        ...
+    def __init__(self, *args, **kwargs): ...
 
     def _not_found(self, request: HttpRequest) -> HttpResponse:
         allowed_dispatch_config_message = " | ".join(

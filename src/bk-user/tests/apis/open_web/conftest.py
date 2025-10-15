@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from typing import Dict
 from unittest import mock
 
 import pytest
@@ -31,6 +32,7 @@ from bkuser.apps.tenant.models import (
 )
 from bkuser.auth.models import User
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.test.utils import override_settings
 from rest_framework.test import APIClient
 
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
@@ -39,19 +41,38 @@ from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 
 @pytest.fixture
-def api_client(random_tenant):
-    client = APIClient()
-    client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-    with mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []), mock.patch.object(
-        OpenWebApiCommonMixin, "permission_classes", []
-    ):
-        yield client
+def api_client(random_tenant, browser_headers):
+    with override_settings(ENABLE_MULTI_TENANT_MODE=True, BK_DOMAIN_SCHEME="https"):
+        client = APIClient()
+        client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
+        client.defaults.update(browser_headers)
+        with (
+            mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []),
+            mock.patch.object(OpenWebApiCommonMixin, "permission_classes", []),
+        ):
+            yield client
 
 
 @pytest.fixture
 def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
     """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def browser_headers() -> Dict[str, str]:
+    return {
+        "HTTP_ACCEPT": "application/json",
+        "HTTP_ACCEPT_LANGUAGE": "zh-CN,zh;q=0.9",
+        "HTTP_ACCEPT_ENCODING": "gzip, deflate",
+        "HTTP_USER_AGENT": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+        ),
+        "HTTP_SEC_FETCH_DEST": "empty",
+        "HTTP_SEC_FETCH_MODE": "cors",
+        "HTTP_SEC_FETCH_SITE": "same-site",
+    }
 
 
 @pytest.fixture

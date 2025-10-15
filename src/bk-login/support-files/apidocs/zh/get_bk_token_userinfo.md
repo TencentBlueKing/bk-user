@@ -22,6 +22,7 @@ bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAz
   "data": {
     "bk_username": "nteuuhzxlh0jcanw",
     "tenant_id": "system",
+    "login_name": "admin",
     "display_name": "admin",
     "language": "zh-cn",
     "time_zone": "Asia/Shanghai"
@@ -36,6 +37,7 @@ bk_token=bkcrypt%24gAAAAABnWEIbW4BC9VrczvN5pE-ga9fjq0JvT-ZbbjRRIYeVpGsRWWR3NASAz
 |--------------|--------|---------------------|
 | bk_username  | string | 用户唯一标识，全局唯一         |
 | tenant_id    | string | 用户所属租户 ID           |
+| login_name   | string | 企业内用户唯一标识           |
 | display_name | string | 用户展示名               |
 | language     | string | 用户语言，枚举值：zh-cn / en |
 | time_zone    | string | 用户所在时区              |

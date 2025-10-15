@@ -13,9 +13,8 @@ export interface VirtualUsersParams {
 export interface NewVirtualUsersParams {
   username: string,
   full_name: string,
-  email?: string,
-  phone?: string,
-  phone_country_code?: string,
+  app_codes: string[],
+  owners: string[],
 }
 
 /**
@@ -23,7 +22,6 @@ export interface NewVirtualUsersParams {
  */
 export interface PutVirtualUsersParams {
   full_name: string,
-  email?: string,
-  phone?: string,
-  phone_country_code?: string,
+  app_codes: string[],
+  owners: string[],
 }

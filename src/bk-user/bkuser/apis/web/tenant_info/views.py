@@ -33,12 +33,14 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.auditor import TenantAuditor, TenantRealManagerAuditor
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .mixins import CurrentTenantBuiltinDataSourceUserMixin
 from .serializers import (
+    TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ,
     TenantBuiltinManagerPasswordUpdateInputSLZ,
     TenantBuiltinManagerRetrieveOutputSLZ,
     TenantBuiltinManagerUpdateInputSLZ,
@@ -202,6 +204,25 @@ class TenantBuiltinManagerPasswordUpdateApi(
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantBuiltinManagerPasswordRuleRetrieveApi(CurrentTenantBuiltinDataSourceUserMixin, generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="获取内置管理账户密码规则提示",
+        responses={status.HTTP_200_OK: TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        # 内建数据源
+        data_source, _ = self.get_builtin_data_source_and_user()
+
+        # Note: 理论上内建数据源的密码规则不可能为空
+        password_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        return Response(
+            status=status.HTTP_200_OK, data=TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(password_rule).data
+        )
 
 
 class TenantRealManagerListCreateDestroyApi(

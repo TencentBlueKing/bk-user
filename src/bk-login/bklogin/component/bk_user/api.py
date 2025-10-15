@@ -22,7 +22,7 @@ from django.conf import settings
 from requests.auth import HTTPBasicAuth
 
 from bklogin.common.error_codes import error_codes
-from bklogin.component.http import HttpStatusCode, http_get, http_post
+from bklogin.component.http import HttpStatusCode, http_get, http_post, http_put
 from bklogin.utils.url import urljoin
 
 from .models import GlobalSetting, IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
@@ -105,3 +105,12 @@ def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
     """通过租户用户 ID 获取租户用户信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v3/login/tenant-users/{tenant_user_id}/")
     return TenantUserDetailInfo(**data)
+
+
+def update_tenant_user_language(tenant_user_id: str, language: str) -> None:
+    """更新租户用户语言"""
+    return _call_bk_user_api_20x(
+        http_put,
+        f"/api/v3/login/tenant-users/{tenant_user_id}/language/",
+        json={"language": language},
+    )

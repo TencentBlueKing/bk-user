@@ -27,6 +27,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.users import (
     CurrentUserLanguageUpdateInputSLZ,
@@ -40,6 +41,7 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserSearchOutputSLZ,
     VirtualUserListOutputSLZ,
 )
+from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
@@ -65,8 +67,8 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id=self.real_data_source_id,
-            ).select_related("data_source_user", "data_source"),
+                data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+            ).select_related("data_source_user"),
             id=kwargs["id"],
         )
 
@@ -98,12 +100,12 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id=self.real_data_source_id,
+            data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
         ).select_related("data_source_user")
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
             )
         }
@@ -123,6 +125,8 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     搜索用户（包括协同用户与虚拟用户）
     """
+
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_USER)]
 
     pagination_class = None
 
@@ -171,9 +175,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-            queryset
-        )
+        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -187,6 +189,8 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
     批量查询用户（包括协同用户与虚拟用户）
     """
+
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_USER)]
 
     pagination_class = None
 
@@ -233,9 +237,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_mapping"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-            queryset
-        )
+        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -249,6 +251,8 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     查询虚拟用户列表
     """
 
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.LIST_VIRTUAL_USER)]
+
     serializer_class = VirtualUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
@@ -258,7 +262,7 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         return {
-            "display_name_mapping": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
             )
         }

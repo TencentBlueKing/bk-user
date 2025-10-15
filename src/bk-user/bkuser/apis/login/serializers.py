@@ -27,6 +27,7 @@ from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -152,3 +153,10 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     class Meta:
         ref_name = "login.TenantUserRetrieveOutputSLZ"
+
+
+class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+
+    class Meta:
+        ref_name = "login.TenantUserLanguageUpdateInputSLZ"
