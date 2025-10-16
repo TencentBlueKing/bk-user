@@ -19,7 +19,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apis.plugin.mixins import PluginApiAccessControlMixin
-from bkuser.biz.wecom import WeComAccessTokenManager
+from bkuser.biz.weixin import WeComAccessTokenManager
 
 from .serializers import WeComAccessTokenInputSLZ, WeComAccessTokenOutputSLZ
 

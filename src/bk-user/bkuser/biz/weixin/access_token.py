@@ -19,19 +19,16 @@ import logging
 from typing import Any, Dict, Tuple
 from urllib.parse import urlparse
 
-from django.conf import settings
-
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
-from bkuser.component.apigw import _call_apigw_api
-from bkuser.component.esb import _call_esb_api
+from bkuser.component.cmsi import get_notification_client
 from bkuser.component.http import http_get
 from bkuser.utils.url import urljoin
 
 logger = logging.getLogger(__name__)
 
-# 企业微信 API 基础URL
+# 企业微信 API 基础 URL
 WECOM_API_BASE_URL = "https://qyapi.weixin.qq.com/cgi-bin"
 
 
@@ -124,32 +121,16 @@ class WeComAccessTokenManager:
             return access_token
 
         # 获取蓝鲸 CMSI 中的微信配置
-        wecom_config = get_wecom_config(self.tenant_id)
+        notification_client = get_notification_client(self.tenant_id)
+        wecom_config = notification_client.get_weixin_settings()
         corp_id = wecom_config.get("corp_id", "")
         corp_secret = wecom_config.get("corp_secret", "")
 
         # 如果传入的 corp_id 和 corp_secret 与蓝鲸 CMSI 配置一致，则使用蓝鲸 CMSI 接口获取 access_token
         if self.corp_id == corp_id and self.corp_secret == corp_secret:
-            access_token = get_access_token_from_cmsi(self.tenant_id)
+            access_token = notification_client.get_weixin_token()["access_token"]
         else:
             # 否则直接使用传入的 corp_id 和 corp_secret 请求 access_token
             access_token, expires_in = self._fetch_access_token()
             self.cache.set(cache_key, access_token, expires_in - 300)
         return access_token
-
-
-def get_wecom_config(tenant_id: str) -> Dict[str, Any]:
-    """获取蓝鲸 CMSI 中的微信配置"""
-    if settings.ENABLE_MULTI_TENANT_MODE:
-        return _call_apigw_api(http_get, "bk-cmsi", "/v1/channels/weixin/settings/", tenant_id)
-    return _call_esb_api(http_get, "/api/c/compapi/esb/get_weixin_config/")
-
-
-def get_access_token_from_cmsi(tenant_id: str) -> str:
-    """从蓝鲸 CMSI 获取 access_token"""
-    if settings.ENABLE_MULTI_TENANT_MODE:
-        resp_data = _call_apigw_api(http_get, "bk-cmsi", "/v1/channels/weixin/token/", tenant_id)
-    else:
-        resp_data = _call_esb_api(http_get, "/api/c/compapi/weixin/get_token/")
-
-    return resp_data["access_token"]

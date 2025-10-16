@@ -29,12 +29,14 @@ class TestWeComAccessTokenApi:
     def test_get_access_token_with_cmsi(self, api_client):
         """测试从 CMSI 获取 access_token"""
 
-        with (
-            mock.patch("bkuser.biz.wecom.get_wecom_config") as mock_config,
-            mock.patch("bkuser.biz.wecom.get_access_token_from_cmsi") as mock_cmsi,
-        ):
-            mock_config.return_value = {"corp_id": "test_corp_id", "corp_secret": "test_corp_secret"}
-            mock_cmsi.return_value = "cmsi_access_token_456"
+        with mock.patch("bkuser.biz.weixin.access_token.get_notification_client") as mock_get_client:
+            mock_client = mock.Mock()
+            mock_client.get_weixin_settings.return_value = {
+                "corp_id": "test_corp_id",
+                "corp_secret": "test_corp_secret",
+            }
+            mock_client.get_weixin_token.return_value = {"access_token": "cmsi_access_token_456"}
+            mock_get_client.return_value = mock_client
 
             resp = api_client.get(
                 reverse("plugin.wecom.access_token"),
@@ -46,10 +48,17 @@ class TestWeComAccessTokenApi:
     def test_get_access_token_with_wecom_server_config(self, api_client):
         """测试从企业微信服务器获取 access_token"""
         with (
-            mock.patch("bkuser.biz.wecom.get_wecom_config") as mock_config,
-            mock.patch("bkuser.biz.wecom.WeComAccessTokenManager._fetch_access_token") as mock_fetch_access_token,
+            mock.patch("bkuser.biz.weixin.access_token.get_notification_client") as mock_get_client,
+            mock.patch(
+                "bkuser.biz.weixin.access_token.WeComAccessTokenManager._fetch_access_token"
+            ) as mock_fetch_access_token,
         ):
-            mock_config.return_value = {"corp_id": "another_corp_id", "corp_secret": "another_corp_secret"}
+            mock_client = mock.Mock()
+            mock_client.get_weixin_settings.return_value = {
+                "corp_id": "another_corp_id",
+                "corp_secret": "another_corp_secret",
+            }
+            mock_get_client.return_value = mock_client
             mock_fetch_access_token.return_value = ("wecom_access_token_789", 10)
 
             resp = api_client.get(
@@ -62,7 +71,9 @@ class TestWeComAccessTokenApi:
 
     def test_get_access_token_with_invalid_params(self, api_client):
         """测试无效参数"""
-        with mock.patch("bkuser.biz.wecom.WeComAccessTokenManager.get_access_token") as mock_get_access_token:
+        with mock.patch(
+            "bkuser.biz.weixin.access_token.WeComAccessTokenManager.get_access_token"
+        ) as mock_get_access_token:
             mock_get_access_token.side_effect = ValidationError("Invalid corp_id or corp_secret")
 
             resp = api_client.get(
