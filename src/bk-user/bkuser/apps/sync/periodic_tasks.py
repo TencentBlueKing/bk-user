@@ -23,7 +23,7 @@ from django.db.models.functions import Concat
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
@@ -69,13 +69,12 @@ def _should_execute_sync_task(data_source: DataSource, exec_time_index: int) -> 
     """判断是否应该执行同步任务"""
     sync_config = DataSourceSyncConfig(**data_source.sync_config)
 
-    exec_time = sync_config.exec_times[exec_time_index]
-    should_execute = sync_config.should_execute_now(exec_time)
-    if not should_execute:
-        logger.info("data source %s should not execute sync task now based on period config", data_source.id)
-        return False
+    # 分钟级别由 IntervalSchedule 精确控制，直接执行
+    if sync_config.period_type == DataSourceSyncPeriodType.MINUTE:
+        return True
 
-    return True
+    exec_time = sync_config.exec_times[exec_time_index]
+    return sync_config.should_execute_now(exec_time)
 
 
 @app.task(base=BaseTask, ignore_result=True)

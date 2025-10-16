@@ -124,9 +124,7 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         PeriodicTask.objects.filter(name__startswith=periodic_task_name).delete()
         return
 
-    # 在事务中处理任务的创建和删除，避免并发修改
-    with transaction.atomic():
-        sync_periodic_tasks_for_data_source(data_source, cfg)
+    sync_periodic_tasks_for_data_source(data_source, cfg)
 
 
 def sync_periodic_tasks_for_data_source(data_source: DataSource, cfg: DataSourceSyncConfig):
@@ -140,9 +138,7 @@ def sync_periodic_tasks_for_data_source(data_source: DataSource, cfg: DataSource
     base_task_name = gen_data_source_sync_periodic_task_name(data_source.id)
 
     try:
-        # 在事务中使用 select_for_update 锁定相关的 PeriodicTask，避免并发修改
-        tasks_to_delete = PeriodicTask.objects.select_for_update().filter(name__startswith=base_task_name)
-        tasks_to_delete.delete()
+        PeriodicTask.objects.filter(name__startswith=base_task_name).delete()
 
         # 根据配置类型创建新任务
         if cfg.period_type == DataSourceSyncPeriodType.MINUTE:

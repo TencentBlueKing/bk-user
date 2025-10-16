@@ -20,7 +20,7 @@ from typing import List
 from django.conf import settings
 from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from bkuser.apps.sync.constants import DataSourceSyncPeriodType, SyncTaskTrigger
 
@@ -52,11 +52,25 @@ class TenantSyncOptions(BaseModel):
 
 
 class DataSourceSyncConfig(BaseModel):
-    """数据源同步配置"""
+    """
+    数据源同步配置
 
+    支持三种同步周期类型：
+    - 分钟级别：使用 IntervalSchedule，每隔 N 分钟执行一次
+    - 小时级别：使用 CrontabSchedule，每 N 小时在指定分钟执行
+    - 天级别：使用 CrontabSchedule，每 N 天在指定时间执行
+
+    注：小时/天级别当 period_value > 1 时，crontab 每小时/每天都会触发，
+       但在任务执行时通过 should_execute_now() 判断是否真正执行
+    """
+
+    # 同步周期类型（分钟/小时/天），默认为分钟级别
     period_type: DataSourceSyncPeriodType = DataSourceSyncPeriodType.MINUTE
+    # 周期数值，表示每隔多少个单位执行一次，默认每小时执行一次
     period_value: int = 24 * 60
-    exec_times: List[datetime] = []
+    # 执行时间列表，支持多个时间点（小时/天级别需要，每个时间点会创建独立的 PeriodicTask）
+    exec_times: List[datetime] = Field(default_factory=list)
+    # 同步超时时间（单位：秒）
     sync_timeout: int = settings.DATA_SOURCE_SYNC_DEFAULT_TIMEOUT
 
     def get_interval_schedule(self) -> IntervalSchedule:
@@ -72,9 +86,8 @@ class DataSourceSyncConfig(BaseModel):
         schedules: List[CrontabSchedule] = []
 
         if self.period_type == DataSourceSyncPeriodType.HOUR:
-            # 小时级别：每小时在指定分钟触发，间隔检查在任务执行时进行
+            # 小时级别：每小时的指定分钟触发
             for exec_time in self.exec_times:
-                # 转换为本地时区来获取正确的小时和分钟
                 local_time = timezone.localtime(exec_time)
                 schedule, _ = CrontabSchedule.objects.get_or_create(
                     minute=str(local_time.minute),
@@ -86,10 +99,9 @@ class DataSourceSyncConfig(BaseModel):
                 )
                 schedules.append(schedule)
 
-        elif self.period_type == DataSourceSyncPeriodType.DAY:
-            # 天级别：每天在指定时间触发，间隔检查在任务执行时进行
+        else:
+            # 天级别：每天在指定时间触发
             for exec_time in self.exec_times:
-                # 转换为本地时区来获取正确的小时和分钟
                 local_time = timezone.localtime(exec_time)
                 schedule, _ = CrontabSchedule.objects.get_or_create(
                     minute=str(local_time.minute),
@@ -113,26 +125,17 @@ class DataSourceSyncConfig(BaseModel):
             # period_value = 1 时，由 crontab 精确控制，无需判断
             return True
 
-        if self.period_type == DataSourceSyncPeriodType.MINUTE:
-            # 分钟级别：由 IntervalSchedule 控制间隔，直接执行
-            return True
+        now_local = timezone.localtime(now)
+        exec_time_local = timezone.localtime(exec_time)
 
         if self.period_type == DataSourceSyncPeriodType.HOUR:
             # 小时级别：检查距离参考时间的小时数是否为间隔的倍数
-            now_local = timezone.localtime(now)
-            exec_time_local = timezone.localtime(exec_time)
-
             # 计算总的小时差，考虑跨天的情况
             time_delta = now_local - exec_time_local
             hour_delta = time_delta.days * 24 + time_delta.seconds // 3600
             return hour_delta % self.period_value == 0
 
-        if self.period_type == DataSourceSyncPeriodType.DAY:
-            # 天级别：检查距离参考时间的天数是否为间隔的倍数
-            # 使用本地时区的日期来计算，避免UTC时区差异导致的日期偏移
-            now_local = timezone.localtime(now)
-            exec_time_local = timezone.localtime(exec_time)
-            days_delta = (now_local.date() - exec_time_local.date()).days
-            return days_delta % self.period_value == 0
-
-        return True
+        # 天级别：检查距离参考时间的天数是否为间隔的倍数
+        # 使用本地时区的日期来计算，避免UTC时区差异导致的日期偏移
+        days_delta = (now_local.date() - exec_time_local.date()).days
+        return days_delta % self.period_value == 0
