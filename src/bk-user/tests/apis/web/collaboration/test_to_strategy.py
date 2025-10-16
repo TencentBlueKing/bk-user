@@ -180,8 +180,7 @@ class TestCollaborationTargetTenantListApi:
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         tenant_ids = [i["id"] for i in resp.data]
-        assert collaboration_tenant.id in tenant_ids
-        assert random_tenant.id not in tenant_ids
+        assert len(tenant_ids) == 0
 
         # 修改租户可见性
         collaboration_tenant.visible = False

@@ -16,12 +16,17 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-from typing import Dict
+from typing import Dict, List
 
+from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag, PhoneOrEmailUpdateRestrictionEnum
@@ -34,25 +39,38 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserFieldOutputSLZ,
     TenantUserLanguageUpdateInputSLZ,
     TenantUserLogoUpdateInputSLZ,
+    TenantUserMPCallbackInputSLZ,
+    TenantUserPasswordRuleRetrieveOutputSLZ,
     TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserPhoneVerificationCodeSendInputSLZ,
     TenantUserRetrieveOutputSLZ,
     TenantUserTimeZoneUpdateInputSLZ,
+    TenantUserWecomCallbackInputSLZ,
+    TenantUserWeixinInfoRetrieveOutputSLZ,
+    TenantUserWeixinRetrieveToBindInfoOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
-from bkuser.biz.auditor import TenantUserPasswordResetAuditor, TenantUserPersonalInfoUpdateAuditor
+from bkuser.biz.auditor import (
+    TenantUserPasswordResetAuditor,
+    TenantUserPersonalInfoUpdateAuditor,
+    TenantUserWeixinBindAuditor,
+)
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.biz.senders import (
     EmailVerificationCodeSender,
     ExceedSendRateLimit,
     PhoneVerificationCodeSender,
 )
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
+from bkuser.biz.weixin import WeixinConfigProvider
+from bkuser.biz.weixin.constants import WeixinTypeEnum
+from bkuser.biz.weixin.weixin import MpBindHandler, WecomBindHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     EmailVerificationCodeManager,
@@ -70,18 +88,18 @@ logger = logging.getLogger(__name__)
 
 
 class NaturalUserTenantUserListApi(generics.ListAPIView):
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-关联账户列表",
+        operation_description="个人中心 - 关联账户列表",
         responses={status.HTTP_200_OK: NaturalUserWithTenantUserListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         current_tenant_user_id = request.user.username
 
-        # 获取当前登录的租户用户的自然人:两种情况绑定、未绑定，在函数中做处理
+        # 获取当前登录的租户用户的自然人：两种情况绑定、未绑定，在函数中做处理
         nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
 
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(
@@ -89,7 +107,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         )
 
         # 将当前登录置顶
-        # 通过比对租户用户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
+        # 通过比对租户用户 id, 当等于当前登录用户的租户 id，将其排序到查询集的顶部，否则排序到查询集的底部
         sorted_tenant_users = sorted(tenant_users, key=lambda t: t.id != current_tenant_user_id)
 
         # 响应数据组装
@@ -112,13 +130,13 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-关联账户详情",
+        operation_description="个人中心 - 关联账户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
@@ -135,9 +153,9 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
 
 
 class TenantUserLogoUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -160,9 +178,9 @@ class TenantUserLogoUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
 class TenantUserPhoneUpdateApi(
     ExcludePatchAPIViewMixin, CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.UpdateAPIView
 ):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -227,9 +245,9 @@ class TenantUserPhoneUpdateApi(
 
 
 class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -247,15 +265,16 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user.custom_phone = data["phone"]
-        tenant_user.custom_phone_country_code = data["phone_country_code"]
-        self._send_verification_code_to_user_phone(tenant_user, VerificationCodeScene.UPDATE_PHONE)
+        self._send_verification_code_to_user_phone(
+            tenant_user, data["phone"], data["phone_country_code"], VerificationCodeScene.UPDATE_PHONE
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _send_verification_code_to_user_phone(self, tenant_user: TenantUser, scene: VerificationCodeScene):
+    def _send_verification_code_to_user_phone(
+        self, tenant_user: TenantUser, phone: str, phone_country_code: str, scene: VerificationCodeScene
+    ):
         """发送短信验证码到指定的租户用户"""
-        phone, phone_country_code = tenant_user.custom_phone, tenant_user.custom_phone_country_code
 
         try:
             code = PhoneVerificationCodeManager(phone, phone_country_code, scene).gen_code()
@@ -263,22 +282,21 @@ class TenantUserPhoneVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
         except GenerateCodeTooFrequently:
             raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
 
-        # FIXME: ESB只支持根据 username 发送，这里修改手机号并没有保存，发送的还是旧的，后续修复
         try:
-            PhoneVerificationCodeSender(scene).send(tenant_user, code)
+            PhoneVerificationCodeSender(scene, tenant_user.tenant_id).send(phone, phone_country_code, code)
         except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:
-            logger.exception("failed to send verification code to user %s", tenant_user.id)
+            logger.exception("failed to send verification code to phone +%s %s", phone_country_code, phone)
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
 class TenantUserEmailUpdateApi(
     ExcludePatchAPIViewMixin, CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.UpdateAPIView
 ):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -330,9 +348,9 @@ class TenantUserEmailUpdateApi(
 
 
 class TenantUserEmailVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -348,16 +366,14 @@ class TenantUserEmailVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
 
         slz = TenantUserEmailVerificationCodeSendInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-        email = slz.validated_data["email"]
+        data = slz.validated_data
 
-        tenant_user.custom_email = email
-        self._send_verification_code_to_user_email(tenant_user, VerificationCodeScene.UPDATE_EMAIL)
+        self._send_verification_code_to_user_email(tenant_user, data["email"], VerificationCodeScene.UPDATE_EMAIL)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _send_verification_code_to_user_email(self, tenant_user: TenantUser, scene: VerificationCodeScene):
+    def _send_verification_code_to_user_email(self, tenant_user: TenantUser, email: str, scene: VerificationCodeScene):
         """发送邮箱验证码到指定的租户用户"""
-        email = tenant_user.custom_email
 
         try:
             code = EmailVerificationCodeManager(email, scene).gen_code()
@@ -366,18 +382,18 @@ class TenantUserEmailVerificationCodeSendApi(CurrentTenantPhoneOrEmailUpdateRest
             raise error_codes.TOO_FREQUENTLY.f(_("发送邮箱验证码过于频繁，请稍后再试"))
 
         try:
-            EmailVerificationCodeSender(scene).send(tenant_user, code)
+            EmailVerificationCodeSender(scene, tenant_user.tenant_id).send(email, code)
         except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:
-            logger.exception("failed to send verification code to user %s", tenant_user.id)
+            logger.exception("failed to send verification code to email %s", email)
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
 class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -398,9 +414,9 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
 
 
 class TenantUserTimeZoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -421,9 +437,9 @@ class TenantUserTimeZoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
 
 
 class TenantUserExtrasUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -452,14 +468,14 @@ class TenantUserExtrasUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView
 
 
 class TenantUserFieldListApi(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-用户可见字段列表",
+        operation_description="个人中心 - 用户可见字段列表",
         responses={status.HTTP_200_OK: TenantUserFieldOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
@@ -471,6 +487,10 @@ class TenantUserFieldListApi(generics.ListAPIView):
                 continue
 
             selected = tenant_user.data_source_user.extras.get(f.name)
+            if not selected:
+                f.options = []
+                continue
+
             # 如果该字段是不可编辑的，且是枚举类型，则仅仅返回需要的 options 用于前端展示，避免泄露枚举选项
             if f.data_type == UserFieldDataType.ENUM:
                 f.options = [opt for opt in f.options if opt["id"] == selected]
@@ -484,14 +504,14 @@ class TenantUserFieldListApi(generics.ListAPIView):
 
 
 class TenantUserFeatureFlagListApi(CurrentTenantPhoneOrEmailUpdateRestrictionMixin, generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
-        operation_description="个人中心-用户功能特性",
+        operation_description="个人中心 - 用户功能特性",
         responses={status.HTTP_200_OK: TenantUserFeatureFlagOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
@@ -513,9 +533,9 @@ class TenantUserFeatureFlagListApi(CurrentTenantPhoneOrEmailUpdateRestrictionMix
 
 
 class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -557,3 +577,186 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         auditor.record(tenant_user.data_source_user, extras={"valid_days": plugin_config.password_expire.valid_time})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserPasswordRuleRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="获取租户用户密码规则提示",
+        responses={status.HTTP_200_OK: TenantUserPasswordRuleRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source_user = tenant_user.data_source_user
+        data_source = data_source_user.data_source
+
+        passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        if passwd_rule is None:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
+
+        return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
+
+
+class TenantUserWeixinInfoRetrieveDestroyApi(generics.RetrieveDestroyAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心 - 查询用户微信 ID",
+        responses={status.HTTP_200_OK: TenantUserWeixinInfoRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        wx_type = WeixinConfigProvider(tenant_user.tenant_id).get_wx_type()
+
+        data = {"wx_userid": tenant_user.wx_userid, "type": wx_type}
+        return Response(TenantUserWeixinInfoRetrieveOutputSLZ(data).data)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心 - 删除用户微信 ID",
+    )
+    def delete(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+
+        if not tenant_user.wx_userid:
+            raise error_codes.WEIXIN_ALREADY_UNBOUND.f(_("当前账号未绑定微信"))
+
+        # 【审计】创建微信绑定审计对象并记录变更前的数据
+        auditor = TenantUserWeixinBindAuditor(request.user.username, tenant_user.tenant_id)
+        auditor.pre_record_data_before(tenant_user)
+
+        # 解绑逻辑
+        tenant_user.wx_userid = ""
+        tenant_user.save(update_fields=["wx_userid", "updated_at"])
+
+        # 【审计】记录解绑操作
+        auditor.record_unbind(tenant_user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserWeixinToBindInfoRetrieveApi(generics.RetrieveAPIView):
+    """个人中心 - 统一的绑定接口"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心 - 微信绑定",
+        responses={status.HTTP_200_OK: TenantUserWeixinRetrieveToBindInfoOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        if tenant_user.wx_userid:
+            raise error_codes.WEIXIN_ALREADY_BOUND.f(_("当前账户已绑定微信"))
+
+        # 获取微信类型
+        wx_type = WeixinConfigProvider(tenant_user.tenant_id).get_wx_type()
+
+        url = ""
+        if wx_type == WeixinTypeEnum.WeCom.value:
+            url = WecomBindHandler(tenant_user).get_authorization_url(request.session)
+        elif wx_type == WeixinTypeEnum.MP.value:
+            url = MpBindHandler(tenant_user.tenant_id).get_mp_qrcode_url(tenant_user)
+
+        return Response(TenantUserWeixinRetrieveToBindInfoOutputSLZ({"url": url}).data)
+
+
+class TenantUserWecomCallbackApi(generics.RetrieveAPIView):
+    """个人中心 - 企业微信绑定回调接口"""
+
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心 - 企业微信扫码绑定回调",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = TenantUser.objects.get(id=request.user.username)
+        wecom_handler = WecomBindHandler(tenant_user)
+
+        slz = TenantUserWecomCallbackInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+        code = data["code"]
+        state = data["state"]
+
+        if not wecom_handler.check_state(state, request.session):
+            raise error_codes.WEIXIN_STATE_INVALID
+
+        wx_userid = wecom_handler.get_wecom_userid(code)
+
+        # 【审计】创建企业微信绑定审计对象并记录变更前的数据
+        auditor = TenantUserWeixinBindAuditor(request.user.username, tenant_user.tenant_id)
+        auditor.pre_record_data_before(tenant_user)
+
+        # 执行绑定操作
+        tenant_user.wx_userid = wx_userid
+        tenant_user.save(update_fields=["wx_userid", "updated_at"])
+
+        # 【审计】记录绑定操作
+        auditor.record_bind(tenant_user)
+
+        # Note: 这里与前端配合，重新向到绑定成功且 5 秒后自动关闭页面
+        return HttpResponseRedirect(redirect_to="/bind-result?status=1")
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class TenantUserMPCallbackApi(generics.CreateAPIView, generics.RetrieveAPIView):
+    """个人中心 - 微信公众号回调接口"""
+
+    # 豁免认证 & 权限
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
+
+    def get(self, request, *args, **kwargs):
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        if not MpBindHandler(self.kwargs["tenant_id"]).check_mp_signature(
+            data["signature"], data["timestamp"], data["nonce"]
+        ):
+            raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
+
+        return HttpResponse(escape(request.query_params.get("echostr")))
+
+    def post(self, request, *args, **kwargs):
+        """处理微信公众号回调消息"""
+        slz = TenantUserMPCallbackInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        mp_handler = MpBindHandler(self.kwargs["tenant_id"])
+        if not mp_handler.check_mp_signature(data["signature"], data["timestamp"], data["nonce"]):
+            raise error_codes.WEIXIN_SIGN_INVALID.f(_("微信公众号签名验证失败"))
+
+        tenant_user, wx_userid, response = mp_handler.process_mp_callback_event(request.data)
+        # 处理回调事件出错，应该返回空响应作为 fallback，防止微信公众号服务器重复推送
+        if not tenant_user:
+            return HttpResponse(content="", content_type="application/xml", status=status.HTTP_200_OK)
+
+        # 【审计】创建微信绑定审计对象并记录变更前的数据
+        auditor = TenantUserWeixinBindAuditor(tenant_user.id, tenant_user.tenant_id)
+        auditor.pre_record_data_before(tenant_user)
+
+        # 执行绑定操作
+        tenant_user.wx_userid = wx_userid
+        tenant_user.save(update_fields=["wx_userid", "updated_at"])
+
+        # 【审计】记录绑定操作
+        auditor.record_bind(tenant_user)
+
+        return HttpResponse(content=response, content_type="application/xml", status=status.HTTP_200_OK)

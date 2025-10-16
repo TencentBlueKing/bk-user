@@ -23,18 +23,21 @@
           immediate
           :min="140"
           :max="900"
-          :initial-divide="'50%'">
+          :initial-divide="isShowCollaboration ? '50%' : '100%'">
           <template #aside>
             <aside-tenant />
           </template>
-          <template #main>
+          <template #main v-if="isShowCollaboration">
             <aside-collaboration />
           </template>
         </bk-resize-layout>
       </template>
       <template #main>
         <section>
-          <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
+          <div
+            class="
+            text-[#313238] leading-[52px] h-[52px] px-[24px]
+              text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
             {{ appStore.currentOrg?.name }}
           </div>
           <div class="table-main">
@@ -48,7 +51,7 @@
 
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
@@ -57,22 +60,21 @@ import Search from './components/search-org.vue';
 import SearchResultTree from './components/search-result-tree.vue';
 import TableList from './components/table-list.vue';
 
-import { getCollaboration, getCurrentTenant, getDepartmentsList } from '@/http/organizationFiles';
+import { getCurrentTenant } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
 
 const appStore = useAppStore();
 const isShow = ref(null);
 const isLoading = ref(false);
 const tableListRef = ref();
+const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
 const getList = async () => {
   isLoading.value = true;
   const tenantData = await getCurrentTenant();
   appStore.currentTenant = tenantData?.data;
-  const collaborationData = await getCollaboration();
-  const deptData = await getDepartmentsList(0, tenantData?.data?.id);
   isLoading.value = false;
-  if (deptData.data.length === 0 && collaborationData.data.length === 0) {
+  if (!tenantData?.data?.data_source) {
     isShow.value = true;
   } else {
     isShow.value = false;

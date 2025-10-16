@@ -13,4 +13,6 @@ declare interface Window {
   BK_SHARED_RES_URL: string
   ENABLE_VIRTUAL_USER: string
   ENABLE_CREATE_TENANT:string
+  ENABLE_COLLABORATION_TENANT: string
+  ENABLE_MULTI_TENANT_MODE: string
 }

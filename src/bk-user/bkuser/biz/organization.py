@@ -22,16 +22,19 @@ from typing import Dict, List, Set
 from django.db import transaction
 from django.utils import timezone
 
+from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 class DataSourceUserHandler:
@@ -177,14 +180,52 @@ class TenantDepartmentHandler:
 
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
+    @staticmethod
+    def update_department_code(data_source_department: DataSourceDepartment):
+        """
+        更新数据源部门 code, 必须在事务内调用该方法
+        """
+
+        org_path_map = TenantOrgPathHandler.get_dept_descendant_org_path_map(data_source_department.id)
+
+        # 构建数据源部门 ID 到新 code 的映射
+        dept_code_map = {dept_id: gen_dept_code(org_path_map[dept_id]) for dept_id in org_path_map}
+
+        # 批量更新数据源部门 code
+        data_source_departments = DataSourceDepartment.objects.filter(id__in=org_path_map.keys())
+        for dept in data_source_departments:
+            dept.code = dept_code_map[dept.id]
+            dept.updated_at = timezone.now()
+        DataSourceDepartment.objects.bulk_update(
+            data_source_departments, fields=["code", "updated_at"], batch_size=250
+        )
+
+        # 获取所有数据源部门对应的租户部门
+        tenant_departments = TenantDepartment.objects.filter(data_source_department__in=data_source_departments)
+
+        # 构建租户部门 ID 到新 code 的映射
+        tenant_dept_code_map = {
+            tenant_dept.id: dept_code_map[tenant_dept.data_source_department_id] for tenant_dept in tenant_departments
+        }
+
+        # 需要批量更新租户部门 ID 记录中的 code
+        # 否则会导致部门修改名称后 code 不一致的情况，引起租户部门同步失败
+        dept_id_records = TenantDepartmentIDRecord.objects.filter(tenant_department_id__in=tenant_dept_code_map.keys())
+        for dept_id_record in dept_id_records:
+            dept_id_record.code = tenant_dept_code_map[dept_id_record.tenant_department_id]
+            dept_id_record.updated_at = timezone.now()
+        TenantDepartmentIDRecord.objects.bulk_update(dept_id_records, fields=["code", "updated_at"], batch_size=250)
+
 
 class TenantOrgPathHandler:
     @staticmethod
-    def get_dept_organization_path_map(data_source_department_ids: List[int]) -> Dict[int, str]:
+    def get_dept_organization_path_map(
+        data_source_department_ids: List[int], include_self: bool = False
+    ) -> Dict[int, str]:
         """获取部门的组织路径信息"""
 
         # 数据源部门 ID -> 组织路径
-        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=False)
+        org_path_map = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=include_self)
 
         return {dept_id: org_path_map.get(dept_id, "") for dept_id in data_source_department_ids}
 
@@ -212,12 +253,55 @@ class TenantOrgPathHandler:
     @staticmethod
     def _query_org_path(data_source_department_ids: List[int], include_self: bool) -> Dict[int, str]:
         """构建数据源部门 ID -> 组织路径映射"""
-        relations = DataSourceDepartmentRelation.objects.select_related("department").filter(
-            department_id__in=data_source_department_ids
-        )
         org_path_map = {}
-        # TODO: 这里存在 N + 1 问题，后续添加缓存优化或其他方式优化祖先路径的批量快速获取
-        for rel in relations:
-            dept_names = list(rel.get_ancestors(include_self=include_self).values_list("department__name", flat=True))
-            org_path_map[rel.department_id] = "/".join(dept_names)
+
+        # 1. 从缓存获取祖先 ID 列表
+        ancestor_id_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
+
+        # 2. 批量查询部门名称
+        dept_ids = set(data_source_department_ids).union(*ancestor_id_map.values())
+        id_name_map = dict(DataSourceDepartment.objects.filter(id__in=dept_ids).values_list("id", "name"))
+
+        # 3. 构建缓存部门的组织路径
+        for dept_id, ancestor_ids in ancestor_id_map.items():
+            dept_names = [id_name_map.get(ancestor_id, "") for ancestor_id in ancestor_ids]
+            if include_self:
+                dept_names.append(id_name_map.get(dept_id, ""))
+            org_path_map[dept_id] = "/".join(dept_names)
+
         return org_path_map
+
+    @staticmethod
+    def get_dept_descendant_org_path_map(department_id: int) -> Dict[int, str]:
+        """
+        获取指定部门以及子孙部门的组织路径信息
+        """
+        rel = DataSourceDepartmentRelation.objects.get(department_id=department_id)
+
+        # 查询祖先（包括自身）
+        ancestor_names = list(rel.get_ancestors(include_self=True).values_list("department__name", flat=True))
+        org_path_map = {department_id: "/".join(ancestor_names)}
+
+        # Q: 查询子孙时为什么要按照层级排序
+        # A: 按层级排序后，父节点一定是比子节点先被遍历，
+        # 这样在计算 org_path 时，可直接使用父节点的 org_path + 自身 name 即可
+        descendants = (
+            rel.get_descendants()
+            .select_related("department")
+            .order_by("level")
+            .values_list("department_id", "parent_id", "department__name")
+        )
+
+        # 按层级顺序遍历每个子孙部门
+        for dept_id, parent_id, dept_name in descendants:
+            org_path_map[dept_id] = f"{org_path_map[parent_id]}/{dept_name}"
+
+        return org_path_map
+
+    @staticmethod
+    def clear_department_descendants_ancestor_cache(data_source_department_id: int):
+        """清理指定数据源部门及其子孙部门的祖先 ID 缓存"""
+        relation = DataSourceDepartmentRelation.objects.get(department_id=data_source_department_id)
+
+        descendant_ids = list(relation.get_descendants(include_self=True).values_list("department_id", flat=True))
+        DepartmentAncestorCache().batch_delete(descendant_ids)

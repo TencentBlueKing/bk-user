@@ -75,7 +75,7 @@ class TenantUserMatchedByTokenOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="展示用名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_mapping"][obj.id]
+        return self.context["display_name_map"][obj.id]
 
 
 class ResetPasswordByTokenInputSLZ(serializers.Serializer):

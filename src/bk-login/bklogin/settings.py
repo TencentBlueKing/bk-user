@@ -235,6 +235,7 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
+BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-login")
 # 是否开启同步网关 API
 ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
@@ -412,4 +413,4 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MUTIL_TENANT_MODE = env.bool("ENABLE_MUTIL_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)

@@ -88,11 +88,10 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
     )
     def get(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        # 默认的内置字段，虽然邮箱 & 手机在 DB 中不是必填，但是在
-        # 快速录入场景中要求必填，手机国际区号与手机号合并，不需要单独提供
+        # 手机国际区号与手机号合并，不需要单独提供
         field_infos = [
             {"name": f.name, "display_name": f.display_name, "tips": ""}
-            for f in UserBuiltinField.objects.exclude(name="phone_country_code")
+            for f in UserBuiltinField.objects.filter(required=True).exclude(name="phone_country_code")
         ]
         for f in TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True):
             opts = ", ".join(opt["value"] for opt in f.options)

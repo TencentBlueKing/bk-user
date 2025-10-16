@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.validators import (
@@ -37,7 +38,6 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
-    visible = serializers.BooleanField(help_text="租户可见性")
     user_number_visible = serializers.BooleanField(help_text="人员数量是否可见")
 
     def get_logo(self, obj: Tenant) -> str:
@@ -53,7 +53,6 @@ class TenantUpdateInputSLZ(serializers.Serializer):
         default=settings.DEFAULT_TENANT_LOGO,
         validators=[validate_logo],
     )
-    visible = serializers.BooleanField(help_text="租户可见性")
     user_number_visible = serializers.BooleanField(help_text="人员数量是否可见")
 
     def validate_name(self, name: str) -> str:
@@ -83,8 +82,12 @@ class TenantBuiltinManagerPasswordUpdateInputSLZ(serializers.Serializer):
         )
 
 
+class TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    pass
+
+
 class TenantRealManagerListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户ID", source="tenant_user.id")
+    id = serializers.CharField(help_text="用户 ID", source="tenant_user.id")
     username = serializers.CharField(help_text="用户名", source="tenant_user.data_source_user.username")
     full_name = serializers.CharField(help_text="姓名", source="tenant_user.data_source_user.full_name")
 
@@ -123,6 +126,6 @@ class TenantRealUserListInputSLZ(serializers.Serializer):
 
 
 class TenantRealUserListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户ID")
+    id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")

@@ -23,6 +23,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -237,6 +238,23 @@ class DataSourceDepartmentRelationSyncer:
 
         self.ctx.logger.info(f"re-create {len(dept_code_rel_map)} department relations")
         self.ctx.logger.info(f"data source has {len(mptt_tree_ids)} department tree(s) currently")
+
+        # 同步完成后，清理数据源内原有部门祖先 ID 缓存
+        self._clear_department_ancestor_cache()
+
+    def _clear_department_ancestor_cache(self):
+        """清理数据源内原有部门祖先 ID 缓存"""
+        # 获取该数据源的所有部门 ID
+        dept_ids = list(
+            DataSourceDepartmentRelation.objects.filter(data_source_id=self.data_source.id).values_list(
+                "department_id", flat=True
+            )
+        )
+
+        # 批量删除部门祖先 ID 缓存
+        DepartmentAncestorCache().batch_delete(dept_ids)
+
+        self.ctx.logger.info(f"cleared department ancestor ids cache for data source {self.data_source.id}")
 
     @staticmethod
     def _generate_tree_id(data_source: DataSource) -> int:

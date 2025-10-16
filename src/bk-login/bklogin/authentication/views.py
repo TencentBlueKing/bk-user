@@ -42,11 +42,23 @@ from bklogin.idp_plugins.exceptions import (
 )
 from bklogin.utils.url import urljoin
 
-from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
+from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME
 from .manager import BkTokenManager
 from .utils import url_has_allowed_host_and_scheme
 
 logger = logging.getLogger(__name__)
+
+
+def _get_language(request) -> str:
+    """
+    获取当前登录请求的语言
+    """
+    # 从 Cookie 里获取，若获取得到，则说明用户有在页面上切换过语言，返回用户设置的语言
+    language = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
+    if language and language in ["zh-cn", "en"]:
+        return language
+
+    return ""
 
 
 # 确保无论何时，响应必然有 CSRFToken Cookie
@@ -98,7 +110,7 @@ class LoginView(View):
         bk_token = request.COOKIES.get(settings.BK_TOKEN_COOKIE_NAME)
         if is_from_logout and bk_token:
             BkTokenManager.set_invalid(bk_token)
-            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME)
+            response.delete_cookie(settings.BK_TOKEN_COOKIE_NAME, domain=settings.BK_COOKIE_DOMAIN)
 
         return response
 
@@ -111,6 +123,24 @@ class GlobalSettingRetrieveApi(View):
         return APISuccessResponse(data=gs.model_dump())
 
 
+class TenantSearchApi(View):
+    def get(self, request, *args, **kwargs):
+        """
+        搜索租户列表
+        """
+        # 过滤参数
+        keyword = request.GET.get("keyword", "")
+        if not keyword:
+            raise error_codes.VALIDATION_ERROR.f(_("keyword 参数必填"))
+
+        tenants = bk_user_api.list_tenant()
+
+        # 过滤租户
+        tenants = [t for t in tenants if keyword.lower() == t.name.lower() or keyword.lower() == t.id.lower()]
+
+        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
+
+
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
         """
@@ -118,11 +148,14 @@ class TenantListApi(View):
         """
         # 过滤参数
         tenant_ids_str = request.GET.get("tenant_ids", "")
+        if not tenant_ids_str:
+            raise error_codes.VALIDATION_ERROR.f(_("tenant_ids 参数必填"))
+
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
         tenants = bk_user_api.list_tenant(tenant_ids)
 
-        return APISuccessResponse(data=[t.model_dump() for t in tenants])
+        return APISuccessResponse(data=[t.model_dump(include={"id", "name", "logo"}) for t in tenants])
 
 
 class TenantIdpListApi(View):
@@ -130,14 +163,21 @@ class TenantIdpListApi(View):
         """
         获取需要登录租户的认证方式列表
         """
-        # 获取路径参数
-        tenant_id = kwargs["tenant_id"]
-        idp_owner_tenant_id = kwargs["idp_owner_tenant_id"]
+        # 过滤参数
+        tenant_id = request.GET.get("tenant_id", "")
+        if not tenant_id:
+            raise error_codes.VALIDATION_ERROR.f(_("tenant_id 参数必填"))
 
         # 获取指定租户中 本租户可用 且 已启用 的认证源
-        idps = bk_user_api.list_idp(tenant_id, idp_owner_tenant_id)
+        idps = bk_user_api.list_idp(tenant_id, tenant_id)
 
-        return APISuccessResponse(data=[i.model_dump() for i in idps])
+        return APISuccessResponse(
+            data=[
+                i.model_dump(include={"id", "name", "plugin_id"})
+                for i in idps
+                if i.data_source_type == DataSourceTypeEnum.REAL
+            ]
+        )
 
 
 class IdpBasicInfo(pydantic.BaseModel):
@@ -166,16 +206,6 @@ class IdpPluginDispatchView(View):
         """
         根据路径参数 idp_id 和 action 将请求路由调度到各个插件
         """
-        # Session 里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        # 路径优先
-        if kwargs.get("tenant_id"):
-            sign_in_tenant_id = kwargs.get("tenant_id")
-            # session 记录登录的租户
-            request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = sign_in_tenant_id
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
-
         # 获取参数
         idp_id = kwargs["idp_id"]
         action = kwargs["action"]
@@ -185,6 +215,8 @@ class IdpPluginDispatchView(View):
         idp = bk_user_api.get_idp(idp_id)
         if idp.status != IdpStatus.ENABLED:
             raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
+
+        sign_in_tenant_id = idp.owner_tenant_id
 
         #  (1) 获取插件
         try:
@@ -364,6 +396,14 @@ class PageUserView(View):
         if user.data_source_type == DataSourceTypeEnum.BUILTIN_MANAGEMENT:
             redirect_to = bk_user_api.get_global_setting().bk_user_url
 
+        # FIXME(nan): 需要重构，重新抽象，包括与内置管理员的区分，待改造内置管理时一起调整
+        # 更新语言
+        language = _get_language(request)
+        if language and language != user.language:
+            # 如果用户设置的语言与用户之前的语言不一致，则更新用户语言
+            user.language = language
+            bk_user_api.update_tenant_user_language(user_id, language)
+
         response = HttpResponseRedirect(redirect_to=redirect_to)
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
@@ -376,7 +416,9 @@ class PageUserView(View):
             httponly=True,
             secure=False,
         )
-
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME, user.language, expires=expired_at, domain=settings.BK_COOKIE_DOMAIN
+        )
         # 删除 Session
         request.session.clear()
 
@@ -388,11 +430,6 @@ class TenantUserListApi(View):
         """
         用户认证后，获取认证成功后的租户用户列表
         """
-        # Session 里获取当前登录的租户
-        sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
-        if not sign_in_tenant_id:
-            raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
-
         # Session 里获取已认证过的租户用户
         tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY)
         if not tenant_users:
@@ -429,9 +466,102 @@ class SignInTenantUserCreateApi(View):
         # TODO：支持 MFA、首次登录强制修改密码登录操作
         # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如 bk_token_for_force_change_password
 
+        # FIXME(nan): 需要重构，重新抽象，包括与内置管理员的区分，待改造内置管理时一起调整
+        # 更新语言
+        language = _get_language(request)
+        if language and language != user.language:
+            # 如果用户设置的语言与用户之前的语言不一致，则更新用户语言
+            user.language = language
+            bk_user_api.update_tenant_user_language(user_id, language)
+
         response = APISuccessResponse({"redirect_uri": redirect_to})
         # 生成 Cookie
         bk_token, expired_at = BkTokenManager().generate(user_id)
+        # 设置 Cookie
+        response.set_cookie(
+            settings.BK_TOKEN_COOKIE_NAME,
+            bk_token,
+            expires=expired_at,
+            domain=settings.BK_COOKIE_DOMAIN,
+            httponly=True,
+            secure=False,
+        )
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME, user.language, expires=expired_at, domain=settings.BK_COOKIE_DOMAIN
+        )
+
+        # 删除 Session
+        request.session.clear()
+
+        return response
+
+
+# 确保无论何时，响应必然有 CSRFToken Cookie
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class BuiltinManagementLoginView(View):
+    """
+    内置管理员登录页面
+    """
+
+    template_name = "index.html"
+
+    def get(self, request, *args, **kwargs):
+        """登录页面"""
+        # 返回登录页面
+        return render(request, self.template_name)
+
+
+class BuiltinManagementAuthenticateView(View):
+    def post(self, request, *args, **kwargs):
+        """
+        内置管理员登录认证
+        """
+        idp_id = kwargs["idp_id"]
+        # 获取认证源信息
+        idp = bk_user_api.get_idp(idp_id)
+        if idp.status != IdpStatus.ENABLED:
+            raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
+
+        sign_in_tenant_id = idp.owner_tenant_id
+
+        #  (1) 获取插件
+        try:
+            plugin_cls = get_plugin_cls(idp.plugin.id)
+        except NotImplementedError as error:
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 获取插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
+            )
+
+        # （2）初始化插件
+        try:
+            plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
+            plugin = plugin_cls(cfg=plugin_cfg)
+        except pydantic.ValidationError:
+            logger.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            # Note: 不可将 error 对外，因为配置信息比较敏感
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 初始化插件配置 [{}] 失败").format(idp.name, idp.plugin.name),
+            )
+        except Exception as error:
+            logger.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 加载插件 [{}] 失败，{}").format(idp.name, idp.plugin.name, error),
+            )
+
+        idp_info = IdpBasicInfo(id=idp.id, name=idp.name, plugin_id=idp.plugin.id, plugin_name=idp.plugin.name)
+        assert isinstance(plugin, BaseCredentialIdpPlugin)
+
+        plugin_error_context = PluginErrorContext(
+            idp=idp_info, action=BuiltinActionEnum.AUTHENTICATE, http_method=AllowedHttpMethodEnum.POST
+        )
+        user_infos = self.wrap_plugin_error(plugin_error_context, plugin.authenticate_credentials, request=request)
+        # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
+        tenant_users = self._auth_backend(request, sign_in_tenant_id, idp.id, user_infos)
+
+        # 身份凭证认证直接返回成功即可，由前端重定向路由到用户列表选择页面
+        response = APISuccessResponse({"redirect_uri": bk_user_api.get_global_setting().bk_user_url})
+        # 生成 Cookie
+        bk_token, expired_at = BkTokenManager().generate(tenant_users[0]["id"])
         # 设置 Cookie
         response.set_cookie(
             settings.BK_TOKEN_COOKIE_NAME,
@@ -446,3 +576,40 @@ class SignInTenantUserCreateApi(View):
         request.session.clear()
 
         return response
+
+    def wrap_plugin_error(self, context: PluginErrorContext, func: Callable, *func_args, **func_kwargs):
+        """统一捕获插件异常"""
+        try:
+            return func(*func_args, **func_kwargs)
+        except ParseRequestBodyError as e:
+            raise error_codes.INVALID_ARGUMENT.f(str(e), replace=True)
+        except (InvalidParamError, ValidationError) as e:
+            raise error_codes.VALIDATION_ERROR.f(str(e), replace=True)
+        except UnexpectedDataError as e:
+            raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
+        except Exception:
+            logger.exception(
+                "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
+                context.idp.id,
+                context.action,
+                context.http_method,
+                context.idp.plugin_id,
+            )
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源 [{}] 执行插件 [{}] 失败").format(context.idp.name, context.idp.plugin_name),
+            )
+
+    def _auth_backend(
+        self, request, sign_in_tenant_id: str, idp_id: str, user_infos: Dict[str, Any] | List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """认证：认证源数据与数据源匹配"""
+        if isinstance(user_infos, dict):
+            user_infos = [user_infos]
+
+        tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp_id, user_infos)
+        if not tenant_users:
+            raise error_codes.OBJECT_NOT_FOUND.f(
+                _("认证成功，但用户在租户 ({}) 下未有对应账号").format(sign_in_tenant_id),
+            )
+
+        return [i.model_dump(include={"id", "username", "full_name"}) for i in tenant_users]

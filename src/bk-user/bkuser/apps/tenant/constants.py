@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-# (?!.*--) 为 negative lookahead（否定前瞻断言），表示若任意位置出现了连续两个连字符(--)，则会匹配失败
+# (?!.*--) 为 negative lookahead（否定前瞻断言），表示若任意位置出现了连续两个连字符 (--)，则会匹配失败
 TENANT_ID_REGEX = re.compile(r"^(?!.*--)[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 
 # 自定义字段英文标识命名规则
@@ -31,7 +31,7 @@ class BuiltInTenantIDEnum(StrStructuredEnum):
     """内置租户 ID 枚举"""
 
     DEFAULT = EnumField("default", label="Default")
-    SYSTEM = EnumField("system", label="BleuKing Op")
+    SYSTEM = EnumField("system", label="BlueKing Op")
 
 
 class UserFieldDataType(StrStructuredEnum):
@@ -104,13 +104,13 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "sender": "蓝鲸智云",
             "content": (
                 "{{ username }}，您好：\n "
-                + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
                 + "该短信为系统自动发送，请勿回复。"
             ),
             "content_html": (
                 "<p>{{ username }}，您好：</p>"
-                + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "<p>您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
                 + "<p>该短信为系统自动发送，请勿回复。</p>"
             ),
@@ -199,3 +199,10 @@ class TenantUserIdRuleEnum(StrStructuredEnum):
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
     USERNAME = EnumField("username", label=_("用户名"))
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
+
+
+class UserLookupFieldEnum(StrStructuredEnum):
+    """用户查询匹配字段"""
+
+    LOGIN_NAME = EnumField("login_name", label=_("企业内用户唯一标识"))
+    BK_USERNAME = EnumField("bk_username", label=_("蓝鲸用户唯一标识"))

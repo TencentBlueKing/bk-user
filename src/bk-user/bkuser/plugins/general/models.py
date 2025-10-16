@@ -14,8 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import re
 
-from pydantic import BaseModel, Field
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from pydantic import BaseModel, Field, model_validator
 
 from bkuser.plugins.general.constants import (
     API_URL_PATH_REGEX,
@@ -30,6 +33,7 @@ from bkuser.plugins.general.constants import (
     PageSizeEnum,
 )
 from bkuser.plugins.models import BasePluginConfig
+from bkuser.utils.url import urljoin
 
 
 class QueryParam(BaseModel):
@@ -43,7 +47,7 @@ class ServerConfig(BaseModel):
     """数据服务相关配置"""
 
     # 服务地址
-    server_base_url: str = Field(pattern=BASE_URL_REGEX)
+    server_base_url: str
     # 用户数据 API 路径
     user_api_path: str = Field(pattern=API_URL_PATH_REGEX)
     # 用户数据 API 请求参数
@@ -69,6 +73,11 @@ class AuthConfig(BaseModel):
     # basic auth 配置
     username: str | None = None
     password: str | None = None
+    # 蓝鲸网关配置
+    # server_base_url = urljoin(settings.BK_API_URL_TMPL.format(api_name=gateway_name), gateway_stage)
+    gateway_name: str | None = None
+    gateway_stage: str | None = None
+    tenant_id: str | None = None
 
 
 class GeneralDataSourcePluginConfig(BasePluginConfig):
@@ -83,3 +92,33 @@ class GeneralDataSourcePluginConfig(BasePluginConfig):
     server_config: ServerConfig
     # 认证配置
     auth_config: AuthConfig
+
+    @property
+    def server_base_url(self) -> str:
+        """获取服务基础 url
+
+        对于蓝鲸网关认证方式，将通过 gateway_name 和 gateway_stage 动态构建 server_base_url
+        对于其他认证方式，直接使用 server_config 的 server_base_url
+        """
+
+        if self.auth_config.method == AuthMethod.BK_APIGATEWAY:
+            return urljoin(
+                settings.BK_API_URL_TMPL.format(api_name=self.auth_config.gateway_name),
+                self.auth_config.gateway_stage,  # type: ignore
+            )
+        return self.server_config.server_base_url
+
+    @model_validator(mode="after")
+    def validate_configs(self) -> "GeneralDataSourcePluginConfig":
+        auth_method = self.auth_config.method
+
+        if auth_method == AuthMethod.BK_APIGATEWAY:
+            if not self.auth_config.gateway_name or not self.auth_config.gateway_stage:
+                raise ValueError(_("蓝鲸网关认证时，gateway_name 和 gateway_stage 不能为空"))
+
+            return self
+
+        # 非蓝鲸网关认证方式，校验 server_base_url 格式
+        if not re.match(BASE_URL_REGEX, self.server_config.server_base_url):
+            raise ValueError(_("服务地址格式不正确"))
+        return self

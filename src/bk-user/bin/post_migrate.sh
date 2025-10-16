@@ -3,6 +3,11 @@
 # 如果任何命令返回一个非零退出状态（错误），脚本将会立即终止执行
 set -e
 
+# 初始化默认租户
+if [ "$SKIP_INIT_DEFAULT_TENANT" != true ]; then
+  python manage.py init_default_tenant
+fi
+
 # 自动化同步网关
 if [ "$ENABLE_SYNC_APIGW" = true ]; then
   sh ./support-files/bin/sync-bk-user-apigateway.sh

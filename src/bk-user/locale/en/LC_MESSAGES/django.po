@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-30 18:03+0800\n"
+"POT-Creation-Date: 2025-09-02 12:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,22 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bkuser/apis/login/serializers.py:54 bkuser/common/error_codes.py:85
+#: bkuser/apis/login/serializers.py:55 bkuser/common/error_codes.py:85
 msgid "用户名或密码错误"
 msgstr "Incorrect username or password"
 
-#: bkuser/apis/login/views.py:226
+#: bkuser/apis/login/views.py:224
 msgid "租户 {} 不存在"
 msgstr "Tenant {} does not exist"
 
-#: bkuser/apis/login/views.py:231
+#: bkuser/apis/login/views.py:229
 msgid "认证源 {} 不存在"
 msgstr "Auth source {} does not exist"
-
-#: bkuser/apis/open_web/mixins.py:53
-#: bkuser/apis/web/organization/views/mixins.py:33
-msgid "当前租户不存在实名用户数据源"
-msgstr "There is no real-name user data source in the current tenant"
 
 #: bkuser/apis/open_web/serializers/departments.py:58
 #: bkuser/apis/open_web/serializers/departments.py:84
@@ -51,6 +46,14 @@ msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_u
 msgstr ""
 "The specified lookup field {} is not supported. Only login_name, full_name, "
 "and bk_username are supported."
+
+#: bkuser/apis/web/audit/serializers.py:40
+msgid "开始时间和结束时间参数不能仅提供其中一个"
+msgstr "Start time and end time parameters cannot be provided with only one of them"
+
+#: bkuser/apis/web/audit/serializers.py:43
+msgid "开始时间不能大于结束时间"
+msgstr "Start time cannot be greater than end time"
 
 #: bkuser/apis/web/collaboration/serializers.py:75
 #: bkuser/apis/web/collaboration/serializers.py:118
@@ -128,76 +131,80 @@ msgstr ""
 msgid "请先确认策略，再尝试修改状态"
 msgstr "Please confirm the strategy before attempting to modify the status"
 
-#: bkuser/apis/web/data_source/serializers.py:79
+#: bkuser/apis/web/data_source/serializers.py:52
+msgid "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
+msgstr "In BlueKing Gateway authentication mode, tenant_id must be consistent with the current tenant"
+
+#: bkuser/apis/web/data_source/serializers.py:88
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr ""
 "Target field {} in the field mapping does not belong to either custom or "
 "built-in fields"
 
-#: bkuser/apis/web/data_source/serializers.py:86
+#: bkuser/apis/web/data_source/serializers.py:95
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "Required target field {} is missing a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:114
+#: bkuser/apis/web/data_source/serializers.py:123
 msgid "数据源插件不存在"
 msgstr "Date source plugin does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:128
+#: bkuser/apis/web/data_source/serializers.py:137
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "A tenant can only have one data source of the real type"
 
-#: bkuser/apis/web/data_source/serializers.py:134
-#: bkuser/apis/web/data_source/serializers.py:206
+#: bkuser/apis/web/data_source/serializers.py:143
+#: bkuser/apis/web/data_source/serializers.py:225
 msgid "当前数据源类型必须配置字段映射"
 msgstr "The current date source type must be configured with a field mapping"
 
-#: bkuser/apis/web/data_source/serializers.py:137
-#: bkuser/apis/web/data_source/serializers.py:209
+#: bkuser/apis/web/data_source/serializers.py:146
+#: bkuser/apis/web/data_source/serializers.py:228
 msgid "当前数据源类型必须提供同步配置"
 msgstr ""
 "The current date source type must provide a synchronization configuration"
 
-#: bkuser/apis/web/data_source/serializers.py:140
-#: bkuser/apis/web/data_source/serializers.py:247
+#: bkuser/apis/web/data_source/serializers.py:149
+#: bkuser/apis/web/data_source/serializers.py:266
 msgid "数据源插件 {} 不存在"
 msgstr "Data source plugin {} does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:146
-#: bkuser/apis/web/data_source/serializers.py:194
-#: bkuser/apis/web/data_source/serializers.py:267
+#: bkuser/apis/web/data_source/serializers.py:155
+#: bkuser/apis/web/data_source/serializers.py:207
+#: bkuser/apis/web/data_source/serializers.py:286
 msgid "插件配置不合法：{}"
 msgstr "Plugin configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:244
+#: bkuser/apis/web/data_source/serializers.py:263
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "Local data source does not support connectivity test"
 
-#: bkuser/apis/web/data_source/serializers.py:255
+#: bkuser/apis/web/data_source/serializers.py:274
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "The current user tenant {} does not have a data source with ID {}"
 
-#: bkuser/apis/web/data_source/serializers.py:290
+#: bkuser/apis/web/data_source/serializers.py:313
 msgid "密码规则配置不合法: {}"
 msgstr "Password rule configuration is invalid: {}"
 
-#: bkuser/apis/web/data_source/serializers.py:298
+#: bkuser/apis/web/data_source/serializers.py:321
 msgid "指定数据源不存在"
 msgstr "The specified data source does not exist"
 
-#: bkuser/apis/web/data_source/serializers.py:302
+#: bkuser/apis/web/data_source/serializers.py:325
 msgid "无法使用该数据源生成随机密码"
 msgstr "Unable to generate a random password using this data source"
 
-#: bkuser/apis/web/data_source/serializers.py:328
+#: bkuser/apis/web/data_source/serializers.py:351
 msgid "待导入文件必须为 Excel 格式"
 msgstr "The file to be imported must be in Excel format"
 
-#: bkuser/apis/web/data_source/serializers.py:331
+#: bkuser/apis/web/data_source/serializers.py:354
 msgid "待导入文件大小不得超过 {} M"
 msgstr "The file to be imported must not exceed {} M in size"
 
-#: bkuser/apis/web/data_source/serializers.py:337
+#: bkuser/apis/web/data_source/serializers.py:360
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "Full import mode is temporarily unavailable for security reasons"
 
@@ -249,8 +256,8 @@ msgstr "An auth source with the same name already exists"
 
 #: bkuser/apis/web/idp/serializers.py:79
 msgid ""
-"{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组"
-"成，以字母开头并以字母或数字结尾"
+"{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) "
+"字符组成，以字母开头并以字母或数字结尾"
 msgstr ""
 "{} does not meet the naming requirements for auth source fields: must be "
 "composed of 3-32 letters, digits, underscores (_), or hyphens (-), starting "
@@ -302,6 +309,13 @@ msgstr "Data source is not configured or is not a local type data source"
 msgid "本地账密登录已存在"
 msgstr "Local account password login already exists"
 
+#: bkuser/apis/web/me/serializers.py:60
+#: bkuser/apis/web/virtual_user/serializers.py:55
+msgid "用户 {} 不存在、不是实体用户或不属于当前租户"
+msgstr ""
+"User {} does not exist, is not a real user, or does not belong to the "
+"current tenant"
+
 #: bkuser/apis/web/organization/serializers/departments.py:37
 msgid "指定的父部门在当前租户中不存在"
 msgstr "The specified parent department does not exist in the current tenant"
@@ -332,7 +346,7 @@ msgid "不能移动至自己的子部门下"
 msgstr "Department cannot move to its sub-department"
 
 #: bkuser/apis/web/organization/serializers/relations.py:34
-#: bkuser/apis/web/organization/serializers/users.py:627
+#: bkuser/apis/web/organization/serializers/users.py:616
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "User ID {} does not exist in the current tenant"
 
@@ -340,73 +354,73 @@ msgstr "User ID {} does not exist in the current tenant"
 msgid "部门 ID {} 在当前租户中不存在"
 msgstr "Department ID {} does not exist in the current tenant"
 
-#: bkuser/apis/web/organization/serializers/users.py:102
+#: bkuser/apis/web/organization/serializers/users.py:103
 msgid "部门不存在"
 msgstr "The department does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:132
-#: bkuser/apis/web/organization/serializers/users.py:595
-#: bkuser/apis/web/virtual_user/serializers.py:51
+#: bkuser/apis/web/organization/serializers/users.py:133
+#: bkuser/apis/web/organization/serializers/users.py:584
+#: bkuser/apis/web/virtual_user/serializers.py:37
 msgid "用户名 {} 已存在"
 msgstr "Username {} already exists"
 
-#: bkuser/apis/web/organization/serializers/users.py:144
+#: bkuser/apis/web/organization/serializers/users.py:145
 msgid "指定的直属上级 {} 不存在"
 msgstr "The specified direct leader {} does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:187
+#: bkuser/apis/web/organization/serializers/users.py:188
 msgid "指定的部门 {} 不存在"
 msgstr "The specified department {} does not exist"
 
-#: bkuser/apis/web/organization/serializers/users.py:354
+#: bkuser/apis/web/organization/serializers/users.py:355
 msgid "不能设置自己为自己的直接上级"
 msgstr "Unable to set yourself as your direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:369
-#: bkuser/apis/web/organization/serializers/users.py:384
+#: bkuser/apis/web/organization/serializers/users.py:370
+#: bkuser/apis/web/organization/serializers/users.py:385
 msgid "账号有效期时间不能早于当前时间"
 msgstr "Account expiration time cannot be earlier than the current time"
 
-#: bkuser/apis/web/organization/serializers/users.py:496
+#: bkuser/apis/web/organization/serializers/users.py:482
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr ""
 "On line {}, the format of user information is incorrect, expected {} fields, "
 "but got {} fields"
 
-#: bkuser/apis/web/organization/serializers/users.py:509
+#: bkuser/apis/web/organization/serializers/users.py:496
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "On line {}, the format of the phone number {} is incorrect"
 
-#: bkuser/apis/web/organization/serializers/users.py:551
+#: bkuser/apis/web/organization/serializers/users.py:540
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "Username: {} custom field {} value {} cannot be converted to a number"
 
-#: bkuser/apis/web/organization/serializers/users.py:559
-#: bkuser/apis/web/organization/serializers/users.py:572
+#: bkuser/apis/web/organization/serializers/users.py:548
+#: bkuser/apis/web/organization/serializers/users.py:561
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "Username: {} custom field {} value {} is not in the options {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:590
+#: bkuser/apis/web/organization/serializers/users.py:579
 msgid "用户名 {} 重复"
 msgstr "Username {} is duplicated"
 
-#: bkuser/apis/web/organization/serializers/users.py:702
+#: bkuser/apis/web/organization/serializers/users.py:691
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "Unable to set user {} as their direct leader"
 
-#: bkuser/apis/web/organization/serializers/users.py:713
+#: bkuser/apis/web/organization/serializers/users.py:702
 msgid "一次只能批量更新一个自定义字段"
 msgstr "Only one custom field can be updated in a batch update"
 
-#: bkuser/apis/web/organization/serializers/users.py:721
+#: bkuser/apis/web/organization/serializers/users.py:710
 msgid "请提供自定义字段 {} 的值"
 msgstr "Please provide the value of the custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:729
+#: bkuser/apis/web/organization/serializers/users.py:718
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "The current tenant has no admin editable custom field {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:733
+#: bkuser/apis/web/organization/serializers/users.py:722
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr ""
 "Cannot modify custom field {} that is set to be unique in batch operations"
@@ -448,63 +462,68 @@ msgstr "Only local data sources support moving departments"
 msgid "仅可移动属于当前租户的部门"
 msgstr "Only departments belonging to the current tenant can be moving"
 
+#: bkuser/apis/web/organization/views/mixins.py:33
+msgid "当前租户不存在实名用户数据源"
+msgstr "There is no real-name user data source in the current tenant"
+
 #: bkuser/apis/web/organization/views/mixins.py:40
 msgid "当前租户不存在本地实名用户数据源"
 msgstr "There is no local real-name user data source in the current tenant"
 
-#: bkuser/apis/web/organization/views/tenants.py:101
+#: bkuser/apis/web/organization/views/tenants.py:100
 msgid "单选枚举，可选值：{}"
 msgstr "Single-choice enum, optional values: {}"
 
-#: bkuser/apis/web/organization/views/tenants.py:103
+#: bkuser/apis/web/organization/views/tenants.py:102
 msgid "多选枚举，多个值以 / 分隔，可选值：{}"
 msgstr ""
 "Multiple-choice enum, multiple values separated by /, optional values: {}"
 
-#: bkuser/apis/web/organization/views/tenants.py:105
+#: bkuser/apis/web/organization/views/tenants.py:104
 msgid "数据类型：{}"
 msgstr "Data type: {}"
 
-#: bkuser/apis/web/organization/views/users.py:318
+#: bkuser/apis/web/organization/views/users.py:319
 msgid "仅可创建属于当前租户的用户"
 msgstr "Only users belonging to the current tenant can be created"
 
-#: bkuser/apis/web/organization/views/users.py:478
+#: bkuser/apis/web/organization/views/users.py:479
 msgid "仅本地实名数据源支持更新用户信息"
 msgstr "Only local real-name data sources support updating user information"
 
-#: bkuser/apis/web/organization/views/users.py:481
+#: bkuser/apis/web/organization/views/users.py:482
 msgid "仅可更新非协同产生的租户用户"
 msgstr "Only tenant users not created through collaboration can be updated"
 
-#: bkuser/apis/web/organization/views/users.py:498
+#: bkuser/apis/web/organization/views/users.py:499
 msgid "当前用户不允许更新用户名"
 msgstr "The current user is not allowed to update the username"
 
-#: bkuser/apis/web/organization/views/users.py:548
+#: bkuser/apis/web/organization/views/users.py:549
 msgid "仅本地实名数据源支持删除用户"
 msgstr "Only local real-name data sources support deleting users"
 
-#: bkuser/apis/web/organization/views/users.py:551
+#: bkuser/apis/web/organization/views/users.py:552
 msgid "仅可删除非协同产生的租户用户"
 msgstr "Only tenant users not created through collaboration can be deleted"
 
-#: bkuser/apis/web/organization/views/users.py:646
+#: bkuser/apis/web/organization/views/users.py:647
+#: bkuser/apis/web/personal_center/views.py:599
 msgid "该租户用户没有可用的密码规则"
 msgstr "There are no available password rules for this tenant user"
 
-#: bkuser/apis/web/organization/views/users.py:683
-#: bkuser/apis/web/personal_center/views.py:534
+#: bkuser/apis/web/organization/views/users.py:680
+#: bkuser/apis/web/personal_center/views.py:553
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr ""
 "Password can only be reset for users of local data sources with the password "
 "function enabled"
 
-#: bkuser/apis/web/organization/views/users.py:825
+#: bkuser/apis/web/organization/views/users.py:822
 msgid "指定的租户部门不存在"
 msgstr "The specified tenant department does not exist"
 
-#: bkuser/apis/web/organization/views/users.py:1205
+#: bkuser/apis/web/organization/views/users.py:1202
 msgid "当前数据源未启用密码功能"
 msgstr "Current data source has not enabled password functionality"
 
@@ -533,51 +552,52 @@ msgid "邮箱 {} 在租户 {} 中匹配不到用户"
 msgstr "Email {} does not match a user in tenant {}"
 
 #: bkuser/apis/web/password/views.py:133
-#: bkuser/apis/web/personal_center/views.py:264
+#: bkuser/apis/web/personal_center/views.py:282
 msgid "发送短信验证码过于频繁，请稍后再试"
 msgstr "Sending SMS verification codes is too frequent, please try again later"
 
-#: bkuser/apis/web/password/views.py:138
-#: bkuser/apis/web/personal_center/views.py:270
-#: bkuser/apis/web/personal_center/views.py:371
+#: bkuser/apis/web/password/views.py:140
+#: bkuser/apis/web/personal_center/views.py:287
+#: bkuser/apis/web/personal_center/views.py:386
 msgid "今日发送验证码次数超过上限，请明天再试"
 msgstr ""
 "Today's limit for sending verification codes has been exceeded, please try "
 "again tomorrow"
 
-#: bkuser/apis/web/password/views.py:141 bkuser/apis/web/password/views.py:235
-#: bkuser/apis/web/personal_center/views.py:273
-#: bkuser/apis/web/personal_center/views.py:374
+#: bkuser/apis/web/password/views.py:143 bkuser/apis/web/password/views.py:237
+#: bkuser/apis/web/personal_center/views.py:290
+#: bkuser/apis/web/personal_center/views.py:389
+#: bkuser/apis/web/personal_center/views.py:631
 msgid "请联系管理员处理"
 msgstr "Please contact the administrator for assistance"
 
-#: bkuser/apis/web/password/views.py:169
+#: bkuser/apis/web/password/views.py:171
 msgid "手机号码或验证码错误"
 msgstr "Incorrect phone number or verification code"
 
-#: bkuser/apis/web/password/views.py:182
-#: bkuser/apis/web/personal_center/views.py:221
-#: bkuser/apis/web/personal_center/views.py:324
+#: bkuser/apis/web/password/views.py:184
+#: bkuser/apis/web/personal_center/views.py:238
+#: bkuser/apis/web/personal_center/views.py:341
 msgid "验证码错误"
 msgstr "Incorrect verification code"
 
-#: bkuser/apis/web/password/views.py:185
-#: bkuser/apis/web/personal_center/views.py:226
-#: bkuser/apis/web/personal_center/views.py:329
+#: bkuser/apis/web/password/views.py:187
+#: bkuser/apis/web/personal_center/views.py:243
+#: bkuser/apis/web/personal_center/views.py:346
 msgid "验证码校验失败，请联系管理员处理"
 msgstr ""
 "Verification code validation failed, please contact the administrator for "
 "assistance"
 
-#: bkuser/apis/web/password/views.py:191 bkuser/apis/web/password/views.py:227
+#: bkuser/apis/web/password/views.py:193 bkuser/apis/web/password/views.py:229
 msgid "请稍后再试"
 msgstr "Please try again later"
 
-#: bkuser/apis/web/password/views.py:232
+#: bkuser/apis/web/password/views.py:234
 msgid "今日发送次数超过上限，请明天再试"
 msgstr "Today's sending limit has been reached, please try again tomorrow"
 
-#: bkuser/apis/web/password/views.py:293
+#: bkuser/apis/web/password/views.py:295
 msgid "租户用户不存在"
 msgstr "Tenant user does not exist"
 
@@ -605,103 +625,111 @@ msgstr "Editable directly"
 msgid "不可修改"
 msgstr "Not editable"
 
-#: bkuser/apis/web/personal_center/serializers.py:178
+#: bkuser/apis/web/personal_center/serializers.py:180
 msgid "自定义手机号码为必填项"
 msgstr "Custom phone number is a required field"
 
-#: bkuser/apis/web/personal_center/serializers.py:195
+#: bkuser/apis/web/personal_center/serializers.py:197
 msgid "自定义邮箱为必填项"
 msgstr "Custom email is a required field"
 
-#: bkuser/apis/web/personal_center/serializers.py:267
+#: bkuser/apis/web/personal_center/serializers.py:269
 msgid "旧密码校验失败"
 msgstr "Old password validation failed"
 
-#: bkuser/apis/web/personal_center/views.py:185
+#: bkuser/apis/web/personal_center/serializers.py:330
+msgid "微信公众号签名验证失败"
+msgstr "WeChat signature verification failed"
+
+#: bkuser/apis/web/personal_center/views.py:202
 msgid "手机号码不可编辑"
 msgstr "Phone number cannot be edited"
 
-#: bkuser/apis/web/personal_center/views.py:190
-#: bkuser/apis/web/personal_center/views.py:304
+#: bkuser/apis/web/personal_center/views.py:207
+#: bkuser/apis/web/personal_center/views.py:321
 msgid "验证码不能为空"
 msgstr "verification code cannot be empty"
 
-#: bkuser/apis/web/personal_center/views.py:223
-#: bkuser/apis/web/personal_center/views.py:326
+#: bkuser/apis/web/personal_center/views.py:240
+#: bkuser/apis/web/personal_center/views.py:343
 #: bkuser/common/verification_code/managers.py:54
 msgid "超过验证码重试次数"
 msgstr "Exceeded verification code retry attempts"
 
-#: bkuser/apis/web/personal_center/views.py:244
+#: bkuser/apis/web/personal_center/views.py:261
 msgid "当前租户更新手机号不允许发送验证码"
 msgstr ""
 "Current tenant don't allow the verification code to be sent when updating "
 "the phone number"
 
-#: bkuser/apis/web/personal_center/views.py:299
+#: bkuser/apis/web/personal_center/views.py:316
 msgid "邮箱不可编辑"
 msgstr "Email address cannot be edited"
 
-#: bkuser/apis/web/personal_center/views.py:347
+#: bkuser/apis/web/personal_center/views.py:364
 msgid "当前租户更新邮箱不允许发送验证码"
 msgstr ""
 "Current tenant don't allow the verification code to be sent when updating "
 "the email"
 
-#: bkuser/apis/web/personal_center/views.py:366
+#: bkuser/apis/web/personal_center/views.py:381
 msgid "发送邮箱验证码过于频繁，请稍后再试"
 msgstr ""
 "Sending email verification codes is too frequent, please try again later"
 
-#: bkuser/apis/web/platform_management/serializers.py:57
+#: bkuser/apis/web/personal_center/views.py:619
+msgid "当前账户已绑定微信"
+msgstr "This account is already bound to WeChat"
+
+#: bkuser/apis/web/personal_center/views.py:658
+msgid "当前账号未绑定微信"
+msgstr "This account is not bound to WeChat"
+
+#: bkuser/apis/web/platform_management/serializers.py:58
 msgid "选择邮箱通知方式时，邮箱不能为空"
 msgstr "Email cannot be empty when selecting email notification method"
 
-#: bkuser/apis/web/platform_management/serializers.py:61
+#: bkuser/apis/web/platform_management/serializers.py:62
 msgid "选择短信通知方式时，手机号不能为空"
 msgstr "Phone number cannot be empty when selecting SMS notification method"
 
-#: bkuser/apis/web/platform_management/serializers.py:106
+#: bkuser/apis/web/platform_management/serializers.py:107
 msgid "租户 ID {} 已被使用"
 msgstr "Tenant ID {} is already in use"
 
-#: bkuser/apis/web/platform_management/serializers.py:111
+#: bkuser/apis/web/platform_management/serializers.py:112
 msgid ""
-"{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小"
-"写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符(--)"
+"{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，"
+"以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)"
 msgstr ""
 "{} does not meet the naming requirements for Tenant ID: must be composed of "
 "3-32 lowercase letters, digits, or hyphens (-), starting with a lowercase "
 "letter and ending with a lowercase letter or digit, and cannot contain two "
 "consecutive hyphens(--)"
 
-#: bkuser/apis/web/platform_management/serializers.py:124
+#: bkuser/apis/web/platform_management/serializers.py:125
 msgid "密码不符合密码规则：{}"
 msgstr "Password does not meet password rules: {}"
 
-#: bkuser/apis/web/platform_management/views.py:209
-msgid "管理员账密登录"
-msgstr "Admin account password login"
-
-#: bkuser/apis/web/platform_management/views.py:268
+#: bkuser/apis/web/platform_management/views.py:186
 msgid "默认租户不能删除"
 msgstr "Default tenant cannot be deleted"
 
-#: bkuser/apis/web/platform_management/views.py:271
+#: bkuser/apis/web/platform_management/views.py:189
 msgid "需要先停用租户才能删除"
 msgstr "The tenant needs to be disabled before it can be deleted"
 
-#: bkuser/apis/web/platform_management/views.py:317
+#: bkuser/apis/web/platform_management/views.py:235
 msgid "默认租户不能停用"
 msgstr "Default tenant cannot be deactivated"
 
-#: bkuser/apis/web/tenant_info/serializers.py:109
+#: bkuser/apis/web/tenant_info/serializers.py:112
 msgid "非本租户实名账号（ids={}）不允许添加"
 msgstr ""
 "Non-real-name accounts (ids={}) or accounts from other tenants are not "
 "allowed to be added"
 
-#: bkuser/apis/web/tenant_info/views.py:139
+#: bkuser/apis/web/tenant_info/views.py:140
 msgid "不存在实名管理员，无法禁用内置管理员账号登录"
 msgstr ""
 "There is no real-name administrator, so built-in administrator account login "
@@ -819,7 +847,7 @@ msgstr ""
 "exceed 16"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:310
-msgid "表达式中存在无效字段: {}"
+msgid "表达式中存在无效字段：{}"
 msgstr "There are invalid fields in the expression: {}"
 
 #: bkuser/apis/web/tenant_setting/serializers.py:314
@@ -891,7 +919,7 @@ msgid "创建租户用户"
 msgstr "Create tenant user"
 
 #: bkuser/apps/audit/constants.py:52
-msgid "创建用户-部门关系"
+msgid "创建用户 - 部门关系"
 msgstr "Create user-department relations"
 
 #: bkuser/apps/audit/constants.py:53
@@ -907,11 +935,11 @@ msgid "修改租户用户"
 msgstr "Modify tenant user"
 
 #: bkuser/apps/audit/constants.py:57
-msgid "修改用户-上级关系"
+msgid "修改用户 - 上级关系"
 msgstr "Modify user-leader relations"
 
 #: bkuser/apps/audit/constants.py:58
-msgid "修改用户-部门关系"
+msgid "修改用户 - 部门关系"
 msgstr "Modify user-department relations"
 
 #: bkuser/apps/audit/constants.py:59
@@ -934,119 +962,127 @@ msgstr "Modify the user's email"
 msgid "修改用户电话号码"
 msgstr "Modify the user's phone number"
 
+#: bkuser/apps/audit/constants.py:64
+msgid "绑定微信"
+msgstr "Bind WeChat"
+
 #: bkuser/apps/audit/constants.py:65
+msgid "解绑微信"
+msgstr "Unbind WeChat"
+
+#: bkuser/apps/audit/constants.py:67
 msgid "删除数据源用户"
 msgstr "Delete data source user"
 
-#: bkuser/apps/audit/constants.py:66
+#: bkuser/apps/audit/constants.py:68
 msgid "删除租户用户"
 msgstr "Delete tenant user"
 
-#: bkuser/apps/audit/constants.py:67
-msgid "删除用户-上级关系"
+#: bkuser/apps/audit/constants.py:69
+msgid "删除用户 - 上级关系"
 msgstr "Delete user-leader relations"
 
-#: bkuser/apps/audit/constants.py:68
-msgid "删除用户-部门关系"
+#: bkuser/apps/audit/constants.py:70
+msgid "删除用户 - 部门关系"
 msgstr "Delete user-department relations"
 
-#: bkuser/apps/audit/constants.py:69
+#: bkuser/apps/audit/constants.py:71
 msgid "删除协同租户用户"
 msgstr "Delete collaboration tenant user"
 
-#: bkuser/apps/audit/constants.py:72
+#: bkuser/apps/audit/constants.py:74
 msgid "创建数据源部门"
 msgstr "Create data source department"
 
-#: bkuser/apps/audit/constants.py:73
+#: bkuser/apps/audit/constants.py:75
 msgid "创建租户部门"
 msgstr "Create tenant department"
 
-#: bkuser/apps/audit/constants.py:75
+#: bkuser/apps/audit/constants.py:77
 msgid "创建协同租户部门"
 msgstr "Create collaboration tenant department"
 
-#: bkuser/apps/audit/constants.py:77
-msgid "创建部门-父部门关系"
+#: bkuser/apps/audit/constants.py:79
+msgid "创建部门 - 父部门关系"
 msgstr "Create relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:78
+#: bkuser/apps/audit/constants.py:80
 msgid "修改数据源部门"
 msgstr "Modify data source department"
 
-#: bkuser/apps/audit/constants.py:79
+#: bkuser/apps/audit/constants.py:81
 msgid "修改租户部门"
 msgstr "Modify tenant department"
 
-#: bkuser/apps/audit/constants.py:80
-msgid "修改部门-父部门关系"
+#: bkuser/apps/audit/constants.py:82
+msgid "修改部门 - 父部门关系"
 msgstr "Modify relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:81
+#: bkuser/apps/audit/constants.py:83
 msgid "删除数据源部门"
 msgstr "Delete data source department"
 
-#: bkuser/apps/audit/constants.py:82
+#: bkuser/apps/audit/constants.py:84
 msgid "删除租户部门"
 msgstr "Delete tenant department"
 
-#: bkuser/apps/audit/constants.py:84
+#: bkuser/apps/audit/constants.py:86
 msgid "删除协同租户部门"
 msgstr "Delete collaboration tenant department"
 
-#: bkuser/apps/audit/constants.py:86
-msgid "删除部门-父部门关系"
+#: bkuser/apps/audit/constants.py:88
+msgid "删除部门 - 父部门关系"
 msgstr "Delete relations of department and parent department"
 
-#: bkuser/apps/audit/constants.py:89
+#: bkuser/apps/audit/constants.py:91
 msgid "创建租户"
 msgstr "Create tenant"
 
-#: bkuser/apps/audit/constants.py:90
+#: bkuser/apps/audit/constants.py:92
 msgid "修改租户信息"
 msgstr "Modify tenant"
 
-#: bkuser/apps/audit/constants.py:91
+#: bkuser/apps/audit/constants.py:93
 msgid "删除租户"
 msgstr "Delete tenant"
 
-#: bkuser/apps/audit/constants.py:92
+#: bkuser/apps/audit/constants.py:94
 msgid "修改租户状态"
 msgstr "Modify the status of tenant"
 
-#: bkuser/apps/audit/constants.py:93
+#: bkuser/apps/audit/constants.py:95
 msgid "创建租户实名管理员"
 msgstr "Create real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:94
+#: bkuser/apps/audit/constants.py:96
 msgid "删除租户实名管理员"
 msgstr "Delete real manager of tenant"
 
-#: bkuser/apps/audit/constants.py:96
+#: bkuser/apps/audit/constants.py:98
 msgid "修改租户账户有效期配置"
 msgstr "Modify the validity period config of tenant account"
 
-#: bkuser/apps/audit/constants.py:99
+#: bkuser/apps/audit/constants.py:101
 msgid "修改租户用户显示名称表达式配置"
 msgstr "Modify tenant user display_name expression config"
 
-#: bkuser/apps/audit/constants.py:103
+#: bkuser/apps/audit/constants.py:105
 msgid "创建虚拟用户"
 msgstr "Create virtual user"
 
-#: bkuser/apps/audit/constants.py:104
+#: bkuser/apps/audit/constants.py:106
 msgid "修改虚拟用户"
 msgstr "Modify virtual user"
 
-#: bkuser/apps/audit/constants.py:105
+#: bkuser/apps/audit/constants.py:107
 msgid "删除虚拟用户"
 msgstr "Delete virtual user"
 
-#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:197
+#: bkuser/apps/data_source/constants.py:29 bkuser/apps/tenant/constants.py:191
 msgid "直接"
 msgstr "Direct"
 
-#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:198
+#: bkuser/apps/data_source/constants.py:30 bkuser/apps/tenant/constants.py:192
 msgid "表达式"
 msgstr "Expression"
 
@@ -1070,8 +1106,8 @@ msgstr "Enterprise"
 msgid "社交"
 msgstr "Social"
 
-#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:165
-#: bkuser/apps/tenant/constants.py:172 bkuser/apps/tenant/constants.py:180
+#: bkuser/apps/idp/constants.py:31 bkuser/apps/tenant/constants.py:159
+#: bkuser/apps/tenant/constants.py:166 bkuser/apps/tenant/constants.py:174
 msgid "启用"
 msgstr "Enabled"
 
@@ -1129,11 +1165,11 @@ msgstr "Admin Reset Password"
 msgid "发送验证码"
 msgstr "Send Verification Code"
 
-#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:55
+#: bkuser/apps/notification/constants.py:37 bkuser/apps/tenant/constants.py:56
 msgid "租户用户即将过期"
 msgstr "Tenant User About to Expire"
 
-#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:56
+#: bkuser/apps/notification/constants.py:38 bkuser/apps/tenant/constants.py:57
 msgid "租户用户已过期"
 msgstr "Tenant User Has Expired"
 
@@ -1275,79 +1311,83 @@ msgstr "Data source imported successfully"
 msgid "数据源导入失败"
 msgstr "Data source import failed"
 
-#: bkuser/apps/tenant/constants.py:39
+#: bkuser/apps/tenant/constants.py:40
 msgid "字符串"
 msgstr "String"
 
-#: bkuser/apps/tenant/constants.py:40 bkuser/common/passwd/models.py:119
+#: bkuser/apps/tenant/constants.py:41 bkuser/common/passwd/models.py:119
 msgid "数字"
 msgstr "Number"
 
-#: bkuser/apps/tenant/constants.py:41
+#: bkuser/apps/tenant/constants.py:42
 msgid "枚举"
 msgstr "Enum"
 
-#: bkuser/apps/tenant/constants.py:42
+#: bkuser/apps/tenant/constants.py:43
 msgid "多选枚举"
 msgstr "Multiple-choice Enum"
 
-#: bkuser/apps/tenant/constants.py:48 bkuser/plugins/local/constants.py:60
+#: bkuser/apps/tenant/constants.py:49 bkuser/plugins/local/constants.py:60
 msgid "邮件通知"
 msgstr "Email Notification"
 
-#: bkuser/apps/tenant/constants.py:49 bkuser/plugins/local/constants.py:61
+#: bkuser/apps/tenant/constants.py:50 bkuser/plugins/local/constants.py:61
 msgid "短信通知"
 msgstr "SMS Notification"
 
-#: bkuser/apps/tenant/constants.py:149
-msgid "租户用户 ID"
-msgstr "Tenant user ID"
-
-#: bkuser/apps/tenant/constants.py:166 bkuser/apps/tenant/constants.py:173
-#: bkuser/apps/tenant/constants.py:181
+#: bkuser/apps/tenant/constants.py:160 bkuser/apps/tenant/constants.py:167
+#: bkuser/apps/tenant/constants.py:175
 msgid "禁用"
 msgstr "Disabled"
 
-#: bkuser/apps/tenant/constants.py:174
+#: bkuser/apps/tenant/constants.py:168
 msgid "已过期"
 msgstr "Expired"
 
-#: bkuser/apps/tenant/constants.py:183
+#: bkuser/apps/tenant/constants.py:177
 msgid "未确认"
 msgstr "Unconfirmed"
 
-#: bkuser/apps/tenant/constants.py:189
+#: bkuser/apps/tenant/constants.py:183
 msgid "全部"
 msgstr "All"
 
-#: bkuser/apps/tenant/constants.py:204
+#: bkuser/apps/tenant/constants.py:198
 msgid "nanoid"
 msgstr "nanoid"
 
-#: bkuser/apps/tenant/constants.py:205
+#: bkuser/apps/tenant/constants.py:199
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:206
+#: bkuser/apps/tenant/constants.py:200
 msgid "用户名"
 msgstr "Username"
 
-#: bkuser/apps/tenant/constants.py:207
+#: bkuser/apps/tenant/constants.py:201
 msgid "用户名@域名"
 msgstr "Username@Domain"
 
-#: bkuser/biz/senders.py:43 bkuser/biz/senders.py:73
+#: bkuser/apps/tenant/constants.py:207
+msgid "企业内用户唯一标识"
+msgstr ""
+
+#: bkuser/apps/tenant/constants.py:208
+msgid "蓝鲸用户唯一标识"
+msgstr ""
+
+#: bkuser/biz/senders.py:44 bkuser/biz/senders.py:75
 msgid "今日发送验证码次数超过上限"
 msgstr "Today's limit for sending verification codes has been reached"
 
-#: bkuser/biz/senders.py:101
+#: bkuser/biz/senders.py:103
 msgid "超过发送次数限制"
 msgstr "Exceeded the limit for sending times"
 
 #: bkuser/biz/validators.py:46
 msgid ""
-"{} 不符合 用户名 的命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)"
-"字符组成，以字母或数字开头及结尾"
+"{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接"
+"符 (-) 字符组成，以字母或数字开头及结尾"
 msgstr ""
 "{} does not meet the naming requirements for Username: must be composed of "
 "2-32 letters, digits, underscores (_), dots (.), or hyphens (-), starting "
@@ -1355,8 +1395,8 @@ msgstr ""
 
 #: bkuser/biz/validators.py:55
 msgid ""
-"{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字"
-"母开头，字母或数字结尾"
+"{} 不符合 自定义字段 的命名规范：由 3-32 位字母、数字、下划线 (_) 字符组成，"
+"以字母开头，字母或数字结尾"
 msgstr ""
 "{} does not meet the naming requirements for Custom Fields: must be composed "
 "of 3-32 letters, digits, or underscores (_), starting with a letter and "
@@ -1430,6 +1470,34 @@ msgstr "The current user has no editable tenant custom fields"
 #: bkuser/biz/validators.py:208
 msgid "提供的自定义字段数据与租户自定义字段不匹配"
 msgstr "The provided custom field data does not match the tenant custom fields"
+
+#: bkuser/biz/weixin/weixin.py:111
+msgid "获取企业微信用户信息失败"
+msgstr "Failed to retrieve user information from WeCom"
+
+#: bkuser/biz/weixin/weixin.py:116
+msgid "企业微信 API 调用失败：{}"
+msgstr "WeCom API call failed: {}"
+
+#: bkuser/biz/weixin/weixin.py:173
+msgid "创建微信临时二维码失败"
+msgstr "Failed to create a temporary WeChat QR code"
+
+#: bkuser/biz/weixin/weixin.py:177
+msgid "微信公众号 API 调用失败：{}"
+msgstr "WeChat Official Account API call failed: {}"
+
+#: bkuser/biz/weixin/weixin.py:210
+msgid "绑定成功"
+msgstr "Binding successful"
+
+#: bkuser/biz/weixin/weixin.py:220
+msgid "微信二维码 ticket 无效或已过期"
+msgstr "WeChat QR code ticket is invalid or expired"
+
+#: bkuser/biz/weixin/weixin.py:229
+msgid "微信二维码对应的用户不存在"
+msgstr "User corresponding to WeChat QR code does not exist"
 
 #: bkuser/common/constants.py:35
 msgid "未认证的用户"
@@ -1528,7 +1596,7 @@ msgid "操作过于频繁"
 msgstr "Operation too Frequent"
 
 #: bkuser/common/error_codes.py:82
-msgid "调用外部系统API异常"
+msgid "调用外部系统 API 异常"
 msgstr "Error when requesting external system API"
 
 #: bkuser/common/error_codes.py:88
@@ -1626,6 +1694,42 @@ msgstr "Failed to send password reset email"
 #: bkuser/common/error_codes.py:127
 msgid "验证失败"
 msgstr "Authentication failed"
+
+#: bkuser/common/error_codes.py:130
+msgid "微信已解绑"
+msgstr "WeChat is already unbound"
+
+#: bkuser/common/error_codes.py:131
+msgid "微信已绑定"
+msgstr "WeChat is already bound"
+
+#: bkuser/common/error_codes.py:132
+msgid "微信配置未找到"
+msgstr "WeChat configuration not found"
+
+#: bkuser/common/error_codes.py:133
+msgid "微信 API 调用失败"
+msgstr "WeChat API call failed"
+
+#: bkuser/common/error_codes.py:134
+msgid "二维码生成失败"
+msgstr "Failed to generate QR code"
+
+#: bkuser/common/error_codes.py:135
+msgid "二维码无效"
+msgstr "QR code is invalid"
+
+#: bkuser/common/error_codes.py:136
+msgid "XML 解析失败"
+msgstr "Failed to parse XML"
+
+#: bkuser/common/error_codes.py:137
+msgid "state 无效"
+msgstr "Invalid state parameter"
+
+#: bkuser/common/error_codes.py:138
+msgid "不支持的微信类型"
+msgstr "Unsupported WeChat type"
 
 #: bkuser/common/locks.py:30
 msgid "全局锁"
@@ -1814,6 +1918,16 @@ msgstr "Contains at most {max_items} objects"
 msgid "至少包含 {min_items} 个对象."
 msgstr "Contains at least {min_items} objects."
 
+#: bkuser/common/serializers.py:30
+#, python-brace-format
+msgid "每个对象长度不能超过 {max_item_length} 个字符."
+msgstr "Each object cannot exceed {max_item_length} characters."
+
+#: bkuser/common/serializers.py:31
+#, python-brace-format
+msgid "每个对象长度不能小于 {min_item_length} 个字符."
+msgstr "Each object cannot be less than {min_item_length} characters."
+
 #: bkuser/common/verification_code/constants.py:25
 msgid "忘记密码后申请重置"
 msgstr "Request reset after forgetting password"
@@ -1923,34 +2037,46 @@ msgstr ""
 "connectivity between the User Management service and the implemented API "
 "service, and ensure the API service can respond correctly"
 
-#: bkuser/plugins/general/http.py:70
+#: bkuser/plugins/general/constants.py:69
+msgid "蓝鲸网关"
+msgstr "BlueKing Gateway"
+
+#: bkuser/plugins/general/http.py:81
 msgid ""
 "实现的 API 服务异常，请检查实现的 API 服务是否正常或通过日志排查问题原因"
 msgstr ""
 "API service exception, please check the implemented API service logs to "
 "identify the cause of the problem"
 
-#: bkuser/plugins/general/http.py:74
+#: bkuser/plugins/general/http.py:85
 msgid "请求异常，请检查 API 路径和查询参数是否正确，并确保符合 API 文档的要求"
 msgstr ""
 "Request exception, please check if the API path and query parameters are "
 "correct, and ensure they meet API documentation requirements"
 
-#: bkuser/plugins/general/http.py:112 bkuser/plugins/general/http.py:169
+#: bkuser/plugins/general/http.py:123 bkuser/plugins/general/http.py:180
 msgid ""
 "请求数据源 API {} 参数 {} 异常，状态码：{}，可能原因是：{}，响应内容：{}"
 msgstr ""
 "Request to data source API {} parameter {} exception, status code: {}, "
 "possible reason: {}, response content: {}"
 
-#: bkuser/plugins/general/http.py:125 bkuser/plugins/general/http.py:182
+#: bkuser/plugins/general/http.py:136 bkuser/plugins/general/http.py:193
 msgid "数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}"
 msgstr ""
 "Data source API {} parameter {} returned non-Json format, response content {}"
 
+#: bkuser/plugins/general/models.py:117
+msgid "蓝鲸网关认证时，gateway_name 和 gateway_stage 不能为空"
+msgstr "When using BlueKing Gateway authentication, gateway_name and gateway_stage cannot be empty"
+
+#: bkuser/plugins/general/models.py:123
+msgid "服务地址格式不正确"
+msgstr "Service address format is incorrect"
+
 #: bkuser/plugins/general/plugin.py:95
 msgid ""
-"连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
+"连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息："
 "{}"
 msgstr ""
 "Connection test failed: unable to establish connection or request timed out, "
@@ -2136,8 +2262,8 @@ msgstr "Required field {} in the file to be imported has empty values"
 
 #: bkuser/plugins/local/parser.py:174
 msgid ""
-"用户名 {} 不符合命名规范: 由2-32位字母、数字、下划线(_)、点(.)、连接符(-)字符"
-"组成，以字母或数字开头及结尾"
+"用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 "
+"(-) 字符组成，以字母或数字开头及结尾"
 msgstr ""
 "Username {} does not meet the naming requirements: must be composed of 2-32 "
 "letters, digits, underscores (_), dots (.), or hyphens (-), starting and "
@@ -2167,10 +2293,28 @@ msgstr "message"
 msgid "new message"
 msgstr "new message"
 
+#~ msgid "缺少授权码"
+#~ msgstr "Authorization code is missing"
+
+#~ msgid "缺少 state"
+#~ msgstr "State parameter is missing"
+
+#~ msgid "管理员账密登录"
+#~ msgstr "Admin account password login"
+
+#~ msgid "签名验证失败"
+#~ msgstr "Signature verification failed"
+
+#~ msgid "租户用户 ID"
+#~ msgstr "Tenant user ID"
+
+#~ msgid "用户 {} 不存在"
+#~ msgstr "User {} does not exist"
+
 #~ msgid "租户 {} 的展示名表达式配置不存在，请联系管理员"
 #~ msgstr ""
 #~ "Tenant {} display_name expression config not found, please contact "
 #~ "administrator"
 
-#~ msgid "表达式 {} 不合法: {}"
+#~ msgid "表达式 {} 不合法：{}"
 #~ msgstr "Expression {} is invalid: {}"

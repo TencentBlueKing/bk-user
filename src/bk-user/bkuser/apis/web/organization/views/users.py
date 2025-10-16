@@ -18,7 +18,7 @@
 import itertools
 from collections import defaultdict
 from datetime import timedelta
-from typing import Dict, List, Set
+from typing import Dict, List
 
 from django.conf import settings
 from django.db import transaction
@@ -88,7 +88,8 @@ from bkuser.biz.auditor import (
     TenantUserStatusUpdateAuditor,
     TenantUserUpdateAuditor,
 )
-from bkuser.biz.organization import DataSourceUserHandler
+from bkuser.biz.organization import DataSourceUserHandler, TenantOrgPathHandler
+from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -165,38 +166,6 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         return queryset.select_related("data_source", "data_source_user")[: self.search_limit]
 
-    def _get_user_organization_paths_map(self, tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
-        """获取租户部门的组织路径信息"""
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
-
-        # 数据源用户 ID -> [数据源部门 ID1， 数据源部门 ID2]
-        user_dept_id_map = defaultdict(list)
-        for relation in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
-            user_dept_id_map[relation.user_id].append(relation.department_id)
-
-        # 数据源部门 ID 集合
-        data_source_dept_ids: Set[int] = set().union(*user_dept_id_map.values())
-
-        # 数据源部门 ID -> 组织路径
-        org_path_map = {}
-        for dept_relation in DataSourceDepartmentRelation.objects.filter(
-            department_id__in=data_source_dept_ids
-        ).select_related("department"):
-            dept_names = list(
-                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
-            )
-            org_path_map[dept_relation.department_id] = "/".join(dept_names)
-
-        # 租户用户 ID -> 组织路径列表
-        return {
-            user.id: [
-                org_path_map[dept_id]
-                for dept_id in user_dept_id_map[user.data_source_user_id]
-                if dept_id in org_path_map
-            ]
-            for user in tenant_users
-        }
-
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="搜索租户用户",
@@ -205,9 +174,10 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_users = self.get_queryset()
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
         context = {
             "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
-            "org_path_map": self._get_user_organization_paths_map(tenant_users),
+            "org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids),
         }
         resp_data = TenantUserSearchOutputSLZ(tenant_users, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
@@ -640,15 +610,11 @@ class TenantUserPasswordRuleRetrieveApi(CurrentUserTenantMixin, generics.Retriev
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
         data_source = tenant_user.data_source
-        plugin_config = data_source.get_plugin_cfg()
 
-        if not (data_source.is_local and data_source.is_real_type and plugin_config.enable_password):
+        passwd_rule = PasswordRuleHandler.get_data_source_password_rule(data_source)
+        if passwd_rule is None:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("该租户用户没有可用的密码规则"))
 
-        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
-        assert plugin_config.password_rule is not None
-
-        passwd_rule = plugin_config.password_rule.to_rule()
         return Response(TenantUserPasswordRuleRetrieveOutputSLZ(passwd_rule).data, status=status.HTTP_200_OK)
 
 
@@ -737,16 +703,10 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
             user_id=tenant_user.data_source_user.id,
         ).values_list("department_id", flat=True)
 
-        organization_paths: List[str] = []
-        # NOTE: 用户部门数量不会很多，且该 API 调用不频繁，这里的 N+1 问题可以先不处理
-        for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids):
-            dept_names = list(
-                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
-            )
-            organization_paths.append("/".join(dept_names))
+        org_path_map = TenantOrgPathHandler.get_dept_organization_path_map(data_source_dept_ids, include_self=True)
 
         return Response(
-            TenantUserOrganizationPathOutputSLZ({"organization_paths": organization_paths}).data,
+            TenantUserOrganizationPathOutputSLZ({"organization_paths": org_path_map.values()}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -1161,7 +1121,7 @@ class TenantUserLeaderBatchUpdateApi(
             for leader_id, user_id in itertools.product(leader_ids, data_source_user_ids)
         ]
 
-        # 【审计】创建用户-上级关系变更操作审计对象并记录变更前的用户-上级关系
+        # 【审计】创建用户 - 上级关系变更操作审计对象并记录变更前的用户 - 上级关系
         auditor = TenantUserLeaderRelationsUpdateAuditor(request.user.username, cur_tenant_id, data_source_user_ids)
         auditor.pre_record_data_before()
 

@@ -425,7 +425,9 @@ const handleCancelEdit = async () => {
 onMounted(() => {
   currentUser()
     .then((res) => {
-      if (res.data.role === 'tenant_manager') {
+      if (res.data.role === 'tenant_manager' ||
+        window.ENABLE_MULTI_TENANT_MODE === 'False'
+      ) {
         router.push({ name: 'organization' });
       } else if (res.data.role === 'super_manager') {
         fetchTenantsList();

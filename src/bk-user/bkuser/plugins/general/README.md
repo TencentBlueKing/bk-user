@@ -6,7 +6,7 @@
 
 ## 鉴权模式
 
-通用 HTTP 插件目前支持使用 `BearerToken` 或 `BasicAuth` 进行鉴权，后续将陆续支持其他鉴权方式。当前示例请求等效于：
+通用 HTTP 插件目前支持使用 `BearerToken` 、`BasicAuth` 和 `蓝鲸网关` 进行鉴权，后续将陆续支持其他鉴权方式。当前示例请求等效于：
 
 ```shell
 # BearerToken
@@ -14,6 +14,10 @@ curl -H 'Authorization: Bearer ${BearerToken}' http://bk.example.com/apis/v1/use
 
 # BasicAuth
 curl -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" http://bk.example.com/apis/v1/departments?page=1&page_size=100
+
+# bk_apigateway
+curl -H 'X-Bkapi-Authorization: {"bk_app_code":"bkuser","bk_app_secret":"dXNlcm5hbWU6cGFzc3dvcmQ="}' \
+     http://bk.example.com/apis/v1/users?page=1&page_size=100
 ```
 
 ## 用户数据 API

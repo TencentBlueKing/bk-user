@@ -25,6 +25,6 @@ class RequestIDFilter(logging.Filter):
     日志记录中增加 request id
     """
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         record.request_id = local.request_id
         return True

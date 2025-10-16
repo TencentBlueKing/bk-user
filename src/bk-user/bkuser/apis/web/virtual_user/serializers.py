@@ -14,30 +14,16 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Any, Dict
+from typing import List
 
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.validators import validate_data_source_user_username
-from bkuser.common.validators import validate_phone_with_country_code
-
-
-class VirtualUserListInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
-
-
-class VirtualUserListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
-    # Note: 这里并不获取租户用户的联系方式，因为虚拟账号并不是同步而来，也无法通过登录后修改
-    email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
-    phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
-    phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
 
 
 def _validate_duplicate_data_source_username(data_source_id: str, username: str, data_source_user_id: int = 0) -> str:
@@ -53,51 +39,74 @@ def _validate_duplicate_data_source_username(data_source_id: str, username: str,
     return username
 
 
+def _validate_owners(owners: List[str], tenant_id: str) -> List[str]:
+    """
+    校验责任人列表
+    1. 检查每个责任人是否存在且为实体用户
+    2. 检查每个责任人都应属于当前租户
+    """
+    valid_owners = set(
+        TenantUser.objects.filter(
+            id__in=owners, tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+        ).values_list("id", flat=True)
+    )
+
+    if invalid_owners := set(owners) - valid_owners:
+        raise ValidationError(_("用户 {} 不存在、不是实体用户或不属于当前租户").format(invalid_owners))
+
+    return owners
+
+
+class VirtualUserListInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
+
+
+class VirtualUserOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户 ID")
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="姓名")
+    app_codes = serializers.ListField(child=serializers.CharField(), help_text="应用编码列表")
+    owners = serializers.ListField(child=serializers.CharField(), help_text="责任人列表")
+    created_at = serializers.DateTimeField(help_text="创建时间")
+
+
+class VirtualUserRetrieveOutputSLZ(VirtualUserOutputSLZ):
+    pass
+
+
+class VirtualUserListOutputSLZ(VirtualUserOutputSLZ):
+    pass
+
+
 class VirtualUserCreateInputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱", required=False, default="", allow_blank=True)
-    phone = serializers.CharField(help_text="手机号", required=False, default="", allow_blank=True)
-    phone_country_code = serializers.CharField(
-        help_text="手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
-    )
+    app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
+    owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(self.context["data_source_id"], username)
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果提供了手机号，则校验手机号是否合法
-        if attrs["phone"]:
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
+    def validate_app_codes(self, app_codes: List[str]) -> List[str]:
+        # 过滤重复值
+        return list(set(app_codes))
 
-        return attrs
+    def validate_owners(self, owners: List[str]) -> List[str]:
+        return _validate_owners(owners, self.context["tenant_id"])
 
 
 class VirtualUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
 
 
-class VirtualUserRetrieveOutputSLZ(VirtualUserListOutputSLZ):
-    pass
-
-
 class VirtualUserUpdateInputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱", required=False, default="", allow_blank=True)
-    phone = serializers.CharField(help_text="手机号", required=False, default="", allow_blank=True)
-    phone_country_code = serializers.CharField(
-        help_text="手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
-    )
+    app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
+    owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果提供了手机号，则校验手机号是否合法
-        if attrs["phone"]:
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
+    def validate_app_codes(self, app_codes: List[str]) -> List[str]:
+        # 过滤重复值
+        return list(set(app_codes))
 
-        return attrs
+    def validate_owners(self, owners: List[str]) -> List[str]:
+        return _validate_owners(owners, self.context["tenant_id"])

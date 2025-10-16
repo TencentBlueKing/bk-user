@@ -47,11 +47,25 @@ class OpenApiCommonMixin:
 
     @cached_property
     def real_data_source_id(self) -> int:
+        # 实名数据源不存在时，返回 0
         data_source = (
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
         )
         if not data_source:
-            raise ValidationError("there is no real data source in the current tenant")
+            return 0
+
+        return data_source.id
+
+    @cached_property
+    def virtual_data_source_id(self) -> int:
+        # 虚拟数据源不存在时，返回 0
+        data_source = (
+            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
+            .only("id")
+            .first()
+        )
+        if not data_source:
+            return 0
 
         return data_source.id
 

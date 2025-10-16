@@ -164,7 +164,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_organization_path(self, obj: TenantDepartment) -> str:
-        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
+        return self.context["org_path_map"].get(obj.data_source_department_id, obj.data_source_department.name)
 
 
 class OptionalTenantDepartmentListInputSLZ(serializers.Serializer):
@@ -178,7 +178,7 @@ class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_organization_path(self, obj: TenantDepartment) -> str:
-        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
+        return self.context["org_path_map"].get(obj.data_source_department_id, obj.data_source_department.name)
 
 
 class TenantDepartmentParentUpdateInputSLZ(serializers.Serializer):

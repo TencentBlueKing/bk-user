@@ -5,6 +5,7 @@ import { createApp } from 'vue';
 import VueDOMPurifyHTML from 'vue-dompurify-html';
 
 import App from './app.vue';
+import vIsMultipleTenant from './directives/is-multiple-tanent';
 import i18n from './language/index';
 import router from './router';
 
@@ -57,4 +58,5 @@ createApp(App)
   .use(VueDOMPurifyHTML)
   .provide('editLeaveBefore', leaveBox)
   .directive('bkTooltips', bkTooltips)
+  .directive('isMultipleTenant', vIsMultipleTenant)
   .mount('.app');
