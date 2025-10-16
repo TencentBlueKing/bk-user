@@ -22,8 +22,8 @@ from typing import List
 
 from django.utils import timezone
 
+from bkuser.apps.tenant.cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import CollaborationStrategy, TenantUser
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
@@ -90,4 +90,4 @@ def batch_delete_tenant_user_display_names(data_source_user_ids: List[int], tena
     tenant_users = TenantUser.objects.filter(tenant_id=tenant_id, data_source_user_id__in=data_source_user_ids)
 
     # 批量失效缓存
-    DisplayNameCacheHandler.batch_delete_display_name_cache(tenant_users)
+    DisplayNameCacheHandler().batch_delete(tenant_users)

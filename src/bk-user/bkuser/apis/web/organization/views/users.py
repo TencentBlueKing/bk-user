@@ -70,8 +70,8 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
+from bkuser.apps.tenant.cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantUserStatus
-from bkuser.apps.tenant.display_name_cache import DisplayNameCacheHandler
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
     Tenant,
@@ -506,7 +506,7 @@ class TenantUserRetrieveUpdateDestroyApi(
 
                 tenant_user.save(update_fields=["account_expired_at", "status", "updater", "updated_at"])
             # 失效 DisplayName 缓存
-            transaction.on_commit(lambda: DisplayNameCacheHandler.delete_display_name_cache(tenant_user))
+            transaction.on_commit(lambda: DisplayNameCacheHandler().delete(tenant_user))
 
         # 【审计】将审计记录保存至数据库
         auditor.record(tenant_user)
