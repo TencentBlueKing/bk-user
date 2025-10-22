@@ -243,6 +243,8 @@ BK_COOKIE_AGE = env.int("BK_LOGIN_LOGIN_COOKIE_AGE", 60 * 60 * 24)
 BK_TOKEN_OFFSET_ERROR_TIME = env.int("BK_LOGIN_LOGIN_TOKEN_OFFSET_ERROR_TIME", 60)
 # 无操作 失效期，默认2个小时. 长时间误操作, 登录态已过期
 BK_INACTIVE_COOKIE_AGE = env.int("BK_LOGIN_LOGIN_INACTIVE_COOKIE_AGE", 60 * 60 * 2)
+# 更新不活跃状态的时间间隔
+BK_INACTIVE_UPDATE_INTERVAL = env.int("BK_PAAS_LOGIN_INACTIVE_UPDATE_INTERVAL", 60 * 10)
 
 # ===============================================================================
 # AUTHENTICATION
