@@ -26,7 +26,7 @@ IDP（Identity Provider）插件是蓝鲸用户管理系统的认证扩展机制
 
 ### 内置插件
 
-系统已经内置了以下插件：
+系统`预计`会内置了以下插件：
 
 - **身份凭证认证**
   - `local`: 本地账密登录
@@ -153,7 +153,7 @@ touch settings.py    # 如果有配置常量
 配置类使用 [Pydantic](https://docs.pydantic.dev/) 定义，提供类型验证和数据校验功能。
 
 ```python
-from idp_plugins.base import BasePluginConfig
+from ..base import BasePluginConfig
 
 class MyPluginConfig(BasePluginConfig):
     # 根据插件所需自行定义必填字段，比如
@@ -202,6 +202,7 @@ register_plugin(MyCustomPlugin)
 
 ```python
 from django.utils.translation import gettext_lazy as _
+
 from ..exceptions import InvalidParamError, RequestAPIError
 
 # 参数校验
