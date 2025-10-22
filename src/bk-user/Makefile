@@ -28,7 +28,3 @@ i18n-all: i18n-po i18n-mo  ## 执行 i18n-po & i18n-mo
 package-plugin: ## 打包自定义数据源插件
 	@configmap_name=bk-user-plugin-$(shell echo ${name} | sed 's/_/-/g'); \
 	kubectl create configmap $${configmap_name} --from-file=bkuser/plugins/${name} --dry-run=client -o yaml > $${configmap_name}.yaml
-
-package-idp-plugin: ## 打包自定义 IDP 插件
-	@configmap_name=bk-user-idp-plugin-$(shell echo ${name} | sed 's/_/-/g'); \
-	kubectl create configmap $${configmap_name} --from-file=bkuser/idp_plugins/${name} --dry-run=client -o yaml > $${configmap_name}.yaml
