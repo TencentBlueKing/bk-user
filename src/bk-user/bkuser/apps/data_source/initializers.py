@@ -115,18 +115,23 @@ class LocalDataSourceIdentityInfoInitializer:
         # 由于用户密码将采用 HASH 加密，因此只有在初始化的时候才能获取到明文密码，用于后续通知
         user_password_map = {user.id: self.password_provider.generate() for user in users}
 
-        waiting_create_infos = [
-            LocalDataSourceIdentityInfo(
-                user=user,
-                password=make_password(user_password_map[user.id]),
-                password_updated_at=time_now,
-                password_expired_at=expired_at,
-                data_source=self.data_source,
-                username=user.username,
-            )
-            for user in users
-        ]
-        LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos, batch_size=self.BATCH_SIZE)
+        # Q: 为什么手动分批处理，而不是生成所有后再使用 bulk_create 的 batch_size 进行分批插入
+        # A: make_password 是一个耗时操作（单次大约 360 ms），在用户较多时由于长时间无数据库交互
+        # 导致在 Celery Worker 启动时获取的 MySQL 连接被 MySQL 服务器单方面关闭，所以这里手动分配生成后直接插入 DB
+        for i in range(0, len(users), self.BATCH_SIZE):
+            waiting_create_infos = [
+                LocalDataSourceIdentityInfo(
+                    user=user,
+                    password=make_password(user_password_map[user.id]),
+                    password_updated_at=time_now,
+                    password_expired_at=expired_at,
+                    data_source=self.data_source,
+                    username=user.username,
+                )
+                for user in users[i : i + self.BATCH_SIZE]
+            ]
+
+            LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos)
 
         return user_password_map
 
