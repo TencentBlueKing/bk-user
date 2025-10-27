@@ -40,10 +40,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--tenant_id", type=str, help="Tenant ID", required=True)
+        parser.add_argument("--tenant_name", type=str, help="Tenant name")
         parser.add_argument("--password", type=str, help="Built-In Manager - admin password", required=True)
 
     @staticmethod
-    def _check_tenant(tenant_id: str):
+    def _check_tenant(tenant_id: str, tenant_name: str):
         if not re.fullmatch(TENANT_ID_REGEX, tenant_id):
             raise ValueError(
                 f"{tenant_id} does not meet the naming requirements for Tenant ID: must be composed of "
@@ -53,6 +54,9 @@ class Command(BaseCommand):
 
         if Tenant.objects.filter(id=tenant_id).exists():
             raise ValueError(f"Tenant {tenant_id} already exists")
+
+        if Tenant.objects.filter(name=tenant_name).exists():
+            raise ValueError(f"Tenant name {tenant_name} already exists")
 
         if tenant_id in [BuiltInTenantIDEnum.SYSTEM, BuiltInTenantIDEnum.DEFAULT]:
             raise ValueError(f"Tenant {tenant_id} is reserved")
@@ -66,15 +70,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
+        tenant_name = kwargs.get("tenant_name", tenant_id)
         password = kwargs["password"]
 
         # 校验
-        self._check_tenant(tenant_id)
+        self._check_tenant(tenant_id, tenant_name)
         self._check_password(password)
 
         # 创建租户
         tenant = TenantCreator.create(
-            tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_id, is_default=False),
+            tenant_info=TenantInfo(tenant_id=tenant_id, tenant_name=tenant_name, is_default=False),
             builtin_manager=BuiltinManagerInfo(username="admin", password=password),
             builtin_ds_config=BuiltinManagementDataSourceConfig(send_password_notification=False),
         )
