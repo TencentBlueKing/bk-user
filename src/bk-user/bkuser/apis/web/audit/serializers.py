@@ -19,7 +19,6 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from bkuser.apps.audit.constants import ObjectTypeEnum, OperationEnum
-from bkuser.apps.audit.models import OperationAuditRecord
 
 
 class AuditRecordListInputSLZ(serializers.Serializer):
@@ -49,8 +48,5 @@ class AuditRecordListOutputSLZ(serializers.Serializer):
     operation = serializers.CharField(help_text="操作行为")
     object_type = serializers.CharField(help_text="操作对象类型")
     object_name = serializers.CharField(help_text="操作对象名称", allow_blank=True, allow_null=True)
-    creator = serializers.SerializerMethodField(help_text="操作人")
+    creator = serializers.CharField(help_text="操作人")
     created_at = serializers.DateTimeField(help_text="操作时间")
-
-    def get_creator(self, obj: OperationAuditRecord) -> str:
-        return self.context["user_display_name_map"].get(obj.creator) or obj.creator

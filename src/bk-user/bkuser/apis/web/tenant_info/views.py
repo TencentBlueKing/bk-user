@@ -109,9 +109,12 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         data_source, user = self.get_builtin_data_source_and_user()
         idp = Idp.objects.get(data_source_id=data_source.id)
 
+        tenant_user = TenantUser.objects.get(data_source_user=user)
+
         return Response(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
+                    "id": tenant_user.id,
                     "username": user.username,
                     "enable_login": idp.status == IdpStatus.ENABLED,
                 }
