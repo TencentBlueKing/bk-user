@@ -711,5 +711,6 @@
   "s 后自动关闭页面": "seconds to auto close page",
   "直接关闭": "Close Directly",
   "绑定失败": "Binding failed",
-  "请稍后重试，若无法解决，请联系管理员处理": "Please try again later. If the issue cannot be resolved, please contact the administrator for assistance"
+  "请稍后重试，若无法解决，请联系管理员处理": "Please try again later. If the issue cannot be resolved, please contact the administrator for assistance",
+  "录入成功": "Entry successful"
 }
