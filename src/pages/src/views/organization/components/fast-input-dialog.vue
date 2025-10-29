@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="tsx">
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { useValidate } from '@/hooks';
@@ -256,6 +256,7 @@ const confirm = async () => {
     };
     await operationsCreate(param);
     emit('success');
+    Message({ theme: 'success', message: t('录入成功') });
   } catch (err) {
     console.error(err);
   } finally {
