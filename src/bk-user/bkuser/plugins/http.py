@@ -21,9 +21,10 @@ from typing import Dict, Tuple
 from urllib.parse import urlparse
 
 import requests
-from django.conf import settings
 from requests.adapters import HTTPAdapter
+from requests.auth import HTTPBasicAuth
 
+from bkuser.plugins.settings import BK_USER_API_URL, BK_USER_APP_CODE, BK_USER_APP_SECRET
 from bkuser.plugins.utils import urljoin
 
 logger = logging.getLogger(__name__)
@@ -217,11 +218,9 @@ def http_delete_20x(url, **kwargs):
 
 def _call_bk_user_api(http_func, url_path: str, **kwargs):
     """调用用户管理接口"""
-    url = urljoin(settings.BK_USER_URL, url_path)
+    url = urljoin(BK_USER_API_URL, url_path)
 
-    # 为内部插件 API 接口调用添加专用标识头，允许访问插件 API
-    headers = kwargs.setdefault("headers", {})
-    headers["X-Internal-Call"] = settings.INTERNAL_PLUGIN_API_TOKEN
+    kwargs.setdefault("auth", HTTPBasicAuth(BK_USER_APP_CODE, BK_USER_APP_SECRET))
 
     ok, resp_data = http_func(url, **kwargs)
     if not ok:

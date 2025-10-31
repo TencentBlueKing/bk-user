@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from rest_framework.permissions import IsAuthenticated
 
-from .authentications import InnerPluginAuthentication
+from bkuser.apis.authentications import BkUserAppAuthentication
 
 
 class PluginApiAccessControlMixin:
@@ -24,5 +24,5 @@ class PluginApiAccessControlMixin:
     Plugin API 的访问权限控制
     """
 
-    authentication_classes = [InnerPluginAuthentication]
+    authentication_classes = [BkUserAppAuthentication]
     permission_classes = [IsAuthenticated]

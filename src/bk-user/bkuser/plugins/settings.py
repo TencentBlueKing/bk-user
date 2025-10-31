@@ -14,16 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from rest_framework.permissions import IsAuthenticated
 
-from bkuser.apis.authentications import BkUserAppAuthentication
+import os
 
-
-class LoginApiAccessControlMixin:
-    """
-    登录API的访问权限控制
-    Note: 继承时，必须添加到第一个父类，否则可能会被其他父类的覆盖
-    """
-
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
+BK_USER_APP_CODE = os.environ.get("BK_APP_CODE", default="bk_user")
+BK_USER_APP_SECRET = os.environ.get("BK_APP_SECRET", "")
+BK_USER_API_URL = os.environ.get("BK_USER_URL", "http://bk-user")

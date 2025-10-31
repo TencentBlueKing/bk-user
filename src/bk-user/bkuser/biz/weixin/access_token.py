@@ -54,11 +54,10 @@ class WeComAccessTokenManager:
         ok, resp_data = http_func(url, **kwargs)
         if not ok:
             logger.error(
-                "wecom api failed! %s %s, corp_id: %s, corp_secret: %s, request_id: %s, error: %s",
+                "wecom api failed! %s %s, corp_id: %s, request_id: %s, error: %s",
                 http_func.__name__,
                 url,
                 self.corp_id,
-                self.corp_secret,
                 request_id,
                 resp_data["error"],
             )
@@ -73,11 +72,10 @@ class WeComAccessTokenManager:
         if errcode != 0:
             errmsg = resp_data.get("errmsg", "unknown")
             logger.error(
-                "wecom api error! %s %s, corp_id: %s, corp_secret: %s, request_id: %s, errcode: %s, errmsg: %s",
+                "wecom api error! %s %s, corp_id: %s, request_id: %s, errcode: %s, errmsg: %s",
                 http_func.__name__,
                 url,
                 self.corp_id,
-                self.corp_secret,
                 request_id,
                 errcode,
                 errmsg,
@@ -117,7 +115,7 @@ class WeComAccessTokenManager:
         # 尝试从缓存获取
         access_token = self.cache.get(cache_key)
         if access_token:
-            logger.debug("access_token hit cache, corp_id: %s, corp_secret: %s", self.corp_id, self.corp_secret)
+            logger.debug("access_token hit cache, corp_id: %s", self.corp_id)
             return access_token
 
         # 获取蓝鲸 CMSI 中的微信配置
