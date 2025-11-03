@@ -413,6 +413,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { UploadRequestOptions } from 'bkui-vue/lib/upload/upload.type';
+import { cloneDeep } from 'lodash';
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import AsideList from './AsideList.vue';
@@ -880,7 +881,7 @@ const getCurrentUser = async (id: string) => {
     canChangePassword.value = featureRes.data.can_change_password;
     emailUpdateRestriction.value = featureRes.data.email_update_restriction as emailEditable;
     phoneUpdateRestriction.value = featureRes.data.phone_update_restriction as phoneEditable;
-    extrasList.value = [...currentUserInfo.value.extras];
+    extrasList.value =  cloneDeep(currentUserInfo.value.extras);
     // 初始化时读取custom data
     customEmail.value = userRes.data.custom_email;
     customPhone.value = userRes.data.custom_phone;
