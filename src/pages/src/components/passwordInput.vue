@@ -9,13 +9,7 @@
     @keydown="handleFastClear"
   >
     <template #suffix>
-      <div class="pl-[10px]">
-        <span class="copy-icon">
-          <i
-            class="user-icon icon-copy text-[#3A84FF] text-[14px] "
-            v-bk-tooltips="{ content: $t('复制密码') }"
-            @click="copy(inputValue)" />
-        </span>
+      <div class="pr-[10px] flex items-center">
         <bk-button
           v-show="!isPassword"
           :disabled="isPasswordDisabled"
@@ -25,6 +19,10 @@
           @click="isPassword = true">
           <eye />
         </bk-button>
+        <i
+          class="user-icon icon-copy text-[#3A84FF] text-[14px] "
+          v-bk-tooltips="{ content: $t('复制密码') }"
+          @click="copy(inputValue)" />
       </div>
     </template>
   </bk-input>
@@ -72,13 +70,6 @@ const handleFastClear = (value: any, event: KeyboardEvent) => {
 <style lang="less" scoped>
 .bk-input {
   position: relative;
-
-  .copy-icon {
-    position: absolute;
-    top: 50%;
-    right: 30px;
-    transform: translate(0,  -50%)
-  }
 }
 
 :deep(.bk-input--suffix-icon) {
