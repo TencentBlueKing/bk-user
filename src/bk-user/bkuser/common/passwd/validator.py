@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import string
+from itertools import pairwise
 from typing import Dict, List
 
 from django.conf import settings
@@ -209,4 +210,27 @@ class PasswordValidator:
                 errors.append(_("密码不可包含 {} 位重复字符（{}）").format(not_continuous_cnt, m.base_token))
                 catch_repeated_symbol = True
 
+            # 5. 处理 dictionary 模式中的连续数字序列
+            # zxcvbn 会将常见弱密码数字（如 "12345", "123456"）优先识别为 dictionary 而非 sequence
+            # 但字母序列（如 "abcde"）几乎总是被识别为 sequence，因此这里只需检查数字
+            if (
+                self.rule.not_continuous_digit
+                and m.pattern == ZxcvbnPattern.DICTIONARY
+                and not catch_continuous_digits
+                and self._is_continuous_digits(m.token)
+            ):
+                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
+                catch_continuous_digits = True
+
         return errors
+
+    def _is_continuous_digits(self, s: str) -> bool:
+        """检查字符串是否为连续数字序列（升序或降序）"""
+        if not s.isdigit():
+            return False
+
+        # 使用 pairwise 检查相邻字符，避免手动索引
+        is_ascending = all(ord(b) - ord(a) == 1 for a, b in pairwise(s))
+        is_descending = all(ord(a) - ord(b) == 1 for a, b in pairwise(s))
+
+        return is_ascending or is_descending
