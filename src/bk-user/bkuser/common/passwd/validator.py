@@ -210,17 +210,32 @@ class PasswordValidator:
                 errors.append(_("密码不可包含 {} 位重复字符（{}）").format(not_continuous_cnt, m.base_token))
                 catch_repeated_symbol = True
 
-            # 5. 处理 dictionary 模式中的连续数字序列
-            # zxcvbn 会将常见弱密码数字（如 "12345", "123456"）优先识别为 dictionary 而非 sequence
-            # 但字母序列（如 "abcde"）几乎总是被识别为 sequence，因此这里只需检查数字
-            if (
-                self.rule.not_continuous_digit
-                and m.pattern == ZxcvbnPattern.DICTIONARY
-                and not catch_continuous_digits
-                and self._is_continuous_digits(m.token)
-            ):
-                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
-                catch_continuous_digits = True
+            # 5. 处理 dictionary 模式中的连续数字序列和键盘序
+            # zxcvbn 会将常见弱密码数字（如 "12345", "asdfg"）优先识别为 dictionary 模式
+            if m.pattern == ZxcvbnPattern.DICTIONARY:
+                errors.extend(
+                    self._check_dictionary_pattern(
+                        m, not_continuous_cnt, catch_continuous_digits, catch_keyboard_order
+                    )
+                )
+
+        return errors
+
+    def _check_dictionary_pattern(
+        self, m: ZxcvbnMatch, not_continuous_cnt: int, catch_continuous_digits: bool, catch_keyboard_order: bool
+    ) -> List[str]:
+        """检查 dictionary 模式中的连续序列和键盘序"""
+        errors: List[str] = []
+
+        # 检查连续数字序列
+        if self.rule.not_continuous_digit and not catch_continuous_digits and self._is_continuous_digits(m.token):
+            catch_continuous_digits = True
+            errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
+
+        # 检查键盘序
+        if self.rule.not_keyboard_order and not catch_keyboard_order and self._is_keyboard_sequence(m.token):
+            catch_keyboard_order = True
+            errors.append(_("密码不可包含 {} 位键盘序（{}）").format(not_continuous_cnt, m.token))
 
         return errors
 
@@ -229,8 +244,20 @@ class PasswordValidator:
         if not s.isdigit():
             return False
 
-        # 使用 pairwise 检查相邻字符，避免手动索引
+        # 使用 pairwise 检查相邻字符
         is_ascending = all(ord(b) - ord(a) == 1 for a, b in pairwise(s))
         is_descending = all(ord(a) - ord(b) == 1 for a, b in pairwise(s))
 
         return is_ascending or is_descending
+
+    def _is_keyboard_sequence(self, s: str) -> bool:
+        """检查字符串是否为键盘序"""
+
+        qwerty_rows = [
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm",
+        ]
+
+        # 检查是否为任一行的连续子串（正向或反向）
+        return any(s in row or s in row[::-1] for row in qwerty_rows)
