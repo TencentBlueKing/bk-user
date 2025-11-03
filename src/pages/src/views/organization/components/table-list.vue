@@ -666,7 +666,8 @@ import DisplayName from '@/components/display-name.vue';
   const initTenantsUserList = async () => {
     isDataEmpty.value = false;
     isEmptySearch.value = false;
-    const { id, isTenant, tenantId } = appStore.currentOrg;
+    const { isTenant } = appStore.currentOrg;
+    const tenantId = appStore.currentOrg.tenantId || appStore.currentOrg.tenant_id;
     try {
         tableData.value = [];
         selectList.value = [];
