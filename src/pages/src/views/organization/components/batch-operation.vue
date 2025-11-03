@@ -172,7 +172,7 @@ import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { randomPasswords } from '@/http';
-import { batchAccountExpired, batchCreate, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
+import { batchAccountExpired, batchUpdate, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
@@ -224,7 +224,7 @@ const dropdownList = ref<any[]>([
     isShow: true,
     disabled: !isLocalDataSource.value,
     tips: t('非本地数据源，无法移动至组织'),
-    confirmFn: batchCreate,
+    confirmFn: batchUpdate,
     handle: (item: any) => {
       emits('moveOrg', item);
     },
