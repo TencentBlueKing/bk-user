@@ -34,6 +34,7 @@ from bkuser.apis.web.tenant_setting.serializers import (
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.tasks import (
+    initialize_created_field_in_user_extras,
     migrate_user_extras_with_mapping,
     remove_dropped_field_in_data_source_field_mapping,
     remove_dropped_field_in_user_extras,
@@ -94,7 +95,12 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        # 创建自定义字段
         TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
+
+        # 为当前租户用户初始化该自定义字段的默认值
+        initialize_created_field_in_user_extras.delay(tenant_id, data["name"], data["default"])
+
         return Response(status=status.HTTP_201_CREATED)
 
 

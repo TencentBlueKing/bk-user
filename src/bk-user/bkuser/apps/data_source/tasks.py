@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 from bkuser.apps.data_source.constants import USER_EXTRAS_UPDATE_BATCH_SIZE
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
@@ -74,6 +74,21 @@ def migrate_user_extras_with_mapping(tenant_id: str, field_name: str, mapping: D
             u.extras[field_name] = list({mapping.get(v, v) for v in value})
         elif isinstance(value, str):
             u.extras[field_name] = mapping.get(value, value)
+
+    DataSourceUser.objects.bulk_update(
+        users, fields=["extras", "updated_at"], batch_size=USER_EXTRAS_UPDATE_BATCH_SIZE
+    )
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def initialize_created_field_in_user_extras(tenant_id: str, field_name: str, default_value: Any):
+    """
+    创建新的用户自定义字段后，为现有用户初始化默认值
+    """
+    users = DataSourceUser.objects.filter(data_source__owner_tenant_id=tenant_id).exclude(extras__has_key=field_name)
+
+    for u in users:
+        u.extras[field_name] = default_value
 
     DataSourceUser.objects.bulk_update(
         users, fields=["extras", "updated_at"], batch_size=USER_EXTRAS_UPDATE_BATCH_SIZE
