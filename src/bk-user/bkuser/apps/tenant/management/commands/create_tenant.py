@@ -70,7 +70,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
-        tenant_name = kwargs.get("tenant_name", tenant_id)
+        tenant_name = kwargs.get("tenant_name") or tenant_id
         password = kwargs["password"]
 
         # 校验
