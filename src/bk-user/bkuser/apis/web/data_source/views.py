@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
+from typing import List
 
 import openpyxl
 from django.conf import settings
@@ -23,6 +24,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
+from openpyxl.workbook import Workbook
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -65,6 +67,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
+from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
@@ -78,6 +81,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.parser import LocalDataSourceDataParser
 
 from .schema import get_data_source_plugin_cfg_json_schema
 
@@ -487,6 +491,10 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(_("文件格式异常"))
 
+        # 本地数据源导入时，若选择不覆盖且存在同名用户，则需要返回前端通知到用户，这部分用户在同步时不会做处理
+        if not data["overwrite"]:
+            duplicate_usernames = self._collect_existing_usernames(data_source, workbook)
+
         options = DataSourceSyncOptions(
             operator=request.user.username,
             overwrite=data["overwrite"],
@@ -504,6 +512,14 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
+        if duplicate_usernames:
+            # 记录同名用户列表及数量，最多展示前 5 个
+            warnings = task.extras.setdefault("warnings", {})
+            warnings["duplicate_usernames"] = duplicate_usernames[:5]
+            warnings["duplicate_usernames_count"] = len(duplicate_usernames)
+
+            task.save(update_fields=["extras", "updated_at"])
+
         # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
         # 【审计】将审计记录保存至数据库
@@ -511,8 +527,30 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
-                instance={"task_id": task.id, "status": task.status, "summary": task.summary}
+                instance={
+                    "task_id": task.id,
+                    "status": task.status,
+                    "summary": task.summary,
+                }
             ).data
+        )
+
+    def _collect_existing_usernames(self, data_source: DataSource, workbook: Workbook) -> List[str]:
+        """在不允许覆盖的导入模式下，获取导入文件与数据源的同名用户列表"""
+
+        parser = LocalDataSourceDataParser(TaskLogger(), workbook)
+
+        if not parser.is_parsed:
+            parser.parse()
+
+        raw_users = parser.get_users()
+        if not raw_users:
+            return []
+
+        codes = [user.code for user in raw_users]
+
+        return list(
+            DataSourceUser.objects.filter(data_source=data_source, code__in=codes).values_list("username", flat=True)
         )
 
 
