@@ -95,7 +95,6 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 创建自定义字段
         TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
 
         # 为当前租户用户初始化该自定义字段的默认值
