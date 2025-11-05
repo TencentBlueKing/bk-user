@@ -100,8 +100,8 @@ def get_ee_exception_response(exc, context, detail):
         # build response
         data["message"] = UNKNOWN_ERROR_HINT
         # 如果有错误堆栈, 直接把堆栈暴露出来
-        if exc is not None:
-            data["message"] = UNKNOWN_ERROR_HINT + traceback.format_exc()
+        # if exc is not None:
+        #     data["message"] = UNKNOWN_ERROR_HINT + traceback.format_exc()
         data["code"] = -1
 
         # Call REST framework's default exception handler to get the standard error response.
