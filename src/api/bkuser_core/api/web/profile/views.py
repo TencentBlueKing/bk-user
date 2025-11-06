@@ -29,7 +29,7 @@ from bkuser_core.api.web.profile.serializers import (
     ProfileSearchOutputSLZ,
     ProfileUpdateInputSLZ,
 )
-from bkuser_core.api.web.utils import get_category, get_operator, validate_password
+from bkuser_core.api.web.utils import get_category, get_operator, validate_password, mask_sensitive_data
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log
@@ -111,6 +111,24 @@ class ProfileSearchApi(generics.ListAPIView):
 
         # NOTE: 这里相对原来/api/v3/profiles/?category_id 的差异是 enabled=True
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+
+        # 脱敏处理
+        for item in serializer.data:
+            mask_sensitive_data(item)
+
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+
+        return Response(serializer.data)
 
 
 class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):

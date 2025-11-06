@@ -42,7 +42,7 @@ from .serializers import (
 from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
-from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
+from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas, mask_sensitive_data
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
@@ -429,6 +429,9 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
 
         # FIXME: profile slz should contains?
         all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
+        for item in all_profiles:
+            mask_sensitive_data(item)
+
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
         fields_data = FieldOutputSLZ(fields, many=True).data
