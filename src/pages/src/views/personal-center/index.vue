@@ -20,7 +20,7 @@
           <div class="header-left">
             <UploadImg
               v-bk-tooltips="{ content: t('支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
-              v-model="currentUserInfo.logo"
+              v-model:value="currentUserInfo.logo"
               :ext-cls="currentUserInfo.logo ? 'show-logo' : 'normal-logo'"
               :is-show-tip="false"
               :after-upload="customRequest"

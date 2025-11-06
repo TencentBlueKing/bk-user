@@ -17,7 +17,7 @@
               </bk-form-item>
             </div>
             <bk-form-item :label="$t('租户logo')">
-              <UploadImg v-model="formData.logo" />
+              <UploadImg v-model:value="formData.logo" />
             </bk-form-item>
           </div>
           <bk-form-item :label="$t('用户数量')" required>
@@ -92,7 +92,9 @@ import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
+import useAppStore from '@/store/app';
 
+const appStore = useAppStore();
 const validate = useValidate();
 const fieldData = useFieldData();
 const store = useMainViewStore();
@@ -269,6 +271,8 @@ const saveEdit = async () => {
       PutTenantInfo(params),
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
+    appStore.updateCurrentTenantLogo(formData.value.logo);
+    appStore.updateCurrentTenantName(formData.value.name);
     isEdit.value = false;
     Message({ theme: 'success', message: t('保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效') });
     initTenantInfo();

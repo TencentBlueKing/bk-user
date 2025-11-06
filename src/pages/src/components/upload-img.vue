@@ -36,12 +36,12 @@ interface IProps {
   afterUpload?: (url: string) => void
 }
 
-const imgUrl = defineModel<string>('');
+const imgUrl = defineModel<string>('value');
 const props = withDefaults(defineProps<IProps>(), {
   maxSize: 0.25, // 256kb
   maxWidth: 1024,
   maxHeight: 1024,
-  accept: 'image/png,image/jpeg,image/jpg',
+  accept: '.jpg, .jpeg, .png',
   isShowTip: true,
 });
 const emit = defineEmits(['success', 'delete', 'error']);
@@ -52,12 +52,6 @@ const files = ref([]);
 
 const customRequest = async (event: any) => {
   const { file } = event;
-  // 1. 验证文件类型
-  if (!validateFileType(file)) {
-    Message({ theme: 'error', message: t('图片格式不符合要求，请重新上传') });
-    clearImgUrl();
-    return;
-  }
   // 2. 验证图片尺寸
   const res = await validateFileResolution(file);
   if (!res) {
@@ -97,16 +91,6 @@ const updateFiles = (url: string) => {
     return;
   }
   files.value = [{ url }];
-};
-
-/** 验证文件类型 bk-upload、input 对accept的检查并不严格，因此这里对文件type做检查 */
-const validateFileType = (file: File) => {
-  const { type } = file;
-  const acceptTypes = props.accept.split(',');
-  if (!acceptTypes.includes(type)) {
-    return false;
-  }
-  return true;
 };
 
 /** 验证文件大小 */
@@ -149,5 +133,5 @@ const validateFileResolution = (file: File): Promise<boolean> => new Promise(asy
   reader.readAsDataURL(file);
 });
 
-watch(imgUrl, (val: string) => updateFiles(val));
+watch(imgUrl, (val: string) => updateFiles(val), { immediate: true });
 </script>

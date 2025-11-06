@@ -24,7 +24,7 @@
           </bk-form-item>
         </div>
         <UploadImg
-          v-model="formData.logo"
+          v-model:value="formData.logo"
           class="mt-[26px]"
           @success="handleChange"
           @delete="handleChange"
@@ -37,7 +37,7 @@
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('邮箱')" property="email">
+      <bk-form-item :label="$t('邮箱')" property="email" required>
         <bk-input
           v-model="formData.email"
           @focus="handleChange"

@@ -30,7 +30,7 @@
           </div>
           <UploadImg
             v-bk-tooltips="{ content: t('支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
-            v-model="formData.logo"
+            v-model:value="formData.logo"
             class="mt-[26px]"
             @success="handleChange"
             @delete="handleChange"

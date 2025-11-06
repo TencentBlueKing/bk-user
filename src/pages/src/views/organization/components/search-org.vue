@@ -154,12 +154,12 @@ const searchLoading = ref(false);
 const selected = ref({});
 
 const handleSearch = () => {
-  if (search.value.length > 1) {
-    searchData();
-  } else {
+  if (search.value.length === 0) {
     searchDialogVisible.value = false;
     appStore.isSearchTree = false;
+    return;
   }
+  searchData();
 };
 
 const handleClear = () => {

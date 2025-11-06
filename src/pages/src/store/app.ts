@@ -11,10 +11,28 @@ export default defineStore('app', () => {
 
   const reloadIndex = ref(1);
 
+  /** 更新当前租户logo */
+  const updateCurrentTenantLogo = (logo: string) => {
+    currentTenant.value = {
+      ...currentTenant.value,
+      logo,
+    };
+  };
+
+  /** 更新当前租户name */
+  const updateCurrentTenantName = (name: string) => {
+    currentTenant.value = {
+      ...currentTenant.value,
+      name,
+    };
+  };
+
   return {
     currentTenant,
     currentOrg,
     isSearchTree,
     reloadIndex,
+    updateCurrentTenantLogo,
+    updateCurrentTenantName,
   };
 });
