@@ -15,12 +15,12 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import string
-from itertools import pairwise
 from typing import Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from zxcvbn import zxcvbn
+from zxcvbn.matching import sequence_match, spatial_match
 
 from bkuser.common.passwd import PasswordStrengthError
 from bkuser.common.passwd.constants import ZxcvbnPattern
@@ -228,36 +228,29 @@ class PasswordValidator:
         errors: List[str] = []
 
         # 检查连续数字序列
-        if self.rule.not_continuous_digit and not catch_continuous_digits and self._is_continuous_digits(m.token):
-            catch_continuous_digits = True
-            errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
+        if self.rule.not_continuous_digit and not catch_continuous_digits:
+            digit_sequence_detected = any(
+                match["sequence_name"] == "digits"
+                and len(match["token"]) >= not_continuous_cnt
+                and match["i"] == 0
+                and match["j"] == len(m.token) - 1
+                for match in sequence_match(m.token)
+            )
+            if digit_sequence_detected:
+                catch_continuous_digits = True
+                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
 
         # 检查键盘序
-        if self.rule.not_keyboard_order and not catch_keyboard_order and self._is_keyboard_sequence(m.token):
-            catch_keyboard_order = True
-            errors.append(_("密码不可包含 {} 位键盘序（{}）").format(not_continuous_cnt, m.token))
+        if self.rule.not_keyboard_order and not catch_keyboard_order:
+            keyboard_sequence_detected = any(
+                match["graph"] == "qwerty"
+                and len(match["token"]) >= not_continuous_cnt
+                and match["i"] == 0
+                and match["j"] == len(m.token) - 1
+                for match in spatial_match(m.token)
+            )
+            if keyboard_sequence_detected:
+                catch_keyboard_order = True
+                errors.append(_("密码不可包含 {} 位键盘序（{}）").format(not_continuous_cnt, m.token))
 
         return errors
-
-    def _is_continuous_digits(self, s: str) -> bool:
-        """检查字符串是否为连续数字序列（升序或降序）"""
-        if not s.isdigit():
-            return False
-
-        # 使用 pairwise 检查相邻字符
-        is_ascending = all(ord(b) - ord(a) == 1 for a, b in pairwise(s))
-        is_descending = all(ord(a) - ord(b) == 1 for a, b in pairwise(s))
-
-        return is_ascending or is_descending
-
-    def _is_keyboard_sequence(self, s: str) -> bool:
-        """检查字符串是否为键盘序"""
-
-        qwerty_rows = [
-            "qwertyuiop",
-            "asdfghjkl",
-            "zxcvbnm",
-        ]
-
-        # 检查是否为任一行的连续子串（正向或反向）
-        return any(s in row or s in row[::-1] for row in qwerty_rows)
