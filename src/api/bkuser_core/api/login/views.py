@@ -154,6 +154,27 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
             max_trail_times = int(config_loader["max_trail_times"])
 
+        try:
+            login_class = get_plugin_by_category(category).login_handler_cls
+        except Exception:
+            logger.exception(
+                "login check, category<%s-%s-%s> load login handler failed",
+                category.type,
+                category.display_name,
+                category.id,
+            )
+            # NOTE: 代码异常, 可以返回加载失败
+            raise error_codes.CATEGORY_PLUGIN_LOAD_FAIL
+
+        try:
+            login_class().check(profile, password)
+        except Exception:
+            create_profile_log(
+                profile=profile,
+                operation="LogIn",
+                request=request,
+                params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
+            )
             # 错误登录次数校验
             if profile.bad_check_cnt >= max_trail_times > 0:
                 from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
@@ -176,28 +197,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     )
                     # NOTE: 安全原因, 不能返回账户状态
                     raise mask_login_error(error_codes.USER_LOCKED_TEMPORARILY.f(wait_seconds=retry_after_wait))
-
-        try:
-            login_class = get_plugin_by_category(category).login_handler_cls
-        except Exception:
-            logger.exception(
-                "login check, category<%s-%s-%s> load login handler failed",
-                category.type,
-                category.display_name,
-                category.id,
-            )
-            # NOTE: 代码异常, 可以返回加载失败
-            raise error_codes.CATEGORY_PLUGIN_LOAD_FAIL
-
-        try:
-            login_class().check(profile, password)
-        except Exception:
-            create_profile_log(
-                profile=profile,
-                operation="LogIn",
-                request=request,
-                params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
-            )
             logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
             # NOTE: 这里不能使用其他错误, 一律是 PASSWORD_ERROR, 安全问题
             raise mask_login_error(

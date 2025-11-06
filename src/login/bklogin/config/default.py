@@ -41,6 +41,7 @@ DEBUG = env.bool("DEBUG", False)
 SECRET_KEY = "o7(025idh*fj@)ohujum-ilfxl^n=@d&$xz!_$$7s$8jopd5r#"
 
 CSRF_COOKIE_NAME = "bklogin_csrftoken"
+CSRF_COOKIE_AGE = 60 * 60 * 24  # one day
 # CSRF 验证失败处理函数
 CSRF_FAILURE_VIEW = "bklogin.bkauth.views.csrf_failure"
 
