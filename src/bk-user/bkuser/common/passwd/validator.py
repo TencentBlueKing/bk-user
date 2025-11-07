@@ -19,12 +19,11 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from zxcvbn import zxcvbn
-from zxcvbn.matching import sequence_match, spatial_match
 
 from bkuser.common.passwd import PasswordStrengthError
 from bkuser.common.passwd.constants import ZxcvbnPattern
 from bkuser.common.passwd.models import PasswordRule, ValidateResult, ZxcvbnMatch
+from bkuser.common.passwd.zxcvbn_ext import zxcvbn_ext
 
 
 class PasswordValidator:
@@ -92,19 +91,22 @@ class PasswordValidator:
 
         # NOTE 产品功能上，连续字母序是不区分大小写的，即 abCDef 应当算是连续字母序，
         # 但 zxcvbn 连续字母序匹配是区分大小写的，因此这里使用 password.lower() 进行检查
-        zxcvbn_result = zxcvbn(password.lower())
-        matches = self._gen_zxcvbn_matches(zxcvbn_result)
+        zxcvbn_result, zxcvbn_omni_matches = zxcvbn_ext(password.lower())
+        # 最小化猜测次数的匹配序列
+        matches = self._gen_zxcvbn_matches(zxcvbn_result["sequence"])
+        # 所有匹配序列
+        omni_matches = self._gen_zxcvbn_matches(zxcvbn_omni_matches)
 
         return (
             self._validate_by_zxcvbn_score(zxcvbn_result)
             # 对使用弱密码组合的情况进行限制
             + self._validate_weak_passwd_combination(password, matches)
             # 对键盘序，连续字母，连续数字，连续重复等连续性场景进行检查
-            + self._validate_continuous(matches)
+            + self._validate_continuous(omni_matches)
         )
 
-    def _gen_zxcvbn_matches(self, zxcvbn_result: Dict) -> List[ZxcvbnMatch]:
-        """调用 zxcvbn 获取匹配结果"""
+    def _gen_zxcvbn_matches(self, matches: List[Dict]) -> List[ZxcvbnMatch]:
+        """将 zxcvbn 的匹配结果转换为 ZxcvbnMatch 列表"""
         return [
             ZxcvbnMatch(
                 token=m["token"],
@@ -126,7 +128,7 @@ class PasswordValidator:
                 graph=m.get("graph", ""),
                 turns=m.get("turns", 0),
             )
-            for m in zxcvbn_result["sequence"]
+            for m in matches
         ]
 
     def _validate_by_zxcvbn_score(self, zxcvbn_result: Dict) -> List[str]:
@@ -209,48 +211,5 @@ class PasswordValidator:
             if self.rule.not_repeated_symbol and m.pattern == ZxcvbnPattern.REPEAT and not catch_repeated_symbol:
                 errors.append(_("密码不可包含 {} 位重复字符（{}）").format(not_continuous_cnt, m.base_token))
                 catch_repeated_symbol = True
-
-            # 5. 处理 dictionary 模式中的连续数字序列和键盘序
-            # zxcvbn 会将常见弱密码数字（如 "12345", "asdfg"）优先识别为 dictionary 模式
-            if m.pattern == ZxcvbnPattern.DICTIONARY:
-                errors.extend(
-                    self._check_dictionary_pattern(
-                        m, not_continuous_cnt, catch_continuous_digits, catch_keyboard_order
-                    )
-                )
-
-        return errors
-
-    def _check_dictionary_pattern(
-        self, m: ZxcvbnMatch, not_continuous_cnt: int, catch_continuous_digits: bool, catch_keyboard_order: bool
-    ) -> List[str]:
-        """检查 dictionary 模式中的连续序列和键盘序"""
-        errors: List[str] = []
-
-        # 检查连续数字序列
-        if self.rule.not_continuous_digit and not catch_continuous_digits:
-            digit_sequence_detected = any(
-                match["sequence_name"] == "digits"
-                and len(match["token"]) >= not_continuous_cnt
-                and match["i"] == 0
-                and match["j"] == len(m.token) - 1
-                for match in sequence_match(m.token)
-            )
-            if digit_sequence_detected:
-                catch_continuous_digits = True
-                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
-
-        # 检查键盘序
-        if self.rule.not_keyboard_order and not catch_keyboard_order:
-            keyboard_sequence_detected = any(
-                match["graph"] == "qwerty"
-                and len(match["token"]) >= not_continuous_cnt
-                and match["i"] == 0
-                and match["j"] == len(m.token) - 1
-                for match in spatial_match(m.token)
-            )
-            if keyboard_sequence_detected:
-                catch_keyboard_order = True
-                errors.append(_("密码不可包含 {} 位键盘序（{}）").format(not_continuous_cnt, m.token))
 
         return errors
