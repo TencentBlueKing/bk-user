@@ -98,6 +98,7 @@ class TestPasswordValidator:
         assert simple_validator._validate_with_zxcvbn(password) == []
         assert strict_validator._validate_with_zxcvbn(password) == [
             "密码不可包含 3 位连续字母序（abcdef）",
+            "密码不可包含 3 位键盘序（cde）",
             "密码不可包含连续 3 位数字序（234567）",
             "密码不可包含 3 位重复字符（k）",
         ]
@@ -109,6 +110,27 @@ class TestPasswordValidator:
         password = "uricke&239=&2k9d"
         assert simple_validator._validate_with_zxcvbn(password) == []
         assert strict_validator._validate_with_zxcvbn(password) == []
+
+    def test_validate_with_zxcvbn_ext_continuous(self, simple_validator, strict_validator):
+        password = "([v@sPdAc^]0ME12345"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（12345）",
+            "密码不可包含连续 3 位数字序（12345）",
+        ]
+
+        password = "yf/u4ji[HPc^}C9)Ui'SXi'!asdfg"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（asdfg）",
+        ]
+
+        password = "”:By5];K&Q@),p^123456789a"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（123456789）",
+            "密码不可包含连续 3 位数字序（123456789）",
+        ]
 
     def test_validate_failed(self, strict_validator):
         password = "ertyu45678AbcDppppppcc "
@@ -136,6 +158,9 @@ class TestPasswordValidator:
                 "密码必须包含大写字母",
                 "密码强度评级过低",
                 "密码中包含过多的常见单词或弱密码（如：abc123 或 321cba）",
+                "密码不可包含 3 位连续字母序（abc）",
+                "密码不可包含 3 位键盘序（1234）",
+                "密码不可包含连续 3 位数字序（1234）",
             ]
         )
 

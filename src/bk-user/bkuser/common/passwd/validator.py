@@ -19,11 +19,11 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from zxcvbn import zxcvbn
 
 from bkuser.common.passwd import PasswordStrengthError
 from bkuser.common.passwd.constants import ZxcvbnPattern
 from bkuser.common.passwd.models import PasswordRule, ValidateResult, ZxcvbnMatch
+from bkuser.common.passwd.zxcvbn_ext import zxcvbn_ext
 
 
 class PasswordValidator:
@@ -91,19 +91,22 @@ class PasswordValidator:
 
         # NOTE 产品功能上，连续字母序是不区分大小写的，即 abCDef 应当算是连续字母序，
         # 但 zxcvbn 连续字母序匹配是区分大小写的，因此这里使用 password.lower() 进行检查
-        zxcvbn_result = zxcvbn(password.lower())
-        matches = self._gen_zxcvbn_matches(zxcvbn_result)
+        zxcvbn_result, zxcvbn_omni_matches = zxcvbn_ext(password.lower())
+        # 最小化猜测次数的匹配序列
+        matches = self._gen_zxcvbn_matches(zxcvbn_result["sequence"])
+        # 所有匹配序列
+        omni_matches = self._gen_zxcvbn_matches(zxcvbn_omni_matches)
 
         return (
             self._validate_by_zxcvbn_score(zxcvbn_result)
             # 对使用弱密码组合的情况进行限制
             + self._validate_weak_passwd_combination(password, matches)
             # 对键盘序，连续字母，连续数字，连续重复等连续性场景进行检查
-            + self._validate_continuous(matches)
+            + self._validate_continuous(omni_matches)
         )
 
-    def _gen_zxcvbn_matches(self, zxcvbn_result: Dict) -> List[ZxcvbnMatch]:
-        """调用 zxcvbn 获取匹配结果"""
+    def _gen_zxcvbn_matches(self, matches: List[Dict]) -> List[ZxcvbnMatch]:
+        """将 zxcvbn 的匹配结果转换为 ZxcvbnMatch 列表"""
         return [
             ZxcvbnMatch(
                 token=m["token"],
@@ -125,7 +128,7 @@ class PasswordValidator:
                 graph=m.get("graph", ""),
                 turns=m.get("turns", 0),
             )
-            for m in zxcvbn_result["sequence"]
+            for m in matches
         ]
 
     def _validate_by_zxcvbn_score(self, zxcvbn_result: Dict) -> List[str]:
