@@ -111,6 +111,27 @@ class TestPasswordValidator:
         assert simple_validator._validate_with_zxcvbn(password) == []
         assert strict_validator._validate_with_zxcvbn(password) == []
 
+    def test_validate_with_zxcvbn_ext_continuous(self, simple_validator, strict_validator):
+        password = "([v@sPdAc^]0ME12345"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（12345）",
+            "密码不可包含连续 3 位数字序（12345）",
+        ]
+
+        password = "yf/u4ji[HPc^}C9)Ui'SXi'!asdfg"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（asdfg）",
+        ]
+
+        password = "”:By5];K&Q@),p^123456789a"
+        assert simple_validator._validate_with_zxcvbn(password) == []
+        assert strict_validator._validate_with_zxcvbn(password) == [
+            "密码不可包含 3 位键盘序（123456789）",
+            "密码不可包含连续 3 位数字序（123456789）",
+        ]
+
     def test_validate_failed(self, strict_validator):
         password = "ertyu45678AbcDppppppcc "
         ret = strict_validator.validate(password)
