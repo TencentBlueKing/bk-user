@@ -109,7 +109,7 @@ class DataSourceUserSyncer:
         self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.USER, waiting_create_users)
 
     def _record_duplicate_usernames(self, duplicate_user_codes: Set[str]):
-        """记录导入文件与现有数据源之间的同名用户信息"""
+        """记录在不覆盖模式下同步的用户与当前数据源中的现有用户重名信息"""
         usernames = DataSourceUser.objects.filter(
             data_source=self.data_source, code__in=duplicate_user_codes
         ).values_list("username", flat=True)

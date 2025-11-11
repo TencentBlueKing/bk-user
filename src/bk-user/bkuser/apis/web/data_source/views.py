@@ -511,11 +511,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(
-                instance={
-                    "task_id": task.id,
-                    "status": task.status,
-                    "summary": task.summary,
-                }
+                instance={"task_id": task.id, "status": task.status, "summary": task.summary}
             ).data
         )
 
