@@ -217,6 +217,28 @@ class TestSyncDataSourceUser:
             user_leader_relation_cnt_before_sync + 1
         )
 
+    def test_duplicate_usernames_warning(
+        self,
+        data_source_sync_task_ctx,
+        full_local_data_source,
+        raw_users,
+    ):
+        assert data_source_sync_task_ctx.logger.has_warning is False
+
+        self._sync_data_source_users(
+            data_source_sync_task_ctx,
+            full_local_data_source,
+            raw_users,
+            overwrite=False,
+            incremental=True,
+        )
+        assert data_source_sync_task_ctx.logger.has_warning is True
+        assert (
+            "in non-overwrite mode, skip update 11 users: "
+            "zhangsan, lisi, wangwu, zhaoliu, liuqi, maiba, yangjiu, lushi, linshiyi, baishier, freedom"
+            in data_source_sync_task_ctx.logger.logs
+        )
+
     def test_update_without_incremental_and_overwrite(
         self, data_source_sync_task_ctx, full_local_data_source, raw_users
     ):
