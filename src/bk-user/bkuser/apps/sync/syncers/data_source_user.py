@@ -74,14 +74,21 @@ class DataSourceUserSyncer:
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
         raw_user_codes = {user.code for user in self.raw_users}
 
-        if not self.overwrite:
-            duplicate_user_codes = user_codes & raw_user_codes
-            if duplicate_user_codes:
-                self._record_duplicate_usernames(duplicate_user_codes)
-
         waiting_create_user_codes = raw_user_codes - user_codes
         waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
-        waiting_update_user_codes = user_codes & raw_user_codes if self.overwrite else set()
+        # 若是覆盖模式，则更新存在用户的数据，否则无需更新，但需日志里记录便于提示
+        waiting_update_user_codes = user_codes & raw_user_codes
+        if not self.overwrite:
+            # 提示未覆盖更新的用户
+            usernames = DataSourceUser.objects.filter(
+                data_source=self.data_source,
+                code__in=waiting_update_user_codes,
+            ).values_list("username", flat=True)
+            self.ctx.logger.warning(
+                f"in non-overwrite mode, skip update {len(waiting_update_user_codes)} users: {', '.join(usernames)}"
+            )
+            # 不覆盖，则无需更新已存在用户
+            waiting_update_user_codes = set()
 
         waiting_delete_users = self._get_waiting_delete_users(waiting_delete_user_codes)
         waiting_update_users = self._get_waiting_update_users(self.raw_users, waiting_update_user_codes)
@@ -107,17 +114,6 @@ class DataSourceUserSyncer:
 
         self.ctx.logger.info(f"create {len(waiting_create_users)} users")
         self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.USER, waiting_create_users)
-
-    def _record_duplicate_usernames(self, duplicate_user_codes: Set[str]):
-        """记录在不覆盖模式下同步的用户与当前数据源中的现有用户重名信息"""
-        usernames = DataSourceUser.objects.filter(
-            data_source=self.data_source, code__in=duplicate_user_codes
-        ).values_list("username", flat=True)
-
-        self.ctx.logger.warning(
-            f"detected {len(usernames)} existing users, "
-            f"these users will be skipped during sync: {', '.join(usernames)}"
-        )
 
     def _get_waiting_delete_users(self, user_codes: Set[str]) -> QuerySet[DataSourceUser]:
         return DataSourceUser.objects.filter(data_source=self.data_source, code__in=user_codes)

@@ -234,8 +234,7 @@ class TestSyncDataSourceUser:
         )
         assert data_source_sync_task_ctx.logger.has_warning is True
         assert (
-            "WARNING detected 11 existing users, "
-            "these users will be skipped during sync: "
+            "in non-overwrite mode, skip update 11 users: "
             "zhangsan, lisi, wangwu, zhaoliu, liuqi, maiba, yangjiu, lushi, linshiyi, baishier, freedom"
             in data_source_sync_task_ctx.logger.logs
         )
