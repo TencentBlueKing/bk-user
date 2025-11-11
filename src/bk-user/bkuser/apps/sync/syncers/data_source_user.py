@@ -74,6 +74,11 @@ class DataSourceUserSyncer:
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
         raw_user_codes = {user.code for user in self.raw_users}
 
+        if not self.overwrite:
+            duplicate_user_codes = user_codes & raw_user_codes
+            if duplicate_user_codes:
+                self._record_duplicate_usernames(duplicate_user_codes)
+
         waiting_create_user_codes = raw_user_codes - user_codes
         waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
         waiting_update_user_codes = user_codes & raw_user_codes if self.overwrite else set()
@@ -102,6 +107,17 @@ class DataSourceUserSyncer:
 
         self.ctx.logger.info(f"create {len(waiting_create_users)} users")
         self.ctx.recorder.add(SyncOperation.CREATE, DataSourceSyncObjectType.USER, waiting_create_users)
+
+    def _record_duplicate_usernames(self, duplicate_user_codes: Set[str]):
+        """记录导入文件与现有数据源之间的同名用户信息"""
+        usernames = DataSourceUser.objects.filter(
+            data_source=self.data_source, code__in=duplicate_user_codes
+        ).values_list("username", flat=True)
+
+        self.ctx.logger.warning(
+            f"detected {len(usernames)} existing users, "
+            f"these users will be skipped during sync: {', '.join(usernames)}"
+        )
 
     def _get_waiting_delete_users(self, user_codes: Set[str]) -> QuerySet[DataSourceUser]:
         return DataSourceUser.objects.filter(data_source=self.data_source, code__in=user_codes)
