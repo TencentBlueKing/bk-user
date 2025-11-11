@@ -124,14 +124,14 @@
         {% include "agreement.html" %}
         <!-- 浏览器验证 -->
         <div class="error-message-content is-chrome">
-            <span>{% trans '您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果' %}</span><i class="bk-icon icon-close-circle-shape" id="close-chrome"></i>
+            <span>{% trans '您的浏览器非 Chrome，建议您使用最新版本的 Chrome 浏览，以保证最好的体验效果' %}</span><i class="bk-icon icon-close-circle-shape" id="close-chrome"></i>
         </div>
     </body>
     <!-- js 国际化 -->
 
     <script type="text/javascript" src="{{SITE_URL}}jsi18n/i18n/"></script>
 
-    <script src="{{STATIC_URL}}assets/jquery-1.10.2.min.js"></script>
+    <script src="{{STATIC_URL}}assets/jquery-3.7.1.min.js"></script>
     <script src="{{STATIC_URL}}js/login.js"></script>
     <script src="{{STATIC_URL}}js/particles.js"></script>
     <script src="{{STATIC_URL}}js/app.js"></script>
@@ -147,7 +147,7 @@
         PASSWORD_RSA_PUBLIC_KEY = "{{ PASSWORD_RSA_PUBLIC_KEY }}"
         ENABLE_PASSWORD_RSA_ENCRYPTED = "{{ ENABLE_PASSWORD_RSA_ENCRYPTED }}" === "true"
 
-    // 密码传输rsa加密
+    // 密码传输 rsa 加密
     function rsa_encrypt_password() {
         var public_key = window.atob(PASSWORD_RSA_PUBLIC_KEY).split('\n').join("");
         var password = $('#password').val();
