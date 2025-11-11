@@ -29,13 +29,15 @@ REDIS_PASSWORD = env("CACHE_REDIS_PASSWORD", default="")
 REDIS_DB = env("CACHE_REDIS_DB", default=0)
 REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 
-REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-
 # redis tls
 REDIS_TLS_ENABLED = env.bool("CACHE_REDIS_TLS_ENABLED", False)
 REDIS_TLS_CERT_CA_FILE = env.str("CACHE_REDIS_TLS_CERT_CA_FILE", default="")
 REDIS_TLS_CERT_FILE = env.str("CACHE_REDIS_TLS_CERT_FILE", default="")
 REDIS_TLS_CERT_KEY_FILE = env.str("CACHE_REDIS_TLS_CERT_KEY_FILE", default="")
+
+# 根据是否启用 TLS 使用不同的协议: rediss:// (TLS) 或 redis:// (无加密)
+REDIS_PROTOCOL = "rediss" if REDIS_TLS_ENABLED else "redis"
+REDIS_URL = f"{REDIS_PROTOCOL}://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 # redis sentinel配置
 REDIS_SENTINEL = env.bool("CACHE_REDIS_SENTINEL_ENABLED", False)
@@ -49,14 +51,13 @@ REDIS_SENTINEL_NODES = env.list("CACHE_REDIS_SENTINEL_NODES", default=[])
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
-# celery broker tls
-CELERY_BROKER_TLS_ENABLED = env.bool("CELERY_BROKER_TLS_ENABLED", default=False)
-CELERY_BROKER_TLS_CERT_CA_FILE = env.str("CELERY_BROKER_TLS_CERT_CA_FILE", default="")
-CELERY_BROKER_TLS_CERT_FILE = env.str("CELERY_BROKER_TLS_CERT_FILE", default="")
-CELERY_BROKER_TLS_CERT_KEY_FILE = env.str("CELERY_BROKER_TLS_CERT_KEY_FILE", default="")
+
+# 如果启用了 Celery Broker TLS 且 URL 是 Redis，自动转换为 rediss:// 协议
+if REDIS_TLS_ENABLED and CELERY_BROKER_URL.startswith("redis://"):
+    CELERY_BROKER_URL = CELERY_BROKER_URL.replace("redis://", "rediss://", 1)
 
 # Celery sentinel配置
-if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("redis"):
+if REDIS_SENTINEL and REDIS_SENTINEL_NODES:
     # 转换 Sentinel 节点格式
     sentinel_nodes = []
     for node in REDIS_SENTINEL_NODES:
@@ -76,10 +77,10 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("red
     }
 
     # 如果启用 TLS
-    if CELERY_BROKER_TLS_ENABLED:
+    if REDIS_TLS_ENABLED:
         CELERY_BROKER_TRANSPORT_OPTIONS.update({
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
-            "ssl_ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+            "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
             "visibility_timeout": 3600,
             "fanout_prefix": True,
             "socket_timeout": 5,
@@ -89,25 +90,25 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES and CELERY_BROKER_URL.startswith("red
                 "max_retries": 3,
             },
         })
-        if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
             CELERY_BROKER_TRANSPORT_OPTIONS.update({
-                "ssl_certfile": CELERY_BROKER_TLS_CERT_FILE,
-                "ssl_keyfile": CELERY_BROKER_TLS_CERT_KEY_FILE,
+                "ssl_certfile": REDIS_TLS_CERT_FILE,
+                "ssl_keyfile": REDIS_TLS_CERT_KEY_FILE,
             })
     CELERY_TASK_ACKS_LATE = True
     CELERY_TASK_REJECT_ON_WORKER_LOST = True
 else:
     # celery broker tls : 仅仅支持 rabbitmq 和 单例 redis 作为 celery broker 时开启 TLS
-    if CELERY_BROKER_URL and CELERY_BROKER_TLS_ENABLED:
+    if CELERY_BROKER_URL and REDIS_TLS_ENABLED:
         ssl_key_prefix = "ssl_" if CELERY_BROKER_URL.startswith("redis") else ""
         CELERY_BROKER_USE_SSL = {
             f"{ssl_key_prefix}cert_reqs": ssl.CERT_REQUIRED,
-            f"{ssl_key_prefix}ca_certs": CELERY_BROKER_TLS_CERT_CA_FILE,
+            f"{ssl_key_prefix}ca_certs": REDIS_TLS_CERT_CA_FILE,
         }
         # mTLS
-        if CELERY_BROKER_TLS_CERT_FILE and CELERY_BROKER_TLS_CERT_KEY_FILE:
-            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = CELERY_BROKER_TLS_CERT_FILE
-            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = CELERY_BROKER_TLS_CERT_KEY_FILE
+        if REDIS_TLS_CERT_FILE and REDIS_TLS_CERT_KEY_FILE:
+            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}certfile"] = REDIS_TLS_CERT_FILE
+            CELERY_BROKER_USE_SSL[f"{ssl_key_prefix}keyfile"] = REDIS_TLS_CERT_KEY_FILE
 # ==============================================================================
 # 缓存配置
 # ==============================================================================
@@ -172,6 +173,8 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES:
 
     # 如果启用 TLS
     if REDIS_TLS_ENABLED:
+        # Sentinel 模式下使用 rediss:// 协议
+        CACHES["verification_code"]["LOCATION"] = f"rediss://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
         CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
             "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
@@ -184,7 +187,8 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES:
 else:
     # redis tls : 仅仅支持 redis 单例模式
     if REDIS_TLS_ENABLED:
-        CACHES["verification_code"]["LOCATION"] = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        # 单例模式下使用 rediss:// 协议(已通过 REDIS_URL 自动处理)
+        CACHES["verification_code"]["LOCATION"] = REDIS_URL
 
         if "CONNECTION_POOL_KWARGS" not in CACHES["verification_code"]["OPTIONS"]:
             CACHES["verification_code"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {}
