@@ -113,7 +113,8 @@
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
+import type { IMessage } from 'bkui-vue/lib/message/messageConstructor';
 import { defineEmits, inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
@@ -174,17 +175,64 @@ const searchData = () => {
   const payload = {
     keyword: search.value,
   };
-  Promise.all([searchOrganization(payload), searchUser(payload)])
-    .then(([orgData, userData]) => {
-      orgs.value = orgData.data || [];
-      users.value = userData.data || [];
-    })
-    .catch((err) => {
-      console.log(err);
+  const httpConfig = { customMessage: true };
+  Promise.allSettled([searchOrganization(payload, httpConfig), searchUser(payload, httpConfig)])
+    .then((results) => {
+      const orgResult = results[0];
+      const userResult = results[1];
+      // 处理组织数据
+      if (orgResult.status === 'fulfilled') {
+        orgs.value = orgResult.value.data || [];
+      }
+      // 处理用户数据
+      if (userResult.status === 'fulfilled') {
+        users.value = userResult.value.data || [];
+      }
+      // 处理错误信息
+      const orgError = orgResult.status === 'rejected' ? orgResult.reason : null;
+      const userError = userResult.status === 'rejected' ? userResult.reason : null;
+      if (orgError || userError) {
+        const orgErrorMessage = orgError?.[1]?.suggestion;
+        const userErrorMessage = userError?.[1]?.suggestion;
+        // 如果两个错误信息相同，只展示一次
+        if (orgErrorMessage && userErrorMessage && orgErrorMessage === userErrorMessage) {
+          console.error(orgError?.[0]);
+          console.error(userError?.[0]);
+          const messageConfig = orgError?.[1];
+          handleShowErrorMessage(messageConfig);
+        } else {
+          // 错误信息不同，各自展示
+          if (orgError) {
+            console.error(orgError?.[0]);
+            const messageConfig = orgError?.[1];
+            handleShowErrorMessage(messageConfig);
+          }
+          if (userError) {
+            console.error(userError?.[0]);
+            const messageConfig = userError?.[1];
+            handleShowErrorMessage(messageConfig);
+          }
+        }
+      }
     })
     .finally(() => {
       searchLoading.value = false;
     });
+};
+
+const handleShowErrorMessage = (messageConfig: IMessage) => {
+  Message({
+    theme: 'error',
+    message: messageConfig,
+    delay: 10000,
+    extCls: 'message-fix-fixed',
+    actions: [
+      {
+        id: 'assistant',
+        disabled: true,
+      },
+    ],
+  });
 };
 
 const handleOrgSelect = (org) => {

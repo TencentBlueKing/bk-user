@@ -199,12 +199,12 @@ export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/te
 /**
  * 搜索组织
  */
-export const searchOrganization = (params: any) => http.get(`${prefix}/tenants/departments/`, params);
+export const searchOrganization = (params: any, config?: any) => http.get(`${prefix}/tenants/departments/`, params, config);
 
 /**
  * 搜索用户
  */
-export const searchUser = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+export const searchUser = (params: any, config?: any) => http.get(`${prefix}/tenants/users/`, params, config);
 
 /**
  * 租户下部门单个用户详情
