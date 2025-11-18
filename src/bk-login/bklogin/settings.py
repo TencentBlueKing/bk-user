@@ -40,7 +40,7 @@ urllib3.disable_warnings()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", False)
+DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -101,11 +101,11 @@ WSGI_APPLICATION = "bklogin.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME", "bk-login"),
-        "USER": env.str("MYSQL_USER", "root"),
-        "PASSWORD": env.str("MYSQL_PASSWORD", ""),
-        "HOST": env.str("MYSQL_HOST", "localhost"),
-        "PORT": env.int("MYSQL_PORT", 3306),
+        "NAME": env.str("MYSQL_NAME", default="bk-login"),
+        "USER": env.str("MYSQL_USER", default="root"),
+        "PASSWORD": env.str("MYSQL_PASSWORD", default=""),
+        "HOST": env.str("MYSQL_HOST", default="localhost"),
+        "PORT": env.int("MYSQL_PORT", default=3306),
         "TEST": {
             "CHARSET": "utf8mb4",
         },
@@ -113,11 +113,11 @@ DATABASES = {
 }
 
 # Database tls
-MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
-MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
-MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
-MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
-MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", True)
+MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", default=False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", default="")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", default="")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", default="")
+MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", default=True)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
         "ca": MYSQL_TLS_CERT_CA_FILE,
@@ -159,21 +159,21 @@ BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
 # [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
-BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
+BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", default="")
 
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 # 详情查看：https://cryptography.io/en/latest/fernet/
 BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
 # 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
-BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", default="CLASSIC")
 ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
 # 蓝鲸统一的基础域和对外 SCHEME
-BK_DOMAIN = env.str("BK_DOMAIN", "")
+BK_DOMAIN = env.str("BK_DOMAIN", default="")
 BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
 # 统一登录的外部访问地址，不包括 http(s) 协议
-BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", "")
+BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", default="")
 BK_LOGIN_URL = f"{BK_DOMAIN_SCHEME}://{BK_LOGIN_ADDR}{SITE_URL}"
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
 # 蓝鲸公共的 Cookie 的 Domain(比如 bk_token 和 blueking_language)
@@ -358,7 +358,7 @@ LOGGING = build_logging_config(LOG_LEVEL, logging_to_console, logging_directory,
 # ------------------------------------------ Healthz 配置 ------------------------------------------
 
 # 调用 Healthz API 需要的 Token
-HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", default="")
 # 服务健康探针配置
 HEALTHZ_PROBES = env.list(
     "HEALTHZ_PROBES",
@@ -370,25 +370,25 @@ HEALTHZ_PROBES = env.list(
 # ------------------------------------------ Metric 配置 ------------------------------------------
 
 # 调用 Metric API 需要的 Token
-METRIC_TOKEN = env.str("METRIC_TOKEN", "")
+METRIC_TOKEN = env.str("METRIC_TOKEN", default="")
 
 # ------------------------------------------ Tracing 配置 ------------------------------------------
 
 # Sentry DSN 配置
-SENTRY_DSN = env.str("SENTRY_DSN", "")
+SENTRY_DSN = env.str("SENTRY_DSN", default="")
 
 # 是否开启 OTEL 数据上报，默认不启用
-ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
+ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", default=False)
 # 上报数据服务名称，一般使用默认值即可
-OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-login")
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", default="bk-login")
 # sdk 采样规则（always_on / always_off ...）
-OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
+OTEL_SAMPLER = env.str("OTEL_SAMPLER", default="always_on")
 # OTEL 上报地址（grpc）
-OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", "")
+OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", default="")
 # OTEL 上报到监控平台的数据 Token，可通过监控平台上新建应用获得
-OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", "")
+OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", default="")
 # 是否记录 DB 相关 tracing
-OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
+OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", default=False)
 
 if ENABLE_OTEL_TRACE or SENTRY_DSN:
     INSTALLED_APPS += ("bklogin.monitoring.tracing",)
@@ -396,11 +396,11 @@ if ENABLE_OTEL_TRACE or SENTRY_DSN:
 # ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
 
 # 通知中心的功能可通过配置开启
-ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", default=False)
 if ENABLE_BK_NOTICE:
     INSTALLED_APPS += ("bk_notice_sdk",)
     # 对接通知中心的环境，默认为生产环境
-    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", default="prod")
     BK_NOTICE = {
         "STAGE": BK_NOTICE_ENV,
         "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
@@ -413,4 +413,7 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", default=False)
+
+# 是否允许浏览器保存密码自动填充功能
+ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE = env.str("ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE", default=True)
