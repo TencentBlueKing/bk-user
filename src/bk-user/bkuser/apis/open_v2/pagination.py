@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from bkuser.common.pagination import CustomPageNumberPagination
+from django.conf import settings
 
 
 class LegacyOpenApiPagination(CustomPageNumberPagination):
@@ -22,4 +23,4 @@ class LegacyOpenApiPagination(CustomPageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
     # 兼容 API 单页返回条数上限与老版本默认值保持一致
-    max_page_size = 2000
+    max_page_size = settings.MAX_PAGE_SIZE
