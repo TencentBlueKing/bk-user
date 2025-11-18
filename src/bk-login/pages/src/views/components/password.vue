@@ -48,7 +48,7 @@ import { t } from '@/language/index';
 
 const appStore = useAppStore();
 
-const enableBrowserPasswordAutocomplete = computed(() => window.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE === 'True');
+const enableBrowserPasswordAutocomplete = computed(() => window.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE !== 'False');
 
 const props = defineProps({
   idpId: {
