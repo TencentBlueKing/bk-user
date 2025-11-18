@@ -5,4 +5,5 @@ declare interface Window {
   BK_SHARED_RES_URL: string
   BK_COMPONENT_API_URL: string
   BK_DOMAIN: string
+  ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE: string
 }
