@@ -49,11 +49,12 @@ def _call_bk_user_api(http_func, url_path: str, allow_error_status_func: Callabl
     if allow_error_status_func(status) or status.is_success:
         return resp_data
 
-    error = resp_data.get("error")
+    error = resp_data("error") or {}
+    message = error.get("message") or "unknown error"
     logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
-    raise error_codes.REMOTE_REQUEST_ERROR.f(
-        f"request bk_user api error! " f"Request=[{http_func.__name__} {url_path} Response[error={error}]"
-    )
+    # FIXME(nan): 重构错误码体系，关注点在于如何区分用户侧错误和系统侧错误，
+    #  如何更优好的给用户提示且不暴露系统细节，大部分场景下，应该避免代码式的错误展示
+    raise error_codes.REMOTE_REQUEST_ERROR.f(message)
 
 
 def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
