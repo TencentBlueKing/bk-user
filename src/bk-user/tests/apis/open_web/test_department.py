@@ -121,12 +121,11 @@ class TestTenantDepartmentChildrenListApi:
         resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": dept_a.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert len(resp.data["results"]) == 2
-        assert {d["id"] for d in resp.data["results"]} == {center_aa.id, center_ab.id}
-        assert {d["name"] for d in resp.data["results"]} == {"中心AA", "中心AB"}
-        assert {d["has_child"] for d in resp.data["results"]} == {True}
-        assert {d["has_user"] for d in resp.data["results"]} == {True}
+        assert len(resp.data) == 2
+        assert {d["id"] for d in resp.data} == {center_aa.id, center_ab.id}
+        assert {d["name"] for d in resp.data} == {"中心AA", "中心AB"}
+        assert {d["has_child"] for d in resp.data} == {True}
+        assert {d["has_user"] for d in resp.data} == {True}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_sub_dept_with_not_child(self, api_client, random_tenant):
@@ -136,12 +135,11 @@ class TestTenantDepartmentChildrenListApi:
         resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": center_aa.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert len(resp.data["results"]) == 1
-        assert resp.data["results"][0]["id"] == group_aaa.id
-        assert resp.data["results"][0]["name"] == "小组AAA"
-        assert not resp.data["results"][0]["has_child"]
-        assert resp.data["results"][0]["has_user"]
+        assert len(resp.data) == 1
+        assert resp.data[0]["id"] == group_aaa.id
+        assert resp.data[0]["name"] == "小组AAA"
+        assert not resp.data[0]["has_child"]
+        assert resp.data[0]["has_user"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_not_child(self, api_client, random_tenant):
@@ -150,8 +148,7 @@ class TestTenantDepartmentChildrenListApi:
         resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": group_aaa.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 0
-        assert len(resp.data["results"]) == 0
+        assert len(resp.data) == 0
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_tenant(self, api_client, collaboration_tenant):
@@ -171,12 +168,11 @@ class TestTenantDepartmentChildrenListApi:
         resp = api_client.get(reverse("open_web.tenant_department.child.list", kwargs={"id": dept_a.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2
-        assert len(resp.data["results"]) == 2
-        assert {d["id"] for d in resp.data["results"]} == {center_aa.id, center_ab.id}
-        assert {d["name"] for d in resp.data["results"]} == {"中心AA", "中心AB"}
-        assert {d["has_child"] for d in resp.data["results"]} == {True}
-        assert {d["has_user"] for d in resp.data["results"]} == {True}
+        assert len(resp.data) == 2
+        assert {d["id"] for d in resp.data} == {center_aa.id, center_ab.id}
+        assert {d["name"] for d in resp.data} == {"中心AA", "中心AB"}
+        assert {d["has_child"] for d in resp.data} == {True}
+        assert {d["has_user"] for d in resp.data} == {True}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_root_department(self, api_client, random_tenant):
@@ -187,12 +183,11 @@ class TestTenantDepartmentChildrenListApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1
-        assert len(resp.data["results"]) == 1
-        assert resp.data["results"][0]["id"] == company.id
-        assert resp.data["results"][0]["name"] == "公司"
-        assert resp.data["results"][0]["has_child"]
-        assert resp.data["results"][0]["has_user"]
+        assert len(resp.data) == 1
+        assert resp.data[0]["id"] == company.id
+        assert resp.data[0]["name"] == "公司"
+        assert resp.data[0]["has_child"]
+        assert resp.data[0]["has_user"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_owner_tenant_id(self, api_client, random_tenant):

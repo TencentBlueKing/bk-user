@@ -100,7 +100,7 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
     获取部门子部门（包括协同）列表
     """
 
-    serializer_class = TenantDepartmentChildrenListOutputSLZ
+    pagination_class = None
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
         slz = TenantDepartmentChildrenListInputSLZ(
@@ -138,15 +138,6 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
             data_source_department_id__in=data_source_dept_ids,
         ).select_related("data_source_department")
 
-    def get_serializer_context(self):
-        data_source_department_ids = self.paginate_queryset(
-            self.get_queryset().values_list("data_source_department_id", flat=True)
-        )
-        return {
-            "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
-            "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
-        }
-
     @swagger_auto_schema(
         tags=["open_web.department"],
         operation_id="list_department_child",
@@ -155,7 +146,13 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_depts = self.get_queryset()
+        data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
+        context = {
+            "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
+            "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
+        }
+        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_depts, many=True, context=context).data)
 
 
 class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
