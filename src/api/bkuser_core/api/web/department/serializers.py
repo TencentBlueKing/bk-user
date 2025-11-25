@@ -111,6 +111,8 @@ class DepartmentProfileListInputSLZ(serializers.Serializer):
     telephone = serializers.CharField(required=False, help_text="电话")
     status = serializers.CharField(required=False, help_text="账户状态")
     staff_status = serializers.CharField(required=False, help_text="在职状态")
+    position = serializers.IntegerField(required=False, help_text="职务")
+    leaders = serializers.CharField(required=False, help_text="上级")
 
 class DepartmentProfilesCreateInputSLZ(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())

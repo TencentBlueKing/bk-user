@@ -237,6 +237,20 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
             queryset = queryset.filter(staff_status=data["staff_status"])
             if recursive:
                 queryset_recursive = queryset_recursive.filter(staff_status=data["staff_status"])
+        if data.get("position") is not None:
+            queryset = queryset.filter(position=data["position"])
+            if recursive:
+                queryset_recursive = queryset_recursive.filter(position=data["position"])
+        if data.get("leaders"):
+            if data["leaders"].isdigit():
+                queryset = queryset.filter(leader__id=data["leaders"])
+            else:
+                queryset = queryset.filter(leader__username__icontains=data["leaders"])
+            if recursive:
+                if data["leaders"].isdigit():
+                    queryset_recursive = queryset_recursive.filter(leader__id=data["leaders"])
+                else:
+                    queryset_recursive = queryset_recursive.filter(leader__username__icontains=data["leaders"])
         if recursive:
             current_count = queryset_recursive.count()
         else:

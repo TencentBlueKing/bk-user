@@ -487,6 +487,10 @@ export default {
       val.forEach((item) => {
         const { name, options } = item;
         const id = item.key;
+        // 跳过账号有效期、最近登录时间、创建时间这三个字段
+        if (this.timerMap.includes(id)) {
+          return;
+        }
         const children = [];
         const multiable = true;
         if (options.length > 0) {
