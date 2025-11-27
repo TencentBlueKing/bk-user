@@ -101,7 +101,7 @@ class LoginView(View):
         if idp and get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
             # 直接重定向到第三方登录
             response = HttpResponseRedirect(
-                redirect_to=f"{settings.SITE_URL}tenants/{idp.owner_tenant_id}/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
+                redirect_to=f"{settings.SITE_URL}auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
             )
 
         # [兼容 2.x] 注销当前登录态

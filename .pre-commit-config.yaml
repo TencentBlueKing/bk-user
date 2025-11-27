@@ -24,7 +24,7 @@ repos:
         exclude: >
           (?x)^(
             .*/\.env|
-            .*/poetry\.lock|
+            .*/uv\.lock|
             .*/pyproject\.toml|
             src/bk-user/logs|
             src/pages/node_modules/
@@ -36,7 +36,7 @@ repos:
         exclude: >
           (?x)^(
             .*/\.env|
-            .*/poetry\.lock|
+            .*/uv\.lock|
             .*/pyproject\.toml|
             .*/requirements_dev\.txt|
             \.github/workflows/bk-user.yml|
