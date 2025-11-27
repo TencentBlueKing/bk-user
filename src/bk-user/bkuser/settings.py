@@ -26,7 +26,9 @@ import environ
 import pymysql
 import urllib3
 from celery.schedules import crontab
+from django.db.backends.mysql.features import DatabaseFeatures
 from django.utils.encoding import force_bytes
+from django.utils.functional import cached_property
 
 pymysql.install_as_MySQLdb()
 
@@ -37,6 +39,19 @@ environ.Env.read_env()
 
 # no more useless warning
 urllib3.disable_warnings()
+
+
+# 定义一个补丁来兼容 MySQL 5.7
+class PatchFeatures:
+    @cached_property
+    def minimum_database_version(self):
+        if self.connection.mysql_is_mariadb:  # type: ignore[attr-defined]
+            return 10, 4
+        return 5, 7
+
+
+# 将补丁应用到 DatabaseFeatures 中
+DatabaseFeatures.minimum_database_version = PatchFeatures.minimum_database_version
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
