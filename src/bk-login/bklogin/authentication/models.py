@@ -25,6 +25,8 @@ class BkToken(TimestampedModel):
     """
 
     token = models.CharField("登录票据", max_length=255, unique=True, db_index=True)
+    # 用户标识
+    user_id = models.CharField("用户ID", max_length=255, db_index=True, default="")
     # 是否已经退出登录
     is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
     # 无操作过期时间戳
