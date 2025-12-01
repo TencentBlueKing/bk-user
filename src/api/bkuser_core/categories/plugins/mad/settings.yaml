@@ -1,7 +1,7 @@
 ldap_max_paged_size:
-  default: 1000
+  default: 10000
 min_sync_period:
-  default: 60
+  default: 600
 default_sync_period:
   default: 120
 
