@@ -239,7 +239,6 @@ CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
 # 登录票据 Cookie 有效期，默认 1 天
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
-
 # 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
 # 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
