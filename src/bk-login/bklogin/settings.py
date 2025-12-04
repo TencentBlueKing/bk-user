@@ -243,15 +243,15 @@ BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
 # 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
-# 删除登录票据的保留期，默认 7 天
+# 清理任务中，登录票据过期后额外保留的时长，便于问题排查，默认 7 天
 BK_TOKEN_CLEANUP_RETENTION_AGE = env.int("BK_TOKEN_CLEANUP_RETENTION_AGE", default=60 * 60 * 24 * 7)
 # 允许的最大登录终端数量，默认 0 表示不限制
 # - 0: 不限制，允许无限多个终端同时登录
 # - 1: 单端登录，同一时间只能有一个有效 token
 # - N: 最多允许 N 个终端同时登录
 BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)
-# 清理无效登录票据时每批的数量，默认 1000
-BK_TOKEN_CLEANUP_BATCH_SIZE = env.int("BK_TOKEN_CLEANUP_BATCH_SIZE", default=1000)
+# 清理无效登录票据时分批删除每批的数量，默认 200
+BK_TOKEN_CLEANUP_BATCH_SIZE = env.int("BK_TOKEN_CLEANUP_BATCH_SIZE", default=200)
 
 # 用户管理相关信息
 BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")

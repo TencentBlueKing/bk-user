@@ -20,7 +20,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db.models import Q
 from django.utils import timezone
 
 from bklogin.authentication.models import BkToken
@@ -29,36 +28,39 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "清理无效的 bk_token 数据（已注销、绝对过期、无操作过期），保留一定时间供问题排查"
+    """清理无效的 bk_token 数据
+
+    该命令用于配合 K8S CronJob 定期执行，清理无效的登录票据
+
+    清理逻辑：删除 created_at < now - (cookie * 2 + retention_age）的记录
+    - cookie_age * 2: 兜底，确保 token 已绝对过期
+    - retention_age: 额外保留时间，便于问题排查
+    """
+
+    help = "清理无效的 bk_token 数据，无效后保留一段时间再删除，避免影响短期内的问题排查"
 
     def handle(self, *args, **options):
-        now = int(time.time())
-        now_datetime = timezone.now()
+        # 清理阈值：cookie_age * 2 （兜底） + retention_age (保留时间)
+        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + settings.BK_TOKEN_CLEANUP_RETENTION_AGE
+        threshold_time = timezone.now() - timedelta(seconds=threshold_seconds)
 
-        invalid_token_filter = (
-            # 已注销
-            Q(is_logout=True, updated_at__lt=now_datetime - timedelta(seconds=settings.BK_TOKEN_CLEANUP_RETENTION_AGE))
-            # 无操作过期: inactive_expires_at + inactive_age + retention_age < now
-            | Q(inactive_expires_at__lt=now - settings.BK_TOKEN_INACTIVE_AGE - settings.BK_TOKEN_CLEANUP_RETENTION_AGE)
-            # 绝对过期：created_at + cookie_age + offset_error_age + retention_age < now
-            # Note: created_at 理论上大于 expired_at + cookie_age
-            | Q(
-                created_at__lt=now_datetime
-                - timedelta(
-                    seconds=settings.BK_TOKEN_COOKIE_AGE
-                    + settings.BK_TOKEN_OFFSET_ERROR_AGE
-                    + settings.BK_TOKEN_CLEANUP_RETENTION_AGE
-                )
+        # 分批删除所有无效的 bk_token
+        total_deleted = 0
+        while True:
+            # 获取一批待删除的 ID
+            ids_to_delete = list(
+                BkToken.objects.filter(created_at__lt=threshold_time).values_list("id", flat=True)[
+                    : settings.BK_TOKEN_CLEANUP_BATCH_SIZE
+                ]
             )
-        )
+            if not ids_to_delete:
+                break
 
-        # 获取一批待删除的 ID
-        ids_to_delete = list(
-            BkToken.objects.filter(invalid_token_filter).values_list("id", flat=True)[
-                : settings.BK_TOKEN_CLEANUP_BATCH_SIZE
-            ]
-        )
-        # 批量删除
-        deleted_count, _ = BkToken.objects.filter(id__in=ids_to_delete).delete()
+            # 批量删除
+            deleted_count, _ = BkToken.objects.filter(id__in=ids_to_delete).delete()
+            total_deleted += deleted_count
 
-        logger.info("cleanup_invalid_tokens completed, deleted %d tokens", deleted_count)
+            # 每批删除后休眠 1s, 避免对数据库造成过大压力
+            time.sleep(1)
+
+        logger.info("cleanup_invalid_tokens completed, deleted %d tokens", total_deleted)
