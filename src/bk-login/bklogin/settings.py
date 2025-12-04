@@ -239,15 +239,20 @@ CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
 # 登录票据 Cookie 有效期，默认 1 天
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
+
 # 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
 # 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
+# 登录票据保留期，默认 7 天
+BK_TOKEN_CLEANUP_RETENTION_AGE = env.int("BK_TOKEN_CLEANUP_RETENTION_AGE", default=60 * 60 * 24 * 7)
 # 允许的最大登录终端数量，默认 0 表示不限制
 # - 0: 不限制，允许无限多个终端同时登录
 # - 1: 单端登录，同一时间只能有一个有效 token
 # - N: 最多允许 N 个终端同时登录
 BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)
+# 清理无效 Token 时的批量大小，默认 1000
+BK_TOKEN_CLEANUP_BATCH_SIZE = env.int("BK_TOKEN_CLEANUP_BATCH_SIZE", default=1000)
 
 # 用户管理相关信息
 BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")
