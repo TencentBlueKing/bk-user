@@ -251,7 +251,7 @@ BK_TOKEN_CLEANUP_RETENTION_AGE = env.int("BK_TOKEN_CLEANUP_RETENTION_AGE", defau
 # - 1: 单端登录，同一时间只能有一个有效 token
 # - N: 最多允许 N 个终端同时登录
 BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)
-# 清理无效 Token 时的批量大小，默认 1000
+# 清理无效登录票据时每批的数量，默认 1000
 BK_TOKEN_CLEANUP_BATCH_SIZE = env.int("BK_TOKEN_CLEANUP_BATCH_SIZE", default=1000)
 
 # 用户管理相关信息

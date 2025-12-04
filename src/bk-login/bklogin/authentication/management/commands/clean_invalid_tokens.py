@@ -41,6 +41,7 @@ class Command(BaseCommand):
             # 无操作过期: inactive_expires_at + inactive_age + retention_age < now
             | Q(inactive_expires_at__lt=now - settings.BK_TOKEN_INACTIVE_AGE - settings.BK_TOKEN_CLEANUP_RETENTION_AGE)
             # 绝对过期：created_at + cookie_age + offset_error_age + retention_age < now
+            # Note: created_at 理论上大于 expired_at + cookie_age
             | Q(
                 created_at__lt=now_datetime
                 - timedelta(
