@@ -169,7 +169,7 @@ WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
 # STATIC_URL 也可以是 CDN 地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
-# 登录服务的AppCode/AppSecret
+# 登录服务的 AppCode/AppSecret
 BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
@@ -241,8 +241,13 @@ BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
 # 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
-# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
+# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
+# 无操作失效时间更新间隔（秒），距离上次更新超过该间隔时才更新，减少数据库写操作
+# 默认值为 10 分钟，即距离上次更新超过 10 分钟时才更新
+# 设置为 0 表示每次校验都更新（不推荐，会影响性能）
+# 设置为大于 0 的值表示自定义更新间隔
+BK_TOKEN_INACTIVE_UPDATE_INTERVAL = env.int("BK_TOKEN_INACTIVE_UPDATE_INTERVAL", default=10 * 60)
 # 允许的最大登录终端数量，默认 0 表示不限制
 # - 0: 不限制，允许无限多个终端同时登录
 # - 1: 单端登录，同一时间只能有一个有效 token
