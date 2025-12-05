@@ -27,8 +27,8 @@ from bklogin.authentication.models import BkToken
 
 logger = logging.getLogger(__name__)
 
-# 默认保留时长 7 天 (秒)
-DEFAULT_RETENTION_AGE = 60 * 60 * 24 * 7
+# 默认保留时长 168 小时 (7 天)
+DEFAULT_RETENTION_HOURS = 24 * 7
 # 默认批量删除大小
 DEFAULT_BATCH_SIZE = 200
 
@@ -48,18 +48,18 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="只统计待删除数量，不实际删除")
         parser.add_argument(
-            "--retention-age",
+            "--retention-hours",
             type=int,
-            default=DEFAULT_RETENTION_AGE,
-            help=f"额外保留时长（秒），默认：{DEFAULT_RETENTION_AGE} (7天)",
+            default=DEFAULT_RETENTION_HOURS,
+            help=f"额外保留时长（小时），默认：{DEFAULT_RETENTION_HOURS} (7天)",
         )
         parser.add_argument(
             "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help=f"每批删除大小，默认：{DEFAULT_BATCH_SIZE}"
         )
 
     def handle(self, *args, **options):
-        # 清理阈值：cookie_age * 2 （兜底） + retention_age (保留时间)
-        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_age"]
+        # 清理阈值：cookie_age * 2 （兜底） + retention_hours (保留时间)
+        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_hours"] * 3600
         threshold_time = timezone.now() - timedelta(seconds=threshold_seconds)
 
         # 统计待删除的总数，计算批次
