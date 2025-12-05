@@ -33,9 +33,9 @@ class Command(BaseCommand):
 
     该命令用于配合 K8S CronJob 定期执行，清理无效的登录票据
 
-    清理逻辑：删除 (cookie_age * 2 + retention_age) 之前的记录
+    清理逻辑：删除 (cookie_age * 2 + retention_days) 之前的记录
     - cookie_age * 2: 兜底，确保 token 已绝对过期
-    - retention_age: 额外保留时间，便于问题排查
+    - retention_days: 额外保留时间，便于问题排查
     """
 
     # 保留时长，默认7天
