@@ -27,11 +27,6 @@ from bklogin.authentication.models import BkToken
 
 logger = logging.getLogger(__name__)
 
-# 默认保留时长 168 小时 (7 天)
-DEFAULT_RETENTION_HOURS = 24 * 7
-# 默认批量删除大小
-DEFAULT_BATCH_SIZE = 200
-
 
 class Command(BaseCommand):
     """清理无效的 bk_token 数据
@@ -43,50 +38,44 @@ class Command(BaseCommand):
     - retention_age: 额外保留时间，便于问题排查
     """
 
+    # 保留时长，默认7天
+    RETENTION_DAYS = 7
+    # 批量删除大小，默认 200
+    BATCH_SIZE = 200
+
     help = "清理无效的 bk_token 数据"
 
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="只统计待删除数量，不实际删除")
         parser.add_argument(
-            "--retention-hours",
+            "--retention-days",
             type=int,
-            default=DEFAULT_RETENTION_HOURS,
-            help=f"额外保留时长（小时），默认：{DEFAULT_RETENTION_HOURS} (7天)",
-        )
-        parser.add_argument(
-            "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help=f"每批删除大小，默认：{DEFAULT_BATCH_SIZE}"
+            default=self.RETENTION_DAYS,
+            help=f"额外保留时长（天），默认：{self.RETENTION_DAYS}",
         )
 
     def handle(self, *args, **options):
-        # 清理阈值：cookie_age * 2 （兜底） + retention_hours (保留时间)
-        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_hours"] * 3600
+        # 清理阈值：cookie_age * 2 （兜底） + retention_days (保留时间)
+        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_days"] * 24 * 3600
         threshold_time = timezone.now() - timedelta(seconds=threshold_seconds)
 
         # 统计待删除的总数，计算批次
         total_count = BkToken.objects.filter(created_at__lt=threshold_time).count()
-        if total_count == 0:
-            logger.info("cleanup_invalid_token completed, no tokens to delete")
-            return
 
         if options["dry_run"]:
             logger.info("cleanup_invalid_token dry run, %d tokens to delete", total_count)
             return
 
-        batch_size = options["batch_size"]
-        batch_count = math.ceil(total_count / batch_size)
+        batch_count = math.ceil(total_count / self.BATCH_SIZE)
 
         # 分批删除
-        total_deleted = 0
-        for batch_num in range(batch_count):
+        for _ in range(batch_count):
             ids_to_delete = list(
-                BkToken.objects.filter(created_at__lt=threshold_time).values_list("id", flat=True)[:batch_size]
+                BkToken.objects.filter(created_at__lt=threshold_time).values_list("id", flat=True)[: self.BATCH_SIZE]
             )
+            BkToken.objects.filter(id__in=ids_to_delete).delete()
 
-            deleted_count, _ = BkToken.objects.filter(id__in=ids_to_delete).delete()
-            total_deleted += deleted_count
+            # 每批删除后休眠 1s,避免对数据库造成过大压力
+            time.sleep(1)
 
-            # 每批删除后休眠 1s,避免对数据库造成过大压力,最后一批跳过
-            if batch_num < batch_count - 1:
-                time.sleep(1)
-
-        logger.info("cleanup_invalid_token completed, deleted %d tokens", total_deleted)
+        logger.info("cleanup_invalid_token completed, deleted %d tokens", total_count)
