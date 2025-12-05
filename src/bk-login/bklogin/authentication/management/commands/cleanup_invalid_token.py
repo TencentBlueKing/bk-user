@@ -27,6 +27,11 @@ from bklogin.authentication.models import BkToken
 
 logger = logging.getLogger(__name__)
 
+# 默认保留时长 7 天 (秒)
+DEFAULT_RETENTION_AGE = 60 * 60 * 24 * 7
+# 默认批量删除大小
+DEFAULT_BATCH_SIZE = 200
+
 
 class Command(BaseCommand):
     """清理无效的 bk_token 数据
@@ -40,18 +45,34 @@ class Command(BaseCommand):
 
     help = "清理无效的 bk_token 数据"
 
+    def add_arguments(self, parser):
+        parser.add_argument("--dry-run", action="store_true", help="只统计待删除数量，不实际删除")
+        parser.add_argument(
+            "--retention-age",
+            type=int,
+            default=DEFAULT_RETENTION_AGE,
+            help=f"额外保留时长（秒），默认：{DEFAULT_RETENTION_AGE} (7天)",
+        )
+        parser.add_argument(
+            "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help=f"每批删除大小，默认：{DEFAULT_BATCH_SIZE}"
+        )
+
     def handle(self, *args, **options):
         # 清理阈值：cookie_age * 2 （兜底） + retention_age (保留时间)
-        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + settings.BK_TOKEN_CLEANUP_RETENTION_AGE
+        threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_age"]
         threshold_time = timezone.now() - timedelta(seconds=threshold_seconds)
 
         # 统计待删除的总数，计算批次
         total_count = BkToken.objects.filter(created_at__lt=threshold_time).count()
         if total_count == 0:
-            logger.info("cleanup_invalid_tokens completed, no tokens to delete")
+            logger.info("cleanup_invalid_token completed, no tokens to delete")
             return
 
-        batch_size = settings.BK_TOKEN_CLEANUP_BATCH_SIZE
+        if options["dry_run"]:
+            logger.info("cleanup_invalid_token dry run, %d tokens to delete", total_count)
+            return
+
+        batch_size = options["batch_size"]
         batch_count = math.ceil(total_count / batch_size)
 
         # 分批删除
@@ -64,8 +85,8 @@ class Command(BaseCommand):
             deleted_count, _ = BkToken.objects.filter(id__in=ids_to_delete).delete()
             total_deleted += deleted_count
 
-            # 每批删除后休眠 1s, 避免对数据库造成过大压力,最后一批跳过
+            # 每批删除后休眠 1s,避免对数据库造成过大压力,最后一批跳过
             if batch_num < batch_count - 1:
                 time.sleep(1)
 
-        logger.info("cleanup_invalid_tokens completed, deleted %d tokens", total_deleted)
+        logger.info("cleanup_invalid_token completed, deleted %d tokens", total_deleted)
