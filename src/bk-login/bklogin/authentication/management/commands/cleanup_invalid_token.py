@@ -50,6 +50,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--retention-days",
             type=int,
+            nargs="?",
+            const=self.RETENTION_DAYS,
             default=self.RETENTION_DAYS,
             help=f"额外保留时长（天），默认：{self.RETENTION_DAYS}",
         )
