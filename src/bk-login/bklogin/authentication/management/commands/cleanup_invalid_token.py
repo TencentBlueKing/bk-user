@@ -38,7 +38,7 @@ class Command(BaseCommand):
     - retention_days: 额外保留时间，便于问题排查
     """
 
-    # 保留时长，默认7天
+    # 保留时长，默认 7 天
     RETENTION_DAYS = 7
     # 批量删除大小，默认 200
     BATCH_SIZE = 200
@@ -57,7 +57,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # 清理阈值：cookie_age * 2 （兜底） + retention_days (保留时间)
+        # 清理阈值：cookie_age * 2（兜底） + retention_days (保留时间)
         threshold_seconds = settings.BK_TOKEN_COOKIE_AGE * 2 + options["retention_days"] * 24 * 3600
         threshold_time = timezone.now() - timedelta(seconds=threshold_seconds)
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
         total_count = BkToken.objects.filter(created_at__lt=threshold_time).count()
 
         if options["dry_run"]:
-            logger.info("cleanup_invalid_token dry run, %d tokens to delete", total_count)
+            self.stdout.write(f"cleanup_invalid_token dry run, {total_count} tokens to delete")
             return
 
         batch_count = math.ceil(total_count / self.BATCH_SIZE)
@@ -77,7 +77,7 @@ class Command(BaseCommand):
             )
             BkToken.objects.filter(id__in=ids_to_delete).delete()
 
-            # 每批删除后休眠 1s,避免对数据库造成过大压力
+            # 每批删除后休眠 1s，避免对数据库造成过大压力
             time.sleep(1)
 
-        logger.info("cleanup_invalid_token completed, deleted %d tokens", total_count)
+        self.stdout.write(f"cleanup_invalid_token completed, deleted {total_count} tokens")
