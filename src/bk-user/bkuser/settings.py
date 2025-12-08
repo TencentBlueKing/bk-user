@@ -779,7 +779,7 @@ HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
 # bk-cmsi 网关部署环境
 BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
 # 是否启用微信消息推送功能
-ENABLE_WEIXIN_NOTIFICATION = env.bool("ENABLE_WEIXIN_NOTIFICATION", default=False)
+ENABLE_WEIXIN_NOTIFICATION = env.bool("ENABLE_WEIXIN_NOTIFICATION", default=True)
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 # 内置租户管理员 username
