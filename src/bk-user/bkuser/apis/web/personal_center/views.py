@@ -629,6 +629,7 @@ class TenantUserWeixinInfoRetrieveDestroyApi(generics.RetrieveDestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         tenant_user = self.get_object()
+
         if not tenant_user.wx_userid:
             raise error_codes.WEIXIN_ALREADY_UNBOUND.f(_("当前账号未绑定微信"))
 

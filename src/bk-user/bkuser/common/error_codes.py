@@ -137,7 +137,6 @@ class ErrorCodes:
     WEIXIN_STATE_INVALID = ErrorCode(_("state 无效"))
     WEIXIN_TYPE_UNSUPPORTED = ErrorCode(_("不支持的微信类型"))
     WEIXIN_SIGN_INVALID = ErrorCode(_("微信签名无效"))
-    WEIXIN_NOTIFICATION_DISABLED = ErrorCode(_("微信通知功能未启用"))
 
 
 # 实例化一个全局对象
