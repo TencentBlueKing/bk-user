@@ -280,6 +280,7 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
+BK_USER_WEB_APIGW_STAGE = env.str("BK_USER_WEB_APIGW_STAGE", default="prod")
 # bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
 # Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
 # 例如：BK_APIGW_CORS_ALLOW_ORIGINS=http://demo.example.com,https://demo.example.com
