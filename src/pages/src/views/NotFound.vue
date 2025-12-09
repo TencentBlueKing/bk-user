@@ -1,21 +1,28 @@
 <template>
   <bk-exception
+    v-bkloading="{
+      opacity: 1,
+      loading: isLoading,
+    }"
     class="exception-wrap-item"
     type="404"
-    title="页面不存在"
+    :title="$t('页面不存在')"
   >
     <bk-button theme="primary" @click="handleRefresh">
-      刷新页面
+      {{ $t('刷新页面') }}
     </bk-button>
     <bk-button theme="primary" @click="backHome">
-      返回首页
+      {{ $t('返回首页') }}
     </bk-button>
   </bk-exception>
 </template>
 
 <script setup lang="ts">
+import { onBeforeMount, ref } from 'vue';
+
 import router from '../router';
 
+const isLoading = ref(false);
 const handleRefresh = () => {
   window.location.reload();
 };
@@ -23,6 +30,13 @@ const handleRefresh = () => {
 const backHome = () => {
   router.push({ name: 'organization' });
 };
+
+onBeforeMount(() => {
+  isLoading.value = true;
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 300);
+});
 </script>
 
 <style lang="postcss" scoped>
