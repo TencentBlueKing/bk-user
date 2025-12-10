@@ -137,7 +137,7 @@ class TestTenantUserListApi:
         assert len(resp.data["results"]) == 10  # noqa: PLR2004
 
         # 所有层级的用户（根部门递归）+ 关键字搜索
-        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "keyword": "shi"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "username": "shi"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 3  # noqa: PLR2004
         assert {user["username"] for user in resp.data["results"]} == {"lushi", "linshiyi", "baishier"}
@@ -159,7 +159,7 @@ class TestTenantUserListApi:
         assert {user["username"] for user in resp.data["results"]} == {"wangwu", "lushi", "baishier"}
 
         # 部门 B 及其子部门的用户 + 关键字搜索
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_b.id, "keyword": "王五"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": dept_b.id, "full_name": "王五"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
 
@@ -183,10 +183,87 @@ class TestTenantUserListApi:
         assert resp.data["count"] == 8  # noqa: PLR2004
 
         # 子部门，递归 + 关键字搜索，虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "keyword": "李四"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "full_name": "李四"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "lisi"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_email(self, api_client, random_tenant):
+        """测试通过邮箱过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "email": "wangwu"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "wangwu"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_phone(self, api_client, random_tenant):
+        """测试通过手机号过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "phone": "13512345673"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "wangwu"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_status(self, api_client, random_tenant):
+        """测试通过状态过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        # 先禁用一个用户
+        lisi = TenantUser.objects.get(data_source_user__username="lisi", tenant=random_tenant)
+        lisi.status = TenantUserStatus.DISABLED
+        lisi.save()
+
+        # 过滤启用状态的用户
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "status": TenantUserStatus.ENABLED})
+        assert resp.status_code == status.HTTP_200_OK
+        assert all(user["status"] == "enabled" for user in resp.data["results"])
+
+        # 过滤禁用状态的用户
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "status": TenantUserStatus.DISABLED})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "lisi"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_created_at_range(self, api_client, random_tenant):
+        """测试通过创建时间范围过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        now = timezone.now()
+        # 查询过去一天内创建的用户
+        resp = api_client.get(
+            url,
+            data={
+                "recursive": True,
+                "department_id": 0,
+                "created_at_start": (now - datetime.timedelta(days=1)).isoformat(),
+                "created_at_end": now.isoformat(),
+            },
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        # 测试数据刚创建，应该都能查到
+        assert resp.data["count"] >= 1
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_created_at_invalid_range(self, api_client, random_tenant):
+        """测试创建时间范围校验：开始时间不能大于结束时间"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        now = timezone.now()
+        resp = api_client.get(
+            url,
+            data={
+                "recursive": True,
+                "department_id": 0,
+                "created_at_start": now.isoformat(),
+                "created_at_end": (now - datetime.timedelta(days=1)).isoformat(),
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "创建时间的开始时间不能大于结束时间" in resp.data["message"]
 
 
 class TestTenantUserCreateApi:

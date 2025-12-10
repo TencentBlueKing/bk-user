@@ -93,16 +93,39 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
     department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    username = serializers.CharField(help_text="用户名", required=False)
+    full_name = serializers.CharField(help_text="用户姓名", required=False)
+    email = serializers.CharField(help_text="用户邮箱", required=False)
+    phone = serializers.CharField(help_text="用户手机号", required=False)
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices(), required=False)
+    created_at_start = serializers.DateTimeField(help_text="创建时间开始", required=False)
+    created_at_end = serializers.DateTimeField(help_text="创建时间结束", required=False)
+    account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
+    account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
 
-    def validate_department_id(self, department_id: int) -> int:
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 校验部门
         if (
-            department_id
-            and not TenantDepartment.objects.filter(tenant_id=self.context["tenant_id"], id=department_id).exists()
+            attrs.get("department_id")
+            and not TenantDepartment.objects.filter(
+                tenant_id=self.context["tenant_id"], id=attrs["department_id"]
+            ).exists()
         ):
             raise ValidationError(_("部门不存在"))
 
-        return department_id
+        # 校验创建时间范围
+        created_at_start = attrs.get("created_at_start")
+        created_at_end = attrs.get("created_at_end")
+        if created_at_start and created_at_end and created_at_start > created_at_end:
+            raise ValidationError(_("创建时间的开始时间不能大于结束时间"))
+
+        # 校验账号过期时间范围
+        account_expired_at_start = attrs.get("account_expired_at_start")
+        account_expired_at_end = attrs.get("account_expired_at_end")
+        if account_expired_at_start and account_expired_at_end and account_expired_at_start > account_expired_at_end:
+            raise ValidationError(_("账户过期时间的开始时间不能大于结束时间"))
+
+        return attrs
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
@@ -474,7 +497,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 注：raw_info 格式是以英文逗号 (,)、中文逗号 (，)、英文分号 (;) 或中文分号 (；)
             # 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, 女, StarCoreHunter, 狩猎/阅读
+            # 示例：kafka, 卡芙卡，kafka@starrail.com, 女，StarCoreHunter, 狩猎/阅读
             data: List[str] = [s.strip() for s in re.split(r"[,，;；]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
