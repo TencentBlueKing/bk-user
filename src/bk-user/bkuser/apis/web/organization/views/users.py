@@ -201,13 +201,22 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         queryset = TenantUser.objects.select_related("data_source_user").filter(
             tenant_id=cur_tenant_id, data_source=data_source
         )
-        if kw := params.get("keyword"):
-            queryset = queryset.filter(
-                Q(data_source_user__username__icontains=kw)
-                | Q(data_source_user__full_name__icontains=kw)
-                | Q(data_source_user__email__icontains=kw)
-                | Q(data_source_user__phone__icontains=kw)
-            )
+        # 字段过滤映射
+        filter_map = {
+            "username": "data_source_user__username__icontains",
+            "full_name": "data_source_user__full_name__icontains",
+            "email": "data_source_user__email__icontains",
+            "phone": "data_source_user__phone__icontains",
+            "status": "status",
+            "created_at_start": "created_at__gte",
+            "created_at_end": "created_at__lte",
+            "account_expired_at_start": "account_expired_at__gte",
+            "account_expired_at_end": "account_expired_at__lte",
+        }
+        # Note: 字段筛选值不支持零值
+        lookup_filters = {expr: value for field, expr in filter_map.items() if (value := params.get(field))}
+        if lookup_filters:
+            queryset = queryset.filter(**lookup_filters)
 
         # 指定具体的部门的情况
         if params["department_id"]:

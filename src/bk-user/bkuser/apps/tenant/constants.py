@@ -59,7 +59,7 @@ class NotificationScene(StrStructuredEnum):
 
 DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
     "enabled": True,
-    "validity_period": 365,
+    "validity_period": -1,
     "remind_before_expire": [7],
     "enabled_notification_methods": [NotificationMethod.EMAIL],
     "notification_templates": [
