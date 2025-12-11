@@ -182,8 +182,6 @@ const userInfo = computed(() => {
     headerNav.value = baseNav;
   } else if (role.value === 'tenant_manager') {
     headerNav.value = baseNav;
-  } else if (role.value === 'natural_user') {
-    router.push({ name: 'personalCenter' });
   }
   return userStore.user;
 });

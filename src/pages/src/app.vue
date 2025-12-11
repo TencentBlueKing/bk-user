@@ -2,7 +2,7 @@
 import { Message } from 'bkui-vue';
 import en from 'bkui-vue/dist/locale/en.esm';
 import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
-import { computed, ref, watch  } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import BkUserDisplayName from '@blueking/bk-user-display-name';
@@ -91,22 +91,34 @@ watch(() => route.name, (val) => {
           user.admin = managerData?.data;
         }
       }
-      // 如果不是普通用户，添加管理员路由
-      if (data.role !== 'natural_user') {
+      if (data.role === 'natural_user') {
+        // 普通用户直接跳转到个人中心
+        router.replace({ name: 'personalCenter' }).finally(() => {
+          isLoading.value = false;
+        });
+      } else {
+        // 如果不是普通用户，添加管理员路由
         const managerRoutes = routes.filter(route => route.meta?.manager === true);
         managerRoutes.forEach(route => {
           router.addRoute(route);
         });
-        // 如果当前页面是404，重新导航
-        if (route.name === 'notFound') {
-          router.replace(route.fullPath);
-        }
+        // 等待路由添加完成后再结束 loading
+        nextTick(() => {
+          // 使用 router.resolve 检查当前路径是否能匹配到路由
+          const resolved = router.resolve(route.fullPath);
+          // 如果之前是 404，现在能匹配到了，就重新导航
+          if (route.name === 'notFound' && resolved.name !== 'notFound') {
+            router.replace(route.fullPath).finally(() => {
+              isLoading.value = false;
+            });
+          } else {
+            isLoading.value = false;
+          }
+        });
       }
     })
     .catch(() => {
       Message(t('获取用户信息失败，请检查后再试'));
-    })
-    .finally(() => {
       isLoading.value = false;
     });
 });
