@@ -103,16 +103,16 @@ class TenantUserListInputSLZ(serializers.Serializer):
     account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
     account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 校验部门
+    def validate_department_id(self, deparment_id: int) -> int:
         if (
-            attrs.get("department_id")
-            and not TenantDepartment.objects.filter(
-                tenant_id=self.context["tenant_id"], id=attrs["department_id"]
-            ).exists()
+            deparment_id
+            and not TenantDepartment.objects.filter(tenant_id=self.context["tenant_id"], id=deparment_id).exists()
         ):
             raise ValidationError(_("部门不存在"))
 
+        return deparment_id
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验创建时间范围
         created_at_start = attrs.get("created_at_start")
         created_at_end = attrs.get("created_at_end")
