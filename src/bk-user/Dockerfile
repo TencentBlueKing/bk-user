@@ -6,17 +6,13 @@ WORKDIR /
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
-FROM python:3.11.13-slim-bullseye
+FROM mirrors.tencent.com/blueking/python:3.11.14-ts4
 USER root
-
-RUN rm /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian bullseye main" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian-security bullseye-security main" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian bullseye-updates main" >> /etc/apt/sources.list
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
-RUN apt-get update && apt-get install -y default-libmysqlclient-dev build-essential pkg-config gettext
+RUN dnf install -y mysql-devel gettext && \
+    dnf groupinstall -y "Development Tools"
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
