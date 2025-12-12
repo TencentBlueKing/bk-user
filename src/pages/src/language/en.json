@@ -717,5 +717,8 @@
   "图片格式不符合要求，请重新上传": "The image format does not meet the requirements, please upload again",
   "刷新页面": "Refresh the page",
   "返回首页": "Return to Home",
-  "页面不存在": "Page not found"
+  "页面不存在": "Page not found",
+  "搜索{0}": "Search for {0}",
+  "搜索{0}关键字": "Search for keywords {0}",
+  "搜索{0}等关键字": "Search for {0} Waiting for keywords"
 }
