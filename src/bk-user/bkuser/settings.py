@@ -189,7 +189,7 @@ MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
 MODELTRANSLATION_AUTO_POPULATE = True
 
 # SITE
-SITE_URL = "/"
+SITE_URL = env.str("SITE_URL", default="/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
