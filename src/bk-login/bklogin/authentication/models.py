@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -25,6 +25,8 @@ class BkToken(TimestampedModel):
     """
 
     token = models.CharField("登录票据", max_length=255, unique=True, db_index=True)
+    # 用户标识
+    user_id = models.CharField("用户ID", max_length=255, db_index=True, default="")
     # 是否已经退出登录
     is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
     # 无操作过期时间戳

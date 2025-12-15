@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -215,6 +215,28 @@ class TestSyncDataSourceUser:
         )
         assert DataSourceUserLeaderRelation.objects.filter(data_source=full_local_data_source).count() == (
             user_leader_relation_cnt_before_sync + 1
+        )
+
+    def test_duplicate_usernames_warning(
+        self,
+        data_source_sync_task_ctx,
+        full_local_data_source,
+        raw_users,
+    ):
+        assert data_source_sync_task_ctx.logger.has_warning is False
+
+        self._sync_data_source_users(
+            data_source_sync_task_ctx,
+            full_local_data_source,
+            raw_users,
+            overwrite=False,
+            incremental=True,
+        )
+        assert data_source_sync_task_ctx.logger.has_warning is True
+        assert (
+            "in non-overwrite mode, skip update 11 users: "
+            "zhangsan, lisi, wangwu, zhaoliu, liuqi, maiba, yangjiu, lushi, linshiyi, baishier, freedom"
+            in data_source_sync_task_ctx.logger.logs
         )
 
     def test_update_without_incremental_and_overwrite(

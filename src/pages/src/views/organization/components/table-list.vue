@@ -19,15 +19,19 @@
                 v-model="recursive"
                 @change="reloadList"
             />
-            <bk-input
-                class="header-right"
-                v-model="keyword"
-                :placeholder="$t('输入用户名、姓名、邮箱、手机号码搜索')"
-                type="search"
-                clearable
-                @enter="handleEnter"
-                @clear="handleClear"
-            />
+            <bk-searchSelect
+              class="header-right"
+              v-model="keyword"
+              :data="searchSelectOptions"
+              :placeholder="
+                createPlaceholder({
+                  type: 'searchSelect',
+                  labels: ['用户名', '姓名', '账号状态', '邮箱', '手机号'],
+                })
+              "
+              unique-select
+            >
+            </bk-searchSelect>
         </div>
         <bk-table
             :pagination-height="paginationHeight"
@@ -98,7 +102,7 @@
       >
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option pt-[5px] pb-[5px]">
-            <p class="text-[#313238]">{{ item.username }}({{ item.full_name }})</p>
+            <DisplayName :user-id="item.id" class="text-[#313238]" />
             <p class="text-[#979BA5] mt-[6px]">
                 <bk-overflow-title
                   :style="{display: 'inline-block'}"
@@ -266,15 +270,18 @@
     passwordRule
   } from '@/http/organizationFiles';
   import useAppStore from '@/store/app';
-import { useTableMaxHeight } from '@/hooks';
+  import { useTableMaxHeight } from '@/hooks';
+  import DisplayName from '@/components/display-name.vue';
+  import { useSearchPlaceholder } from '@/hooks/useSearchPlaceholder';
 
+  const { createPlaceholder } = useSearchPlaceholder();
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
   const editLeaveBefore = inject('editLeaveBefore');
   const editDetailsShow = ref(false);
   const dropdownRefs = ref({});
-  const keyword = ref('');
+  const keyword = ref([]);
   const selectedValue = ref([]);
   const isDetailSlider = ref(false);
   const moveTips = ref('');
@@ -304,6 +311,50 @@ import { useTableMaxHeight } from '@/hooks';
   const chooseDepartments = ref([]);
   const passwordTips = ref([]);
   const isPassword = ref(false);
+  const searchSelectOptions = [
+    {
+      name: t('用户名'),
+      id: 'username',
+    },
+    {
+      name: t('姓名'),
+      id: 'full_name',
+    },
+    {
+      name: t('账号状态'),
+      id: 'status',
+      children: [
+        {
+          name: t('正常'),
+          id: 'enabled',
+        },
+        {
+          name: t('停用'),
+          id: 'disabled',
+        },
+        {
+          name: t('冻结'),
+          id: 'expired',
+        },
+      ],
+    },
+    {
+      name: t('邮箱'),
+      id: 'email',
+    },
+    {
+      name: t('手机号'),
+      id: 'phone',
+    },
+  ];
+
+  const searchSelectFilters = computed(() => {
+    const result: Record<string, string> = {};
+    for (const item of keyword.value) {
+      result[item.id] = item.values[0].id;
+    }
+    return result;
+  });
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'local';
@@ -565,7 +616,7 @@ import { useTableMaxHeight } from '@/hooks';
     return isCollaborativeUsers.value ? columns : columnsRender.value;
   })
   const getUserListFun = async (word) => {
-    const res = await getUsersList({tenant_id: appStore.currentTenant.id, keyword: word});
+    const res = await getUsersList({tenant_id: appStore.currentTenant.id});
     getUserList.value = res.data;
   }
   /** 点击拉取已有用户按钮 */
@@ -665,23 +716,24 @@ import { useTableMaxHeight } from '@/hooks';
   const initTenantsUserList = async () => {
     isDataEmpty.value = false;
     isEmptySearch.value = false;
-    const { id, isTenant, tenantId } = appStore.currentOrg;
+    const { id, isTenant } = appStore.currentOrg;
+    const tenantId = appStore.currentOrg.tenantId || appStore.currentOrg.tenant_id;
     try {
         tableData.value = [];
         selectList.value = [];
         isLoading.value = true;
         isDataError.value = false;
         const params = {
+          ...searchSelectFilters.value,
           page: pagination.current,
           page_size: pagination.limit,
-          keyword: keyword.value,
           department_id: isTenant ?  0 : appStore.currentOrg.id,
           recursive: !recursive.value
         };
         const res = await getTenantsUserList(isTenant ? id : tenantId, params);
         if (res.data?.count === 0) {
-          isDataEmpty.value = keyword.value === '';
-          isEmptySearch.value = keyword.value !== '';
+          isDataEmpty.value = keyword.value.length === 0;
+          isEmptySearch.value = keyword.value.length !== 0;
         }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
@@ -732,13 +784,9 @@ import { useTableMaxHeight } from '@/hooks';
     fastInputDialogShow.value = false;
     handleClear();
   };
-  const handleEnter = () => {
-    pagination.current = 1;
-    initTenantsUserList();
-  };
 
   const handleClear = () => {
-    keyword.value = '';
+    keyword.value = [];
     reloadList();
   };
   // 勾选数据行
@@ -820,6 +868,11 @@ const curTableMaxHeight = computed(() => {
   if (pagination.count < pagination.limit) return '100%';
   return dynamicTableHeight.value;
 });
+
+watch(keyword, (val) => {
+  pagination.current = 1;
+  initTenantsUserList();
+}, { deep: true });
 
 defineExpose({
   importDialogHandle

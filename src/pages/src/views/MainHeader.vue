@@ -24,10 +24,10 @@
           v-is-multiple-tenant
           class="tenant-style">
           <div class="logo">
-            <img v-if="userData.logo" :src="userData.logo" alt="">
-            <span v-else>{{logoConvert(userData?.name) }}</span>
+            <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
+            <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
+          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
           <i
             v-if="role === 'super_manager'"
             class="user-icon icon-shezhi"
@@ -101,7 +101,7 @@
           >
             <div
               :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <span class="help-info-name">{{ userInfo.display_name }}</span>
+              <DisplayName :user-id="userInfo.username" class="help-info-name" />
               <DownShape class="help-info-icon" />
             </div>
             <template #content>
@@ -145,12 +145,15 @@ import logo from '../../static/images/logo.png';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
+import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import { locale, t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
+import useAppStore from '@/store/app';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
 
+const appStore = useAppStore();
 const state = reactive({
   logoutDropdown: false,
   helpDropdown: false,
@@ -179,8 +182,6 @@ const userInfo = computed(() => {
     headerNav.value = baseNav;
   } else if (role.value === 'tenant_manager') {
     headerNav.value = baseNav;
-  } else if (role.value === 'natural_user') {
-    router.push({ name: 'personalCenter' });
   }
   return userStore.user;
 });
@@ -213,10 +214,10 @@ const toTenant = () => {
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
-const userData = ref({});
+
 const initTenantInfo = async () => {
   const res = await getTenantInfo();
-  userData.value = res.data;
+  appStore.currentTenant = res.data;
 };
 onMounted(() => {
   if (role.value && role.value !== 'natural_user') {

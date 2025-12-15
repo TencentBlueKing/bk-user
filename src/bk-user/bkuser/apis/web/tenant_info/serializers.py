@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -60,6 +60,7 @@ class TenantUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantBuiltinManagerRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名")
     enable_login = serializers.BooleanField(help_text="是否启用账密登录")
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -101,7 +101,7 @@ class LoginView(View):
         if idp and get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
             # 直接重定向到第三方登录
             response = HttpResponseRedirect(
-                redirect_to=f"{settings.SITE_URL}tenants/{idp.owner_tenant_id}/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
+                redirect_to=f"{settings.SITE_URL}auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
             )
 
         # [兼容 2.x] 注销当前登录态

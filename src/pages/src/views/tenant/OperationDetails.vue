@@ -28,19 +28,13 @@
               />
             </bk-form-item>
           </div>
-          <bk-upload
+          <UploadImg
+            v-bk-tooltips="{ content: t('支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+            v-model:value="formData.logo"
             class="mt-[26px]"
-            theme="picture"
-            with-credentials
-            :multiple="false"
-            :files="files"
-            :handle-res-code="handleRes"
-            :url="formData.logo"
-            :custom-request="customRequest"
-            :size="2"
-            @delete="handleDelete"
-            @error="handleError"
-            v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+            @success="handleChange"
+            @delete="handleChange"
+            :is-show-tip="false"
           />
         </div>
       </Row>
@@ -101,17 +95,16 @@
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
+import UploadImg from '@/components/upload-img.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
-import { getBase64 } from '@/utils';
 
 const props = defineProps({
   tenantsData: {
@@ -169,34 +162,6 @@ const files = computed(() => {
   }
   return [];
 });
-
-const handleRes = (response: any) => {
-  if (response.id) {
-    return true;
-  }
-  return false;
-};
-
-const customRequest = (event) => {
-  getBase64(event.file).then((res) => {
-    formData.logo = res;
-  })
-    .catch((e) => {
-      console.warn(e);
-    });
-  handleChange();
-};
-
-const handleDelete = () => {
-  formData.logo = '';
-  handleChange();
-};
-
-const handleError = (file) => {
-  if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
-  }
-};
 
 // 校验表单
 async function handleSubmit() {

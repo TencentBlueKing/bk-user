@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -69,7 +69,7 @@ class OptionalTenantUserListOutputSLZ(serializers.Serializer):
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID", required=False)
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -93,7 +93,15 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
     department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    username = serializers.CharField(help_text="用户名", required=False)
+    full_name = serializers.CharField(help_text="用户姓名", required=False)
+    email = serializers.CharField(help_text="用户邮箱", required=False)
+    phone = serializers.CharField(help_text="用户手机号", required=False)
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices(), required=False)
+    created_at_start = serializers.DateTimeField(help_text="创建时间开始", required=False)
+    created_at_end = serializers.DateTimeField(help_text="创建时间结束", required=False)
+    account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
+    account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
 
     def validate_department_id(self, department_id: int) -> int:
         if (
@@ -103,6 +111,21 @@ class TenantUserListInputSLZ(serializers.Serializer):
             raise ValidationError(_("部门不存在"))
 
         return department_id
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 校验创建时间范围
+        created_at_start = attrs.get("created_at_start")
+        created_at_end = attrs.get("created_at_end")
+        if created_at_start and created_at_end and created_at_start > created_at_end:
+            raise ValidationError(_("创建时间的开始时间不能大于结束时间"))
+
+        # 校验账号过期时间范围
+        account_expired_at_start = attrs.get("account_expired_at_start")
+        account_expired_at_end = attrs.get("account_expired_at_end")
+        if account_expired_at_start and account_expired_at_end and account_expired_at_start > account_expired_at_end:
+            raise ValidationError(_("账户过期时间的开始时间不能大于结束时间"))
+
+        return attrs
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):

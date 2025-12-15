@@ -2,13 +2,13 @@
   <bk-exception
     class="exception-wrap-item"
     type="404"
-    title="页面不存在"
+    :title="$t('页面不存在')"
   >
     <bk-button theme="primary" @click="handleRefresh">
-      刷新页面
+      {{ $t('刷新页面') }}
     </bk-button>
     <bk-button theme="primary" @click="backHome">
-      返回首页
+      {{ $t('返回首页') }}
     </bk-button>
   </bk-exception>
 </template>

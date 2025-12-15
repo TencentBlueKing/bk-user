@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -24,7 +24,9 @@ from urllib.parse import urlparse
 import environ
 import pymysql
 import urllib3
+from django.db.backends.mysql.features import DatabaseFeatures
 from django.utils.encoding import force_bytes
+from django.utils.functional import cached_property
 
 pymysql.install_as_MySQLdb()
 
@@ -36,11 +38,25 @@ environ.Env.read_env()
 # no more useless warning
 urllib3.disable_warnings()
 
+
+# 定义一个补丁来兼容 MySQL 5.7
+class PatchFeatures:
+    @cached_property
+    def minimum_database_version(self):
+        if self.connection.mysql_is_mariadb:  # type: ignore[attr-defined]
+            return 10, 4
+        return 5, 7
+
+
+# 将补丁应用到 DatabaseFeatures 中
+DatabaseFeatures.minimum_database_version = PatchFeatures.minimum_database_version
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", False)
+DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -101,11 +117,11 @@ WSGI_APPLICATION = "bklogin.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME", "bk-login"),
-        "USER": env.str("MYSQL_USER", "root"),
-        "PASSWORD": env.str("MYSQL_PASSWORD", ""),
-        "HOST": env.str("MYSQL_HOST", "localhost"),
-        "PORT": env.int("MYSQL_PORT", 3306),
+        "NAME": env.str("MYSQL_NAME", default="bk-login"),
+        "USER": env.str("MYSQL_USER", default="root"),
+        "PASSWORD": env.str("MYSQL_PASSWORD", default=""),
+        "HOST": env.str("MYSQL_HOST", default="localhost"),
+        "PORT": env.int("MYSQL_PORT", default=3306),
         "TEST": {
             "CHARSET": "utf8mb4",
         },
@@ -113,11 +129,11 @@ DATABASES = {
 }
 
 # Database tls
-MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", False)
-MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", "")
-MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", "")
-MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", "")
-MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", True)
+MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", default=False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", default="")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", default="")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", default="")
+MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", default=True)
 if MYSQL_TLS_ENABLED:
     default_ssl_options = {
         "ca": MYSQL_TLS_CERT_CA_FILE,
@@ -153,27 +169,27 @@ WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
 # STATIC_URL 也可以是 CDN 地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
-# 登录服务的AppCode/AppSecret
+# 登录服务的 AppCode/AppSecret
 BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
 # [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
-BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
+BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", default="")
 
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 # 详情查看：https://cryptography.io/en/latest/fernet/
 BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
 # 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
-BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", default="CLASSIC")
 ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
 # 蓝鲸统一的基础域和对外 SCHEME
-BK_DOMAIN = env.str("BK_DOMAIN", "")
+BK_DOMAIN = env.str("BK_DOMAIN", default="")
 BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
 # 统一登录的外部访问地址，不包括 http(s) 协议
-BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", "")
+BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", default="")
 BK_LOGIN_URL = f"{BK_DOMAIN_SCHEME}://{BK_LOGIN_ADDR}{SITE_URL}"
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
 # 蓝鲸公共的 Cookie 的 Domain(比如 bk_token 和 blueking_language)
@@ -225,8 +241,18 @@ BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
 # 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
-# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期（Note: 调整为）
+# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
+# 无操作失效时间更新间隔（秒），距离上次更新超过该间隔时才更新，减少数据库写操作
+# 默认值为 10 分钟，即距离上次更新超过 10 分钟时才更新
+# 设置为 0 表示每次校验都更新（不推荐，会影响性能）
+# 设置为大于 0 的值表示自定义更新间隔
+BK_TOKEN_INACTIVE_UPDATE_INTERVAL = env.int("BK_TOKEN_INACTIVE_UPDATE_INTERVAL", default=10 * 60)
+# 允许的最大登录终端数量，默认 0 表示不限制
+# - 0: 不限制，允许无限多个终端同时登录
+# - 1: 单端登录，同一时间只能有一个有效 token
+# - N: 最多允许 N 个终端同时登录
+BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)
 
 # 用户管理相关信息
 BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")
@@ -358,7 +384,7 @@ LOGGING = build_logging_config(LOG_LEVEL, logging_to_console, logging_directory,
 # ------------------------------------------ Healthz 配置 ------------------------------------------
 
 # 调用 Healthz API 需要的 Token
-HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", default="")
 # 服务健康探针配置
 HEALTHZ_PROBES = env.list(
     "HEALTHZ_PROBES",
@@ -370,25 +396,25 @@ HEALTHZ_PROBES = env.list(
 # ------------------------------------------ Metric 配置 ------------------------------------------
 
 # 调用 Metric API 需要的 Token
-METRIC_TOKEN = env.str("METRIC_TOKEN", "")
+METRIC_TOKEN = env.str("METRIC_TOKEN", default="")
 
 # ------------------------------------------ Tracing 配置 ------------------------------------------
 
 # Sentry DSN 配置
-SENTRY_DSN = env.str("SENTRY_DSN", "")
+SENTRY_DSN = env.str("SENTRY_DSN", default="")
 
 # 是否开启 OTEL 数据上报，默认不启用
-ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
+ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", default=False)
 # 上报数据服务名称，一般使用默认值即可
-OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-login")
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", default="bk-login")
 # sdk 采样规则（always_on / always_off ...）
-OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
+OTEL_SAMPLER = env.str("OTEL_SAMPLER", default="always_on")
 # OTEL 上报地址（grpc）
-OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", "")
+OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", default="")
 # OTEL 上报到监控平台的数据 Token，可通过监控平台上新建应用获得
-OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", "")
+OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", default="")
 # 是否记录 DB 相关 tracing
-OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
+OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", default=False)
 
 if ENABLE_OTEL_TRACE or SENTRY_DSN:
     INSTALLED_APPS += ("bklogin.monitoring.tracing",)
@@ -396,11 +422,11 @@ if ENABLE_OTEL_TRACE or SENTRY_DSN:
 # ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
 
 # 通知中心的功能可通过配置开启
-ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", default=False)
 if ENABLE_BK_NOTICE:
     INSTALLED_APPS += ("bk_notice_sdk",)
     # 对接通知中心的环境，默认为生产环境
-    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", default="prod")
     BK_NOTICE = {
         "STAGE": BK_NOTICE_ENV,
         "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
@@ -413,4 +439,7 @@ if ENABLE_BK_NOTICE:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
-ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", default=False)
+
+# 是否允许浏览器保存密码自动填充功能
+ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE = env.str("ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE", default=True)

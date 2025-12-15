@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -34,7 +34,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 4
-        assert all(record["creator"] == f"{bk_user.username}({bk_user.username})" for record in resp.data["results"])
+        assert all(record["creator"] == bk_user.username for record in resp.data["results"])
 
     def test_audit_record_list_filter_by_operation(self, api_client, audit_records):
         resp = api_client.get(reverse("audit.list"), data={"operation": "create_data_source"})
@@ -89,7 +89,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["operation"] == "create_data_source"
 
     def test_audit_record_list_filter_by_creator_and_object_type(self, api_client, bk_user, audit_records):
@@ -98,7 +98,7 @@ class TestAuditRecordListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 4
         assert all(
-            record["creator"] == f"{bk_user.username}({bk_user.username})" and record["object_type"] == "data_source"
+            record["creator"] == bk_user.username and record["object_type"] == "data_source"
             for record in resp.data["results"]
         )
 
@@ -107,7 +107,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
     def test_audit_record_list_filter_by_operation_and_object_name(self, api_client, audit_records):
@@ -128,7 +128,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["operation"] == "create_data_source"
 
@@ -140,7 +140,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
@@ -152,7 +152,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["operation"] == "create_data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"
 
@@ -183,7 +183,7 @@ class TestAuditRecordListApi:
 
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1
-        assert resp.data["results"][0]["creator"] == f"{bk_user.username}({bk_user.username})"
+        assert resp.data["results"][0]["creator"] == bk_user.username
         assert resp.data["results"][0]["object_type"] == "data_source"
         assert resp.data["results"][0]["operation"] == "create_data_source"
         assert resp.data["results"][0]["object_name"] == "DataSource1"

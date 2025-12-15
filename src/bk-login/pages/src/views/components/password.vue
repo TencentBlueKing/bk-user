@@ -7,6 +7,7 @@
         class="login-input"
         v-model="formData.username"
         :placeholder="isAdmin ? $t('请输入管理员账号') : $t('请输入用户名')"
+        :autocomplete="enableBrowserPasswordAutocomplete ? 'on' : 'off'"
       >
       </bk-input>
     </bk-form-item>
@@ -17,6 +18,7 @@
         class="login-input"
         v-model="formData.password"
         type="password"
+        :autocomplete="enableBrowserPasswordAutocomplete ? 'on' : 'off'"
         :placeholder="$t('请输入密码')"
         @enter="handleLogin">
       </bk-input>
@@ -45,6 +47,8 @@ import useAppStore from '@/store/app';
 import { t } from '@/language/index';
 
 const appStore = useAppStore();
+
+const enableBrowserPasswordAutocomplete = computed(() => window.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE !== 'False');
 
 const props = defineProps({
   idpId: {

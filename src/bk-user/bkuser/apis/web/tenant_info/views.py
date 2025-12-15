@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -109,9 +109,12 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         data_source, user = self.get_builtin_data_source_and_user()
         idp = Idp.objects.get(data_source_id=data_source.id)
 
+        tenant_user = TenantUser.objects.get(data_source_user=user)
+
         return Response(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
+                    "id": tenant_user.id,
                     "username": user.username,
                     "enable_login": idp.status == IdpStatus.ENABLED,
                 }

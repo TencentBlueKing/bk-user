@@ -17,19 +17,7 @@
               </bk-form-item>
             </div>
             <bk-form-item :label="$t('租户logo')">
-              <bk-upload
-                theme="picture"
-                with-credentials
-                :multiple="false"
-                :files="files"
-                :handle-res-code="handleRes"
-                :url="formData.logo"
-                :custom-request="customRequest"
-                :size="2"
-                @delete="handleDelete"
-                @error="handleError"
-                :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
-              />
+              <UploadImg v-model:value="formData.logo" />
             </bk-form-item>
           </div>
           <bk-form-item :label="$t('用户数量')" required>
@@ -98,13 +86,15 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
+import UploadImg from '@/components/upload-img.vue';
 import UserDisplayNameConfig from '@/components/user-display-name-config/userDisplayNameConfig.vue';
 import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
-import { getBase64 } from '@/utils';
+import useAppStore from '@/store/app';
 
+const appStore = useAppStore();
 const validate = useValidate();
 const fieldData = useFieldData();
 const store = useMainViewStore();
@@ -130,7 +120,7 @@ const displayNameExpressionView = computed(() => {
     }
   }
   return str;
-})
+});
 
 /** 预览用户展示名list */
 const displayNameExpressionPreviewList = ref<{ display_name: string }[]>([]);
@@ -272,44 +262,6 @@ watch(formData, () => {
   isDisabled.value = originalData  === JSON.stringify(formData.value);
 }, { deep: true });
 
-// 上传头像
-const files = computed(() => {
-  const img = [];
-  if (formData.value.logo !== '') {
-    img.push({
-      url: formData.value.logo,
-    });
-    return img;
-  }
-  return [];
-});
-
-const handleRes = (response: any) => {
-  if (response.id) {
-    return true;
-  }
-  return false;
-};
-
-const customRequest = (event) => {
-  getBase64(event.file).then((res) => {
-    formData.value.logo = res;
-  })
-    .catch((e) => {
-      console.warn(e);
-    });
-};
-
-const handleDelete = () => {
-  formData.value.logo = '';
-};
-
-const handleError = (file) => {
-  if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
-  }
-};
-
 const saveEdit = async () => {
   try {
     const result = await formRef.value.validate().catch(() => false);
@@ -319,6 +271,8 @@ const saveEdit = async () => {
       PutTenantInfo(params),
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
+    appStore.updateCurrentTenantLogo(formData.value.logo);
+    appStore.updateCurrentTenantName(formData.value.name);
     isEdit.value = false;
     Message({ theme: 'success', message: t('保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效') });
     initTenantInfo();

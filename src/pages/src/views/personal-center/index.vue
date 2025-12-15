@@ -18,28 +18,23 @@
       <div class="personal-center-main" v-bkloading="{ loading: infoLoading }">
         <header>
           <div class="header-left">
-            <bk-upload
+            <UploadImg
+              v-bk-tooltips="{ content: t('支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+              v-model:value="currentUserInfo.logo"
               :ext-cls="currentUserInfo.logo ? 'show-logo' : 'normal-logo'"
-              theme="picture"
-              with-credentials
-              :multiple="false"
-              :handle-res-code="handleRes"
-              :url="currentUserInfo.logo"
-              :custom-request="customRequest"
-              :size="2"
-              @error="handleError"
-              v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+              :is-show-tip="false"
+              :after-upload="customRequest"
             >
               <template #trigger>
                 <div v-if="currentUserInfo.logo" class="logo-box">
                   <img :src="currentUserInfo.logo" />
                   <div class="logo-hover">
-                    <i class="user-icon icon-edit" @click="customRequest" />
+                    <i class="user-icon icon-edit" />
                   </div>
                 </div>
                 <i v-else class="user-icon icon-yonghu" />
               </template>
-            </bk-upload>
+            </UploadImg>
             <div>
               <div class="user-info">
                 <span class="name">{{ currentTenantInfo.username }}</span>
@@ -412,7 +407,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { UploadRequestOptions } from 'bkui-vue/lib/upload/upload.type';
+import { cloneDeep } from 'lodash';
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import AsideList from './AsideList.vue';
@@ -424,6 +419,7 @@ import WeChatBind from './social-media-account/wechat/WeChatBind.vue';
 import ChangePassword from '@/components/ChangePassword.vue';
 import InfoCard from '@/components/InfoCard.vue';
 import phoneInput from '@/components/phoneInput.vue';
+import UploadImg from '@/components/upload-img.vue';
 import { ExtrasCustomFields, useCustomFields, useValidate } from '@/hooks';
 import {
   getCurrentNaturalUser,
@@ -441,7 +437,7 @@ import {
 import { CurrentNaturalUserData, PersonalCenterUsersData, WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
+import { customFieldsMap, formatConvert, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
 
 const userStore = useUser();
 const validate = useValidate();
@@ -758,13 +754,6 @@ const changeCountryCode = (code: string) => {
   currentUserInfo.value.custom_phone_country_code = code;
 };
 
-const handleRes = (response: any) => {
-  if (response.id) {
-    return true;
-  }
-  return false;
-};
-
 const showEmailVerify = ref(false);
 const showPhoneVerify = ref(false);
 
@@ -814,23 +803,11 @@ const curPhone = computed<string>(() => {
   return result === '--' ? '' : result;
 });
 
-const customRequest = (event: UploadRequestOptions) => {
-  getBase64(event.file).then((res) => {
-    currentUserInfo.value.logo = res as string;
-    patchTenantUsersLogo({
-      id: currentUserInfo.value.id,
-      logo: currentUserInfo.value.logo,
-    });
-  })
-    .catch((e) => {
-      console.warn(e);
-    });
-};
-
-const handleError = (file: File) => {
-  if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
-  }
+const customRequest = (url: string) => {
+  patchTenantUsersLogo({
+    id: currentUserInfo.value.id,
+    logo: url,
+  });
 };
 
 // 是否是编辑状态
@@ -880,7 +857,7 @@ const getCurrentUser = async (id: string) => {
     canChangePassword.value = featureRes.data.can_change_password;
     emailUpdateRestriction.value = featureRes.data.email_update_restriction as emailEditable;
     phoneUpdateRestriction.value = featureRes.data.phone_update_restriction as phoneEditable;
-    extrasList.value = [...currentUserInfo.value.extras];
+    extrasList.value =  cloneDeep(currentUserInfo.value.extras);
     // 初始化时读取custom data
     customEmail.value = userRes.data.custom_email;
     customPhone.value = userRes.data.custom_phone;
