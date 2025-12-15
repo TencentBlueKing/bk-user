@@ -23,7 +23,11 @@ from .compatibility import views as compatibility_views
 urlpatterns = [
     # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
-    path("api/v3/open/bk-tokens/verify/", views.TokenVerifyApi.as_view(), name="v3_open.bk_token.verify"),
+    path(
+        "api/v3/open/bk-tokens/verify/",
+        views.TokenVerifyApi.as_view(allow_builtin_manager=True),
+        name="v3_open.bk_token.verify",
+    ),
     path(
         "api/v3/open/bk-tokens/userinfo/",
         views.TokenUserInfoRetrieveApi.as_view(),
