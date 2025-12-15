@@ -74,3 +74,10 @@ grant_permissions:
       - "list_department"
       - "list_department_relation"
       - "list_department_user_relation"
+  - bk_app_code: "bk_ci"
+    grant_dimension: "resource"
+    resource_names:
+      - "retrieve_user"
+      - "list_user"
+      - "list_user_department"
+      - "batch_lookup_department"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -44,7 +44,7 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     target_tenant_name = serializers.SerializerMethodField(help_text="目标租户名称")
-    creator = serializers.SerializerMethodField(help_text="创建人")
+    creator = serializers.CharField(help_text="创建人")
     created_at = serializers.DateTimeField(help_text="创建时间")
     source_status = serializers.ChoiceField(
         help_text="策略状态（分享方）",
@@ -59,10 +59,6 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_target_tenant_name(self, obj: CollaborationStrategy) -> str:
         return self.context["tenant_name_map"][obj.target_tenant_id]
-
-    @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_creator(self, obj: CollaborationStrategy) -> str:
-        return self.context["user_display_name_map"][obj.creator]
 
 
 class CollaborationToStrategyCreateInputSLZ(serializers.Serializer):

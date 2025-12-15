@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -76,7 +76,19 @@ class DataSourceUserSyncer:
 
         waiting_create_user_codes = raw_user_codes - user_codes
         waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
-        waiting_update_user_codes = user_codes & raw_user_codes if self.overwrite else set()
+        # 若是覆盖模式，则更新存在用户的数据，否则无需更新，但需日志里记录便于提示
+        waiting_update_user_codes = user_codes & raw_user_codes
+        if not self.overwrite:
+            # 提示未覆盖更新的用户
+            usernames = DataSourceUser.objects.filter(
+                data_source=self.data_source,
+                code__in=waiting_update_user_codes,
+            ).values_list("username", flat=True)
+            self.ctx.logger.warning(
+                f"in non-overwrite mode, skip update {len(waiting_update_user_codes)} users: {', '.join(usernames)}"
+            )
+            # 不覆盖，则无需更新已存在用户
+            waiting_update_user_codes = set()
 
         waiting_delete_users = self._get_waiting_delete_users(waiting_delete_user_codes)
         waiting_update_users = self._get_waiting_update_users(self.raw_users, waiting_update_user_codes)

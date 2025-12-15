@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -53,7 +53,6 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserCustomField,
 )
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
@@ -72,11 +71,7 @@ class CollaborationToStrategyListCreateApi(CurrentUserTenantMixin, generics.List
         return CollaborationStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        tenant_user_ids = self.get_queryset().values_list("creator", flat=True)
         return {
-            "user_display_name_map": TenantUserDisplayNameHandler.get_tenant_user_display_name_map_by_ids(
-                tenant_user_ids
-            ),
             "tenant_name_map": {t.id: t.name for t in Tenant.objects.all()},
         }
 

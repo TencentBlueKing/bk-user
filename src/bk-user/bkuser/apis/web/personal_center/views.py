@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -18,6 +18,7 @@
 import logging
 from typing import Dict, List
 
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
@@ -613,6 +614,9 @@ class TenantUserWeixinInfoRetrieveDestroyApi(generics.RetrieveDestroyAPIView):
         responses={status.HTTP_200_OK: TenantUserWeixinInfoRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
+        if not settings.ENABLE_WEIXIN_NOTIFICATION:
+            return Response(TenantUserWeixinInfoRetrieveOutputSLZ({"wx_userid": "", "type": ""}).data)
+
         tenant_user = self.get_object()
         wx_type = WeixinConfigProvider(tenant_user.tenant_id).get_wx_type()
 

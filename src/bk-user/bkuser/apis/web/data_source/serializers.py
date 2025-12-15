@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -380,13 +380,10 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
-    operator = serializers.SerializerMethodField(help_text="操作人")
+    operator = serializers.CharField(help_text="操作人")
     start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.SerializerMethodField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
-
-    def get_operator(self, obj: DataSourceSyncTask) -> str:
-        return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
     # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:

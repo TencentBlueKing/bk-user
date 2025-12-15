@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -26,7 +26,9 @@ import environ
 import pymysql
 import urllib3
 from celery.schedules import crontab
+from django.db.backends.mysql.features import DatabaseFeatures
 from django.utils.encoding import force_bytes
+from django.utils.functional import cached_property
 
 pymysql.install_as_MySQLdb()
 
@@ -37,6 +39,19 @@ environ.Env.read_env()
 
 # no more useless warning
 urllib3.disable_warnings()
+
+
+# 定义一个补丁来兼容 MySQL 5.7
+class PatchFeatures:
+    @cached_property
+    def minimum_database_version(self):
+        if self.connection.mysql_is_mariadb:  # type: ignore[attr-defined]
+            return 10, 4
+        return 5, 7
+
+
+# 将补丁应用到 DatabaseFeatures 中
+DatabaseFeatures.minimum_database_version = PatchFeatures.minimum_database_version
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -174,7 +189,7 @@ MODELTRANSLATION_LANGUAGES = ("zh-cn", "en-us")
 MODELTRANSLATION_AUTO_POPULATE = True
 
 # SITE
-SITE_URL = "/"
+SITE_URL = env.str("SITE_URL", default="/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
@@ -266,6 +281,7 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
 BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-user")
+BK_USER_WEB_APIGW_STAGE = env.str("BK_USER_WEB_APIGW_STAGE", default="prod")
 # bk-user-web 网关跨域插件配置 allow_origins 和 allow_origins_by_regex
 # Note: allow_origins 和 allow_origins_by_regex 必须二选一，不能同时填写，否则将导致网关注册失败
 # 例如：BK_APIGW_CORS_ALLOW_ORIGINS=http://demo.example.com,https://demo.example.com
@@ -764,6 +780,8 @@ ENABLE_CREATE_TENANT = ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_CREATE_TENA
 HAS_BK_CMSI_APIGW = env.bool("HAS_BK_CMSI_APIGW", default=False)
 # bk-cmsi 网关部署环境
 BK_CMSI_APIGW_STAGE = env.str("BK_CMSI_APIGW_STAGE", "prod")
+# 是否启用微信消息推送功能
+ENABLE_WEIXIN_NOTIFICATION = env.bool("ENABLE_WEIXIN_NOTIFICATION", default=True)
 # 是否启用协同租户功能
 ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=False)
 # 内置租户管理员 username

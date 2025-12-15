@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -60,7 +60,7 @@ def one_line_error(error: ValidationError):
 def _handle_exception(request, exc) -> APIError:
     """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
-        # Q: 为什么需要f("")
+        # Q: 为什么需要 f("")
         # A: 如果直接 set_data , 那么 set_data 是影响 UNAUTHENTICATED 这个"全局变量"的，而 format 是返回 clone 后的对象
         return error_codes.UNAUTHENTICATED.f("").set_data(
             {
@@ -85,7 +85,7 @@ def _handle_exception(request, exc) -> APIError:
         return error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
 
     if isinstance(exc, Throttled):
-        # 处理限流异常，返回429状态码
+        # 处理限流异常，返回 429 状态码
         return error_codes.TOO_FREQUENTLY.f(exc.detail)
 
     if isinstance(exc, APIError):
@@ -122,8 +122,8 @@ def custom_exception_handler(exc, context):
     request = context["request"]
     error = _handle_exception(request, exc)
 
-    # 根据蓝鲸新版HTTP API 协议， 处理响应数据
-    #  开发者关注的，能自助排查, 快速定位问题
+    # 根据蓝鲸新版 HTTP API 协议，处理响应数据
+    #  开发者关注的，能自助排查，快速定位问题
     detail = {"code": error.code, "message": ""}
     if error.detail and isinstance(error.detail, dict):
         detail.update(error.detail)
@@ -142,9 +142,9 @@ def custom_exception_handler(exc, context):
 
 class ExcludePutAPIViewMixin:
     """
-    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
-    但是大部分时候都不是两个都需要，该类是为了排除Put
-    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），
+    Update 操作同时包括 put/patch，但是大部分时候都不是两个都需要，该类是为了排除 Put
+    Note: 由于类继承顺序，所以必须在 UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView 之前
     """
 
     @swagger_auto_schema(auto_schema=None)
@@ -154,9 +154,9 @@ class ExcludePutAPIViewMixin:
 
 class ExcludePatchAPIViewMixin:
     """
-    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
-    但是大部分时候都不是两个都需要，该类是为了排除Patch
-    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），
+    Update 操作同时包括 put/patch，但是大部分时候都不是两个都需要，该类是为了排除 Patch
+    Note: 由于类继承顺序，所以必须在 UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView 之前
     """
 
     @swagger_auto_schema(auto_schema=None)
@@ -169,7 +169,7 @@ class VueTemplateView(TemplateView):
 
     @xframe_options_exempt
     def get(self, request, *args, **kwargs):
-        # 尝试获取模板，找不到模板，则404
+        # 尝试获取模板，找不到模板，则 404
         try:
             get_template(self.template_name)
         except TemplateDoesNotExist:
@@ -186,9 +186,10 @@ class VueTemplateView(TemplateView):
                 # BK USER
                 "BK_USER_URL": settings.BK_USER_URL.rstrip("/"),
                 "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
+                "SITE_URL": settings.SITE_URL.rstrip("/"),
                 # 去除末尾的 /, 前端约定
                 "BK_STATIC_URL": settings.STATIC_URL.rstrip("/"),
-                # 去除开头的 . document.domain需要
+                # 去除开头的 . document.domain 需要
                 "SESSION_COOKIE_DOMAIN": settings.SESSION_COOKIE_DOMAIN.lstrip("."),
                 # CSRF TOKEN COOKIE NAME
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
@@ -211,8 +212,10 @@ class VueTemplateView(TemplateView):
                 "ENABLE_CREATE_TENANT": settings.ENABLE_CREATE_TENANT,
                 # 是否启用协同租户功能
                 "ENABLE_COLLABORATION_TENANT": settings.ENABLE_COLLABORATION_TENANT,
-                # 前端服务 API 网关（bk-user-web）正式环境（prod) URL
-                "BK_USER_WEB_APIGW_URL": urljoin(settings.BK_API_URL_TMPL.format(api_name="bk-user-web"), "/prod"),
+                # 前端服务 API 网关（bk-user-web）URL
+                "BK_USER_WEB_APIGW_URL": urljoin(
+                    settings.BK_API_URL_TMPL.format(api_name="bk-user-web"), settings.BK_USER_WEB_APIGW_STAGE
+                ),
             }
 
         except Exception:  # pylint: disable=broad-except

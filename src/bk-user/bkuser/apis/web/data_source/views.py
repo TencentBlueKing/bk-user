@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -71,7 +71,6 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
@@ -594,15 +593,8 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         cur_tenant_id = self.get_current_tenant_id()
-        data_sources = DataSource.objects.filter(owner_tenant_id=cur_tenant_id)
-        tenant_user_ids = DataSourceSyncTask.objects.filter(
-            data_source__in=data_sources,
-        ).values_list("operator", flat=True)
         tenant_sync_tasks = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
         return {
-            "user_display_name_map": TenantUserDisplayNameHandler.get_tenant_user_display_name_map_by_ids(
-                tenant_user_ids
-            ),
             "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_tasks},
         }
 

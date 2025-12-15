@@ -10,7 +10,8 @@ dependencies = [
     "django==4.2.23",
     "djangorestframework==3.16.0",
     "celery==5.5.3",
-    "django-celery-beat==2.8.1",
+    # Note: 不可以升级到 2.8.1 版本，存在 mysql 5.7 兼容性问题，虽然官方 master 分支已修复，但未出新版本
+    "django-celery-beat==2.8.0",
     "django-celery-results==2.6.0",
     "pymysql==1.1.1",
     "requests==2.32.5",

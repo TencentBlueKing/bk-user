@@ -65,7 +65,7 @@
             <template #icon>
               <i class="user-icon icon-yonghu" />
             </template>
-            {{ `${item.username}（${item.full_name}）` }}
+            <DisplayName :user-id="item.id" />
           </bk-tag>
           <i
             class="user-icon icon-add-2"
@@ -115,7 +115,11 @@
         :rules="rules">
         <bk-form-item :label="$t('密码')" property="password" required>
           <div class="flex justify-between">
-            <passwordInput v-model="resetPasswordConfig.password" @change="changePassword" @input="changePassword" />
+            <passwordInput
+              v-model="resetPasswordConfig.password"
+              clearable
+              @change="changePassword"
+              @input="changePassword" />
             <bk-button
               outline
               theme="primary"
@@ -134,6 +138,7 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import DisplayName from '@/components/display-name.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import MemberSelector from '@/components/MemberSelector.vue';

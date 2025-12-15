@@ -2,56 +2,26 @@
 import { Message } from 'bkui-vue';
 import en from 'bkui-vue/dist/locale/en.esm';
 import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
-import { computed, ref, watch  } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, nextTick, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import BkUserDisplayName from '@blueking/bk-user-display-name';
 import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
 
+import { IUser } from './types/store';
 import HeaderBox from './views/MainHeader.vue';
 
-import { currentUser } from '@/http';
+import { currentUser, getBuiltinManager } from '@/http';
 import { locale as i18nLocal, t } from '@/language/index';
+import { routes } from '@/router/routes';
 import { platformConfig, useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
 import ResetPassword from '@/views/reset-password/newPassword.vue';
 
 const route = useRoute();
+const router = useRouter();
 
 const showName = ref(null);
-// 判断是否是重置密码的路由
-watch(() => route.name, (val) => {
-  const filterRoutes = [
-    'password',
-    'resetPassword',
-    'bindResult',
-  ];
-  if (filterRoutes.includes(val as string)) {
-    isLoading.value = false;
-    return;
-  }
-
-  // 先检查store中是否已有用户信息
-  if (user.user.username) {
-    isLoading.value = false;
-    return;
-  }
-
-  currentUser()
-    .then((res) => {
-      user.setUser(res.data);
-      BkUserDisplayName.configure({
-        tenantId: res.data.tenant_id,
-        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
-      });
-    })
-    .catch(() => {
-      Message(t('获取用户信息失败，请检查后再试'));
-    })
-    .finally(() => {
-      isLoading.value = false;
-    });
-});
 
 // 加载完用户数据才会展示页面
 const isLoading = ref(true);
@@ -86,6 +56,72 @@ const getConfigData = async () => {
   platformConfigData.update(config);
 };
 getConfigData();
+
+
+// 判断是否是重置密码的路由
+watch(() => route.name, (val) => {
+  const filterRoutes = [
+    'password',
+    'resetPassword',
+    'bindResult',
+  ];
+  if (filterRoutes.includes(val as string)) {
+    isLoading.value = false;
+    return;
+  }
+
+  // 先检查store中是否已有用户信息
+  if (user.user.username) {
+    isLoading.value = false;
+    return;
+  }
+
+  currentUser()
+    .then(async (res) => {
+      const { data } = res as { data: IUser };
+      user.setUser(data);
+      BkUserDisplayName.configure({
+        tenantId: data.tenant_id,
+        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
+      });
+      // 角色为租户管理员或超级管理员时
+      if (data.role === 'super_manager' || data.role === 'tenant_manager') {
+        const managerData = await getBuiltinManager();
+        if (managerData?.data) {
+          user.admin = managerData?.data;
+        }
+      }
+      if (data.role === 'natural_user') {
+        // 普通用户直接跳转到个人中心
+        router.replace({ name: 'personalCenter' }).finally(() => {
+          isLoading.value = false;
+        });
+      } else {
+        // 如果不是普通用户，添加管理员路由
+        const managerRoutes = routes.filter(route => route.meta?.manager === true);
+        managerRoutes.forEach(route => {
+          router.addRoute(route);
+        });
+        // 等待路由添加完成后再结束 loading
+        nextTick(() => {
+          // 使用 router.resolve 检查当前路径是否能匹配到路由
+          const resolved = router.resolve(route.fullPath);
+          // 如果之前是 404，现在能匹配到了，就重新导航
+          if (route.name === 'notFound' && resolved.name !== 'notFound') {
+            router.replace(route.fullPath).finally(() => {
+              isLoading.value = false;
+            });
+          } else {
+            isLoading.value = false;
+          }
+        });
+      }
+    })
+    .catch(() => {
+      Message(t('获取用户信息失败，请检查后再试'));
+      isLoading.value = false;
+    });
+});
 </script>
 
 <template>

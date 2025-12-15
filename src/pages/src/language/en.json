@@ -588,7 +588,7 @@
   "其他租户(通过跨租户协同分享)": "Other tenants (through cross-tenant co-sharing)",
   "停用期间，该租户下的用户将无法登录系统": "During the shutdown, users under the tenant cannot log in to the system",
   "启用后，该租户下的用户可以重新登录系统": "After this function is enabled, users under the vstore can log in to the system again",
-  "支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB": "The value can be jpg or png, with a size no larger than 1024px x 1024px, and no larger than 256KB",
+  "支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB": "Supports JPG, JPEG, PNG, with a size not exceeding 1024px * 1024px and not exceeding 256KB",
   "复制密码": "Copy password",
   "不允许查看上次保存的密码": "Not allowed to view the last saved password",
   "创建租户成功": "Vstore is created successfully. Procedure",
@@ -711,5 +711,14 @@
   "s 后自动关闭页面": "seconds to auto close page",
   "直接关闭": "Close Directly",
   "绑定失败": "Binding failed",
-  "请稍后重试，若无法解决，请联系管理员处理": "Please try again later. If the issue cannot be resolved, please contact the administrator for assistance"
+  "请稍后重试，若无法解决，请联系管理员处理": "Please try again later. If the issue cannot be resolved, please contact the administrator for assistance",
+  "录入成功": "Entry successful",
+  "图片尺寸超出限制，请重新上传": "The image size exceeds the limit, please upload again",
+  "图片格式不符合要求，请重新上传": "The image format does not meet the requirements, please upload again",
+  "刷新页面": "Refresh the page",
+  "返回首页": "Return to Home",
+  "页面不存在": "Page not found",
+  "搜索{0}": "Search for {0}",
+  "搜索{0}关键字": "Search for keywords {0}",
+  "搜索{0}等关键字": "Search for {0} Waiting for keywords"
 }
