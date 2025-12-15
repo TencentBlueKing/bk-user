@@ -142,7 +142,7 @@ def custom_exception_handler(exc, context):
 
 class ExcludePutAPIViewMixin:
     """
-    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），
+    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView）
     Update 操作同时包括 put/patch，但是大部分时候都不是两个都需要，该类是为了排除 Put
     Note: 由于类继承顺序，所以必须在 UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView 之前
     """
@@ -154,7 +154,7 @@ class ExcludePutAPIViewMixin:
 
 class ExcludePatchAPIViewMixin:
     """
-    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），
+    对于 DRF 便捷 APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView）
     Update 操作同时包括 put/patch，但是大部分时候都不是两个都需要，该类是为了排除 Patch
     Note: 由于类继承顺序，所以必须在 UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView 之前
     """
