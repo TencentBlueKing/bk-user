@@ -24,7 +24,8 @@ urlpatterns = [
     # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
     # FIXME(mufen):为了让内置管理员能够访问 display_info 接口，当前允许内置管理员通过 bk_token 校验
-    #   这是一个临时的解决方案，后续应考虑更精细的权限控制，或为内置管理员提供单独的 API 接口
+    #   后续应考虑更精细的权限控制，或为内置管理员提供单独的 API 接口
+    #   注意：open-web 接口的搜索和查询接口默认排除 BUILTIN_MANAGEMENT 数据源，内置管理员无法搜索到自己
     path(
         "api/v3/open/bk-tokens/verify/",
         views.TokenVerifyApi.as_view(allow_builtin_manager=True),
