@@ -20,7 +20,7 @@
           <span class="title-desc">{{ appName}}</span>
         </div>
         <div
-          v-if="!isTenant && role !== 'natural_user'"
+          v-if="!isTenant && role !== ROLE.NATURAL_USER"
           v-is-multiple-tenant
           class="tenant-style">
           <div class="logo">
@@ -29,7 +29,7 @@
           </div>
           <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
           <i
-            v-if="role === 'super_manager'"
+            v-if="role === ROLE.SUPER_MANAGER"
             class="user-icon icon-shezhi"
             @click="toTenant"
           />
@@ -145,6 +145,7 @@ import logo from '../../static/images/logo.png';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
 import { logout } from '@/common/auth';
+import { ROLE } from '@/common/constant';
 import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
 import { locale, t } from '@/language/index';
@@ -178,9 +179,9 @@ const userInfo = computed(() => {
   if (window.ENABLE_VIRTUAL_USER === 'False') {
     baseNav?.splice(1, 1);
   }
-  if (role.value === 'super_manager' && !isTenant.value) {
+  if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
     headerNav.value = baseNav;
-  } else if (role.value === 'tenant_manager') {
+  } else if (role.value === ROLE.TENANT_MANAGER) {
     headerNav.value = baseNav;
   }
   return userStore.user;
@@ -220,19 +221,19 @@ const initTenantInfo = async () => {
   appStore.currentTenant = res.data;
 };
 onMounted(() => {
-  if (role.value && role.value !== 'natural_user') {
+  if (role.value && role.value !== ROLE.NATURAL_USER) {
     initTenantInfo();
   }
 });
 
 const onGoBack = () => {
-  if (role.value === 'super_manager' && route.name !== 'tenant') {
+  if (role.value === ROLE.SUPER_MANAGER && route.name !== 'tenant') {
     if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
     router.push({ name: 'tenant' });
     headerNav.value = [];
-  } else if (role.value === 'tenant_manager' && route.name !== 'organization') {
+  } else if (role.value === ROLE.TENANT_MANAGER && route.name !== 'organization') {
     router.push({ name: 'organization' });
-  } else if (role.value === 'natural_user') return;
+  } else if (role.value === ROLE.NATURAL_USER) return;
 };
 
 // 产品文档

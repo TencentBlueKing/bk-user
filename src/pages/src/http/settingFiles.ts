@@ -1,4 +1,5 @@
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
   BuiltinManagerData,
   CollaborationSyncRecordsParams,
@@ -16,10 +17,6 @@ import type {
   TenantItem,
   TenantSettingFieldsData,
 } from './types/settingFiles';
-
-interface ResponseData<T> {
-  data: T
-}
 
 /**
  * 用户字段列表

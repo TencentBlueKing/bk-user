@@ -1,6 +1,7 @@
 import { AxiosRequestConfig } from 'axios';
 
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
   CurrentNaturalUserData,
   PatchUserEmailParams,
@@ -17,9 +18,6 @@ import type {
 } from './types/personalCenterFiles';
 interface Config extends AxiosRequestConfig {
   globalError?: boolean
-}
-interface ResponseData<T> {
-  data: T
 }
 /**
  *个人中心-关联账户列表
