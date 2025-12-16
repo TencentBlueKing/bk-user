@@ -23,6 +23,8 @@ from .compatibility import views as compatibility_views
 urlpatterns = [
     # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
+    # FIXME(mufen):为了让内置管理员能够访问 display_info 接口，当前允许内置管理员通过 bk_token 校验
+    #   这是一个临时的解决方案，后续应考虑更精细的权限控制，或为内置管理员提供单独的 API 接口
     path(
         "api/v3/open/bk-tokens/verify/",
         views.TokenVerifyApi.as_view(allow_builtin_manager=True),
