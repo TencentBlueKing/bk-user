@@ -8,7 +8,6 @@ export const routes: RouteRecordRaw[] = [
     name: 'tenant',
     component: () => import('@/views/tenant/index.vue'),
     meta: {
-      manager: true,
     },
   },
   {
@@ -16,7 +15,6 @@ export const routes: RouteRecordRaw[] = [
     name: 'organization',
     component: () => import('@/views/organization/index.vue'),
     meta: {
-      manager: true,
     },
   },
   {
@@ -24,7 +22,6 @@ export const routes: RouteRecordRaw[] = [
     name: 'virtual-account',
     component: () => import('@/views/virtual-account/index.vue'),
     meta: {
-      manager: true,
     },
   },
   {
@@ -32,7 +29,6 @@ export const routes: RouteRecordRaw[] = [
     name: 'operations-history',
     component: () => import('@/views/operations-history/index.vue'),
     meta: {
-      manager: true,
     },
   },
   {
@@ -43,7 +39,6 @@ export const routes: RouteRecordRaw[] = [
     },
     meta: {
       navName: t('设置'),
-      manager: true,
     },
     component: () => import('@/views/setting/index.vue'),
     children: [
@@ -144,48 +139,35 @@ export const routes: RouteRecordRaw[] = [
     path: '/personal-center',
     name: 'personalCenter',
     component: () => import('@/views/personal-center/index.vue'),
-    meta: {
-      manager: false,
-    },
   },
   {
     path: '/bind-result',
     name: 'bindResult',
     component: () => import('@/views/personal-center/BindResult.vue'),
-    meta: {
-      manager: false,
-    },
   },
   {
     path: '/password/:tenantId?',
     name: 'password',
     component: () => import('@/views/reset-password/index.vue'),
-    meta: {
-      manager: false,
-    },
   },
   {
     path: '/reset-password/:token?',
     name: 'resetPassword',
     component: () => import('@/views/reset-password/newPassword.vue'),
-    meta: {
-      manager: false,
-    },
   },
   {
     path: '/recycle',
     name: 'recycle',
     component: () => import('@/views/recycle/index.vue'),
-    meta: {
-      manager: false,
-    },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'notFound',
     component: () => import('@/views/NotFound.vue'),
-    meta: {
-      manager: false,
-    },
   },
+];
+/** 无需登录可访问的路由 */
+export const noNeedLoginRouteNames = [
+  'password',
+  'resetPassword',
 ];

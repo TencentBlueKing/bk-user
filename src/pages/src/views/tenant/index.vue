@@ -297,7 +297,6 @@ import PhoneInput from '@/components/phoneInput.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
 import {
-  currentUser,
   deleteTenants,
   getTenantDetails,
   getTenants,
@@ -421,22 +420,6 @@ const handleCancelEdit = async () => {
     window.changeInput = false;
   }
 };
-
-onMounted(() => {
-  currentUser()
-    .then((res) => {
-      if (res.data.role === 'tenant_manager' ||
-        window.ENABLE_MULTI_TENANT_MODE === 'False'
-      ) {
-        router.push({ name: 'organization' });
-      } else if (res.data.role === 'super_manager') {
-        fetchTenantsList();
-      }
-    })
-    .catch(() => {
-      Message(t('获取用户信息失败，请检查后再试'));
-    });
-});
 
 // 新建租户状态 id
 const isCreated = ref(false);
@@ -731,6 +714,10 @@ const changeEmail = () => {
 const emailBlur = () => {
   emailValue.value && handleBlur();
 };
+
+onMounted(() => {
+  fetchTenantsList();
+});
 </script>
 
 <style lang="less">

@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import type { IUser } from 'types/store';
 
+import BkUserDisplayName from '@blueking/bk-user-display-name';
+
+import { ROLE } from '@/common/constant';
+import { currentUser, getBuiltinManager } from '@/http';
 import { BuiltinManagerData } from '@/http/types/settingFiles';
 
 export const useUser = defineStore('user', {
@@ -20,6 +24,27 @@ export const useUser = defineStore('user', {
     },
     setShowAlert(status: boolean) {
       this.showAlert = status;
+    },
+    /**
+     * 初始化用户信息
+     * DisplayName组件数据初始化
+     */
+    async initUserInfo() {
+      const res = await currentUser();
+      this.user = res.data;
+      const { role, tenant_id } = res.data;
+      BkUserDisplayName.configure({
+        tenantId: tenant_id,
+        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
+      });
+      // 角色为租户管理员或超级管理员时
+      if (role === ROLE.SUPER_MANAGER || role === ROLE.TENANT_MANAGER) {
+        this.initAdmin();
+      }
+    },
+    async initAdmin() {
+      const res = await getBuiltinManager();
+      this.admin = res?.data;
     },
   },
 });
