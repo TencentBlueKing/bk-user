@@ -11,8 +11,7 @@ USER root
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
-RUN dnf install -y mysql-devel gettext && \
-    dnf groupinstall -y "Development Tools"
+RUN dnf install -y mysql-devel gettext
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
