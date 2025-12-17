@@ -23,12 +23,9 @@ from .compatibility import views as compatibility_views
 urlpatterns = [
     # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
-    # FIXME(mufen):为了让内置管理员能够访问 display_info 接口，当前允许内置管理员通过 bk_token 校验
-    #   后续应考虑更精细的权限控制，或为内置管理员提供单独的 API 接口
-    #   注意：open-web 接口的搜索和查询接口默认排除 BUILTIN_MANAGEMENT 数据源，内置管理员无法搜索到自己
     path(
         "api/v3/open/bk-tokens/verify/",
-        views.TokenVerifyApi.as_view(allow_builtin_manager=True),
+        views.TokenVerifyApi.as_view(),
         name="v3_open.bk_token.verify",
     ),
     path(
@@ -38,7 +35,9 @@ urlpatterns = [
     ),
     # 提供给 apigw 的内部 API
     path(
-        "api/v3/apigw/bk-tokens/verify/", views.TokenVerifyApiByBearerAuth.as_view(), name="v3_apigw.bk_token.verify"
+        "api/v3/apigw/bk-tokens/verify/",
+        views.TokenVerifyApiByBearerAuth.as_view(allow_builtin_manager=True),
+        name="v3_apigw.bk_token.verify",
     ),
     # 提供给 bkuser 的内部 API
     path(
