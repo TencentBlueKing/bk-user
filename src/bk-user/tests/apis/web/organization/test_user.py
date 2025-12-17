@@ -611,10 +611,7 @@ class TestTenantUserRetrieveApi:
         assert resp.status_code == status.HTTP_200_OK
         assert "password_expired_at" in resp.data
         expired_at_str = resp.data["password_expired_at"]
-        # 不带时区的 expired_at
-        native_expired_at = datetime.datetime.strptime(expired_at_str, settings.REST_FRAMEWORK["DATETIME_FORMAT"])
-        # 带时区的 expired_at
-        expired_at = timezone.make_aware(native_expired_at)
+        expired_at = datetime.datetime.strptime(expired_at_str, settings.REST_FRAMEWORK["DATETIME_FORMAT"])
         # 预期时间
         expected_time = timezone.now() + datetime.timedelta(days=3)
 

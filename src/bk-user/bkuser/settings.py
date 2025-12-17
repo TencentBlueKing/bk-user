@@ -211,7 +211,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["bkuser.common.renderers.BkStandardApiJSONRenderer"],
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S %z",
 }
 # 单页最大返回条数
 MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", 500)
