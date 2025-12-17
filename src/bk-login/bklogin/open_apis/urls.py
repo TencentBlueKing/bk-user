@@ -23,7 +23,11 @@ from .compatibility import views as compatibility_views
 urlpatterns = [
     # Note: OpenAPI 统一接入了 APIGateway
     # 通用 OpenAPI
-    path("api/v3/open/bk-tokens/verify/", views.TokenVerifyApi.as_view(), name="v3_open.bk_token.verify"),
+    path(
+        "api/v3/open/bk-tokens/verify/",
+        views.TokenVerifyApi.as_view(),
+        name="v3_open.bk_token.verify",
+    ),
     path(
         "api/v3/open/bk-tokens/userinfo/",
         views.TokenUserInfoRetrieveApi.as_view(),
@@ -31,7 +35,9 @@ urlpatterns = [
     ),
     # 提供给 apigw 的内部 API
     path(
-        "api/v3/apigw/bk-tokens/verify/", views.TokenVerifyApiByBearerAuth.as_view(), name="v3_apigw.bk_token.verify"
+        "api/v3/apigw/bk-tokens/verify/",
+        views.TokenVerifyApiByBearerAuth.as_view(allow_builtin_manager=True),
+        name="v3_apigw.bk_token.verify",
     ),
     # 提供给 bkuser 的内部 API
     path(
