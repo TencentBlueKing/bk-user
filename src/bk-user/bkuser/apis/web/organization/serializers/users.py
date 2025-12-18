@@ -44,6 +44,7 @@ from bkuser.apps.tenant.models import (
     TenantUserCustomField,
     UserBuiltinField,
 )
+from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
@@ -237,9 +238,14 @@ class TenantUserCreateOutputSLZ(serializers.Serializer):
 class TenantUserDepartmentSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="租户部门 ID")
     name = serializers.CharField(help_text="租户部门名称", source="data_source_department.name")
+    organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
     class Meta:
         ref_name = "organization.TenantUserDepartmentSLZ"
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.data_source_department_id, obj.data_source_department.name)
 
 
 class TenantUserLeaderSLZ(serializers.Serializer):
@@ -300,8 +306,13 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         depts = TenantDepartment.objects.filter(
             tenant_id=obj.tenant_id, data_source_department_id__in=[rel.department_id for rel in relations]
         ).select_related("data_source_department")
-
-        return TenantUserDepartmentSLZ(depts, many=True).data
+        data_source_dept_ids = [dept.data_source_department_id for dept in depts]
+        context = {
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(
+                data_source_dept_ids, include_self=True
+            )
+        }
+        return TenantUserDepartmentSLZ(depts, many=True, context=context).data
 
     @swagger_serializer_method(serializer_or_field=TenantUserLeaderSLZ(many=True))
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
@@ -497,7 +508,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 注：raw_info 格式是以英文逗号 (,)、中文逗号 (，)、英文分号 (;) 或中文分号 (；)
             # 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, 女, StarCoreHunter, 狩猎/阅读
+            # 示例：kafka, 卡芙卡，kafka@starrail.com, 女，StarCoreHunter, 狩猎/阅读
             data: List[str] = [s.strip() for s in re.split(r"[,，;；]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
