@@ -537,10 +537,23 @@
         render: ({ row, column }) => {
           return <>
             <bk-popover
-              content={(row?.organization_paths || []).map(path => <div>{path}</div>)}
               disabled={row[column?.field]?.length === 0}
               render-type="auto"
-              theme="dark">
+              theme="dark"
+              v-slots={{
+                content: () => (
+                  <div
+                    v-bkloading={{
+                      loading: isOrgPathLoading.value && row?.organization_paths?.length !== 0,
+                      size: 'small',
+                      theme: 'primary',
+                    }}
+                    class={ 'min-w-[30px]' }
+                  >
+                    {(row?.organization_paths || []).map(path => <div>{path}</div>)}
+                  </div>
+                )
+              }}>
               <span onMouseenter={() => handleHoverOrg(row)}>{(row[column?.field] || []).join('、') || '--'}</span>
             </bk-popover>
           </>
@@ -702,14 +715,16 @@
   watch(() => appStore.currentOrg, (val) => {
     !!val && reloadList();
   });
-
+  
+  const isOrgPathLoading = ref(false);
   const handleHoverOrg = (row) => {
     if (!row?.organization_paths) {
-      const currentIndex = tableData.value.findIndex(item => item === row)
+      const currentIndex = tableData.value.findIndex(item => item === row);
+      isOrgPathLoading.value = true;
       getOrganizationPaths(row.id).then(res => {
         const organization_paths = res?.data?.organization_paths;  
         tableData.value[currentIndex].organization_paths  = organization_paths;
-      });
+      }).finally(() => isOrgPathLoading.value = false);
     }
   }
   
