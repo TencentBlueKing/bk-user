@@ -23,6 +23,7 @@ Query user's information
         "tenant_id": "default",
         "bk_username": "7idwx3b7nzk6xigs",
         "login_name": "zhangsan",
+        "full_name": "张三",
         "display_name": "zhangsan(张三)",
         "time_zone": "Asia/Shanghai",
         "language": "zh-cn",
@@ -38,7 +39,8 @@ Query user's information
 | tenant_id    | string | Tenant ID                                                                  |
 | bk_username  | string | Blueking user's unique identifier                                          |
 | login_name   | string | Unique ID of the user within the enterprise                                |
-| display_name | string | User's display_name                                                        |
+| full_name    | string | User's name                                                                |
+| display_name | string | User's display name                                                        |
 | time_zone    | string | Time Zone                                                                  |
 | language     | string | Language                                                                   |
 | status       | string | User's status, including the states of 'enabled', 'disabled' and 'expired' |

@@ -24,11 +24,13 @@ lookups=zhangsan,lisi&lookup_field=login_name
         {
             "bk_username": "7idwx3b7nzk6xigs",
             "login_name": "zhangsan",
+            "full_name": "张三",
             "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
             "login_name": "lisi",
+            "full_name": "李四",
             "display_name": "lisi(李四)"
         }
     ]
@@ -41,4 +43,5 @@ lookups=zhangsan,lisi&lookup_field=login_name
 |--------------|--------|---------------------------------------------|
 | bk_username  | string | Blueking user's unique identifier           |
 | login_name   | string | Unique ID of the user within the enterprise |
-| display_name | string | User's display_name                         |
+| full_name    | string | User's name                                 |
+| display_name | string | User's display name                         |
