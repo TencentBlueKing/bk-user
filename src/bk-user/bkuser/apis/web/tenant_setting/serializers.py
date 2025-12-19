@@ -259,7 +259,7 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
             and attrs["method"] == NotificationMethod.EMAIL
             and not re.fullmatch(EMAIL_REGEX, attrs["sender"])
         ):
-            raise ValidationError(_("发件人邮箱地址格式不正确"))
+            raise ValidationError(_("发件人应该为正确的邮箱格式"))
 
         return attrs
 
