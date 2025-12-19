@@ -27,6 +27,9 @@ TENANT_ID_REGEX = re.compile(r"^(?!.*--)[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
+EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
+
+
 class BuiltInTenantIDEnum(StrStructuredEnum):
     """内置租户 ID 枚举"""
 
@@ -67,7 +70,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRING,
             "title": "蓝鲸智云 - 账号即将到期提醒！",
-            "sender": "蓝鲸智云",
+            "sender": "",
             "content": (
                 "{{ username }}, 您好：\n "
                 + "您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
@@ -85,7 +88,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "method": NotificationMethod.EMAIL,
             "scene": NotificationScene.TENANT_USER_EXPIRED,
             "title": "蓝鲸智云 - 账号到期提醒！",
-            "sender": "蓝鲸智云",
+            "sender": "",
             "content": (
                 "{{ username }}，您好：\n "
                 + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501

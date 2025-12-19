@@ -284,3 +284,51 @@ class TestIdpStatusUpdateApi:
         assert api_client.put(url).data["status"] == IdpStatus.DISABLED
         # 再次切换，变成可用
         assert api_client.put(url).data["status"] == IdpStatus.ENABLED
+
+
+class TestLocalIdpCreateApi:
+    def test_create_with_valid_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        # 修改邮件发送模版的 sender 为合法邮箱
+        local_ds_plugin_cfg["password_initial"]["notification"]["templates"][0]["sender"] = "test@example.com"
+        local_ds_plugin_cfg["password_expire"]["notification"]["templates"][0]["sender"] = "test@example.com"
+
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_with_empty_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_with_invalid_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        local_ds_plugin_cfg["password_initial"]["notification"]["templates"][0]["sender"] = "not-an-email"
+
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "发件人邮箱地址格式不正确" in resp.data["message"]
