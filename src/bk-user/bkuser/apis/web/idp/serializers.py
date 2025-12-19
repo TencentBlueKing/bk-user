@@ -249,7 +249,7 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
                 and template.get("sender")
                 and not re.fullmatch(EMAIL_REGEX, template.get("sender"))
             ):
-                raise ValidationError(_("发件人邮箱地址格式不正确"))
+                raise ValidationError(_("发件人应该为正确的邮箱格式"))
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> LocalDataSourcePluginConfig:
         self._validate_email_sender(plugin_config)
