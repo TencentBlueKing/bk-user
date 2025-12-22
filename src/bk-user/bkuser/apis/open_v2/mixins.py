@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
+from functools import cached_property
 from typing import Dict, List, Tuple
 
 from django.db.models import Q
@@ -39,8 +39,12 @@ class DefaultTenantMixin:
     """默认租户 Mixin"""
 
     @cachedmethod(timeout=60 * 60)
-    def default_tenant(self) -> Tenant:
+    def _get_default_tenant(self) -> Tenant:
         return Tenant.objects.filter(is_default=True).first()
+
+    @cached_property
+    def default_tenant(self) -> Tenant:
+        return self._get_default_tenant()
 
     @cachedmethod(timeout=60 * 60)
     def get_real_data_source_ids(self) -> List[int]:
