@@ -571,6 +571,10 @@ class TestTenantUserRetrieveApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["username"] == "lushi"
         assert {dept["name"] for dept in resp.data["departments"]} == {"中心BA", "小组ABA"}
+        assert {dept["organization_path"] for dept in resp.data["departments"]} == {
+            "公司/部门A/中心AB/小组ABA",
+            "公司/部门B/中心BA",
+        }
         assert {ld["username"] for ld in resp.data["leaders"]} == {"wangwu", "maiba"}
 
         # 语言和时区字段应为默认值
