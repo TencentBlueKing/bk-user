@@ -330,4 +330,4 @@ class TestLocalIdpCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "is not a valid address" in resp.data["message"]
+        assert "认证源插件配置不合法" in resp.data["message"]
