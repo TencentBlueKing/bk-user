@@ -181,7 +181,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
 
         # 查询 Leader 对应的租户用户
         leaders = TenantUser.objects.filter(data_source_user_id__in=leader_ids).select_related("data_source_user")
-        # { "数据源 Leader ID": List[租户 Leader ] }， 协同场景下，会出现一个 data_source_user 可以对应多个租户用户
+        # { "数据源 Leader ID": List[租户 Leader ] }，协同场景下，会出现一个 data_source_user 可以对应多个租户用户
         tenant_leader_map = defaultdict(list)
         for i in leaders:
             tenant_leader_map[i.data_source_user_id].append(i)
@@ -236,7 +236,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
                     {
                         "id": tenant_dept.id,
                         "name": tenant_dept.data_source_department.name,
-                        # TODO: 协同支持指定范围后，是以 “伪根” 开始，并不是原始数据源的根，需要调整
+                        # TODO: 协同支持指定范围后，是以“伪根”开始，并不是原始数据源的根，需要调整
                         "full_name": "/".join(
                             [
                                 dept_id_name_map[i]
@@ -276,18 +276,11 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         return Response(user_infos)
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet[TenantUser]:
-        """根据参数过滤, 生成 TenantUser QuerySet"""
+        """根据参数过滤，生成 TenantUser QuerySet"""
         # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        queryset = (
-            TenantUser.objects.select_related("data_source_user", "data_source")
-            .filter(
-                Q(tenant=self.default_tenant),
-                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
-                Q(data_source__type=DataSourceTypeEnum.REAL)
-                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
-            )
-            .distinct()
+        queryset = TenantUser.objects.select_related("data_source_user").filter(
+            tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
         )
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
@@ -319,10 +312,10 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         :param lookup_values: 字段值列表
         :param is_exact: 是否精确匹配
 
-        :return: 生成的 Django Queryset Filter, None 值表示一定过滤不到， 空列表表示无需过滤
+        :return: 生成的 Django Queryset Filter, None 值表示一定过滤不到，空列表表示无需过滤
         """
         if lookup_field == "staff_status":
-            # 员工状态, 3.x 所有用户数据都是 IN 状态，无 OUT 状态
+            # 员工状态，3.x 所有用户数据都是 IN 状态，无 OUT 状态
             return None if "IN" not in lookup_values else []
 
         # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤
@@ -500,9 +493,7 @@ class ProfileRetrieveApi(
             .filter(
                 Q(**lookup_filter),
                 Q(tenant_id=self.default_tenant.id),
-                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
-                Q(data_source__type=DataSourceTypeEnum.REAL)
-                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+                Q(data_source_id__in=self.get_data_source_ids()),
             )
             .first()
         )
@@ -707,10 +698,7 @@ class ProfileLanguageUpdateApi(
         slz.is_valid(raise_exception=True)
 
         tenant_user = TenantUser.objects.filter(
-            Q(id=kwargs["username"]),
-            Q(tenant=self.default_tenant),
-            Q(data_source__type=DataSourceTypeEnum.REAL)
-            | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+            id=kwargs["username"], tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
         ).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")

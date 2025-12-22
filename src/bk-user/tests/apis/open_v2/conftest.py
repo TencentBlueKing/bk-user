@@ -21,12 +21,21 @@ from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationSt
 from bkuser.apps.tenant.models import CollaborationStrategy
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.core.cache import cache
 
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """在每个测试前清除缓存，避免缓存的方法返回值影响测试结果"""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture
