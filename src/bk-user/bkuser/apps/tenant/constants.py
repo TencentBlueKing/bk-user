@@ -27,9 +27,6 @@ TENANT_ID_REGEX = re.compile(r"^(?!.*--)[a-z][a-z0-9-]{1,30}[a-z0-9]$")
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
-EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
-
-
 class BuiltInTenantIDEnum(StrStructuredEnum):
     """内置租户 ID 枚举"""
 

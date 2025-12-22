@@ -15,9 +15,8 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import logging
-import re
 from collections import Counter
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
@@ -27,7 +26,6 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.tenant.constants import (
     DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS,
     DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
-    EMAIL_REGEX,
     NotificationMethod,
     NotificationScene,
     UserFieldDataType,
@@ -248,20 +246,9 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    sender = serializers.CharField(help_text="发送人", required=False, allow_blank=True, default="")
+    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True)
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
-
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果 sender 不为空且是邮件通知，校验 sender 是否为合法的邮箱地址
-        if (
-            attrs["sender"]
-            and attrs["method"] == NotificationMethod.EMAIL
-            and not re.fullmatch(EMAIL_REGEX, attrs["sender"])
-        ):
-            raise ValidationError(_("发件人应该为正确的邮箱格式"))
-
-        return attrs
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):

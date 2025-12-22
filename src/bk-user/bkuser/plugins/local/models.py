@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import re
 from typing import List, Optional
 
 from django.utils.translation import gettext_lazy as _
@@ -21,6 +22,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
+    EMAIL_REGEX,
     MAX_LOCK_TIME,
     MAX_NOT_CONTINUOUS_COUNT,
     MAX_PASSWORD_LENGTH,
@@ -104,6 +106,10 @@ class NotificationTemplate(BaseModel):
     def validate_attrs(self) -> "NotificationTemplate":
         if self.method == NotificationMethod.EMAIL and not self.title:
             raise ValueError(_("邮件通知模板需要提供标题"))
+
+        # 如果 sender 不为空且是邮件通知，则需要检查 sender 是否为邮箱地址
+        if self.sender and self.method == NotificationMethod.EMAIL and not re.fullmatch(EMAIL_REGEX, self.sender):
+            raise ValueError(_("发件人应该为正确的邮箱格式"))
 
         return self
 

@@ -27,8 +27,6 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.apps.notification.constants import NotificationMethod
-from bkuser.apps.tenant.constants import EMAIL_REGEX
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
@@ -224,36 +222,7 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
     def validate_name(self, name: str) -> str:
         return _validate_duplicate_idp_name(name, self.context["tenant_id"])
 
-    def _validate_email_sender(self, plugin_config: Dict[str, Any]) -> None:
-        # 检查密码初始化通知模版
-        password_initial = plugin_config.get("password_initial", {})
-        notification = password_initial.get("notification", {})
-        templates = notification.get("templates", [])
-
-        for template in templates:
-            if (
-                template.get("method") == NotificationMethod.EMAIL.value
-                and template.get("sender")
-                and not re.fullmatch(EMAIL_REGEX, template.get("sender"))
-            ):
-                raise ValidationError(_("发件人应该为正确的邮箱格式"))
-
-        # 检查密码过期通知模版
-        password_expire = plugin_config.get("password_expire", {})
-        notification = password_expire.get("notification", {})
-        templates = notification.get("templates", [])
-
-        for template in templates:
-            if (
-                template.get("method") == NotificationMethod.EMAIL.value
-                and template.get("sender")
-                and not re.fullmatch(EMAIL_REGEX, template.get("sender"))
-            ):
-                raise ValidationError(_("发件人应该为正确的邮箱格式"))
-
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> LocalDataSourcePluginConfig:
-        self._validate_email_sender(plugin_config)
-
         try:
             return LocalDataSourcePluginConfig(**plugin_config)
         except PDValidationError as e:
