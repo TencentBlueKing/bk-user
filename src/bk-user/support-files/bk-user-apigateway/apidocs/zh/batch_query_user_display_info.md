@@ -22,12 +22,10 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
-            "full_name": "张三",
             "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
-            "full_name": "李四",
             "display_name": "lisi(李四)"
         }
     ]
@@ -39,5 +37,4 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | 参数名称         | 参数类型   | 描述       |
 |--------------|--------|----------|
 | bk_username  | string | 蓝鲸用户唯一标识 |
-| full_name    | string | 用户姓名     |
 | display_name | string | 用户展示名    |

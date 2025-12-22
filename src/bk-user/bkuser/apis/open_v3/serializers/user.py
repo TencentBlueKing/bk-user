@@ -34,7 +34,6 @@ class TenantUserDisplayInfoListInputSLZ(serializers.Serializer):
 
 class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:

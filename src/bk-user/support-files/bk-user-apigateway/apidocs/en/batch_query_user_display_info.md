@@ -22,12 +22,10 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
-            "full_name": "张三",
             "display_name": "zhangsan(张三)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
-            "full_name": "张三",
             "display_name": "lisi(李四)"
         }
     ]
@@ -39,5 +37,4 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | Name         | Type   | Description                       |
 |--------------|--------|-----------------------------------|
 | bk_username  | string | Blueking user's unique identifier |
-| full_name    | string | User's name                       |
 | display_name | string | User's display name               |
