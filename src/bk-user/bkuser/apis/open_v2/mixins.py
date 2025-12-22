@@ -84,6 +84,7 @@ class DefaultTenantMixin:
             ).values_list("id", flat=True)
         )
 
+    @cachedmethod(timeout=60 * 60)
     def get_collaboration_field_mapping(self) -> Dict[Tuple[str, str], str]:
         """
         默认租户的所有协同租户字段映射
@@ -109,4 +110,4 @@ class DataSourceDomainMixin:
         }
 
     def get_domain(self, data_source_id: int, target_tenant_id: str) -> str:
-        return self.data_source_to_domain_map.get((data_source_id, target_tenant_id), "")
+        return self.data_source_to_domain_map().get((data_source_id, target_tenant_id), "")
