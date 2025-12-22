@@ -14,10 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, EmailStr, Field, TypeAdapter, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
@@ -34,8 +34,6 @@ from bkuser.plugins.local.constants import (
 )
 from bkuser.plugins.models import BasePluginConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
-
-email_adapter = TypeAdapter(EmailStr)
 
 
 class PasswordRuleConfig(BaseModel):
@@ -96,7 +94,7 @@ class NotificationTemplate(BaseModel):
     # 模板标题
     title: Optional[str] = None
     # 模板发送方
-    sender: str
+    sender: EmailStr | Literal[""] = ""
     # 模板内容（text）格式
     content: str
     # 模板内容（html）格式
@@ -104,16 +102,8 @@ class NotificationTemplate(BaseModel):
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "NotificationTemplate":
-        if self.method == NotificationMethod.EMAIL:
-            if not self.title:
-                raise ValueError(_("邮件通知模板需要提供标题"))
-
-            # 如果 sender 不为空且是邮件通知，则需要检查 sender 是否为邮箱地址
-            if self.sender:
-                try:
-                    email_adapter.validate_python(self.sender)
-                except ValidationError:
-                    raise ValueError(_("发件人应该为正确的邮箱格式"))
+        if self.method == NotificationMethod.EMAIL and not self.title:
+            raise ValueError(_("邮件通知模板需要提供标题"))
 
         return self
 

@@ -330,4 +330,4 @@ class TestLocalIdpCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "发件人应该为正确的邮箱格式" in resp.data["message"]
+        assert "is not a valid address" in resp.data["message"]
