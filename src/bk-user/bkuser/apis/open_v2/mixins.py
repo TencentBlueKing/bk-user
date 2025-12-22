@@ -16,9 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 
 from functools import cached_property
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
-from django.db.models import Q, QuerySet
+from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 
 from bkuser.apis.open_v2.authentications import ESBAuthentication
@@ -27,6 +27,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserIDGenerateConfig
+from bkuser.common.cache import cachedmethod
 
 
 class LegacyOpenApiCommonMixin:
@@ -42,17 +43,43 @@ class DefaultTenantMixin:
     def default_tenant(self) -> Tenant:
         return Tenant.objects.filter(is_default=True).first()
 
-    def get_real_user_data_sources(self) -> QuerySet[DataSource]:
+    @cachedmethod(timeout=60 * 60)
+    def get_real_data_source_ids(self) -> List[int]:
         """获取默认租户真实用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
         # 接受方确认过的数据源，就是认为是有数据的
-        collaboration_tenant_ids = (
+        collaboration_tenant_ids = list(
             CollaborationStrategy.objects.filter(target_tenant=self.default_tenant)
             .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
             .values_list("source_tenant_id", flat=True)
         )
-        return DataSource.objects.filter(
-            Q(owner_tenant_id=self.default_tenant.id) | Q(owner_tenant_id__in=collaboration_tenant_ids)
-        ).filter(type=DataSourceTypeEnum.REAL)
+        tenant_ids = [self.default_tenant.id] + collaboration_tenant_ids
+        return list(
+            DataSource.objects.filter(owner_tenant_id__in=tenant_ids, type=DataSourceTypeEnum.REAL).values_list(
+                "id", flat=True
+            )
+        )
+
+    @cachedmethod(timeout=60 * 60)
+    def get_data_source_ids(self) -> List[int]:
+        """获取默认租户所有用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
+        # 接受方确认过的数据源，就是认为是有数据的
+        collaboration_tenant_ids = list(
+            CollaborationStrategy.objects.filter(target_tenant=self.default_tenant)
+            .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
+            .values_list("source_tenant_id", flat=True)
+        )
+        return list(
+            DataSource.objects.filter(
+                # 本租户的虚拟和真实数据源
+                Q(
+                    owner_tenant_id=self.default_tenant.id,
+                    type__in=[DataSourceTypeEnum.VIRTUAL, DataSourceTypeEnum.REAL],
+                )
+                |
+                # 协同租户的真实数据源
+                Q(owner_tenant_id__in=collaboration_tenant_ids, type=DataSourceTypeEnum.REAL)
+            ).values_list("id", flat=True)
+        )
 
     def get_collaboration_field_mapping(self) -> Dict[Tuple[str, str], str]:
         """

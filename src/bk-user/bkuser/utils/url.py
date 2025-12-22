@@ -18,9 +18,9 @@
 
 def urljoin(host: str, path: str) -> str:
     """
-    拼接host, path生成url，核心是处理host, path有多余/的情况
+    拼接 host, path 生成 url，核心是处理 host, path有多余/的情况
     Q: 为什么不直接使用 urllib.parse.urljoin
-    A: urllib.parse.urljoin 会根据path是否带"/"前缀，对host的带部分path进行移除
+    A: urllib.parse.urljoin 会根据 path 是否带"/"前缀，对 host 的带部分 path 进行移除
        urllib.parse.urljoin("https://example.com/abc", "/efg/index.html") => "https://example.com/efg/index.html"
     """
     return "{}/{}".format(host.rstrip("/"), path.lstrip("/"))
