@@ -401,7 +401,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         # 目标租户为默认租户的所有数据源 domain 映射
         domain_to_data_source_map = {
             domain: ds_id
-            for (ds_id, tenant_id), domain in self.data_source_to_domain_map.items()
+            for (ds_id, tenant_id), domain in self.data_source_to_domain_map().items()
             if tenant_id == self.default_tenant.id
         }
 
