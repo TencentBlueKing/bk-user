@@ -101,7 +101,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "method": NotificationMethod.SMS,
             "scene": NotificationScene.TENANT_USER_EXPIRING,
             "title": None,
-            "sender": "蓝鲸智云",
+            "sender": "",
             "content": (
                 "{{ username }}，您好：\n "
                 + "您的蓝鲸智云平台账号将于 {{ valid_days }} 天后到期。"
@@ -119,7 +119,7 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "method": NotificationMethod.SMS,
             "scene": NotificationScene.TENANT_USER_EXPIRED,
             "title": None,
-            "sender": "蓝鲸智云",
+            "sender": "",
             "content": (
                 "{{ username }}您好：\n "
                 + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501

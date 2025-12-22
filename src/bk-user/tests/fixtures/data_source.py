@@ -70,14 +70,14 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                     {
                         "method": "sms",
                         "scene": "user_initialize",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的账户已经成功创建，请尽快修改密码",
                         "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "reset_password",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>点击以下链接以重置代码</p>",
                     },
@@ -109,14 +109,14 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                     {
                         "method": "sms",
                         "scene": "password_expiring",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的密码即将到期！",
                         "content_html": "<p>您的密码即将到期！</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "password_expired",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的密码已到期！",
                         "content_html": "<p>您的密码已到期！</p>",
                     },
