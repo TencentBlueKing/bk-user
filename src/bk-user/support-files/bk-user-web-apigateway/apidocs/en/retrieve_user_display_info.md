@@ -33,4 +33,4 @@ Query user's display information
 |--------------|--------|---------------------------------------------|
 | login_name   | string | Unique ID of the user within the enterprise |
 | full_name    | string | User's name                                 |
-| display_name | string | User's display_name                         |
+| display_name | string | User's display name                         |
