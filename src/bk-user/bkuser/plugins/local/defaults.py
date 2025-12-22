@@ -94,7 +94,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.USER_INITIALIZE,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
@@ -114,7 +114,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.RESET_PASSWORD,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}\n"
@@ -173,7 +173,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.PASSWORD_EXPIRING,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码将于 {{ valid_days }} 天后过期，为避免影响使用，请尽快登录平台修改密码。\n"  # noqa: E501
@@ -189,7 +189,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.PASSWORD_EXPIRED,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快联系管理员重置密码。\n"  # noqa: E501

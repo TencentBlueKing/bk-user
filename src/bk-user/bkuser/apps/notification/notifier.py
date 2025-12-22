@@ -105,7 +105,7 @@ class NotificationTmplsGetter:
                 NotificationTemplate(
                     method=NotificationMethod.SMS,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "您的蓝鲸智云验证码为：{{ verification_code }}\n"
