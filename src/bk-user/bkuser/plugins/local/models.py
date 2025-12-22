@@ -112,7 +112,7 @@ class NotificationTemplate(BaseModel):
             if self.sender:
                 try:
                     email_adapter.validate_python(self.sender)
-                except Exception:
+                except ValidationError:
                     raise ValueError(_("发件人应该为正确的邮箱格式"))
 
         return self
@@ -196,7 +196,7 @@ class LocalDataSourcePluginConfig(BasePluginConfig):
         try:
             rule = self.password_rule.to_rule()
         except ValidationError as e:
-            raise ValueError(_("密码生成规则不合法: {}").format(stringify_pydantic_error(e)))
+            raise ValueError(_("密码生成规则不合法：{}").format(stringify_pydantic_error(e)))
 
         if self.password_initial.generate_method == PasswordGenerateMethod.FIXED:
             # 如果初始密码生成模式为固定密码，则需要为固定密码预设值
