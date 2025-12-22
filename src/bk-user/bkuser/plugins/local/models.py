@@ -17,7 +17,7 @@
 from typing import List, Optional
 
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, Field, TypeAdapter, ValidationError, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
@@ -34,6 +34,8 @@ from bkuser.plugins.local.constants import (
 )
 from bkuser.plugins.models import BasePluginConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
+
+email_adapter = TypeAdapter(EmailStr)
 
 
 class PasswordRuleConfig(BaseModel):
@@ -109,7 +111,7 @@ class NotificationTemplate(BaseModel):
             # 如果 sender 不为空且是邮件通知，则需要检查 sender 是否为邮箱地址
             if self.sender:
                 try:
-                    EmailStr._validate(self.sender, None)  # type: ignore
+                    email_adapter.validate_python(self.sender)
                 except Exception:
                     raise ValueError(_("发件人应该为正确的邮箱格式"))
 
