@@ -29,7 +29,7 @@ dependencies = [
     "django-mptt==0.17.0",
     "redis==6.2.0",
     "django-redis==6.0.0",
-    "pydantic==2.11.7",
+    "pydantic[email]==2.11.7",
     "zxcvbn==4.5.0",
     "phonenumbers==9.0.9",
     "jsonref==1.1.0",

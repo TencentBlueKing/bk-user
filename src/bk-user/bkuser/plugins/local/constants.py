@@ -46,9 +46,6 @@ MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
 # 数据源用户名规则
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,30}[a-zA-Z0-9]$")
 
-# 邮箱规则
-EMAIL_REGEX = re.compile(r"^[\w.-]+@[\w.-]+\.[A-Za-z]{2,6}$")
-
 
 class PasswordGenerateMethod(StrStructuredEnum):
     """密码生成方式"""
