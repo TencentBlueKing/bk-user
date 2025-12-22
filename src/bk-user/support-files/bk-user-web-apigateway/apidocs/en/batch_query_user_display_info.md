@@ -43,4 +43,4 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | bk_username  | string | Blueking user's unique identifier           |
 | login_name   | string | Unique ID of the user within the enterprise |
 | full_name    | string | User's name                                 |
-| display_name | string | User's display_name                         |
+| display_name | string | User's display name                         |

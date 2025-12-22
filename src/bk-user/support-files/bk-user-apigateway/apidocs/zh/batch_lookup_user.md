@@ -24,12 +24,14 @@ lookups=zhangsan,lisi&lookup_field=login_name
         {
             "bk_username": "7idwx3b7nzk6xigs",
             "login_name": "zhangsan",
+            "full_name": "张三",
             "display_name": "zhangsan(张三)",
             "status": "enabled"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
             "login_name": "lisi",
+            "full_name": "李四",
             "display_name": "lisi(李四)",
             "status": "enabled"
         }
@@ -43,5 +45,6 @@ lookups=zhangsan,lisi&lookup_field=login_name
 |--------------|--------|-------------------------------------------------------------------------|
 | bk_username  | string | 蓝鲸用户唯一标识                                                                |
 | login_name   | string | 企业内用户唯一标识（登录名）                                                          |
+| full_name    | string | 用户姓名                                                                    |
 | display_name | string | 用户展示名                                                                   |
 | status       | string | 用户状态，其中 `enabled` 表示**启用**状态；`disabled` 表示**禁用**状态；`expired` 表示**过期**状态 |

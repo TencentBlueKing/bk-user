@@ -37,4 +37,4 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 | Name         | Type   | Description                       |
 |--------------|--------|-----------------------------------|
 | bk_username  | string | Blueking user's unique identifier |
-| display_name | string | User's display_name               |
+| display_name | string | User's display name               |

@@ -23,6 +23,7 @@
         "tenant_id": "default",
         "bk_username": "7idwx3b7nzk6xigs",
         "login_name": "zhangsan",
+        "full_name": "张三",
         "display_name": "zhangsan(张三)",
         "time_zone": "Asia/Shanghai",
         "language": "zh-cn",
@@ -38,6 +39,7 @@
 | tenant_id    | string | 租户 ID                                                                   |
 | bk_username  | string | 蓝鲸用户唯一标识                                                                |
 | login_name   | string | 企业内用户唯一标识                                                               |
+| full_name    | string | 用户姓名                                                                    |
 | display_name | string | 用户展示名                                                                   |
 | time_zone    | string | 时区                                                                      |
 | language     | string | 语言                                                                      |
