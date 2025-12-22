@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from functools import cached_property
 from typing import Dict, List, Tuple
 
 from django.db.models import Q
@@ -39,7 +38,7 @@ class LegacyOpenApiCommonMixin:
 class DefaultTenantMixin:
     """默认租户 Mixin"""
 
-    @cached_property
+    @cachedmethod(timeout=60 * 60)
     def default_tenant(self) -> Tenant:
         return Tenant.objects.filter(is_default=True).first()
 
@@ -99,7 +98,7 @@ class DefaultTenantMixin:
 class DataSourceDomainMixin:
     """数据源 Domain Mixin"""
 
-    @cached_property
+    @cachedmethod(timeout=60 * 60)
     def data_source_to_domain_map(self) -> Dict[Tuple[int, str], str]:
         return {
             (cfg.data_source_id, cfg.target_tenant.id): cfg.domain for cfg in TenantUserIDGenerateConfig.objects.all()
