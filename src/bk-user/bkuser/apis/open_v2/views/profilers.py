@@ -44,6 +44,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
+from bkuser.common.cache import CacheEnum, cachedmethod
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
@@ -262,14 +263,28 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
         no_page = params["no_page"]
+        page_size = (
+            request.query_params.get(self.pagination_class.page_size_query_param) or self.pagination_class.page_size
+        )
+        page = request.query_params.get(self.pagination_class.page_query_param) or 1
 
+        return self._get(params, no_page, page, page_size)
+
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
+    def _get(self, params: Dict[str, Any], no_page: bool, page: int, page_size: int):
+        """用户列表查询实现，支持缓存
+        Note: 缓存 key 需要包含分页参数，以防止不同分页数据混淆
+        Q: 为什么不使用 django 的 cache_page 装饰器？
+        A: cache_page 装饰器是默认使用 request 里的所有参数，
+           这样只有调用方传递了一个无关但每次都变化的参数就会导致缓存失效（比如 request_id）
+        """
         # 根据参数过滤
         tenant_users = self._filter_queryset(params)
         if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 根据 fields 构造对外的用户信息
-        user_infos = self.build_user_infos(tenant_users, params.get("fields"))
+        user_infos = self.build_user_infos(tenant_users, params.get("fields"))  # type: ignore
         if not no_page:
             return self.get_paginated_response(user_infos)
 

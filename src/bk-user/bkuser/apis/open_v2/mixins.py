@@ -26,7 +26,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserIDGenerateConfig
-from bkuser.common.cache import cachedmethod
+from bkuser.common.cache import CacheEnum, cachedmethod
 
 
 class LegacyOpenApiCommonMixin:
@@ -38,7 +38,7 @@ class LegacyOpenApiCommonMixin:
 class DefaultTenantMixin:
     """默认租户 Mixin"""
 
-    @cachedmethod(timeout=60 * 60)
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
     def _get_default_tenant(self) -> Tenant:
         return Tenant.objects.filter(is_default=True).first()
 
@@ -46,7 +46,7 @@ class DefaultTenantMixin:
     def default_tenant(self) -> Tenant:
         return self._get_default_tenant()
 
-    @cachedmethod(timeout=60 * 60)
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
     def get_real_data_source_ids(self) -> List[int]:
         """获取默认租户真实用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
         # 接受方确认过的数据源，就是认为是有数据的
@@ -62,7 +62,7 @@ class DefaultTenantMixin:
             )
         )
 
-    @cachedmethod(timeout=60 * 60)
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
     def get_data_source_ids(self) -> List[int]:
         """获取默认租户所有用户数据源（含自己的 + 协同过来的），兼容 V2 的 OpenAPI 专用"""
         # 接受方确认过的数据源，就是认为是有数据的
@@ -84,7 +84,7 @@ class DefaultTenantMixin:
             ).values_list("id", flat=True)
         )
 
-    @cachedmethod(timeout=60 * 60)
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
     def get_collaboration_field_mapping(self) -> Dict[Tuple[str, str], str]:
         """
         默认租户的所有协同租户字段映射
@@ -103,7 +103,7 @@ class DefaultTenantMixin:
 class DataSourceDomainMixin:
     """数据源 Domain Mixin"""
 
-    @cachedmethod(timeout=60 * 60)
+    @cachedmethod(cache_name=CacheEnum.REDIS, timeout=60 * 60)
     def data_source_to_domain_map(self) -> Dict[Tuple[int, str], str]:
         return {
             (cfg.data_source_id, cfg.target_tenant.id): cfg.domain for cfg in TenantUserIDGenerateConfig.objects.all()
