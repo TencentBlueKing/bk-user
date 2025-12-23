@@ -13,7 +13,7 @@ import './css/index.css';
 import '../static/bk_icon_font/style.css';
 import '../static/blueking-icon/style.css';
 // 全量引入 bkui-vue 样式
-import 'bkui-vue/dist/style.css';
+import 'bkui-vue/dist/style.variable.css';
 
 const leaveBoxInstance = InfoBox({
   isShow: false,

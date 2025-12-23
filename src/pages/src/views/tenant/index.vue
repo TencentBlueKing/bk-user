@@ -96,6 +96,7 @@
                 placement="bottom-start"
                 theme="light"
                 ext-cls="operate-popover"
+                hide-ignore-reference
                 :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>

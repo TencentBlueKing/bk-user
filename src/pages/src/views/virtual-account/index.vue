@@ -26,6 +26,7 @@
       :min-height="150"
       :data="tableData"
       :border="['outer']"
+      remote-pagination
       :pagination="pagination"
       :settings="settings"
       show-overflow-tooltip

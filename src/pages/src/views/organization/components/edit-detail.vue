@@ -64,8 +64,6 @@
             id-key="id"
             display-key="organization_path"
             :remote-method="searchDepartments"
-            :scroll-loading="scrollLoading"
-            @scroll-end="departmentsScrollEnd"
             @change="handleChange">
           </bk-select>
         </bk-form-item>
@@ -79,8 +77,6 @@
             collapse-tags
             id-key="id"
             :remote-method="searchLeaders"
-            :scroll-loading="scrollLoading"
-            @scroll-end="leadersScrollEnd"
             @change="handleChange">
             <template #tagRender="{ value }">
               <DisplayName :user-id="value" />
@@ -197,7 +193,19 @@ const changeTelError = (value: boolean) => {
 };
 const getOptionalDepartmentsList = (value = '') => {
   optionalDepartmentsList({ keyword: value }).then((res) => {
-    departmentsList.value = res.data;
+    const dataMap = new Map();
+    res.data.forEach((item) => {
+      dataMap.set(item.id, item);
+    });
+    // 补充departmentList没有的部门
+    if (props.detailsInfo.departments && Array.isArray(props.detailsInfo.departments)) {
+      props.detailsInfo.departments.forEach((item) => {
+        if (!dataMap.has(item.id)) {
+          dataMap.set(item.id, item);
+        }
+      });
+    }
+    departmentsList.value = Array.from(dataMap.values());
   })
     .catch((e) => {
       console.warn(e);

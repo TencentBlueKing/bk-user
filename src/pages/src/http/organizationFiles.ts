@@ -1,11 +1,15 @@
 import http from './fetch';
 import type {
   DepartmentsListParams,
+  OptionalDepartmentsListData,
   TenantListParams,
   UpdateTenantParams,
 } from './types/organizationFiles';
 
 const prefix = 'api/v3/web/organization';
+interface ResponseData<T> {
+  data: T
+}
 
 /**
  * 组织架构-租户列表
@@ -189,7 +193,7 @@ export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/
 /**
  * 可选部门
  */
-export const optionalDepartmentsList = (params: any) => http.get(`${prefix}/tenants/optional-departments/`, params);
+export const optionalDepartmentsList = (params: any) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/optional-departments/`, params);
 
 /**
  * 可选leader
