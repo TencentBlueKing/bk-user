@@ -63,6 +63,7 @@
             :list="departmentsList"
             id-key="id"
             display-key="organization_path"
+            :remote-method="searchDepartments"
             @change="handleChange">
           </bk-select>
         </bk-form-item>
@@ -75,6 +76,7 @@
             multiple-mode="tag"
             collapse-tags
             id-key="id"
+            :remote-method="searchLeaders"
             @change="handleChange">
             <template #tagRender="{ value }">
               <DisplayName :user-id="value" />
@@ -216,6 +218,12 @@ const getOptionalLeaderList = (value = '') => {
     .catch((e) => {
       console.warn(e);
     });
+};
+const searchDepartments = (value: string) => {
+  getOptionalDepartmentsList(value);
+};
+const searchLeaders = (value: string) => {
+  getOptionalLeaderList(value);
 };
 
 const handleSubmit = async () => {
