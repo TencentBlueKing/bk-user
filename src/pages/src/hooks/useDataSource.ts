@@ -46,7 +46,10 @@ export const useDataSource = () => {
       });
   };
 
-  /** 若状态处于pending或running，触发轮询 */
+  /**
+   * @description 若状态处于pending或running，触发轮询
+   * 当页面刷新时，若当前状态仍处于同步中，需要开启轮询，否则状态Tag将不会发生变化
+   */
   const refreshSync = ({ status }) => {
     if (!['pending', 'running'].includes(status)) {
       return;
@@ -54,7 +57,7 @@ export const useDataSource = () => {
     if (dataSource.value.plugin_id === 'local') {
       handleImportLocalDataSync();
     } else {
-      handleOperationsSync();
+      pollingGetSyncRecords();
     }
   };
 
@@ -121,13 +124,19 @@ export const useDataSource = () => {
 
   const pollingInterval = ref(null);
 
+  /** 点击同步 发起同步，并开启syncRecords轮询*/
   const handleOperationsSync = async () => {
     postOperationsSync(dataSource.value?.id).then((res) => {
       Message({ theme: res.data.status, message: res.data.summary });
-      if (pollingInterval.value) return;
-      initSyncRecords(stopOperationPollingRule);
-      pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 5000);
+      pollingGetSyncRecords();
     });
+  };
+
+  /** 轮询获取syncRecords 用于更新同步状态Tag */
+  const pollingGetSyncRecords = () => {
+    if (pollingInterval.value) return;
+    initSyncRecords(stopOperationPollingRule);
+    pollingInterval.value = setInterval(() => initSyncRecords(stopOperationPollingRule), 5000);
   };
 
   const stopPolling = () => {
