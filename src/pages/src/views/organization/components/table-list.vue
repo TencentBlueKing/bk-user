@@ -30,6 +30,7 @@
                 })
               "
               unique-select
+              value-behavior="need-key"
             >
             </bk-searchSelect>
         </div>
