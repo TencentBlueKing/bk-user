@@ -14,10 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
@@ -94,7 +94,7 @@ class NotificationTemplate(BaseModel):
     # 模板标题
     title: Optional[str] = None
     # 模板发送方
-    sender: str
+    sender: EmailStr | Literal[""] = ""
     # 模板内容（text）格式
     content: str
     # 模板内容（html）格式
@@ -186,7 +186,7 @@ class LocalDataSourcePluginConfig(BasePluginConfig):
         try:
             rule = self.password_rule.to_rule()
         except ValidationError as e:
-            raise ValueError(_("密码生成规则不合法: {}").format(stringify_pydantic_error(e)))
+            raise ValueError(_("密码生成规则不合法：{}").format(stringify_pydantic_error(e)))
 
         if self.password_initial.generate_method == PasswordGenerateMethod.FIXED:
             # 如果初始密码生成模式为固定密码，则需要为固定密码预设值

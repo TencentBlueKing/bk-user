@@ -59,7 +59,7 @@ class NotificationClient(Protocol):
         """
         发送邮件
         支持通过接收者的邮箱地址 或 租户用户 ID 发送通知，当两者都存在时，优先使用邮箱地址
-        :param sender: 发件人，例如："蓝鲸智云"
+        :param sender: 发件人，例如："noreply@bktencent.com"
         :param title: 邮件标题
         :param content: 邮件内容（HTML 格式）
         :param email: 接收者邮箱地址

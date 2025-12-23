@@ -70,7 +70,7 @@ class NotificationTmplsGetter:
             NotificationTemplate(
                 method=NotificationMethod.EMAIL,
                 title="蓝鲸智云 - 您的密码已被重置",
-                sender="蓝鲸智云",
+                sender="",
                 content=(
                     "<p>您好：</p>"
                     + "<p>您的蓝鲸智云帐户密码已被重置，以下是您的帐户信息</p>"
@@ -90,7 +90,7 @@ class NotificationTmplsGetter:
                 NotificationTemplate(
                     method=NotificationMethod.EMAIL,
                     title="蓝鲸智云 - 验证码",
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "<p>您好：</p>"
                         + "<p>您的蓝鲸智云验证码为：{{ verification_code }}</p>"
@@ -105,7 +105,7 @@ class NotificationTmplsGetter:
                 NotificationTemplate(
                     method=NotificationMethod.SMS,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "您的蓝鲸智云验证码为：{{ verification_code }}\n"
