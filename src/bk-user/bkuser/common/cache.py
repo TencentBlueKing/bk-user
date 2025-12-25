@@ -18,7 +18,6 @@
 import functools
 
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
-from django.core.cache import cache as default_cache
 from django.core.cache import caches
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 
@@ -73,16 +72,16 @@ def _method_key_function(_, *args, **kwargs):
 # cached 和 cachedmethod 其 key 的生成方法可以满足大部分情况下不冲突，但有以下几种情况可能会冲突
 # (1) 对于类的实例方法，由于缓存 key 只用到方法的自定义参数，
 #     若 key 的区分需要用到 self.{attr}，则需要重新自定义，否则相同方法参数时会冲突
-# (2) 虽然模块名+方法名作为了 key 的前缀，但由于是字符串拼接，
+# (2) 虽然模块名 + 方法名作为了 key 的前缀，但由于是字符串拼接，
 #     有极少概率会出现拼接出来的结果一样的情况而导致冲突
 # (3) key 的字符串拼接，若参数里的值包含分隔符 "|"，有可能出现冲突
 # (4) 生成 key 时做了字符串转换，对于某些对象可能 str() 后相同，
 #     建议参数类型为：str/bool/int/tuple/List[base_type]/Dict[base_type]
-def cached(cache=default_cache, key_function=_default_key_function, timeout=DEFAULT_TIMEOUT):
+def cached(cache_name=CacheEnum.DEFAULT.value, key_function=_default_key_function, timeout=DEFAULT_TIMEOUT):
     """Decorator to wrap a function with a memorizing callable that saves results in a cache.
     cache param usage:
         from django.core.cache import caches
-        @cached(cache=caches[CacheEnum.REDIS], ...)
+        @cached(cache_name=CacheEnum.REDIS, ...)
     """
 
     def decorator(func):
@@ -92,14 +91,14 @@ def cached(cache=default_cache, key_function=_default_key_function, timeout=DEFA
             namespace = f"{func.__module__}:{func.__name__}"
             key = f"{CacheKeyPrefixEnum.AUTO}:{namespace}:{custom_key}"
 
-            return cache.get_or_set(key, lambda: func(*args, **kwargs), timeout)
+            return caches[str(cache_name)].get_or_set(key, lambda: func(*args, **kwargs), timeout)
 
         return wrapper
 
     return decorator
 
 
-def cachedmethod(cache=default_cache, key_function=_method_key_function, timeout=DEFAULT_TIMEOUT):
+def cachedmethod(cache_name=CacheEnum.DEFAULT.value, key_function=_method_key_function, timeout=DEFAULT_TIMEOUT):
     """Decorator to wrap a class or instance method with a memorizing
     callable that saves results in a cache.
     """
@@ -111,7 +110,7 @@ def cachedmethod(cache=default_cache, key_function=_method_key_function, timeout
             namespace = f"{method.__module__}:{method.__qualname__}"
             key = f"{CacheKeyPrefixEnum.AUTO}:{namespace}:{custom_key}"
 
-            return cache.get_or_set(key, lambda: method(self, *args, **kwargs), timeout)
+            return caches[str(cache_name)].get_or_set(key, lambda: method(self, *args, **kwargs), timeout)
 
         return wrapper
 
@@ -122,7 +121,7 @@ class Cache:
     """
     Cache 用于避免直接使用 Django Caches 时导致不同场景的前缀 Key 冲突问题，
     使用各个场景更专注于自身业务逻辑缓存和 key 生成，Cache 所有方法都基于
-    Django Cache 的 BaseCache ，只封装了项目所需方法
+    Django Cache 的 BaseCache，只封装了项目所需方法
     """
 
     def __init__(self, type_, key_prefix):
