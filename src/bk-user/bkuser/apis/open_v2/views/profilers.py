@@ -23,13 +23,11 @@ from typing import Any, Dict, List, Tuple
 
 import phonenumbers
 from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.conf import settings
 from django.db.models import Q, QuerySet
-
-# from django.conf import settings
 from django.http import Http404
-
-# from django.utils.decorators import method_decorator
-# from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -49,6 +47,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
+from bkuser.common.cache import CacheEnum
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
@@ -384,7 +383,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
     pagination_class = LegacyOpenApiPagination
 
-    # @method_decorator(cache_page(cache="redis", 60 * 60, key_prefix="openapi_v2_profile_list"))
+    @method_decorator(cache_page(cache=CacheEnum.REDIS.value, timeout=settings.OPEN_API_V2_LIST_USER_CACHE_TIMEOUT))
     def get(self, request, *args, **kwargs):
         slz = ProfileListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
