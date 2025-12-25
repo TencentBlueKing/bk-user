@@ -24,7 +24,12 @@ from typing import Any, Dict, List, Tuple
 import phonenumbers
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.db.models import Q, QuerySet
+
+# from django.conf import settings
 from django.http import Http404
+
+# from django.utils.decorators import method_decorator
+# from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -83,7 +88,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
         """
         构建对外用户信息列表
         :param tenant_users: 租户用户 List，即已经经过 filter、only 等优化后的数据
-                             且必须保证 select_related("data_source_user")
+                             select_related 会根据 fields 在 optimize_queryset 中动态添加
         :param fields: 对外的用户字段列表，需要已经标准化处理（调用 _get_default_fields）
         """
         # 批量预加载关联数据
@@ -118,7 +123,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     def _get_db_field_map() -> Dict[str, List[str]]:
         """获取字段到数据库字段的映射"""
         return {
-            "id": ["data_source_user__id"],
+            "id": ["data_source_user_id"],
             "username": ["id"],
             "display_name": ["data_source_user__full_name"],
             "email": ["custom_email", "is_inherited_email", "data_source_user__email"],
@@ -134,10 +139,10 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
             "domain": ["data_source_id", "tenant_id"],
             "category_id": ["data_source_id"],
             "status": ["status"],
-            "extras": ["data_source_user__extras"],
-            "position": ["data_source_user__extras"],
-            "leader": ["data_source_user__id"],
-            "departments": ["data_source_user__id"],
+            "extras": ["data_source_user__extras", "data_source_id", "tenant_id"],
+            "position": ["data_source_user__extras", "data_source_id", "tenant_id"],
+            "leader": ["data_source_user_id"],
+            "departments": ["data_source_user_id"],
         }
 
     def optimize_queryset(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> QuerySet[TenantUser]:
@@ -146,11 +151,19 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
         only_fields = {"id"}
         for f in fields:
             only_fields.update(db_field_map.get(f, []))
+
+        # 根据需要的字段决定是否添加 select_related，避免不必要的关联查询
+        # 同时避免 select_related 与 only() 不包含关联字段时的冲突
+        if any(field.startswith("data_source_user__") for field in only_fields):
+            tenant_users.select_related("data_source_user")
+
         return tenant_users.only(*only_fields)
 
     def _prepare_context(self, tenant_users: List[TenantUser], fields: List[str]) -> Dict[str, Any]:
         """预加载关联数据，减少数据库查询"""
-        data_source_user_ids = [i.data_source_user.id for i in tenant_users]
+        data_source_user_ids = []
+        if "leader" in fields or "departments" in fields:
+            data_source_user_ids = [i.data_source_user_id for i in tenant_users]
 
         return {
             "leader_map": self._get_leader_map(data_source_user_ids) if "leader" in fields else {},
@@ -191,7 +204,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     def _add_basic_fields(user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
         """添加基础字段"""
         if "id" in fields:
-            user_info["id"] = tenant_user.data_source_user.id
+            user_info["id"] = tenant_user.data_source_user_id
         if "username" in fields:
             user_info["username"] = tenant_user.id
         if "display_name" in fields:
@@ -228,8 +241,8 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
             if field_name in fields:
                 user_info[field_name] = value_func()
 
-    @staticmethod
     def _add_extras_fields(
+        self,
         user_info: Dict[str, Any],
         tenant_user: TenantUser,
         fields: List[str],
@@ -240,23 +253,21 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
             return
 
         source_extras = tenant_user.data_source_user.extras
-        extras = TenantUserListToUserInfosMixin._get_collaboration_extras(
-            source_extras, tenant_user, collaboration_field_mapping
-        )
+        extras = self._get_collaboration_extras(source_extras, tenant_user, collaboration_field_mapping)
 
         if "extras" in fields:
             user_info["extras"] = extras
         if "position" in fields:
             user_info["position"] = int(source_extras.get("position", 0))
 
-    @staticmethod
     def _get_collaboration_extras(
+        self,
         source_extras: Dict[str, Any],
         tenant_user: TenantUser,
         collaboration_field_mapping: Dict[Tuple[str, str], str],
     ) -> Dict[str, Any]:
         """获取协同场景下的自定义字段"""
-        ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
+        ds_owner_tenant_id = self.data_source_id_to_tenant_id_map()[tenant_user.data_source_id]
         if ds_owner_tenant_id != tenant_user.tenant_id:
             return {
                 collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
@@ -271,10 +282,10 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     ) -> None:
         """添加关联字段"""
         if "leader" in fields:
-            user_info["leader"] = context["leader_map"].get((tenant_user.tenant.id, tenant_user.data_source_user.id))
+            user_info["leader"] = context["leader_map"].get((tenant_user.tenant_id, tenant_user.data_source_user_id))
         if "departments" in fields:
             user_info["departments"] = context["department_map"].get(
-                (tenant_user.tenant.id, tenant_user.data_source_user.id)
+                (tenant_user.tenant_id, tenant_user.data_source_user_id)
             )
 
     @staticmethod
@@ -373,6 +384,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
     pagination_class = LegacyOpenApiPagination
 
+    # @method_decorator(cache_page(cache="redis", 60 * 60, key_prefix="openapi_v2_profile_list"))
     def get(self, request, *args, **kwargs):
         slz = ProfileListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
@@ -399,11 +411,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet[TenantUser]:
         """根据参数过滤，生成 TenantUser QuerySet"""
-        # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        queryset = TenantUser.objects.select_related("data_source_user").filter(
-            tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
-        )
+        # Note: select_related 会在 optimize_queryset 中根据需要的字段动态添加
+        queryset = TenantUser.objects.filter(tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids())
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
         if not lookup_field:
@@ -810,9 +820,8 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
 
         # 租户用户
         # Note: 由于虚拟账号不存在部门关系，所以这里不需要查询虚拟账号情况
-        return TenantUser.objects.filter(
-            tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
-        ).select_related("data_source_user", "data_source")
+        # Note: select_related 会在 optimize_queryset 中根据需要的字段动态添加
+        return TenantUser.objects.filter(tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids)
 
 
 class ProfileLanguageUpdateApi(
