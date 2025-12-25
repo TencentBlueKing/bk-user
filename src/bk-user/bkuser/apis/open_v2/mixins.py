@@ -101,10 +101,7 @@ class DefaultTenantMixin:
 
     @cachedmethod(timeout=60 * 60)
     def data_source_id_to_tenant_id_map(self) -> Dict[int, str]:
-        return {
-            ds.id: ds.owner_tenant_id
-            for ds in DataSource.objects.filter(owner_tenant=self.default_tenant).only("id", "owner_tenant_id")
-        }
+        return {ds.id: ds.owner_tenant_id for ds in DataSource.objects.all().only("id", "owner_tenant_id")}
 
 
 class DataSourceDomainMixin:
