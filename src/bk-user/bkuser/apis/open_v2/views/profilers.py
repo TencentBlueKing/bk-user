@@ -79,19 +79,13 @@ def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
 class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     """将 TenantUser 列表转换 对外的用户信息"""
 
-    def build_user_infos(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
+    def build_user_infos(self, tenant_users: List[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
         """
         构建对外用户信息列表
-        :param tenant_users: 租户用户 Queryset，即已经经过 filter 等后的 QuerySet
+        :param tenant_users: 租户用户 List，即已经经过 filter、only 等优化后的数据
                              且必须保证 select_related("data_source_user")
-        :param fields: 对外的用户字段列表，空时表示所有用户字段都对外
+        :param fields: 对外的用户字段列表，需要已经标准化处理（调用 _get_default_fields）
         """
-        # 标准化字段列表
-        fields = self._get_default_fields(fields)
-
-        # 优化查询：只查询需要的数据库字段
-        tenant_users = self._optimize_queryset(tenant_users, fields)
-
         # 批量预加载关联数据
         context = self._prepare_context(tenant_users, fields)
 
@@ -99,7 +93,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
         return [self._build_single_user_info(tenant_user, fields, context) for tenant_user in tenant_users]
 
     @staticmethod
-    def _get_default_fields(fields: List[str]) -> List[str]:
+    def get_default_fields(fields: List[str]) -> List[str]:
         """获取默认字段列表"""
         return fields or [
             "id",
@@ -146,7 +140,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
             "departments": ["data_source_user__id"],
         }
 
-    def _optimize_queryset(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> QuerySet[TenantUser]:
+    def optimize_queryset(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> QuerySet[TenantUser]:
         """优化查询，只查询需要的数据库字段"""
         db_field_map = self._get_db_field_map()
         only_fields = {"id"}
@@ -154,7 +148,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
             only_fields.update(db_field_map.get(f, []))
         return tenant_users.only(*only_fields)
 
-    def _prepare_context(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> Dict[str, Any]:
+    def _prepare_context(self, tenant_users: List[TenantUser], fields: List[str]) -> Dict[str, Any]:
         """预加载关联数据，减少数据库查询"""
         data_source_user_ids = [i.data_source_user.id for i in tenant_users]
 
@@ -387,11 +381,17 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 根据参数过滤
         tenant_users = self._filter_queryset(params)
+
+        # 在分页前 (不分页也需优化) 进行 queryset 优化（只查询需要的字段）要的字段
+        fields = params.get("fields")
+        fields = self.get_default_fields(fields)
+        tenant_users = self.optimize_queryset(tenant_users, fields)
+
         if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 根据 fields 构造对外的用户信息
-        user_infos = self.build_user_infos(tenant_users, params.get("fields"))
+        user_infos = self.build_user_infos(tenant_users, fields)
         if not no_page:
             return self.get_paginated_response(user_infos)
 
@@ -775,11 +775,16 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
 
         # 根据部门、是否递归，过滤出 部门下的用户
         tenant_users = self._filter_queryset(tenant_dept, params.get("recursive"))
+
+        # 在分页前 (不分页也需优化) 进行 queryset 优化（只查询需要的字段）要的字段
+        fields = self.get_default_fields([])
+        tenant_users = self.optimize_queryset(tenant_users, fields)
+
         if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 不指定用户字段
-        user_infos = self.build_user_infos(tenant_users, [])
+        user_infos = self.build_user_infos(tenant_users, fields)
         if not no_page:
             return self.get_paginated_response(user_infos)
 
