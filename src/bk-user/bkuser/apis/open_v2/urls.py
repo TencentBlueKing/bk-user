@@ -38,7 +38,7 @@ urlpatterns = [
         views.ProfileDepartmentListApi.as_view(),
         name="open_v2.list_profile_departments",
     ),
-    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况 （ESB yaml 配置里是该情况）
+    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况（ESB yaml 配置里是该情况）
     path(
         "profiles/<str:lookup_value>/departments",
         views.ProfileDepartmentListApi.as_view(),
@@ -66,7 +66,7 @@ urlpatterns = [
         views.DepartmentProfileListApi.as_view(),
         name="open_v2.list_department_profiles",
     ),
-    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况 （ESB yaml 配置里是该情况）
+    # 与上面 API 一样，只是兼容了缺少末尾 / 的情况（ESB yaml 配置里是该情况）
     path(
         "departments/<str:id>/profiles",
         views.DepartmentProfileListApi.as_view(),

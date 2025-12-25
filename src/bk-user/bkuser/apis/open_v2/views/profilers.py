@@ -86,80 +86,202 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
                              且必须保证 select_related("data_source_user")
         :param fields: 对外的用户字段列表，空时表示所有用户字段都对外
         """
-        # 按需提前获取用户 Leader 信息 和 用户部门信息
+        # 标准化字段列表
+        fields = self._get_default_fields(fields)
+
+        # 优化查询：只查询需要的数据库字段
+        tenant_users = self._optimize_queryset(tenant_users, fields)
+
+        # 批量预加载关联数据
+        context = self._prepare_context(tenant_users, fields)
+
+        # 构建每个用户的信息
+        return [self._build_single_user_info(tenant_user, fields, context) for tenant_user in tenant_users]
+
+    @staticmethod
+    def _get_default_fields(fields: List[str]) -> List[str]:
+        """获取默认字段列表"""
+        return fields or [
+            "id",
+            "username",
+            "display_name",
+            "email",
+            "telephone",
+            "country_code",
+            "time_zone",
+            "language",
+            "wx_userid",
+            "domain",
+            "category_id",
+            "status",
+            "extras",
+            "position",
+            "leader",
+            "departments",
+        ]
+
+    @staticmethod
+    def _get_db_field_map() -> Dict[str, List[str]]:
+        """获取字段到数据库字段的映射"""
+        return {
+            "id": ["data_source_user__id"],
+            "username": ["id"],
+            "display_name": ["data_source_user__full_name"],
+            "email": ["custom_email", "is_inherited_email", "data_source_user__email"],
+            "telephone": ["custom_phone", "is_inherited_phone", "data_source_user__phone"],
+            "country_code": [
+                "custom_phone_country_code",
+                "is_inherited_phone",
+                "data_source_user__phone_country_code",
+            ],
+            "time_zone": ["time_zone"],
+            "language": ["language"],
+            "wx_userid": ["wx_userid"],
+            "domain": ["data_source_id", "tenant_id"],
+            "category_id": ["data_source_id"],
+            "status": ["status"],
+            "extras": ["data_source_user__extras"],
+            "position": ["data_source_user__extras"],
+            "leader": ["data_source_user__id"],
+            "departments": ["data_source_user__id"],
+        }
+
+    def _optimize_queryset(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> QuerySet[TenantUser]:
+        """优化查询，只查询需要的数据库字段"""
+        db_field_map = self._get_db_field_map()
+        only_fields = {"id"}
+        for f in fields:
+            only_fields.update(db_field_map.get(f, []))
+        return tenant_users.only(*only_fields)
+
+    def _prepare_context(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> Dict[str, Any]:
+        """预加载关联数据，减少数据库查询"""
         data_source_user_ids = [i.data_source_user.id for i in tenant_users]
-        leader_map = self._get_leader_map(data_source_user_ids) if not fields or "leader" in fields else {}
-        department_map = (
-            self._get_department_map(data_source_user_ids) if not fields or "departments" in fields else {}
+
+        return {
+            "leader_map": self._get_leader_map(data_source_user_ids) if "leader" in fields else {},
+            "department_map": self._get_department_map(data_source_user_ids) if "departments" in fields else {},
+            "collaboration_field_mapping": (
+                self.get_collaboration_field_mapping() if "extras" in fields or "position" in fields else {}
+            ),
+        }
+
+    def _build_single_user_info(
+        self, tenant_user: TenantUser, fields: List[str], context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """构建单个用户的信息"""
+        user_info: Dict[str, Any] = {}
+
+        # 添加基础字段
+        self._add_basic_fields(user_info, tenant_user, fields)
+
+        # 添加电话相关字段
+        self._add_phone_fields(user_info, tenant_user, fields)
+
+        # 添加简单字段
+        self._add_simple_fields(user_info, tenant_user, fields)
+
+        # 添加自定义字段
+        self._add_extras_fields(user_info, tenant_user, fields, context["collaboration_field_mapping"])
+
+        # 添加固定值字段
+        user_info["logo"] = ""
+        user_info["staff_status"] = "IN"
+
+        # 添加关联字段
+        self._add_relation_fields(user_info, tenant_user, fields, context)
+
+        return user_info
+
+    @staticmethod
+    def _add_basic_fields(user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加基础字段"""
+        if "id" in fields:
+            user_info["id"] = tenant_user.data_source_user.id
+        if "username" in fields:
+            user_info["username"] = tenant_user.id
+        if "display_name" in fields:
+            user_info["display_name"] = tenant_user.data_source_user.full_name
+        if "email" in fields:
+            user_info["email"] = tenant_user.email
+
+    @staticmethod
+    def _add_phone_fields(user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加电话相关字段"""
+        if not any(f in fields for f in ["telephone", "country_code", "iso_code"]):
+            return
+
+        phone, phone_country_code = tenant_user.phone_info
+        if "telephone" in fields:
+            user_info["telephone"] = phone
+        if "country_code" in fields:
+            user_info["country_code"] = phone_country_code
+        if "iso_code" in fields:
+            user_info["iso_code"] = _phone_country_code_to_iso_code(phone_country_code)
+
+    def _add_simple_fields(self, user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加简单字段"""
+        simple_field_mapping = {
+            "time_zone": lambda: tenant_user.time_zone,
+            "language": lambda: tenant_user.language,
+            "wx_userid": lambda: tenant_user.wx_userid,
+            "domain": lambda: self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
+            "category_id": lambda: tenant_user.data_source_id,
+            "status": lambda: TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
+        }
+
+        for field_name, value_func in simple_field_mapping.items():
+            if field_name in fields:
+                user_info[field_name] = value_func()
+
+    @staticmethod
+    def _add_extras_fields(
+        user_info: Dict[str, Any],
+        tenant_user: TenantUser,
+        fields: List[str],
+        collaboration_field_mapping: Dict[Tuple[str, str], str],
+    ) -> None:
+        """添加自定义字段"""
+        if not ("extras" in fields or "position" in fields):
+            return
+
+        source_extras = tenant_user.data_source_user.extras
+        extras = TenantUserListToUserInfosMixin._get_collaboration_extras(
+            source_extras, tenant_user, collaboration_field_mapping
         )
 
-        collaboration_field_mapping = self.get_collaboration_field_mapping()
+        if "extras" in fields:
+            user_info["extras"] = extras
+        if "position" in fields:
+            user_info["position"] = int(source_extras.get("position", 0))
 
-        user_infos = []
-        for tenant_user in tenant_users:
-            # 手机号和手机区号
-            phone, phone_country_code = tenant_user.phone_info
-
-            # 自定义字段
-            source_extras = tenant_user.data_source_user.extras
-            # 协同时按照协同租户配置的用户自定义字段进行输出
-            ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
-            if ds_owner_tenant_id != tenant_user.tenant_id:
-                extras = {
-                    collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
-                    for k, v in source_extras.items()
-                    if (ds_owner_tenant_id, k) in collaboration_field_mapping
-                }
-            else:
-                extras = source_extras
-
-            # 不会放大查询的字段
-            user_info = {
-                "id": tenant_user.data_source_user.id,
-                # 租户用户 ID 即为对外的 username / bk_username
-                "username": tenant_user.id,
-                "display_name": tenant_user.data_source_user.full_name,
-                "email": tenant_user.email,
-                "telephone": phone,
-                "country_code": phone_country_code,
-                "iso_code": _phone_country_code_to_iso_code(phone_country_code),
-                "time_zone": tenant_user.time_zone,
-                "language": tenant_user.language,
-                "wx_userid": tenant_user.wx_userid,
-                "domain": self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
-                "category_id": tenant_user.data_source_id,
-                "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
-                "enabled": True,
-                "extras": extras,
-                # 旧版本内置字段，新版本迁移在自定义字段里
-                "position": int(source_extras.get("position", 0)),
-                # 总是返回固定值
-                "logo": "",
-                "staff_status": "IN",
+    @staticmethod
+    def _get_collaboration_extras(
+        source_extras: Dict[str, Any],
+        tenant_user: TenantUser,
+        collaboration_field_mapping: Dict[Tuple[str, str], str],
+    ) -> Dict[str, Any]:
+        """获取协同场景下的自定义字段"""
+        ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
+        if ds_owner_tenant_id != tenant_user.tenant_id:
+            return {
+                collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
+                for k, v in source_extras.items()
+                if (ds_owner_tenant_id, k) in collaboration_field_mapping
             }
+        return source_extras
 
-            # 指定对外字段，则只返回指定的字段
-            if fields:
-                user_info = {k: v for k, v in user_info.items() if k in fields}
-                # 由于 leader 需要额外计算，因此特殊分支处理
-                if "leader" in fields:
-                    user_info["leader"] = leader_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-                # 由于 department 需要额外计算，因此特殊分支处理
-                if "departments" in fields:
-                    user_info["departments"] = department_map.get(
-                        (tenant_user.tenant.id, tenant_user.data_source_user.id)
-                    )
-
-                user_infos.append(user_info)
-                continue
-
-            # 未指定字段，则关联字段也要返回
-            user_info["leader"] = leader_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-            user_info["departments"] = department_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-
-            user_infos.append(user_info)
-
-        return user_infos
+    @staticmethod
+    def _add_relation_fields(
+        user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str], context: Dict[str, Any]
+    ) -> None:
+        """添加关联字段"""
+        if "leader" in fields:
+            user_info["leader"] = context["leader_map"].get((tenant_user.tenant.id, tenant_user.data_source_user.id))
+        if "departments" in fields:
+            user_info["departments"] = context["department_map"].get(
+                (tenant_user.tenant.id, tenant_user.data_source_user.id)
+            )
 
     @staticmethod
     def _get_leader_map(data_source_user_ids: List[int]) -> Dict[Tuple[str, int], List[Dict[str, Any]]]:
@@ -480,7 +602,7 @@ class ProfileRetrieveApi(
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        lookup_filter = {}
+        lookup_filter: Dict[str, Any] = {}
         if params["lookup_field"] == "username":
             # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4 / nanoid
             lookup_filter["id"] = kwargs["lookup_value"]
