@@ -342,44 +342,67 @@
         </InfoCard>
 
         <InfoCard :title="$t('语言和时区')">
-          <bk-form
-            class="item-content"
-            :model="currentUserInfo">
-            <div class="item-div" v-for="(item, key) in LanguageAndTimeZone" :key="key">
-              <li>
-                <span class="key">{{ $t(item.label) }}：</span>
-                <div class="value-content">
-                  <div class="value-edit" v-if="item.isEdit">
-                    <bk-form-item>
-                      <bk-select
-                        v-model="currentUserInfo[item.model]"
-                        clearable
-                        :input-search="item.model === 'language'">
-                        <bk-option
-                          v-for="option in item.options"
-                          :key="option.value"
-                          :id="option.value"
-                          :name="option.label">
-                        </bk-option>
-                      </bk-select>
-                    </bk-form-item>
-                    <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="submitChange(item)">
-                      {{ $t('确定') }}
-                    </bk-button>
-                    <bk-button text theme="primary" @click="cancelChange(item)">{{ $t('取消') }}</bk-button>
-                  </div>
-                  <div v-else>
-                    <span class="value">
-                      {{ item.model === 'language' ?
-                        showLanguage(currentUserInfo[item.model])
-                        : currentUserInfo[item.model]}}
+          <div class="grid grid-cols-2 gap-y-[30px] pt-[16px]">
+            <FieldItem
+              :container-height="50"
+              :field-value="$t('语言')"
+              :field-width="120"
+            >
+              <template #value>
+                <EditBlock
+                  @confirm="submitLanguage"
+                  @cancel="cancelEditLanguage">
+                  <template #text>
+                    <span class="value leading-[50px]">
+                      {{ showLanguage(currentUserInfo.language) }}
                     </span>
-                    <i class="user-icon icon-edit" @click="item.isEdit = true" />
-                  </div>
-                </div>
-              </li>
-            </div>
-          </bk-form>
+                  </template>
+                  <template #edit>
+                    <bk-select
+                      v-model="currentUserInfo.language"
+                      clearable
+                      input-search
+                      class="w-[106px]">
+                      <bk-option
+                        v-for="option in LANGUAGE_OPTIONS"
+                        :key="option.value"
+                        :id="option.value"
+                        :name="option.label">
+                      </bk-option>
+                    </bk-select>
+                  </template>
+                </EditBlock>
+              </template>
+            </FieldItem>
+            <FieldItem
+              :container-height="50"
+              :field-value="$t('时区')"
+              :field-width="120"
+            >
+              <template #value>
+                <EditBlock
+                  @confirm="submitTimeZone"
+                  @cancel="cancelEditTimeZone">
+                  <template #text>
+                    <span class="value leading-[50px]">
+                      {{ currentUserInfo.time_zone }}
+                    </span>
+                  </template>
+                  <template #edit>
+                    <TimezonePicker
+                      v-model:value="currentUserInfo.time_zone"
+                      :popover-min-width="450"
+                      clearable
+                    >
+                      <template #trigger="{ data }">
+                        {{ JSON.stringify(data) }}
+                      </template>
+                    </TimezonePicker>
+                  </template>
+                </EditBlock>
+              </template>
+            </FieldItem>
+          </div>
         </InfoCard>
       </div>
       <!-- 修改密码 -->
@@ -410,6 +433,8 @@ import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { cloneDeep } from 'lodash';
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
+import { TimezonePicker } from '@blueking/date-picker';
+
 import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
 import { emailEditable, OpenDialogSelect, OpenDialogType, phoneEditable  } from './openDialogType';
@@ -417,6 +442,8 @@ import PhoneVerify from './PhoneVerify.vue';
 import WeChatBind from './social-media-account/wechat/WeChatBind.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
+import EditBlock from '@/components/edit-block.vue';
+import FieldItem from '@/components/field-item.vue';
 import InfoCard from '@/components/InfoCard.vue';
 import phoneInput from '@/components/phoneInput.vue';
 import UploadImg from '@/components/upload-img.vue';
@@ -437,7 +464,7 @@ import {
 import { CurrentNaturalUserData, PersonalCenterUsersData, WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
+import { customFieldsMap, formatConvert, handleSwitchLocale, LANGUAGE_OPTIONS } from '@/utils';
 
 const userStore = useUser();
 const validate = useValidate();
@@ -544,59 +571,42 @@ const showLanguage = computed(() => (targetValue: string) => {
   return foundItem ? foundItem.label : null;
 });
 
-const submitChange  = async (item: LanguageAndTimeZoneFieldItem) => {
-  const { model } = item;
+const submitLanguage = async () => {
   try {
-    if (!currentUserInfo.value[model]) return;
-    const apiCall = model === 'language' ? putUserLanguage : putUserTimeZone;
-    await apiCall({
+    if (!currentUserInfo.value.language) return;
+    await putUserLanguage({
       id: currentUserInfo.value.id,
-      [model]: currentUserInfo.value[model],
+      language: currentUserInfo.value.language,
     });
-
-    item.isEdit = false;
     Message({ theme: 'success', message: t('保存成功') });
-    if (model === 'language') {
-      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language, userStore.user.tenant_id), 100);
-    }
-    originalValue.value[model] = currentUserInfo.value[model];
+    setTimeout(() => handleSwitchLocale(currentUserInfo.value.language, userStore.user.tenant_id), 100);
+    originalValue.value.language = currentUserInfo.value.language;
   } catch (error) {
     console.warn(error);
   }
 };
 
-const cancelChange = (item: LanguageAndTimeZoneFieldItem) => {
-  item.isEdit = false;
-  currentUserInfo.value[item.model] = originalValue.value[item.model];
+const cancelEditLanguage = () => {
+  currentUserInfo.value.language = originalValue.value.language;
 };
 
-type LanguageAndZoneModelField = 'language' | 'time_zone';
-type LanguageAndTimeZoneFieldItem = {
-  label: string
-  isEdit: boolean
-  model: LanguageAndZoneModelField
-  options: {
-    value: string
-    label: string
-  }[]
+const submitTimeZone = async () => {
+  try {
+    if (!currentUserInfo.value.time_zone) return;
+    await putUserTimeZone({
+      id: currentUserInfo.value.id,
+      time_zone: currentUserInfo.value.time_zone,
+    });
+    Message({ theme: 'success', message: t('保存成功') });
+    originalValue.value.time_zone = currentUserInfo.value.time_zone;
+  } catch (error) {
+    console.warn(error);
+  }
 };
 
-type LanguageTimeZoneField = Record<string, LanguageAndTimeZoneFieldItem>;
-
-const LanguageAndTimeZone = ref<LanguageTimeZoneField>({
-  language: {
-    label: t('语言'),
-    isEdit: false,
-    model: 'language',
-    options: LANGUAGE_OPTIONS,
-  },
-  timeZone: {
-    label: t('时区'),
-    isEdit: false,
-    model: 'time_zone',
-    options: TIME_ZONES,
-  },
-});
+const cancelEditTimeZone = () => {
+  currentUserInfo.value.time_zone = originalValue.value.time_zone;
+};
 
 // 取消自定义字段修改
 const cancelCustomFields = (item: OperateExtrasCustomFields, index: number) => {
