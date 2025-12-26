@@ -132,7 +132,7 @@ class TestTenantUserLanguageUpdateApi:
 
 
 class TestTenantUserTimeZoneUpdateApi:
-    @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("UTC")])
+    @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("America/New_York")])
     def test_update_legal_timezone(self, api_client, tenant_user, time_zone):
         resp = api_client.put(
             reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),
