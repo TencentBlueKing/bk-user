@@ -146,6 +146,9 @@ class DataSourceUserConverter:
 
             # 如果没有提供该字段，则使用默认值
             if not props.get(mapping[f.name]):
+                # 只有字符串类型需要进行必填校验，其他类型一定有默认值
+                if f.data_type == UserFieldDataType.STRING and f.required and not f.default:
+                    raise ValueError(f"username: {username}, field {f.name} is required")
                 extras[f.name] = f.default
                 continue
 
@@ -181,10 +184,6 @@ class DataSourceUserConverter:
                         f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_values}"
                     )
                 value = [opt_value_to_id_map[v] for v in value]  # type: ignore
-
-            # 必填字段检查仅适用于字符串类型字段，因为数字类型即使是 0 也不能判断是空，枚举类型都有值检查
-            elif f.data_type == UserFieldDataType.STRING and f.required and not value:
-                raise ValueError(f"username: {username}, field {f.name} is required")
 
             extras[f.name] = value
 
