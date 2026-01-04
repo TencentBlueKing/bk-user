@@ -2,7 +2,8 @@
   <section class="bg-white h-full pl-[6px]">
     <div class="h-[calc(100%-36px)]" v-bkloading="{ loading: loading }">
       <div
-        class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
+        class="tenant-node leading-[36px] text-[14px] px-[6px] inline-flex
+          items-center w-full cursor-pointer relative pr-[12px]"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
         @click="handleNodeClick(currentTenant, currentTenant.id, true)"
       >
@@ -18,6 +19,13 @@
           {{ currentTenant?.name.charAt(0).toUpperCase() }}
         </span>
         {{ currentTenant?.name }}
+        <operate-more
+          v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
+          :dept="currentTenant"
+          :tenant="currentTenant"
+          :is-root-add="true"
+          @add-node="addNode">
+        </operate-more>
       </div>
       <bk-tree
         :data="treeData"
@@ -114,5 +122,23 @@ const {
   text-overflow: ellipsis;
   white-space: nowrap;
   border-radius: 4px;
+}
+
+.tenant-node {
+  :deep(.opt-more) {
+    visibility: hidden;
+
+    &:hover {
+      :deep(.icon-more) {
+        background-color: #DCDEE5;
+      }
+    }
+  }
+
+  &:hover {
+    :deep(.opt-more) {
+      visibility: visible;
+    }
+  }
 }
 </style>
