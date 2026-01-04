@@ -1,5 +1,6 @@
 <template>
   <BkUserSelector
+    v-if="showAdmin"
     v-model="value"
     :api-base-url="apiBaseUrl"
     :tenant-id="userStore.user.tenant_id"
@@ -7,7 +8,13 @@
     :user-group="userGroup"
     :user-group-name="userGroupName"
   />
-
+  <BkUserSelector
+    v-else
+    v-model="value"
+    :api-base-url="apiBaseUrl"
+    :tenant-id="userStore.user.tenant_id"
+    :multiple="multiple"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -21,6 +28,10 @@ import { useUser } from '@/store';
 const value = defineModel<string | string[]>('value');
 defineProps({
   multiple: {
+    type: Boolean,
+    default: true,
+  },
+  showAdmin: {
     type: Boolean,
     default: true,
   },
