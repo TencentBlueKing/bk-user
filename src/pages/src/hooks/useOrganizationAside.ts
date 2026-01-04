@@ -64,6 +64,11 @@ export default function useOrganizationAside(currentTenant: any) {
    * 添加子组织
    */
   const addNode = (id, node) => {
+    // 若id为0，则添加到根节点（租户节点下直接添加组织）
+    if (id === 0) {
+      treeData.value.push(node);
+      return;
+    }
     for (const item of treeData.value) {
       const current = findNode(item, id);
       if (current) {

@@ -35,7 +35,7 @@
         />
       </bk-form-item>
       <bk-form-item :label="$t('账号责任人')" property="owners" required>
-        <UserSelector v-model:value="formData.owners" />
+        <UserSelector v-model:value="formData.owners" :show-admin="false" />
       </bk-form-item>
     </bk-form>
     <div class="footer">
