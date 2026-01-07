@@ -26,14 +26,18 @@ lookups=zhangsan,lisi&lookup_field=login_name
             "login_name": "zhangsan",
             "full_name": "张三",
             "display_name": "zhangsan(张三)",
-            "status": "enabled"
+            "status": "enabled",
+            "language": "zh-cn",
+            "time_zone": "Asia/Shanghai"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
             "login_name": "lisi",
             "full_name": "李四",
             "display_name": "lisi(李四)",
-            "status": "enabled"
+            "status": "enabled",
+            "language": "en",
+            "time_zone": "Asia/Shanghai"
         }
     ]
 }
@@ -48,3 +52,5 @@ lookups=zhangsan,lisi&lookup_field=login_name
 | full_name    | string | 用户姓名                                                                    |
 | display_name | string | 用户展示名                                                                   |
 | status       | string | 用户状态，其中 `enabled` 表示**启用**状态；`disabled` 表示**禁用**状态；`expired` 表示**过期**状态 |
+| language     | string | 语言                                                                      |
+| time_zone    | string | 时区                                                                      |
