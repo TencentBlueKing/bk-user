@@ -37,7 +37,7 @@ lookups=zhangsan,lisi&lookup_field=login_name
             "display_name": "lisi(李四)",
             "status": "enabled",
             "language": "en",
-            "time_zone": "UTC"
+            "time_zone": "Asia/Shanghai"
         }
     ]
 }
