@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from bkuser.apps.notification.constants import NotificationMethod
 
@@ -31,3 +31,11 @@ class NotificationTemplate(BaseModel):
     title: Optional[str] = None
     # 模板内容
     content: str
+
+    @field_validator("sender", mode="before")
+    @classmethod
+    def normalize_sender(cls, sender: str) -> str:
+        """兼容历史数据：将 DB 中已存的"蓝鲸智云"转换为空字符串"""
+        if sender == "蓝鲸智云":
+            return ""
+        return sender

@@ -18,6 +18,8 @@ import logging
 from collections import Counter
 from typing import Dict, List
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
@@ -246,9 +248,23 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True)
+    sender = serializers.CharField(help_text="发送人", required=False, allow_blank=True)
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
+
+    def validate_sender(self, sender: str) -> str:
+        # Q: 这里为什么不直接使用 serializers.EmailField
+        # A: 短信模版在前端无法修改 sender，对于可能存在的历史数据“蓝鲸智云"需要将其转换为空字符串
+        if sender == "蓝鲸智云":
+            return ""
+        # 为空则直接放行
+        if not sender:
+            return sender
+        try:
+            validate_email(sender)
+        except DjangoValidationError as e:
+            raise ValidationError(e)
+        return sender
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
