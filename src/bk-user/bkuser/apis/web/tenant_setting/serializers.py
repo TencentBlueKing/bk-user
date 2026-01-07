@@ -248,7 +248,7 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    sender = serializers.CharField(help_text="发送人", required=False, allow_blank=True)
+    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True)
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
 
@@ -262,8 +262,8 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
             return sender
         try:
             validate_email(sender)
-        except DjangoValidationError as e:
-            raise ValidationError(e)
+        except DjangoValidationError:
+            raise ValidationError(_("请输入合法的邮箱地址"))
         return sender
 
 
