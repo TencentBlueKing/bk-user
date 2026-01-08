@@ -242,14 +242,13 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class SenderEmailField(serializers.EmailField):
-    def to_internal_value(self, data):
-        if data == "蓝鲸智云":
-            data = ""
-        return super().to_internal_value(data)
-
-
 class NotificationTemplatesInputSLZ(serializers.Serializer):
+    class SenderEmailField(serializers.EmailField):
+        def to_internal_value(self, data):
+            if data == "蓝鲸智云":
+                data = ""
+            return super().to_internal_value(data)
+
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
