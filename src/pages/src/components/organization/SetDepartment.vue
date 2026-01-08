@@ -30,11 +30,18 @@
           <div class="search-content-container" v-if="searchStatus">
             <template v-if="searchList.length">
               <div class="search-content">
-                <p
-                  v-for="(item, index) in searchList" class="search-item"
-                  :class="index === selectedIndex && 'selected'" :key="item.id" @click="selectItem(item)">
-                  <input type="checkbox" class="checkbox" :checked="item.isChecked" />{{item.name}}
-                </p>
+                <div
+                  v-for="(item, index) in searchList"
+                  class="search-item"
+                  :class="index === selectedIndex && 'selected'"
+                  :key="item.id"
+                  @click="selectItem(item)"
+                >
+                  <input type="checkbox" class="checkbox" :checked="item.isChecked" />
+                  <span v-bk-tooltips="getDepartmentDetail(item)">{{ item.name }}</span>
+                  <span> > </span>
+                  <p class="item-detail" v-bk-overflow-tips>{{ getDepartmentDetail(item) }}</p>
+                </div>
                 <p v-if="searchList.length >= searchLength" class="search-item">{{$t('完善关键字搜索更多内容')}}</p>
               </div>
             </template>
@@ -62,7 +69,10 @@
       <div class="selected-content" data-test-id="list_selDepartmentsData">
         <ul v-if="selectedDepartments.length">
           <li class="selected-list" v-for="(item, index) in selectedDepartments" :key="item.id">
-            <span class="title" v-bk-overflow-tips>{{item.name}}</span>
+            <div class="selected-item-content">
+              <span class="title" v-bk-overflow-tips>{{item.name}}</span>
+              <p class="item-detail" v-bk-overflow-tips>{{ getDepartmentDetail(item) }}</p>
+            </div>
             <i class="icon-user-close" @click="deleteSelected(item, index)"></i>
           </li>
         </ul>
@@ -107,6 +117,7 @@ export default {
       currParent: [],
       currChildren: [],
       basicLoading: true,
+      currentCategoryName: '',
     };
   },
   watch: {
@@ -121,11 +132,19 @@ export default {
     this.initDepartmentTree();
   },
   methods: {
+    getDepartmentDetail(itemInfo = this.searchResult) {
+      const categoryName = itemInfo.category_name || this.currentCategoryName || '';
+      const prefix = categoryName ? `${categoryName}：` : '';
+      const fullName = itemInfo.full_name || itemInfo.name || '';
+      // return this.dealDepartmentPath(`${prefix}${fullName}`);
+      return `${prefix}${fullName}`;
+    },
     async initDepartmentTree() {
       try {
         const { data: departments } = await this.$store.dispatch('organization/getOrganizationTree');
         for (let i = 0; i < departments.length; i++) {
           if (departments[i].id === this.currentCategoryId) {
+            this.currentCategoryName = departments[i].name || '';
             const list = JSON.parse(JSON.stringify(departments[i].departments));
             list.forEach((item) => {
               this.filterTreeNode(item);
@@ -139,6 +158,17 @@ export default {
       } finally {
         this.basicLoading = false;
       }
+    },
+    dealDepartmentPath(path) {
+      const length = path.length;
+      // 目前的宽度最多展示28个汉字
+      if (length <= 28) {
+        return path;
+      }
+      const array = path.split('');
+      const deleteCount = length - 27;
+      array.splice(13, deleteCount, '...');
+      return array.join('');
     },
     filterTreeNode(node) {
       // 是否选中
@@ -317,16 +347,16 @@ export default {
 
 .set-department-wrapper {
   display: flex;
-  width: 721px;
+  width: 960px;
 }
 
 .department-content {
-  width: 361px;
+  width: 480px;
   border-right: 1px solid #dcdee5;
 }
 
 .selected-department {
-  width: 360px;
+  width: 480px;
 }
 
 .depart-title {
@@ -386,6 +416,21 @@ export default {
         flex-shrink: 0;
       }
 
+      > span {
+        flex-shrink: 0;
+        margin: 0 4px;
+      }
+
+      .item-detail {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #979ba5;
+        font-size: 12px;
+        margin: 0;
+      }
+
       &.selected,
       &:hover {
         background: #e1ecff;
@@ -416,28 +461,51 @@ export default {
 
 .selected-list {
   position: relative;
-  padding: 0 24px 0 15px;
-  height: 36px;
-  line-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 8px 24px 8px 15px;
+  min-height: 52px;
   font-size: 14px;
   font-weight: 400;
   color: rgba(115, 121, 135, 1);
 
-  .title {
-    display: block;
-    width: calc(100% - 24px);
+  .selected-item-content {
+    flex: 1;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+    .title {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 20px;
+    }
+
+    .item-detail {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #979ba5;
+      font-size: 12px;
+      line-height: 16px;
+      margin-top: 2px;
+    }
   }
 
   .icon-user-close {
-    position: absolute;
-    right: 24px;
-    top: 13px;
+    flex-shrink: 0;
+    margin-left: 8px;
     font-size: 10px;
     cursor: pointer;
   }
+}
+
+.item-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #979ba5;
 }
 
 .checkbox {

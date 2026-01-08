@@ -94,7 +94,7 @@ class Department(TimestampMPTTModel):
 
     def to_audit_info(self):
         """提供审计元信息"""
-        return AuditObjMetaInfo(key=self.pk, display_name=self.name, category_id=self.category_id)
+        return AuditObjMetaInfo(key=self.pk, display_name=self.full_name, category_id=self.category_id)
 
     @property
     def full_name(self):

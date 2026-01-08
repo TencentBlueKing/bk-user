@@ -24,7 +24,7 @@
         v-for="option in userList"
         :key="option.id"
         :id="option.id"
-        :name="option.username">
+        :name="`${option.username}(${option.display_name})`">
       </bk-option>
     </bk-select>
     <div class="input-loading" @click.stop v-show="basicLoading">

@@ -10,6 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import List
+from functools import reduce
+from operator import or_
 
 from django.conf import settings
 from django.db.models import Q
@@ -433,7 +435,7 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
             mask_sensitive_data(item)
 
 
-        fields = DynamicFieldInfo.objects.filter(enabled=True).all()
+        fields = DynamicFieldInfo.objects.filter(enabled=True).exclude(name="operationtype").all()
         fields_data = FieldOutputSLZ(fields, many=True).data
         exporter = ProfileExcelExporter(
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org", fields_data
@@ -590,6 +592,14 @@ class CategoryProfileListApi(generics.ListAPIView):
             request = self.request,
         )
 
+        first_profile = queryset.first()
+        if first_profile:
+            create_general_log(
+                operator=self.request.operator,
+                operate_type=OperationType.VIEW.value,
+                operator_obj=first_profile,
+                request=self.request,
+            )
         # do prefetch
         queryset = queryset.prefetch_related("departments", "leader")
         return queryset

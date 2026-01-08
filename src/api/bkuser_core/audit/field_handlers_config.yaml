@@ -1,0 +1,45 @@
+# 字段处理器配置文件
+# 定义字段名称到处理器类型的映射关系
+#
+# 支持的处理器类型:
+#   - password: 密码字段处理器 (PasswordFieldHandler)
+#   - datetime: 日期时间字段处理器 (DateTimeFieldHandler)
+#   - list: 列表字段处理器基类 (需要指定具体的list_attr)
+#   - departments: 部门列表处理器 (DepartmentsFieldHandler)
+#   - leader: 上级列表处理器 (LeaderFieldHandler)
+#   - extras: 自定义字段处理器 (ExtrasFieldHandler)
+#   - simple: 简单字段处理器 (SimpleFieldHandler) - 默认类型
+
+# 字段处理器映射
+field_handlers:
+  # 密码字段
+  password:
+    handler_type: password
+    description: "密码字段，隐藏敏感信息"
+
+  # 部门字段
+  departments:
+    handler_type: departments
+    description: "部门列表字段"
+
+  # 上级字段
+  leader:
+    handler_type: leader
+    description: "上级列表字段"
+
+  # 自定义字段
+  extras:
+    handler_type: extras
+    description: "动态自定义字段"
+
+  # 日期时间字段
+  password_update_time:
+    handler_type: datetime
+    description: "密码更新时间"
+
+  account_expiration_date:
+    handler_type: datetime
+    description: "账号过期日期"
+
+# 默认处理器类型
+default_handler: simple

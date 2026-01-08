@@ -28,6 +28,7 @@ from .parsers import (
     DepartmentColumnParser,
     EmailCellParser,
     LeadersCellParser,
+    OperationTypeCellParser,
     PhoneNumberParser,
     UsernameCellParser,
 )
@@ -81,6 +82,10 @@ class ExcelFetcher(Fetcher):
         """通过用户提供的中文表头，获取对应的字段 key"""
         fields = DynamicFieldInfo.objects.filter(enabled=True)
         fields_display_name_map = {x.display_name: x for x in fields}
+
+        # 手动新增一个字段
+        operationtype = DynamicFieldInfo(name="operationtype", display_name="操作类型", type="string", order=0)
+        fields_display_name_map["操作类型"] = operationtype
 
         try:
             fields = [fields_display_name_map[t] for t in self.excel_helper.get_titles() if t]
@@ -213,6 +218,28 @@ class ExcelSyncer(Syncer):
         if is_overwrite and len(old_department_relations) > 0:
             should_deleted_department_profile_relation_ids.extend(old_department_relations.values())
 
+    def _determine_overwrite_mode(self, operation_type: str) -> bool:
+        """确定用户的组织覆盖模式
+
+        Args:
+            operation_type: 单元格的操作类型值（"overwrite" | "append" | ""）
+
+        Returns:
+            True: 覆盖模式
+            False: 新增模式
+        """
+
+        # 如果操作类型为overwrite，则使用覆盖模式
+        if operation_type in ["overwrite", "覆盖"]:
+            return True
+
+        # 如果操作类型为append，则使用新增模式
+        # if operation_type in ["append", "新增"]:
+        #     return False
+
+        # 默认使用新增
+        return False
+
     def _sync_users(self, parser_set: "ParserSet", users: list, is_overwrite: bool = False):
         """在内存中操作&判断数据，bulk 插入"""
         logger.info("=========== trying to load profiles into memory ===========")
@@ -279,30 +306,23 @@ class ExcelSyncer(Syncer):
             progress(index, total, f"loading {username}")
             try:
                 updating_profile = Profile.objects.get(username=username, category_id=self.category_id)
-                # 已存在的用户：如果未勾选 <进行覆盖更新>（即is_overwrite为false）=》则忽略，反之则更新该 profile
-                if not is_overwrite:
-                    logger.debug(
-                        "username %s exist, and is_overwrite is false, so will not do update for this user, skip",
-                        username,
-                    )
-                    continue
-                for name, value in profile_params.items():
-                    if name == "extras":
-                        extras = updating_profile.extras or {}
-                        #  存在旧格式数据,兼容处理
-                        if isinstance(extras, list):
-                            extras = {x["key"]: x["value"] for x in extras}
-
-                        extras.update(value)
-                        setattr(updating_profile, name, extras)
-                        continue
-
-                    setattr(updating_profile, name, value)
                 profile_id = updating_profile.id
+                if is_overwrite:
+                    for name, value in profile_params.items():
+                        if name == "extras":
+                            extras = updating_profile.extras or {}
+                            #  存在旧格式数据,兼容处理
+                            if isinstance(extras, list):
+                                extras = {x["key"]: x["value"] for x in extras}
 
-                self.db_sync_manager.magic_add(updating_profile, SyncOperation.UPDATE.value)
-                logger.debug("(%s/%s) username<%s> already exist, trying to update it", username, index + 1, total)
+                            extras.update(value)
+                            setattr(updating_profile, name, extras)
+                            continue
 
+                        setattr(updating_profile, name, value)
+
+                    self.db_sync_manager.magic_add(updating_profile, SyncOperation.UPDATE.value)
+                    logger.debug("(%s/%s) username<%s> already exist, trying to update it", username, index + 1, total)
             except ObjectDoesNotExist:
                 profile_id = self.db_sync_manager.register_id(ProfileMeta)
                 raw_password, should_notify = make_password_by_config(self.category_id, return_raw=True)
@@ -328,8 +348,14 @@ class ExcelSyncer(Syncer):
             # 2 获取关联的部门DB实例，创建关联对象
             progress(index, total, "adding profile & department relation")
             department_groups = parser_set.get_cell_data("department_name", user_raw_info)
+
+            # 获取操作类型
+            operation_type = parser_set.get_cell_data("operationtype", user_raw_info) or ""
+            # 根据操作类型确定是否覆盖
+            user_is_overwrite = self._determine_overwrite_mode(operation_type)
+
             self._department_profile_relation_handle(
-                is_overwrite, department_groups, profile_id, should_deleted_department_profile_relation_ids
+                user_is_overwrite, department_groups, profile_id, should_deleted_department_profile_relation_ids
             )
 
         if len(should_deleted_department_profile_relation_ids) > 0:
@@ -408,6 +434,9 @@ class ParserSet:
     def __post_init__(self):
         fields = DynamicFieldInfo.objects.filter(enabled=True)
         fields_display_name_map = {x.display_name: x for x in fields}
+        # 手动新增一个字段
+        operationtype = DynamicFieldInfo(name="operationtype", display_name="操作类型", type="string", order=0)
+        fields_display_name_map["操作类型"] = operationtype
 
         missing_names = set(self.titles) - set(fields_display_name_map.keys())
         if missing_names:
@@ -431,6 +460,7 @@ class ParserSet:
             LeadersCellParser,
             PhoneNumberParser,
             EmailCellParser,
+            OperationTypeCellParser,
         ]:
             l_parsers[cell_cls.name] = cell_cls.__call__(category_id)
 

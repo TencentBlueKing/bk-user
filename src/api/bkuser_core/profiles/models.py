@@ -219,6 +219,13 @@ class Profile(TimestampedModel):
     def is_normal(self) -> bool:
         return self.enabled and self.status == ProfileStatus.NORMAL.value
 
+    # 下面两个函数不做成属性函数property, 因为旧实例需要保存改动之前的数据
+    def get_leader_list(self) -> list:
+        return list(self.leader.filter(enabled=True).values_list("username", flat=True))
+
+    def get_departments_list(self) -> list:
+        return list(self.departments.filter(enabled=True).values_list("name", flat=True))
+
     def enable(self):
         self.enabled = True
         self.status = ProfileStatus.NORMAL.value

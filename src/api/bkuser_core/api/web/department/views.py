@@ -26,9 +26,9 @@ from .serializers import (
     DepartmentsWithChildrenAndAncestorsOutputSLZ,
 )
 from bkuser_core.api.web.utils import (
-    get_category, 
-    get_default_category_id, 
-    get_department, 
+    get_category,
+    get_default_category_id,
+    get_department,
     get_operator,
     mask_sensitive_data
 )
@@ -129,6 +129,29 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         instance.delete()
         return Response(status=status.HTTP_200_OK)
+
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # 名称不变的情况
+        if data["name"] != instance.name:
+            if Department.objects.filter(parent=instance.parent, name=data["name"]).exists():
+                raise error_codes.DEPARTMENT_NAME_CONFLICT
+
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
 
 
 class DepartmentSearchApi(generics.ListAPIView):
@@ -242,13 +265,14 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
             if recursive:
                 queryset_recursive = queryset_recursive.filter(position=data["position"])
         if data.get("leaders"):
-            if data["leaders"].isdigit():
-                queryset = queryset.filter(leader__id=data["leaders"])
+            leader_list = data.get("leaders").split(",")
+            if leader_list[0].isdigit():
+                queryset = queryset.filter(leader__id__in=leader_list)
             else:
                 queryset = queryset.filter(leader__username__icontains=data["leaders"])
             if recursive:
-                if data["leaders"].isdigit():
-                    queryset_recursive = queryset_recursive.filter(leader__id=data["leaders"])
+                if leader_list[0].isdigit():
+                    queryset_recursive = queryset_recursive.filter(leader__id__in=leader_list)
                 else:
                     queryset_recursive = queryset_recursive.filter(leader__username__icontains=data["leaders"])
         if recursive:
