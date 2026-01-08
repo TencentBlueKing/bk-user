@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  BatchUpdateParams,
   DepartmentsListParams,
   OptionalDepartmentsListData,
   TenantListParams,
@@ -137,7 +138,7 @@ export const batchDelete = (params: any) => http.delete(`${prefix}/tenants/depar
 /**
  * 移至目标组织
  */
-export const batchUpdate = (params: any) => http.patch(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const batchUpdate = (params: BatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 从其他组织拉取 / 追加目标组织

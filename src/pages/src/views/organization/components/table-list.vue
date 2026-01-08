@@ -262,7 +262,6 @@
     batchDeleteUser,
     optionalDepartmentsList,
     batchDelete,
-    batchUpdate,
     batchCreate,
     batchDelUpdate,
     getTenantsUserDetail,
@@ -692,7 +691,6 @@
     const params = {
       user_ids: getBatchUserIds(),
       target_department_ids: selectedValue.value,
-      source_department_id: appStore.currentOrg.id
     };
     await currentHandle.value.confirmFn(params);
     moveDialogShow.value = false;
