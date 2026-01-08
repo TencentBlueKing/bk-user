@@ -243,20 +243,19 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
 
 
 class NotificationTemplatesInputSLZ(serializers.Serializer):
-    class SenderEmailField(serializers.EmailField):
-        def to_internal_value(self, data):
-            if data == "蓝鲸智云":
-                data = ""
-            return super().to_internal_value(data)
-
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    # Q: 这里为什么不直接使用 serializers.EmailField
-    # A: 短信模版在前端无法修改 sender，对于可能存在的历史数据“蓝鲸智云"需要将其转换为空字符串
-    sender = SenderEmailField(help_text="发送人", required=False, allow_blank=True)
+    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True)
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
+
+    def to_internal_value(self, data):
+        # Q: 这里为什么要重写 to_internal_value
+        # A: 短信模版在前端无法修改 sender，对于可能存在的历史数据“蓝鲸智云"需要将其转换为空字符串
+        if data["sender"] == "蓝鲸智云":
+            data["sender"] = ""
+        return super().to_internal_value(data)
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
