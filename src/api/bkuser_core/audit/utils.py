@@ -19,10 +19,14 @@ from bkuser_core.audit import models as log_models_module
 from bkuser_core.audit.constants import OperationStatus, OperationType
 from bkuser_core.audit.models import GeneralLog, ProfileRelatedLog
 from bkuser_core.common.error_codes import CoreAPIError
+from bkuser_core.profiles.models import DynamicFieldInfo
+from .field_handler import create_field_handler
 
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
+    from bkuser_core.profiles.models import Profile
+else:
     from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -102,6 +106,63 @@ def create_profile_log(
     except Exception:
         raise ValueError("operation is not a profile log type")
 
+def generate_profile_update_info(old_profile: Optional["Profile"], new_profile: "Profile") -> list:
+    """生成用户资料变更的详细信息
+
+    使用字段处理器模式来处理不同类型的字段变更
+
+    Args:
+        old_profile: 旧的Profile对象，创建操作时为None
+        new_profile: 新的Profile对象
+
+    Returns:
+        变更记录列表
+    """
+    # 字段显示名称映射
+    field_display_names = {
+        "departments": "部门",
+    }
+
+    field_display_names.update({
+        field.name: field.verbose_name
+        for field in Profile._meta.get_fields()
+        if field.model is Profile and not field.auto_created and field.name not in ["create_time", "update_time"]
+    })
+
+    # 获取动态字段的显示名称
+    try:
+        dynamic_fields = DynamicFieldInfo.objects.filter(enabled=True)
+        for field in dynamic_fields:
+            field_display_names[f"extras.{field.name}"] = f"自定义字段-{field.display_name}"
+    except Exception:
+        # 如果无法获取动态字段信息，继续使用默认字段
+        pass
+
+    attributes = []
+    is_create = old_profile is None
+
+    # 获取所有需要处理的字段
+    basic_fields = ["departments"] + [
+        field.name
+        for field in Profile._meta.get_fields()
+        if field.model is Profile and not field.auto_created and field.name not in ["create_time", "update_time"]
+    ]
+
+    # 为每个字段创建对应的处理器
+    for field in basic_fields:
+        display_name = field_display_names.get(field, field)
+        handler = create_field_handler(field, display_name, field_display_names)
+
+        # 使用处理器处理字段变更
+        result = handler.handle(old_profile, new_profile, is_create)
+
+        # ExtrasFieldHandler返回列表，其他处理器返回单个字典
+        if isinstance(result, list):
+            attributes.extend(result)
+        elif result is not None:
+            attributes.append(result)
+
+    return attributes
 
 def audit_general_log(operate_type: str):
     """定义捕获异常的审计日志装饰器"""

@@ -83,7 +83,7 @@
                 </div>
               </bk-form-item>
               <bk-form-item
-                :label="$t('所在公司')"
+                :label="$t('所在组织')"
                 :required="true"
                 :property="'department_name'"
                 :error-display-type="'normal'">
@@ -119,7 +119,7 @@
     <!-- 所在组织的弹窗 -->
     <div class="operation-wrapper">
       <bk-dialog
-        width="721"
+        width="960"
         class="king-dialog department-dialog"
         :auto-close="false"
         header-position="left"

@@ -281,7 +281,7 @@
       </bk-dialog>
       <!-- 设置所在组织的弹窗 -->
       <bk-dialog
-        width="721"
+        width="960"
         class="king-dialog department-dialog"
         header-position="left"
         :position="{ top: setDepartmentTop }"
@@ -492,7 +492,7 @@ export default {
           return;
         }
         const children = [];
-        const multiable = true;
+        const multiable = false;
         if (options.length > 0) {
           options.forEach((k) => {
             if (this.$i18n.locale === 'en') {
@@ -969,6 +969,8 @@ export default {
         const res = await this.$store.dispatch('organization/modifyDepartmentName', {
           id: this.renameData.item.id,
           name: this.$refs.dialogContentRef.departmentName,
+          category_id: this.renameData.item.category_id,
+          parent_id: this.renameData.item.directParent ? this.renameData.item.directParent.id : null,
         });
         const { name, full_name: fullName } = res.data;
         this.renameData.item.name = name;
