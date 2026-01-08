@@ -17,7 +17,7 @@
 from typing import List, Literal, Optional
 
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_validator, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
@@ -99,6 +99,12 @@ class NotificationTemplate(BaseModel):
     content: str
     # 模板内容（html）格式
     content_html: str
+
+    @field_validator("sender", mode="before")
+    @classmethod
+    def normalize_sender(cls, sender: str) -> str:
+        """兼容历史数据：将 DB 中已存的“蓝鲸智云”转换为空字符串"""
+        return "" if sender == "蓝鲸智云" else sender
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "NotificationTemplate":
