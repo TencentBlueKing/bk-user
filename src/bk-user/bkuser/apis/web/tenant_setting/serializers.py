@@ -246,13 +246,12 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True)
+    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True, default="")
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
 
     def to_internal_value(self, data):
-        # Q: 这里为什么要重写 to_internal_value
-        # A: 短信模版在前端无法修改 sender，对于可能存在的历史数据“蓝鲸智云"需要将其转换为空字符串
+        # Note: 存量历史数据可能存在 sender=“蓝鲸智云"，而 EmailField 的声明必然会失败，所以这里兼容处理历史数据
         if data["sender"] == "蓝鲸智云":
             data["sender"] = ""
         return super().to_internal_value(data)
