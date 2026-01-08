@@ -14,6 +14,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
+from django.forms.models import model_to_dict
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
@@ -32,7 +33,7 @@ from bkuser_core.api.web.profile.serializers import (
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password, mask_sensitive_data
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import audit_general_log, create_general_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log, generate_profile_update_info
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePermission, Permission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -144,6 +145,13 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         operate_type = OperationType.UPDATE.value
         validated_data = slz.validated_data
 
+        # 记录旧的数据, 使用model_to_dict安全地进行转换
+        old_instance = Profile(**model_to_dict(instance, exclude=["leader", "departments"]))
+        old_instance.leader_list = instance.get_leader_list()
+        old_instance.departments_list = instance.get_departments_list()
+        # 复杂类型需要使用copy()
+        old_instance.extras = instance.extras.copy()
+
         # 前端是把extras字段打平提交的
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
         extra_fields = {key: value for key, value in request.data.items() if key not in validated_data}
@@ -232,6 +240,10 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             logger.exception(f"failed to update profile<{username}>")
             raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
+        # 获取更新后的数据
+        instance.leader_list = instance.get_leader_list()
+        instance.departments_list = instance.get_departments_list()
+
         post_profile_update.send(
             sender=self,
             instance=instance,
@@ -244,6 +256,9 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             operate_type=operate_type,
             operator_obj=instance,
             request=request,
+            extra_info={
+                "attributes": generate_profile_update_info(old_instance, instance)
+            }
         )
         return Response(self.serializer_class(instance).data)
 
@@ -474,18 +489,37 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                     category = ProfileCategory.objects.get(pk=instance.category_id)
                     Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
 
+                # 拿到更新前的数据
+                old_instance = Profile(**model_to_dict(instance, exclude=["leader", "departments"]))
+                old_instance.leader_list = instance.get_leader_list()
+                old_instance.departments_list = instance.get_departments_list()
+                # 复杂类型需要使用copy()
+                old_instance.extras = instance.extras.copy()
+
+                # TODO: 限制非本地目录进行修改
+                single_serializer = ProfileBatchUpdateInputSLZ(instance=instance, data=obj)
+                single_serializer.is_valid(raise_exception=True)
+                single_serializer.save()
+                updating_instances.append(instance)
+
+                # 获取更新后的数据
+                instance.leader_list = instance.get_leader_list()
+                instance.departments_list = instance.get_departments_list()
+
+                # TODO: 限制非本地目录进行修改
+                single_serializer = ProfileBatchUpdateInputSLZ(instance=instance, data=obj)
+                single_serializer.is_valid(raise_exception=True)
+                single_serializer.save()
+                updating_instances.append(instance)
+
                 create_general_log(
                     operator=operator,
                     operate_type=OperationType.UPDATE.value,
                     operator_obj=instance,
                     request=request,
+                    extra_info={
+                        "attributes": generate_profile_update_info(old_instance, instance)
+                    }
                 )
-
-                # TODO: 限制非本地目录进行修改
-
-                single_serializer = ProfileBatchUpdateInputSLZ(instance=instance, data=obj)
-                single_serializer.is_valid(raise_exception=True)
-                single_serializer.save()
-                updating_instances.append(instance)
 
         return Response(status=status.HTTP_200_OK)

@@ -222,7 +222,7 @@ def mask_sensitive_data(data: dict) -> dict:
 
     if data.get('telephone', ''):
         data['telephone'] = mask_telephone(data['telephone'])
-    
+
     return data
 
 

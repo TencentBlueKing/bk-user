@@ -32,7 +32,7 @@ from bkuser_core.api.login.serializers import (
     ProfileSerializer,
 )
 from bkuser_core.audit.constants import LogInFailReason, OperationType
-from bkuser_core.audit.utils import create_general_log, create_profile_log
+from bkuser_core.audit.utils import create_general_log, create_profile_log, generate_profile_update_info
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -104,6 +104,13 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         config_loader = ConfigProvider(category_id=category.id)
         # 由于安全检测等原因，取消原先对admin用户的检查豁免
         if category.type in [CategoryType.LOCAL.value]:
+            # 判断账户解锁
+            auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
+            from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
+            retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
+            if retry_after_wait <= 0 and profile.status == ProfileStatus.LOCKED.value:
+                profile.status = ProfileStatus.NORMAL.value
+                profile.save(update_fields=["status"])
 
             # 判断账户状态
             if profile.status in [
@@ -151,7 +158,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 # raise error_codes.USER_IS_RESIGNED
 
             # 获取密码配置
-            auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
             max_trail_times = int(config_loader["max_trail_times"])
 
         try:
@@ -195,6 +201,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         profile.username,
                         message_detail,
                     )
+                    # 将账户锁定
+                    profile.status = ProfileStatus.LOCKED.value
+                    profile.save(update_fields=["status"])
                     # NOTE: 安全原因, 不能返回账户状态
                     raise mask_login_error(error_codes.USER_LOCKED_TEMPORARILY.f(wait_seconds=retry_after_wait))
             logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
@@ -310,6 +319,17 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             else:
                 raise error_codes.DOMAIN_UNKNOWN
 
+        # 获取更新前的用户资料（用于变更日志）
+        try:
+            # 这里不需要预加载多对多字段, 因为这个接口无法修改相关信息
+            old_profile = Profile.objects.get(
+                username=username,
+                domain=category.domain,
+                category_id=category.id
+            )
+        except Profile.DoesNotExist:
+            old_profile = None
+
         profile, created = Profile.objects.update_or_create(
             username=username,
             domain=category.domain,
@@ -342,6 +362,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             operate_type=OperationType.CREATE.value if created else OperationType.UPDATE.value,
             operator_obj=profile,
             request=request,
+            extra_info={
+                "attributes": generate_profile_update_info(old_profile, profile)
+            },
         )
 
         return Response(data=ProfileSerializer(profile, context={"request": request}).data)
