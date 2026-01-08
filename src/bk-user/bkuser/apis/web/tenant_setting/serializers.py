@@ -252,7 +252,7 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
 
     def to_internal_value(self, data):
         # Note: 存量历史数据可能存在 sender=“蓝鲸智云"，而 EmailField 的声明必然会失败，所以这里兼容处理历史数据
-        if data["sender"] == "蓝鲸智云":
+        if data.get("sender") == "蓝鲸智云":
             data["sender"] = ""
         return super().to_internal_value(data)
 
