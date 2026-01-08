@@ -36,6 +36,4 @@ class NotificationTemplate(BaseModel):
     @classmethod
     def normalize_sender(cls, sender: str) -> str:
         """兼容历史数据：将 DB 中已存的"蓝鲸智云"转换为空字符串"""
-        if sender == "蓝鲸智云":
-            return ""
-        return sender
+        return "" if sender == "蓝鲸智云" else sender
