@@ -343,13 +343,19 @@
 
         <InfoCard :title="$t('语言和时区')">
           <div class="grid grid-cols-2 gap-y-[30px] pt-[16px]">
-            <FieldItem
-              :container-height="50"
-              :field-value="$t('语言')"
-              :field-width="120"
-            >
+            <FieldItem :container-height="50">
+              <template #field>
+                <div
+                  class="shrink-0 text-right w-[120px] text-[#63656e] text-[14px] leading-[50px]"
+                >
+                  <span class="required-icon"> * </span>
+                  {{ $t('语言') }}：
+                </div>
+              </template>
               <template #value>
                 <EditBlock
+                  v-model="currentUserInfo.language"
+                  required
                   @confirm="submitLanguage"
                   @cancel="cancelEditLanguage">
                   <template #text>
@@ -374,13 +380,19 @@
                 </EditBlock>
               </template>
             </FieldItem>
-            <FieldItem
-              :container-height="50"
-              :field-value="$t('时区')"
-              :field-width="120"
-            >
+            <FieldItem :container-height="50">
+              <template #field>
+                <div
+                  class="shrink-0 text-right w-[120px] text-[#63656e] text-[14px] leading-[50px]"
+                >
+                  <span class="required-icon"> * </span>
+                  {{ $t('时区') }}：
+                </div>
+              </template>
               <template #value>
                 <EditBlock
+                  v-model="currentUserInfo.time_zone"
+                  required
                   @confirm="submitTimeZone"
                   @cancel="cancelEditTimeZone">
                   <template #text>
@@ -530,7 +542,7 @@ const editExtra = (item: OperateExtrasCustomFields, index: number) => {
 };
 // 失焦校验
 const customBlur = (item: OperateExtrasCustomFields) => {
-  item.error = item.value === '' || (item.data_type === 'multi_enum' && !item.value.length);
+  item.error = item.required && (item.value === '' || (item.data_type === 'multi_enum' && !item.value.length));
 };
 
 const handleInput = (item: OperateExtrasCustomFields) => {
@@ -599,7 +611,7 @@ const submitTimeZone = async () => {
     });
     Message({ theme: 'success', message: t('保存成功') });
     originalValue.value.time_zone = currentUserInfo.value.time_zone;
-  } catch (error) {
+    } catch (error) {
     console.warn(error);
   }
 };

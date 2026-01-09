@@ -55,7 +55,7 @@ interface IProps {
   /** 分隔符(默认：) */
   fieldSplitCode?: string;
   /** 左侧字段(key)展示 */
-  fieldValue: number | string;
+  fieldValue?: number | string;
   /** 左侧字段(key)文本宽度(默认100，英文环境下自动翻倍) */
   fieldWidth?: number | string;
   /** 右侧值(value)是否使用OverflowTitle(默认使用) */
