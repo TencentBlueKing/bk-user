@@ -105,10 +105,8 @@ export interface TestConnectionParams {
  */
 export interface SyncRecordsParams {
   page?: number,
-  pageSize?: number,
-  data_source_id?: number,
-  status?: string,
-  id: string,
+  page_size?: number,
+  statuses?: string,
 }
 
 /**

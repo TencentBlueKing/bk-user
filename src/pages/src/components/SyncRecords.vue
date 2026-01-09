@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
+import { debounce } from 'lodash';
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -98,6 +99,7 @@ import DisplayName from './display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http';
+import { SyncRecordsParams } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { dataRecordStatus, durationText } from '@/utils';
 
@@ -167,14 +169,15 @@ const getSyncRecordsList = async () => {
   }
 };
 
-const dataRecordFilter = ({ checked }) => {
+// 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
+const dataRecordFilter = debounce(({ checked }) => {
   if (checked.length === 0) {
     pagination.current = 1;
   }
   dataRecordConfig.status = checked.join(',');
   pagination.current = 1;
   getSyncRecordsList();
-};
+}, 100);
 
 const pageLimitChange = (limit: number) => {
   pagination.limit = limit;
@@ -199,19 +202,18 @@ const beforeClose = () => {
 const handleSyncRecords = async () => {
   dataRecordConfig.isDataEmpty = false;
   dataRecordConfig.isDataError = false;
-  const params = {
+  const params: SyncRecordsParams = {
     page: pagination.current,
     page_size: pagination.limit,
-    status: dataRecordConfig.status,
-    id: props.dataSource?.id,
+    statuses: dataRecordConfig.status,
   };
   try {
-    const res = await getSyncRecords(params);
+    const res = await getSyncRecords(props.dataSource?.id, params);
     dataRecordConfig.list = res.data.results;
     dataRecordConfig.isDataEmpty = res.data.count === 0;
     pagination.count = res.data.count;
     // stop time polling
-    const curStatus = res.data.results[0].status;
+    const curStatus = res.data.results?.[0]?.status;
     if (curStatus === 'success' || curStatus === 'failed') {
       clearInterval(interval.value);
     }
