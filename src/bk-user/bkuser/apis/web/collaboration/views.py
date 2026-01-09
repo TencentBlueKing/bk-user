@@ -30,6 +30,7 @@ from bkuser.apis.web.collaboration.serializers import (
     CollaborationFromStrategyTargetStatusUpdateOutputSLZ,
     CollaborationFromStrategyUpdateInputSLZ,
     CollaborationSourceTenantCustomFieldListOutputSLZ,
+    CollaborationSyncRecordListInputSLZ,
     CollaborationSyncRecordListOutputSLZ,
     CollaborationSyncRecordRetrieveOutputSLZ,
     CollaborationTargetTenantListInputSLZ,
@@ -429,10 +430,18 @@ class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
     serializer_class = CollaborationSyncRecordListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantSyncTask]:
+        slz = CollaborationSyncRecordListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
         cur_tenant_id = self.get_current_tenant_id()
-        return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
+        queryset = TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
             data_source_owner_tenant_id=cur_tenant_id
         )
+        if statuses := data.get("statuses"):
+            queryset = queryset.filter(status__in=statuses)
+
+        return queryset
 
     def get_serializer_context(self) -> Dict[str, Any]:
         return {"tenant_name_map": {t.id: t.name for t in Tenant.objects.all()}}

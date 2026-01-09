@@ -129,7 +129,7 @@ class CollaborationToStrategySourceStatusUpdateOutputSLZ(serializers.Serializer)
 
 
 class CollaborationTargetTenantListInputSLZ(serializers.Serializer):
-    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+    tenant_ids = StringArrayField(help_text="指定查询的租户，多个使用英文逗号分隔", required=False, default="")
 
 
 class CollaborationTargetTenantListOutputSLZ(serializers.Serializer):
@@ -180,7 +180,7 @@ def _validate_field_mapping_with_tenant_user_fields(
     if not_allowed_fields := source_fields - set(source_tenant_custom_field_map.keys()):
         raise ValidationError(_("字段映射中的源字段 {} 不属于源租户用户自定义字段").format(not_allowed_fields))
 
-    # 目标字段检查（是否合法） 注：不需要检查必填字段是否已配置
+    # 目标字段检查（是否合法）注：不需要检查必填字段是否已配置
     target_fields = {m.get("target_field") for m in field_mapping}
     if not_allowed_fields := target_fields - set(target_tenant_custom_field_map.keys()):
         raise ValidationError(
@@ -227,6 +227,10 @@ class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateIn
 
 class CollaborationFromStrategyTargetStatusUpdateOutputSLZ(serializers.Serializer):
     target_status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
+
+
+class CollaborationSyncRecordListInputSLZ(serializers.Serializer):
+    statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
