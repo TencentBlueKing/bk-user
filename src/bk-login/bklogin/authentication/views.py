@@ -366,7 +366,7 @@ class IdpPluginDispatchView(View):
         if isinstance(user_infos, dict):
             user_infos = [user_infos]
 
-        tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp_id, user_infos)
+        tenant_users = bk_user_api.list_matched_tenant_user(sign_in_tenant_id, idp_id, user_infos)
         if not tenant_users:
             raise error_codes.OBJECT_NOT_FOUND.f(
                 _("认证成功，但用户在租户 ({}) 下未有对应账号").format(sign_in_tenant_id),
@@ -606,7 +606,7 @@ class BuiltinManagementAuthenticateView(View):
         if isinstance(user_infos, dict):
             user_infos = [user_infos]
 
-        tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp_id, user_infos)
+        tenant_users = bk_user_api.list_matched_tenant_user(sign_in_tenant_id, idp_id, user_infos)
         if not tenant_users:
             raise error_codes.OBJECT_NOT_FOUND.f(
                 _("认证成功，但用户在租户 ({}) 下未有对应账号").format(sign_in_tenant_id),
