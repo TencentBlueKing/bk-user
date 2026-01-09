@@ -479,7 +479,7 @@ export default {
   离开将会导致未保存信息丢失: 'Leaving will result in the loss of unsaved information',
   离开: 'LEAVE',
   '字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头': 'By letters, numbers, (_), (.) , (-), starting with a letter or digit',
-  所在公司: 'Company',
+  所在组织: 'Company',
   将文件拖到此处或: 'Drag and drop your files here or',
   点击上传: 'Choose file',
   提交1: 'OK',

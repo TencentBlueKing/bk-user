@@ -253,3 +253,30 @@ class EmailCellParser(CellParser):
             logger.debug("failed to parse email: {}".format(e))
             raise ParseFailedException(field_name=self.name, reason=_("{} 不符合格式要求").format(raw_content))
         return {self.name: raw_content}
+
+
+@dataclass
+class OperationTypeCellParser(CellParser):
+    """
+    操作类型解析
+    """
+
+    name = "operationtype"
+    required = False
+
+    def parse(self, raw_content: str) -> dict:
+        # 操作类型可选值：覆盖、新增，对应英文为 overwrite, append
+        # 空值默认为 ""
+        if not raw_content:
+            return {self.name: ""}
+
+        # 标准化操作类型值
+        raw_content = raw_content.strip().lower()
+        operation_map = {
+            "覆盖": "overwrite",
+            "新增": "append",
+            "overwrite": "overwrite",
+            "append": "append",
+        }
+
+        return {self.name: operation_map.get(raw_content, "")}

@@ -71,6 +71,7 @@ class GeneralLogOutputSLZ(serializers.Serializer):
             "display_name": display_name,
             "operation": instance["operation"],
             "client_ip": extra_value.get("client_ip", PLACE_HOLDER),
+            "attributes": extra_value.get("attributes", []),
         }
 
 

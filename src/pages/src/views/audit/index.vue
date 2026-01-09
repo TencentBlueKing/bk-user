@@ -47,7 +47,8 @@
         :data="auditList"
         :pagination="paginationConfig"
         @page-change="changeCurrentPage"
-        @page-limit-change="changeLimitPage">
+        @page-limit-change="changeLimitPage"
+        @row-click="handleRowClick">
         <template slot="empty">
           <EmptyComponent
             :is-data-empty="isDataEmpty"
@@ -82,6 +83,97 @@
           </bk-table-column>
         </template>
       </bk-table>
+
+      <!-- 审计详情侧边栏 -->
+      <bk-sideslider
+        :is-show.sync="auditDetailSlider.isShow"
+        :title="$t('操作详情')"
+        :width="760"
+        :quick-close="true"
+        @hidden="handleHidden">
+        <div slot="content" class="details-content" v-bkloading="{ isLoading: auditDetailSlider.loading }">
+          <div class="details-layout" v-if="!auditDetailSlider.loading && currentAuditDetail">
+            <div class="details-info">
+              <div class="info-group">
+                <label class="info-label">{{$t('操作用户')}}</label>
+                <span class="info-content">{{currentAuditDetail.operator || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('用户全名')}}</label>
+                <span class="info-content">{{currentAuditDetail.display_name || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('操作对象')}}</label>
+                <span class="info-content">{{currentAuditDetail.target_obj || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('操作类型')}}</label>
+                <span class="info-content">{{currentAuditDetail.operation || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('用户目录')}}</label>
+                <span class="info-content">{{currentAuditDetail.category_display_name || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('操作时间')}}</label>
+                <span class="info-content">{{currentAuditDetail.datetime || '--'}}</span>
+              </div>
+              <div class="info-group">
+                <label class="info-label">{{$t('来源IP')}}</label>
+                <span class="info-content">{{currentAuditDetail.client_ip || '--'}}</span>
+              </div>
+            </div>
+
+            <div class="details-table" v-if="currentAuditDetail.attributes && currentAuditDetail.attributes.length > 0">
+              <div
+                class="bk-table bk-table-fit bk-table-border bk-table-outer-border
+                bk-table-row-border bk-table-col-border bk-table-fluid-height
+                bk-table-enable-row-transition bk-table-small">
+                <div class="bk-table-header-wrapper">
+                  <table cellspacing="0" cellpadding="0" border="0" class="bk-table-header" style="width: 100%;">
+                    <colgroup>
+                      <col width="33%">
+                      <col width="33%">
+                      <col width="34%">
+                    </colgroup>
+                    <thead class="has-gutter">
+                      <tr>
+                        <th class="is-right is-leaf is-first"><div class="cell">{{$t('属性')}}</div></th>
+                        <th class="is-leaf"><div class="cell">{{$t('变更前')}}</div></th>
+                        <th class="is-leaf is-last"><div class="cell">{{$t('变更后')}}</div></th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                <div class="bk-table-body-wrapper is-scrolling-none">
+                  <table cellspacing="0" cellpadding="0" border="0" class="bk-table-body" style="width: 100%;">
+                    <colgroup>
+                      <col width="33%">
+                      <col width="33%">
+                      <col width="34%">
+                    </colgroup>
+                    <tbody>
+                      <tr v-for="(attr, index) in currentAuditDetail.attributes" :key="index" class="bk-table-row">
+                        <td class="is-right is-first"><div class="cell">{{attr.name}}</div></td>
+                        <td class=""><div
+                          class="cell"
+                          :style="getCellStyle(attr.before, attr.after)">
+                          {{attr.before || '--'}}
+                        </div></td>
+                        <td class="is-last"><div
+                          class="cell"
+                          :style="getCellStyle(attr.before, attr.after)">
+                          {{attr.after || '--'}}
+                        </div></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </bk-sideslider>
     </bk-tab>
   </div>
 </template>
@@ -110,6 +202,13 @@ export default {
       // 记录搜索过的关键字，blur 的时候如果和当前关键字不一样就刷新表格
       searchedKey: '',
       auditList: [],
+      // 当前选中的审计详情
+      currentAuditDetail: null,
+      // 审计详情侧边栏
+      auditDetailSlider: {
+        isShow: false,
+        loading: false,
+      },
       shortcuts: [
         {
           text: this.$t('最近一天'),
@@ -293,6 +392,29 @@ export default {
         content: `${item.reason}`,
       };
     },
+    /** 处理表格行点击事件 */
+    handleRowClick(row) {
+      // 只有操作审计才显示详情
+      if (this.panelActive !== 'operate') {
+        return;
+      }
+
+      // 直接使用行数据中的attributes
+      this.currentAuditDetail = row;
+      this.auditDetailSlider.isShow = true;
+    },
+    /** 隐藏侧边栏时的回调 */
+    handleHidden() {
+      this.currentAuditDetail = null;
+    },
+    /** 获取变更前后单元格样式 */
+    getCellStyle(before, after) {
+      // 如果变更前和变更后不同，则添加背景色
+      if (before !== after) {
+        return { 'background-color': 'rgb(233, 250, 240)' };
+      }
+      return {};
+    },
   },
 };
 </script>
@@ -362,4 +484,53 @@ export default {
     text-align: center;
     font-weight: normal;
   }
+
+// 审计详情侧边栏样式
+.details-content {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+
+  .details-layout {
+    .details-info {
+      margin-bottom: 20px;
+
+      .info-group {
+        display: flex;
+        margin-bottom: 10px;
+
+        .info-label {
+          width: 100px;
+          font-weight: bold;
+          color: #63656e;
+        }
+
+        .info-content {
+          flex: 1;
+          color: #63656e;
+        }
+      }
+    }
+
+    .details-table {
+      .bk-table {
+        .bk-table-header {
+          th {
+            background-color: #f0f1f5;
+            font-weight: bold;
+          }
+        }
+
+        .bk-table-body {
+          td {
+            .cell {
+              padding: 10px;
+              word-break: break-all;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 </style>

@@ -156,6 +156,8 @@ class ProfileExcelExporter:
         not_required_field_names = [
             x["display_name"] for x in self.fields if not x["builtin"] and x["name"] not in exclude_keys
         ]
+        # 增加操作类型
+        not_required_field_names.append("操作类型")
 
         field_col_map = {}
 

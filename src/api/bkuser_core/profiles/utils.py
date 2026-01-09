@@ -17,12 +17,13 @@ from typing import TYPE_CHECKING, Dict, Tuple
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.forms.models import model_to_dict
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
 
 from ..audit.constants import OperationStatus, OperationType, ResetPasswordFailReason
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
-from bkuser_core.audit.utils import create_general_log, create_profile_log
+from bkuser_core.audit.utils import create_general_log, create_profile_log, generate_profile_update_info
 from bkuser_core.categories.cache import get_default_category_id_from_local_cache
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
@@ -282,6 +283,9 @@ def check_old_password(instance: "Profile", old_password: str, request: "Request
             and settings.ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK
         ):
             # 校验失败次数超过配置次数并且配置锁定则对用户进行锁定
+
+            # 提前获取旧数据
+            old_instance = Profile(**model_to_dict(raw_profile, exclude=["leader", "departments"]))
             raw_profile.status = ProfileStatus.LOCKED.value
             raw_profile.save()
             create_general_log(
@@ -289,6 +293,9 @@ def check_old_password(instance: "Profile", old_password: str, request: "Request
                 operate_type=OperationType.UPDATE.value,
                 operator_obj=instance,
                 request=request,
+                extra_info={
+                    "attributes": generate_profile_update_info(old_instance, raw_profile)
+                }
             )
 
         raise error_codes.OLD_PASSWORD_ERROR
