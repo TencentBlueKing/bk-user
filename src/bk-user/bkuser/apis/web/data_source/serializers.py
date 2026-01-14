@@ -310,7 +310,7 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
             try:
                 attrs["password_rule"] = PasswordRuleConfig(**passwd_rule_cfg).to_rule()
             except PDValidationError as e:
-                raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
+                raise ValidationError(_("密码规则配置不合法：{}").format(stringify_pydantic_error(e)))
         elif data_source_id := attrs.get("data_source_id"):
             data_source = DataSource.objects.filter(
                 id=data_source_id,
@@ -371,7 +371,6 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
-    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
     statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
 

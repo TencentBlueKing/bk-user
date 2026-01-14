@@ -92,7 +92,7 @@ def get_idp(idp_id: str) -> IdpDetail:
     return IdpDetail(**data)
 
 
-def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
+def list_matched_tenant_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
     """根据 IDP 用户查询匹配的租户用户"""
     data = _call_bk_user_api_20x(
         http_post,
