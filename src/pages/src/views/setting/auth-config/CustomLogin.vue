@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
+import { defineEmits, defineProps, onMounted, ref, toRaw, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
@@ -204,7 +204,7 @@ onMounted(async () => {
         type: field.type,
       }));
     });
-    originalData = JSON.parse(JSON.stringify(formData));
+    originalData = JSON.parse(JSON.stringify(toRaw(formData.value)));
   } catch (error) {
     console.error(error);
   } finally {
@@ -220,7 +220,9 @@ const getJsonSchema = () => {
   });
 };
 watch(formData, () => {
-  isDisabled.value = props?.authDetails?.idp_id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  isDisabled.value = props?.authDetails?.idp_id
+    ? JSON.stringify(originalData) === JSON.stringify(toRaw(formData.value))
+    : false;
 }, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
