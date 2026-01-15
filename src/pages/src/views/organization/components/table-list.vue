@@ -13,7 +13,7 @@
             </bk-button>
             <bk-button class="mr-[16px]" v-if="isShowBtn"
               @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="reloadList"/>
+            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="handleAfterBatchOperation"/>
             <bk-checkbox class="h-[32px] ml-[2px]"
                 :label="$t('仅显示本级用户')"
                 v-model="recursive"
@@ -35,6 +35,7 @@
             </bk-searchSelect>
         </div>
         <bk-table
+            ref="tableRef"
             :pagination-height="paginationHeight"
             :thead="{ height: headHeight }"
             :row-height="lineHeight"
@@ -285,6 +286,7 @@
   const selectedValue = ref([]);
   const isDetailSlider = ref(false);
   const moveTips = ref('');
+  const tableRef = ref();
   /** 是否为租户层级 */
   const isTenantStatus = computed(() => {
     return appStore.currentOrg?.id === appStore.currentTenant?.id;
@@ -829,6 +831,12 @@
     Message({ theme: 'success', message });
     handleClear();
   };
+
+  const handleAfterBatchOperation = () => {
+    tableRef.value?.clearSelection();
+    reloadList();
+  }
+
   const reloadList = () => {
     pagination.current = 1;
     initTenantsUserList();
