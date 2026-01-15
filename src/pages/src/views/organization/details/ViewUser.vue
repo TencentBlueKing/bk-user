@@ -21,7 +21,7 @@
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('手机号') }}：</span>
           <span class="details-content-value">
-            {{ userData.phone_country_code ?
+            {{ userData.phone ?
               `(+${userData.phone_country_code}) ${userData.phone}` : userData.phone || '--' }}
           </span>
         </div>
