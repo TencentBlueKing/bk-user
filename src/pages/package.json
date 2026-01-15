@@ -23,7 +23,7 @@
     "@blueking/bk-user-display-name": "^1.0.2",
     "@blueking/bk-user-selector": "^0.0.39-beta.3",
     "@blueking/bkui-form": "^1.0.0-beta.3",
-    "@blueking/date-picker": "^3.0.1",
+    "@blueking/date-picker": "3.0.4",
     "@blueking/login-modal": "^1.0.1",
     "@blueking/notice-component": "^2.0.4",
     "@blueking/platform-config": "^1.0.5",
