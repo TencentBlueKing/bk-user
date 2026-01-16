@@ -83,7 +83,7 @@ export const useDataSource = () => {
    * @description 获取同步数据源状态
    */
   const initSyncRecords = (customFn: Function = null) => {
-    getSyncRecords({ id: currentDataSourceId.value })
+    getSyncRecords(currentDataSourceId.value)
       .then((res) => {
         if (res.data?.count === 0) return;
         syncStatusStore.setSyncStatus(res.data?.results[0]);

@@ -36,3 +36,9 @@ export interface OptionalDepartmentsListData {
   name: string;
   organization_path: string;
 }
+
+/** 移至目标组织参数 */
+export interface BatchUpdateParams {
+  user_ids: string[];
+  target_department_ids: string[];
+}

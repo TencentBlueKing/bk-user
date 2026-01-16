@@ -15,7 +15,12 @@
     v-else
     class="flex text-[14px] z-[1000] text-[#313238]"
   >
-    <slot name="edit"></slot>
+    <div class="edit-block-validate-wrapper" :class="{ 'is-error': showError }">
+      <slot name="edit"></slot>
+      <span v-if="showError" class="error-text">
+        {{ errorMessage || $t('必填项') }}
+      </span>
+    </div>
     <div
       class="flex items-center leading-auto"
       :class="isShowAtFirstLine ? '!items-start mt-[6px]' : ''"
@@ -41,35 +46,80 @@
 
 <script setup lang="ts">
 import { Button } from 'bkui-vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
-const props = defineProps({
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  isShowAtFirstLine: {
-    type: Boolean,
-    default: false,
-  },
+interface IProps {
+  disabled?: boolean;
+  isShowAtFirstLine?: boolean;
+  /** 是否必填校验 */
+  required?: boolean;
+  /** 自定义错误提示文本 */
+  errorMessage?: string;
+  /** 自定义空值判断函数 */
+  isEmpty?: (value: any) => boolean;
+}
+
+// 使用 defineModel 双向绑定校验值
+const modelValue = defineModel<any>('modelValue');
+
+const props = withDefaults(defineProps<IProps>(), {
+  disabled: false,
+  isShowAtFirstLine: false,
+  required: false,
 });
 
 const emit = defineEmits(['edit', 'confirm', 'cancel']);
 
 const isEdit = ref(false);
+const validationError = ref(false);
+
+// 默认的空值判断逻辑
+const defaultIsEmpty = (value: any): boolean => {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+};
+
+// 执行校验
+const validate = (): boolean => {
+  if (!props.required) return true;
+
+  const checkEmpty = props.isEmpty || defaultIsEmpty;
+  const isEmpty = checkEmpty(modelValue.value);
+  validationError.value = isEmpty;
+  return !isEmpty;
+};
+
+// 是否显示错误提示
+const showError = computed(() => {
+  if (!props.required) return false;
+  const checkEmpty = props.isEmpty || defaultIsEmpty;
+  return validationError.value && checkEmpty(modelValue.value);
+});
 
 const handleClickEdit = () => {
   if (props.disabled) return;
+  validationError.value = false; // 进入编辑态时重置错误状态
   emit('edit');
   isEdit.value = true;
 };
 
 const handleConfirm = () => {
-  emit('confirm');
+  // 执行校验
+  const isValid = validate();
+  if (!isValid) {
+    return; // 校验失败，保持编辑态
+  }
+
+  // 校验通过，触发 confirm 事件并关闭编辑态
+  validationError.value = false;
   isEdit.value = false;
+  emit('confirm');
 };
 
 const handleCancel = () => {
+  validationError.value = false; // 取消时重置错误状态
   emit('cancel');
   isEdit.value = false;
 };
@@ -84,6 +134,38 @@ const handleCancel = () => {
 
   &:hover {
     color: #3A84FF;
+  }
+}
+
+.edit-block-validate-wrapper {
+  position: relative;
+  display: inline-block;
+
+  &.is-error {
+    // 为子元素的输入框添加红色边框
+    :deep(.bk-input),
+    :deep(.bk-select),
+    :deep(.bk-textarea),
+    :deep(input),
+    :deep(textarea) {
+      border-color: #ea3636 !important;
+    }
+
+    :deep(.bk-select .bk-input) {
+      border-color: #ea3636 !important;
+    }
+  }
+
+  .error-text {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: inline-block;
+    padding-top: 4px;
+    font-size: 12px;
+    line-height: 1;
+    color: #ea3636;
+    white-space: nowrap;
   }
 }
 </style>

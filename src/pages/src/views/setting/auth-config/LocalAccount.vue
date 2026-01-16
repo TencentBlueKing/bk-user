@@ -50,13 +50,13 @@
               style="width: 85px;"
               type="number"
               behavior="simplicity"
-              :min="5"
+              :min="0"
               :max="10"
               v-model="formData.config.password_rule.not_continuous_count"
             />
             <span>{{ $t('位 出现') }}</span>
           </div>
-          <p class="error-text" v-show="passwordCountError">{{ $t('可选值范围：5-10') }}</p>
+          <p class="error-text" v-show="passwordCountError">{{ $t('可选值范围：0-10') }}</p>
           <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">
             {{ $t('键盘序') }}
           </bk-checkbox>
@@ -346,7 +346,7 @@ watch(() => formData.config?.password_rule, (value) => {
   passwordConfigError.value = !list2.some(([, val]) => val);
 
   const count = formData.config?.password_rule?.not_continuous_count;
-  const isCountInRange = count >= 5 && count <= 10;
+  const isCountInRange = count >= 0 && count <= 10;
 
   if (!passwordConfigError.value && isCountInRange) {
     passwordCountError.value = false;
@@ -369,7 +369,7 @@ watch(() => formData.config?.password_rule?.not_continuous_count, (value, oldVal
 
   if (value === 0) return;
 
-  const isValueInRange = value >= 5 && value <= 10;
+  const isValueInRange = value >= 0 && value <= 10;
   passwordCountError.value = !isValueInRange;
   passwordConfigError.value = !!list.every(v => !v);
 });

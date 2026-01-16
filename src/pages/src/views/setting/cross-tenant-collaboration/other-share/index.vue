@@ -101,6 +101,7 @@
         show-overflow-tooltip
         remote-pagination
         :pagination="pagination"
+        @column-filter="dataRecordFilter"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
         @row-expand="handleRowExpand"
@@ -279,6 +280,7 @@
 
 <script setup lang="ts">
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
+import { debounce } from 'lodash';
 import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
@@ -331,6 +333,16 @@ const detailsConfig = reactive({
   type: '',
 });
 
+// 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
+const dataRecordFilter = debounce(({ checked }) => {
+  if (checked.length === 0) {
+    pagination.current = 1;
+  }
+  dialogConfig.status = checked.join(',');
+  pagination.current = 1;
+  fetchUpdateRecord();
+}, 100);
+
 //  状态为unconfirmed的行添加class
 const tableRowClassName = (item) => {
   if (item.target_status === 'unconfirmed') {
@@ -372,6 +384,7 @@ const dialogConfig = reactive({
   isDataEmpty: false,
   isDataError: false,
   loading: false,
+  status: '',
 });
 
 const pagination = reactive({
@@ -395,6 +408,7 @@ const fetchUpdateRecord = async () => {
     const res = await getCollaborationSyncRecords({
       page: pagination.current,
       page_size: pagination.limit,
+      statuses: dialogConfig.status,
     });
     const { count, results } = res.data;
 
