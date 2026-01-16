@@ -92,13 +92,13 @@
       </div>
       <div class="form-item-flex">
         <bk-form-item :label="$t('账号过期时间')">
-          <bk-date-picker
+          <LocalDatePicker
             v-model="formData.account_expired_at"
             :placeholder="$t('选择日期时间')"
             type="datetime"
             format="yyyy-MM-dd HH:mm:ss"
-            :disabled-date="disabledDate">
-          </bk-date-picker>
+            :disabled-date="disabledDate"
+          />
         </bk-form-item>
         <bk-form-item :label="$t('密码过期时间')" v-if="formData.password_expired_at">
           <bk-date-picker
@@ -128,6 +128,7 @@ import { onMounted, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
+import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import UploadImg from '@/components/upload-img.vue';
 import { useValidate } from '@/hooks';

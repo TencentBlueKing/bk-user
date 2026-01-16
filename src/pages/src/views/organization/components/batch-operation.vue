@@ -120,13 +120,13 @@
         :model="infoFormData"
         :rules="rules">
         <bk-form-item v-if="selectedOption === 'date'" :label="$t('账号过期时间')">
-          <bk-date-picker
+          <LocalDatePicker
             v-model="infoFormData.dateTime"
             type="date"
             :placeholder="$t('选择日期')"
             format="yyyy-MM-dd HH:mm:ss"
-            append-to-body>
-          </bk-date-picker>
+            append-to-body
+          />
         </bk-form-item>
         <bk-form-item v-if="selectedOption === 'leader'" :label="$t('直属上级')">
           <bk-select
@@ -170,9 +170,10 @@ import batchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
+import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { randomPasswords } from '@/http';
-import { batchAccountExpired, batchUpdate, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
+import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdate, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
