@@ -38,7 +38,6 @@
           ref="tableRef"
           :max-height="curTableMaxHeight"
           class="organization-table-main"
-          :border="false"
           :data="tableData"
           :pagination="pagination"
           v-bkloading="{ loading: isLoading }"

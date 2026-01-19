@@ -46,7 +46,7 @@
         field="username"
         :label="$t('用户名')"
         show-overflow="tooltip"
-        :min-width="120"
+        :min-width="200"
       >
         <template #default="{ row }">
           <bk-button text theme="primary" @click="handleClick('view', row.id)">{{ row.username }}</bk-button>
@@ -56,13 +56,13 @@
         field="full_name"
         :label="$t('全名')"
         show-overflow="tooltip"
-        :min-width="120"
+        :min-width="200"
       />
       <TableColumn
         field="app_codes"
         :label="$t('所属应用')"
         show-overflow="tooltip"
-        :min-width="150"
+        :min-width="200"
       >
         <template #default="{ row }">
           {{ row.app_codes?.length ? row.app_codes?.join(', ') : '--' }}
@@ -72,7 +72,7 @@
         field="owners"
         :label="$t('账号责任人')"
         show-overflow="tooltip"
-        :min-width="120"
+        :min-width="300"
       >
         <template #default="{ row }">
           <DisplayName :user-id="row.owners" />
@@ -82,7 +82,7 @@
         field="created_at"
         :label="$t('创建时间')"
         show-overflow="tooltip"
-        :min-width="150"
+        :min-width="200"
       >
         <template #default="{ row }">
           <span>{{ row?.created_at || '--' }}</span>
@@ -215,7 +215,7 @@ const detailsConfig = reactive({
 });
 
 const settings = reactive({
-  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at'],
+  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at', 'action'],
   size: 'small',
 });
 

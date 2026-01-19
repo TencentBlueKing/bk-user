@@ -8,7 +8,6 @@
       <Table
         class="field-setting-table"
         :data="tableData"
-        :border="false"
         :max-height="tableMaxHeight">
         <template #empty>
           <Empty

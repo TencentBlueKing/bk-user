@@ -21,7 +21,6 @@
       <Table
         class="content-table"
         :data="tableSearchData"
-        :border="false"
         :max-height="tableMaxHeight"
         @filter-change="handleFilterChange">
         <template #empty>
