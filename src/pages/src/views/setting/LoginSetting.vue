@@ -1,5 +1,5 @@
 <template>
-  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 10 }">
     <ul v-if="currentDataSource?.plugin_id" class="login-setting-content">
       <li class="item-box">
         <div class="header">

@@ -271,21 +271,6 @@ onBeforeUnmount(() => {
   padding: 28px 30px;
 
   :deep(.user-info-table) {
-    .bk-table-head {
-      table thead th {
-        text-align: center;
-      }
-
-      .table-head-settings {
-        border-right: none;
-      }
-    }
-
-    .bk-table-footer {
-      padding: 0 15px;
-      background: #fff;
-    }
-
     .type-icon {
       margin-right: 8px;
       font-size: 14px;

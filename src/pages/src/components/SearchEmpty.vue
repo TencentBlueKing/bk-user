@@ -49,6 +49,7 @@ defineEmits(['handleEmpty', 'handleUpdate']);
   width: 100%;
   height: 100%;
   padding-bottom: 36px;
+  color: #63656E;
 
   .empty-search-text {
     display: block;

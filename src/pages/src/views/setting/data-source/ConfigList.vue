@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }">
+  <div v-bkloading="{ loading: isLoading, zIndex: 10 }">
     <MainBreadcrumbsDetails>
       <template #right v-if="dataSource?.id">
         <bk-button

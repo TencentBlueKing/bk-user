@@ -1,6 +1,6 @@
 <template>
   <div
-    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    v-bkloading="{ loading: isLoading, zIndex: 10 }"
     :class="['user-info-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <header class="flex justify-end">
       <bk-button text theme="primary" @click="showUpdateRecord">
@@ -591,21 +591,6 @@ const expandConfig = reactive({
       background-color: #F2FCF5;
     }
 
-    .bk-table-head {
-      table thead th {
-        text-align: center;
-      }
-
-      .table-head-settings {
-        border-right: none;
-      }
-    }
-
-    .bk-table-footer {
-      padding: 0 15px;
-      background: #fff;
-    }
-
     .type-icon {
       margin-right: 8px;
       font-size: 14px;
@@ -701,12 +686,6 @@ const expandConfig = reactive({
 
   .update-record-table {
     padding : 28px 30px;
-
-    :deep(.bk-table-footer) {
-      padding: 0 15px;
-      background: #fff;
-    }
-
     .expand-wrapper {
       max-height: 300px;
       overflow-y: auto;
