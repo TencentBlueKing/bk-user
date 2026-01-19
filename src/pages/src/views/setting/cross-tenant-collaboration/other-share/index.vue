@@ -2,20 +2,19 @@
   <div
     v-bkloading="{ loading: isLoading, zIndex: 9 }"
     :class="['user-info-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
-    <header>
+    <header class="flex justify-end">
       <bk-button text theme="primary" @click="showUpdateRecord">
         <i class="user-icon icon-lishijilu" />
         {{ $t('数据更新记录') }}
       </bk-button>
     </header>
-    <bk-table
+    <Table
       class="user-info-table"
       :data="tableData"
-      :border="['outer']"
+      :border="'outer'"
       :max-height="tableMaxHeight"
-      show-overflow-tooltip
-      @column-filter="handleFilter"
       :row-class="tableRowClassName"
+      @filter-change="handleFilterChange"
     >
       <template #empty>
         <Empty
@@ -24,23 +23,47 @@
           @handle-update="fetchFromStrategies"
         />
       </template>
-      <bk-table-column prop="source_tenant_id" :label="$t('源租户')">
+      <TableColumn
+        field="source_tenant_id"
+        :label="$t('源租户')"
+        show-overflow="tooltip"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <span>
             {{ row.source_tenant_id }}
           </span>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="target_status" :label="$t('状态')" :filter="{ list: statusFilters }">
+      </TableColumn>
+      <TableColumn
+        field="target_status"
+        :label="$t('状态')"
+        show-overflow="tooltip"
+        filter-multiple
+        :filters="statusFilters"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <div>
             <img :src="dataSourceStatus[row.target_status]?.icon" class="account-status-icon" />
             <span>{{ dataSourceStatus[row.target_status]?.text }}</span>
           </div>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
-      <bk-table-column prop="target_status" :label="$t('启/停')" :filter="{ list: enableFilters }">
+      </TableColumn>
+      <TableColumn
+        field="updated_at"
+        :label="$t('更新时间')"
+        show-overflow="tooltip"
+        :min-width="160"
+      />
+      <TableColumn
+        field="enable_status"
+        :label="$t('启/停')"
+        show-overflow="tooltip"
+        filter-multiple
+        :filters="enableFilters"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
@@ -50,8 +73,12 @@
             @change="handleChange(row)"
           />
         </template>
-      </bk-table-column>
-      <bk-table-column :label="$t('操作')">
+      </TableColumn>
+      <TableColumn
+        field="action"
+        :label="$t('操作')"
+        :width="120"
+      >
         <template #default="{ row }">
           <bk-button
             v-if="row.target_status === 'unconfirmed'"
@@ -70,8 +97,8 @@
             {{ $t('查看详情') }}
           </bk-button>
         </template>
-      </bk-table-column>
-    </bk-table>
+      </TableColumn>
+    </Table>
     <!-- 侧边栏 -->
     <bk-sideslider
       :width="960"
@@ -93,15 +120,14 @@
       render-directive
       quick-close
       trensfer>
-      <bk-table
-        v-bkloading="{ loading: dialogConfig.loading, zIndex: 9 }"
+      <Table
+        v-bkloading="{ loading: dialogConfig.loading, zIndex: 10 }"
         class="update-record-table"
         :data="dialogConfig.list"
-        :border="['outer']"
-        show-overflow-tooltip
-        remote-pagination
+        :border="'outer'"
         :pagination="pagination"
-        @column-filter="dataRecordFilter"
+        :expand-config="expandConfig"
+        @filter-change="dataRecordFilter"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
         @row-expand="handleRowExpand"
@@ -113,96 +139,109 @@
             @handle-update="fetchUpdateRecord"
           />
         </template>
-        <bk-table-column type="expand" min-width="60"></bk-table-column>
-        <template #expandRow="row">
-          <div class="expand-wrapper">
-            <div
-              v-if="
-                row?.deletedObjs?.user_count ||
-                  row?.deletedObjs?.department_count
-              "
-              class="expand-item">
-              <span class="w-[40px] text-[#EA3636]">{{ $t('删除') }}:</span>
-              <div class="expand-item-content">
-                <div class="content-users">
-                  <i class="bk-sq-icon icon-personal-user" />
-                  <div class="flex">
-                    <span v-if="row?.deletedObjs?.user_count">
-                      <span
-                        v-for="(item, index) in row?.deletedObjs?.usernames"
-                        :key="index">
-                        <bk-tag class="mb-2">{{ item }}</bk-tag>
+        <TableColumn type="expand" :min-width="60">
+          <template #content="{ row }">
+            <div class="expand-wrapper">
+              <div
+                v-if="
+                  row?.deletedObjs?.user_count ||
+                    row?.deletedObjs?.department_count
+                "
+                class="expand-item">
+                <span class="w-[40px] text-[#EA3636]">{{ $t('删除') }}:</span>
+                <div class="expand-item-content">
+                  <div class="content-users">
+                    <i class="bk-sq-icon icon-personal-user" />
+                    <div class="flex">
+                      <span v-if="row?.deletedObjs?.user_count">
+                        <span
+                          v-for="(item, index) in row?.deletedObjs?.usernames"
+                          :key="index">
+                          <bk-tag class="mb-2">{{ item }}</bk-tag>
+                        </span>
+                        <tag v-if="row?.deletedObjs?.user_count > 50" style="color: #63656e;">
+                          ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
+                        </tag>
                       </span>
-                      <tag v-if="row?.deletedObjs?.user_count > 50" style="color: #63656e;">
-                        ... {{$t('共') + row?.deletedObjs?.user_count + $t('个用户')}}
-                      </tag>
-                    </span>
-                    <tag v-else>--</tag>
+                      <tag v-else>--</tag>
+                    </div>
+                  </div>
+                  <div class="content-departments">
+                    <i class="bk-sq-icon icon-file-close" />
+                    <div class="flex">
+                      <span v-if="row?.deletedObjs?.department_count">
+                        <span
+                          v-for="(item, index) in row?.deletedObjs?.department_names"
+                          :key="index">
+                          <bk-tag class="mb-2">{{ item }}</bk-tag>
+                        </span>
+                        <tag v-if="row?.deletedObjs?.department_count > 50" style="color: #63656e;">
+                          ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
+                        </tag>
+                      </span>
+                      <tag v-else>--</tag>
+                    </div>
                   </div>
                 </div>
-                <div class="content-departments">
-                  <i class="bk-sq-icon icon-file-close" />
-                  <div class="flex">
-                    <span v-if="row?.deletedObjs?.department_count">
-                      <span
-                        v-for="(item, index) in row?.deletedObjs?.department_names"
-                        :key="index">
-                        <bk-tag class="mb-2">{{ item }}</bk-tag>
+              </div>
+              <div
+                v-if="row?.createdObjs?.user_count ||
+                  row?.createdObjs?.department_count"
+                class="expand-item box-border">
+                <div class="w-[40px] text-[#2DCB56]">{{ $t('新增') }}:</div>
+                <div class="expand-item-content">
+                  <div class="content-users">
+                    <i class="bk-sq-icon icon-personal-user" />
+                    <div class="flex">
+                      <span v-if="row?.createdObjs?.user_count">
+                        <span
+                          v-for="(item, index) in row?.createdObjs?.usernames"
+                          :key="index">
+                          <bk-tag class="mb-2">{{ item }}</bk-tag>
+                        </span>
+                        <tag v-if="row?.createdObjs?.user_count > 50" style="color: #63656e;">
+                          ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
+                        </tag>
                       </span>
-                      <tag v-if="row?.deletedObjs?.department_count > 50" style="color: #63656e;">
-                        ... {{$t('共') + row?.deletedObjs?.department_count + $t('个部门')}}
-                      </tag>
-                    </span>
-                    <tag v-else>--</tag>
+                      <tag v-else>--</tag>
+                    </div>
+                  </div>
+                  <div class="content-departments">
+                    <i class="bk-sq-icon icon-file-close" />
+                    <div class="flex">
+                      <span v-if="row?.createdObjs?.department_count">
+                        <span
+                          v-for="(item, index) in row?.createdObjs?.department_names"
+                          :key="index">
+                          <bk-tag class="mb-2">{{ item }}</bk-tag>
+                        </span>
+                        <tag v-if="row?.createdObjs?.department_count > 50" style="color: #63656e;">
+                          ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
+                        </tag>
+                      </span>
+                      <tag v-else>--</tag>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div
-              v-if="row?.createdObjs?.user_count ||
-                row?.createdObjs?.department_count"
-              class="expand-item box-border">
-              <div class="w-[40px] text-[#2DCB56]">{{ $t('新增') }}:</div>
-              <div class="expand-item-content">
-                <div class="content-users">
-                  <i class="bk-sq-icon icon-personal-user" />
-                  <div class="flex">
-                    <span v-if="row?.createdObjs?.user_count">
-                      <span
-                        v-for="(item, index) in row?.createdObjs?.usernames"
-                        :key="index">
-                        <bk-tag class="mb-2">{{ item }}</bk-tag>
-                      </span>
-                      <tag v-if="row?.createdObjs?.user_count > 50" style="color: #63656e;">
-                        ... {{$t('共') + row?.createdObjs?.user_count + $t('个用户')}}
-                      </tag>
-                    </span>
-                    <tag v-else>--</tag>
-                  </div>
-                </div>
-                <div class="content-departments">
-                  <i class="bk-sq-icon icon-file-close" />
-                  <div class="flex">
-                    <span v-if="row?.createdObjs?.department_count">
-                      <span
-                        v-for="(item, index) in row?.createdObjs?.department_names"
-                        :key="index">
-                        <bk-tag class="mb-2">{{ item }}</bk-tag>
-                      </span>
-                      <tag v-if="row?.createdObjs?.department_count > 50" style="color: #63656e;">
-                        ... {{$t('共') + row?.createdObjs?.department_count + $t('个部门')}}
-                      </tag>
-                    </span>
-                    <tag v-else>--</tag>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-        <bk-table-column prop="start_at" :label="$t('时间')" width="160"></bk-table-column>
-        <bk-table-column prop="source_tenant_name" :label="$t('源租户')" width="120"></bk-table-column>
-        <bk-table-column :label="$t('更新内容')" width="350">
+          </template>
+        </TableColumn>
+        <TableColumn
+          field="start_at"
+          :label="$t('时间')"
+          show-overflow="tooltip"
+          :width="160" />
+        <TableColumn
+          field="source_tenant_name"
+          :label="$t('源租户')"
+          show-overflow="tooltip"
+          :width="120" />
+        <TableColumn
+          field="content"
+          :label="$t('更新内容')"
+          show-overflow="tooltip"
+          :width="350">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
@@ -219,18 +258,20 @@
               <span>{{ row.content?.create?.department }}</span>
             </bk-tag>
           </template>
-        </bk-table-column>
-        <bk-table-column
-          prop="status"
+        </TableColumn>
+        <TableColumn
+          field="status"
           :label="$t('状态')"
-          :filter="{ list: updateStatusFilters, height: '100px' }"
-          min-width="105">
+          show-overflow="tooltip"
+          filter-multiple
+          :filters="updateStatusFilters"
+          :min-width="105">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('操作')" min-width="105">
+        </TableColumn>
+        <TableColumn field="action" :label="$t('操作')" :min-width="105">
           <template #default="{ row }">
             <bk-button
               text
@@ -245,8 +286,8 @@
               v-if="row.has_warning"
               v-bk-tooltips="{ content: t('有部分数据失败') }" />
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </bk-sideslider>
     <!-- 日志详情 -->
     <bk-sideslider
@@ -280,8 +321,9 @@
 
 <script setup lang="ts">
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { debounce } from 'lodash';
-import { defineProps, inject, reactive, ref, watchEffect } from 'vue';
+import { inject, reactive, ref, watchEffect } from 'vue';
+
+import { Table, TableColumn } from '@blueking/table';
 
 import OperationDetails from './OperationDetails.vue';
 
@@ -307,24 +349,43 @@ const tableMaxHeight = useTableMaxHeight(238);
 const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
+const originalTableData = ref([]); // 保存原始数据副本
 const isDataEmpty = ref(false);
 const isDataError = ref(false);
 
 const statusFilters = [
-  { text: t('正常'), value: 'enabled' },
-  { text: t('未启用'), value: 'disabled' },
-  { text: t('待确认'), value: 'unconfirmed' },
+  { label: t('正常'), value: 'enabled' },
+  { label: t('未启用'), value: 'disabled' },
+  { label: t('待确认'), value: 'unconfirmed' },
 ];
 
 const enableFilters = [
-  { text: t('启用'), value: 'enabled' },
-  { text: t('停用'), value: 'disabled' },
+  { label: t('启用'), value: 'enabled' },
+  { label: t('停用'), value: 'disabled' },
 ];
 
+const handleFilterChange = ({ field, values }: { field: any; values: string[] }) => {
+  // 如果没有筛选条件，恢复原始数据
+  if (values.length === 0) {
+    tableData.value = [...originalTableData.value];
+    isDataEmpty.value = false;
+    return;
+  }
+
+  // 对于启停列，需要特殊处理，因为实际数据字段是target_status
+  const fieldName = field === 'enable_status' ? 'target_status' : field;
+
+  // 前端过滤：从原始数据中筛选出符合条件的数据
+  tableData.value = originalTableData.value.filter(item => values.includes(item[fieldName]));
+
+  // 判断是否有数据
+  isDataEmpty.value = tableData.value.length === 0;
+};
+
 const updateStatusFilters = [
-  { text: t('同步成功'), value: 'success' },
-  { text: t('同步失败'), value: 'failed' },
-  { text: t('同步中'), value: 'running' },
+  { label: t('同步成功'), value: 'success' },
+  { label: t('同步失败'), value: 'failed' },
+  { label: t('同步中'), value: 'running' },
 ];
 const detailsConfig = reactive({
   isShow: false,
@@ -333,15 +394,14 @@ const detailsConfig = reactive({
   type: '',
 });
 
-// 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
-const dataRecordFilter = debounce(({ checked }) => {
-  if (checked.length === 0) {
+const dataRecordFilter = ({ values }: { values: string[] }) => {
+  if (values.length === 0) {
     pagination.current = 1;
   }
-  dialogConfig.status = checked.join(',');
+  dialogConfig.status = values.join(',');
   pagination.current = 1;
   fetchUpdateRecord();
-}, 100);
+};
 
 //  状态为unconfirmed的行添加class
 const tableRowClassName = (item) => {
@@ -357,7 +417,11 @@ const fetchFromStrategies = async () => {
     isDataEmpty.value = false;
     isDataError.value = false;
     const res = await getFromStrategies();
-    tableData.value = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
+    const sortedData = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
+    
+    // 保存原始数据副本
+    originalTableData.value = sortedData || [];
+    tableData.value = [...originalTableData.value];
 
     isDataEmpty.value = tableData.value.length === 0;
   } catch (error) {
@@ -372,11 +436,6 @@ watchEffect(() => {
     fetchFromStrategies();
   }
 });
-
-const handleFilter = ({ checked }) => {
-  if (checked.length === 0) return isDataEmpty.value = false;
-  isDataEmpty.value = !tableData.value.some(item => checked.includes(item.status));
-};
 
 const dialogConfig = reactive({
   isShow: false,
@@ -495,6 +554,13 @@ const handleRowExpand = async ({ row }) => {
     });
   }
 };
+
+const expandConfig = reactive({
+  showIcon: true,
+  iconOpen: 'bk-sq-icon icon-down-shape !text-[#C4C6CC] hover:!text-[#63656E]',
+  iconClose: 'bk-sq-icon icon-right-shape !text-[#C4C6CC] hover:!text-[#63656E]',
+  toggleMethod: handleRowExpand,
+});
 </script>
 
 <style lang="less" scoped>
@@ -508,7 +574,6 @@ const handleRowExpand = async ({ row }) => {
   padding: 24px;
 
   header {
-    float: right;
     margin-bottom: 16px;
 
     .bk-button {

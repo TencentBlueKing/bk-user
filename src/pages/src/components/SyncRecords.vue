@@ -1,13 +1,12 @@
 <template>
-  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper">
+  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 10 }" class="sync-records-wrapper">
     <div class="data-record-content">
-      <bk-table
+      <Table
         class="user-info-table"
         :data="dataRecordConfig.list"
-        show-overflow-tooltip
-        remote-pagination
         :pagination="pagination"
-        @column-filter="dataRecordFilter"
+        :border="'inner'"
+        @filter-change="handleFilterChange"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
       >
@@ -18,29 +17,60 @@
             @handle-update="getSyncRecordsList"
           />
         </template>
-        <bk-table-column prop="start_at" :label="$t('开始时间')" :width="160" />
-        <bk-table-column prop="duration" :label="$t('耗时')">
+        <TableColumn
+          field="start_at"
+          :label="$t('开始时间')"
+          show-overflow="tooltip"
+          :min-width="160"
+        />
+        <TableColumn
+          field="duration"
+          :label="$t('耗时')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <span>{{ durationText(row.duration) }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="operator" :label="$t('操作人')">
+        </TableColumn>
+        <TableColumn
+          field="operator"
+          :label="$t('操作人')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <DisplayName :user-id="row.operator" />
           </template>
-        </bk-table-column>
-        <bk-table-column prop="trigger" :label="$t('触发类型')">
+        </TableColumn>
+        <TableColumn
+          field="trigger"
+          :label="$t('触发类型')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '130px' }">
+        </TableColumn>
+        <TableColumn
+          field="status"
+          :label="$t('状态')"
+          show-overflow="tooltip"
+          filter-multiple
+          :filters="updateStatusFilters"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('操作')">
+        </TableColumn>
+        <TableColumn
+          field="action"
+          :label="$t('操作')"
+          :width="160"
+        >
           <template #default="{ row }">
             <bk-button
               text
@@ -55,8 +85,8 @@
               v-if="row.has_warning"
               v-bk-tooltips="{ content: t('有部分数据失败') }" />
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </div>
     <bk-sideslider
       ext-cls="log-wrapper"
@@ -90,9 +120,10 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { debounce } from 'lodash';
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
+
+import { Table, TableColumn } from '@blueking/table';
 
 import DisplayName from './display-name.vue';
 
@@ -126,6 +157,7 @@ const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
+  remote: true,
 });
 
 const logConfig = ref({
@@ -140,9 +172,9 @@ const triggeMode = {
 };
 
 const updateStatusFilters = [
-  { text: t('同步中'), value: 'pending,running' },
-  { text: t('同步成功'), value: 'success' },
-  { text: t('同步失败'), value: 'failed' },
+  { label: t('同步中'), value: 'pending,running' },
+  { label: t('同步成功'), value: 'success' },
+  { label: t('同步失败'), value: 'failed' },
 ];
 
 const interval = ref(null);
@@ -170,14 +202,14 @@ const getSyncRecordsList = async () => {
 };
 
 // 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
-const dataRecordFilter = debounce(({ checked }) => {
-  if (checked.length === 0) {
+const handleFilterChange = ({ values }: { values: string[] }) => {
+  if (values.length === 0) {
     pagination.current = 1;
   }
-  dataRecordConfig.status = checked.join(',');
+  dataRecordConfig.status = values.join(',');
   pagination.current = 1;
   getSyncRecordsList();
-}, 100);
+};
 
 const pageLimitChange = (limit: number) => {
   pagination.limit = limit;

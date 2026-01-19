@@ -278,3 +278,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-link:before {
 	content: "\e15e";
 }
+.icon-right-shape:before {
+	content: "\e160";
+}
+.icon-down-shape:before {
+	content: "\e15f";
+}

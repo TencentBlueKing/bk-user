@@ -8,7 +8,6 @@
           :class="['filter-operation-history-container', isFold.preFold ? 'overflow-hidden' : '']">
           <bk-form
             form-type="vertical"
-            ref="formRef"
             :model="formData"
             class="w-full mt-[24px]">
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作人')">
@@ -94,23 +93,20 @@
       </div>
       <!-- 展示列表 -->
       <div class="data-operation-history-container">
-        <bk-table
+        <Table
           v-bkloading="{ loading: isLoading }"
           :pagination="pagination"
-          remote-pagination
           :data="tableData"
           :settings="settings"
+          :show-settings="true"
+          :max-height="curTableMaxHeight"
+          :height="curTableHeight"
+          :virtual-y-config="{ enabled: true, gt: 10 }"
+          :sort-config="sortConfig"
           class="operation-history-table"
           @page-limit-change="pageLimitChange"
           @page-value-change="pageCurrentChange"
-          :show-overflow-tooltip="true"
-          :max-height="curTableMaxHeight"
-          :height="curTableHeight"
-          :pagination-height="paginationHeight"
-          :thead="{ height: headHeight }"
-          :row-height="lineHeight"
           @setting-change="handleSettingChange"
-          @column-sort="handleSortBy"
         >
           <template #empty>
             <Empty
@@ -121,36 +117,59 @@
               @handle-update="handleFetchAudit('search')"
             />
           </template>
-          <bk-table-column :label="$t('操作类型')" prop="operation" width="100">
+          <TableColumn
+            field="operation"
+            :label="$t('操作类型')"
+            show-overflow="tooltip"
+            :min-width="100"
+          >
             <template #default="{ row }">
               <span>{{ getOperationLabel(row.operation) }}</span>
             </template>
-          </bk-table-column>
-          <bk-table-column :label="$t('操作对象')" prop="object_type" width="100">
+          </TableColumn>
+
+          <TableColumn
+            field="object_type"
+            :label="$t('操作对象')"
+            show-overflow="tooltip"
+            :min-width="100"
+          >
             <template #default="{ row }">
               <span>{{ getOperationTypeLabel(row.object_type) }}</span>
             </template>
-          </bk-table-column>
-          <bk-table-column :label="$t('操作实例')" prop="object_name" width="100">
+          </TableColumn>
+          <TableColumn
+            field="object_name"
+            :label="$t('操作实例')"
+            show-overflow="tooltip"
+            :min-width="100"
+          >
             <template #default="{ row }">
               <span>{{ row.object_name || '--' }}</span>
             </template>
-          </bk-table-column>
-          <bk-table-column :label="$t('操作人')" prop="creator" width="100">
+          </TableColumn>
+          <TableColumn
+            field="creator"
+            :label="$t('操作人')"
+            show-overflow="tooltip"
+            :min-width="100"
+          >
             <template #default="{ row }">
               <DisplayName :user-id="row.creator" />
             </template>
-          </bk-table-column>
-          <bk-table-column
+          </TableColumn>
+          <TableColumn
+            field="created_at"
             :label="$t('操作时间')"
-            :sort="sortConfig"
-            prop="created_at"
-            width="100">
+            sortable
+            show-overflow="tooltip"
+            :min-width="100"
+          >
             <template #default="{ row }">
               <span>{{ row.created_at || '--' }}</span>
             </template>
-          </bk-table-column>
-        </bk-table>
+          </TableColumn>
+        </Table>
       </div>
     </div>
   </div>
@@ -160,15 +179,17 @@
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
+import { Table, TableColumn } from '@blueking/table';
+
 import { getCurrentOperationOptions, operationType } from './operations';
 
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
 import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import UserSelector from '@/components/UserSelector.vue';
 import { useTableMaxHeight } from '@/hooks';
 import { getAudit } from '@/http/operationHistoryFiles';
-import { t } from '@/language';
-
 
 const isHover = ref(false);
 const isFold = reactive({
@@ -176,20 +197,21 @@ const isFold = reactive({
   preFold: false,
 });
 
-const formRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
 
-// 固定表头行高分页器高度，便于切换行高时计算高度
-const paginationHeight = 60;
-const headHeight = 42;
-const lineHeight = ref(42);
-// 使用max-height来限制表格高度
+// const lineHeight = ref(42);
+const rowHeightSizeMap: Record<string, number> = {
+  mini: 36,
+  small: 40,
+  medium: 44,
+};
+// // 使用max-height来限制表格高度
 const curTableMaxHeight = computed(() => {
   // header(52) + button-height(24) + margin-bottom(24) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
   const tableMaxHeight = window.innerHeight - 100;
   // 计算当前分页下table高度
-  const targetTableHeight = headHeight + lineHeight.value * pagination.limit + paginationHeight;
+  const targetTableHeight = 42 + (rowHeightSizeMap?.[settings.size] || 0) * pagination.limit + 62;
   // 若超出页面允许的最大高度，返回最大高度，否则返回数据铺满高度，防止出现空白区域未铺满数据的情况
   if (targetTableHeight < tableMaxHeight) return targetTableHeight;
   return tableMaxHeight;
@@ -209,8 +231,8 @@ const curRedundantHeight = computed(() => {
 const curTableHeight = useTableMaxHeight(curRedundantHeight);
 
 // 更改表格设置时，更新当前行高
-const handleSettingChange = (data: { height: number; }) => {
-  lineHeight.value = data.height;
+const handleSettingChange = (data: any) => {
+  settings.size = data.size as string;
 };
 
 interface SearchFromData {
@@ -229,38 +251,20 @@ const formData = reactive<SearchFromData>({
   operation_time: ['', ''], // 操作时间
 });
 
-const sortType = ref('null');
-const sortConfig = computed(() => ({ SortScope: 'all', value: sortType.value }));
-const settings = {
-  fields: [
-    {
-      label: t('操作类型'),
-      field: 'operation',
-    },
-    {
-      label: t('操作对象'),
-      field: 'object_type',
-    },
-    {
-      label: t('操作实例'),
-      field: 'object_name',
-    },
-    {
-      label: t('操作人'),
-      field: 'creator',
-    },
-    {
-      label: t('操作时间'),
-      field: 'created_at',
-    },
-  ],
+const sortConfig = reactive({
+  multiple: false,
+  trigger: 'cell',
+});
+const settings = reactive({
   checked: ['operation', 'object_type', 'object_name', 'creator', 'created_at'],
-};
+  size: 'small',
+});
 const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
   limitList: [10, 20, 50],
+  remote: true,
 });
 
 const isDataEmpty = ref(false);
@@ -315,10 +319,6 @@ const pageLimitChange = (pageSize: number) => {
 const pageCurrentChange = (page: number) => {
   pagination.current = page;
   handleFetchAudit();
-};
-
-const handleSortBy = (curSort: any) => {
-  sortType.value = curSort.type;
 };
 
 // 折叠button处理
@@ -442,5 +442,12 @@ onMounted(() => {
 .v-enter-from,
 .v-leave-to {
   height: 0px;
+}
+</style>
+
+<style lang="less">
+/* 隐藏setting Tab的滚动条 */
+.action-tab-wrapper {
+  overflow-y: auto !important;
 }
 </style>
