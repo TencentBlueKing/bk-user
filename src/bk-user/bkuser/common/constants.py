@@ -57,7 +57,7 @@ _GEOGRAPHIC_PREFIX = (
 )
 
 # 时区选项，排除非地理时区
-TIME_ZONE_CHOICES = [(i, i) for i in pytz.common_timezones if i.startswith(_GEOGRAPHIC_PREFIX)]
+TIME_ZONE_CHOICES = [(i, i) for i in pytz.all_timezones if i.startswith(_GEOGRAPHIC_PREFIX)]
 
 # datetime 对比时允许最大偏移的秒数内认为是相等的，默认 2 分钟
 ALLOWED_DATETIME_MAX_OFFSET = 120
