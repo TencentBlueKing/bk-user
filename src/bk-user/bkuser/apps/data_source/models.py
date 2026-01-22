@@ -80,9 +80,6 @@ class DataSource(AuditedModel):
 
     class Meta:
         ordering = ["id"]
-        unique_together = [
-            ("owner_tenant_id", "type"),
-        ]
 
     @property
     def is_local(self) -> bool:
