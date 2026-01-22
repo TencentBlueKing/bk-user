@@ -29,6 +29,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -838,6 +839,84 @@ class TestTenantUserBatchCreateAndPreviewApi:
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]
+
+
+class TestTenantUserBatchCreateWithMultiDataSource:
+    @pytest.fixture
+    def raw_user_infos(self) -> List[str]:
+        # username full_name email age gender region hobbies
+        return [
+            "test_alice, Alice, alice@test.com, 25, 女，Beijing, 阅读/旅游",
+            "test_bob, Bob, bob@test.com, 30, 男，Shanghai, 游戏/学习",
+        ]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_preview_with_multi_data_source_enabled(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos
+    ):
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+            resp = api_client.post(
+                reverse("organization.tenant_user.batch_create_preview"),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert resp.data[0]["username"] == "test_alice_local"
+        assert resp.data[1]["username"] == "test_bob_local"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_preview_with_multi_data_source_disabled(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos
+    ):
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+            resp = api_client.post(
+                reverse("organization.tenant_user.batch_create_preview"),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert resp.data[0]["username"] == "test_alice"
+        assert resp.data[1]["username"] == "test_bob"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_with_multi_data_source_enabled(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos
+    ):
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+            resp = api_client.post(
+                reverse("organization.tenant_user.batch_create"),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        alice = DataSourceUser.objects.get(code="test_alice_local")
+        assert alice.username == "test_alice_local"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_with_multi_data_source_disabled(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos
+    ):
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+            resp = api_client.post(
+                reverse("organization.tenant_user.batch_create"),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        alice = DataSourceUser.objects.get(code="test_alice")
+        assert alice.username == "test_alice"
 
 
 class TestTenantUserBatchDeleteApi:

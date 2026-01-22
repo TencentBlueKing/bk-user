@@ -32,6 +32,7 @@ from bkuser.plugins.local.exceptions import (
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
 from bkuser.plugins.local.utils import gen_dept_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from django.test.utils import override_settings
 
 
 class TestLocalDataSourceDataParser:
@@ -340,3 +341,49 @@ class TestLocalDataSourceDataParser:
                 departments=[],
             ),
         ]
+
+
+class TestLocalDataSourceDataParserWithMultiDataSource:
+    def test_username_with_multi_data_source_enabled(self, logger, user_workbook):
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+            parser = LocalDataSourceDataParser(logger, user_workbook)
+            parser.parse()
+
+            users = parser.get_users()
+            zhangsan = next(u for u in users if u.properties["username"] == "zhangsan_local")
+            lisi = next(u for u in users if u.properties["username"] == "lisi_local")
+
+            assert zhangsan.code == "zhangsan_local"
+            assert zhangsan.properties["username"] == "zhangsan_local"
+            assert lisi.code == "lisi_local"
+            assert lisi.properties["username"] == "lisi_local"
+            assert lisi.leaders == ["zhangsan_local"]
+
+    def test_username_with_multi_data_source_disabled(self, logger, user_workbook):
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+            parser = LocalDataSourceDataParser(logger, user_workbook)
+            parser.parse()
+
+            users = parser.get_users()
+            zhangsan = next(u for u in users if u.properties["username"] == "zhangsan")
+            lisi = next(u for u in users if u.properties["username"] == "lisi")
+
+            assert zhangsan.code == "zhangsan"
+            assert zhangsan.properties["username"] == "zhangsan"
+            assert lisi.code == "lisi"
+            assert lisi.properties["username"] == "lisi"
+            assert lisi.leaders == ["zhangsan"]
+
+    def test_leader_codes_with_multi_data_source_enabled(self, logger, user_workbook):
+        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+            parser = LocalDataSourceDataParser(logger, user_workbook)
+            parser.parse()
+
+            users = parser.get_users()
+            # maiba has leaders: lisi, wangwu
+            maiba = next(u for u in users if u.properties["username"] == "maiba_local")
+            assert set(maiba.leaders) == {"lisi_local", "wangwu_local"}
+
+            # lushi has leaders: wangwu, maiba
+            lushi = next(u for u in users if u.properties["username"] == "lushi_local")
+            assert set(lushi.leaders) == {"wangwu_local", "maiba_local"}

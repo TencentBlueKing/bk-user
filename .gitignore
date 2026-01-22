@@ -217,6 +217,7 @@ pre_commit_hooks
 cliff.toml
 .codecc
 .idea
+.cursor
 
 # igonre symlinks
 src/bk-user/bkuser/idp_plugins
