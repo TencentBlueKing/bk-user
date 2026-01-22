@@ -54,8 +54,11 @@ const getConfigData = async () => {
 };
 getConfigData();
 
-// 检查用户角色权限并重定向
-const checkRolePermission = (to: RouteLocationNormalizedGeneric, next: NavigationGuardNext) => {
+/**
+ * 检查用户角色权限并在需要时重定向
+ * @returns true 表示已重定向，调用方无需再调用 next()
+ */
+const handleRoleRedirect = (to: RouteLocationNormalizedGeneric, next: NavigationGuardNext) => {
   const { role } = userStore.user;
   const isSingleTenantMode = window.ENABLE_MULTI_TENANT_MODE === 'False';
 
@@ -83,7 +86,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 已登录用户，检查角色权限
   if (userStore.user.username) {
-    const redirected = checkRolePermission(to, next);
+    const redirected = handleRoleRedirect(to, next);
     isLoading.value = false;
     if (!redirected) {
       next();
@@ -94,7 +97,7 @@ router.beforeEach(async (to, from, next) => {
   // 未登录用户，初始化用户信息
   try {
     await userStore.initUserInfo();
-    const redirected = checkRolePermission(to, next);
+    const redirected = handleRoleRedirect(to, next);
     isLoading.value = false;
     if (!redirected) {
       next();
