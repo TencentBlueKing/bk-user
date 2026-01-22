@@ -44,7 +44,7 @@ export const useUser = defineStore('user', {
     },
     async initAdmin() {
       const res = await getBuiltinManager();
-      this.admin = res?.data;
+      this.admin = res?.data || {} as BuiltinManagerData;
     },
   },
 });
