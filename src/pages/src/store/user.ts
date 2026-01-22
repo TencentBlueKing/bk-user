@@ -37,7 +37,7 @@ export const useUser = defineStore('user', {
         tenantId: tenant_id,
         apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
       });
-      // 角色为租户管理员或超级管理员时
+      // 角色为租户管理员或内置管理员时
       if (role === ROLE.SUPER_MANAGER || role === ROLE.TENANT_MANAGER) {
         this.initAdmin();
       }
