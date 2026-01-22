@@ -35,11 +35,9 @@
     >
       <template #empty>
         <Empty
-          :is-data-empty="isDataEmpty"
-          :is-search-empty="isEmptySearch"
-          :is-data-error="isDataError"
-          @handle-empty="handleClear"
-          @handle-update="initVirtualUsers"
+          :type="curExceptionType"
+          @clear="handleClear"
+          @refresh="initVirtualUsers"
         />
       </template>
       <TableColumn
@@ -146,6 +144,7 @@ import 'tippy.js/themes/light.css';
 import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
@@ -158,9 +157,9 @@ const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
 const isLoading = ref(false);
 const tableData = ref([]);
-const isDataEmpty = ref(false);
-const isEmptySearch = ref(false);
-const isDataError = ref(false);
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: searchVal,
+});
 
 const pagination = reactive({
   current: 1,
@@ -177,7 +176,7 @@ onMounted(() => {
 const initVirtualUsers = async () => {
   try {
     isLoading.value = true;
-    isDataError.value = false;
+    clearErrorType();
 
     const params = {
       page: pagination.current,
@@ -185,15 +184,11 @@ const initVirtualUsers = async () => {
       keyword: searchVal.value,
     };
     const res = await getVirtualUsers(params);
-    if (res.data?.count === 0) {
-      isDataEmpty.value = searchVal.value === '';
-      isEmptySearch.value = searchVal.value !== '';
-    }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
   } catch (e) {
     console.warn(e);
-    isDataError.value = true;
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }

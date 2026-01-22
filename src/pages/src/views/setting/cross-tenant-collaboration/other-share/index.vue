@@ -18,11 +18,9 @@
     >
       <template #empty>
         <Empty
-          :is-data-empty="isDataEmpty"
-          :is-data-error="isDataError"
-          :is-search-empty="isSearchEmpty"
-          @handle-update="fetchFromStrategies"
-          @handle-empty="handleClearFilter"
+          :type="curExceptionType"
+          @clear="handleClearFilter"
+          @refresh="fetchFromStrategies"
         />
       </template>
       <TableColumn
@@ -136,11 +134,9 @@
       >
         <template #empty>
           <Empty
-            :is-data-empty="dialogConfig.isDataEmpty"
-            :is-data-error="dialogConfig.isDataError"
-            :is-search-empty="dialogConfig.isDataSearch"
-            @handle-update="fetchUpdateRecord"
-            @handle-empty="handleClearRecordFilter"
+            :type="curRecordExceptionType"
+            @clear="handleClearRecordFilter"
+            @refresh="fetchUpdateRecord"
           />
         </template>
         <TableColumn type="expand" :min-width="60">
@@ -245,7 +241,7 @@
           field="content"
           :label="$t('更新内容')"
           show-overflow="tooltip"
-          :width="350">
+          :width="300">
           <template #default="{ row }">
             <bk-tag theme="danger">
               {{ $t('删除') }}：
@@ -269,7 +265,7 @@
           show-overflow="tooltip"
           filter-multiple
           :filters="updateStatusFilters"
-          :min-width="105">
+          :min-width="130">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
@@ -325,7 +321,7 @@
 
 <script setup lang="ts">
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { inject, reactive, ref, watchEffect } from 'vue';
+import { inject, reactive, ref, toRef, watchEffect } from 'vue';
 
 import { Table, TableColumn } from '@blueking/table';
 
@@ -334,6 +330,7 @@ import OperationDetails from './OperationDetails.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { getCollaborationSyncRecords, getCollaborationSyncRecordsLogs, getFromStrategies, putFromStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
@@ -354,9 +351,12 @@ const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
 const originalTableData = ref([]); // 保存原始数据副本
-const isDataEmpty = ref(false);
-const isDataError = ref(false);
-const isSearchEmpty = ref(false);
+
+// 使用 useTableEmpty hook 管理主表格空状态
+const filterValues = ref([]);
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: filterValues,
+});
 
 const statusFilters = ref([
   { label: t('正常'), value: 'enabled' },
@@ -370,11 +370,16 @@ const enableFilters = ref([
 ]);
 
 const handleFilterChange = ({ field, values }: { field: any; values: string[] }) => {
+  if (filterValues.value.findIndex(item => item.field === field) === -1) {
+    filterValues.value.push({ field, values });
+  } else {
+    const index = filterValues.value.findIndex(item => item.field === field);
+    filterValues.value[index].values = values;
+  }
+
   // 如果没有筛选条件，恢复原始数据
   if (values.length === 0) {
-    isSearchEmpty.value = false;
     tableData.value = [...originalTableData.value];
-    isDataEmpty.value = tableData.value.length === 0;
     return;
   }
 
@@ -383,11 +388,11 @@ const handleFilterChange = ({ field, values }: { field: any; values: string[] })
 
   // 前端过滤：从原始数据中筛选出符合条件的数据
   tableData.value = originalTableData.value.filter(item => values.includes(item[fieldName]));
-  isSearchEmpty.value = tableData.value.length === 0;
 };
 
 const handleClearFilter = () => {
-  isSearchEmpty.value = false;
+  filterValues.value = [];
+  tableData.value = [...originalTableData.value];
   statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
   enableFilters.value = enableFilters.value.map(item => ({ ...item, checked: false }));
 };
@@ -405,16 +410,12 @@ const detailsConfig = reactive({
 });
 
 const dataRecordFilter = ({ values }: { values: string[] }) => {
-  if (values.length === 0) {
-    pagination.current = 1;
-  }
   dialogConfig.status = values.join(',');
   pagination.current = 1;
   fetchUpdateRecord();
 };
 
 const handleClearRecordFilter = () => {
-  dialogConfig.isDataSearch = false;
   updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
   dialogConfig.status = '';
   pagination.current = 1;
@@ -432,18 +433,16 @@ const tableRowClassName = (item) => {
 const fetchFromStrategies = async () => {
   try {
     isLoading.value = true;
-    isDataEmpty.value = false;
-    isDataError.value = false;
+    clearErrorType();
     const res = await getFromStrategies();
     const sortedData = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
 
     // 保存原始数据副本
     originalTableData.value = sortedData || [];
     tableData.value = [...originalTableData.value];
-
-    isDataEmpty.value = tableData.value.length === 0;
   } catch (error) {
-    isDataError.value = true;
+    console.error(error);
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }
@@ -458,11 +457,16 @@ watchEffect(() => {
 const dialogConfig = reactive({
   isShow: false,
   list: [],
-  isDataEmpty: false,
-  isDataError: false,
-  isDataSearch: false,
   loading: false,
   status: '',
+});
+
+const {
+  setTypeToError: setRecordTypeToError,
+  clearErrorType: clearRecordErrorType,
+  curExceptionType: curRecordExceptionType,
+} = useTableEmpty({
+  filters: toRef(dialogConfig, 'status'),
 });
 
 const pagination = reactive({
@@ -480,8 +484,7 @@ const showUpdateRecord = () => {
 const fetchUpdateRecord = async () => {
   try {
     dialogConfig.loading = true;
-    dialogConfig.isDataEmpty = false;
-    dialogConfig.isDataError = false;
+    clearRecordErrorType();
 
     const res = await getCollaborationSyncRecords({
       page: pagination.current,
@@ -491,11 +494,6 @@ const fetchUpdateRecord = async () => {
     const { count, results } = res.data;
 
     pagination.count = count;
-    if (dialogConfig.status) {
-      dialogConfig.isDataSearch = count === 0;
-    } else {
-      dialogConfig.isDataEmpty = count === 0;
-    }
     dialogConfig.list = results;
 
     dialogConfig.list?.forEach((item) => {
@@ -507,7 +505,8 @@ const fetchUpdateRecord = async () => {
       };
     });
   } catch (error) {
-    dialogConfig.isDataError = true;
+    console.warn(error);
+    setRecordTypeToError();
   } finally {
     dialogConfig.loading = false;
   }

@@ -11,9 +11,8 @@
         :max-height="tableMaxHeight">
         <template #empty>
           <Empty
-            :is-data-empty="fieldData.isTableDataEmpty"
-            :is-data-error="fieldData.isTableDataError"
-            @handle-update="fetchFieldList"
+            :type="curExceptionType"
+            @refresh="fetchFieldList"
           />
         </template>
         <TableColumn field="display_name" :label="$t('字段名称')" :width="200" show-overflow="tooltip">
@@ -98,6 +97,7 @@ import FieldsAdd from './FieldsAdd.vue';
 
 import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { deleteCustomFields, getFields } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
@@ -107,14 +107,15 @@ store.customBreadcrumbs = false;
 
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: null,
+});
 const fieldData = reactive({
   isShow: false,
   title: t('添加字段'),
   // 侧边栏区分添加字段、编辑字段
   setType: '',
   currentEditorData: {},
-  isTableDataEmpty: false,
-  isTableDataError: false,
 });
 const rootRef = ref();
 const isLoading = ref(false);
@@ -127,8 +128,6 @@ onMounted(() => {
 const getFieldsList = async () => {
   try {
     isLoading.value = true;
-    fieldData.isTableDataEmpty = false;
-    fieldData.isTableDataError = false;
     tableData.value = [];
     const res = await getFields();
     const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
@@ -138,12 +137,10 @@ const getFieldsList = async () => {
         tableData.value.push(item);
       });
     });
-    if (tableData.value.length === 0) {
-      fieldData.isTableDataEmpty = true;
-    }
+    clearErrorType();
   } catch (e) {
     console.warn(e);
-    fieldData.isTableDataError = true;
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }
