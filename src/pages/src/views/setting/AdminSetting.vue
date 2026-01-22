@@ -146,7 +146,6 @@ import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   deleteRealManagers,
-  getBuiltinManager,
   getRealManagers,
   getRealUsers,
   patchBuiltinManager,
@@ -155,9 +154,9 @@ import {
   randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store';
+import { useMainViewStore, useUser } from '@/store';
 
-
+const userStore = useUser();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
@@ -178,9 +177,9 @@ onMounted(() => {
 
 const initBuiltinManager = async () => {
   try {
-    const { data } = await getBuiltinManager();
-    adminAccount.value = data;
-    fixedAdminAccount.value = { ...data };
+    await userStore.initAdmin();
+    adminAccount.value = userStore.admin;
+    fixedAdminAccount.value = { ...userStore.admin };
   } catch (e) {
     isLoading.value = false;
     console.warn(e);

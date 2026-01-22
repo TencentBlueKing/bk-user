@@ -1,4 +1,5 @@
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
   DataSourceDetails,
   DataSourceUsersParams,
@@ -17,10 +18,6 @@ import type {
   TestConnectionData,
   TestConnectionParams,
 } from './types/dataSourceFiles';
-
-interface ResponseData<T> {
-  data: T
-}
 
 /**
  * 数据源用户信息列表

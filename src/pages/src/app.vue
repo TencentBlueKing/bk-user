@@ -2,23 +2,20 @@
 import { Message } from 'bkui-vue';
 import en from 'bkui-vue/dist/locale/en.esm';
 import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
-import { computed, nextTick, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, ref } from 'vue';
+import { NavigationGuardNext, RouteLocationNormalizedGeneric, useRouter } from 'vue-router';
 
-import BkUserDisplayName from '@blueking/bk-user-display-name';
 import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
 
-import { IUser } from './types/store';
+import { ROLE } from './common/constant';
+import { noNeedLoginRouteNames } from './router/routes';
 import HeaderBox from './views/MainHeader.vue';
 
-import { currentUser, getBuiltinManager } from '@/http';
 import { locale as i18nLocal, t } from '@/language/index';
-import { routes } from '@/router/routes';
 import { platformConfig, useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
 import ResetPassword from '@/views/reset-password/newPassword.vue';
 
-const route = useRoute();
 const router = useRouter();
 
 const showName = ref(null);
@@ -26,7 +23,7 @@ const showName = ref(null);
 // 加载完用户数据才会展示页面
 const isLoading = ref(true);
 // 获取用户数据
-const user = useUser();
+const userStore = useUser();
 
 const currentLang = ref(i18nLocal.value);
 // 多语言注入, 此处引用组件库内置多语言配置
@@ -57,70 +54,60 @@ const getConfigData = async () => {
 };
 getConfigData();
 
+/**
+ * 检查用户角色权限并在需要时重定向
+ * @returns true 表示已重定向，调用方无需再调用 next()
+ */
+const handleRoleRedirect = (to: RouteLocationNormalizedGeneric, next: NavigationGuardNext) => {
+  const { role } = userStore.user;
+  const isSingleTenantMode = window.ENABLE_MULTI_TENANT_MODE === 'False';
 
-// 判断是否是重置密码的路由
-watch(() => route.name, (val) => {
-  const filterRoutes = [
-    'password',
-    'resetPassword',
-    'bindResult',
-  ];
-  if (filterRoutes.includes(val as string)) {
+  // 普通用户只能访问个人中心
+  if (role === ROLE.NATURAL_USER && to.name !== 'personalCenter') {
+    next({ name: 'personalCenter' });
+    return true;
+  }
+
+  // 租户管理员或单租户模式下，不能访问租户管理页
+  if ((role === ROLE.TENANT_MANAGER || isSingleTenantMode) && to.name === 'tenant') {
+    next({ name: 'organization' });
+    return true;
+  }
+
+  return false;
+};
+
+router.beforeEach(async (to, from, next) => {
+  if (noNeedLoginRouteNames.includes(to.name as string)) {
+    next();
     isLoading.value = false;
     return;
   }
 
-  // 先检查store中是否已有用户信息
-  if (user.user.username) {
+  // 已登录用户，检查角色权限
+  if (userStore.user.username) {
+    const redirected = handleRoleRedirect(to, next);
     isLoading.value = false;
+    if (!redirected) {
+      next();
+    }
     return;
   }
 
-  currentUser()
-    .then(async (res) => {
-      const { data } = res as { data: IUser };
-      user.setUser(data);
-      BkUserDisplayName.configure({
-        tenantId: data.tenant_id,
-        apiBaseUrl: window.BK_USER_WEB_APIGW_URL,
-      });
-      // 角色为租户管理员或超级管理员时
-      if (data.role === 'super_manager' || data.role === 'tenant_manager') {
-        const managerData = await getBuiltinManager();
-        if (managerData?.data) {
-          user.admin = managerData?.data;
-        }
-      }
-      if (data.role === 'natural_user') {
-        // 普通用户直接跳转到个人中心
-        router.replace({ name: 'personalCenter' }).finally(() => {
-          isLoading.value = false;
-        });
-      } else {
-        // 如果不是普通用户，添加管理员路由
-        const managerRoutes = routes.filter(route => route.meta?.manager === true);
-        managerRoutes.forEach(route => {
-          router.addRoute(route);
-        });
-        // 等待路由添加完成后再结束 loading
-        nextTick(() => {
-          // 使用 router.resolve 检查当前路径是否能匹配到路由
-          const resolved = router.resolve(route.fullPath);
-          // 如果之前是 404，现在能匹配到了，就重新导航
-          if (route.name === 'notFound' && resolved.name !== 'notFound') {
-            router.replace(route.fullPath).finally(() => {
-              isLoading.value = false;
-            });
-          } else {
-            isLoading.value = false;
-          }
-        });
-      }
-    })
-    .catch(() => {
-      Message(t('获取用户信息失败，请检查后再试'));
-      isLoading.value = false;
-    });
+  // 未登录用户，初始化用户信息
+  try {
+    await userStore.initUserInfo();
+    const redirected = handleRoleRedirect(to, next);
+    isLoading.value = false;
+    if (!redirected) {
+      next();
+    }
+    return;
+  } catch (err) {
+    Message(t('获取用户信息失败，请检查后再试'));
+    next();
+    isLoading.value = false;
+  }
 });
 </script>
 
