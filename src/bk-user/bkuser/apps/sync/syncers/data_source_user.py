@@ -78,7 +78,7 @@ class DataSourceUserSyncer:
         waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
         # 若是覆盖模式，则更新存在用户的数据，否则无需更新，但需日志里记录便于提示
         waiting_update_user_codes = user_codes & raw_user_codes
-        if not self.overwrite:
+        if not self.overwrite and waiting_update_user_codes:
             # 提示未覆盖更新的用户
             usernames = DataSourceUser.objects.filter(
                 data_source=self.data_source,
@@ -96,8 +96,8 @@ class DataSourceUserSyncer:
 
         with transaction.atomic():
             # Q: 为什么这里的顺序应该是 1. 删除 2. 更新 3. 创建
-            # A: 同步操作原则是数据库尽可能 “干净” 以避免冲突，因此删除是最优先的，可以让数据更少，
-            #  而更新放在第二步的原因是 “挪窝”，可以避免一些已有的数据和待创建的数据冲突导致同步失败
+            # A: 同步操作原则是数据库尽可能“干净”以避免冲突，因此删除是最优先的，可以让数据更少，
+            #  而更新放在第二步的原因是“挪窝”，可以避免一些已有的数据和待创建的数据冲突导致同步失败
             waiting_delete_users.delete()
             DataSourceUser.objects.bulk_update(
                 waiting_update_users,
@@ -258,9 +258,9 @@ class DataSourceUserLeaderRelationSyncer:
             if waiting_delete_user_leader_relation_ids:
                 DataSourceUserLeaderRelation.objects.filter(id__in=waiting_delete_user_leader_relation_ids).delete()
 
-        # 记录 用户-直接上级 关系新增日志
+        # 记录 用户 - 直接上级 关系新增日志
         self.ctx.logger.info(f"create {len(waiting_create_user_leader_relations)} user-leader relations")
-        # 记录 用户-直接上级 关系删除日志
+        # 记录 用户 - 直接上级 关系删除日志
         self.ctx.logger.info(f"delete {len(waiting_delete_user_leader_relation_ids)} user-leader relations")
 
     def _get_waiting_create_user_leader_relations(
@@ -353,7 +353,7 @@ class DataSourceUserDeptRelationSyncer:
             DataSourceDepartment.objects.filter(data_source=self.data_source).values_list("code", flat=True)
         )
         raw_user_dept_codes = {dept_code for user in self.raw_users for dept_code in user.departments}
-        # 需要确保待同步的 用户-部门 关系中的部门都是存在的
+        # 需要确保待同步的 用户 - 部门 关系中的部门都是存在的
         # Q: 提示信息使用 dept_code 是否影响可读性
         # A：尽管本地数据源使用 Hash 值作为部门 code，但是组织路径中的部门都会被创建，理论上不会触发该处异常
         #  非本地数据源，因为本身插件提供的用户部门信息即 code 列表，因此是可映射回实际的部门数据的
@@ -407,9 +407,9 @@ class DataSourceUserDeptRelationSyncer:
             if waiting_delete_user_dept_relation_ids:
                 DataSourceDepartmentUserRelation.objects.filter(id__in=waiting_delete_user_dept_relation_ids).delete()
 
-        # 记录 用户-部门 关系新增日志
+        # 记录 用户 - 部门 关系新增日志
         self.ctx.logger.info(f"create {len(waiting_create_user_dept_relations)} user-department relations")
-        # 记录 用户-部门 关系删除日志
+        # 记录 用户 - 部门 关系删除日志
         self.ctx.logger.info(f"delete {len(waiting_delete_user_dept_relation_ids)} user-department relations")
 
     def _get_waiting_create_user_dept_relations(

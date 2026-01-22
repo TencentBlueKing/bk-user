@@ -107,6 +107,9 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
             tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
         ).select_related("data_source_user", "data_source")
 
+    def get_serializer_context(self):
+        return {"tenant_id": self.tenant_id}
+
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="retrieve_user",
@@ -231,7 +234,8 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
         return {
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
-            )
+            ),
+            "tenant_id": self.tenant_id,
         }
 
     @swagger_auto_schema(
@@ -264,7 +268,8 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         return {
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.paginate_queryset(self.get_queryset())
-            )
+            ),
+            "tenant_id": self.tenant_id,
         }
 
     @swagger_auto_schema(
@@ -336,7 +341,8 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         return {
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
                 self.get_queryset()
-            )
+            ),
+            "tenant_id": self.tenant_id,
         }
 
     @swagger_auto_schema(

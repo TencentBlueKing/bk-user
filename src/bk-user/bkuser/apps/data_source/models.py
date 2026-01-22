@@ -34,7 +34,7 @@ from bkuser.utils.uuid import generate_uuid
 class DataSourcePlugin(models.Model):
     """
     数据源插件
-    DB初始化内置插件：local/mad/ldap
+    DB 初始化内置插件：local/mad/ldap
     """
 
     id = models.CharField("数据源插件唯一标识", primary_key=True, max_length=128)
@@ -154,7 +154,7 @@ class DataSourceUser(TimestampedModel):
     extras = models.JSONField("自定义字段", default=dict)
 
     # ----------------------- 状态相关 -----------------------
-    # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态
+    # TODO: (1) 用户管理里涉及的功能状态（2）企业本身的员工状态
 
     class Meta:
         ordering = ["id"]

@@ -45,6 +45,7 @@ from bkuser.apps.tenant.models import (
     UserBuiltinField,
 )
 from bkuser.biz.organization import TenantOrgPathHandler
+from bkuser.biz.tenant import generate_local_data_source_username
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
@@ -508,7 +509,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 注：raw_info 格式是以英文逗号 (,)、中文逗号 (，)、英文分号 (;) 或中文分号 (；)
             # 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, 女, StarCoreHunter, 狩猎/阅读
+            # 示例：kafka, 卡芙卡，kafka@starrail.com, 女，StarCoreHunter, 狩猎/阅读
             data: List[str] = [s.strip() for s in re.split(r"[,，;；]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
@@ -633,12 +634,15 @@ class TenantUserBatchCreatePreviewInputSLZ(TenantUserBatchCreateInputSLZ): ...
 
 
 class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
-    username = serializers.CharField(help_text="用户名")
+    username = serializers.SerializerMethodField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
     email = serializers.EmailField(help_text="邮箱", required=False)
     phone = serializers.CharField(help_text="手机号", required=False)
     phone_country_code = serializers.CharField(help_text="手机国际区号", required=False)
     extras = serializers.JSONField(help_text="自定义字段")
+
+    def get_username(self, obj: Dict[str, Any]) -> str:
+        return generate_local_data_source_username(obj["username"])
 
 
 def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:

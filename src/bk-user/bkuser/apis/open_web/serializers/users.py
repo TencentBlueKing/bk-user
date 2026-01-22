@@ -24,15 +24,18 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, get_tenant_user_login_name
 from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
 class TenantUserDisplayInfoRetrieveOutputSLZ(serializers.Serializer):
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return get_tenant_user_login_name(self.context["tenant_id"], obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
@@ -47,9 +50,12 @@ class TenantUserDisplayInfoListInputSLZ(serializers.Serializer):
 
 class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return get_tenant_user_login_name(self.context["tenant_id"], obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
@@ -73,7 +79,7 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     # 用 login_name 对外暴露 username 字段，作为企业内用户唯一标识
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     # TODO: 虚拟帐号先暂时使用 display_name 展示，后续根据虚拟帐号方案再进行更改
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
@@ -81,6 +87,9 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return get_tenant_user_login_name(self.context["tenant_id"], obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
@@ -128,13 +137,16 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
 
 class TenantUserLookupOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     data_source_type = serializers.CharField(help_text="用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return get_tenant_user_login_name(self.context["tenant_id"], obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]

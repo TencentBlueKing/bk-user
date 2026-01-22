@@ -100,6 +100,13 @@ class LocalDataSourceDataParser:
         self._parse_users()
         self.is_parsed = True
 
+    @staticmethod
+    def _build_username(raw_username: str) -> str:
+        """构建用户名，多数据源场景下添加 _local 后缀"""
+        if settings.ENABLE_MULTI_DATA_SOURCE:
+            return f"{raw_username}_local"
+        return raw_username
+
     def get_departments(self) -> List[RawDataSourceDepartment]:
         return self.departments
 
@@ -246,7 +253,7 @@ class LocalDataSourceDataParser:
 
             if leader_names := properties.pop("leaders"):
                 # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
-                leaders = [ld.strip() for ld in leader_names.split(",") if ld.strip()]
+                leaders = [self._build_username(ld.strip()) for ld in leader_names.split(",") if ld.strip()]
 
             phone_number = properties.pop("phone_number")
             # 如果手机号为空，设置为空字符串
@@ -264,6 +271,9 @@ class LocalDataSourceDataParser:
 
             # 格式化，将所有非 None 字段都转成 str 类型
             properties = {k: str(v) for k, v in properties.items() if v is not None}
+            # 构建 username
+            properties["username"] = self._build_username(properties["username"])
+
             self.users.append(
                 RawDataSourceUser(
                     # 本地数据源用户，code 就是 username

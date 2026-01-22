@@ -61,6 +61,24 @@ from bkuser.settings import DEFAULT_TENANT_LOGO
 logger = logging.getLogger(__name__)
 
 
+def generate_local_data_source_username(raw_username: str) -> str:
+    """生成本地数据源用户名，多数据源场景下添加 _local 后缀"""
+    if settings.ENABLE_MULTI_DATA_SOURCE:
+        return f"{raw_username}_local"
+    return raw_username
+
+
+def get_tenant_user_login_name(tenant_id: str, tenant_user: TenantUser) -> str:
+    """
+    获取租户用户的登录名
+
+    对于协同过来的用户（即数据源所属租户 != 当前租户），加上来源租户 ID 作为后缀
+    """
+    if tenant_id != tenant_user.data_source.owner_tenant_id:
+        return f"{tenant_user.data_source_user.username}@{tenant_user.data_source.owner_tenant_id}"
+    return tenant_user.data_source_user.username
+
+
 class TenantInfo(BaseModel):
     """租户基础信息配置"""
 

@@ -90,6 +90,7 @@ from bkuser.biz.auditor import (
 )
 from bkuser.biz.organization import DataSourceUserHandler, TenantOrgPathHandler
 from bkuser.biz.password_rule import PasswordRuleHandler
+from bkuser.biz.tenant import generate_local_data_source_username
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -798,8 +799,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             data_source_users = [
                 DataSourceUser(
                     data_source=data_source,
-                    code=info["username"],
-                    username=info["username"],
+                    code=generate_local_data_source_username(info["username"]),
+                    username=generate_local_data_source_username(info["username"]),
                     full_name=info["full_name"],
                     email=info["email"],
                     phone=info["phone"],
@@ -812,7 +813,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
 
             # 重新从 DB 查询以获取带 ID 的数据源用户
             data_source_users = DataSourceUser.objects.filter(
-                data_source=data_source, code__in=[u["username"] for u in data["user_infos"]]
+                data_source=data_source,
+                code__in=[generate_local_data_source_username(u["username"]) for u in data["user_infos"]],
             )
 
             # 绑定数据源部门 - 用户
