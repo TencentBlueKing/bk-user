@@ -34,25 +34,19 @@
             >
             </bk-searchSelect>
         </div>
-        <bk-table
-            ref="tableRef"
-            :pagination-height="paginationHeight"
-            :thead="{ height: headHeight }"
-            :row-height="lineHeight"
-            :max-height="curTableMaxHeight"
-            min-height="30%"
-            class="organization-table-main"
-            :border="['outer']"
-            :data="tableData"
-            :pagination="pagination"
-            v-bkloading="{ loading: isLoading }"
-            row-hover="auto"
-            remote-pagination
-            :columns="tableColumns"
-            @select="handleSelectTable"
-            @select-all="handleSelectAll"
-            @page-limit-change="pageLimitChange"
-            @page-value-change="pageCurrentChange"
+        <Table
+          ref="tableRef"
+          :max-height="curTableMaxHeight"
+          class="organization-table-main"
+          :data="tableData"
+          :pagination="pagination"
+          v-bkloading="{ loading: isLoading }"
+          :virtual-y-config="{ enabled: true, gt: 10 }"
+          :columns="tableColumns"
+          @checkbox-change="handleSelectTable"
+          @checkbox-all="handleSelectAll"
+          @page-limit-change="pageLimitChange"
+          @page-value-change="pageCurrentChange"
         >
           <template #empty>
             <Empty
@@ -77,7 +71,7 @@
                   >{{$t(item.label)}}</label>   
               </div>
           </template>
-        </bk-table>
+        </Table>
     </div>
     <!-- 拉取已有用户 -->
     <bk-dialog
@@ -100,7 +94,6 @@
         multiple-mode="tag"
         display-key="username"
         :remoteMethod="remoteMethod"
-        @select="handleSelect"
       >
         <template #optionRender="{ item }" class="test">
           <div class="user-info-option pt-[5px] pb-[5px]">
@@ -154,7 +147,6 @@
                     idKey="id"
                     displayKey="name"
                     collapse-tags
-                    @select="handleSelect"
                 >
                 <bk-option
                   v-for="item in dataSource"
@@ -243,6 +235,7 @@
 <script setup lang="tsx">
   import { ref, reactive, computed, inject, watch} from 'vue';
   import { InfoBox, Message} from 'bkui-vue';
+  import { Table } from '@blueking/table';
   import Empty from '@/components/SearchEmpty.vue'; 
   import { Upload} from 'bkui-vue/lib/icon'; 
   import { t } from '@/language/index';
@@ -276,6 +269,7 @@
   import { useSearchPlaceholder } from '@/hooks/useSearchPlaceholder';
 
   const { createPlaceholder } = useSearchPlaceholder();
+  const curTableMaxHeight = useTableMaxHeight(200);
   const appStore = useAppStore();
   const recursive = ref(true);
   const isLoading = ref(false);
@@ -492,7 +486,7 @@
   const prependData = computed(() => {
     return appStore.currentOrg.isTenant ? [] : operationList;
   })
-  const pagination = reactive({ count: 0, limit: 10, current: 1 })
+  const pagination = reactive({ count: 0, limit: 10, current: 1, remote: true })
   const isScrollLoading = ref(false);
 
   const statusEnum = reactive({
@@ -613,9 +607,9 @@
     }}>{ operationLabel(item, row) }</label>)
   }
   const selectionColumns = reactive([{
-      width: 40,
-      minWidth: 40,
-      type: "selection"
+      width: 50,
+      minWidth: 50,
+      type: "checkbox"
   }]);
   const operationColumns = reactive([{
     label: t("操作"),
@@ -625,12 +619,16 @@
   const hasOperationColumns = [...columns, ...operationColumns]
   /** 判断当前表格需要展示的列 */
   const columnsRender = computed(() => {
+    // 当 tableData 为空时，不显示选择列
+    if (tableData.value.length === 0) {
+      return hasOperationColumns;
+    }
     return isLocalDataSource.value || isLdapDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
   });
   const tableColumns = computed(() => {
     return isCollaborativeUsers.value ? columns : columnsRender.value;
   })
-  const getUserListFun = async (word) => {
+  const getUserListFun = async () => {
     const res = await getUsersList({tenant_id: appStore.currentTenant.id});
     getUserList.value = res.data;
   }
@@ -811,7 +809,7 @@
   };
 
   // 勾选所有数据行
-  const handleSelectAll = ({ checked, data }) => {
+  const handleSelectAll = ({ checked, records: data }) => {
     selectList.value = checked ? data : [];
   };
   const handleBeforeClose = async () => {
@@ -833,7 +831,7 @@
   };
 
   const handleAfterBatchOperation = () => {
-    tableRef.value?.clearSelection();
+    tableRef.value?.getVxeTableInstance()?.clearCheckboxRow();
     reloadList();
   }
 
@@ -879,17 +877,6 @@ const batchMoveOrg = (params) => {
   currentHandle.value = params
   handleOperations(true, t('移动至组织'), t('将'), t('从当前组织移出，并追加到以下组织'));
 }
-
-// 固定表头行高分页器高度，便于切换行高时计算高度
-const paginationHeight = 60;
-const headHeight = 42;
-const lineHeight = ref(42);
-// table height继续采用响应式hook，用于处理window resize以及折叠功能高度的计算(curRedundantHeight is ref data)
-const dynamicTableHeight = useTableMaxHeight(200);
-const curTableMaxHeight = computed(() => {
-  if (pagination.count < pagination.limit) return '100%';
-  return dynamicTableHeight.value;
-});
 
 watch(keyword, (val) => {
   pagination.current = 1;

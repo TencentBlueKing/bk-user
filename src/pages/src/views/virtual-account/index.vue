@@ -20,20 +20,18 @@
         @clear="handleClear"
       />
     </header>
-    <bk-table
+    <Table
       v-bkloading="{ loading: isLoading }"
       class="table-users"
-      :min-height="150"
+      :max-height="maxHeight"
       :data="tableData"
-      :border="['outer']"
-      remote-pagination
       :pagination="pagination"
       :settings="settings"
-      show-overflow-tooltip
-      @select="handleSelect"
-      @select-all="handleSelectAll"
+      :show-settings="true"
+      :virtual-y-config="{ enabled: true, gt: 10 }"
       @page-limit-change="pageLimitChange"
       @page-value-change="pageCurrentChange"
+      @setting-change="handleSettingChange"
     >
       <template #empty>
         <Empty
@@ -44,43 +42,64 @@
           @handle-update="initVirtualUsers"
         />
       </template>
-      <template #prepend v-if="selectList.length">
-        <div class="batch-operation">
-          {{ $t('当前已选择') }}<span class="font-bold mx-[8px]">{{ selectList.length }}</span>{{ $t('条数据') }}
-          <bk-button class="ml-[8px]" theme="primary" text>{{ $t('批量删除') }}</bk-button>
-        </div>
-      </template>
-      <!-- 暂不支持批量操作 -->
-      <!-- <bk-table-column type="selection" :width="80" align="center" /> -->
-      <bk-table-column prop="username" :label="$t('用户名')">
+      <TableColumn
+        field="username"
+        :label="$t('用户名')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
         <template #default="{ row }">
           <bk-button text theme="primary" @click="handleClick('view', row.id)">{{ row.username }}</bk-button>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="full_name" :label="$t('全名')" />
-      <bk-table-column prop="app_codes" :label="$t('所属应用')">
+      </TableColumn>
+      <TableColumn
+        field="full_name"
+        :label="$t('全名')"
+        show-overflow="tooltip"
+        :min-width="200"
+      />
+      <TableColumn
+        field="app_codes"
+        :label="$t('所属应用')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
         <template #default="{ row }">
           {{ row.app_codes?.length ? row.app_codes?.join(', ') : '--' }}
         </template>
-      </bk-table-column>
-      <bk-table-column prop="owners" :label="$t('账号责任人')">
+      </TableColumn>
+      <TableColumn
+        field="owners"
+        :label="$t('账号责任人')"
+        show-overflow="tooltip"
+        :min-width="300"
+      >
         <template #default="{ row }">
           <DisplayName :user-id="row.owners" />
         </template>
-      </bk-table-column>
-      <bk-table-column prop="created_at" :label="$t('创建时间')">
+      </TableColumn>
+      <TableColumn
+        field="created_at"
+        :label="$t('创建时间')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
         <template #default="{ row }">
           <span>{{ row?.created_at || '--' }}</span>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="action" :label="$t('操作')" width="160">
+      </TableColumn>
+      <TableColumn
+        field="action"
+        :label="$t('操作')"
+        :min-width="160"
+      >
         <template #default="{ row }">
           <bk-button class="mr-[8px]" theme="primary" text @click="handleClick('edit', row.id)">
             {{ $t('编辑') }}
           </bk-button>
         </template>
-      </bk-table-column>
-    </bk-table>
+      </TableColumn>
+    </Table>
     <!-- 新建编辑 -->
     <bk-sideslider
       :width="640"
@@ -117,16 +136,22 @@
 import { Message } from 'bkui-vue';
 import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 
+import { Table, TableColumn } from '@blueking/table';
+
 import EditDetails from './EditDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
 import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
+import { useTableMaxHeight } from '@/hooks';
 import { getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
 
 const userStore = useUser();
+const maxHeight = useTableMaxHeight(148);
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -136,12 +161,12 @@ const tableData = ref([]);
 const isDataEmpty = ref(false);
 const isEmptySearch = ref(false);
 const isDataError = ref(false);
-const selectList = ref([]);
 
 const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
+  remote: true,
 });
 
 onMounted(() => {
@@ -174,16 +199,6 @@ const initVirtualUsers = async () => {
   }
 };
 
-// 勾选数据行
-const handleSelect = ({ row, checked }) => {
-  checked ? selectList.value.push(row) : selectList.value = selectList.value.filter(item => item.id !== row.id);
-};
-
-// 勾选所有数据行
-const handleSelectAll = ({ checked, data }) => {
-  selectList.value = checked ? data : [];
-};
-
 // 新建/编辑信息
 const detailsInfo = ref({
   username: '',
@@ -199,30 +214,14 @@ const detailsConfig = reactive({
   type: '',
 });
 
-const settings = {
-  fields: [
-    {
-      label: t('用户名'),
-      field: 'username',
-    },
-    {
-      label: t('全名'),
-      field: 'full_name',
-    },
-    {
-      label: t('所属应用'),
-      field: 'app_codes',
-    },
-    {
-      label: t('账号责任人'),
-      field: 'owners',
-    },
-    {
-      label: t('创建时间'),
-      field: 'created_at',
-    },
-  ],
-  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at'],
+const settings = reactive({
+  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at', 'action'],
+  size: 'small',
+});
+
+// 更改表格设置时，更新当前行高
+const handleSettingChange = (data: any) => {
+  settings.size = data.size as string;
 };
 
 const enumData = {

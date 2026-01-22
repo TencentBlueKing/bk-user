@@ -1,6 +1,6 @@
 <template>
   <div
-    v-bkloading="{ loading: state.tableLoading, zIndex: 9 }"
+    v-bkloading="{ loading: state.tableLoading, zIndex: 10 }"
     :class="['group-details-wrapper user-scroll-y relative', { 'has-alert': userStore.showAlert }]">
     <div class="main-content">
       <div class="content-search">
@@ -18,13 +18,11 @@
           clearable
         />
       </div>
-      <bk-table
+      <Table
         class="content-table"
         :data="tableSearchData"
-        :border="['outer']"
         :max-height="tableMaxHeight"
-        show-overflow-tooltip
-        @column-sort="columnSort">
+        @filter-change="handleFilterChange">
         <template #empty>
           <Empty
             :is-data-empty="state.isTableDataEmpty"
@@ -34,13 +32,15 @@
             @handle-update="fetchTenantsList"
           />
         </template>
-        <bk-table-column
-          prop="name"
-          :label="$t('租户名')">
-          <template #default="{ row, index }">
+        <TableColumn
+          field="name"
+          :label="$t('租户名')"
+          :min-width="300"
+          show-overflow="tooltip">
+          <template #default="{ row, $rowIndex }">
             <div class="item-name">
               <img v-if="row.logo" class="img-logo" :src="row.logo" />
-              <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[index]}`">
+              <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[$rowIndex]}`">
                 {{ logoConvert(row.name) }}
               </span>
               <bk-button
@@ -53,18 +53,28 @@
               <img v-if="row.new" class="icon-new" src="@/images/new.svg" alt="">
             </div>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="id" :label="$t('租户ID')"></bk-table-column>
-        <bk-table-column prop="status" :label="$t('租户状态')" :filter="{ list: statusFilters }">
+        </TableColumn>
+        <TableColumn field="id" :label="$t('租户ID')" :min-width="200" show-overflow="tooltip" />
+        <TableColumn
+          field="status"
+          :label="$t('租户状态')"
+          :min-width="200"
+          show-overflow="tooltip"
+          filter-multiple
+          :filters="statusFilters">
           <template #default="{ row }">
             <div>
               <img :src="tenantStatus[row.status]?.icon" class="status-icon" />
               <span>{{ tenantStatus[row.status]?.text }}</span>
             </div>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="created_at" :label="$t('创建时间')" />
-        <bk-table-column :label="$t('操作')">
+        </TableColumn>
+        <TableColumn
+          field="created_at"
+          :label="$t('创建时间')"
+          show-overflow="tooltip"
+          :min-width="300" />
+        <TableColumn :label="$t('操作')" :width="300">
           <template #default="{ row }">
             <div class="flex items-center">
               <span
@@ -123,8 +133,8 @@
               </bk-popover>
             </div>
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
@@ -289,6 +299,8 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import { Table, TableColumn } from '@blueking/table';
+
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
@@ -390,8 +402,8 @@ const isView = computed(() => detailsConfig.type === 'view');
 const currentTenantId = ref('');
 
 const statusFilters = [
-  { text: t('已启用'), value: 'enabled' },
-  { text: t('未启用'), value: 'disabled' },
+  { label: t('已启用'), value: 'enabled' },
+  { label: t('未启用'), value: 'disabled' },
 ];
 
 const handleClick = async (type: string, item?: any) => {
@@ -426,7 +438,7 @@ const handleCancelEdit = async () => {
 const isCreated = ref(false);
 const newId = ref('');
 
-const getRows = () => document.getElementsByClassName('hover-highlight')[0].getElementsByTagName('td');
+const getRows = () => document.getElementsByClassName('vxe-body--row')[0].getElementsByTagName('td');
 
 watch(() => search.value, (val) => {
   if (val) {
@@ -481,8 +493,49 @@ const fetchTenantsList = () => {
     });
 };
 
-// 搜索租户列表
-const tableSearchData = computed(() => state.list.filter(item => !search.value || item.name.includes(search.value)));
+// 前端筛选状态
+const filterStatus = ref('');
+
+// 前端筛选处理
+const handleFilterChange = ({ field, values }: { field: string, values: string[] }) => {
+  if (field === 'status') {
+    filterStatus.value = values.join(',');
+
+    // 判断筛选后是否有数据
+    // 如果有筛选条件，需要判断是搜索为空还是数据为空
+    if (values.length > 0) {
+      const statusArray = values;
+      const filteredList = state.list.filter(item => statusArray.includes(item.status));
+      // 如果有搜索条件，显示搜索为空；否则显示数据为空
+      if (search.value) {
+        state.isEmptySearch = filteredList.length === 0;
+      } else {
+        state.isTableDataEmpty = filteredList.length === 0;
+      }
+    } else {
+      // 没有筛选条件，恢复状态
+      state.isEmptySearch = false;
+      state.isTableDataEmpty = state.list.length === 0;
+    }
+  }
+};
+
+// 搜索和筛选租户列表
+const tableSearchData = computed(() => {
+  let filteredList = state.list;
+  // 应用状态筛选
+  if (filterStatus.value) {
+    const statusArray = filterStatus.value.split(',');
+    filteredList = filteredList.filter(item => statusArray.includes(item.status));
+  }
+
+  // 应用搜索
+  if (search.value) {
+    filteredList = filteredList.filter(item => item.name.includes(search.value));
+  }
+
+  return filteredList;
+});
 
 watch(() => search.value, (val) => {
   state.isEmptySearch = val && !tableSearchData.value.length;
@@ -767,27 +820,25 @@ onMounted(() => {
       }
     }
 
-    :deep(.bk-table) {
-      .item-name {
-        display: flex;
-        align-items: center;
-        height: 42px;
-        line-height: 42px;
+    .item-name {
+      display: flex;
+      align-items: center;
+      height: 42px;
+      line-height: 42px;
 
-        .icon-new {
-          width: 26px;
-          margin-left: 8px;
-        }
+      .icon-new {
+        width: 26px;
+        margin-left: 8px;
       }
+    }
 
-      .status-icon {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 5px;
-        color: #999;
-        vertical-align: middle
-      }
+    .status-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      color: #999;
+      vertical-align: middle
     }
   }
 }
@@ -906,5 +957,9 @@ onMounted(() => {
   font-size: 12px;
   line-height: 20px;
   text-align: center;
+}
+
+:deep(.vxe-body--row) {
+  height: 44px;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div
-    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    v-bkloading="{ loading: isLoading, zIndex: 10 }"
     :class="['collaboration-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <header>
       <bk-button theme="primary" @click="handleClick('add')">
@@ -15,12 +15,10 @@
         :placeholder="$t('搜索策略名称')"
       />
     </header>
-    <bk-table
+    <Table
       :data="searchList"
-      :border="['outer']"
       :max-height="tableMaxHeight"
-      show-overflow-tooltip
-      @column-filter="handleFilter"
+      @filter-change="handleFilterChange"
     >
       <template #empty>
         <Empty
@@ -31,29 +29,62 @@
           @handle-update="fetchToStrategies"
         />
       </template>
-      <bk-table-column prop="name" :label="$t('策略名称')">
+      <TableColumn
+        field="name"
+        :label="$t('策略名称')"
+        show-overflow="tooltip"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <bk-button text theme="primary" @click="handleClick('view', row)">
             {{ row.name }}
           </bk-button>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="target_tenant_id" :label="$t('目标租户')" />
-      <bk-table-column prop="target_status" :label="$t('状态')" :filter="{ list: targetStatusFilters }">
+      </TableColumn>
+      <TableColumn
+        field="target_tenant_id"
+        :label="$t('目标租户')"
+        show-overflow="tooltip"
+        :min-width="120"
+      />
+      <TableColumn
+        field="target_status"
+        :label="$t('状态')"
+        show-overflow="tooltip"
+        filter-multiple
+        :filters="targetStatusFilters"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <div class="styled-circle" :class="row.target_status === 'enabled' ? 'enabled-color' : 'unconfirmed-color'">
           </div>
           <span>{{ row.target_status === 'enabled' ? $t('已接收') : $t('待接收')}}</span>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="creator" :label="$t('创建人')">
+      </TableColumn>
+      <TableColumn
+        field="creator"
+        :label="$t('创建人')"
+        show-overflow="tooltip"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <DisplayName :user-id="row.creator" />
         </template>
-      </bk-table-column>
-      <bk-table-column prop="created_at" :label="$t('创建时间')"></bk-table-column>
-      <bk-table-column
-        prop="source_status" :label="$t('启/停')" :filter="{ list: statusFilters }">
+      </TableColumn>
+      <TableColumn
+        field="created_at"
+        :label="$t('创建时间')"
+        show-overflow="tooltip"
+        :min-width="160"
+      />
+      <TableColumn
+        field="source_status"
+        :label="$t('启/停')"
+        show-overflow="tooltip"
+        filter-multiple
+        :filters="statusFilters"
+        :min-width="120"
+      >
         <template #default="{ row }">
           <bk-switcher
             theme="primary"
@@ -62,8 +93,12 @@
             @change="handleChange(row)"
           />
         </template>
-      </bk-table-column>
-      <bk-table-column :label="$t('操作')">
+      </TableColumn>
+      <TableColumn
+        field="action"
+        :label="$t('操作')"
+        :width="160"
+      >
         <template #default="{ row }">
           <bk-button text theme="primary" class="mr8" @click="handleClick('edit', row)">
             {{ $t('编辑') }}
@@ -74,8 +109,8 @@
             </bk-button>
           </span>
         </template>
-      </bk-table-column>
-    </bk-table>
+      </TableColumn>
+    </Table>
     <bk-sideslider
       :class="['details-wrapper', { 'details-edit-wrapper': !isView }]"
       :width="960"
@@ -110,7 +145,9 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import { computed, defineProps, inject, reactive, ref, watch, watchEffect } from 'vue';
+import { computed, inject, reactive, ref, watch, watchEffect } from 'vue';
+
+import { Table, TableColumn } from '@blueking/table';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
@@ -136,6 +173,7 @@ const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
+const originalTableData = ref([]); // 保存原始数据副本
 const isDataEmpty = ref(false);
 const isDataError = ref(false);
 const isSearchEmpty = ref(false);
@@ -149,7 +187,11 @@ const fetchToStrategies = async () => {
     isDataError.value = false;
     isSearchEmpty.value = false;
     const res = await getToStrategies();
-    tableData.value = res?.data;
+
+    // 保存原始数据副本
+    originalTableData.value = res?.data || [];
+    tableData.value = [...originalTableData.value];
+
     if (tableData.value.length === 0) {
       isDataEmpty.value = true;
     }
@@ -167,18 +209,28 @@ watchEffect(() => {
 });
 
 const statusFilters = [
-  { text: t('启用'), value: 'enabled' },
-  { text: t('停用'), value: 'disabled' },
+  { label: t('启用'), value: 'enabled' },
+  { label: t('停用'), value: 'disabled' },
 ];
 
 const targetStatusFilters = [
-  { text: t('已接收'), value: 'enabled' },
-  { text: t('待接收'), value: 'unconfirmed' },
+  { label: t('已接收'), value: 'enabled' },
+  { label: t('待接收'), value: 'unconfirmed' },
 ];
 
-const handleFilter = ({ checked }) => {
-  if (checked.length === 0) return isDataEmpty.value = false;
-  isDataEmpty.value = !tableData.value.some(item => checked.includes(item.status));
+const handleFilterChange = ({ field, values }: { field: string; values: string[] }) => {
+  // 如果没有筛选条件，恢复原始数据
+  if (values.length === 0) {
+    tableData.value = [...originalTableData.value];
+    isDataEmpty.value = false;
+    return;
+  }
+
+  // 前端过滤：从原始数据中筛选出符合条件的数据
+  tableData.value = originalTableData.value.filter(item => values.includes(item[field]));
+
+  // 判断是否有数据
+  isDataEmpty.value = tableData.value.length === 0;
 };
 
 // 搜索协同列表

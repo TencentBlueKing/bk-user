@@ -157,7 +157,7 @@
       <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading" :disabled="isDisabled">
         {{ $t('保存') }}
       </bk-button>
-      <bk-button theme="default" @click="$emit('handleCancel')">{{ $t('取消') }}</bk-button>
+      <bk-button @click="$emit('handleCancel')">{{ $t('取消') }}</bk-button>
     </div>
     <!-- 枚举值删除确认弹框 -->
     <bk-dialog
@@ -200,7 +200,6 @@
             @click="changeEnumValue"
           >{{ $t('确定') }}</bk-button>
           <bk-button
-            theme="default"
             @click="enumDialog.isShow = false"
           >{{ $t('取消') }}</bk-button>
         </div>
@@ -211,7 +210,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useValidate } from '@/hooks';
 import { newCustomFields, putCustomFields } from '@/http';

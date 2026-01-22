@@ -1,5 +1,5 @@
 <template>
-  <div class="details-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+  <div class="details-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 10 }">
     <bk-form
       class="auth-source-form"
       ref="formRef"

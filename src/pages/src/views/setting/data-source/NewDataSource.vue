@@ -1,7 +1,7 @@
 <template>
   <div
     :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
-    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    v-bkloading="{ loading: isLoading, zIndex: 10 }"
   >
     <DataSourceCard
       v-if="!isSuccess"

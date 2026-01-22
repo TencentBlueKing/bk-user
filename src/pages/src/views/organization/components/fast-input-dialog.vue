@@ -68,7 +68,7 @@
           </bk-form-item>
         </bk-form>
       </div>
-      <bk-table
+      <Table
         v-else
         v-bkloading="{ loading: isLoading }"
         style="margin-top: 18px"
@@ -78,7 +78,7 @@
         show-overflow-tooltip
         stripe
       >
-      </bk-table>
+      </Table>
     </div>
     <template #footer>
       <div class="flex justify-between" v-if="currentId > 1">
@@ -113,6 +113,8 @@
 <script setup lang="tsx">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, nextTick, ref, watch } from 'vue';
+
+import { Table } from '@blueking/table';
 
 import { useValidate } from '@/hooks';
 import { getFields } from '@/http';

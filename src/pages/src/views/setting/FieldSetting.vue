@@ -1,16 +1,14 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="field-setting-content user-scroll-y">
+  <div v-bkloading="{ loading: isLoading, zIndex: 10 }" class="field-setting-content user-scroll-y">
     <bk-button class="add-field" theme="primary" @click="addField">
       <i class="user-icon icon-add-2 mr8" />
       {{ $t('添加字段') }}
     </bk-button>
     <div ref="rootRef">
-      <bk-table
+      <Table
         class="field-setting-table"
         :data="tableData"
-        :border="['outer']"
-        :max-height="tableMaxHeight"
-        show-overflow-tooltip>
+        :max-height="tableMaxHeight">
         <template #empty>
           <Empty
             :is-data-empty="fieldData.isTableDataEmpty"
@@ -18,46 +16,46 @@
             @handle-update="fetchFieldList"
           />
         </template>
-        <bk-table-column prop="display_name" :label="$t('字段名称')" width="200">
+        <TableColumn field="display_name" :label="$t('字段名称')" :width="200" show-overflow="tooltip">
           <template #default="{ row }">
             <div class="field-name">
               <span class="name">{{ row.display_name }}</span>
               <bk-tag theme="info" v-if="row.builtin">{{ $t('内置') }}</bk-tag>
             </div>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="name" :label="$t('英文标识')"></bk-table-column>
-        <bk-table-column prop="data_type" :label="$t('字段类型')">
+        </TableColumn>
+        <TableColumn field="name" :label="$t('英文标识')" show-overflow="tooltip"></TableColumn>
+        <TableColumn field="data_type" :label="$t('字段类型')" show-overflow="tooltip">
           <template #default="{ row }">
             <span>{{ switchType(row.data_type) }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="required" :label="$t('是否必填')">
+        </TableColumn>
+        <TableColumn field="required" :label="$t('是否必填')" show-overflow="tooltip">
           <template #default="{ row }">
             <i :class="fieldStatus(row.required)"></i>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="unique" :label="$t('是否唯一')">
+        </TableColumn>
+        <TableColumn field="unique" :label="$t('是否唯一')" show-overflow="tooltip">
           <template #default="{ row }">
             <i :class="fieldStatus(row.unique)"></i>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="manager_editable" :label="$t('管理员可编辑')">
+        </TableColumn>
+        <TableColumn field="manager_editable" :label="$t('管理员可编辑')" show-overflow="tooltip">
           <template #default="{ row }">
             <i :class="fieldStatus(row.manager_editable)"></i>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="personal_center_visible" :label="$t('个人中心展示')">
+        </TableColumn>
+        <TableColumn field="personal_center_visible" :label="$t('个人中心展示')" show-overflow="tooltip">
           <template #default="{ row }">
             <i :class="fieldStatus(row.personal_center_visible)"></i>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="personal_center_editable" :label="$t('个人中心可编辑')">
+        </TableColumn>
+        <TableColumn field="personal_center_editable" :label="$t('个人中心可编辑')" show-overflow="tooltip">
           <template #default="{ row }">
             <i :class="fieldStatus(row.personal_center_editable)"></i>
           </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('操作')">
+        </TableColumn>
+        <TableColumn field="action" :label="$t('操作')">
           <template #default="{ row }">
             <span v-bk-tooltips="{ content: $t('该内置字段，不支持修改'), disabled: !row.builtin }">
               <bk-button text theme="primary" class="mr8" :disabled="row.builtin" @click="editField(row)">
@@ -70,8 +68,8 @@
               </bk-button>
             </span>
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </div>
     <!-- 添加字段的侧边栏 -->
     <bk-sideslider
@@ -93,6 +91,8 @@
 <script setup lang="ts"> import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import InfoBox from 'bkui-vue/lib/info-box';
 import { inject, onMounted, reactive, ref } from 'vue';
+
+import { Table, TableColumn } from '@blueking/table';
 
 import FieldsAdd from './FieldsAdd.vue';
 
