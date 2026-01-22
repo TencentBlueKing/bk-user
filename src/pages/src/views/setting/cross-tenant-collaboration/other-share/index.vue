@@ -20,7 +20,9 @@
         <Empty
           :is-data-empty="isDataEmpty"
           :is-data-error="isDataError"
+          :is-search-empty="isSearchEmpty"
           @handle-update="fetchFromStrategies"
+          @handle-empty="handleClearFilter"
         />
       </template>
       <TableColumn
@@ -136,7 +138,9 @@
           <Empty
             :is-data-empty="dialogConfig.isDataEmpty"
             :is-data-error="dialogConfig.isDataError"
+            :is-search-empty="dialogConfig.isDataSearch"
             @handle-update="fetchUpdateRecord"
+            @handle-empty="handleClearRecordFilter"
           />
         </template>
         <TableColumn type="expand" :min-width="60">
@@ -352,23 +356,25 @@ const tableData = ref([]);
 const originalTableData = ref([]); // 保存原始数据副本
 const isDataEmpty = ref(false);
 const isDataError = ref(false);
+const isSearchEmpty = ref(false);
 
-const statusFilters = [
+const statusFilters = ref([
   { label: t('正常'), value: 'enabled' },
   { label: t('未启用'), value: 'disabled' },
   { label: t('待确认'), value: 'unconfirmed' },
-];
+]);
 
-const enableFilters = [
+const enableFilters = ref([
   { label: t('启用'), value: 'enabled' },
   { label: t('停用'), value: 'disabled' },
-];
+]);
 
 const handleFilterChange = ({ field, values }: { field: any; values: string[] }) => {
   // 如果没有筛选条件，恢复原始数据
   if (values.length === 0) {
+    isSearchEmpty.value = false;
     tableData.value = [...originalTableData.value];
-    isDataEmpty.value = false;
+    isDataEmpty.value = tableData.value.length === 0;
     return;
   }
 
@@ -377,16 +383,20 @@ const handleFilterChange = ({ field, values }: { field: any; values: string[] })
 
   // 前端过滤：从原始数据中筛选出符合条件的数据
   tableData.value = originalTableData.value.filter(item => values.includes(item[fieldName]));
-
-  // 判断是否有数据
-  isDataEmpty.value = tableData.value.length === 0;
+  isSearchEmpty.value = tableData.value.length === 0;
 };
 
-const updateStatusFilters = [
+const handleClearFilter = () => {
+  isSearchEmpty.value = false;
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
+  enableFilters.value = enableFilters.value.map(item => ({ ...item, checked: false }));
+};
+
+const updateStatusFilters = ref([
   { label: t('同步成功'), value: 'success' },
   { label: t('同步失败'), value: 'failed' },
   { label: t('同步中'), value: 'running' },
-];
+]);
 const detailsConfig = reactive({
   isShow: false,
   title: '',
@@ -399,6 +409,14 @@ const dataRecordFilter = ({ values }: { values: string[] }) => {
     pagination.current = 1;
   }
   dialogConfig.status = values.join(',');
+  pagination.current = 1;
+  fetchUpdateRecord();
+};
+
+const handleClearRecordFilter = () => {
+  dialogConfig.isDataSearch = false;
+  updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
+  dialogConfig.status = '';
   pagination.current = 1;
   fetchUpdateRecord();
 };
@@ -418,7 +436,7 @@ const fetchFromStrategies = async () => {
     isDataError.value = false;
     const res = await getFromStrategies();
     const sortedData = res.data?.sort(a => (a.target_status === 'unconfirmed' ? -1 : 1));
-    
+
     // 保存原始数据副本
     originalTableData.value = sortedData || [];
     tableData.value = [...originalTableData.value];
@@ -442,6 +460,7 @@ const dialogConfig = reactive({
   list: [],
   isDataEmpty: false,
   isDataError: false,
+  isDataSearch: false,
   loading: false,
   status: '',
 });
@@ -472,7 +491,11 @@ const fetchUpdateRecord = async () => {
     const { count, results } = res.data;
 
     pagination.count = count;
-    dialogConfig.isDataEmpty = count === 0;
+    if (dialogConfig.status) {
+      dialogConfig.isDataSearch = count === 0;
+    } else {
+      dialogConfig.isDataEmpty = count === 0;
+    }
     dialogConfig.list = results;
 
     dialogConfig.list?.forEach((item) => {

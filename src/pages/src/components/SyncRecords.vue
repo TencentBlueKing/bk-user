@@ -13,8 +13,10 @@
         <template #empty>
           <Empty
             :is-data-empty="dataRecordConfig.isDataEmpty"
+            :is-search-empty="dataRecordConfig.isEmptySearch"
             :is-data-error="dataRecordConfig.isDataError"
             @handle-update="getSyncRecordsList"
+            @handle-empty="handleClearSearch"
           />
         </template>
         <TableColumn
@@ -150,6 +152,7 @@ const dataRecordConfig = reactive({
   isDataError: false,
   // 表格请求结果为空
   isDataEmpty: false,
+  isEmptySearch: false,
   status: '',
 });
 
@@ -171,11 +174,11 @@ const triggeMode = {
   manual: t('手动'),
 };
 
-const updateStatusFilters = [
+const updateStatusFilters = ref([
   { label: t('同步中'), value: 'pending,running' },
   { label: t('同步成功'), value: 'success' },
   { label: t('同步失败'), value: 'failed' },
-];
+]);
 
 const interval = ref(null);
 onMounted(() => {
@@ -199,6 +202,14 @@ const getSyncRecordsList = async () => {
   } finally {
     dataRecordConfig.loading = false;
   }
+};
+
+const handleClearSearch = () => {
+  dataRecordConfig.status = '';
+  updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
+  dataRecordConfig.isEmptySearch = false;
+  pagination.current = 1;
+  getSyncRecordsList();
 };
 
 // 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
@@ -242,7 +253,13 @@ const handleSyncRecords = async () => {
   try {
     const res = await getSyncRecords(props.dataSource?.id, params);
     dataRecordConfig.list = res.data.results;
-    dataRecordConfig.isDataEmpty = res.data.count === 0;
+    if (res.data.count === 0) {
+      if (dataRecordConfig.status) {
+        dataRecordConfig.isEmptySearch = true;
+      } else {
+        dataRecordConfig.isDataEmpty = true;
+      }
+    }
     pagination.count = res.data.count;
     // stop time polling
     const curStatus = res.data.results?.[0]?.status;

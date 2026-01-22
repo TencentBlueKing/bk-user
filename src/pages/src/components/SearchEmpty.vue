@@ -1,7 +1,14 @@
 <template>
   <div class="no-data-wrapper">
-    <bk-exception v-if="isDataEmpty" type="empty" scene="part" :description="$t('暂无数据')" />
-    <bk-exception v-if="isSearchEmpty" type="search-empty" scene="part">
+    <bk-exception v-if="isDataError" type="500" scene="part">
+      {{ $t('数据获取异常') }}
+      <bk-button
+        text
+        theme="primary"
+        class="empty-search-text"
+        @click="$emit('handleUpdate')">{{ $t('刷新') }}</bk-button>
+    </bk-exception>
+    <bk-exception v-else-if="isSearchEmpty" type="search-empty" scene="part">
       {{ $t('搜索结果为空') }}
       <p>
         {{ $t('可以尝试 调整关键词 或') }}
@@ -12,20 +19,11 @@
         </bk-button>
       </p>
     </bk-exception>
-    <bk-exception v-if="isDataError" type="500" scene="part">
-      {{ $t('数据获取异常') }}
-      <bk-button
-        text
-        theme="primary"
-        class="empty-search-text"
-        @click="$emit('handleUpdate')">{{ $t('刷新') }}</bk-button>
-    </bk-exception>
+    <bk-exception v-else-if="isDataEmpty" type="empty" scene="part" :description="$t('暂无数据')" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
-
 defineProps({
   isDataEmpty: {
     type: Boolean,

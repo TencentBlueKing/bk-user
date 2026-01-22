@@ -25,7 +25,7 @@
           :is-data-empty="isDataEmpty"
           :is-search-empty="isSearchEmpty"
           :is-data-error="isDataError"
-          @handle-empty="search = ''"
+          @handle-empty="handleClearSearch"
           @handle-update="fetchToStrategies"
         />
       </template>
@@ -208,29 +208,38 @@ watchEffect(() => {
   }
 });
 
-const statusFilters = [
+const statusFilters = ref([
   { label: t('启用'), value: 'enabled' },
   { label: t('停用'), value: 'disabled' },
-];
+]);
 
-const targetStatusFilters = [
+const targetStatusFilters = ref([
   { label: t('已接收'), value: 'enabled' },
   { label: t('待接收'), value: 'unconfirmed' },
-];
+]);
 
 const handleFilterChange = ({ field, values }: { field: string; values: string[] }) => {
   // 如果没有筛选条件，恢复原始数据
   if (values.length === 0) {
     tableData.value = [...originalTableData.value];
-    isDataEmpty.value = false;
+    isSearchEmpty.value = false;
+    isDataEmpty.value = tableData.value.length === 0;
     return;
   }
 
   // 前端过滤：从原始数据中筛选出符合条件的数据
   tableData.value = originalTableData.value.filter(item => values.includes(item[field]));
+  if (values.length > 0) {
+    isSearchEmpty.value = true;
+  }
+};
 
-  // 判断是否有数据
+const handleClearSearch = () => {
+  search.value = '';
+  isSearchEmpty.value = false;
   isDataEmpty.value = tableData.value.length === 0;
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
+  targetStatusFilters.value = targetStatusFilters.value.map(item => ({ ...item, checked: false }));
 };
 
 // 搜索协同列表

@@ -28,7 +28,7 @@
             :is-data-empty="state.isTableDataEmpty"
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isTableDataError"
-            @handle-empty="search = ''"
+            @handle-empty="handleClearSearch"
             @handle-update="fetchTenantsList"
           />
         </template>
@@ -401,10 +401,10 @@ watch(
 const isView = computed(() => detailsConfig.type === 'view');
 const currentTenantId = ref('');
 
-const statusFilters = [
+const statusFilters = ref([
   { label: t('已启用'), value: 'enabled' },
   { label: t('未启用'), value: 'disabled' },
-];
+]);
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
@@ -438,17 +438,19 @@ const handleCancelEdit = async () => {
 const isCreated = ref(false);
 const newId = ref('');
 
-const getRows = () => document.getElementsByClassName('vxe-body--row')[0].getElementsByTagName('td');
+const getRows = () => document.getElementsByClassName('vxe-body--row')?.[0]?.getElementsByTagName('td');
 
 watch(() => search.value, (val) => {
   if (val) {
     isCreated.value = false;
     newId.value = '';
     const rows = getRows();
-    for (const i of rows) {
-      i.style.background = '#fff';
+    if (Array.isArray(rows)) {
+      for (const i of rows) {
+        i.style.background = '#fff';
+      }
+      state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
     }
-    state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }
 });
 
@@ -506,18 +508,21 @@ const handleFilterChange = ({ field, values }: { field: string, values: string[]
     if (values.length > 0) {
       const statusArray = values;
       const filteredList = state.list.filter(item => statusArray.includes(item.status));
-      // 如果有搜索条件，显示搜索为空；否则显示数据为空
-      if (search.value) {
-        state.isEmptySearch = filteredList.length === 0;
-      } else {
-        state.isTableDataEmpty = filteredList.length === 0;
-      }
+      state.isEmptySearch = filteredList.length === 0;
     } else {
       // 没有筛选条件，恢复状态
       state.isEmptySearch = false;
       state.isTableDataEmpty = state.list.length === 0;
     }
   }
+};
+
+const handleClearSearch = () => {
+  search.value = '';
+  filterStatus.value = '';
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
+  state.isEmptySearch = false;
+  state.isTableDataEmpty = state.list.length === 0;
 };
 
 // 搜索和筛选租户列表
