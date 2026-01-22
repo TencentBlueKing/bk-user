@@ -100,7 +100,7 @@ const props = defineProps({
     type: Number,
   },
 });
-const emit = defineEmits(['update:isShow', 'success', 'close']);
+const emit = defineEmits(['update:isShow', 'success']);
 
 const {
   stopImportDataTimePolling,
@@ -213,12 +213,8 @@ const importSuccess = () => {
     infoType: 'success',
     title: t('导入成功'),
     confirmText: t('查看组织架构'),
-    cancelText: t('关闭'),
     onConfirm: () => {
       emit('success');
-    },
-    onClosed: () => {
-      emit('close');
     },
   });
 };
