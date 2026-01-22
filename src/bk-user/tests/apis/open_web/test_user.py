@@ -345,7 +345,12 @@ class TestTenantUserLookupApi:
             virtual_lisi.id,
             collab_lisi.id,
         }
-        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["login_name"] for t in resp.data} == {
+            "zhangsan",
+            "lisi",
+            f"zhangsan@{collaboration_tenant.id}",
+            f"lisi@{collaboration_tenant.id}",
+        }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
@@ -410,7 +415,10 @@ class TestTenantUserLookupApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
-        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["login_name"] for t in resp.data} == {
+            f"zhangsan@{collaboration_tenant.id}",
+            f"lisi@{collaboration_tenant.id}",
+        }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
