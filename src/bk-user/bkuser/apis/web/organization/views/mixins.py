@@ -28,13 +28,13 @@ class CurrentUserTenantDataSourceMixin(CurrentUserTenantMixin):
     """获取当前用户所在租户指定条件数据源"""
 
     def get_current_tenant_real_data_sources(self) -> List[DataSource]:
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), type=DataSourceTypeEnum.REAL
+        data_sources = list(
+            DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id(), type=DataSourceTypeEnum.REAL)
         )
-        if not data_source:
+        if not data_sources:
             raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
 
-        return list(data_source)
+        return data_sources
 
     def get_current_tenant_local_real_data_source(self) -> DataSource:
         real_ds_list = self.get_current_tenant_real_data_sources()
