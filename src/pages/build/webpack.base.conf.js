@@ -68,16 +68,18 @@ export default {
       },
       {
         test: /\.js$/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            include: [resolve('src')],
-            cacheDirectory: './webpack_cache/',
-            // 确保 JS 的转译应用到 node_modules 的 Vue 单文件组件
-            exclude: file => (
-              /node_modules/.test(file) && !/\.vue\.js/.test(file)
-            ),
-          },
+        loader: 'babel-loader',
+        include: [
+          resolve('src'),
+          // 包含 intl-tel-input 以支持其使用的 ES2020 语法（nullish coalescing）
+          /node_modules[\\/]intl-tel-input/,
+        ],
+        options: {
+          cacheDirectory: './webpack_cache/',
+          plugins: [
+            '@babel/plugin-proposal-nullish-coalescing-operator',
+            '@babel/plugin-proposal-optional-chaining',
+          ],
         },
       },
       {

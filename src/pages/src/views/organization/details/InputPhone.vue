@@ -28,8 +28,8 @@
   </div>
 </template>
 <script>
-import intlTelInput from 'intl-tel-input/build/js/intlTelInput.min';
-import utils from 'intl-tel-input/build/js/utils';
+import intlTelInput from 'intl-tel-input';
+import 'intl-tel-input/build/js/utils';
 
 export default {
   props: {
@@ -63,12 +63,18 @@ export default {
       try {
         this.iti = intlTelInput(input, {
           allowDropdown: true,
+          showFlags: true, // 显示国旗
           separateDialCode: true, // 国旗右边显示区号
+          nationalMode: false, // 不显示本地号码格式
           formatOnDisplay: false, // 不自动加空格或横线
+          autoPlaceholder: 'aggressive', // 自动显示占位符
           placeholderNumberType: 'MOBILE', // 手机号码
-          initialCountry: this.item.iso_code, // 初始国家
+          initialCountry: this.item.iso_code,
           preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
-          utilsScript: utils,
+          onlyCountries: [], // 空数组表示显示所有国家
+          i18n: {
+            searchPlaceholder: '搜索', // 修改搜索框为中文
+          },
         });
         // iti.setCountry("gb")
         // iti.setNumber("+447733123456")
@@ -89,12 +95,18 @@ export default {
       this.item.iso_code = 'cn';
       this.iti = intlTelInput(input, {
         allowDropdown: true,
+        showFlags: true, // 显示国旗
         separateDialCode: true, // 国旗右边显示区号
+        nationalMode: false, // 不显示本地号码格式
         formatOnDisplay: false, // 不自动加空格或横线
+        autoPlaceholder: 'aggressive', // 自动显示占位符
         placeholderNumberType: 'MOBILE', // 手机号码
         initialCountry: 'cn', // 初始国家
         preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
-        utilsScript: utils,
+        onlyCountries: [], // 空数组表示显示所有国家
+        i18n: {
+          searchPlaceholder: '搜索', // 修改搜索框为中文
+        },
       });
     },
     // 失焦验证
@@ -102,18 +114,20 @@ export default {
       if (item.value === '') {
         return this.$emit('phone', true);
       }
-      const validation = () => {
-        if (item.value.includes('****')) {
-          return true;
-        }
-        const isoCode = item.iso_code.toLowerCase();
-        if (isoCode === 'cn') {
-          return /^1[3-9]\d{9}$/.test(item.value);
-        } if (isoCode === 'mo') {
-          return /^6\d{7}$/.test(item.value);
-        }
-        return this.iti.isValidNumber(); // 其他国家走默认校验
-      };
+      if (item.value.includes('****')) {
+        return true;
+      }
+      let validation = false;
+      const currentIsoCode = this.iti && this.iti.getSelectedCountryData()
+        ? this.iti.getSelectedCountryData().iso2
+        : item.iso_code;
+      if (currentIsoCode && currentIsoCode.toLowerCase() === 'cn') {
+        validation = /^1[3-9]\d{9}$/.test(item.value.replace(/\s+/g, ''));
+      } else {
+        validation = this.iti && typeof this.iti.isValidNumber === 'function'
+          ? this.iti.isValidNumber()
+          : false;
+      }
       !validation && (item.isError = true);
       return !validation;
     },
@@ -142,6 +156,12 @@ export default {
     .iti.iti--allow-dropdown {
       width: 100%;
     }
+
+    .iti__divider {
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+    }
 </style>
 
 <style lang="scss" scoped>
@@ -155,7 +175,7 @@ input::-webkit-input-placeholder {
 
 .select-text {
   display: block;
-  padding: 0 30px 0 12px;
+  padding: 0 30px 0 52px;
 
   &.active {
     color: #63656e !important;
