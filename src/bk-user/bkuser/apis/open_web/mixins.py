@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 from functools import cached_property
+from typing import List
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
 from django.conf import settings
@@ -86,15 +87,13 @@ class OpenWebApiCommonMixin:
         return tenant_id
 
     @cached_property
-    def real_data_source_id(self) -> int:
-        # 实名数据源不存在时，返回 0
-        data_source = (
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
-        )
-        if not data_source:
-            return 0
-
-        return data_source.id
+    def real_data_source_ids(self) -> List[int]:
+        # 实名数据源不存在时，返回 [0]
+        return list(
+            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).values_list(
+                "id", flat=True
+            )
+        ) or [0]
 
     @cached_property
     def virtual_data_source_id(self) -> int:

@@ -84,21 +84,21 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
     def _get_root_depts(self) -> QuerySet[TenantDepartment]:
         owner_tenant_id = self.kwargs["id"]
         # 获取指定租户的数据源，通过数据源部门关系查询部门列表
-        data_source = DataSource.objects.filter(
+        data_sources = DataSource.objects.filter(
             owner_tenant_id=owner_tenant_id,
             type=DataSourceTypeEnum.REAL,
-        ).first()
-        if not data_source:
+        )
+        if not data_sources.exists():
             return TenantDepartment.objects.none()
 
         root_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.root_nodes()
-            .filter(data_source=data_source)
+            .filter(data_source__in=data_sources)
             .values_list("department_id", flat=True)
         )
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__owner_tenant_id=owner_tenant_id,
+            data_source__in=data_sources,
             data_source_department_id__in=root_data_source_dept_ids,
         ).select_related("data_source_department")
 

@@ -44,8 +44,8 @@ from bkuser.apps.tenant.models import (
     TenantUserCustomField,
     UserBuiltinField,
 )
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import TenantOrgPathHandler
-from bkuser.biz.tenant import generate_local_data_source_username
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
@@ -160,10 +160,10 @@ def _validate_duplicate_data_source_username(
     return username
 
 
-def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
+def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_ids: List[int]) -> List[str]:
     """校验直属上级是否存在于指定数据源中"""
     exists_tenant_users = TenantUser.objects.filter(
-        id__in=leader_ids, tenant_id=tenant_id, data_source_id=data_source_id
+        id__in=leader_ids, tenant_id=tenant_id, data_source_id__in=data_source_ids
     ).values_list("id", flat=True)
 
     if invalid_leader_ids := set(leader_ids) - set(exists_tenant_users):
@@ -215,7 +215,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
         return department_ids
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], [self.context["data_source_id"]])
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
@@ -642,12 +642,12 @@ class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段")
 
     def get_username(self, obj: Dict[str, Any]) -> str:
-        return generate_local_data_source_username(obj["username"])
+        return DataSourceHandler.generate_local_data_source_username(obj["username"])
 
 
-def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
+def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_ids: List[int]) -> List[str]:
     exists_tenant_users = TenantUser.objects.filter(
-        id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
+        id__in=user_ids, tenant_id=tenant_id, data_source_id__in=data_source_ids
     ).values_list("id", flat=True)
 
     if invalid_user_ids := set(user_ids) - set(exists_tenant_users):
@@ -667,7 +667,7 @@ class TenantUserIDBatchSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_ids"])
 
 
 class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
@@ -676,7 +676,7 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_ids"])
 
 
 class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):
@@ -687,7 +687,7 @@ class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):
         exists_tenant_users = TenantUser.objects.filter(
             id__in=attrs["user_ids"],
             tenant_id=self.context["tenant_id"],
-            data_source_id=self.context["data_source_id"],
+            data_source_id__in=self.context["data_source_ids"],
         )
 
         # 校验密码是否符合每一位用户的密码策略
@@ -721,7 +721,7 @@ class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     )
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_ids"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验是否自己设置为自己的上级

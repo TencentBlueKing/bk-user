@@ -45,7 +45,7 @@ from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserDisplayNameHandler, get_tenant_user_login_name
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -67,14 +67,14 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+                data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
             ).select_related("data_source_user"),
             id=kwargs["id"],
         )
 
         return Response(
             {
-                "login_name": get_tenant_user_login_name(self.tenant_id, tenant_user),
+                "login_name": TenantUserHandler.get_login_name(tenant_user, self.tenant_id),
                 "full_name": tenant_user.data_source_user.full_name,
                 "display_name": TenantUserDisplayNameHandler.generate_tenant_user_display_name(tenant_user),
             }
@@ -100,7 +100,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+            data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
         ).select_related("data_source_user")
 
     def get_serializer_context(self):
@@ -292,7 +292,7 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
     """
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
 
     @swagger_auto_schema(
         tags=["open_web.user"],

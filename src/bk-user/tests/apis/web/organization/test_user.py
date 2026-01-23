@@ -856,7 +856,7 @@ class TestTenantUserBatchCreateWithMultiDataSource:
     ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=True):
             resp = api_client.post(
                 reverse("organization.tenant_user.batch_create_preview"),
                 data={"user_infos": raw_user_infos, "department_id": company.id},
@@ -873,7 +873,7 @@ class TestTenantUserBatchCreateWithMultiDataSource:
     ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=False):
             resp = api_client.post(
                 reverse("organization.tenant_user.batch_create_preview"),
                 data={"user_infos": raw_user_infos, "department_id": company.id},
@@ -890,7 +890,7 @@ class TestTenantUserBatchCreateWithMultiDataSource:
     ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=True):
             resp = api_client.post(
                 reverse("organization.tenant_user.batch_create"),
                 data={"user_infos": raw_user_infos, "department_id": company.id},
@@ -907,7 +907,7 @@ class TestTenantUserBatchCreateWithMultiDataSource:
     ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=False):
             resp = api_client.post(
                 reverse("organization.tenant_user.batch_create"),
                 data={"user_infos": raw_user_infos, "department_id": company.id},

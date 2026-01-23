@@ -132,12 +132,18 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 租户至多拥有一个实体类型的数据源
-        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
-            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+        # 一个租户至多允许一个本地实名数据源 + 一个外部实名数据源
+        tenant_id = self.context["tenant_id"]
+        real_data_sources = DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+        plugin_id = attrs["plugin_id"]
+
+        if plugin_id == DataSourcePluginEnum.LOCAL:
+            if real_data_sources.filter(plugin_id=DataSourcePluginEnum.LOCAL).exists():
+                raise ValidationError(_("租户至多拥有一个本地实名数据源"))
+        elif real_data_sources.exclude(plugin_id=DataSourcePluginEnum.LOCAL).exists():
+            raise ValidationError(_("租户至多拥有一个外部实名数据源"))
 
         # 除本地数据源类型外，都需要配置字段映射
-        plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
             if not attrs["field_mapping"]:
                 raise ValidationError(_("当前数据源类型必须配置字段映射"))

@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.conf import settings
 
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -68,3 +69,10 @@ class DataSourceHandler:
         DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
         # 8. 删除数据源
         data_source.delete()
+
+    @staticmethod
+    def generate_local_data_source_username(raw_username: str) -> str:
+        """生成本地数据源用户名，多数据源场景下添加 _local 后缀"""
+        if settings.ENABLE_MULTI_REAL_DATA_SOURCE:
+            return f"{raw_username}_local"
+        return raw_username

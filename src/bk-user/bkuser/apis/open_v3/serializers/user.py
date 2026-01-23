@@ -20,7 +20,7 @@ from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantUserStatus, UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserDisplayNameHandler, get_tenant_user_login_name
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
@@ -51,7 +51,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return get_tenant_user_login_name(self.context["tenant_id"], obj)
+        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
@@ -82,7 +82,7 @@ class TenantUserLeaderListOutputSLZ(serializers.Serializer):
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return get_tenant_user_login_name(self.context["tenant_id"], obj)
+        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
@@ -96,7 +96,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return get_tenant_user_login_name(self.context["tenant_id"], obj)
+        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
@@ -135,7 +135,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return get_tenant_user_login_name(self.context["tenant_id"], obj)
+        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]

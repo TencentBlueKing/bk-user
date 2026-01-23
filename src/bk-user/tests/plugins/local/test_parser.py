@@ -345,7 +345,7 @@ class TestLocalDataSourceDataParser:
 
 class TestLocalDataSourceDataParserWithMultiDataSource:
     def test_username_with_multi_data_source_enabled(self, logger, user_workbook):
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=True):
             parser = LocalDataSourceDataParser(logger, user_workbook)
             parser.parse()
 
@@ -360,7 +360,7 @@ class TestLocalDataSourceDataParserWithMultiDataSource:
             assert lisi.leaders == ["zhangsan_local"]
 
     def test_username_with_multi_data_source_disabled(self, logger, user_workbook):
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=False):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=False):
             parser = LocalDataSourceDataParser(logger, user_workbook)
             parser.parse()
 
@@ -375,7 +375,7 @@ class TestLocalDataSourceDataParserWithMultiDataSource:
             assert lisi.leaders == ["zhangsan"]
 
     def test_leader_codes_with_multi_data_source_enabled(self, logger, user_workbook):
-        with override_settings(ENABLE_MULTI_DATA_SOURCE=True):
+        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=True):
             parser = LocalDataSourceDataParser(logger, user_workbook)
             parser.parse()
 

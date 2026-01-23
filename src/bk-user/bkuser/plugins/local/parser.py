@@ -103,7 +103,7 @@ class LocalDataSourceDataParser:
     @staticmethod
     def _build_username(raw_username: str) -> str:
         """构建用户名，多数据源场景下添加 _local 后缀"""
-        if settings.ENABLE_MULTI_DATA_SOURCE:
+        if settings.ENABLE_MULTI_REAL_DATA_SOURCE:
             return f"{raw_username}_local"
         return raw_username
 

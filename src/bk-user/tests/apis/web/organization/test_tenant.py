@@ -28,12 +28,12 @@ class TestCurrentTenantRetrieveApi:
         resp = api_client.get(reverse("organization.tenant.retrieve"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data.keys() == {"id", "name", "logo", "data_source"}
+        assert resp.data.keys() == {"id", "name", "logo", "data_sources"}
 
         assert resp.data["id"] == random_tenant.id
         assert resp.data["name"] == random_tenant.name
 
-        data_source = resp.data["data_source"]
+        data_source = resp.data["data_sources"][0]
         assert data_source["id"] == bare_local_data_source.id
         assert data_source["type"] == DataSourceTypeEnum.REAL
         assert data_source["plugin_id"] == DataSourcePluginEnum.LOCAL
