@@ -50,11 +50,9 @@
         >
           <template #empty>
             <Empty
-              :is-data-empty="isDataEmpty"
-              :is-search-empty="isEmptySearch"
-              :is-data-error="isDataError"
-              @handle-empty="handleClear"
-              @handle-update="reloadList"
+              :type="curExceptionType"
+              @clear="handleClear"
+              @refresh="reloadList"
             />
           </template>
           <template #prepend v-if="isLocalDataSource && selectList.length && prependData.length">
@@ -267,6 +265,7 @@
   import { useTableMaxHeight } from '@/hooks';
   import DisplayName from '@/components/display-name.vue';
   import { useSearchPlaceholder } from '@/hooks/useSearchPlaceholder';
+  import useTableEmpty from '@/hooks/use-table-empty';
 
   const { createPlaceholder } = useSearchPlaceholder();
   const curTableMaxHeight = useTableMaxHeight(200);
@@ -277,6 +276,9 @@
   const editDetailsShow = ref(false);
   const dropdownRefs = ref({});
   const keyword = ref([]);
+  const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+    filters: keyword,
+  });
   const selectedValue = ref([]);
   const isDetailSlider = ref(false);
   const moveTips = ref('');
@@ -289,8 +291,6 @@
   const isCollaborativeUsers = computed(() => {
     return appStore.currentTenant?.id !== appStore.currentOrg?.tenantId
   })
-  const isDataError = ref(false);
-  const isEmptySearch = ref(false);
   const detailsInfo = ref({});
   const selectList = ref([]);
   const password = ref('');
@@ -494,7 +494,6 @@
     disabled: t('停用'),
     expired: t('冻结')
   });
-  const isDataEmpty = ref(false);
   const columns = reactive([
     {
         label: t("用户名"),
@@ -703,13 +702,6 @@
     }
     return item.label;
   };
-  /** 格式化要展示的字段 */
-  const formatField = (field) => {
-    if (Array.isArray(field)) {
-      return field.join('、') || '--';
-    }
-    return field || '--';
-  }
 
   watch(() => appStore.currentOrg, (val) => {
     !!val && reloadList();
@@ -728,15 +720,12 @@
   }
   
   const initTenantsUserList = async () => {
-    isDataEmpty.value = false;
-    isEmptySearch.value = false;
     const { id, isTenant } = appStore.currentOrg;
     const tenantId = appStore.currentOrg.tenantId || appStore.currentOrg.tenant_id;
     try {
         tableData.value = [];
         selectList.value = [];
         isLoading.value = true;
-        isDataError.value = false;
         const params = {
           ...searchSelectFilters.value,
           page: pagination.current,
@@ -745,15 +734,12 @@
           recursive: !recursive.value
         };
         const res = await getTenantsUserList(isTenant ? id : tenantId, params);
-        if (res.data?.count === 0) {
-          isDataEmpty.value = keyword.value.length === 0;
-          isEmptySearch.value = keyword.value.length !== 0;
-        }
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
+        clearErrorType();
     } catch (e) {
         console.warn(e);
-        isDataError.value = true;
+        setTypeToError();
     } finally {
         isLoading.value = false;
     }

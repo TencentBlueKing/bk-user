@@ -25,11 +25,9 @@
         @filter-change="handleFilterChange">
         <template #empty>
           <Empty
-            :is-data-empty="state.isTableDataEmpty"
-            :is-search-empty="state.isEmptySearch"
-            :is-data-error="state.isTableDataError"
-            @handle-empty="search = ''"
-            @handle-update="fetchTenantsList"
+            :type="curExceptionType"
+            @clear="handleClearSearch"
+            @refresh="fetchTenantsList"
           />
         </template>
         <TableColumn
@@ -309,6 +307,7 @@ import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import {
   deleteTenants,
   getTenantDetails,
@@ -335,15 +334,14 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
+// 前端筛选状态
+const filterStatus = ref('');
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: [search, filterStatus],
+});
 const state = reactive({
   list: [],
   tableLoading: true,
-  // 搜索结果为空
-  isEmptySearch: false,
-  // 表格请求出错
-  isTableDataError: false,
-  // 表格请求结果为空
-  isTableDataEmpty: false,
   // 租户详情数据
   tenantsData: {
     name: '',
@@ -401,10 +399,10 @@ watch(
 const isView = computed(() => detailsConfig.type === 'view');
 const currentTenantId = ref('');
 
-const statusFilters = [
+const statusFilters = ref([
   { label: t('已启用'), value: 'enabled' },
   { label: t('未启用'), value: 'disabled' },
-];
+]);
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
@@ -438,17 +436,19 @@ const handleCancelEdit = async () => {
 const isCreated = ref(false);
 const newId = ref('');
 
-const getRows = () => document.getElementsByClassName('vxe-body--row')[0].getElementsByTagName('td');
+const getRows = () => document.getElementsByClassName('vxe-body--row')?.[0]?.getElementsByTagName('td');
 
 watch(() => search.value, (val) => {
   if (val) {
     isCreated.value = false;
     newId.value = '';
     const rows = getRows();
-    for (const i of rows) {
-      i.style.background = '#fff';
+    if (Array.isArray(rows)) {
+      for (const i of rows) {
+        i.style.background = '#fff';
+      }
+      state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
     }
-    state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }
 });
 
@@ -456,15 +456,8 @@ watch(() => search.value, (val) => {
 const fetchTenantsList = () => {
   search.value = '';
   state.tableLoading = true;
-  state.isTableDataEmpty = false;
-  state.isEmptySearch = false;
-  state.isTableDataError = false;
   getTenants()
     .then((res: any) => {
-      if (res.data.length === 0) {
-        state.isTableDataEmpty = true;
-      }
-
       const newDate = new Date().getTime(); // 当前时间
       res.data.forEach((item) => {
         const createdDate = new Date(item.created_at).getTime();
@@ -485,39 +478,28 @@ const fetchTenantsList = () => {
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
       }
+      clearErrorType();
       state.tableLoading = false;
     })
-    .catch(() => {
-      state.isTableDataError = true;
+    .catch((error) => {
+      console.error(error);
+      setTypeToError();
       state.tableLoading = false;
     });
 };
 
-// 前端筛选状态
-const filterStatus = ref('');
 
 // 前端筛选处理
 const handleFilterChange = ({ field, values }: { field: string, values: string[] }) => {
   if (field === 'status') {
     filterStatus.value = values.join(',');
-
-    // 判断筛选后是否有数据
-    // 如果有筛选条件，需要判断是搜索为空还是数据为空
-    if (values.length > 0) {
-      const statusArray = values;
-      const filteredList = state.list.filter(item => statusArray.includes(item.status));
-      // 如果有搜索条件，显示搜索为空；否则显示数据为空
-      if (search.value) {
-        state.isEmptySearch = filteredList.length === 0;
-      } else {
-        state.isTableDataEmpty = filteredList.length === 0;
-      }
-    } else {
-      // 没有筛选条件，恢复状态
-      state.isEmptySearch = false;
-      state.isTableDataEmpty = state.list.length === 0;
-    }
   }
+};
+
+const handleClearSearch = () => {
+  search.value = '';
+  filterStatus.value = '';
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
 };
 
 // 搜索和筛选租户列表
@@ -535,10 +517,6 @@ const tableSearchData = computed(() => {
   }
 
   return filteredList;
-});
-
-watch(() => search.value, (val) => {
-  state.isEmptySearch = val && !tableSearchData.value.length;
 });
 
 const dialogData = ref({});

@@ -720,5 +720,6 @@
   "页面不存在": "Page not found",
   "搜索{0}": "Search for {0}",
   "搜索{0}关键字": "Search for keywords {0}",
-  "搜索{0}等关键字": "Search for {0} Waiting for keywords"
+  "搜索{0}等关键字": "Search for {0} Waiting for keywords",
+  "可以尝试 调整关键词 或 {0}": "You can try adjusting keywords or {0}"
 }

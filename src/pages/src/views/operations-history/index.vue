@@ -110,11 +110,9 @@
         >
           <template #empty>
             <Empty
-              :is-data-empty="isDataEmpty"
-              :is-search-empty="isEmptySearch"
-              :is-data-error="isDataError"
-              @handle-empty="handleReset"
-              @handle-update="handleFetchAudit('search')"
+              :type="curExceptionType"
+              @clear="handleReset"
+              @refresh="handleFetchAudit('search')"
             />
           </template>
           <TableColumn
@@ -189,6 +187,7 @@ import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import UserSelector from '@/components/UserSelector.vue';
 import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { getAudit } from '@/http/operationHistoryFiles';
 
 const isHover = ref(false);
@@ -267,17 +266,15 @@ const pagination = reactive({
   remote: true,
 });
 
-const isDataEmpty = ref(false);
-const isEmptySearch = ref(false);
-const isDataError = ref(false);
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: formData,
+});
 
 // 获取audit数据
 const handleFetchAudit = async (type = '') => {
   try {
     isLoading.value = true;
-    isDataEmpty.value = false;
-    isEmptySearch.value = false;
-    isDataError.value = false;
+    clearErrorType();
     const isSearch = type === 'search';
     if (isSearch) {
       pagination.count = 0;
@@ -294,15 +291,11 @@ const handleFetchAudit = async (type = '') => {
       end_at: formData.operation_time[1] ? dayjs(formData.operation_time[1]).format('YYYY-MM-DD HH:mm:ss') : '',
     };
     const res = await getAudit(params);
-    if (res.data?.count === 0) {
-      isDataEmpty.value = !isSearch;
-      isEmptySearch.value = isSearch;
-    }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
   } catch (e) {
     console.warn(e);
-    isDataError.value = true;
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }

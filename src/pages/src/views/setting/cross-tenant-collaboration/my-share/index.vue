@@ -22,11 +22,9 @@
     >
       <template #empty>
         <Empty
-          :is-data-empty="isDataEmpty"
-          :is-search-empty="isSearchEmpty"
-          :is-data-error="isDataError"
-          @handle-empty="search = ''"
-          @handle-update="fetchToStrategies"
+          :type="curExceptionType"
+          @clear="handleClearSearch"
+          @refresh="fetchToStrategies"
         />
       </template>
       <TableColumn
@@ -155,6 +153,7 @@ import ViewDetails from './ViewDetails.vue';
 import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { deleteToStrategies, getToStrategies, putToStrategiesStatus } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
@@ -174,29 +173,27 @@ const editLeaveBefore = inject('editLeaveBefore');
 const isLoading = ref(false);
 const tableData = ref([]);
 const originalTableData = ref([]); // 保存原始数据副本
-const isDataEmpty = ref(false);
-const isDataError = ref(false);
-const isSearchEmpty = ref(false);
 const search = ref('');
+const filterValues = ref([]);
+
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: [search, filterValues],
+});
 
 // 获取协同策略列表
 const fetchToStrategies = async () => {
   try {
     isLoading.value = true;
-    isDataEmpty.value = false;
-    isDataError.value = false;
-    isSearchEmpty.value = false;
     const res = await getToStrategies();
 
     // 保存原始数据副本
     originalTableData.value = res?.data || [];
     tableData.value = [...originalTableData.value];
 
-    if (tableData.value.length === 0) {
-      isDataEmpty.value = true;
-    }
+    clearErrorType();
   } catch (error) {
-    isDataError.value = true;
+    console.warn(error);
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }
@@ -208,38 +205,42 @@ watchEffect(() => {
   }
 });
 
-const statusFilters = [
+const statusFilters = ref([
   { label: t('启用'), value: 'enabled' },
   { label: t('停用'), value: 'disabled' },
-];
+]);
 
-const targetStatusFilters = [
+const targetStatusFilters = ref([
   { label: t('已接收'), value: 'enabled' },
   { label: t('待接收'), value: 'unconfirmed' },
-];
+]);
 
 const handleFilterChange = ({ field, values }: { field: string; values: string[] }) => {
+  if (filterValues.value.findIndex(item => item.field === field) === -1) {
+    filterValues.value.push({ field, values });
+  } else {
+    const index = filterValues.value.findIndex(item => item.field === field);
+    filterValues.value[index].values = values;
+  }
   // 如果没有筛选条件，恢复原始数据
   if (values.length === 0) {
     tableData.value = [...originalTableData.value];
-    isDataEmpty.value = false;
     return;
   }
 
   // 前端过滤：从原始数据中筛选出符合条件的数据
   tableData.value = originalTableData.value.filter(item => values.includes(item[field]));
+};
 
-  // 判断是否有数据
-  isDataEmpty.value = tableData.value.length === 0;
+const handleClearSearch = () => {
+  filterValues.value = [];
+  search.value = '';
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
+  targetStatusFilters.value = targetStatusFilters.value.map(item => ({ ...item, checked: false }));
 };
 
 // 搜索协同列表
 const searchList = computed(() => tableData.value.filter(item => !search.value || item.name.includes(search.value)));
-
-watch(() => search.value, (val) => {
-  isSearchEmpty.value = val !== '' && !searchList.value.length;
-  isDataEmpty.value = val === '' && !searchList.value.length;
-});
 
 const handleChange = (row: any) => {
   putToStrategiesStatus(row.id).then((res) => {

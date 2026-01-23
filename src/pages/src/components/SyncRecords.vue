@@ -12,9 +12,9 @@
       >
         <template #empty>
           <Empty
-            :is-data-empty="dataRecordConfig.isDataEmpty"
-            :is-data-error="dataRecordConfig.isDataError"
-            @handle-update="getSyncRecordsList"
+            :type="curExceptionType"
+            @clear="handleClearSearch"
+            @refresh="getSyncRecordsList"
           />
         </template>
         <TableColumn
@@ -120,7 +120,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, toRef } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { Table, TableColumn } from '@blueking/table';
@@ -129,6 +129,7 @@ import DisplayName from './display-name.vue';
 
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { getSyncLogs, getSyncRecords } from '@/http';
 import { SyncRecordsParams } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
@@ -146,11 +147,11 @@ const route = useRoute();
 const dataRecordConfig = reactive({
   loading: false,
   list: [],
-  // 表格请求出错
-  isDataError: false,
-  // 表格请求结果为空
-  isDataEmpty: false,
   status: '',
+});
+
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: toRef(dataRecordConfig, 'status'),
 });
 
 const pagination = reactive({
@@ -171,11 +172,11 @@ const triggeMode = {
   manual: t('手动'),
 };
 
-const updateStatusFilters = [
+const updateStatusFilters = ref([
   { label: t('同步中'), value: 'pending,running' },
   { label: t('同步成功'), value: 'success' },
   { label: t('同步失败'), value: 'failed' },
-];
+]);
 
 const interval = ref(null);
 onMounted(() => {
@@ -188,17 +189,25 @@ onMounted(() => {
 const getSyncRecordsList = async () => {
   try {
     dataRecordConfig.loading = true;
+    clearErrorType();
     const { list } = await handleSyncRecords();
     const record = list[0];
     if (route.params.type && (record.status === 'failed' || (record.status === 'success' && record.has_warning))) {
       handleLogDetails(record);
     }
   } catch (e) {
-    dataRecordConfig.isDataError = true;
     console.warn(e);
+    setTypeToError();
   } finally {
     dataRecordConfig.loading = false;
   }
+};
+
+const handleClearSearch = () => {
+  dataRecordConfig.status = '';
+  updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
+  pagination.current = 1;
+  getSyncRecordsList();
 };
 
 // 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
@@ -232,8 +241,6 @@ const beforeClose = () => {
 };
 
 const handleSyncRecords = async () => {
-  dataRecordConfig.isDataEmpty = false;
-  dataRecordConfig.isDataError = false;
   const params: SyncRecordsParams = {
     page: pagination.current,
     page_size: pagination.limit,
@@ -242,7 +249,6 @@ const handleSyncRecords = async () => {
   try {
     const res = await getSyncRecords(props.dataSource?.id, params);
     dataRecordConfig.list = res.data.results;
-    dataRecordConfig.isDataEmpty = res.data.count === 0;
     pagination.count = res.data.count;
     // stop time polling
     const curStatus = res.data.results?.[0]?.status;
@@ -254,7 +260,6 @@ const handleSyncRecords = async () => {
       list: res.data.results,
     };
   } catch (e) {
-    dataRecordConfig.isDataError = true;
     console.warn(e);
   }
 };
