@@ -88,12 +88,11 @@ class OpenWebApiCommonMixin:
 
     @cached_property
     def real_data_source_ids(self) -> List[int]:
-        # 实名数据源不存在时，返回 [0]
         return list(
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).values_list(
                 "id", flat=True
             )
-        ) or [0]
+        )
 
     @cached_property
     def virtual_data_source_id(self) -> int:
