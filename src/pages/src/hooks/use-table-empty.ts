@@ -45,7 +45,13 @@ export default function useTableEmpty(opts: FilterOptions) {
     isError.value = false;
   }
 
-  function deepFindFilter(curFilter: any[]): boolean {
+  /**
+   *
+   * @param curFilter 当前过滤条件
+   * @param visited 已遍历的对象
+   * @returns
+   */
+  function deepFindFilter(curFilter: any[], visited = new WeakSet()): boolean {
     for (const item of curFilter) {
       if (item === null || item === undefined) {
         continue;
@@ -55,15 +61,15 @@ export default function useTableEmpty(opts: FilterOptions) {
         if (!isValueEmpty(item)) {
           return true;
         }
-      } else if (Array.isArray(item)) {
-        // 如果是数组，递归检查
-        if (deepFindFilter(item)) {
-          return true;
-        }
       } else {
-        // 如果是对象，检查其值
-        if (deepFindFilter(Object.values(item))) {
-          return true;
+        // 防止循环引用
+        if (visited.has(item)) continue;
+        visited.add(item);
+
+        if (Array.isArray(item)) {
+          if (deepFindFilter(item, visited)) return true;
+        } else {
+          if (deepFindFilter(Object.values(item), visited)) return true;
         }
       }
     }
@@ -71,6 +77,7 @@ export default function useTableEmpty(opts: FilterOptions) {
   }
 
   function isValueEmpty(value: any) {
+    if (Array.isArray(value)) return value.length === 0;
     return value === '' || value === null || value === undefined;
   }
 
