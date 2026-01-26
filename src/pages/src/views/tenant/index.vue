@@ -104,6 +104,7 @@
                 placement="bottom-start"
                 theme="light"
                 ext-cls="operate-popover"
+                :popover-delay="[100, 0]"
                 hide-ignore-reference
                 :arrow="false">
                 <i class="user-icon icon-more"></i>
