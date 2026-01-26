@@ -139,6 +139,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
     def get_departments(self, obj: TenantUser) -> List[str]:

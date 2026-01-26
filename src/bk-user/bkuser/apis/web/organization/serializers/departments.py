@@ -50,6 +50,7 @@ class TenantDepartmentListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     has_children = serializers.BooleanField(help_text="是否有子部门")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
 
 
 def _validate_duplicate_dept_name_in_brothers(

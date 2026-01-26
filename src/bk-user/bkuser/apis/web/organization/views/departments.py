@@ -155,6 +155,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 "id": tenant_dept.id,
                 "name": tenant_dept.data_source_department.name,
                 "has_children": has_children_map.get(tenant_dept.id, False),
+                "data_source_id": tenant_dept.data_source_id,
             }
             for tenant_dept in tenant_depts
         ]
