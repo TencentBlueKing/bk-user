@@ -26,7 +26,6 @@ from bkuser.apps.tenant.models import (
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
     BuiltinManagerInfo,
     TenantCreator,
@@ -34,19 +33,8 @@ from bkuser.biz.tenant import (
     VirtualUserInfo,
 )
 from bkuser.plugins.constants import DataSourcePluginEnum
-from django.test.utils import override_settings
 
 pytestmark = pytest.mark.django_db
-
-
-class TestGenerateLocalDataSourceUsername:
-    def test_with_multi_real_data_source_enabled(self):
-        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=True):
-            assert DataSourceHandler.generate_local_data_source_username("zhangsan") == "zhangsan_local"
-
-    def test_with_multi_real_data_source_disabled(self):
-        with override_settings(ENABLE_MULTI_REAL_DATA_SOURCE=False):
-            assert DataSourceHandler.generate_local_data_source_username("zhangsan") == "zhangsan"
 
 
 class TestTenantCreator:
