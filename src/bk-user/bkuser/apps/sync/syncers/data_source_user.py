@@ -78,7 +78,7 @@ class DataSourceUserSyncer:
         waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
         # 若是覆盖模式，则更新存在用户的数据，否则无需更新，但需日志里记录便于提示
         waiting_update_user_codes = user_codes & raw_user_codes
-        if not self.overwrite:
+        if not self.overwrite and waiting_update_user_codes:
             # 提示未覆盖更新的用户
             usernames = DataSourceUser.objects.filter(
                 data_source=self.data_source,
