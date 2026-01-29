@@ -70,7 +70,7 @@ export default {
           autoPlaceholder: 'aggressive', // 自动显示占位符
           placeholderNumberType: 'MOBILE', // 手机号码
           initialCountry: this.item.iso_code,
-          preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
+          preferredCountries: ['cn', 'us', 'gb'], // 优先显示的国家 中美英
           onlyCountries: [], // 空数组表示显示所有国家
           i18n: {
             searchPlaceholder: '搜索', // 修改搜索框为中文
@@ -79,6 +79,10 @@ export default {
         // iti.setCountry("gb")
         // iti.setNumber("+447733123456")
         // iti.getNumber() 带 country code 的号码
+        // 手动将三个国家置顶
+        this.$nextTick(() => {
+          this.reorderCountryList();
+        });
       } catch (e) {
         console.warn('手机号国际化初始化失败，默认改为中国', e);
         this.handleInitError();
@@ -88,6 +92,42 @@ export default {
         // eslint-disable-next-line vue/no-mutating-props
         this.item.iso_code = countryData.iso2;
       });
+    },
+    reorderCountryList() {
+      // 获取国家列表容器
+      const countryList = this.$refs.intlTelInput?.parentElement?.querySelector('.iti__country-list');
+      if (!countryList) return;
+      // 优先显示的国家代码
+      const priorityCountries = ['cn', 'us', 'gb'];
+      // 获取所有国家项
+      const countryItems = Array.from(countryList.querySelectorAll('.iti__country'));
+      // 分离优先国家和其他国家
+      const priorityItems = [];
+      const otherItems = [];
+      countryItems.forEach((item) => {
+        const countryCode = item.getAttribute('data-country-code');
+        if (priorityCountries.includes(countryCode)) {
+          priorityItems.push(item);
+        } else {
+          otherItems.push(item);
+        }
+      });
+      // 按优先级排序优先国家
+      priorityItems.sort((a, b) => {
+        const codeA = a.getAttribute('data-country-code');
+        const codeB = b.getAttribute('data-country-code');
+        return priorityCountries.indexOf(codeA) - priorityCountries.indexOf(codeB);
+      });
+      // 创建分隔线
+      const divider = document.createElement('li');
+      divider.className = 'iti__divider';
+      divider.setAttribute('role', 'separator');
+      // 清空列表
+      countryList.innerHTML = '';
+      // 重新添加：优先国家 + 分隔线 + 其他国家
+      priorityItems.forEach(item => countryList.appendChild(item));
+      countryList.appendChild(divider);
+      otherItems.forEach(item => countryList.appendChild(item));
     },
     handleInitError() {
       const input = this.$refs.intlTelInput;
@@ -102,11 +142,15 @@ export default {
         autoPlaceholder: 'aggressive', // 自动显示占位符
         placeholderNumberType: 'MOBILE', // 手机号码
         initialCountry: 'cn', // 初始国家
-        preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
+        preferredCountries: ['cn', 'us', 'gb'], // 优先显示的国家 中美英
         onlyCountries: [], // 空数组表示显示所有国家
         i18n: {
           searchPlaceholder: '搜索', // 修改搜索框为中文
         },
+      });
+      // 手动将三个国家置顶
+      this.$nextTick(() => {
+        this.reorderCountryList();
       });
     },
     // 失焦验证
