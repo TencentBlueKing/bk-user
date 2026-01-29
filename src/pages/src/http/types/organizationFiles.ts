@@ -42,3 +42,22 @@ export interface BatchUpdateParams {
   user_ids: string[];
   target_department_ids: string[];
 }
+
+export interface CurrentTenantData {
+  id: string;
+  name: string;
+  logo: string;
+  data_sources: {
+    id: number;
+    type: string;
+    plugin_id: string;
+    enable_password: boolean;
+  };
+}
+
+export interface DepartmentsItemData {
+  id: number;
+  name: string;
+  has_children: boolean;
+  data_source_id: string;
+}

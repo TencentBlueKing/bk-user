@@ -138,7 +138,7 @@ const closed = () => {
 const exceed = () => {
   Message({ theme: 'error', message: t('最多上传1个文件，如需更新，请先删除已上传文件') });
 };
-const getSize = (value) => {
+const getSize = (value: number) => {
   const size = value / 1024;
   return `${parseFloat(size.toFixed(2))}KB`;
 };

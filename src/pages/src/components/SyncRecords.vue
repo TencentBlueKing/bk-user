@@ -6,9 +6,12 @@
         :data="dataRecordConfig.list"
         :pagination="pagination"
         :border="'inner'"
+        :settings="settings"
+        :show-settings="true"
         @filter-change="handleFilterChange"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
+        @setting-change="handleSettingChange"
       >
         <template #empty>
           <Empty
@@ -34,6 +37,16 @@
           </template>
         </TableColumn>
         <TableColumn
+          field="type"
+          :label="$t('数据源类型')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
+          <template #default="{ row }">
+            <span>{{ row?.type || '--' }}</span>
+          </template>
+        </TableColumn>
+        <TableColumn
           field="operator"
           :label="$t('操作人')"
           show-overflow="tooltip"
@@ -47,7 +60,7 @@
           field="trigger"
           :label="$t('触发类型')"
           show-overflow="tooltip"
-          :min-width="120"
+          :min-width="80"
         >
           <template #default="{ row }">
             <span>{{ triggeMode[row.trigger] }}</span>
@@ -69,7 +82,7 @@
         <TableColumn
           field="action"
           :label="$t('操作')"
-          :width="160"
+          :min-width="100"
         >
           <template #default="{ row }">
             <bk-button
@@ -127,6 +140,8 @@ import { Table, TableColumn } from '@blueking/table';
 
 import DisplayName from './display-name.vue';
 
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import useTableEmpty from '@/hooks/use-table-empty';
@@ -148,6 +163,11 @@ const dataRecordConfig = reactive({
   loading: false,
   list: [],
   status: '',
+});
+
+const settings = reactive({
+  checked: ['start_at', 'duration', 'operator', 'trigger', 'status'],
+  size: 'small',
 });
 
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
@@ -238,6 +258,10 @@ const handleLogDetails = async (row) => {
 
 const beforeClose = () => {
   logConfig.value.isShow = false;
+};
+
+const handleSettingChange = (data: any) => {
+  settings.size = data.size as string;
 };
 
 const handleSyncRecords = async () => {

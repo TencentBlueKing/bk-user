@@ -721,5 +721,11 @@
   "搜索{0}": "Search for {0}",
   "搜索{0}关键字": "Search for keywords {0}",
   "搜索{0}等关键字": "Search for {0} Waiting for keywords",
-  "可以尝试 调整关键词 或 {0}": "You can try adjusting keywords or {0}"
+  "可以尝试 调整关键词 或 {0}": "You can try adjusting keywords or {0}",
+  "本地数据源": "Local Data Source",
+  "外部数据源": "External Data Source",
+  "HTTP 数据源": "HTTP Data Source",
+  "当前已配置「{source}」，支持同时配置 1 个「{target}」": "Currently configured \"{source}\", supports configuring 1 \"{target}\" at the same time",
+  "仅支持同时配置 1 个「{local}」和 1 个「{external}」，切换外部数据源将会清除原配置数据源": "Only supports configuring 1 \"{local}\" and 1 \"{external}\" at the same time. Switching external data sources will clear the original configuration",
+  "全部重置": "全部重置"
 }

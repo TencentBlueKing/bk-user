@@ -1,6 +1,9 @@
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
   BatchUpdateParams,
+  CurrentTenantData,
+  DepartmentsItemData,
   DepartmentsListParams,
   OptionalDepartmentsListData,
   TenantListParams,
@@ -8,9 +11,6 @@ import type {
 } from './types/organizationFiles';
 
 const prefix = 'api/v3/web/organization';
-interface ResponseData<T> {
-  data: T
-}
 
 /**
  * 组织架构-租户列表
@@ -55,12 +55,12 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
 /**
  * 当前租户
  */
-export const getCurrentTenant = () => http.get(`${prefix}/current-tenant/`);
+export const getCurrentTenant = () => http.get<ResponseData<CurrentTenantData>>(`${prefix}/current-tenant/`);
 
 /**
  * 当前租户下的部门列表，id为0时表示获取根部门
  */
-export const getDepartmentsList = (deptId: number, id: string) => http.get(`${prefix}/tenants/${id}/departments/`, { parent_department_id: deptId });
+export const getDepartmentsList = (deptId: number, id: string) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${id}/departments/`, { parent_department_id: deptId });
 
 /**
  * 创建租户组织

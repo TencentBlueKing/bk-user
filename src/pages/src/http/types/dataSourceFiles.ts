@@ -262,3 +262,23 @@ export interface SyncRecords {
     }
   }[],
 }
+
+export interface DataSourceItemData {
+  id: number,
+  owner_tenant_id: string,
+  type: string,
+  plugin_id: string,
+}
+
+export interface OperationsSyncData {
+  status: string;
+  summary: string;
+  task_id: string;
+}
+
+export interface DataSourcePluginsItemData {
+  id: string;
+  name: string;
+  description: string;
+  logo: string;
+}

@@ -9,6 +9,7 @@ import {
   newDataSource,
   postOperationsSync,
 } from '@/http';
+import { DataSourceItemData, SyncRecords } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useSyncStatus } from '@/store/syncStatus';
@@ -19,7 +20,7 @@ import { useSyncStatus } from '@/store/syncStatus';
  */
 export const useDataSource = () => {
   const dataSourcePlugins = ref([]);
-  const dataSource = ref({});
+  const dataSource = ref<DataSourceItemData>({} as DataSourceItemData);
   const currentDataSourceId = ref(null);
   const isLoading = ref(false);
   const syncStatusStore = useSyncStatus();
@@ -50,7 +51,7 @@ export const useDataSource = () => {
    * @description 若状态处于pending或running，触发轮询
    * 当页面刷新时，若当前状态仍处于同步中，需要开启轮询，否则状态Tag将不会发生变化
    */
-  const refreshSync = ({ status }) => {
+  const refreshSync = ({ status }: { status: string }) => {
     if (!['pending', 'running'].includes(status)) {
       return;
     }
@@ -146,7 +147,7 @@ export const useDataSource = () => {
     }
   };
 
-  const stopOperationPollingRule = (data) => {
+  const stopOperationPollingRule = (data: SyncRecords['results'][number]) => {
     if (data.status === 'success' || data.status === 'failed') {
       stopPolling();
     }
@@ -159,9 +160,9 @@ export const useDataSource = () => {
    * @description 轮询 [获取导入本地数据源同步状态]
    */
   const handleImportLocalDataSync = (callback?: Function) => {
-    initSyncRecords((data) => importDataStopRule(data, callback));
+    initSyncRecords((data: SyncRecords['results'][number]) => importDataStopRule(data, callback));
     importDataTimePolling.value = setInterval(() => {
-      initSyncRecords((data) => importDataStopRule(data, callback));
+      initSyncRecords((data: SyncRecords['results'][number]) => importDataStopRule(data, callback));
     }, 5000);
   };
 
@@ -181,7 +182,7 @@ export const useDataSource = () => {
    * @param callback 停止轮询的钩子方法
    * @description 停止轮询的规则 [获取导入本地数据源同步状态]
    */
-  const importDataStopRule = (data, callback?: Function) => {
+  const importDataStopRule = (data: SyncRecords['results'][number], callback?: Function) => {
     if (data.status === 'success' || data.status === 'failed') {
       stopImportDataTimePolling(callback);
     }

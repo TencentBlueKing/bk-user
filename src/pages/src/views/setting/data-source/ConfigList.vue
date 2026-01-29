@@ -16,7 +16,7 @@
           @click="handleReset"
           :disabled="disabledSyncBtn"
         >
-          {{ $t('重置') }}
+          {{ $t('全部重置') }}
         </bk-button>
       </template>
     </MainBreadcrumbsDetails>
@@ -24,6 +24,21 @@
       :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
       v-if="dataSource?.id"
     >
+      <div class="info">
+        <i class="user-icon icon-info-i" />
+        <span v-if="dataSource?.plugin_id === 'local'">
+          {{ $t('当前已配置「{source}」，支持同时配置 1 个「{target}」', { source: $t('本地数据源'), target: $t('外部数据源') }) }}
+        </span>
+        <span v-else-if="dataSource?.plugin_id === 'general'">
+          {{ $t('当前已配置「{source}」，支持同时配置 1 个「{target}」', { source: $t('HTTP 数据源'), target: $t('本地数据源') }) }}
+        </span>
+        <span v-else>
+          {{ $t('仅支持同时配置 1 个「{local}」和 1 个「{external}」，切换外部数据源将会清除原配置数据源', { 
+            local: $t('本地数据源'),
+            external: $t('外部数据源'),
+          }) }}
+        </span>
+      </div>
       <DataSourceCard
         :plugins="dataSourcePlugins"
         :data-source="dataSource"
@@ -46,7 +61,7 @@
                 {{ syncStatus?.start_at }}
               </span>
             </div>
-            <div v-if="dataSource?.plugin_id === 'local'">
+            <div v-if="dataSource?.plugin_id === 'local'" class="flex items-center">
               <bk-button
                 class="min-w-[64px]"
                 theme="primary"
@@ -56,8 +71,23 @@
                 <Upload class="mr-[8px] text-[16px]" />
                 {{ $t('导入') }}
               </bk-button>
+              <bk-dropdown
+                trigger="click"
+                @click.stop
+              >
+                <bk-button class="w-[32px] ml-[8px]">
+                  <i class="user-icon icon-more"></i>
+                </bk-button>
+                <template #content>
+                  <bk-dropdown-menu>
+                    <bk-dropdown-item @click="handleReset">
+                      <span>{{ $t('重置') }}</span>
+                    </bk-dropdown-item>
+                  </bk-dropdown-menu>
+                </template>
+              </bk-dropdown>
             </div>
-            <div class="flex" v-else>
+            <div class="flex items-center" v-else>
               <div>
                 <bk-pop-confirm
                   ref="popConfirmRef"
@@ -83,6 +113,21 @@
               >
                 {{ $t('编辑') }}
               </bk-button>
+              <bk-dropdown
+                trigger="click"
+                @click.stop
+              >
+                <bk-button class="w-[32px] ml-[8px]">
+                  <i class="user-icon icon-more"></i>
+                </bk-button>
+                <template #content>
+                  <bk-dropdown-menu>
+                    <bk-dropdown-item @click="handleReset">
+                      <span>{{ $t('重置') }}</span>
+                    </bk-dropdown-item>
+                  </bk-dropdown-menu>
+                </template>
+              </bk-dropdown>
             </div>
           </div>
         </template>

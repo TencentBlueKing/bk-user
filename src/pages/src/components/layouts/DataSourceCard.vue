@@ -8,17 +8,20 @@
           content: $t('若需切换数据源需要先对当前已选数据源进行重置操作'),
           delay: 300,
           offset: 0,
-          disabled: dataSource.plugin_id === item.id,
+          disabled: isCurDataSourceUsed(item.id),
         }"
         @click="handleClick(item.id)">
         <div class="card-header-right">
           <img :src="item.logo" />
           <div>
-            <p class="title">{{ item.name }}</p>
+            <p class="title">
+              {{ item.name }}
+              <bk-tag v-if="isCurDataSourceUsed(item.id)" theme="success" class="ml-[8px]">{{ $t('启用') }}</bk-tag>
+            </p>
             <p class="subtitle">{{ item.description }}</p>
           </div>
         </div>
-        <slot name="right" v-if="dataSource.plugin_id === item.id"></slot>
+        <slot name="right" v-if="isCurDataSourceUsed(item.id)"></slot>
       </div>
       <template v-else>
         <div
@@ -34,7 +37,10 @@
           <div class="card-header-right">
             <img :src="item.logo" />
             <div>
-              <p class="title">{{ item.name }}</p>
+              <p class="title">
+                {{ item.name }}
+                <bk-tag v-if="isCurDataSourceUsed(item.id)" theme="success" class="ml-[8px]">{{ $t('启用') }}</bk-tag>
+              </p>
               <p class="subtitle">{{ item.description }}</p>
             </div>
           </div>
@@ -56,11 +62,9 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { AngleDownLine } from 'bkui-vue/lib/icon';
-import { computed, defineEmits, defineProps, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { t } from '@/language/index';
-
-const emit = defineEmits(['handleCollapse']);
 
 const props = defineProps({
   plugins: {
@@ -81,9 +85,16 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['handleCollapse']);
+
+/** 当前数据源是否被使用 */
+const isCurDataSourceUsed = (id: string) => props.dataSource?.plugin_id === id;
+/** 当前数据源是否不是本地数据源 */
+const isCurDataSourceNotLocal = computed(() => !isCurDataSourceUsed('local'));
+
 const handleClick = (id: string) => {
-  if (props.config && props.dataSource.plugin_id === 'local') return;
-  if (!props.config || props.dataSource.plugin_id === id || id !== 'local') {
+  // 如果是本地数据源，不进行操作
+  if (props.config && isCurDataSourceNotLocal.value && isCurDataSourceUsed(id)) {
     emit('handleCollapse', id);
   }
 };

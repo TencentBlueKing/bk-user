@@ -2,6 +2,8 @@ import http from './fetch';
 import { ResponseData } from './types';
 import type {
   DataSourceDetails,
+  DataSourceItemData,
+  DataSourcePluginsItemData,
   DataSourceUsersParams,
   DataSourceUsersResult,
   DeleteDataSourcesParams,
@@ -10,6 +12,7 @@ import type {
   LeadersParams,
   NewDataSourceParams,
   NewDataSourceUserParams,
+  OperationsSyncData,
   PutDataSourceParams,
   PutDataSourceUserParams,
   ResetPasswordParams,
@@ -61,12 +64,12 @@ export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => htt
 /**
  * 数据源列表
  */
-export const getDataSourceList = (params: { type: string }) => http.get('/api/v3/web/data-sources/', params);
+export const getDataSourceList = (params: { type: string }) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
 
 /**
  * 数据源插件列表
  */
-export const getDataSourcePlugins = () => http.get('/api/v3/web/data-sources/plugins/');
+export const getDataSourcePlugins = () => http.get<ResponseData<DataSourcePluginsItemData[]>>('/api/v3/web/data-sources/plugins/');
 
 /**
  * 新建数据源
@@ -101,7 +104,7 @@ export const postTestConnection = (params: TestConnectionParams) => http.post<Re
 /**
  * 数据源同步
  */
-export const postOperationsSync = (id: string) => http.post(`/api/v3/web/data-sources/${id}/operations/sync/`);
+export const postOperationsSync = (id: number) => http.post<ResponseData<OperationsSyncData>>(`/api/v3/web/data-sources/${id}/operations/sync/`);
 
 /**
  * 生成数据源用户随机密码
