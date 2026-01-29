@@ -72,14 +72,11 @@
             v-if="!showSelectInput"
             @click="handleSelectValue" />
           <div v-else class="mb-[12px] flex">
-            <MemberSelector
-              class="w-[300px]"
-              :state="realUsers"
-              :params="params"
-              @change-select-list="changeSelectList"
-              @search-user-list="fetchRealUsers"
-              @scroll-change="scrollChange"
-            />
+            <UserSelector
+              class="!w-[300px]"
+              v-model:value="changeValues"
+              :show-admin="false"
+              :exclude-user-ids="selectedValue.map(item => item.id)" />
             <bk-button
               text
               theme="primary"
@@ -141,13 +138,12 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import DisplayName from '@/components/display-name.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import MemberSelector from '@/components/MemberSelector.vue';
 import passwordInput from '@/components/passwordInput.vue';
+import UserSelector from '@/components/UserSelector.vue';
 import { useValidate } from '@/hooks';
 import {
   deleteRealManagers,
   getRealManagers,
-  getRealUsers,
   patchBuiltinManager,
   postRealManagers,
   putBuiltinManagerPassword,
@@ -291,17 +287,6 @@ const confirmPassword = async () => {
 // 实名管理员信息
 const selectedValue = ref([]);
 
-const realUsers = ref({
-  count: 0,
-  results: [],
-});
-
-const params = reactive({
-  page: 1,
-  page_size: 10,
-  keyword: '',
-  exclude_manager: true,
-});
 const isDisabled = ref(false);
 const initRealManagers = async () => {
   try {
@@ -323,33 +308,9 @@ watch(() => showSelectInput.value, (val) => {
 
 const handleSelectValue = async () => {
   showSelectInput.value = true;
-  const res = await getRealUsers({
-    exclude_manager: params.exclude_manager,
-  });
-  realUsers.value = res.data;
 };
 
 const changeValues = ref([]);
-const changeSelectList = (values: string[]) => {
-  changeValues.value = values;
-};
-
-// 获取用户列表
-const fetchRealUsers = (value: string) => {
-  params.keyword = value;
-  params.page = 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value = res.data;
-  });
-};
-
-const scrollChange = () => {
-  params.page += 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value.count = res.data.count;
-    realUsers.value.results.push(...res.data.results);
-  });
-};
 
 // 删除实名管理员
 const deleteAccount = (id: string) => {
@@ -365,11 +326,13 @@ const saveRealUsers = () => {
   postRealManagers({
     ids: changeValues.value,
   }).then(() => {
+    changeValues.value = [];
     initRealManagers();
   });
 };
 
 const cancelRealUsers = () => {
+  changeValues.value = [];
   showSelectInput.value = false;
 };
 </script>

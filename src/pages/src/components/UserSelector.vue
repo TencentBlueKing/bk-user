@@ -7,6 +7,7 @@
     :multiple="multiple"
     :user-group="userGroup"
     :user-group-name="userGroupName"
+    :exclude-user-ids="excludeUserIds"
   />
   <BkUserSelector
     v-else
@@ -14,6 +15,7 @@
     :api-base-url="apiBaseUrl"
     :tenant-id="userStore.user.tenant_id"
     :multiple="multiple"
+    :exclude-user-ids="excludeUserIds"
   />
 </template>
 
@@ -25,16 +27,18 @@ import BkUserSelector from '@blueking/bk-user-selector';
 import '@blueking/bk-user-selector/vue3/vue3.css';
 import { t } from '@/language';
 import { useUser } from '@/store';
+
+interface UserSelectorProps {
+  multiple?: boolean;
+  showAdmin?: boolean;
+  excludeUserIds?: string[];
+}
+
 const value = defineModel<string | string[]>('value');
-defineProps({
-  multiple: {
-    type: Boolean,
-    default: true,
-  },
-  showAdmin: {
-    type: Boolean,
-    default: true,
-  },
+withDefaults(defineProps<UserSelectorProps>(), {
+  multiple: true,
+  showAdmin: true,
+  excludeUserIds: () => [],
 });
 const userStore = useUser();
 const apiBaseUrl = ref(window.BK_USER_WEB_APIGW_URL);
