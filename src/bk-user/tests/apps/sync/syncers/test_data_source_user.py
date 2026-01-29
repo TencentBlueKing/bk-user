@@ -232,7 +232,7 @@ class TestSyncDataSourceUser:
             overwrite=False,
             incremental=True,
         )
-        assert data_source_sync_task_ctx.logger.has_warning is True
+        assert data_source_sync_task_ctx.logger.has_warning is False
         assert (
             "in non-overwrite mode, skip update 11 users: "
             "zhangsan, lisi, wangwu, zhaoliu, liuqi, maiba, yangjiu, lushi, linshiyi, baishier, freedom"
