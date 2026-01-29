@@ -217,7 +217,7 @@ class TestSyncDataSourceUser:
             user_leader_relation_cnt_before_sync + 1
         )
 
-    def test_duplicate_usernames_warning(
+    def test_non_overwrite_skip_update(
         self,
         data_source_sync_task_ctx,
         full_local_data_source,
