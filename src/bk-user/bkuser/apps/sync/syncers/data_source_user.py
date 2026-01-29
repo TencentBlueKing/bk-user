@@ -84,7 +84,7 @@ class DataSourceUserSyncer:
                 data_source=self.data_source,
                 code__in=waiting_update_user_codes,
             ).values_list("username", flat=True)
-            self.ctx.logger.warning(
+            self.ctx.logger.info(
                 f"in non-overwrite mode, skip update {len(waiting_update_user_codes)} users: {', '.join(usernames)}"
             )
             # 不覆盖，则无需更新已存在用户
