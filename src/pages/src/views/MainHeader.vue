@@ -179,10 +179,15 @@ const userInfo = computed(() => {
   if (window.ENABLE_VIRTUAL_USER === 'False') {
     baseNav?.splice(1, 1);
   }
-  if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
-    headerNav.value = baseNav;
-  } else if (role.value === ROLE.TENANT_MANAGER) {
-    headerNav.value = baseNav;
+  // headerNav初始化
+  headerNav.value = [];
+  // 避免route.name undefined时照成的headerNav赋值
+  if (route.name) {
+    if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
+      headerNav.value = baseNav;
+    } else if (role.value === ROLE.TENANT_MANAGER) {
+      headerNav.value = baseNav;
+    }
   }
   return userStore.user;
 });
