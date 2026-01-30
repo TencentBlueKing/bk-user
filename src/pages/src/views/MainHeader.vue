@@ -81,14 +81,14 @@
             </div>
             <template #content>
               <bk-dropdown-menu>
-                <bk-dropdown-item>
-                  <a :href="docUrl" target="_blank">{{ $t('产品文档') }}</a>
+                <bk-dropdown-item @click="openExternalLink('doc')">
+                  {{ $t('产品文档') }}
                 </bk-dropdown-item>
                 <bk-dropdown-item @click="openVersionLog">
-                  <a href="javascript:void(0);">{{ $t('版本日志') }}</a>
+                  {{ $t('版本日志') }}
                 </bk-dropdown-item>
-                <bk-dropdown-item>
-                  <a :href="feedbackUrl" target="_blank">{{ $t('问题反馈') }}</a>
+                <bk-dropdown-item @click="openExternalLink('feedback')">
+                  {{ $t('问题反馈') }}
                 </bk-dropdown-item>
               </bk-dropdown-menu>
             </template>
@@ -244,15 +244,24 @@ const docUrl = computed(() => (
   )
 ));
 
-// 问题反馈
-const feedbackUrl = window.BK_USER_FEEDBACK_URL;
-
 // 消息通知配置信息
 const apiUrl = `${window.AJAX_BASE_URL}/api/v3/web/notices/announcements/`;
 const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
   userStore.setShowAlert(isShow);
+};
+
+// 打开外部链接
+const openExternalLink = (type: 'doc' | 'feedback') => {
+  const urls = {
+    doc: docUrl.value,
+    feedback: window.BK_USER_FEEDBACK_URL,
+  };
+  const url = urls[type];
+  if (url) {
+    window.open(url, '_blank');
+  }
 };
 
 // 版本日志配置信息
