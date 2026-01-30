@@ -15,6 +15,7 @@ import '../static/blueking-icon/style.css';
 // 全量引入 bkui-vue 样式
 import 'bkui-vue/dist/style.variable.css';
 import '@blueking/table/vue3/vue3.css';
+import '@blueking/date-picker/vue3/vue3.css';
 
 const leaveBoxInstance = InfoBox({
   isShow: false,

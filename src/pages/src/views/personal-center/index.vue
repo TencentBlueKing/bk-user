@@ -393,6 +393,7 @@
                 <EditBlock
                   v-model="currentUserInfo.time_zone"
                   required
+                  @edit="handleTimezoneEdit"
                   @confirm="submitTimeZone"
                   @cancel="cancelEditTimeZone">
                   <template #text>
@@ -402,6 +403,7 @@
                   </template>
                   <template #edit>
                     <TimezonePicker
+                      :key="timezonePickerKey"
                       v-model:value="currentUserInfo.time_zone"
                       :popover-min-width="450"
                       clearable
@@ -510,6 +512,8 @@ const originalValue = ref<{
   language: '',
   time_zone: '',
 });
+// 用于强制重新创建 TimezonePicker 组件，避免组件内部状态污染
+const timezonePickerKey = ref(0);
 const rules = {
   custom_email: [validate.required, validate.email],
 };
@@ -611,13 +615,18 @@ const submitTimeZone = async () => {
     });
     Message({ theme: 'success', message: t('保存成功') });
     originalValue.value.time_zone = currentUserInfo.value.time_zone;
-    } catch (error) {
+  } catch (error) {
     console.warn(error);
   }
 };
 
 const cancelEditTimeZone = () => {
   currentUserInfo.value.time_zone = originalValue.value.time_zone;
+};
+
+// 每次进入时区编辑模式时更新 key，强制重新创建 TimezonePicker 组件
+const handleTimezoneEdit = () => {
+  timezonePickerKey.value += 1;
 };
 
 // 取消自定义字段修改
