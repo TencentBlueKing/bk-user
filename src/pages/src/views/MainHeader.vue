@@ -19,21 +19,23 @@
           <div class="w-[28px]"><img :src="appLogo" /></div>
           <span class="title-desc">{{ appName}}</span>
         </div>
-        <div
-          v-if="!isTenant && role !== ROLE.NATURAL_USER"
-          v-is-multiple-tenant
-          class="tenant-style">
-          <div class="logo">
-            <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
-            <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
+        <template v-if="isNotTenantListPage">
+          <div
+            v-if="!isTenant && role !== ROLE.NATURAL_USER"
+            v-is-multiple-tenant
+            class="tenant-style">
+            <div class="logo">
+              <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
+              <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
+            </div>
+            <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
+            <i
+              v-if="role === ROLE.SUPER_MANAGER"
+              class="user-icon icon-shezhi"
+              @click="toTenant"
+            />
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
-          <i
-            v-if="role === ROLE.SUPER_MANAGER"
-            class="user-icon icon-shezhi"
-            @click="toTenant"
-          />
-        </div>
+        </template>
       </template>
       <template #header>
         <div class="main-navigation-left">
@@ -167,6 +169,8 @@ const headerNav = ref([]);
 const role = computed(() => userStore.user.role);
 const appName = computed(() => platformConfigData.i18n.productName);
 const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
+/** 当前不为租户列表页 */
+const isNotTenantListPage = computed(() => route?.name && route?.name !== 'tenant');
 const userInfo = computed(() => {
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
@@ -179,10 +183,12 @@ const userInfo = computed(() => {
   if (window.ENABLE_VIRTUAL_USER === 'False') {
     baseNav?.splice(1, 1);
   }
-  if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
-    headerNav.value = baseNav;
-  } else if (role.value === ROLE.TENANT_MANAGER) {
-    headerNav.value = baseNav;
+  if (isNotTenantListPage.value) {
+    if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
+      headerNav.value = baseNav;
+    } else if (role.value === ROLE.TENANT_MANAGER) {
+      headerNav.value = baseNav;
+    }
   }
   return userStore.user;
 });
