@@ -75,14 +75,13 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
+    # 用户名后缀，区分不同数据源的用户，防止用户名重复
+    username_suffix = models.CharField("用户名后缀", max_length=32, default="")
 
     objects = DataSourceManager()
 
     class Meta:
         ordering = ["id"]
-        unique_together = [
-            ("owner_tenant_id", "type"),
-        ]
 
     @property
     def is_local(self) -> bool:
