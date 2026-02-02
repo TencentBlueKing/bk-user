@@ -197,7 +197,7 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             real_ds_ids = DataSource.objects.filter(
                 owner_tenant_id=idp_owner_tenant_id, type=DataSourceTypeEnum.REAL
             ).values_list("id", flat=True)
-            if not real_ds_ids:
+            if not real_ds_ids.exists():
                 return Idp.objects.none()
             queryset = queryset.filter(data_source_id__in=real_ds_ids)
 
