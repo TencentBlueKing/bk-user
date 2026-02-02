@@ -194,11 +194,12 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         queryset = Idp.objects.filter(owner_tenant_id=idp_owner_tenant_id, status=IdpStatus.ENABLED)
         # 协同情况，只有实名用户对应的认证源可以登录
         if tenant_id != idp_owner_tenant_id:
-            ds = DataSource.objects.filter(owner_tenant_id=idp_owner_tenant_id, type=DataSourceTypeEnum.REAL).first()
-            if ds is None:
+            real_ds_ids = DataSource.objects.filter(
+                owner_tenant_id=idp_owner_tenant_id, type=DataSourceTypeEnum.REAL
+            ).values_list("id", flat=True)
+            if not real_ds_ids:
                 return Idp.objects.none()
-
-            queryset = queryset.filter(data_source_id=ds.id)
+            queryset = queryset.filter(data_source_id__in=real_ds_ids)
 
         return queryset
 

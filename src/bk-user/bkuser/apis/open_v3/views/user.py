@@ -73,7 +73,7 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id=self.real_data_source_id,
+            data_source_id__in=self.real_data_source_ids,
         ).select_related("data_source_user")
 
     def get_serializer_context(self):
@@ -104,7 +104,7 @@ class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
 
     def get_queryset(self):
         return TenantUser.objects.filter(
-            tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+            tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         ).select_related("data_source_user", "data_source")
 
     @swagger_auto_schema(
@@ -137,7 +137,7 @@ class TenantUserDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids),
             id=kwargs["id"],
         )
 
@@ -213,7 +213,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         tenant_user = get_object_or_404(
-            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids),
             id=self.kwargs["id"],
         )
 
@@ -256,7 +256,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
             TenantUser.objects.select_related("data_source_user")
-            .filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+            .filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
             .order_by("id")
         )
 
@@ -292,7 +292,7 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         return TenantUser.objects.filter(
-            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         ).select_related("data_source_user")
 
     @swagger_auto_schema(
@@ -321,7 +321,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
         filter_args = {
             "tenant_id": self.tenant_id,
-            "data_source_id": self.real_data_source_id,
+            "data_source_id__in": self.real_data_source_ids,
         }
 
         if data["lookup_field"] == UserLookupFieldEnum.LOGIN_NAME:

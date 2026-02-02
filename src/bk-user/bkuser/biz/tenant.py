@@ -109,6 +109,12 @@ class TenantUserEmailInfo(BaseModel):
     custom_email: Optional[str] = ""
 
 
+class UsernameConflict(BaseModel):
+    username: str
+    data_source_id: str
+    plugin_id: str
+
+
 class TenantCreator:
     @staticmethod
     def create_tenant_base(info: TenantInfo) -> Tenant:
@@ -349,6 +355,17 @@ class TenantUserHandler:
         if not email_info.is_inherited_email:
             tenant_user.custom_email = email_info.custom_email
         tenant_user.save()
+
+    @staticmethod
+    def get_login_name(tenant_user: TenantUser, tenant_id: str) -> str:
+        """
+        获取租户用户的登录名
+
+        对于协同过来的用户（即数据源所属租户 != 当前租户），加上来源租户 ID 作为后缀
+        """
+        if tenant_id != tenant_user.data_source.owner_tenant_id:
+            return f"{tenant_user.data_source_user.username}@{tenant_user.data_source.owner_tenant_id}"
+        return tenant_user.data_source_user.username
 
 
 class TenantUserDisplayNameHandler:

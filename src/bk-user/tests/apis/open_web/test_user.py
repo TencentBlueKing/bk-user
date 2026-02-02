@@ -206,7 +206,7 @@ class TestTenantUserSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == collab_wangwu.id
-        assert resp.data[0]["login_name"] == "wangwu"
+        assert resp.data[0]["login_name"] == f"wangwu@{collaboration_tenant.id}"
         assert resp.data[0]["full_name"] == "王五"
         assert resp.data[0]["display_name"] == "wangwu(王五)"
         assert resp.data[0]["data_source_type"] == DataSourceTypeEnum.REAL
@@ -247,7 +247,7 @@ class TestTenantUserSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 3
         assert {t["bk_username"] for t in resp.data} == {real_zhangsan.id, virtual_zhangsan.id, collab_zhangsan.id}
-        assert {t["login_name"] for t in resp.data} == {"zhangsan"}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", f"zhangsan@{collaboration_tenant.id}"}
         assert {t["full_name"] for t in resp.data} == {"张三"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
@@ -345,7 +345,12 @@ class TestTenantUserLookupApi:
             virtual_lisi.id,
             collab_lisi.id,
         }
-        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["login_name"] for t in resp.data} == {
+            "zhangsan",
+            "lisi",
+            f"zhangsan@{collaboration_tenant.id}",
+            f"lisi@{collaboration_tenant.id}",
+        }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL}
@@ -410,7 +415,10 @@ class TestTenantUserLookupApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
-        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
+        assert {t["login_name"] for t in resp.data} == {
+            f"zhangsan@{collaboration_tenant.id}",
+            f"lisi@{collaboration_tenant.id}",
+        }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
         assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
