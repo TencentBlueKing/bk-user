@@ -28,7 +28,7 @@ const webpackConfig = merge(baseConf, {
   module: {
     rules: [
       {
-        test: /\.(css|postcss|scss)$/,
+        test: /\.scss$/,
         use: [
           'vue-style-loader',
           {
@@ -51,7 +51,26 @@ const webpackConfig = merge(baseConf, {
               implementation: require("sass") //使用dart-sass代替node-sass
             }
           },
-          // 'sass-loader',
+        ],
+      },
+      {
+        test: /\.(css|postcss)$/,
+        use: [
+          'vue-style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              config: {
+                path: path.resolve(__dirname, '..', 'postcss.config.js'),
+              },
+            },
+          },
         ],
       },
     ],

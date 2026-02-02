@@ -119,7 +119,7 @@ const prodConf = merge(baseConf, {
   module: {
     rules: [
       {
-        test: /\.(css|postcss|scss)?$/,
+        test: /\.scss$/,
         use: [
           MiniCssExtractPlugin.loader,
           {
@@ -136,7 +136,32 @@ const prodConf = merge(baseConf, {
               },
             },
           },
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              implementation: require('sass'),
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(css|postcss)$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              config: {
+                path: resolve(__dirname, '..', 'postcss.config.js'),
+              },
+            },
+          },
         ],
       },
     ],
