@@ -109,12 +109,6 @@ class TenantUserEmailInfo(BaseModel):
     custom_email: Optional[str] = ""
 
 
-class UsernameConflict(BaseModel):
-    username: str
-    data_source_id: str
-    plugin_id: str
-
-
 class TenantCreator:
     @staticmethod
     def create_tenant_base(info: TenantInfo) -> Tenant:
