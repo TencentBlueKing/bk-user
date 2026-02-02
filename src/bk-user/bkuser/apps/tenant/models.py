@@ -58,12 +58,12 @@ class TenantUserManager(models.Manager):
     def filter_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> QuerySet["TenantUser"]:
         return self.filter(tenant_id=tenant_id).filter(
             Q(
-                is_inherited_email=False,
+                is_inherited_phone=False,
                 custom_phone=phone,
                 custom_phone_country_code=phone_country_code,
             )
             | Q(
-                is_inherited_email=True,
+                is_inherited_phone=True,
                 data_source_user__phone=phone,
                 data_source_user__phone_country_code=phone_country_code,
             )
