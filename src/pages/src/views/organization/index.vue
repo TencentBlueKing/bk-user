@@ -21,8 +21,6 @@
           style="height: calc(100vh - 106px)"
           :border="false"
           immediate
-          :min="140"
-          :max="900"
           :initial-divide="isShowCollaboration ? '50%' : '100%'">
           <template #aside>
             <aside-tenant />
