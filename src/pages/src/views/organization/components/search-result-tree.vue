@@ -4,14 +4,18 @@
       v-is-multiple-tenant
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
     >
-      <img v-if="appStore.currentOrg?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="appStore.currentOrg?.logo" />
+      <img
+        v-if="appStore.curTenantLogo"
+        class="w-[20px] h-[20px] mr-[8px]"
+        :src="appStore.curTenantLogo"
+      />
       <span
         v-else
         class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
       >
-        {{ appStore.currentOrg?.tenant_name?.charAt(0).toUpperCase() }}
+        {{ appStore.currentOrg.tenantName?.charAt(0).toUpperCase() }}
       </span>
-      {{ appStore.currentOrg?.tenant_name }}
+      {{ appStore.currentOrg.tenantName }}
     </div>
     <bk-tree
       :data="treeData"
@@ -29,28 +33,34 @@
 </template>
 
 <script setup lang="ts">
-import { defineExpose, ref } from 'vue';
+import { ref } from 'vue';
 
+import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
+import { IOrg } from '@/types/organization';
 
 const appStore = useAppStore();
+const {
+  getRemoteData,
+  getPrefixIcon,
+} = useOrganizationAside(appStore.currentTenant);
 
 /**
  * 根据organization_path转化为树结构
  */
-const getData =  (isChildren) => {
-  const orgs = appStore.currentOrg.organization_path || '';
-  let root = null;
-  let currentParent = null;
+const getData =  (isChildren: boolean): Partial<IOrg>[] => {
+  const orgs = appStore.currentOrg.organizationPath || '';
+  let root: Partial<IOrg> | null = null;
+  let currentParent: Partial<IOrg> | null = null;
   orgs.split('/').forEach((item) => {
     const node = {
-      id: appStore.currentOrg.name === item ? appStore.currentOrg.id : item,
+      id: appStore.currentOrg.deptName === item ? appStore.currentOrg.deptId : item,
       name: item,
-      children: [],
+      children: [] as IOrg[],
       async: isChildren,
-      isOpen: appStore.currentOrg.name !== item,
-    };
+      isOpen: appStore.currentOrg.deptName !== item,
+    } as unknown as IOrg;
     if (!root) {
       root = node;
     } else {
@@ -63,30 +73,14 @@ const getData =  (isChildren) => {
 
 const treeData = ref([]);
 
+/**
+ * 根据搜索选中的组织路径(organization_path)构建树结构并加载子部门
+ * 1. 解析 organization_path (如: "租户/部门A/部门B") 构建父子层级关系
+ * 2. 为最底层节点异步加载其子部门数据
+ */
 const getTreeData = async () => {
-  const { data = [] } = await getDepartmentsList(appStore.currentOrg.id, appStore.currentOrg.tenant_id);
+  const { data = [] } = await getDepartmentsList(appStore.currentOrg.deptId, appStore.currentOrg.tenantId);
   treeData.value = getData(Boolean(data?.length));
-};
-
-const formatTreeData = (data = []) => data.map(item => ({ ...item, async: item.has_children }));
-
-const getRemoteData = async (item: IOrg) => {
-  const res = await getDepartmentsList(item.id, appStore.currentTenant.id);
-  return formatTreeData(res?.data);
-};
-
-const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
-  if (renderType === 'node_action') {
-    return 'default';
-  }
-
-  return {
-    node: 'span',
-    className: 'bk-sq-icon icon-file-close pr-1',
-    style: {
-      color: '#A3C5FD',
-    },
-  };
 };
 
 defineExpose({

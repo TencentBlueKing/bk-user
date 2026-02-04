@@ -358,9 +358,6 @@
   const isLdapDataSource = computed(() => {
     return appStore.currentTenant?.data_source?.plugin_id === 'ldap'; 
   });
-  const dataSourceId = computed(() => {
-    return appStore.currentTenant?.data_source?.id;
-  });
   const isEnabledPassword = computed(() => {
     return appStore.currentTenant?.data_source?.enable_password;
   })
@@ -421,12 +418,12 @@
       isShow: true,
       handle: () => {
         InfoBox({
-            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.name}`,
+            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.deptName}`,
             height: 184,
             onConfirm: async () => {
                 const params = {
                     user_ids: getBatchUserIds(true),
-                    source_department_id: appStore.currentOrg.id
+                    source_department_id: appStore.currentOrg.deptId,
                 }
                 await batchDelete(params);
                 moveDialogShow.value = false;
@@ -622,10 +619,15 @@
     if (tableData.value.length === 0) {
       return hasOperationColumns;
     }
-    return isLocalDataSource.value || isLdapDataSource.value ? [...selectionColumns, ...hasOperationColumns] : hasOperationColumns;
+    // more-data-source-todo
+    // return isLocalDataSource.value || isLdapDataSource.value ? 
+    return [...selectionColumns, ...hasOperationColumns]
+    // : hasOperationColumns;
   });
   const tableColumns = computed(() => {
-    return isCollaborativeUsers.value ? columns : columnsRender.value;
+    // more-data-source-todo
+    // return isCollaborativeUsers.value ? columns : 
+    return columnsRender.value;
   })
   const getUserListFun = async () => {
     const res = await getUsersList({tenant_id: appStore.currentTenant.id});
@@ -703,8 +705,8 @@
     return item.label;
   };
 
-  watch(() => appStore.currentOrg, (val) => {
-    !!val && reloadList();
+  watch(() => appStore.currentOrg.deptId, () => {
+    reloadList();
   });
   
   const isOrgPathLoading = ref(false);
@@ -720,8 +722,6 @@
   }
   
   const initTenantsUserList = async () => {
-    const { id, isTenant } = appStore.currentOrg;
-    const tenantId = appStore.currentOrg.tenantId || appStore.currentOrg.tenant_id;
     try {
         tableData.value = [];
         selectList.value = [];
@@ -730,10 +730,10 @@
           ...searchSelectFilters.value,
           page: pagination.current,
           page_size: pagination.limit,
-          department_id: isTenant ?  0 : appStore.currentOrg.id,
+          department_id: appStore.currentOrg.deptId,
           recursive: !recursive.value
         };
-        const res = await getTenantsUserList(isTenant ? id : tenantId, params);
+        const res = await getTenantsUserList(appStore.currentOrg.tenantId, params);
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
         clearErrorType();

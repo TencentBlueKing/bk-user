@@ -343,7 +343,7 @@ const inputPassword = (val: string, type) => {
 /**
    * 生成随机密码
   */
-const randomPasswordHandle = async (type: string) => {
+const randomPasswordHandle = async () => {
   const res = await randomPasswords({ data_source_id: appStore.currentTenant.data_source.id });
   formData.value.newPassword = res.data?.password;
 };

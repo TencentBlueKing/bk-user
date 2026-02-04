@@ -4,8 +4,8 @@
       <div
         class="tenant-node leading-[36px] text-[14px] px-[6px] inline-flex
           items-center w-full cursor-pointer relative pr-[12px]"
-        :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
-        @click="handleNodeClick(currentTenant, currentTenant.id, true)"
+        :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': activeOrg.id === currentTenant?.id }"
+        @click="handleNodeClick(currentTenant, true)"
       >
         <img
           v-if="currentTenant?.logo"
@@ -14,7 +14,7 @@
         <span
           v-else
           class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
-          :class="{ 'bg-[#3A84FF]': appStore.currentOrg?.id === currentTenant?.id }"
+          :class="{ 'bg-[#3A84FF]': activeOrg.id === currentTenant?.id }"
         >
           {{ currentTenant?.name.charAt(0).toUpperCase() }}
         </span>
@@ -29,14 +29,14 @@
       </div>
       <bk-tree
         :data="treeData"
-        :selected="appStore.currentOrg"
+        :selected="selectedNode"
         class="overflow-y-auto"
         ref="treeRef"
         label="name"
         node-key="id"
         children="children"
         :prefix-icon="getPrefixIcon"
-        @node-click="(node) => handleNodeClick(node, currentTenant.id)"
+        @node-click="(node: IOrg) => handleNodeClick(node)"
         :async="{
           callback: getRemoteData,
           cache: true,
@@ -68,23 +68,57 @@ import { onBeforeMount, ref } from 'vue';
 import OperateMore from './operate-more.vue';
 
 import useOrganizationAside from '@/hooks/useOrganizationAside';
-import { getCurrentTenant, getDepartmentsList } from '@/http/organizationFiles';
+import { getCurrentTenant } from '@/http/organizationFiles';
+import { CurrentTenantData } from '@/http/types/organizationFiles';
 import useAppStore from '@/store/app';
+import { IOrg } from '@/types/organization';
+import { CurrentOrg } from '@/types/store';
+
+interface IProps {
+  activeOrg: {
+    id: number | string;
+    name: string;
+  };
+}
+defineProps<IProps>();
 
 const appStore = useAppStore();
 
 const currentTenant = ref();
 const loading = ref(false);
+const organizationAsideHooks = useOrganizationAside(currentTenant);
+const {
+  treeData,
+  getRemoteData,
+  addNode,
+  deleteNode,
+  updateNode,
+  getPrefixIcon,
+} = organizationAsideHooks;
 
+const getTreeData = async () => {
+  // id为0表示获取根部门
+  treeData.value = await getRemoteData({ id: 0 });
+};
+const selectedNode = ref();
 
-const formatTreeData = (data = []) => {
-  data.forEach((item) => {
-    if (item.has_children) {
-      item.children = [{}];
-      item.async = true;
-    }
-  });
-  return data;
+const handleNodeClick = (data: CurrentTenantData | IOrg, isTenant = false) => {
+  selectedNode.value = data;
+  if (isTenant) {
+    // 点击租户节点，只传入租户信息
+    appStore.updateCurrentOrg({
+      tenantId: currentTenant.value.id,
+      tenantName: currentTenant.value.name,
+    });
+  } else {
+    // 点击部门节点，传入完整信息
+    appStore.updateCurrentOrg({
+      tenantId: currentTenant.value.id,
+      tenantName: currentTenant.value.name,
+      deptId: data.id,
+      deptName: data.name,
+    } as CurrentOrg);
+  }
 };
 
 onBeforeMount(async () => {
@@ -92,26 +126,13 @@ onBeforeMount(async () => {
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
   appStore.currentTenant = tenantData?.data;
-  appStore.currentOrg = { ...tenantData?.data, isTenant: true, tenantId: tenantData?.data?.id  };
+  appStore.updateCurrentOrg({
+    tenantId: tenantData.data?.id,
+    tenantName: tenantData.data?.name,
+  });
   getTreeData();
   loading.value = false;
 });
-
-const getTreeData = async () => {
-  const deptData = await getDepartmentsList(0, currentTenant.value?.id);
-  treeData.value = formatTreeData(deptData?.data);
-};
-const organizationAsideHooks = useOrganizationAside(currentTenant);
-const {
-  treeRef,
-  treeData,
-  getRemoteData,
-  handleNodeClick,
-  addNode,
-  deleteNode,
-  updateNode,
-  getPrefixIcon,
-} = organizationAsideHooks;
 </script>
 
 <style lang="less" scoped>

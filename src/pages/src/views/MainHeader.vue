@@ -24,10 +24,10 @@
           v-is-multiple-tenant
           class="tenant-style">
           <div class="logo">
-            <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
-            <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
+            <img v-if="appStore.curTenantLogo" :src="appStore.curTenantLogo" alt="">
+            <span v-else>{{logoConvert(appStore.currentTenant.name) }}</span>
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
+          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant.name }}</bk-overflow-title>
           <i
             v-if="role === ROLE.SUPER_MANAGER"
             class="user-icon icon-shezhi"

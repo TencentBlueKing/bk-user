@@ -135,7 +135,7 @@ const validate = useValidate();
 const rules = {
   val: [validate.required],
 };
-const formRef = ref('');
+const formRef = ref();
 const tableData = ref([]);
 const formData = ref({
   val: '',
@@ -146,7 +146,7 @@ const objectSteps = ref([
 ]);
 const isLoading = ref(false);
 const currentId = ref(1);
-const currentOrgName = computed(() => appStore.currentOrg?.name);
+const currentOrgName = computed(() => appStore.currentOrg.deptName);
 watch(() => props.isShow, async (val) => {
   if (val) {
     currentId.value = 1;
@@ -171,7 +171,7 @@ const handleNext = async () => {
     isLoading.value = true;
     const param = {
       user_infos: formData.value.val.split('\n'),
-      department_id: appStore.currentOrg.id,
+      department_id: appStore.currentOrg.deptId,
     };
     try {
       const res = await batchCreatePreview(param);
@@ -254,7 +254,7 @@ const confirm = async () => {
   try {
     const param = {
       user_infos: formData.value.val.split('\n'),
-      department_id: appStore.currentOrg.id,
+      department_id: appStore.currentOrg.deptId,
     };
     await operationsCreate(param);
     emit('success');

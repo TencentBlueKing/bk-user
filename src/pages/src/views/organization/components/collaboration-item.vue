@@ -3,29 +3,32 @@
     <div
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full
        cursor-pointer relative org-node hover:bg-[#F0F1F5]"
-      :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"
-      @click="handleNodeClick(tenant, currentTenant.id, true)"
+      :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': activeOrg.id === collaborationTenant?.id }"
+      @click="handleNodeClick(collaborationTenant, true)"
     >
-      <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
+      <img
+        v-if="collaborationTenant?.logo"
+        class="w-[20px] h-[20px] mr-[8px]"
+        :src="collaborationTenant?.logo" />
       <span
         v-else
         class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
-        :class="{ 'bg-[#3A84FF]': appStore.currentOrg?.id === tenant?.id }"
+        :class="{ 'bg-[#3A84FF]': appStore.currentOrg.tenantId === collaborationTenant?.id }"
       >
-        {{ currentTenant?.name.charAt(0).toUpperCase() }}
+        {{ collaborationTenant?.name.charAt(0).toUpperCase() }}
       </span>
-      <span>{{ tenant?.name }}</span>
+      <span>{{ collaborationTenant?.name }}</span>
       <operate-more :is-collaboration="true"></operate-more>
     </div>
     <bk-tree
       v-if="treeData.length"
       :data="treeData"
-      :selected="appStore.currentOrg"
+      :selected="selectedNode"
       label="name"
       node-key="id"
       children="children"
       :prefix-icon="getPrefixIcon"
-      @node-click="(node) => handleNodeClick(node, currentTenant.id)"
+      @node-click="(node: IOrg) => handleNodeClick(node)"
       :async="{
         callback: getRemoteData,
         cache: true,
@@ -41,35 +44,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, toRef, watch } from 'vue';
 
 import OperateMore from './operate-more.vue';
 
 import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
+import { CollaborationItemData } from '@/http/types/organizationFiles';
 import useAppStore from '@/store/app';
+import { IOrg } from '@/types/organization';
+import { CurrentOrg } from '@/types/store';
 
-const props = defineProps({
-  tenant: {
-    type: Object,
-    default: () => ({}),
-  },
-});
+interface IProps {
+  collaborationTenant: CollaborationItemData;
+  activeOrg: {
+    id: number | string;
+    name: string;
+  };
+}
+
+const props = defineProps<IProps>();
+const collaborationTenant = toRef(props, 'collaborationTenant');
+
+const organizationAsideHooks = useOrganizationAside(collaborationTenant);
+const {
+  treeData,
+  formatTreeData,
+  getRemoteData,
+  getPrefixIcon,
+} = organizationAsideHooks;
 
 const appStore = useAppStore();
+const selectedNode = ref();
 
-const formatTreeData = (data = []) => {
-  data.forEach((item) => {
-    if (item.has_children) {
-      item.children = [{}];
-      item.async = true;
-    }
-  });
-  return data;
+const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) => {
+  selectedNode.value = data;
+  if (isTenant) {
+    // 点击租户节点，只传入租户信息
+    appStore.updateCurrentOrg({
+      tenantId: collaborationTenant.value.id,
+      tenantName: data.name,
+    });
+  } else {
+    // 点击部门节点，传入完整信息
+    appStore.updateCurrentOrg({
+      tenantId: collaborationTenant.value.id,
+      tenantName: collaborationTenant.value.name,
+      deptId: data.id,
+      deptName: data.name,
+    } as CurrentOrg);
+  }
 };
 
 watch(
-  props.tenant,
+  collaborationTenant,
   async (val) => {
     if (val) {
       const deptData = await getDepartmentsList(0, val.id);
@@ -80,15 +108,4 @@ watch(
     immediate: true,
   },
 );
-
-const currentTenant = ref(props.tenant);
-
-const organizationAsideHooks = useOrganizationAside(currentTenant);
-const {
-  treeData,
-  getRemoteData,
-  handleNodeClick,
-  getPrefixIcon,
-} = organizationAsideHooks;
-
 </script>

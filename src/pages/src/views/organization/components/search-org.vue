@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import type { IMessage } from 'bkui-vue/lib/message/messageConstructor';
-import { defineEmits, inject, reactive, ref } from 'vue';
+import { inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
 
@@ -123,6 +123,7 @@ import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
 import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
+import { SearchOrganizationItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
 import useAppStore from '@/store/app';
 
@@ -148,7 +149,7 @@ const state = reactive({
 });
 
 const search = ref('');
-const orgs = ref([]);
+const orgs = ref<SearchOrganizationItemData[]>([]);
 const users = ref([]);
 const searchDialogVisible = ref(false);
 const searchLoading = ref(false);
@@ -235,11 +236,17 @@ const handleShowErrorMessage = (messageConfig: IMessage) => {
   });
 };
 
-const handleOrgSelect = (org) => {
+const handleOrgSelect = (org: SearchOrganizationItemData) => {
   appStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
-  appStore.currentOrg = { ...org };
+  appStore.updateCurrentOrg({
+    tenantId: org.tenant_id,
+    tenantName: org.tenant_name,
+    deptId: org.id,
+    deptName: org.name,
+    organizationPath: org.organization_path,
+  });
   emit('select');
 };
 

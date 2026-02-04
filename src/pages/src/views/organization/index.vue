@@ -25,10 +25,10 @@
           :max="900"
           :initial-divide="isShowCollaboration ? '50%' : '100%'">
           <template #aside>
-            <aside-tenant />
+            <aside-tenant :active-org="activeOrgInfo" />
           </template>
           <template #main v-if="isShowCollaboration">
-            <aside-collaboration />
+            <aside-collaboration :active-org="activeOrgInfo" />
           </template>
         </bk-resize-layout>
       </template>
@@ -38,7 +38,7 @@
             class="
             text-[#313238] leading-[52px] h-[52px] px-[24px]
               text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
-            {{ appStore.currentOrg?.name }}
+            {{ activeOrgInfo.name }}
           </div>
           <div class="table-main">
             <TableList ref="tableListRef" @click-import="importHandle" />
@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
@@ -69,6 +69,25 @@ const isLoading = ref(false);
 const tableListRef = ref();
 const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
+/** 当前激活的组织信息（自动根据 deptId 判断是部门还是租户） */
+const activeOrgInfo = computed(() => {
+  const { deptId, deptName, tenantId, tenantName } = appStore.currentOrg;
+
+  if (deptId !== 0) {
+    return {
+      id: deptId,
+      name: deptName,
+      type: 'department' as const,
+    };
+  }
+
+  return {
+    id: tenantId,
+    name: tenantName,
+    type: 'tenant' as const,
+  };
+});
+
 const getList = async () => {
   isLoading.value = true;
   const tenantData = await getCurrentTenant();
@@ -80,7 +99,6 @@ const getList = async () => {
     isShow.value = false;
   }
 };
-getList();
 
 const importHandle = async () => {
   await getList();
@@ -93,6 +111,10 @@ const handleSearchSelect = () => {
     searchResultTreeRef.value.getTreeData();
   }
 };
+
+onMounted(() => {
+  getList();
+});
 </script>
 
 <style lang="postcss" scoped>
