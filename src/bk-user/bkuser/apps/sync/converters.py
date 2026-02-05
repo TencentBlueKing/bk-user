@@ -54,6 +54,8 @@ class DataSourceUserConverter:
         if not username:
             raise ValueError("username is required")
 
+        # 根据数据源配置生成最终的用户名
+        username = self.data_source.generate_username(username)
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 

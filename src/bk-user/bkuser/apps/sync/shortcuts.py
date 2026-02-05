@@ -38,10 +38,8 @@ def start_collaboration_tenant_sync(strategy: CollaborationStrategy):
         logger.info("collaboration strategy %s is not enabled by target, skip sync...", strategy.id)
         return
 
-    data_source = DataSource.objects.filter(
-        owner_tenant_id=strategy.source_tenant_id, type=DataSourceTypeEnum.REAL
-    ).first()
-    if not data_source:
+    data_sources = DataSource.objects.filter(owner_tenant_id=strategy.source_tenant_id, type=DataSourceTypeEnum.REAL)
+    if not data_sources.exists():
         logger.info(
             "collaboration strategy %s source tenant %s didn't have real user data source, skip sync...",
             strategy.id,
@@ -49,5 +47,6 @@ def start_collaboration_tenant_sync(strategy: CollaborationStrategy):
         )
         return
 
-    sync_opts = TenantSyncOptions(operator=strategy.updater, async_run=True, trigger=SyncTaskTrigger.MANUAL)
-    TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()
+    for data_source in data_sources:
+        sync_opts = TenantSyncOptions(operator=strategy.updater, async_run=True, trigger=SyncTaskTrigger.MANUAL)
+        TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()

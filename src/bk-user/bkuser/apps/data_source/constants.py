@@ -14,6 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import re
+
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.utils.translation import gettext_lazy as _
 
@@ -21,6 +23,9 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 
 # 批量更新数据源用户自定义字段单次操作数量
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
+
+# 必须以 _ 开头，后跟 1-5 个字母/数字/下划线/连字符
+USERNAME_SUFFIX_REGEX = re.compile(r"^_[a-z0-9_-]{1,5}$")
 
 
 class FieldMappingOperation(StrStructuredEnum):

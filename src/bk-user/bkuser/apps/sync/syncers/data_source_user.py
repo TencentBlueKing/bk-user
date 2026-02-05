@@ -67,8 +67,46 @@ class DataSourceUserSyncer:
 
     def sync(self):
         self.ctx.logger.info("start sync users...")
+        self._filter_conflict_users()
         self._sync_users()
         self.ctx.logger.info("users sync finished")
+
+    def _filter_conflict_users(self):
+        if not self.raw_users:
+            return
+
+        # Note: 这里只考虑了同租户下其他数据源用户造成的冲突，当前数据源无需处理
+        real_ds_usernames = set(
+            DataSourceUser.objects.filter(
+                data_source__owner_tenant_id=self.data_source.owner_tenant_id,
+            )
+            .exclude(data_source=self.data_source)
+            .values_list("username", flat=True)
+        )
+        if not real_ds_usernames:
+            return
+
+        conflict_users: List[RawDataSourceUser] = []
+        filtered_users: List[RawDataSourceUser] = []
+
+        for user in self.raw_users:
+            # 生成最终的 username
+            username = self.data_source.generate_username(user.properties["username"])
+            if username in real_ds_usernames:
+                conflict_users.append(user)
+            else:
+                filtered_users.append(user)
+
+        if not conflict_users:
+            return
+
+        conflict_usernames = [user.properties["username"] for user in conflict_users]
+        self.ctx.logger.warning(
+            f"found {len(conflict_users)} users with username conflict in other data sources "
+            f"of the same tenant, these users will be skipped: {', '.join(conflict_usernames)}"
+        )
+
+        self.raw_users = filtered_users
 
     def _sync_users(self):
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
@@ -211,7 +249,7 @@ class DataSourceUserLeaderRelationSyncer:
             user_codes |= exists_user_codes
 
         # Q: 提示信息使用 user_code 是否影响可读性
-        # A：本地数据源用户 code 即为用户名，因此不会有可读性问题
+        # A：本地数据源用户 code 即为原始用户名，因此不会有可读性问题
         #  非本地数据源，因为本身插件提供的用户 Leader 信息即 code 列表，因此是可映射回实际数据的
         if not_exists_leaders := raw_leader_codes - user_codes:
             self.ctx.logger.warning(
@@ -258,9 +296,9 @@ class DataSourceUserLeaderRelationSyncer:
             if waiting_delete_user_leader_relation_ids:
                 DataSourceUserLeaderRelation.objects.filter(id__in=waiting_delete_user_leader_relation_ids).delete()
 
-        # 记录 用户-直接上级 关系新增日志
+        # 记录 用户 - 直接上级 关系新增日志
         self.ctx.logger.info(f"create {len(waiting_create_user_leader_relations)} user-leader relations")
-        # 记录 用户-直接上级 关系删除日志
+        # 记录 用户 - 直接上级 关系删除日志
         self.ctx.logger.info(f"delete {len(waiting_delete_user_leader_relation_ids)} user-leader relations")
 
     def _get_waiting_create_user_leader_relations(
@@ -353,7 +391,7 @@ class DataSourceUserDeptRelationSyncer:
             DataSourceDepartment.objects.filter(data_source=self.data_source).values_list("code", flat=True)
         )
         raw_user_dept_codes = {dept_code for user in self.raw_users for dept_code in user.departments}
-        # 需要确保待同步的 用户-部门 关系中的部门都是存在的
+        # 需要确保待同步的 用户 - 部门 关系中的部门都是存在的
         # Q: 提示信息使用 dept_code 是否影响可读性
         # A：尽管本地数据源使用 Hash 值作为部门 code，但是组织路径中的部门都会被创建，理论上不会触发该处异常
         #  非本地数据源，因为本身插件提供的用户部门信息即 code 列表，因此是可映射回实际的部门数据的
@@ -407,9 +445,9 @@ class DataSourceUserDeptRelationSyncer:
             if waiting_delete_user_dept_relation_ids:
                 DataSourceDepartmentUserRelation.objects.filter(id__in=waiting_delete_user_dept_relation_ids).delete()
 
-        # 记录 用户-部门 关系新增日志
+        # 记录 用户 - 部门 关系新增日志
         self.ctx.logger.info(f"create {len(waiting_create_user_dept_relations)} user-department relations")
-        # 记录 用户-部门 关系删除日志
+        # 记录 用户 - 部门 关系删除日志
         self.ctx.logger.info(f"delete {len(waiting_delete_user_dept_relation_ids)} user-department relations")
 
     def _get_waiting_create_user_dept_relations(

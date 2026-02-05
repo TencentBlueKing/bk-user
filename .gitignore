@@ -219,6 +219,7 @@ cliff.toml
 .idea
 .cursor
 .codebuddy
+.claude
 
 # igonre symlinks
 src/bk-user/bkuser/idp_plugins

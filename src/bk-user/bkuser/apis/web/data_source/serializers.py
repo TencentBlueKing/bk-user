@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
+import re
 from typing import Any, Dict, List
 
 from django.conf import settings
@@ -26,7 +27,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import USERNAME_SUFFIX_REGEX, DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -61,6 +62,7 @@ class DataSourceListOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    username_suffix = serializers.CharField(help_text="用户名后缀")
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -117,6 +119,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
+    username_suffix = serializers.CharField(help_text="用户名后缀", required=False, default="")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -131,13 +134,34 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
+    def validate_username_suffix(self, username_suffix: str) -> str:
+        if not username_suffix:
+            return username_suffix
+        if not re.fullmatch(USERNAME_SUFFIX_REGEX, username_suffix):
+            raise ValidationError(_("用户名后缀格式错误，必须以下划线开头，后跟 1-5 个小写字母、数字、下划线或连字符"))
+
+        return username_suffix
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 租户至多拥有一个实体类型的数据源
-        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
-            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+        plugin_id = attrs["plugin_id"]
+        tenant_id = self.context["tenant_id"]
+        # 租户至多拥有一个本地数据源和一个外部数据源
+        if (
+            plugin_id == DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(
+                owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL, plugin_id=DataSourcePluginEnum.LOCAL
+            ).exists()
+        ):
+            raise ValidationError(_("当前租户已存在本地数据源"))
+        if (
+            plugin_id != DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+            .exclude(plugin_id=DataSourcePluginEnum.LOCAL)
+            .exists()
+        ):
+            raise ValidationError(_("当前租户已存在外部数据源"))
 
         # 除本地数据源类型外，都需要配置字段映射
-        plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
             if not attrs["field_mapping"]:
                 raise ValidationError(_("当前数据源类型必须配置字段映射"))
@@ -156,7 +180,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         if plugin_id == DataSourcePluginEnum.GENERAL:
             assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
-            _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
+            _validate_general_plugin_tenant_id(attrs["plugin_config"], tenant_id)
 
         return attrs
 
@@ -184,6 +208,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
+    username_suffix = serializers.CharField(help_text="用户名后缀")
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
