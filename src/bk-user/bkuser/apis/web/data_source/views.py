@@ -577,16 +577,16 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
-        ).first()
-        if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源不存在"))
+        cur_tenant_id = self.get_current_tenant_id()
 
-        if not data_source.is_real_type:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的数据源有同步记录"))
+        queryset = DataSourceSyncTask.objects.filter(
+            data_source__owner_tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+        ).select_related("data_source__plugin")
 
-        queryset = DataSourceSyncTask.objects.filter(data_source=data_source)
+        if plugin_id := data.get("plugin_id"):
+            queryset = queryset.filter(data_source__plugin_id=plugin_id)
+
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
 

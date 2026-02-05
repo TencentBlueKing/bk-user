@@ -52,7 +52,7 @@ urlpatterns = [
     ),
     # 数据源同步记录
     path(
-        "<int:id>/sync-records/",
+        "sync-records/",
         views.DataSourceSyncRecordListApi.as_view(),
         name="data_source.sync_record.list",
     ),
