@@ -420,12 +420,13 @@ class TestDataSourceRelatedResourceStatsApi:
 
 class TestDataSourceSyncRecordApi:
     def test_list(self, api_client, data_source, data_source_sync_tasks):
-        resp = api_client.get(reverse("data_source.sync_record.list", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.sync_record.list"))
         tasks = resp.data["results"]
-        # 不属于指定数据源的同步记录是看不到的
+        # 返回当前租户的所有数据源同步记录
         assert len(tasks) == 2  # noqa: PLR2004
         assert set(tasks[0].keys()) == {
             "id",
+            "plugin",
             "status",
             "has_warning",
             "trigger",
@@ -436,12 +437,20 @@ class TestDataSourceSyncRecordApi:
         }
 
     def test_list_with_filter(self, api_client, data_source, data_source_sync_tasks):
-        url = reverse("data_source.sync_record.list", kwargs={"id": data_source.id})
+        url = reverse("data_source.sync_record.list")
         resp = api_client.get(url, data={"statuses": "success"})
         assert len(resp.data["results"]) == 1  # noqa: PLR2004
 
         resp = api_client.get(url, data={"statuses": "success,failed"})
         assert len(resp.data["results"]) == 2  # noqa: PLR2004
+
+    def test_list_with_plugin_filter(self, api_client, data_source, data_source_sync_tasks):
+        url = reverse("data_source.sync_record.list")
+        resp = api_client.get(url, data={"plugin_id": data_source.plugin_id})
+        assert len(resp.data["results"]) == 2  # noqa: PLR2004
+
+        resp = api_client.get(url, data={"plugin_id": "not_exist_plugin"})
+        assert len(resp.data["results"]) == 0
 
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]
