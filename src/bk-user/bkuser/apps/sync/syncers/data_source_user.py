@@ -75,10 +75,14 @@ class DataSourceUserSyncer:
         if not self.raw_users:
             return
 
+        # 从原始用户数据中提取将要写入的数据源用户名，只与这些用户名做冲突检测，避免加载整个租户下所有用户名
+        candidate_usernames = {user.properties["username"] for user in self.raw_users}
+
         # Note: 这里只考虑了同租户下其他数据源用户造成的冲突，当前数据源无需处理
         real_ds_usernames = set(
             DataSourceUser.objects.filter(
                 data_source__owner_tenant_id=self.data_source.owner_tenant_id,
+                username__in=candidate_usernames,
             )
             .exclude(data_source=self.data_source)
             .values_list("username", flat=True)
