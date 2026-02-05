@@ -247,7 +247,6 @@
   import batchOperation from './batch-operation.vue';
   import {
     getTenantsUserList,
-    getFieldsTips,
     resetTenantsUserPassword,
     updateTenantsUserStatus,
     delTenantsUser,
@@ -261,7 +260,7 @@
     getUsersList,
     passwordRule
   } from '@/http/organizationFiles';
-  import useAppStore from '@/store/app';
+  import useOrganizationStore from '@/store/organization';
   import { useTableMaxHeight } from '@/hooks';
   import DisplayName from '@/components/display-name.vue';
   import { useSearchPlaceholder } from '@/hooks/useSearchPlaceholder';
@@ -269,44 +268,9 @@
 
   const { createPlaceholder } = useSearchPlaceholder();
   const curTableMaxHeight = useTableMaxHeight(200);
-  const appStore = useAppStore();
-  const recursive = ref(true);
-  const isLoading = ref(false);
-  const editLeaveBefore = inject('editLeaveBefore');
-  const editDetailsShow = ref(false);
-  const dropdownRefs = ref({});
-  const keyword = ref([]);
-  const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
-    filters: keyword,
-  });
-  const selectedValue = ref([]);
-  const isDetailSlider = ref(false);
-  const moveTips = ref('');
-  const tableRef = ref();
-  /** 是否为租户层级 */
-  const isTenantStatus = computed(() => {
-    return appStore.currentOrg?.id === appStore.currentTenant?.id;
-  });
-  /** 是否为协同租户 */
-  const isCollaborativeUsers = computed(() => {
-    return appStore.currentTenant?.id !== appStore.currentOrg?.tenantId
-  })
-  const detailsInfo = ref({});
-  const selectList = ref([]);
-  const password = ref('');
-  const dataSource = ref([]);
-  const moveDialogShow = ref(false);
-  const currentHandle = ref({});
-  const passwordDialogShow = ref(false);
-  const fastInputDialogShow = ref(false);
-  const importDialogShow = ref(false);
-  const editDetailsInfo = ref({});
-  const getUsersDialogShow = ref(false);
-  const getUsersValue = ref([]);
-  const getUserList = ref([]);
-  const chooseDepartments = ref([]);
-  const passwordTips = ref([]);
-  const isPassword = ref(false);
+  const organizationStore = useOrganizationStore();
+  
+  /** searchSelect下拉框数据 */
   const searchSelectOptions = [
     {
       name: t('用户名'),
@@ -344,6 +308,41 @@
     },
   ];
 
+  const recursive = ref(true);
+  const isLoading = ref(false);
+  const editLeaveBefore = inject('editLeaveBefore');
+  const editDetailsShow = ref(false);
+  const dropdownRefs = ref();
+
+  const keyword = ref([]);
+  const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+    filters: keyword,
+  });
+  const selectedValue = ref([]);
+  const isDetailSlider = ref(false);
+  const moveTips = ref('');
+  const tableRef = ref();
+  const detailsInfo = ref({});
+  const selectList = ref([]);
+  const password = ref('');
+  const dataSource = ref([]);
+  const moveDialogShow = ref(false);
+  const currentHandle = ref({});
+  const passwordDialogShow = ref(false);
+  const fastInputDialogShow = ref(false);
+  const importDialogShow = ref(false);
+  const editDetailsInfo = ref({});
+  const getUsersDialogShow = ref(false);
+  const getUsersValue = ref([]);
+  const getUserList = ref([]);
+  const chooseDepartments = ref([]);
+  const passwordTips = ref([]);
+
+  /** 是否为租户层级 */
+  const isTenantStatus = computed(() => organizationStore.curSelectedTenant === 'current' && organizationStore.curSelectedType === 'tenant');
+  /** 是否为协同租户 */
+  const isCollaborativeUsers = computed(() => organizationStore.curSelectedTenant === 'collaboration');
+
   const searchSelectFilters = computed(() => {
     const result: Record<string, string> = {};
     for (const item of keyword.value) {
@@ -353,18 +352,17 @@
   });
   /** 是否为本地数据源 */
   const isLocalDataSource = computed(() => {
-    return appStore.currentTenant?.data_source?.plugin_id === 'local';
+    return organizationStore.currentTenant?.data_source?.plugin_id === 'local';
   });
   const isLdapDataSource = computed(() => {
-    return appStore.currentTenant?.data_source?.plugin_id === 'ldap'; 
+    return organizationStore.currentTenant?.data_source?.plugin_id === 'ldap'; 
   });
   const isEnabledPassword = computed(() => {
-    return appStore.currentTenant?.data_source?.enable_password;
-  })
-
+    return organizationStore.currentTenant?.data_source?.enable_password;
+  });
   const isShowBtn = computed(() => {
     return !isCollaborativeUsers.value && !isTenantStatus.value && isLocalDataSource.value
-  })
+  });
 
   const editInfoHandle = async (row, isDetail = false) => {
     isDetailSlider.value = isDetail;
@@ -418,12 +416,12 @@
       isShow: true,
       handle: () => {
         InfoBox({
-            title:`${t('确认将选中的用户移出')}${appStore.currentOrg.deptName}`,
+            title:`${t('确认将选中的用户移出')}${organizationStore.selectedOrg.deptName}`,
             height: 184,
             onConfirm: async () => {
                 const params = {
                     user_ids: getBatchUserIds(true),
-                    source_department_id: appStore.currentOrg.deptId,
+                    source_department_id: organizationStore.selectedOrg.deptId,
                 }
                 await batchDelete(params);
                 moveDialogShow.value = false;
@@ -481,7 +479,7 @@
     },
   ], ...defaultOperation]);
   const prependData = computed(() => {
-    return appStore.currentOrg.isTenant ? [] : operationList;
+    return organizationStore.selectedOrg.isTenant ? [] : operationList;
   })
   const pagination = reactive({ count: 0, limit: 10, current: 1, remote: true })
   const isScrollLoading = ref(false);
@@ -629,8 +627,8 @@
     // return isCollaborativeUsers.value ? columns : 
     return columnsRender.value;
   })
-  const getUserListFun = async () => {
-    const res = await getUsersList({tenant_id: appStore.currentTenant.id});
+  const getUserListFun = async (keyword = '') => {
+    const res = await getUsersList({tenant_id: organizationStore.selectedOrg.tenantId, keyword });
     getUserList.value = res.data;
   }
   /** 点击拉取已有用户按钮 */
@@ -642,7 +640,8 @@
   }
 
   const remoteMethod = (word = '') => {
-    if (word.length > 1) {
+    // 当字符大于1或等于0时，才拉取用户列表（为0时用于清空时恢复原来的列表）
+    if (word.length > 1 || word.length === 0) {
       getUserListFun(word);
     }
   }
@@ -650,7 +649,7 @@
   const confirmGetUser = async () => {
     try {
       const param = {
-        target_department_ids: [appStore.currentOrg.id], 
+        target_department_ids: [organizationStore.selectedOrg.deptId], 
         user_ids: getUsersValue.value
       }
       const res = await batchCreate(param);
@@ -705,7 +704,7 @@
     return item.label;
   };
 
-  watch(() => appStore.currentOrg.deptId, () => {
+  watch(() => organizationStore.selectedOrg.deptId, () => {
     reloadList();
   });
   
@@ -730,10 +729,10 @@
           ...searchSelectFilters.value,
           page: pagination.current,
           page_size: pagination.limit,
-          department_id: appStore.currentOrg.deptId,
+          department_id: organizationStore.selectedOrg.deptId,
           recursive: !recursive.value
         };
-        const res = await getTenantsUserList(appStore.currentOrg.tenantId, params);
+        const res = await getTenantsUserList(organizationStore.selectedOrg.tenantId, params);
         pagination.count = res.data?.count;
         tableData.value = res.data?.results;
         clearErrorType();
@@ -752,7 +751,7 @@
 
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
-    const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
+    const res = await randomPasswords({data_source_id: organizationStore.currentTenant.data_source.id});
       password.value = res.data?.password;
   };
   const isResetPasswordLoading = ref(false);

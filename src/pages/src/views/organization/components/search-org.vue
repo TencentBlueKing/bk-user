@@ -123,12 +123,12 @@ import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
 import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
-import { SearchOrganizationItemData } from '@/http/types/organizationFiles';
+import { SearchOrganizationItemData, SearchUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 
 const emit = defineEmits(['select']);
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -150,7 +150,7 @@ const state = reactive({
 
 const search = ref('');
 const orgs = ref<SearchOrganizationItemData[]>([]);
-const users = ref([]);
+const users = ref<SearchUserItemData[]>([]);
 const searchDialogVisible = ref(false);
 const searchLoading = ref(false);
 const selected = ref({});
@@ -158,14 +158,14 @@ const selected = ref({});
 const handleSearch = () => {
   if (search.value.length === 0) {
     searchDialogVisible.value = false;
-    appStore.isSearchTree = false;
+    organizationStore.isSearchTree = false;
     return;
   }
   searchData();
 };
 
 const handleClear = () => {
-  appStore.isSearchTree = false;
+  organizationStore.isSearchTree = false;
   search.value = '';
   searchDialogVisible.value = false;
 };
@@ -237,12 +237,14 @@ const handleShowErrorMessage = (messageConfig: IMessage) => {
 };
 
 const handleOrgSelect = (org: SearchOrganizationItemData) => {
-  appStore.isSearchTree = true;
+  console.log(org)
+  organizationStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
-  appStore.updateCurrentOrg({
+  organizationStore.updateSelectedOrg({
     tenantId: org.tenant_id,
     tenantName: org.tenant_name,
+    tenantLogo: organizationStore.getTenantLogo(org.tenant_id),
     deptId: org.id,
     deptName: org.name,
     organizationPath: org.organization_path,
@@ -250,7 +252,7 @@ const handleOrgSelect = (org: SearchOrganizationItemData) => {
   emit('select');
 };
 
-const handleUserSelect = async (user) => {
+const handleUserSelect = async (user: SearchUserItemData) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
@@ -282,6 +284,6 @@ const handleBeforeClose = async () => {
 
 const handleRefresh = () => {
   handleClear();
-  appStore.reloadIndex += 1;
+  organizationStore.reloadIndex += 1;
 };
 </script>

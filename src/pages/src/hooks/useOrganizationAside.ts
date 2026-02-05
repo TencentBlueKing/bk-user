@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import { IOrg } from '@/types/organization';
 
-export default function useOrganizationAside(currentTenant: any) {
+export default function useOrganizationAside() {
   const treeRef = ref();
   const treeData = ref<IOrg[]>([]);
 
@@ -19,8 +19,8 @@ export default function useOrganizationAside(currentTenant: any) {
     return data;
   };
 
-  const getRemoteData = async (item: Partial<IOrg>) => {
-    const res = await getDepartmentsList(item.id, currentTenant.value?.id);
+  const getRemoteData = async (item: Partial<IOrg>, currentTenantId: string) => {
+    const res = await getDepartmentsList(item.id, currentTenantId);
     return formatTreeData(res?.data);
   };
 

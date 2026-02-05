@@ -9,11 +9,11 @@
       <img
         v-if="collaborationTenant?.logo"
         class="w-[20px] h-[20px] mr-[8px]"
-        :src="collaborationTenant?.logo" />
+        :src="collaborationTenant.logo" />
       <span
         v-else
         class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
-        :class="{ 'bg-[#3A84FF]': appStore.currentOrg.tenantId === collaborationTenant?.id }"
+        :class="{ 'bg-[#3A84FF]': organizationStore.selectedOrg.tenantId === collaborationTenant?.id }"
       >
         {{ collaborationTenant?.name.charAt(0).toUpperCase() }}
       </span>
@@ -30,7 +30,7 @@
       :prefix-icon="getPrefixIcon"
       @node-click="(node: IOrg) => handleNodeClick(node)"
       :async="{
-        callback: getRemoteData,
+        callback: (node: IOrg) => getRemoteData(node, collaborationTenant.id),
         cache: true,
       }"
     >
@@ -51,9 +51,9 @@ import OperateMore from './operate-more.vue';
 import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import { CollaborationItemData } from '@/http/types/organizationFiles';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 import { IOrg } from '@/types/organization';
-import { CurrentOrg } from '@/types/store';
+import { SelectedOrg } from '@/types/store';
 
 interface IProps {
   collaborationTenant: CollaborationItemData;
@@ -66,7 +66,7 @@ interface IProps {
 const props = defineProps<IProps>();
 const collaborationTenant = toRef(props, 'collaborationTenant');
 
-const organizationAsideHooks = useOrganizationAside(collaborationTenant);
+const organizationAsideHooks = useOrganizationAside();
 const {
   treeData,
   formatTreeData,
@@ -74,25 +74,27 @@ const {
   getPrefixIcon,
 } = organizationAsideHooks;
 
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 const selectedNode = ref();
 
 const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) => {
   selectedNode.value = data;
   if (isTenant) {
     // 点击租户节点，只传入租户信息
-    appStore.updateCurrentOrg({
+    organizationStore.updateSelectedOrg({
       tenantId: collaborationTenant.value.id,
-      tenantName: data.name,
+      tenantName: collaborationTenant.value.name,
+      tenantLogo: collaborationTenant.value?.logo,
     });
   } else {
     // 点击部门节点，传入完整信息
-    appStore.updateCurrentOrg({
+    organizationStore.updateSelectedOrg({
       tenantId: collaborationTenant.value.id,
       tenantName: collaborationTenant.value.name,
+      tenantLogo: collaborationTenant.value?.logo,
       deptId: data.id,
       deptName: data.name,
-    } as CurrentOrg);
+    } as SelectedOrg);
   }
 };
 

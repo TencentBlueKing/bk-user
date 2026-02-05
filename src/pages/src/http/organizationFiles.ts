@@ -6,6 +6,7 @@ import type {
   CurrentTenantData,
   DepartmentsItemData,
   DepartmentsListParams,
+  GetUserListParams,
   OptionalDepartmentsListData,
   SearchKeywordParams,
   SearchOrganizationItemData,
@@ -226,7 +227,7 @@ export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/
 /**
  * 搜索租户用户
  */
-export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+export const getUsersList = (params: GetUserListParams) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params);
 
 /**
  * 密码规则

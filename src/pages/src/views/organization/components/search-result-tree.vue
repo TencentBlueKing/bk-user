@@ -5,17 +5,17 @@
       class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
     >
       <img
-        v-if="appStore.curTenantLogo"
+        v-if="organizationStore.selectedOrg.tenantLogo"
         class="w-[20px] h-[20px] mr-[8px]"
-        :src="appStore.curTenantLogo"
+        :src="organizationStore.selectedOrg.tenantLogo"
       />
       <span
         v-else
         class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
       >
-        {{ appStore.currentOrg.tenantName?.charAt(0).toUpperCase() }}
+        {{ organizationStore.selectedOrg.tenantName?.charAt(0).toUpperCase() }}
       </span>
-      {{ appStore.currentOrg.tenantName }}
+      {{ organizationStore.selectedOrg.tenantName }}
     </div>
     <bk-tree
       :data="treeData"
@@ -24,7 +24,7 @@
       children="children"
       :prefix-icon="getPrefixIcon"
       :async="{
-        callback: getRemoteData,
+        callback: (node: IOrg) => getRemoteData(node, organizationStore.currentTenant.id),
         cache: true,
       }"
     >
@@ -37,29 +37,29 @@ import { ref } from 'vue';
 
 import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 import { IOrg } from '@/types/organization';
 
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 const {
   getRemoteData,
   getPrefixIcon,
-} = useOrganizationAside(appStore.currentTenant);
+} = useOrganizationAside();
 
 /**
  * 根据organization_path转化为树结构
  */
 const getData =  (isChildren: boolean): Partial<IOrg>[] => {
-  const orgs = appStore.currentOrg.organizationPath || '';
+  const orgs = organizationStore.selectedOrg.organizationPath || '';
   let root: Partial<IOrg> | null = null;
   let currentParent: Partial<IOrg> | null = null;
   orgs.split('/').forEach((item) => {
     const node = {
-      id: appStore.currentOrg.deptName === item ? appStore.currentOrg.deptId : item,
+      id: organizationStore.selectedOrg.deptName === item ? organizationStore.selectedOrg.deptId : item,
       name: item,
       children: [] as IOrg[],
       async: isChildren,
-      isOpen: appStore.currentOrg.deptName !== item,
+      isOpen: organizationStore.selectedOrg.deptName !== item,
     } as unknown as IOrg;
     if (!root) {
       root = node;
@@ -79,7 +79,10 @@ const treeData = ref([]);
  * 2. 为最底层节点异步加载其子部门数据
  */
 const getTreeData = async () => {
-  const { data = [] } = await getDepartmentsList(appStore.currentOrg.deptId, appStore.currentOrg.tenantId);
+  const { data = [] } = await getDepartmentsList(
+    organizationStore.selectedOrg.deptId,
+    organizationStore.selectedOrg.tenantId,
+  );
   treeData.value = getData(Boolean(data?.length));
 };
 

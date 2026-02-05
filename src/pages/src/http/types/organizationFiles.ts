@@ -105,3 +105,8 @@ export interface TenantsUserListData {
   count: number;
   results: TenantsUserItemData[];
 }
+
+export interface GetUserListParams {
+  keyword?: string;
+  tenant_id: string;
+}

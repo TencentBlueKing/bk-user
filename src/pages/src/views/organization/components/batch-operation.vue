@@ -176,7 +176,7 @@ import { randomPasswords } from '@/http';
 import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdate, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 
 const props = defineProps({
   selectList: {
@@ -189,10 +189,10 @@ const props = defineProps({
 
 const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 'reloadList']);
 
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 
 /** 是否为本地数据源 */
-const isLocalDataSource = computed(() => appStore.currentTenant?.data_source?.plugin_id === 'local');
+const isLocalDataSource = computed(() => organizationStore.currentTenant?.data_source?.plugin_id === 'local');
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
   newPassword: '',
@@ -344,7 +344,7 @@ const inputPassword = (val: string, type) => {
    * 生成随机密码
   */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: appStore.currentTenant.data_source.id });
+  const res = await randomPasswords({ data_source_id: organizationStore.currentTenant.data_source.id });
   formData.value.newPassword = res.data?.password;
 };
 

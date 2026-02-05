@@ -8,9 +8,9 @@
         @click="handleNodeClick(currentTenant, true)"
       >
         <img
-          v-if="currentTenant?.logo"
+          v-if="currentTenant.logo"
           class="w-[20px] h-[20px] mr-[8px]"
-          :src="currentTenant?.logo" />
+          :src="currentTenant.logo" />
         <span
           v-else
           class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
@@ -20,7 +20,7 @@
         </span>
         {{ currentTenant?.name }}
         <operate-more
-          v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
+          v-if="currentTenant?.data_source?.plugin_id === 'local'"
           :dept="currentTenant"
           :tenant="currentTenant"
           :is-root-add="true"
@@ -38,7 +38,7 @@
         :prefix-icon="getPrefixIcon"
         @node-click="(node: IOrg) => handleNodeClick(node)"
         :async="{
-          callback: getRemoteData,
+          callback: (node: IOrg) => getRemoteData(node, organizationStore.currentTenant.id),
           cache: true,
         }"
       >
@@ -46,7 +46,7 @@
           <div class="org-node pr-[12px] relative node-overflow">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
-              v-if="appStore.currentTenant?.data_source?.plugin_id === 'local'"
+              v-if="currentTenant?.data_source?.plugin_id === 'local'"
               :dept="node"
               :tenant="currentTenant"
               @add-node="addNode"
@@ -63,16 +63,15 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue';
+import { ref, toRef, watch } from 'vue';
 
 import OperateMore from './operate-more.vue';
 
 import useOrganizationAside from '@/hooks/useOrganizationAside';
-import { getCurrentTenant } from '@/http/organizationFiles';
 import { CurrentTenantData } from '@/http/types/organizationFiles';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 import { IOrg } from '@/types/organization';
-import { CurrentOrg } from '@/types/store';
+import { SelectedOrg } from '@/types/store';
 
 interface IProps {
   activeOrg: {
@@ -82,11 +81,11 @@ interface IProps {
 }
 defineProps<IProps>();
 
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 
-const currentTenant = ref();
+const currentTenant = toRef(organizationStore, 'currentTenant');
 const loading = ref(false);
-const organizationAsideHooks = useOrganizationAside(currentTenant);
+const organizationAsideHooks = useOrganizationAside();
 const {
   treeData,
   getRemoteData,
@@ -98,7 +97,7 @@ const {
 
 const getTreeData = async () => {
   // id为0表示获取根部门
-  treeData.value = await getRemoteData({ id: 0 });
+  treeData.value = await getRemoteData({ id: 0 }, organizationStore.currentTenant.id);
 };
 const selectedNode = ref();
 
@@ -106,33 +105,36 @@ const handleNodeClick = (data: CurrentTenantData | IOrg, isTenant = false) => {
   selectedNode.value = data;
   if (isTenant) {
     // 点击租户节点，只传入租户信息
-    appStore.updateCurrentOrg({
+    organizationStore.updateSelectedOrg({
       tenantId: currentTenant.value.id,
       tenantName: currentTenant.value.name,
+      tenantLogo: currentTenant.value?.logo,
     });
   } else {
     // 点击部门节点，传入完整信息
-    appStore.updateCurrentOrg({
+    organizationStore.updateSelectedOrg({
       tenantId: currentTenant.value.id,
       tenantName: currentTenant.value.name,
+      tenantLogo: currentTenant.value?.logo,
       deptId: data.id,
       deptName: data.name,
-    } as CurrentOrg);
+    } as SelectedOrg);
   }
 };
-
-onBeforeMount(async () => {
-  loading.value = true;
-  const tenantData = await getCurrentTenant();
-  currentTenant.value = tenantData?.data;
-  appStore.currentTenant = tenantData?.data;
-  appStore.updateCurrentOrg({
-    tenantId: tenantData.data?.id,
-    tenantName: tenantData.data?.name,
-  });
-  getTreeData();
-  loading.value = false;
-});
+/**
+ * @description 监听当前租户变化，更新当前组织，组织架构会请求租户信息，避免该侧栏造成的多次请求
+ */
+watch(
+  () => organizationStore.currentTenant.id,
+  async (val) => {
+    if (val) {
+      loading.value = true;
+      await getTreeData().finally(() => {
+        loading.value = false;
+      });
+    }
+  },
+);
 </script>
 
 <style lang="less" scoped>
