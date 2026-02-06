@@ -72,7 +72,7 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
     def validate_username(self, username: str) -> str:
-        if DataSourceUser.objects.is_username_exists(self.context["data_source_id"], username):
+        if DataSourceUser.objects.is_username_exists([self.context["data_source_id"]], username):
             raise ValidationError(_("用户名 {} 已存在").format(username))
         return username
 
