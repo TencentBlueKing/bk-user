@@ -777,28 +777,6 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
-        # 前端传入: zhangsan
-        # ↓
-        # Preview
-        # 阶段:
-        # ↓ _validate_user_infos: 用
-        # generate_username("zhangsan") = "zhangsan_local"
-        # 校验重复
-        # ↓ PreviewOutputSLZ.get_username: 输出
-        # "zhangsan_local"
-        # 给前端预览
-        # ↓
-        # 前端展示: zhangsan_local(仅预览，不改变输入)
-        # ↓
-        # 前端传入: zhangsan(原始数据不变)
-        # ↓
-        # Create
-        # 阶段:
-        # ↓ _validate_user_infos: 用
-        # generate_username("zhangsan") = "zhangsan_local"
-        # 校验重复
-        # 需要保证 code 为原始的 raw_username, username = raw_username + username_suffix
-        # ↓ 存储: code = "zhangsan", username = "zhangsan_local"
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
@@ -1019,7 +997,6 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
         data_sources = self.get_current_tenant_real_data_sources()
 
         slz = TenantUserAccountExpiredAtBatchUpdateInputSLZ(
-            # TODO: 这里需要支持多个数据源，不是只有本地数据源才能修改账号过期时间
             data=request.data,
             context={"tenant_id": cur_tenant_id, "data_source_ids": [ds.id for ds in data_sources]},
         )

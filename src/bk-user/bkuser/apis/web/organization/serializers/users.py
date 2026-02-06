@@ -147,7 +147,7 @@ class TenantUserListOutputSLZ(serializers.Serializer):
         return self.context["tenant_user_depts_map"].get(obj.id, [])
 
 
-def _validate_duplicate_data_source_username(
+def _validate_duplicate_username_in_tenant(
     tenant_id: str, username: str, excluded_data_source_user_id: int | None = None
 ) -> str:
     """校验当前租户实体数据源下用户名是否重复"""
@@ -156,12 +156,7 @@ def _validate_duplicate_data_source_username(
         type=DataSourceTypeEnum.REAL,
     ).values_list("id", flat=True)
 
-    queryset = DataSourceUser.objects.filter(data_source_id__in=real_ds_ids, username=username)
-    # 过滤掉自身
-    if excluded_data_source_user_id:
-        queryset = queryset.exclude(id=excluded_data_source_user_id)
-
-    if queryset.exists():
+    if DataSourceUser.objects.is_username_exists(real_ds_ids, username, excluded_data_source_user_id):
         raise ValidationError(_("用户名 {} 已存在").format(username))
 
     return username
@@ -207,12 +202,9 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
         default=list,
     )
 
-    def _generate_username(self, username: str) -> str:
-        return self.context["data_source"].generate_username(username)
-
     def validate_username(self, username: str) -> str:
-        username = self._generate_username(username)
-        return _validate_duplicate_data_source_username(self.context["tenant_id"], username)
+        username = self.context["data_source"].generate_username(username)
+        return _validate_duplicate_username_in_tenant(self.context["tenant_id"], username)
 
     def validate_department_ids(self, department_ids: List[int]) -> List[int]:
         invalid_department_ids = set(department_ids) - set(
@@ -377,7 +369,7 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
 
     def validate_username(self, username: str) -> str:
-        return _validate_duplicate_data_source_username(
+        return _validate_duplicate_username_in_tenant(
             self.context["tenant_id"], username, self.context["data_source_user_id"]
         )
 

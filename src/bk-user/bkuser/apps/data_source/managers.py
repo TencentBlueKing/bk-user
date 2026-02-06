@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import List
 
 from django.db import models, transaction
 
@@ -38,3 +39,13 @@ class DataSourceQuerySet(models.QuerySet):
 
 # 数据源管理器类
 DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
+
+
+class DataSourceUserManager(models.Manager):
+    def is_username_exists(
+        self, data_source_ids: List[int], username: str, excluded_data_source_user_id: int | None = None
+    ) -> bool:
+        queryset = self.filter(data_source_id__in=data_source_ids, username=username)
+        if excluded_data_source_user_id:
+            queryset = queryset.exclude(id=excluded_data_source_user_id)
+        return queryset.exists()

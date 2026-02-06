@@ -21,7 +21,7 @@ from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.managers import DataSourceManager
+from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -124,6 +124,9 @@ class DataSource(AuditedModel):
             return username[: -len(self.username_suffix)]
         return username
 
+    def is_username_valid(self, username: str) -> bool:
+        return username.endswith(self.username_suffix)
+
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
@@ -144,6 +147,8 @@ class DataSourceUser(TimestampedModel):
 
     # ----------------------- 状态相关 -----------------------
     # TODO: (1) 用户管理里涉及的功能状态（2）企业本身的员工状态
+
+    objects = DataSourceUserManager()
 
     class Meta:
         ordering = ["id"]
