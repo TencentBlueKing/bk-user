@@ -192,7 +192,7 @@ const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 're
 const organizationStore = useOrganizationStore();
 
 /** 是否为本地数据源 */
-const isLocalDataSource = computed(() => organizationStore.currentTenant?.data_source?.plugin_id === 'local');
+const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
   newPassword: '',
@@ -344,7 +344,7 @@ const inputPassword = (val: string, type) => {
    * 生成随机密码
   */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: organizationStore.currentTenant.data_source.id });
+  const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
   formData.value.newPassword = res.data?.password;
 };
 

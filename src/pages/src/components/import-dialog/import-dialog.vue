@@ -90,14 +90,12 @@ import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import { useDataSource } from '@/hooks';
 import { t } from '@/language/index';
 import { useSyncStatus } from '@/store';
+import useOrganizationStore from '@/store/organization';
 
 const props = defineProps({
   isShow: {
     type: Boolean,
     default: false,
-  },
-  currentDataSourceId: {
-    type: Number,
   },
 });
 const emit = defineEmits(['update:isShow', 'success']);
@@ -107,6 +105,7 @@ const {
   handleImportLocalDataSync,
 } = useDataSource();
 const syncStatusStore = useSyncStatus();
+const organizationStore = useOrganizationStore();
 
 const importConfig = reactive({
   loading: false,
@@ -148,7 +147,7 @@ const handleUploadRemove = (file) => {
 };
   // 数据源导出模板
 const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${props.currentDataSourceId}/operations/download_template/`;
+  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${organizationStore.localSourceId}/operations/download_template/`;
   window.open(url);
 };
   // 导入用户
@@ -173,7 +172,7 @@ const confirmImportUsers = async () => {
       },
       withCredentials: true,
     };
-    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${props.currentDataSourceId}/operations/import/`;
+    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${organizationStore.localSourceId}/operations/import/`;
     const res = await axios.post(url, formData, config);
     // 确保 importConfig.loading 在最终状态(success/failed/backend error) 下才停止loading
     // 因此取消在finally中处理loading的逻辑
@@ -193,7 +192,7 @@ const confirmImportUsers = async () => {
 };
 
 /** 决定dialog loading的因素：导入的过程，后端同步数据的过程 */
-const curLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(syncStatusStore.syncStatus.status));
+const curLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(syncStatusStore.syncStatus?.status));
 
 /** 停止轮询时的钩子方法 [获取导入本地数据源状态] */
 const afterSyncImportData = () => {

@@ -10,7 +10,10 @@
     <template #aside>
       <search @select="handleSearchSelect"></search>
       <div v-show="organizationStore.isSearchTree">
-        <search-result-tree ref="searchResultTreeRef"></search-result-tree>
+        <search-result-tree
+          ref="searchResultTreeRef"
+          :active-org="activeOrgInfo"
+        />
       </div>
       <bk-resize-layout
         v-show="!organizationStore.isSearchTree"
@@ -39,7 +42,7 @@
           {{ activeOrgInfo.name }}
         </div>
         <div class="table-main">
-          <TableList ref="tableListRef" @click-import="importHandle" />
+          <TableList />
         </div>
       </section>
     </template>
@@ -61,7 +64,6 @@ import useOrganizationStore from '@/store/organization';
 
 const organizationStore = useOrganizationStore();
 const isShow = ref(null);
-const tableListRef = ref();
 const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
 /** 当前激活的组织信息（自动根据 deptId 判断是部门还是租户） */
@@ -83,16 +85,6 @@ const activeOrgInfo = computed(() => {
   };
 });
 
-const importHandle = async () => {
-  await organizationStore.handleFetchCurrentTenant();
-  if (organizationStore.currentTenant?.data_source) {
-    isShow.value = true;
-  } else {
-    isShow.value = false;
-  }
-  tableListRef.value.importDialogHandle();
-};
-
 const searchResultTreeRef = ref();
 const handleSearchSelect = () => {
   if (searchResultTreeRef.value) {
@@ -102,6 +94,11 @@ const handleSearchSelect = () => {
 
 onMounted(async () => {
   await organizationStore.handleFetchCurrentTenant();
+  if (organizationStore.currentTenant?.data_sources.length === 0) {
+    isShow.value = true;
+  } else {
+    isShow.value = false;
+  }
   // 首次载入页面，默认选中当前租户
   organizationStore.updateSelectedOrg({
     tenantId: organizationStore.currentTenant.id,

@@ -69,6 +69,7 @@ export interface SearchKeywordParams {
 export interface SearchOrganizationItemData {
   id: number;
   name: string;
+  data_source_id: number;
   organization_path: string;
   tenant_id: string;
   tenant_name: string;

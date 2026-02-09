@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <!-- <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" /> -->
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"

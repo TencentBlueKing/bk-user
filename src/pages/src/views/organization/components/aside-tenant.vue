@@ -20,7 +20,7 @@
         </span>
         {{ currentTenant?.name }}
         <operate-more
-          v-if="currentTenant?.data_source?.plugin_id === 'local'"
+          v-if="organizationStore.hasPluginDataSource('local')"
           :dept="currentTenant"
           :tenant="currentTenant"
           :is-root-add="true"
@@ -42,18 +42,20 @@
           cache: true,
         }"
       >
-        <template #node="node">
+        <template #node="node: IOrg & { __attr__: { isRoot: boolean } }">
           <div class="org-node pr-[12px] relative node-overflow">
-            <span class="text-[14px]">{{ node.name }}</span>
-            <operate-more
-              v-if="currentTenant?.data_source?.plugin_id === 'local'"
-              :dept="node"
-              :tenant="currentTenant"
-              @add-node="addNode"
-              @delete-node="deleteNode"
-              @update-node="updateNode"
-              @move-node="getTreeData">
-            </operate-more>
+            <span class="text-[14px] mr-[8px]">{{ node.name }}</span>
+            <template v-if="organizationStore.isEqualLocalSourceId(node.data_source_id)">
+              <bk-tag v-if="node.__attr__.isRoot" theme="info" size="small">{{ $t('本地') }}</bk-tag>
+              <operate-more
+                :dept="node"
+                :tenant="currentTenant"
+                @add-node="addNode"
+                @delete-node="deleteNode"
+                @update-node="updateNode"
+                @move-node="getTreeData">
+              </operate-more>
+            </template>
           </div>
         </template>
       </bk-tree>
@@ -116,8 +118,9 @@ const handleNodeClick = (data: CurrentTenantData | IOrg, isTenant = false) => {
       tenantId: currentTenant.value.id,
       tenantName: currentTenant.value.name,
       tenantLogo: currentTenant.value?.logo,
-      deptId: data.id,
-      deptName: data.name,
+      dataSourceId: (data as IOrg).data_source_id,
+      deptId: (data as IOrg).id,
+      deptName: (data as IOrg).name,
     } as SelectedOrg);
   }
 };
@@ -134,6 +137,7 @@ watch(
       });
     }
   },
+  { immediate: true },
 );
 </script>
 

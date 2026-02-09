@@ -11,5 +11,6 @@ export interface SelectedOrg {
   tenantLogo: string;
   deptId?: number;
   deptName?: string;
+  dataSourceId?: number;
   organizationPath?: string;
 }

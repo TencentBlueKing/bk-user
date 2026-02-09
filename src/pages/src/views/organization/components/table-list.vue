@@ -1,75 +1,93 @@
 <template>
     <div class="organization-table px-[24px] py-[24px]">
-        <div class="table-search mb-[16px]">
-            <bk-button v-if="!isCollaborativeUsers && isTenantStatus && isLocalDataSource"
-              class="mr-[16px] button-upload"
-              @click="importDialogHandle">
-                <Upload class="mr-[8px] text-[16px] icon-upload" />{{ $t('导入') }}
-            </bk-button>
-            <bk-button theme="primary" class="mr-[10px]" @click="fastInputHandle"
-                v-if="isShowBtn">
-                <i class="user-icon icon-add-2 mr8" />
-                {{ $t('快速录入') }}
-            </bk-button>
-            <bk-button class="mr-[16px]" v-if="isShowBtn"
-              @click="handleGetUsersDialog">{{ $t('拉取已有用户') }}</bk-button>
-            <batchOperation :select-list="selectList" :isEnabledPassword="isEnabledPassword" @moveOrg="batchMoveOrg" @reloadList="handleAfterBatchOperation"/>
-            <bk-checkbox class="h-[32px] ml-[2px]"
-                :label="$t('仅显示本级用户')"
-                v-model="recursive"
-                @change="reloadList"
-            />
-            <bk-searchSelect
-              class="header-right"
-              v-model="keyword"
-              :data="searchSelectOptions"
-              :placeholder="
-                createPlaceholder({
-                  type: 'searchSelect',
-                  labels: ['用户名', '姓名', '账号状态', '邮箱', '手机号'],
-                })
-              "
-              unique-select
-              value-behavior="need-key"
-            >
-            </bk-searchSelect>
-        </div>
-        <Table
-          ref="tableRef"
-          :max-height="curTableMaxHeight"
-          class="organization-table-main"
-          :data="tableData"
-          :pagination="pagination"
-          v-bkloading="{ loading: isLoading }"
-          :virtual-y-config="{ enabled: true, gt: 10 }"
-          :columns="tableColumns"
-          @checkbox-change="handleSelectTable"
-          @checkbox-all="handleSelectAll"
-          @page-limit-change="pageLimitChange"
-          @page-value-change="pageCurrentChange"
+      <div class="table-search mb-[16px]">
+        <bk-button
+          v-if="!isCollaborativeUsers
+            && isTenantStatus
+            && organizationStore.isConfiguredLocalSource"
+          class="mr-[16px] button-upload"
+          @click="importDialogHandle"
+          >
+          <Upload class="mr-[8px] text-[16px] icon-upload" />
+          {{ $t('导入') }}
+        </bk-button>
+        <bk-button
+          v-if="isShowBtn"
+          theme="primary"
+          class="mr-[10px]"
+          @click="fastInputHandle"
         >
-          <template #empty>
-            <Empty
-              :type="curExceptionType"
-              @clear="handleClear"
-              @refresh="reloadList"
-            />
-          </template>
-          <template #prepend v-if="isLocalDataSource && selectList.length && prependData.length">
-              <div class="table-total">
-                  <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
-                  <label
-                      v-for="(item, index) in prependData.filter(item => item.isShow)"
-                      :key="index"
-                      class="table-operate ml-[12px]"
-                      @click="() => {
-                          currentHandle = item;
-                          item.handle(true);
-                      }"
-                  >{{$t(item.label)}}</label>   
-              </div>
-          </template>
-        </Table>
+          <i class="user-icon icon-add-2 mr8" />
+          {{ $t('快速录入') }}
+        </bk-button>
+        <bk-button
+          v-if="isShowBtn"
+          class="mr-[16px]"
+          @click="handleGetUsersDialog">
+          {{ $t('拉取已有用户') }}
+        </bk-button>
+        <batchOperation
+          :select-list="selectList"
+          :isEnabledPassword="isEnabledPassword"
+          @moveOrg="batchMoveOrg"
+          @reloadList="handleAfterBatchOperation"
+        />
+        <bk-checkbox class="h-[32px] ml-[2px]"
+          :label="$t('仅显示本级用户')"
+          v-model="recursive"
+          @change="reloadList"
+        />
+        <bk-searchSelect
+          class="header-right"
+          v-model="keyword"
+          :data="searchSelectOptions"
+          :placeholder="
+            createPlaceholder({
+              type: 'searchSelect',
+              labels: ['用户名', '姓名', '账号状态', '邮箱', '手机号'],
+            })
+          "
+          unique-select
+          value-behavior="need-key"
+        >
+        </bk-searchSelect>
+      </div>
+      <Table
+        ref="tableRef"
+        :max-height="curTableMaxHeight"
+        class="organization-table-main"
+        :data="tableData"
+        :pagination="pagination"
+        v-bkloading="{ loading: isLoading }"
+        :virtual-y-config="{ enabled: true, gt: 10 }"
+        :columns="tableColumns"
+        @checkbox-change="handleSelectTable"
+        @checkbox-all="handleSelectAll"
+        @page-limit-change="pageLimitChange"
+        @page-value-change="pageCurrentChange"
+      >
+        <template #empty>
+          <Empty
+            :type="curExceptionType"
+            @clear="handleClear"
+            @refresh="reloadList"
+          />
+        </template>
+        <template #prepend v-if="isLocalDataSource && selectList.length && prependData.length">
+          <div class="table-total">
+            <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
+            <label
+              v-for="(item, index) in prependData.filter(item => item.isShow)"
+              :key="index"
+              class="table-operate ml-[12px]"
+              @click="() => {
+                currentHandle = item;
+                item.handle(true);
+              }"
+            >{{$t(item.label)}}</label>   
+          </div>
+        </template>
+      </Table>
     </div>
     <!-- 拉取已有用户 -->
     <bk-dialog
@@ -97,17 +115,17 @@
           <div class="user-info-option pt-[5px] pb-[5px]">
             <DisplayName :user-id="item.id" class="text-[#313238]" />
             <p class="text-[#979BA5] mt-[6px]">
-                <bk-overflow-title
-                  :style="{display: 'inline-block'}"
-                  class="text-[#979BA5] leading-[20px]"
-                  :class="{
-                    'w-[370px]': !!item.organization_paths.length,
-                    'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
-                  }"
-                >
-                  {{ item.organization_paths[0] }}
-                </bk-overflow-title>
-                <bk-tag
+              <bk-overflow-title
+                :style="{display: 'inline-block'}"
+                class="text-[#979BA5] leading-[20px]"
+                :class="{
+                  'w-[370px]': !!item.organization_paths.length,
+                  'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
+                }"
+              >
+                {{ item.organization_paths[0] }}
+              </bk-overflow-title>
+              <bk-tag
                 v-if="item.organization_paths.length > 1"
                 theme="info"
                 class="inline-block !m-0 h-[20px] !ml-[2px]"
@@ -131,31 +149,31 @@
     >
       <div class="mb-[16px] text-[#979BA5]">{{moveTips}}</div>
         <bk-form
-            class="example"
-            form-type="vertical"
+          class="example"
+          form-type="vertical"
         >
-            <bk-form-item :label="$t('选择组织')">
-                <bk-select
-                    v-model="selectedValue"
-                    class="bk-select"
-                    filterable
-                    multiple
-                    auto-focus
-                    :clearable="false"
-                    idKey="id"
-                    displayKey="name"
-                    collapse-tags
-                >
-                <bk-option
-                  v-for="item in dataSource"
-                  :key="item.id"
-                  :disabled="chooseDepartments.includes(item.name)"
-                  v-bk-tooltips="{content: $t('已在当前部门'), disabled: !chooseDepartments.includes(item.name), boundary: 'parent'}"
-                  :value="item.id"
-                  :name="item.name"
-                  :label="item.name" />
-                </bk-select>
-            </bk-form-item>
+          <bk-form-item :label="$t('选择组织')">
+            <bk-select
+              v-model="selectedValue"
+              class="bk-select"
+              filterable
+              multiple
+              auto-focus
+              :clearable="false"
+              idKey="id"
+              displayKey="name"
+              collapse-tags
+            >
+            <bk-option
+              v-for="item in dataSource"
+              :key="item.id"
+              :disabled="chooseDepartments.includes(item.name)"
+              v-bk-tooltips="{content: $t('已在当前部门'), disabled: !chooseDepartments.includes(item.name), boundary: 'parent'}"
+              :value="item.id"
+              :name="item.name"
+              :label="item.name" />
+            </bk-select>
+          </bk-form-item>
         </bk-form>
     </bk-dialog>
     <!-- 重置密码弹框 -->
@@ -170,17 +188,28 @@
     >
       <bk-loading :loading="isResetPasswordLoading">
         <bk-form
-            class="example"
-            form-type="vertical"
+          class="example"
+          form-type="vertical"
         >
-            <bk-form-item :label="$t('新密码')" required>
-              <passwordInput :style="{width: '80%'}"  v-model="password" clearable
-                  :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-                  @input="inputPassword"
-                  />
-                <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
-            </bk-form-item>
+          <bk-form-item :label="$t('新密码')" required>
+            <passwordInput
+              v-model="password"
+              v-bk-tooltips="{
+                content: passwordTips.join('\n'),
+                theme: 'light',
+              }"
+              clearable
+              :style="{width: '80%'}"
+              :placeholder="passwordTips.join('、')"
+              @input="inputPassword"
+            />
+            <bk-button
+              outline
+              theme="primary"
+              @click="randomPasswordHandle">
+              {{$t('随机生成')}}
+            </bk-button>
+          </bk-form-item>
         </bk-form>
       </bk-loading>
       <template #footer>
@@ -199,7 +228,9 @@
       </template>
     </bk-dialog>
     <!-- 快速录入弹框 -->
-    <FastInputDialog v-model:isShow="fastInputDialogShow" @clickImport="$emit('click-import')"
+    <FastInputDialog
+      v-model:isShow="fastInputDialogShow"
+      @click-import="importDialogHandle"
       @success="fastInputSuccess" />
     <!-- 编辑用户 -->
     <bk-sideslider
@@ -213,19 +244,29 @@
     >
     <template #header>
       <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
-      <bk-button v-if="!isDetailSlider && !isCollaborativeUsers && isLocalDataSource" class="mr-[20px]" @click="(data) => handleEditDetails(editDetailsInfo)">{{$t('编辑')}}</bk-button>
+      <bk-button
+        v-if="!isDetailSlider && !isCollaborativeUsers && isLocalDataSource"
+        class="mr-[20px]"
+        @click="handleEditDetails(editDetailsInfo)">
+        {{$t('编辑')}}
+      </bk-button>
     </template>
       <EditDetails
         v-if="isDetailSlider"
         :details-info="editDetailsInfo"
         @updateUsers="updateUsers"
         @handleCancelEdit="handleCancelEdit" />
-      <ViewUser :user-data="detailsInfo" :detail="editDetailsInfo" @updateUsers="updateUsers" :isShowBtn="!isCollaborativeUsers && (isLocalDataSource || isLdapDataSource)" v-else />
+      <ViewUser
+        v-else
+        :user-data="detailsInfo"
+        :detail="editDetailsInfo"
+        :isShowBtn="!isCollaborativeUsers && (isLocalDataSource || isLdapDataSource)"
+        @updateUsers="updateUsers"
+      />
     </bk-sideslider>
     <!-- 导入弹框 -->
     <ImportDialog
       v-model:isShow="importDialogShow"
-      :currentDataSourceId="dataSourceId"
       @success="reloadList"
     />
   </template>
@@ -312,7 +353,7 @@
   const isLoading = ref(false);
   const editLeaveBefore = inject('editLeaveBefore');
   const editDetailsShow = ref(false);
-  const dropdownRefs = ref();
+  const dropdownRefs = ref({});
 
   const keyword = ref([]);
   const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
@@ -350,19 +391,22 @@
     }
     return result;
   });
-  /** 是否为本地数据源 */
-  const isLocalDataSource = computed(() => {
-    return organizationStore.currentTenant?.data_source?.plugin_id === 'local';
-  });
-  const isLdapDataSource = computed(() => {
-    return organizationStore.currentTenant?.data_source?.plugin_id === 'ldap'; 
-  });
-  const isEnabledPassword = computed(() => {
-    return organizationStore.currentTenant?.data_source?.enable_password;
-  });
-  const isShowBtn = computed(() => {
-    return !isCollaborativeUsers.value && !isTenantStatus.value && isLocalDataSource.value
-  });
+  /** 当前选中的是否为本地数据源 */
+  const isLocalDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'local'));
+  /** 当前选中的是否为 LDAP 数据源 */
+  const isLdapDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'ldap'));
+  /** 当前选中的是否允许修改密码 */
+  const isEnabledPassword = computed(() => (organizationStore.curSelectedDataSource?.enable_password));
+  /**
+   * 是否展示
+   *  - 快速录入
+   *  - 拉取已有用户
+   * @description 不为协同租户 && 不为租户层级 && 为本地数据源
+   */
+  const isShowBtn = computed(() => (
+    !isCollaborativeUsers.value
+    && !isTenantStatus.value
+    && organizationStore.selectedOrg?.dataSourceId === organizationStore.localSourceId));
 
   const editInfoHandle = async (row, isDetail = false) => {
     isDetailSlider.value = isDetail;
@@ -447,7 +491,7 @@
       }
     }, 
   ]]);
-  const rowOperation = ref([...[       
+  const rowOperation = ref([...[
     {
       label: t('停用'),
       key: 'status',
@@ -469,7 +513,7 @@
     {
       label: t('重置密码'),
       key: 'password',
-      disabled: !isEnabledPassword.value,
+      disabled: (row) => !isEnabledPassword.value,
       handle: () => {
         passwordDialogShow.value = true;
         passwordRule(detailsInfo.value.id).then(res => {
@@ -481,8 +525,7 @@
   const prependData = computed(() => {
     return organizationStore.selectedOrg.isTenant ? [] : operationList;
   })
-  const pagination = reactive({ count: 0, limit: 10, current: 1, remote: true })
-  const isScrollLoading = ref(false);
+  const pagination = reactive({ count: 0, limit: 10, current: 1, remote: true });
 
   const statusEnum = reactive({
     enabled: t('正常'),
@@ -568,14 +611,14 @@
               <ul class="operate-menu-list">
                 {
                   rowOperation.value.map((item, ind) => <li
-                    class={["operate-list-item", {disabled: item.disabled}]}
+                    class={["operate-list-item", {disabled: item.disabled(row)}]}
                     key="ind"
                     v-bk-tooltips={{
                       content: t('当前租户未启用账密登录，无法修改密码'),
-                      disabled: !item.disabled
+                      disabled: !item.disabled(row)
                     }}
                     onClick={() => {
-                        if (item.disabled) {
+                        if (item.disabled(row)) {
                           return;
                         }
                         detailsInfo.value = row;
@@ -751,7 +794,7 @@
 
   /** 生成随机密码 */
   const randomPasswordHandle = async () => {
-    const res = await randomPasswords({data_source_id: organizationStore.currentTenant.data_source.id});
+    const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
       password.value = res.data?.password;
   };
   const isResetPasswordLoading = ref(false);
@@ -854,9 +897,7 @@
     password.value = val;
 };
 
-const importDialogHandle = () => {
-  importDialogShow.value = true
-}
+const importDialogHandle = () => importDialogShow.value = true;
 
 const batchMoveOrg = (params) => {
   currentHandle.value = params
@@ -868,9 +909,6 @@ watch(keyword, (val) => {
   initTenantsUserList();
 }, { deep: true });
 
-defineExpose({
-  importDialogHandle
-})
 </script>
 <style lang="less">
 .operate-popover {

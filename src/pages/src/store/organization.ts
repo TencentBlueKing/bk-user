@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 
 import { getCollaboration, getCurrentTenant } from '@/http/organizationFiles';
 import { CollaborationItemData, CurrentTenantData } from '@/http/types/organizationFiles';
+import { IOrg } from '@/types/organization';
 import { SelectedOrg } from '@/types/store';
 
 /**
@@ -14,6 +15,7 @@ export default defineStore('organization', () => {
     deptId: 0,
     tenantName: '',
     deptName: '',
+    dataSourceId: undefined,
     tenantLogo: '',
     organizationPath: '',
   };
@@ -44,7 +46,26 @@ export default defineStore('organization', () => {
    * 是否配置了本地数据源
    * @description 数据源配置允许有一个本地数据源和一个外部数据源
    */
-  const isConfiguredLocalSource = computed(() => currentTenant.value.data_sources?.some(item => item.type === 'local'));
+  const isConfiguredLocalSource = computed(() => currentTenant.value.data_sources?.some(item => item.plugin_id === 'local'));
+
+  /**
+   * 当前选中的数据源
+   */
+  const curSelectedDataSource = computed(() => {
+    if (selectedOrg.value.dataSourceId) {
+      return currentTenant.value.data_sources?.find(item => item.id === selectedOrg.value.dataSourceId);
+    }
+    return null;
+  });
+  /**
+   * 本地数据源ID
+   */
+  const localSourceId = computed(() => currentTenant.value.data_sources?.find(item => item.plugin_id === 'local')?.id);
+
+  /**
+   * LDAP数据源ID
+   */
+  const ldapSourceId = computed(() => currentTenant.value.data_sources?.find(item => item.plugin_id === 'ldap')?.id);
 
   /**
    * 是否选中了协同租户
@@ -102,18 +123,30 @@ export default defineStore('organization', () => {
     return currentTenant.value.logo;
   };
 
+  /** 本租户是否配置了该插件数据源 */
+  // eslint-disable-next-line max-len
+  const hasPluginDataSource = (pluginId: string) => currentTenant.value.data_sources?.some(item => item.plugin_id === pluginId);
+
+  /** 与本地数据源ID是否一致 */
+  const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => dataSourceId === localSourceId.value;
+
   return {
     collaborationList,
     currentTenant,
     curSelectedTenant,
     curSelectedType,
+    curSelectedDataSource,
     isConfiguredLocalSource,
     isSearchTree,
+    localSourceId,
+    ldapSourceId,
     reloadIndex,
     selectedOrg,
     getTenantLogo,
     handleFetchCollaborationList,
     handleFetchCurrentTenant,
+    hasPluginDataSource,
+    isEqualLocalSourceId,
     updateSelectedOrg,
   };
 });

@@ -237,7 +237,6 @@ const handleShowErrorMessage = (messageConfig: IMessage) => {
 };
 
 const handleOrgSelect = (org: SearchOrganizationItemData) => {
-  console.log(org)
   organizationStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
@@ -245,6 +244,7 @@ const handleOrgSelect = (org: SearchOrganizationItemData) => {
     tenantId: org.tenant_id,
     tenantName: org.tenant_name,
     tenantLogo: organizationStore.getTenantLogo(org.tenant_id),
+    dataSourceId: org.data_source_id,
     deptId: org.id,
     deptName: org.name,
     organizationPath: org.organization_path,

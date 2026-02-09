@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, watch } from 'vue';
+import { onMounted, ref, toRef, watch } from 'vue';
 
 import OperateMore from './operate-more.vue';
 
@@ -92,22 +92,15 @@ const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) =
       tenantId: collaborationTenant.value.id,
       tenantName: collaborationTenant.value.name,
       tenantLogo: collaborationTenant.value?.logo,
-      deptId: data.id,
-      deptName: data.name,
+      dataSourceId: (data as IOrg).data_source_id,
+      deptId: (data as IOrg).id,
+      deptName: (data as IOrg).name,
     } as SelectedOrg);
   }
 };
 
-watch(
-  collaborationTenant,
-  async (val) => {
-    if (val) {
-      const deptData = await getDepartmentsList(0, val.id);
-      treeData.value = formatTreeData(deptData?.data);
-    }
-  },
-  {
-    immediate: true,
-  },
-);
+onMounted(async () => {
+  const deptData = await getDepartmentsList(0, collaborationTenant.value.id);
+  treeData.value = formatTreeData(deptData?.data);
+});
 </script>

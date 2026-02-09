@@ -113,7 +113,7 @@ export interface SyncRecordsParams {
  * 生成数据源用户随机密码参数
  */
 export interface GeneratePasswordParams {
-  data_source_id?: string;
+  data_source_id?: number;
   password_rule_config?: {};
 }
 
