@@ -83,7 +83,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
+        return TenantUserHandler.get_login_name(obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
@@ -140,7 +140,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_login_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.get_login_name(obj, self.context["tenant_id"])
+        return TenantUserHandler.get_login_name(obj)
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]

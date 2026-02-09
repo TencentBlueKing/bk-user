@@ -178,7 +178,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "with_organization_paths": with_organization_paths,
             "org_path_map": {},
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
-            "tenant_id": self.tenant_id,
         }
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
@@ -244,7 +243,6 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "with_organization_paths": with_organization_paths,
             "org_path_map": {},
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
-            "tenant_id": self.tenant_id,
         }
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
