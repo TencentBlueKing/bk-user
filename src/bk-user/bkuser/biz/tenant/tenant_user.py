@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Optional
+from typing import Dict, List, Optional
 
 from django.conf import settings
 from pydantic import BaseModel
@@ -56,10 +56,19 @@ class TenantUserHandler:
         获取租户用户的登录名
 
         对于协同过来的用户（即数据源所属租户 != 当前租户），加上来源租户 ID 作为后缀
-
-        Note: 调用方需确保 tenant_user 已通过 select_related("data_source_user", "data_source") 预加载关联对象，
-        否则可能导致 N+1 查询问题
         """
         if tenant_user.tenant_id != tenant_user.data_source.owner_tenant_id:
             return f"{tenant_user.data_source_user.username}@{tenant_user.data_source.owner_tenant_id}"
         return tenant_user.data_source_user.username
+
+    @staticmethod
+    def batch_get_login_name(tenant_users: List[TenantUser]) -> Dict[str, str]:
+        """
+        批量获取租户用户的登录名
+
+        对于协同过来的用户（即数据源所属租户 != 当前租户），加上来源租户 ID 作为后缀
+
+        Note: 调用方需确保 tenant_users 已通过 select_related("data_source_user", "data_source") 预加载关联对象，
+        否则可能导致 N+1 查询问题
+        """
+        return {user.id: TenantUserHandler.get_login_name(user) for user in tenant_users}
