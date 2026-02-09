@@ -24,7 +24,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
@@ -53,9 +53,6 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
-
-    def get_login_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.get_login_name(obj)
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
