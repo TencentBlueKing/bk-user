@@ -156,6 +156,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
     tenant_id = serializers.CharField(help_text="部门来源租户 ID", source="data_source.owner_tenant_id")
+    data_source_id = serializers.IntegerField(help_text="部门来源数据源 ID")
     tenant_name = serializers.SerializerMethodField(help_text="部门来源租户名称")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
