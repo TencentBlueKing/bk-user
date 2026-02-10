@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
-import re
 from typing import Any, Dict, List
 
 from django.conf import settings
@@ -27,11 +26,12 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import USERNAME_SUFFIX_REGEX, DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.validators import validate_username_prefix, validate_username_suffix
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -62,7 +62,6 @@ class DataSourceListOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
-    username_suffix = serializers.CharField(help_text="用户名后缀")
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -112,6 +111,24 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
 
+class DataSourceUsernameConfigSLZ(serializers.Serializer):
+    """数据源用户名配置"""
+
+    # TODO: 支持识别关联账号
+    prefix = serializers.CharField(
+        help_text="用户名前缀", required=False, default="", validators=[validate_username_prefix]
+    )
+    suffix = serializers.CharField(
+        help_text="用户名后缀", required=False, default="", validators=[validate_username_suffix]
+    )
+
+    def validate(self, attrs):
+        if attrs.get("prefix") and attrs.get("suffix"):
+            raise ValidationError(_("用户名前缀和用户名后缀不能同时配置"))
+
+        return attrs
+
+
 class DataSourceCreateInputSLZ(serializers.Serializer):
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
@@ -119,7 +136,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-    username_suffix = serializers.CharField(help_text="用户名后缀", required=False, default="")
+    username_config = DataSourceUsernameConfigSLZ(help_text="用户名生成配置", required=False)
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -133,14 +150,6 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
             return field_mapping
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
-
-    def validate_username_suffix(self, username_suffix: str) -> str:
-        if not username_suffix:
-            return username_suffix
-        if not re.fullmatch(USERNAME_SUFFIX_REGEX, username_suffix):
-            raise ValidationError(_("用户名后缀格式错误，必须以下划线开头，后跟 1-5 个小写字母、数字、下划线或连字符"))
-
-        return username_suffix
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]
@@ -208,7 +217,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
-    username_suffix = serializers.CharField(help_text="用户名后缀")
+    username_config = serializers.JSONField(help_text="用户名配置")
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):

@@ -180,7 +180,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
                 sync_config=data.get("sync_config") or {},
-                username_suffix=data["username_suffix"],
+                username_config=data.get("username_config") or {},
                 creator=current_user,
                 updater=current_user,
             )

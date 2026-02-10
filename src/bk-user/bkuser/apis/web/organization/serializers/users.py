@@ -369,6 +369,8 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间", required=False)
 
     def validate_username(self, username: str) -> str:
+        if not self.context["data_source"].is_username_valid(username):
+            raise ValidationError(_("用户名不符合要求"))
         return _validate_duplicate_username_in_tenant(
             self.context["tenant_id"], username, self.context["data_source_user_id"]
         )

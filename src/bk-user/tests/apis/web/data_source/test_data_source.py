@@ -82,6 +82,56 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_201_CREATED
 
+    def test_create_with_username_config_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_config": {"suffix": "_abc"},
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data_source = DataSource.objects.get(id=resp.data["id"])
+        assert data_source.username_config == {"suffix": "_abc"}
+
+    def test_create_with_username_config_prefix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_config": {"prefix": "_corp"},
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data_source = DataSource.objects.get(id=resp.data["id"])
+        assert data_source.username_config == {"prefix": "_corp"}
+
+    def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_config": {"prefix": "_corp", "suffix": "_abc"},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户名前缀和用户名后缀不能同时配置" in resp.data["message"]
+
+    def test_create_with_invalid_username_config(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_config": {"suffix": "invalid"},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "不符合 用户名后缀 的命名规范" in resp.data["message"]
+
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
@@ -348,6 +398,7 @@ class TestDataSourceRetrieveApi:
         assert resp.data["plugin_config"] == data_source.plugin_config
         assert resp.data["sync_config"] == data_source.sync_config
         assert resp.data["field_mapping"] == data_source.field_mapping
+        assert resp.data["username_config"] == data_source.username_config
 
 
 class TestDataSourceDestroyApi:

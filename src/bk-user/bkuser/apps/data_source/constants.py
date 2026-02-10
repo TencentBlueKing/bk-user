@@ -24,8 +24,10 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 # 批量更新数据源用户自定义字段单次操作数量
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
 
-# 必须以 _ 开头，后跟 1-5 个字母/数字/下划线/连字符
+# Must start with "_" and follow 1-5 lowercase letters, digits.
 USERNAME_SUFFIX_REGEX = re.compile(r"^_[a-z0-9_-]{1,5}$")
+# Must end with "_" and follow 1-5 lowercase letters, digits.
+USERNAME_PREFIX_REGEX = re.compile(r"^[a-z0-9]{1,5}_$")
 
 
 class FieldMappingOperation(StrStructuredEnum):

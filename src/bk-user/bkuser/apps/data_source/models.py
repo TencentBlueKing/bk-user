@@ -56,9 +56,8 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
-    # 用户名后缀，区分不同数据源的用户，防止用户名重复
-    # TODO: 后续需要支持前缀
-    username_suffix = models.CharField("用户名后缀", max_length=32, default="")
+    # 用户名配置，区分不同数据源的用户，防止用户名重复
+    username_config = models.JSONField("用户名配置", default=dict)
 
     objects = DataSourceManager()
 
@@ -117,15 +116,25 @@ class DataSource(AuditedModel):
         self.save(update_fields=["plugin_config", "updated_at"])
 
     def generate_username(self, username: str) -> str:
-        return f"{username}{self.username_suffix}" if self.username_suffix else username
+        prefix = self.username_config.get("prefix", "")
+        suffix = self.username_config.get("suffix", "")
+        return f"{prefix}{username}{suffix}"
 
     def parse_username(self, username: str) -> str:
-        if self.username_suffix and username.endswith(self.username_suffix):
-            return username[: -len(self.username_suffix)]
+        prefix = self.username_config.get("prefix", "")
+        suffix = self.username_config.get("suffix", "")
+
+        if prefix and username.startswith(prefix):
+            username = username[len(prefix) :]
+        if suffix and username.endswith(suffix):
+            username = username[: -len(suffix)]
         return username
 
     def is_username_valid(self, username: str) -> bool:
-        return username.endswith(self.username_suffix)
+        prefix = self.username_config.get("prefix", "")
+        suffix = self.username_config.get("suffix", "")
+
+        return (not prefix or username.startswith(prefix)) and (not suffix or username.endswith(suffix))
 
 
 class DataSourceUser(TimestampedModel):

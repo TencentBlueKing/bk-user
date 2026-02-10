@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='datasource',
-            name='username_suffix',
-            field=models.CharField(default='', max_length=32, verbose_name='用户名后缀'),
+            name='username_config',
+            field=models.CharField(default=dict, verbose_name='用户名配置j'),
         ),
     ]
