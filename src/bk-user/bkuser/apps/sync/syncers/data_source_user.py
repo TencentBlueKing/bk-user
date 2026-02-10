@@ -75,15 +75,15 @@ class DataSourceUserSyncer:
         if not self.raw_users:
             return
 
-        username_map = {
-            user: self.data_source.generate_username(user.properties["username"]) for user in self.raw_users
+        code_username_map = {
+            user.code: self.data_source.generate_username(user.properties["username"]) for user in self.raw_users
         }
 
         # 查询同租户下其他数据源中已存在的冲突用户名
         conflict_usernames = set(
             DataSourceUser.objects.filter(
                 data_source__owner_tenant_id=self.data_source.owner_tenant_id,
-                username__in=username_map.values(),
+                username__in=code_username_map.values(),
             )
             .exclude(data_source=self.data_source)
             .values_list("username", flat=True)
@@ -93,8 +93,9 @@ class DataSourceUserSyncer:
             return
 
         # 过滤冲突用户
-        filtered_users = [user for user, username in username_map.items() if username not in conflict_usernames]
-        skipped_usernames = [username for user, username in username_map.items() if username in conflict_usernames]
+        conflict_codes = {code for code, username in code_username_map.items() if username in conflict_usernames}
+        filtered_users = [user for user in self.raw_users if user.code not in conflict_codes]
+        skipped_usernames = [username for code, username in code_username_map.items() if code in conflict_codes]
 
         self.ctx.logger.warning(
             f"found {len(skipped_usernames)} users with username conflict in other data sources "

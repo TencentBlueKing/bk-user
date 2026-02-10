@@ -93,7 +93,7 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_201_CREATED
         data_source = DataSource.objects.get(id=resp.data["id"])
-        assert data_source.username_config == {"suffix": "_abc"}
+        assert data_source.username_config == {"prefix": "", "suffix": "_abc"}
 
     def test_create_with_username_config_prefix(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -106,7 +106,7 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_201_CREATED
         data_source = DataSource.objects.get(id=resp.data["id"])
-        assert data_source.username_config == {"prefix": "corp_"}
+        assert data_source.username_config == {"prefix": "corp_", "suffix": ""}
 
     def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
