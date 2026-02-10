@@ -75,39 +75,30 @@ class DataSourceUserSyncer:
         if not self.raw_users:
             return
 
-        # 从原始用户数据中提取将要写入的数据源用户名，只与这些用户名做冲突检测，避免加载整个租户下所有用户名
-        candidate_usernames = {user.properties["username"] for user in self.raw_users}
+        username_map = {
+            user: self.data_source.generate_username(user.properties["username"]) for user in self.raw_users
+        }
 
-        # Note: 这里只考虑了同租户下其他数据源用户造成的冲突，当前数据源无需处理
-        real_ds_usernames = set(
+        # 查询同租户下其他数据源中已存在的冲突用户名
+        conflict_usernames = set(
             DataSourceUser.objects.filter(
                 data_source__owner_tenant_id=self.data_source.owner_tenant_id,
-                username__in=candidate_usernames,
+                username__in=username_map.values(),
             )
             .exclude(data_source=self.data_source)
             .values_list("username", flat=True)
         )
-        if not real_ds_usernames:
+
+        if not conflict_usernames:
             return
 
-        conflict_users: List[RawDataSourceUser] = []
-        filtered_users: List[RawDataSourceUser] = []
+        # 过滤冲突用户
+        filtered_users = [user for user, username in username_map.items() if username not in conflict_usernames]
+        skipped_usernames = [username for user, username in username_map.items() if username in conflict_usernames]
 
-        for user in self.raw_users:
-            # 生成最终的 username
-            username = self.data_source.generate_username(user.properties["username"])
-            if username in real_ds_usernames:
-                conflict_users.append(user)
-            else:
-                filtered_users.append(user)
-
-        if not conflict_users:
-            return
-
-        conflict_usernames = [user.properties["username"] for user in conflict_users]
         self.ctx.logger.warning(
-            f"found {len(conflict_users)} users with username conflict in other data sources "
-            f"of the same tenant, these users will be skipped: {', '.join(conflict_usernames)}"
+            f"found {len(skipped_usernames)} users with username conflict in other data sources "
+            f"of the same tenant, these users will be skipped: {', '.join(skipped_usernames)}"
         )
 
         self.raw_users = filtered_users

@@ -101,12 +101,12 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_config": {"prefix": "_corp"},
+                "username_config": {"prefix": "corp_"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
         data_source = DataSource.objects.get(id=resp.data["id"])
-        assert data_source.username_config == {"prefix": "_corp"}
+        assert data_source.username_config == {"prefix": "corp_"}
 
     def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -114,7 +114,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_config": {"prefix": "_corp", "suffix": "_abc"},
+                "username_config": {"prefix": "corp_", "suffix": "_abc"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
