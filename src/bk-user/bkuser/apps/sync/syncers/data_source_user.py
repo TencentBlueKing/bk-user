@@ -23,6 +23,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -83,6 +84,7 @@ class DataSourceUserSyncer:
         conflict_usernames = set(
             DataSourceUser.objects.filter(
                 data_source__owner_tenant_id=self.data_source.owner_tenant_id,
+                data_source__type=DataSourceTypeEnum.REAL,
                 username__in=code_username_map.values(),
             )
             .exclude(data_source=self.data_source)
@@ -93,9 +95,12 @@ class DataSourceUserSyncer:
             return
 
         # 过滤冲突用户
-        conflict_codes = {code for code, username in code_username_map.items() if username in conflict_usernames}
-        filtered_users = [user for user in self.raw_users if user.code not in conflict_codes]
-        skipped_usernames = [username for code, username in code_username_map.items() if code in conflict_codes]
+        filtered_users, skipped_usernames = [], []
+        for user in self.raw_users:
+            if code_username_map[user.code] in conflict_usernames:
+                skipped_usernames.append(code_username_map[user.code])
+            else:
+                filtered_users.append(user)
 
         self.ctx.logger.warning(
             f"found {len(skipped_usernames)} users with username conflict in other data sources "

@@ -116,11 +116,13 @@ class DataSource(AuditedModel):
         self.save(update_fields=["plugin_config", "updated_at"])
 
     def generate_username(self, username: str) -> str:
+        """根据用户名配置生成用户名"""
         prefix = self.username_config.get("prefix", "")
         suffix = self.username_config.get("suffix", "")
         return f"{prefix}{username}{suffix}"
 
     def parse_username(self, username: str) -> str:
+        """根据用户名配置解析出原始用户名"""
         prefix = self.username_config.get("prefix", "")
         suffix = self.username_config.get("suffix", "")
 

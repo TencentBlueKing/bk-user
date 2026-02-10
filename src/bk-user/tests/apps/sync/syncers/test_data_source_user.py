@@ -19,6 +19,7 @@ from itertools import groupby
 from typing import Dict, List, Set
 
 import pytest
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartmentUserRelation,
@@ -35,6 +36,7 @@ from bkuser.apps.sync.syncers import (
 )
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 pytestmark = pytest.mark.django_db
@@ -318,6 +320,112 @@ class TestSyncDataSourceUser:
             data_source_sync_task_ctx, full_local_data_source, raw_users, overwrite=True, incremental=False
         )
         assert DataSourceUser.objects.filter(data_source=full_local_data_source).count() == 0
+
+    def test_filter_conflict_users_skips_conflicting(
+        self, data_source_sync_task_ctx, bare_local_data_source, local_ds_plugin, local_ds_plugin_cfg
+    ):
+        """同租户其他数据源中已存在相同用户名的用户，同步时应被跳过"""
+        other_ds = DataSource.objects.create(
+            owner_tenant_id=bare_local_data_source.owner_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin=local_ds_plugin,
+            plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+        )
+        DataSourceUser.objects.create(
+            code="existing_zhangsan",
+            username="zhangsan",
+            full_name="张三",
+            email="zhangsan@m.com",
+            phone="13500000001",
+            data_source=other_ds,
+        )
+
+        raw_users = [
+            RawDataSourceUser(
+                code="zhangsan",
+                properties={"username": "zhangsan", "full_name": "张三", "email": "z@m.com", "phone": "13500000000"},
+                leaders=[],
+                departments=[],
+            ),
+            RawDataSourceUser(
+                code="unique_user",
+                properties={
+                    "username": "unique_user",
+                    "full_name": "唯一",
+                    "email": "u@m.com",
+                    "phone": "13500000002",
+                },
+                leaders=[],
+                departments=[],
+            ),
+        ]
+        self._sync_data_source_users(
+            data_source_sync_task_ctx, bare_local_data_source, raw_users, overwrite=True, incremental=False
+        )
+
+        users = DataSourceUser.objects.filter(data_source=bare_local_data_source)
+        # zhangsan should be skipped, only unique_user is created
+        assert users.count() == 1
+        assert users.first().username == "unique_user"
+        assert data_source_sync_task_ctx.logger.has_warning is True
+        assert "zhangsan" in data_source_sync_task_ctx.logger.logs
+
+    def test_filter_conflict_users_with_same_ds(self, data_source_sync_task_ctx, full_local_data_source, raw_users):
+        """同数据源已有的同名用户不算冲突，同步应正常进行"""
+        self._sync_data_source_users(
+            data_source_sync_task_ctx, full_local_data_source, raw_users, overwrite=True, incremental=False
+        )
+
+        users = DataSourceUser.objects.filter(data_source=full_local_data_source)
+        assert users.count() == len(raw_users)
+        assert set(users.values_list("username", flat=True)) == {u.properties["username"] for u in raw_users}
+
+    def test_filter_conflict_users_with_username_config(
+        self, data_source_sync_task_ctx, bare_local_data_source, local_ds_plugin, local_ds_plugin_cfg
+    ):
+        bare_local_data_source.username_config = {"prefix": "ds1_", "suffix": ""}
+        bare_local_data_source.save(update_fields=["username_config"])
+
+        other_ds = DataSource.objects.create(
+            owner_tenant_id=bare_local_data_source.owner_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin=local_ds_plugin,
+            plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+        )
+
+        DataSourceUser.objects.create(
+            code="e1",
+            username="ds1_alice",
+            full_name="Alice",
+            email="a@m.com",
+            phone="13500000001",
+            data_source=other_ds,
+        )
+
+        raw_users = [
+            RawDataSourceUser(
+                code="u1",
+                properties={"username": "alice", "full_name": "Alice", "email": "a@m.com", "phone": "13500000000"},
+                leaders=[],
+                departments=[],
+            ),
+            RawDataSourceUser(
+                code="u2",
+                properties={"username": "bob", "full_name": "Bob", "email": "b@m.com", "phone": "13500000002"},
+                leaders=[],
+                departments=[],
+            ),
+        ]
+        self._sync_data_source_users(
+            data_source_sync_task_ctx, bare_local_data_source, raw_users, overwrite=True, incremental=False
+        )
+
+        users = DataSourceUser.objects.filter(data_source=bare_local_data_source)
+        # alice -> ds1_alice conflicts, bob -> ds1_bob does not
+        assert users.count() == 1
+        assert users.first().username == "ds1_bob"
+        assert data_source_sync_task_ctx.logger.has_warning is True
+        assert "ds1_alice" in data_source_sync_task_ctx.logger.logs
 
     @staticmethod
     def _sync_data_source_departments(
