@@ -92,6 +92,7 @@ export interface CollaborationItemData {
 }
 
 export interface TenantsUserItemData {
+  data_source_id: number;
   id: string;
   username: string;
   full_name: string;

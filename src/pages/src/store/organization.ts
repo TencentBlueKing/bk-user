@@ -130,6 +130,9 @@ export default defineStore('organization', () => {
   /** 与本地数据源ID是否一致 */
   const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => dataSourceId === localSourceId.value;
 
+  /** 获取数据源信息 */
+  const getDataSourceInfo = (dataSourceId: IOrg['data_source_id']) => currentTenant.value.data_sources?.find(item => item.id === dataSourceId);
+
   return {
     collaborationList,
     currentTenant,
@@ -142,6 +145,7 @@ export default defineStore('organization', () => {
     ldapSourceId,
     reloadIndex,
     selectedOrg,
+    getDataSourceInfo,
     getTenantLogo,
     handleFetchCollaborationList,
     handleFetchCurrentTenant,

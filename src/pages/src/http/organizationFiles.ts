@@ -123,7 +123,7 @@ export const delTenantsUser = (id: string) => http.delete(`${prefix}/tenants/use
 /**
  * 变更租户用户状态（启用/停用）
  */
-export const updateTenantsUserStatus = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/status/`, params);
+export const updateTenantsUserStatus = (id: string, params?: any) => http.put(`${prefix}/tenants/users/${id}/status/`, params);
 
 
 /**
