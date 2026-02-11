@@ -57,7 +57,7 @@ class DataSource(AuditedModel):
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
     # 用户名配置，区分不同数据源的用户，防止用户名重复
-    username_config = models.JSONField("用户名配置", default=dict)
+    username_config = models.JSONField("用户名冲突配置", default=dict)
 
     objects = DataSourceManager()
 

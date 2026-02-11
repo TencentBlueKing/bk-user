@@ -44,6 +44,9 @@ class DataSourceUserSyncer:
     # 单次批量创建 / 更新数量
     batch_size = 250
 
+    # 最多展示的冲突用户名数量
+    max_conflict_usernames_to_display = 10
+
     def __init__(
         self,
         ctx: DataSourceSyncTaskContext,
@@ -104,7 +107,8 @@ class DataSourceUserSyncer:
 
         self.ctx.logger.warning(
             f"found {len(skipped_usernames)} users with username conflict in other data sources "
-            f"of the same tenant, these users will be skipped: {', '.join(skipped_usernames)}"
+            f"of the same tenant, these users will be skipped: {', '.join(skipped_usernames[:self.max_conflict_usernames_to_display])}"  # noqa: E501
+            f"{'...' if len(skipped_usernames) > self.max_conflict_usernames_to_display else ''}"
         )
 
         self.raw_users = filtered_users

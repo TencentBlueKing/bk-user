@@ -204,6 +204,8 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
 
     def validate_username(self, username: str) -> str:
         username = self.context["data_source"].generate_username(username)
+        # 生成最终的用户名需要需要再次校验
+        validate_data_source_user_username(username)
         return _validate_duplicate_username_in_tenant(self.context["tenant_id"], username)
 
     def validate_department_ids(self, department_ids: List[int]) -> List[int]:

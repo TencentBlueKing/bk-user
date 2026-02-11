@@ -26,7 +26,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation, UsernameConfigStrategy
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -114,7 +114,7 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
 class DataSourceUsernameConfigSLZ(serializers.Serializer):
     """数据源用户名配置"""
 
-    # TODO: 支持识别关联账号
+    strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConfigStrategy.get_choices())
     prefix = serializers.CharField(
         help_text="用户名前缀", required=False, default="", validators=[validate_username_prefix]
     )
@@ -122,9 +122,20 @@ class DataSourceUsernameConfigSLZ(serializers.Serializer):
         help_text="用户名后缀", required=False, default="", validators=[validate_username_suffix]
     )
 
-    def validate(self, attrs):
-        if attrs.get("prefix") and attrs.get("suffix"):
-            raise ValidationError(_("用户名前缀和用户名后缀不能同时配置"))
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        strategy = attrs.get("strategy")
+        prefix = attrs.get("prefix")
+        suffix = attrs.get("suffix")
+
+        if strategy == UsernameConfigStrategy.ADD_AFFIX:
+            if not prefix and not suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀请至少配置一项"))
+            if prefix and suffix:
+                raise ValidationError(_("用户名前缀和用户名后缀不能同时配置"))
+
+        elif strategy == UsernameConfigStrategy.MANUAL:
+            if prefix or suffix:
+                raise ValidationError(_("手动处理策略下，不支持配置用户名前缀或后缀"))
 
         return attrs
 
@@ -136,7 +147,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-    username_config = DataSourceUsernameConfigSLZ(help_text="用户名生成配置", required=False)
+    username_config = DataSourceUsernameConfigSLZ(help_text="用户名冲突配置")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():

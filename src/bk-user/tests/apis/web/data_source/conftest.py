@@ -44,7 +44,10 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin_id=DataSourcePluginEnum.LOCAL,
-        defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
+        defaults={
+            "plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+            "username_config": {"strategy": "manual", "prefix": "", "suffix": ""},
+        },
     )
     return ds
 

@@ -43,3 +43,12 @@ class DataSourceTypeEnum(StrStructuredEnum):
     REAL = EnumField("real", label=_("实体"))
     VIRTUAL = EnumField("virtual", label=_("虚拟"))
     BUILTIN_MANAGEMENT = EnumField("builtin_management", label=_("内置管理"))
+
+
+class UsernameConfigStrategy(StrStructuredEnum):
+    """用户名冲突配置策略"""
+
+    MANUAL = EnumField("manual", label=_("手动处理"))
+    ADD_AFFIX = EnumField("add_affix", label=_("添加前后缀"))
+    # TODO (mufen) 支持根据特定字段 (username / phone) 关联账号
+    # LINK_ACCOUNT = EnumField("link_account", label=_("关联账号"))
