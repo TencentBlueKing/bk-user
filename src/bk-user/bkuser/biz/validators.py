@@ -221,7 +221,9 @@ def validate_username_prefix(value: str) -> str:
 
     if not re.fullmatch(USERNAME_PREFIX_REGEX, value):
         raise ValidationError(
-            _("{} 不符合 用户名前缀 的命名规范，应为 1-5 位小写字母或数字，以下划线 (_) 结尾").format(value)
+            _("{} 不符合 用户名前缀 的命名规范，应为 1-5 位小写字母或数字，并以下划线 (_) 或连接符 (-) 结尾").format(
+                value
+            )
         )
 
     return value
@@ -233,7 +235,9 @@ def validate_username_suffix(value: str) -> str:
 
     if not re.fullmatch(USERNAME_SUFFIX_REGEX, value):
         raise ValidationError(
-            _("{} 不符合 用户名后缀 的命名规范，应为 1-5 位小写字母或数字，以下划线 (_) 开头").format(value)
+            _("{} 不符合 用户名后缀 的命名规范，应为 1-5 位小写字母或数字，并以下划线 (_) 或连接符 (-) 开头").format(
+                value
+            )
         )
 
     return value
