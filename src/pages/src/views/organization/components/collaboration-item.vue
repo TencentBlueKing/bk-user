@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRef, watch } from 'vue';
+import { onMounted, ref, toRef } from 'vue';
 
 import OperateMore from './operate-more.vue';
 

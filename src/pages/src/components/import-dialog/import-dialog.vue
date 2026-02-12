@@ -6,7 +6,7 @@
     :width="640"
     @closed="closed"
   >
-    <bk-loading :loading="curLoading">
+    <bk-loading :loading="isLoading">
       <bk-upload
         ref="uploadRef"
         accept=".xlsx,.xls"
@@ -65,7 +65,7 @@
           <bk-button
             theme="primary"
             class="w-[64px] mr-[8px]"
-            :disabled="curLoading"
+            :disabled="isLoading"
             @click="confirmImportUsers">
             {{ $t('导入') }}
           </bk-button>
@@ -85,27 +85,21 @@ import axios from 'axios';
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
-import { useDataSource } from '@/hooks';
+import useDataSourceSetting from '@/hooks/useDataSourceSetting';
 import { t } from '@/language/index';
-import { useSyncStatus } from '@/store';
+import { useDataSourceStore } from '@/store';
 import useOrganizationStore from '@/store/organization';
 
-const props = defineProps({
-  isShow: {
-    type: Boolean,
-    default: false,
-  },
-});
+interface IProps {
+  isShow: boolean;
+}
+defineProps<IProps>();
 const emit = defineEmits(['update:isShow', 'success']);
 
-const {
-  stopImportDataTimePolling,
-  handleImportLocalDataSync,
-} = useDataSource();
-const syncStatusStore = useSyncStatus();
 const organizationStore = useOrganizationStore();
+const dataSourceStore = useDataSourceStore();
 
 const importConfig = reactive({
   loading: false,
@@ -121,6 +115,14 @@ const uploadInfo = reactive({
   overwrite: false,
   incremental: true,
 });
+
+/** 本地数据源插件 - 数据同步状态 */
+// eslint-disable-next-line max-len
+const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(dataSourceStore.localDataSourceId));
+
+/** dialog loading time = 数据导入完毕的时间 + 后端同步数据的时间 */
+const isLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(localDataSourceStatus.value));
+
 const customRequest = (data) => {
   if (data.file.size > (10 * 1024 * 1024)) {
     isError.value = true;
@@ -183,7 +185,7 @@ const confirmImportUsers = async () => {
       importConfig.loading = false;
       Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      handleImportLocalDataSync(afterSyncImportData);
+      startDataSourceSync(dataSourceStore.newDataSourceId);
     }
   } catch (e) {
     importConfig.loading = false;
@@ -191,19 +193,17 @@ const confirmImportUsers = async () => {
   }
 };
 
-/** 决定dialog loading的因素：导入的过程，后端同步数据的过程 */
-const curLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(syncStatusStore.syncStatus?.status));
-
 /** 停止轮询时的钩子方法 [获取导入本地数据源状态] */
 const afterSyncImportData = () => {
   importConfig.loading = false;
-  const curStatus = syncStatusStore.syncStatus.status;
-  if (curStatus === 'success') {
+  if (localDataSourceStatus.value === 'success') {
     importSuccess();
-  } else if (curStatus === 'failed') {
+  } else if (localDataSourceStatus.value === 'failed') {
     Message({ theme: 'error', message: t('同步失败') });
   }
 };
+
+const { startDataSourceSync } = useDataSourceSetting(afterSyncImportData);
 
 /** 导入成功时执行 */
 const importSuccess = () => {
@@ -217,10 +217,6 @@ const importSuccess = () => {
     },
   });
 };
-
-onBeforeUnmount(() => {
-  stopImportDataTimePolling(afterSyncImportData);
-});
 </script>
 <style lang="less" scoped>
 .excel-file {

@@ -9,6 +9,7 @@ import type {
   DeleteDataSourcesParams,
   DepartmentsParams,
   GeneratePasswordParams,
+  GetDataSourceListParams,
   LeadersParams,
   NewDataSourceParams,
   NewDataSourceUserParams,
@@ -64,7 +65,7 @@ export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => htt
 /**
  * 数据源列表
  */
-export const getDataSourceList = (params: { type: string }) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
+export const getDataSourceList = (params: GetDataSourceListParams) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
 
 /**
  * 数据源插件列表
@@ -114,7 +115,7 @@ export const randomPasswords = (params: GeneratePasswordParams) => http.post('/a
 /**
  * 数据源更新记录
  */
-export const getSyncRecords = (id: string, params?: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>(`/api/v3/web/data-sources/${id}/sync-records/`, params);
+export const getSyncRecords = (id: number, params?: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>(`/api/v3/web/data-sources/${id}/sync-records/`, params);
 
 /**
  * 数据源更新日志

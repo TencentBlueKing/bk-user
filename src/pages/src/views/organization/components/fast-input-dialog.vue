@@ -268,7 +268,7 @@ const confirm = async () => {
 const closed = () => {
   emit('update:isShow', false);
 };
-const goToSetting = (name) => {
+const goToSetting = (name: string) => {
   router.push({ name, query: {
     isLink: true,
   } });

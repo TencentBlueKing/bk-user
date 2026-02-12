@@ -26,24 +26,33 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { Message } from 'bkui-vue';
 
-import { useDataSource } from '@/hooks';
+import useDataSourceSetting from '@/hooks/useDataSourceSetting';
+import { postOperationsSync } from '@/http/dataSourceFiles';
 import router from '@/router';
-import { useSyncStatus } from '@/store';
+import { useDataSourceStore, useSyncStatus } from '@/store';
 
-defineProps({
-  title: {
-    type: String,
-    default: '',
-  },
+interface IProps {
+  title: string;
+}
+
+withDefaults(defineProps<IProps>(), {
+  title: '',
 });
 
-const { handleOperationsSync } = useDataSource();
 const syncStatusStore = useSyncStatus();
+const dataSourceStore = useDataSourceStore();
+const { startDataSourceSync } = useDataSourceSetting();
+
 // 同步数据后跳转到数据源配置页面
-const handleSync = () => {
-  handleOperationsSync();
+const handleSync = async () => {
+  const res = await postOperationsSync(dataSourceStore.newDataSourceId);
+  Message({ theme: res.data.status, message: res.data.summary });
+  // more-data-source-todo
+  // 新建完数据源后，若跳转到数据源列表，初始化会获取一次数据源状态
+  // 若为未同步完成，则会触发轮询，因此这里真的还需要手动轮询吗？
+  startDataSourceSync(dataSourceStore.newDataSourceId);
   syncStatusStore.setRefresh(false);
   router.push({ name: 'dataSource' });
 };

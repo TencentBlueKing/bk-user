@@ -129,7 +129,7 @@ export interface ResetPasswordParams {
  * 数据源重置参数
  */
 export interface DeleteDataSourcesParams {
-  id: string;
+  id: number;
   is_delete_idp?: string;
 }
 
@@ -261,6 +261,10 @@ export interface SyncRecords {
       sync_timeout: number;
     }
   }[];
+}
+
+export interface GetDataSourceListParams {
+  type: 'real' | 'virtual' | 'builtin_management';
 }
 
 export interface DataSourceItemData {

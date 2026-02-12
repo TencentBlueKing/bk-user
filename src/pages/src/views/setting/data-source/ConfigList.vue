@@ -1,7 +1,7 @@
 <template>
   <div v-bkloading="{ loading: isLoading, zIndex: 10 }">
     <MainBreadcrumbsDetails>
-      <template #right v-if="dataSource?.id">
+      <template #right v-if="dataSource.length > 0">
         <bk-button
           class="mr-[12px]"
           hover-theme="primary"
@@ -22,18 +22,18 @@
     </MainBreadcrumbsDetails>
     <div
       :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
-      v-if="dataSource?.id"
+      v-if="dataSource.length > 0"
     >
       <div class="info">
         <i class="user-icon icon-info-i" />
-        <span v-if="dataSource?.plugin_id === 'local'">
+        <span v-if="isConfiguredLocalPlugin && !isConfiguredGeneralPlugin">
           {{ $t('当前已配置「{source}」，支持同时配置 1 个「{target}」', { source: $t('本地数据源'), target: $t('外部数据源') }) }}
         </span>
-        <span v-else-if="dataSource?.plugin_id === 'general'">
+        <span v-else-if="isConfiguredGeneralPlugin && !isConfiguredLocalPlugin">
           {{ $t('当前已配置「{source}」，支持同时配置 1 个「{target}」', { source: $t('HTTP 数据源'), target: $t('本地数据源') }) }}
         </span>
-        <span v-else>
-          {{ $t('仅支持同时配置 1 个「{local}」和 1 个「{external}」，切换外部数据源将会清除原配置数据源', { 
+        <span v-else-if="isConfiguredLocalPlugin && isConfiguredGeneralPlugin">
+          {{ $t('仅支持同时配置 1 个「{local}」和 1 个「{external}」，切换外部数据源将会清除原配置数据源', {
             local: $t('本地数据源'),
             external: $t('外部数据源'),
           }) }}
@@ -226,7 +226,7 @@
     </bk-dialog>
     <!-- 数据更新记录 -->
     <bk-sideslider
-      v-model:isShow="updateConfig.isShow"
+      v-model:is-show="updateConfig.isShow"
       :title="updateConfig.title"
       quick-close
       width="960"
@@ -242,7 +242,8 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { computed, onBeforeUnmount, onMounted,  reactive, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HttpDetails from './HttpDetails.vue';
@@ -250,33 +251,57 @@ import HttpDetails from './HttpDetails.vue';
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
-import { useDataSource, useInfoBoxContent } from '@/hooks';
-import { deleteDataSources, getRelatedResource } from '@/http';
+import { useInfoBoxContent } from '@/hooks';
+import useDataSourceSetting from '@/hooks/useDataSourceSetting';
+import { deleteDataSources, getDefaultConfig, getRelatedResource, newDataSource, postOperationsSync } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useSyncStatus, useUser } from '@/store';
+import { useDataSourceStore, useSyncStatus, useUser } from '@/store';
 import { dataRecordStatus, RUNNING_FIELDS } from '@/utils';
 const route = useRoute();
 
 const userStore = useUser();
 const syncStatusStore = useSyncStatus();
+const dataSourceStore = useDataSourceStore();
+
+const {
+  dataSource,
+  dataSourcePlugins,
+  isConfiguredLocalPlugin,
+  isConfiguredGeneralPlugin,
+} = storeToRefs(dataSourceStore);
+/**
+ * more-data-source-todo
+ * 1. dataSource的处理 当前由单一数据源扩展到多数据源，需要处理dataSource在template与script中的使用
+ * 2. syncStatus的处理 当前由单一数据源扩展到多数据源，需要处理syncStatus在template与script中的使用
+ */
 const syncStatus = computed(() => syncStatusStore.syncStatus);
 const disabledSyncBtn = computed(() => RUNNING_FIELDS.includes(syncStatus.value?.status));
-const {
-  dataSourcePlugins,
-  dataSource,
-  currentDataSourceId,
-  isLoading,
-  initDataSourceList,
-  handleClick,
-  importDialog,
-  handleOperationsSync,
-  stopPolling,
-  handleImportLocalDataSync,
-  stopImportDataTimePolling,
-} = useDataSource();
 
+const { startDataSourceSync: otherDataSourceSync } = useDataSourceSetting();
+const { startDataSourceSync: localDataSourceSync } = useDataSourceSetting();
+
+const isLoading = ref(false);
 const resetLoading = ref(false);
+const showContent = ref(false);
+const uploadInfo = reactive({
+  file: {},
+  overwrite: false,
+  incremental: true,
+});
+const uploadRef = ref();
+const isHover = ref(false);
+const textTips = ref('');
+const isError = ref(false);
+
+const importDialog = reactive({
+  isShow: false,
+  loading: false,
+  title: t('导入'),
+  id: 'local',
+});
+
+
 // 重置数据源
 const handleReset = async () => {
   try {
@@ -297,7 +322,8 @@ const handleReset = async () => {
         if (dataSource.value?.id) {
           deleteDataSources({ id: dataSource.value.id, is_delete_idp: resetConfig }).then(() => {
             Message({ theme: 'success', message: t('数据源重置成功') });
-            initDataSourceList();
+            // 重置数据源后，重新获取当前数据源信息
+            dataSourceStore.handleFetchCurrentDataSource();
           })
             .finally(() => resetLoading.value = false);
         }
@@ -310,8 +336,14 @@ const handleReset = async () => {
   }
 };
 
+/** 点击同步 发起同步，并开启syncRecords轮询*/
+const handleOperationsSync = async () => {
+  const res = await postOperationsSync(dataSourceStore.newDataSourceId);
+  Message({ theme: res.data.status, message: res.data.summary });
+  otherDataSourceSync(dataSourceStore.newDataSourceId);
+};
+
 // 切换展示状态
-const showContent = ref(false);
 const handleCollapse = () => {
   showContent.value = !showContent.value;
 };
@@ -323,17 +355,6 @@ const handleEdit = () => {
 const handleImport = () => {
   importDialog.isShow = true;
 };
-
-const uploadInfo = reactive({
-  file: {},
-  overwrite: false,
-  incremental: true,
-});
-
-const uploadRef = ref();
-const isHover = ref(false);
-const textTips = ref('');
-const isError = ref(false);
 
 const customRequest = (data) => {
   if (data.file.size > (10 * 1024 * 1024)) {
@@ -360,9 +381,30 @@ const handleUploadRemove = (file) => {
   uploadInfo.file = {};
 };
 
+// 点击新建数据源
+const handleClick = async (id: string) => {
+  if (dataSourceStore.dataSource.length < 2) {
+    if (id === 'local') {
+      const res = await getDefaultConfig('local');
+      const newDataSourceData = await newDataSource({
+        plugin_id: 'local',
+        plugin_config: {
+          ...res.data?.config,
+        },
+      });
+      dataSourceStore.setNewDataSourceId(newDataSourceData.data?.id);
+      importDialog.isShow = true;
+    } else {
+      router.push({ name: 'newDataSource', query: { type: id } });
+    }
+  } else {
+    router.push({ name: 'dataSourceConfig', query: id === 'local' ? {} : { type: id } });
+  }
+};
+
 // 数据源导出模板
 const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/download_template/`;
+  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${dataSourceStore.localDataSourceId}/operations/download_template/`;
   window.open(url);
 };
 // 导入用户
@@ -387,11 +429,11 @@ const confirmImportUsers = async () => {
       },
       withCredentials: true,
     };
-    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentDataSourceId.value}/operations/import/`;
+    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${dataSourceStore.localDataSourceId}/operations/import/`;
     await axios.post(url, formData, config);
     Message({ theme: 'success', message: t('导入成功') });
-    handleImportLocalDataSync();
-    initDataSourceList();
+    localDataSourceSync(dataSourceStore.newDataSourceId);
+    dataSourceStore.handleFetchCurrentDataSource();
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
   } finally {
@@ -400,15 +442,17 @@ const confirmImportUsers = async () => {
   }
 };
 
-const closed = () => {
+const closed = async () => {
   importDialog.isShow = false;
-  if (!dataSource.value?.id) {
-    deleteDataSources({ id: currentDataSourceId.value }).then(() => {
-      initDataSourceList();
-      uploadInfo.file = {};
-      uploadInfo.overwrite = false;
-      uploadInfo.incremental = true;
-    });
+  if (dataSourceStore.newDataSourceId) {
+    // 删除新创建的数据源
+    await deleteDataSources({ id: dataSourceStore.newDataSourceId });
+    dataSourceStore.clearNewDataSourceId();
+    // 刷新当前数据源
+    await dataSourceStore.handleFetchCurrentDataSource();
+    uploadInfo.file = {};
+    uploadInfo.overwrite = false;
+    uploadInfo.incremental = true;
   }
 };
 
@@ -421,16 +465,24 @@ const changeLog = () => {
   updateConfig.isShow = true;
 };
 
-onMounted(() => {
+const handleInit = async () => {
+  try {
+    isLoading.value = true;
+    await Promise.all([
+      dataSourceStore.handleFetchAllDataSourcePlugins(),
+      dataSourceStore.handleFetchCurrentDataSource(),
+    ]);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(async () => {
+  await handleInit();
   /** 是否从快速导入跳转过来，是的话则默认打开导入弹框 */
   if (route.query?.isLink) {
     handleImport();
   }
-});
-
-onBeforeUnmount(() => {
-  stopPolling();
-  stopImportDataTimePolling();
 });
 </script>
 
