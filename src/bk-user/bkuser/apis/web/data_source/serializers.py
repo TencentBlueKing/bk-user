@@ -427,7 +427,7 @@ class DataSourcePluginSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    plugin = serializers.SerializerMethodField(help_text="数据源插件信息")
+    plugin = DataSourcePluginSLZ(help_text="数据源插件", source="data_source.plugin")
     status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
@@ -435,9 +435,6 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     start_at = serializers.DateTimeField(help_text="开始时间")
     duration = serializers.SerializerMethodField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
-
-    def get_plugin(self, obj: DataSourceSyncTask) -> Dict:
-        return DataSourcePluginSLZ(obj.data_source.plugin).data
 
     # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容
     def get_status(self, obj: DataSourceSyncTask) -> str:
