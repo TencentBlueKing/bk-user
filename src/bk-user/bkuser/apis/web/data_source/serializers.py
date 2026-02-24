@@ -436,7 +436,7 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     duration = serializers.SerializerMethodField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
-    def get_plugin(self, obj: DataSourceSyncTask) -> dict:
+    def get_plugin(self, obj: DataSourceSyncTask) -> Dict:
         return DataSourcePluginSLZ(obj.data_source.plugin).data
 
     # 由于数据源同步分为两个阶段同步任务（数据源同步任务 & 租户同步任务），因此同步状态与持续时间需要做兼容

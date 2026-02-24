@@ -916,9 +916,7 @@ class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics
         data = slz.validated_data
 
         return Response(
-            TenantUserBatchCreatePreviewOutputSLZ(
-                data["user_infos"], context={"data_source": data_source}, many=True
-            ).data,
+            TenantUserBatchCreatePreviewOutputSLZ(data["user_infos"], many=True).data,
             status=status.HTTP_200_OK,
         )
 
