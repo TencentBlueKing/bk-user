@@ -24,9 +24,9 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 # 批量更新数据源用户自定义字段单次操作数量
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
 
-# Must start with "_" or "-" and follow 1-5 lowercase letters, digits.
+# 以 "_" 或 "-" 开头，后跟 1-5 个小写字母或数字
 USERNAME_SUFFIX_REGEX = re.compile(r"^[_-][a-z0-9]{1,5}$")
-# Must end with "_" or "-" and follow 1-5 lowercase letters, digits.
+# 以 "_" 或 "-" 结尾，前面为 1-5 个小写字母或数字
 USERNAME_PREFIX_REGEX = re.compile(r"^[a-z0-9]{1,5}[_-]$")
 
 

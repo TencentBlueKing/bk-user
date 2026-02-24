@@ -132,12 +132,6 @@ class DataSource(AuditedModel):
             username = username[: -len(suffix)]
         return username
 
-    def is_username_valid(self, username: str) -> bool:
-        prefix = self.username_config.get("prefix", "")
-        suffix = self.username_config.get("suffix", "")
-
-        return (not prefix or username.startswith(prefix)) and (not suffix or username.endswith(suffix))
-
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
