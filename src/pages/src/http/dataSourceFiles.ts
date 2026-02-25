@@ -3,6 +3,7 @@ import { ResponseData } from './types';
 import type {
   DataSourceDetails,
   DataSourceItemData,
+  DataSourcePluginDefaultConfig,
   DataSourcePluginsItemData,
   DataSourceUsersParams,
   DataSourceUsersResult,
@@ -12,10 +13,12 @@ import type {
   GetDataSourceListParams,
   LeadersParams,
   NewDataSourceParams,
+  NewDataSourceResult,
   NewDataSourceUserParams,
   OperationsSyncData,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  RelatedResourceStatistics,
   ResetPasswordParams,
   SyncRecords,
   SyncRecordsParams,
@@ -75,17 +78,17 @@ export const getDataSourcePlugins = () => http.get<ResponseData<DataSourcePlugin
 /**
  * 新建数据源
  */
-export const newDataSource = (params: NewDataSourceParams) => http.post('/api/v3/web/data-sources/', params);
+export const newDataSource = (params: NewDataSourceParams) => http.post<ResponseData<NewDataSourceResult>>('/api/v3/web/data-sources/', params);
 
 /**
  * 数据源详情
  */
-export const getDataSourceDetails = (id: string) => http.get<ResponseData<DataSourceDetails>>(`/api/v3/web/data-sources/${id}/`);
+export const getDataSourceDetails = (id: number) => http.get<ResponseData<DataSourceDetails>>(`/api/v3/web/data-sources/${id}/`);
 
 /**
  * 新建数据源默认配置
  */
-export const getDefaultConfig = (id: string) => http.get(`/api/v3/web/data-sources/plugins/${id}/default-config/`);
+export const getDefaultConfig = (id: string) => http.get<ResponseData<DataSourcePluginDefaultConfig>>(`/api/v3/web/data-sources/plugins/${id}/default-config/`);
 
 /**
  * 更新数据源
@@ -115,7 +118,7 @@ export const randomPasswords = (params: GeneratePasswordParams) => http.post('/a
 /**
  * 数据源更新记录
  */
-export const getSyncRecords = (id: number, params?: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>(`/api/v3/web/data-sources/${id}/sync-records/`, params);
+export const getSyncRecords = (id: number, params: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>('/api/v3/web/data-sources/sync-records/', params);
 
 /**
  * 数据源更新日志
@@ -135,7 +138,7 @@ export const deleteDataSources = (params: DeleteDataSourcesParams) => http.delet
 /**
  * 数据源关联资源信息
  */
-export const getRelatedResource = (id: string) => http.get(`/api/v3/web/data-sources/${id}/related-resource-statistics/`);
+export const getRelatedResource = (dataSourceId: number) => http.get<ResponseData<RelatedResourceStatistics>>(`/api/v3/web/data-sources/${dataSourceId}/related-resource-statistics/`);
 
 /**
  * 自定义数据源插件配置信息

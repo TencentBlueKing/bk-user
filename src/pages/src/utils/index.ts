@@ -292,6 +292,7 @@ export const dataRecordStatus: Record<string, {
   },
 };
 
+/** 数据源同步中状态字段 */
 export const RUNNING_FIELDS = ['pending', 'running'];
 
 // 有效期

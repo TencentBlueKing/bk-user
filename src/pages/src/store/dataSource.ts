@@ -2,12 +2,12 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 import { getDataSourceList, getDataSourcePlugins, getSyncRecords } from '@/http/dataSourceFiles';
-import { DataSourceItemData, DataSourcePluginsItemData } from '@/http/types/dataSourceFiles';
+import { DataSourceItemData, DataSourcePluginsItemData, SyncRecords, SyncRecordsParams } from '@/http/types/dataSourceFiles';
 
 export const useDataSourceStore = defineStore('dataSource', () => {
   const dataSource = ref<DataSourceItemData[]>([]);
   const dataSourcePlugins = ref<DataSourcePluginsItemData[]>([]);
-  const dataSourceSyncStatusMap = ref<Map<number, string>>(new Map());
+  const dataSourceSyncStatusMap = ref<Map<number, SyncRecords['results'][number]>>(new Map());
 
   /** 新建的数据源ID */
   const newDataSourceId = ref(null);
@@ -45,19 +45,29 @@ export const useDataSourceStore = defineStore('dataSource', () => {
 
   /**
    * 获取指定数据源的同步状态
-   * @param dataSourceIds 要获取同步状态的数据源ID列表
+   * @param dataSources 要获取同步状态的数据源列表，包含 id 和 pluginId
    */
-  const handleFetchSyncStatus = async (dataSourceIds: number[]) => {
-    if (!dataSourceIds || dataSourceIds.length === 0) return;
+  const handleFetchSyncStatus = async (dataSources: { id: number; pluginId: string }[]) => {
+    if (!dataSources || dataSources.length === 0) return;
 
     // 并发获取所有目标数据源的同步记录
-    const results = await Promise.all(dataSourceIds.map(id => getSyncRecords(id)));
-
+    const results = await Promise.all(
+      dataSources.map(({ id, pluginId }) => {
+        const params: SyncRecordsParams = {
+          plugin_id: pluginId,
+          page: 1,
+          page_size: 10,
+        };
+        return getSyncRecords(id, params);
+      }),
+    );
     // 将每个数据源的最新状态存入 Map
     results.forEach((res, index) => {
-      const dataSourceId = dataSourceIds[index];
-      const status = res.data.results?.[0]?.status || '';
-      dataSourceSyncStatusMap.value.set(dataSourceId, status);
+      const dataSourceId = dataSources[index].id;
+      const data = res.data.results?.[0];
+      if (data) {
+        dataSourceSyncStatusMap.value.set(dataSourceId, data);
+      }
     });
   };
 
@@ -68,8 +78,8 @@ export const useDataSourceStore = defineStore('dataSource', () => {
    * 初始化所有已配置数据源的同步状态
    */
   const handleInitSyncStatus = async () => {
-    const dataSourceIds = dataSource.value?.map(item => item.id) || [];
-    await handleFetchSyncStatus(dataSourceIds);
+    const dataSources = dataSource.value?.map(item => ({ id: item.id, pluginId: item.plugin_id })) || [];
+    await handleFetchSyncStatus(dataSources);
   };
 
   return {

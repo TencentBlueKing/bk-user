@@ -118,7 +118,7 @@ const uploadInfo = reactive({
 
 /** 本地数据源插件 - 数据同步状态 */
 // eslint-disable-next-line max-len
-const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(dataSourceStore.localDataSourceId));
+const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(dataSourceStore.localDataSourceId)?.status);
 
 /** dialog loading time = 数据导入完毕的时间 + 后端同步数据的时间 */
 const isLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(localDataSourceStatus.value));
@@ -185,7 +185,7 @@ const confirmImportUsers = async () => {
       importConfig.loading = false;
       Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      startDataSourceSync(dataSourceStore.newDataSourceId);
+      startDataSourceSync(dataSourceStore.newDataSourceId, 'local');
     }
   } catch (e) {
     importConfig.loading = false;

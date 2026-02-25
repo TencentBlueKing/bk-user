@@ -19,28 +19,29 @@ export default function useDataSourceSetting(callback?: Function) {
    * @returns 是否已完成
    */
   const isStatusCompleted = (dataSourceId: number) => {
-    const status = dataSourceSyncStatusMap.value.get(dataSourceId);
+    const status = dataSourceSyncStatusMap.value.get(dataSourceId)?.status;
     return status === 'success' || status === 'failed';
   };
 
   /**
    * 轮询获取数据源的同步状态
    * @param dataSourceId 要轮询的数据源 ID
+   * @param pluginId 数据源的插件 ID
    */
-  const startDataSourceSync = (dataSourceId: number) => {
+  const startDataSourceSync = (dataSourceId: number, pluginId: string) => {
     // 如果已经在轮询中，先停止
     if (isActive.value) {
       stopDataSourceSync();
     }
 
-    if (!dataSourceId) {
-      console.warn('未找到要轮询的数据源 ID');
+    if (!dataSourceId || !pluginId) {
+      console.warn('未找到要轮询的数据源 ID 或插件 ID');
       return;
     }
 
     // 定义轮询回调函数
     const pollingCallback = async () => {
-      await dataSourceStore.handleFetchSyncStatus([dataSourceId]);
+      await dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }]);
 
       // 检查数据源是否已完成同步
       const isCompleted = isStatusCompleted(dataSourceId);
@@ -53,9 +54,9 @@ export default function useDataSourceSetting(callback?: Function) {
     };
 
     // 立即执行一次获取状态
-    dataSourceStore.handleFetchSyncStatus([dataSourceId]).then(() => {
+    dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }]).then(() => {
       // 检查是否需要开启轮询
-      const status = dataSourceSyncStatusMap.value.get(dataSourceId);
+      const status = dataSourceSyncStatusMap.value.get(dataSourceId)?.status;
       const needPolling = status === 'pending' || status === 'running';
 
       if (needPolling) {

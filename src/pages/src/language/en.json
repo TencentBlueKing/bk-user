@@ -435,7 +435,7 @@
   "数据源配置完成，可以查看组织架构和用户信息": "After the data source is configured, you can view the organizational structure and user information.",
   "若需切换数据源需要先对当前已选数据源进行重置操作": "To switch data sources, reset the current one first",
   "收起": "Collapse",
-  "查看所有数据源": "View all data sources",
+  "展开全部数据源": "Expand all data sources",
   "删除租户将导致以下数据被删除:": "Deleting this tenant will delete the following data:",
   "重置将导致以下数据被删除:": "Resetting will delete the following data:",
   "本租户下的数据：共计": "Data under this tenant totals:",
