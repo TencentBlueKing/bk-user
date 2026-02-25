@@ -480,7 +480,6 @@ class TestDataSourceBatchDeleteApi:
         assert not DataSource.objects.filter(id=general_data_source.id).exists()
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=general_idp.id).exists()
-        # is_delete_idp=False: non-LOCAL IDPs should be disabled, not deleted
         updated_wecom_idp = Idp.objects.get(id=wecom_idp.id)
         assert updated_wecom_idp.status == IdpStatus.DISABLED
         assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
