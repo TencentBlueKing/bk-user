@@ -39,6 +39,7 @@ class OperationEnum(StrStructuredEnum):
     CREATE_DATA_SOURCE = EnumField("create_data_source", label=_("创建数据源"))
     MODIFY_DATA_SOURCE = EnumField("modify_data_source", label=_("修改数据源"))
     DELETE_DATA_SOURCE = EnumField("delete_data_source", label=_("删除数据源"))
+    BATCH_DELETE_DATA_SOURCE = EnumField("batch_delete_data_source", label=_("批量删除数据源"))
     SYNC_DATA_SOURCE = EnumField("sync_data_source", label=_("同步数据源"))
 
     # 认证源

@@ -104,6 +104,40 @@ class DataSourceAuditor:
             objects=[data_source_audit_object] + idp_audit_objects,
         )
 
+    def pre_record_batch_data_before(
+        self, data_sources: List[DataSource], waiting_delete_idps: List[Idp] | None = None
+    ):
+        """记录批量删除变更前的数据"""
+        self.data_befores["data_sources"] = [get_model_dict(ds) for ds in data_sources]
+        self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
+
+    def record_batch_delete(self):
+        """记录批量删除数据源操作"""
+        audit_objects = [
+            AuditObject(
+                id=ds_data["id"],
+                type=ObjectTypeEnum.DATA_SOURCE,
+                operation=OperationEnum.BATCH_DELETE_DATA_SOURCE,
+                data_before=ds_data,
+            )
+            for ds_data in self.data_befores["data_sources"]
+        ]
+        audit_objects += [
+            AuditObject(
+                id=idp_data["id"],
+                type=ObjectTypeEnum.IDP,
+                operation=OperationEnum.DELETE_IDP,
+                data_before=idp_data,
+            )
+            for idp_data in self.data_befores["idps"]
+        ]
+
+        batch_add_audit_records(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            objects=audit_objects,
+        )
+
     def record_sync(self, data_source: DataSource, options: DataSourceSyncOptions):
         """记录数据源同步操作"""
         add_audit_record(

@@ -468,6 +468,46 @@ class TestDataSourceDestroyApi:
         assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
 
 
+class TestDataSourceBatchDeleteApi:
+    def test_batch_delete(self, api_client, data_source, general_data_source, local_idp, general_idp, wecom_idp):
+        resp = api_client.delete(
+            reverse("data_source.batch_delete"),
+            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSource.objects.filter(id=general_data_source.id).exists()
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        assert not Idp.objects.filter(id=general_idp.id).exists()
+        # is_delete_idp=False: non-LOCAL IDPs should be disabled, not deleted
+        updated_wecom_idp = Idp.objects.get(id=wecom_idp.id)
+        assert updated_wecom_idp.status == IdpStatus.DISABLED
+        assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
+
+    def test_batch_delete_with_delete_idp(
+        self, api_client, data_source, general_data_source, local_idp, general_idp, wecom_idp
+    ):
+        resp = api_client.delete(
+            reverse("data_source.batch_delete"),
+            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSource.objects.filter(id=general_data_source.id).exists()
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        assert not Idp.objects.filter(id=general_idp.id).exists()
+        assert not Idp.objects.filter(id=wecom_idp.id).exists()
+
+    def test_batch_delete_no_real_data_source(self, api_client, random_tenant):
+        resp = api_client.delete(
+            reverse("data_source.batch_delete"),
+            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
 class TestDataSourceRelatedResourceStatsApi:
     def test_list(self, api_client, full_local_data_source, default_tenant):
         sync_users_depts_to_tenant(default_tenant, full_local_data_source)

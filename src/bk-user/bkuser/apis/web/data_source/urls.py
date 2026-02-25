@@ -62,6 +62,12 @@ urlpatterns = [
         views.DataSourceSyncRecordRetrieveApi.as_view(),
         name="data_source.sync_record.retrieve",
     ),
+    # 数据源批量重置
+    path(
+        "operations/batch-delete/",
+        views.DataSourceBatchDeleteApi.as_view(),
+        name="data_source.batch_delete",
+    ),
     # 数据源更新/获取/删除
     path(
         "<int:id>/",

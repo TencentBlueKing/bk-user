@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
@@ -29,6 +29,7 @@ from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from tests.test_utils.helpers import generate_random_string
@@ -136,3 +137,28 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
         extras={"async_run": True, "overwrite": True},
     )
     return [success_task, failed_task, other_tenant_task]
+
+
+@pytest.fixture
+def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
+    """General HTTP data source in the same tenant for batch-delete tests"""
+    plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
+    return DataSource.objects.create(
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.REAL,
+        plugin=plugin,
+        plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
+        sync_config={"sync_period": 60},
+        username_config={"strategy": "manual", "prefix": "", "suffix": ""},
+    )
+
+
+@pytest.fixture
+def general_idp(general_data_source) -> Idp:
+    return Idp.objects.create(
+        name="general_local",
+        data_source_id=general_data_source.id,
+        owner_tenant_id=general_data_source.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        plugin_config=LocalIdpPluginConfig(data_source_ids=[general_data_source.id]),
+    )

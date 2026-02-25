@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
+    DataSourceBatchDeleteInputSLZ,
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
     DataSourceDestroyInputSLZ,
@@ -311,6 +312,73 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         # 【审计】将审计记录保存至数据库
         auditor.record_delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceBatchDeleteApi(CurrentUserTenantMixin, generics.DestroyAPIView):
+    """批量重置数据源"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="批量重置数据源",
+        query_serializer=DataSourceBatchDeleteInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        slz = DataSourceBatchDeleteInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        cur_tenant_id = self.get_current_tenant_id()
+        data_sources = list(
+            DataSource.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                type=DataSourceTypeEnum.REAL,
+            )
+        )
+        is_delete_idp = data["is_delete_idp"]
+        data_source_ids = [ds.id for ds in data_sources]
+
+        if is_delete_idp:
+            waiting_delete_idps = Idp.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, *data_source_ids],
+            )
+        else:
+            waiting_delete_idps = Idp.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                data_source_id__in=data_source_ids,
+                plugin_id=BuiltinIdpPluginEnum.LOCAL,
+            )
+
+        # 【审计】创建审计对象并记录变更前数据
+        idp_list = list(waiting_delete_idps)
+        auditor = DataSourceAuditor(request.user.username, cur_tenant_id)
+        auditor.pre_record_batch_data_before(data_sources, idp_list)
+
+        with transaction.atomic():
+            IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+            waiting_delete_idps.delete()
+
+            if not is_delete_idp:
+                Idp.objects.filter(
+                    owner_tenant_id=cur_tenant_id,
+                    data_source_id__in=data_source_ids,
+                ).update(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    updated_at=timezone.now(),
+                    updater=request.user.username,
+                )
+
+            for ds in data_sources:
+                DataSourceHandler.delete_data_source_and_related_resources(ds)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_batch_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
