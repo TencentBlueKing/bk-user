@@ -357,7 +357,7 @@ class DataSourceBatchDeleteApi(CurrentUserTenantMixin, generics.DestroyAPIView):
         # 【审计】创建审计对象并记录变更前数据
         idp_list = list(waiting_delete_idps)
         auditor = DataSourceAuditor(request.user.username, cur_tenant_id)
-        auditor.pre_record_batch_data_before(data_sources, idp_list)
+        auditor.batch_pre_record_data_before(data_sources, idp_list)
 
         with transaction.atomic():
             IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
