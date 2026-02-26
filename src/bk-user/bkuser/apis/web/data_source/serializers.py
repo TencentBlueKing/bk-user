@@ -116,10 +116,10 @@ class DataSourceUsernameConfigSLZ(serializers.Serializer):
 
     strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConfigStrategy.get_choices())
     prefix = serializers.CharField(
-        help_text="用户名前缀", required=False, default="", validators=[validate_username_prefix]
+        help_text="用户名前缀", required=False, default="", allow_blank=True, validators=[validate_username_prefix]
     )
     suffix = serializers.CharField(
-        help_text="用户名后缀", required=False, default="", validators=[validate_username_suffix]
+        help_text="用户名后缀", required=False, default="", allow_blank=True, validators=[validate_username_suffix]
     )
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
