@@ -1,5 +1,9 @@
 <template>
-  <bk-loading :loading="isLoading" class="data-source-content user-scroll-y">
+  <bk-loading
+    :loading="isLoading"
+    class="data-source-content user-scroll-y"
+    :z-index="10"
+  >
     <bk-form
       v-if="props.curStep === 1 && ldapConfigData.plugin_id"
       form-type="vertical"
@@ -275,25 +279,43 @@
             />
           </bk-select>
         </bk-form-item>
-        <div class="btn">
-          <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-            {{ true ? $t('保存') : $t('提交') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
       </Row>
+      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+        <template #header>
+          <div class="flex items-center px-[16px] py-[8px] rounded-[2px]">
+            <i class="user-icon icon-info-i text-[14px] text-[#979BA5] mr-[8px]" />
+            <span class="text-[12px] text-[#63656E] leading-[20px]">
+              {{ $t('若后续存在入多个数据源的需求，建议您提前为用户名设置统一的冲突规则') }}
+            </span>
+          </div>
+        </template>
+        <ConflictConfig
+          ref="conflictConfigRef"
+          :config="fieldSettingData.username_config"
+          :disabled="isEdit"
+        />
+      </Row>
+      <div class="btn">
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+          {{ true ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
 
 <script lang="ts" setup>
-import { defineEmits, defineProps, inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
+
+import ConflictConfig from './components/conflict-config.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
 import { getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
+import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
 import router from '@/router';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
@@ -309,9 +331,12 @@ const props = defineProps({
     default: false,
   },
 });
+const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const isEdit = computed(() => props.dataSourceId !== null);
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
+const conflictConfigRef = ref();
 
 interface LdapConfigData {
   plugin_id: string,
@@ -426,6 +451,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+  username_config: {
+    strategy: 'manual',
+    prefix: '',
+    suffix: '',
+  } as UsernameConfig,
 });
 const apiFields = ref([]);
 const fieldMappingList = ref([]);
@@ -456,7 +486,7 @@ const handleLastStep = async () => {
   fieldSettingData.value.field_mapping.custom_fields = [];
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
-  if (props?.dataSourceId) {
+  if (isEdit.value) {
     const res = await getDataSourceDetails(props.dataSourceId);
     fieldSettingData.value.sync_config = res.data?.sync_config;
   } else {
@@ -493,7 +523,7 @@ const handleTestConnection = async () => {
         },
       },
     };
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.data_source_id = props.dataSourceId;
     }
     const res = await postTestConnection(params);
@@ -513,8 +543,6 @@ const handleTestConnection = async () => {
     connectionLoading.value = false;
   }
 };
-
-const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
 interface Field {
   id?: number;
@@ -538,7 +566,7 @@ const handleNext = async () => {
     emit('updateCurStep', 2);
     isLoading.value = true;
     const res = await getFields();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const list = [];
       const customList: any[] = [];
       const mapFields = (fields: Field, item: Item, isDisabled: boolean, fieldMappingType: string) => {
@@ -683,7 +711,7 @@ const changeCustomField = (newValue: string, oldValue: string) => {
 onMounted(async () => {
   try {
     isLoading.value = true;
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const res = await getDataSourceDetails(props.dataSourceId);
       ldapConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
@@ -694,6 +722,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
+      fieldSettingData.value.username_config = res.data?.username_config;
     } else {
       ldapConfigData.value = defaultLdapConfig();
     }
@@ -717,7 +746,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params = {
+    const params: Partial<NewDataSourceParams> = {
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
         data_config: ldapConfigData.value.data_config,
@@ -731,14 +760,21 @@ const handleSubmit = async () => {
       sync_config: fieldSettingData.value.sync_config,
     };
 
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.id = props.dataSourceId;
       await putDataSourceDetails(params);
-      emit('updateSuccess', t('更新'));
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+      });
     } else {
       params.plugin_id = ldapConfigData.value.plugin_id;
-      await newDataSource(params);
-      emit('updateSuccess', t('新建成功'));
+      params.username_config = conflictConfigRef.value?.getData();
+      const res = await newDataSource(params);
+      emit('updateSuccess', {
+        text: t('新建成功'),
+        dataSourceId: res.data?.id,
+      });
     }
     window.changeInput = false;
   } catch (e) {

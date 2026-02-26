@@ -73,16 +73,18 @@ export interface DataSourceUsersParams {
 /**
  * 新建数据源参数
  */
+export interface UsernameConfig {
+  strategy: 'manual' | 'add_affix';
+  prefix: string;
+  suffix: string;
+}
+
 export interface NewDataSourceParams {
   plugin_id: string;
   plugin_config: GeneralDataSourcePluginConfig | LDAPDataSourcePluginConfig | LocalDataSourcePluginConfig;
   field_mapping?: FieldMapping[];
   sync_config?: SyncConfig;
-  username_config?: {
-    strategy: 'manual' | 'add_affix';
-    prefix: string;
-    suffix: string;
-  }
+  username_config?: UsernameConfig;
 }
 
 /**
@@ -99,6 +101,7 @@ export interface PutDataSourceParams {
   id: string;
   plugin_config: {};
   field_mapping: FieldMapping[];
+  username_config?: UsernameConfig;
 }
 
 /**
@@ -186,6 +189,11 @@ export interface DataSourceDetails {
   };
   sync_config: SyncConfig;
   field_mapping: FieldMapping[];
+  username_config: {
+    strategy: 'manual' | 'add_affix';
+    prefix: string;
+    suffix: string;
+  };
 }
 
 /**
@@ -392,4 +400,8 @@ export interface RelatedResourceStatistics {
   shared_to_tenant_count: number;
   shared_to_department_count: number;
   shared_to_user_count: number;
+}
+
+export interface BatchDeleteDataSourcesParams {
+  is_delete_idp?: boolean;
 }

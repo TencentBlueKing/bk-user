@@ -3,11 +3,13 @@
     :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
     v-bkloading="{ loading: isLoading, zIndex: 10 }"
   >
-    <DataSourceCard
+    <DataSourceItem
       v-if="!isSuccess"
-      :plugins="currentPlugins"
-      @handle-collapse="handleCollapse">
-      <template #content v-if="showContent">
+      :data="currentPlugins"
+      :open-hover="false"
+      @click="handleCollapse"
+    >
+      <template v-if="showContent">
         <div class="steps-wrapper">
           <bk-steps
             ext-cls="steps"
@@ -40,8 +42,12 @@
             @update-success="updateSuccess" />
         </div>
       </template>
-    </DataSourceCard>
-    <Success v-else :title="successText" />
+    </DataSourceItem>
+    <Success
+      v-else
+      :title="successText"
+      :data-source-id="dataSourceId"
+    />
   </div>
 </template>
 
@@ -53,8 +59,9 @@ import CustomJsonSchema from './CustomJsonSchema.vue';
 import Http from './HttpConfig.vue';
 import Ldap from './LdapConfig.vue';
 
-import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
+import DataSourceItem from '@/components/DataSourceItem.vue';
 import { getDataSourcePlugins } from '@/http';
+import { DataSourcePluginsItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
 
@@ -70,9 +77,9 @@ const currentType = ref('');
 const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
 
 // 获取数据源类型
-watch(() => route.query.type, (val: string) => {
+watch(() => route.query.type, (val: string | string[]) => {
   if (val) {
-    currentType.value = val;
+    currentType.value = Array.isArray(val) ? val[0] : val;
   }
 }, {
   deep: true,
@@ -80,17 +87,17 @@ watch(() => route.query.type, (val: string) => {
 });
 
 const dataSourceId = ref(null);
-// 获取数据源类型
-watch(() => route.query.id, (val: number) => {
+// 获取数据源 id
+watch(() => route.query.id, (val: string | string[]) => {
   if (val) {
-    dataSourceId.value = val;
+    dataSourceId.value = Array.isArray(val) ? val[0] : val;
   }
 }, {
   deep: true,
   immediate: true,
 });
 
-const currentPlugins = ref([]);
+const currentPlugins = ref({} as DataSourcePluginsItemData);
 const isLoading = ref(false);
 
 const curStep = ref(1);
@@ -108,7 +115,7 @@ const initDataSourcePlugins = () => {
   getDataSourcePlugins().then((res) => {
     res.data?.forEach((item) => {
       if (item.id === currentType.value) {
-        currentPlugins.value = [item];
+        currentPlugins.value = item;
       }
     });
     isLoading.value = false;
@@ -132,8 +139,9 @@ const handleCollapse = () => {
 // 数据源创建、更新
 const successText = ref('新建企业微信数据源成功');
 const isSuccess = ref(false);
-const updateSuccess = (value: string) => {
-  successText.value = `${value}${currentPlugins.value[0].name}${t('成功 ')}`;
+const updateSuccess = ({ text, dataSourceId: newDataSourceId }: { text: string; dataSourceId: number }) => {
+  successText.value = `${text}${currentPlugins.value.name}${t('成功 ')}`;
+  dataSourceId.value = newDataSourceId;
   isSuccess.value = true;
 };
 

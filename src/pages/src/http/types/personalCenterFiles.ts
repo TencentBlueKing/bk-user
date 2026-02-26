@@ -99,7 +99,7 @@ export interface PersonalCenterUsersData {
     username: string
     full_name: string
   }[]
-  extras?: Record<string; any>
+  extras?: Record<string, any>
   language: string
   time_zone: string
 }

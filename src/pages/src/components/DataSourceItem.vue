@@ -2,9 +2,9 @@
   <div>
     <div
       :class="[
-        'flex items-center justify-between p-[16px] mb-[2px] bg-white rounded-sm shadow-sm',
+        'flex items-center justify-between p-[16px] mb-[2px] bg-white rounded-sm shadow-sm cursor-pointer',
         'border border-white transition-all',
-        'hover:cursor-pointer hover:border-[1px] hover:border-solid hover:border-[#A3C5FD]',
+        { 'hover:border-[1px] hover:border-solid hover:border-[#A3C5FD]': openHover && !disabled},
         { 'hover:border-white': disabled }
       ]"
       v-bk-tooltips="{
@@ -67,10 +67,12 @@ interface Props {
   data: CardItem;
   /** 是否禁用 */
   disabled?: boolean;
+  openHover?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
+  openHover: true,
 });
 
 const emit = defineEmits<{

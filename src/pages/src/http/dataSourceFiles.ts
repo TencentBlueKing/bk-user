@@ -1,6 +1,7 @@
 import http from './fetch';
 import { ResponseData } from './types';
 import type {
+  BatchDeleteDataSourcesParams,
   DataSourceDetails,
   DataSourceItemData,
   DataSourcePluginDefaultConfig,
@@ -144,3 +145,8 @@ export const getRelatedResource = (dataSourceId: number) => http.get<ResponseDat
  * 自定义数据源插件配置信息
  */
 export const getCustomPlugin = (id: string) => http.get(`/api/v3/web/data-sources/plugins/${id}/config-meta/`);
+
+/**
+ * 批量重置数据源
+ */
+export const batchDeleteDataSources = (params: BatchDeleteDataSourcesParams) => http.delete('/api/v3/web/data-sources/operations/batch-delete/', params);

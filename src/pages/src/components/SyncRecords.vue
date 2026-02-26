@@ -37,6 +37,16 @@
           </template>
         </TableColumn>
         <TableColumn
+          field="plugin"
+          :label="$t('数据源类型')"
+          show-overflow="tooltip"
+          :min-width="160"
+        >
+          <template #default="{ row }">
+            <span>{{ row?.plugin?.name || '--' }}</span>
+          </template>
+        </TableColumn>
+        <TableColumn
           field="type"
           :label="$t('数据源类型')"
           show-overflow="tooltip"
@@ -166,7 +176,7 @@ const dataRecordConfig = reactive({
 });
 
 const settings = reactive({
-  checked: ['start_at', 'duration', 'operator', 'trigger', 'status'],
+  checked: ['start_at', 'duration', 'plugin', 'operator', 'trigger', 'status'],
   size: 'small',
 });
 

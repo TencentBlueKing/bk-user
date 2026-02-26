@@ -28,36 +28,22 @@
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
 
-import useDataSourceSetting from '@/hooks/useDataSourceSetting';
 import { postOperationsSync } from '@/http/dataSourceFiles';
 import router from '@/router';
-import { useDataSourceStore, useSyncStatus } from '@/store';
 
 interface IProps {
   title: string;
+  dataSourceId: number;
 }
 
-withDefaults(defineProps<IProps>(), {
+const props = withDefaults(defineProps<IProps>(), {
   title: '',
 });
 
-const syncStatusStore = useSyncStatus();
-const dataSourceStore = useDataSourceStore();
-const { startDataSourceSync } = useDataSourceSetting();
-
 // 同步数据后跳转到数据源配置页面
 const handleSync = async () => {
-  const res = await postOperationsSync(dataSourceStore.newDataSourceId);
+  const res = await postOperationsSync(props.dataSourceId);
   Message({ theme: res.data.status, message: res.data.summary });
-  // more-data-source-todo
-  // 新建完数据源后，若跳转到数据源列表，初始化会获取一次数据源状态
-  // 若为未同步完成，则会触发轮询，因此这里真的还需要手动轮询吗？
-  // 这里的pluginId是可以通过dataSourceStore.newDataSourceId获取吗？这是新建数据，看下是不是要用props处理
-  const dataSource = dataSourceStore.dataSource.find(item => item.id === dataSourceStore.newDataSourceId);
-  if (dataSource) {
-    startDataSourceSync(dataSourceStore.newDataSourceId, dataSource.plugin_id);
-  }
-  syncStatusStore.setRefresh(false);
   router.push({ name: 'dataSource' });
 };
 

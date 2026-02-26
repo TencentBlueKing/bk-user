@@ -727,5 +727,20 @@
   "HTTP 数据源": "HTTP Data Source",
   "当前已配置「{source}」，支持同时配置 1 个「{target}」": "Currently configured \"{source}\", supports configuring 1 \"{target}\" at the same time",
   "仅支持同时配置 1 个「{local}」和 1 个「{external}」，切换外部数据源将会清除原配置数据源": "Only supports configuring 1 \"{local}\" and 1 \"{external}\" at the same time. Switching external data sources will clear the original configuration",
-  "全部重置": "全部重置"
+  "全部重置": "Reset All",
+  "冲突配置": "Conflict Configuration",
+  "若后续存在入多个数据源的需求，建议您提前为用户名设置统一的冲突规则": "If you need to enter multiple data sources in the future, we recommend that you set a unified conflict rule for usernames in advance",
+  "用户名冲突规则": "Username Conflict Rule",
+  "不配置，发生冲突时手动处理": "No configuration, manual processing when conflict",
+  "为新数据源统一添加前后缀": "Add prefix and suffix to new data source",
+  "用户名生成规则": "Username Generation Rule",
+  "添加前缀": "Add Prefix",
+  "添加后缀": "Add Suffix",
+  "新用户名 ( username )": "New Username ( username )",
+  "用户名 ( username )": "Username ( username )",
+  "请输入前缀": "Please enter the prefix",
+  "请输入后缀": "Please enter the suffix",
+  "当前租户下发现其他数据源，请完成字段冲突时的规则配置。": "Other data sources have been found in the current tenant. Please complete the rule configuration when there is a conflict in the field.",
+  "是否重置所有数据源？": "Are you sure to reset all data sources?",
+  "重置后，所有数据源内的用户信息将同步删除，请谨慎操作": "Reset will delete all user information in all data sources. Please operate carefully."
 }
