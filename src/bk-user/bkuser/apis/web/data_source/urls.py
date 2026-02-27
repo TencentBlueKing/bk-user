@@ -68,6 +68,12 @@ urlpatterns = [
         views.DataSourceBatchDeleteApi.as_view(),
         name="data_source.batch_delete",
     ),
+    # 获取用户信息导入模板
+    path(
+        "operations/download_template/",
+        views.DataSourceTemplateApi.as_view(),
+        name="data_source.download_template",
+    ),
     # 数据源更新/获取/删除
     path(
         "<int:id>/",
@@ -79,12 +85,6 @@ urlpatterns = [
         "<int:id>/related-resource-statistics/",
         views.DataSourceRelatedResourceStatsApi.as_view(),
         name="data_source.related_resource_stats",
-    ),
-    # 获取用户信息导入模板
-    path(
-        "<int:id>/operations/download_template/",
-        views.DataSourceTemplateApi.as_view(),
-        name="data_source.download_template",
     ),
     # 导出数据源用户数据
     path(
