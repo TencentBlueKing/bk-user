@@ -9,27 +9,17 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   const dataSourcePlugins = ref<DataSourcePluginsItemData[]>([]);
   const dataSourceSyncStatusMap = ref<Map<number, SyncRecords['results'][number]>>(new Map());
 
-  /** 新建的数据源ID */
-  const newDataSourceId = ref(null);
-
   /** 是否已配置本地数据源插件 */
   const isConfiguredLocalPlugin = computed(() => dataSource.value.some(item => item.plugin_id === 'local'));
 
   /** 是否已配置通用数据源插件 */
   const isConfiguredGeneralPlugin = computed(() => dataSource.value.some(item => item.plugin_id === 'general'));
 
+  /** 是否已配置其他数据源插件 */
+  const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 1 && !isConfiguredLocalPlugin.value);
+
   /** 本地数据源ID */
   const localDataSourceId = computed(() => getDataSourceInfo('local')?.id);
-
-  /** 设置新建的数据源ID */
-  const setNewDataSourceId = (id: number) => {
-    newDataSourceId.value = id;
-  };
-
-  /** 清空新建的数据源ID */
-  const clearNewDataSourceId = () => {
-    newDataSourceId.value = null;
-  };
 
   /** 获取当前配置的数据源插件 */
   const handleFetchCurrentDataSource = async () => {
@@ -82,20 +72,22 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     await handleFetchSyncStatus(dataSources);
   };
 
+  /** 数据源是否同步中 */
+  const isDataSourceSyncing = (status: string) => ['pending', 'running'].includes(status);
+
   return {
     dataSourcePlugins,
     dataSource,
     dataSourceSyncStatusMap,
     isConfiguredLocalPlugin,
     isConfiguredGeneralPlugin,
+    isConfiguredOtherPlugin,
     localDataSourceId,
-    newDataSourceId,
     getDataSourceInfo,
     handleFetchCurrentDataSource,
     handleFetchAllDataSourcePlugins,
     handleFetchSyncStatus,
     handleInitSyncStatus,
-    setNewDataSourceId,
-    clearNewDataSourceId,
+    isDataSourceSyncing,
   };
 });

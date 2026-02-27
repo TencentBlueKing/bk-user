@@ -89,12 +89,7 @@
       </Row>
       <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
         <template #header>
-          <div class="flex items-center px-[16px] py-[8px] rounded-[2px]">
-            <i class="user-icon icon-info-i text-[14px] text-[#979BA5] mr-[8px]" />
-            <span class="text-[12px] text-[#63656E] leading-[20px]">
-              {{ $t('若后续存在入多个数据源的需求，建议您提前为用户名设置统一的冲突规则') }}
-            </span>
-          </div>
+          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
@@ -116,8 +111,8 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 
-import ConflictConfig from './components/conflict-config.vue';
-
+import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
+import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
@@ -126,7 +121,9 @@ import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTe
 import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
+import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
+
 const props = defineProps({
   currentType: {
     type: String,
@@ -144,6 +141,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const dataSourceStore = useDataSourceStore();
+
 const isEdit = computed(() => props.dataSourceId !== null);
 
 const formData = reactive({

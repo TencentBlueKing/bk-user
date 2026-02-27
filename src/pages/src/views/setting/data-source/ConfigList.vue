@@ -26,8 +26,8 @@
         { 'has-alert': userStore.showAlert },
       ]"
     >
-      <div class="info">
-        <i class="user-icon icon-info-i" />
+      <div class="mb-[16px]">
+        <i class="user-icon icon-info-i text-[#979BA5] text-[14px]" />
         <span v-if="!dataSource.length">
           {{ $t('当前还没有数据源，需要先选择数据源类型并进行配置') }}
         </span>
@@ -176,84 +176,10 @@
       </p>
     </div>
     <!-- 导入 -->
-    <bk-dialog
-      :is-show="importDialog.isShow"
-      :title="importDialog.title"
-      :quick-close="false"
-      :width="640"
-      @closed="closed"
-    >
-      <bk-upload
-        ref="uploadRef"
-        accept=".xlsx,.xls"
-        with-credentials
-        :limit="1"
-        :size="10"
-        :multiple="false"
-        :custom-request="customRequest"
-        @exceed="exceed">
-        <template #file="{ file }">
-          <div
-            :class="['excel-file', { 'excel-file-error': isError }]"
-            @mousemove="isHover = true"
-            @mouseleave="isHover = false">
-            <i class="user-icon icon-excel" />
-            <div class="file-text">
-              <div
-                v-overflow-tips
-                class="text-overflow">
-                {{ file.name }}
-              </div>
-              <p class="text-overflow file-status">
-                <i v-if="!isError" class="user-icon icon-check-line" />
-                {{ textTips }}
-              </p>
-            </div>
-            <div class="file-operations">
-              <span v-if="!isHover">{{ getSize(file.size) }}</span>
-              <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
-            </div>
-          </div>
-        </template>
-        <template #tip>
-          <div class="mt-[8px]">
-            <span>{{ $t('支持 Excel 文件，文件小于 10 M，下载') }}</span>
-            <bk-button text theme="primary" @click="handleExportTemplate">{{ $t('模版文件') }}</bk-button>
-          </div>
-        </template>
-      </bk-upload>
-      <template #footer>
-        <div class="footer-wrapper">
-          <div class="footer-left">
-            <bk-checkbox v-model="uploadInfo.overwrite">
-              {{ $t('允许对同名用户覆盖更新') }}
-            </bk-checkbox>
-            <bk-popover
-              ext-cls="popover-wrapper"
-              :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
-              placement="top"
-              width="280"
-            >
-              <InfoLine class="info" />
-            </bk-popover>
-          </div>
-          <div>
-            <bk-button
-              theme="primary"
-              class="w-[64px] mr-[8px]"
-              :loading="importDialog.loading"
-              @click="confirmImportUsers">
-              {{ $t('导入') }}
-            </bk-button>
-            <bk-button
-              class="w-[64px]"
-              @click="closed">
-              {{ $t('取消') }}
-            </bk-button>
-          </div>
-        </div>
-      </template>
-    </bk-dialog>
+    <ImportDialog
+      v-model:is-show="isShowImportDialog"
+      :data-source-id="dataSourceStore.localDataSourceId"
+    />
     <!-- 数据更新记录 -->
     <bk-sideslider
       v-model:is-show="updateConfig.isShow"
@@ -268,12 +194,11 @@
   </div>
 </template>
 
-<script setup lang="tsx"> import axios from 'axios';
+<script setup lang="tsx">
 import { InfoBox, Message } from 'bkui-vue';
-import { AngleDownLine, InfoLine, Upload } from 'bkui-vue/lib/icon';
-import Cookies from 'js-cookie';
+import { AngleDownLine, Upload } from 'bkui-vue/lib/icon';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HttpDetails from './HttpDetails.vue';
@@ -289,6 +214,7 @@ import { t } from '@/language/index';
 import router from '@/router';
 import { useDataSourceStore, useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
+import ImportDialog from '@/components/import-dialog/import-dialog.vue';
 const route = useRoute();
 
 const userStore = useUser();
@@ -307,6 +233,7 @@ const isExpanded = ref(false);
 const { startDataSourceSync: otherDataSourceSync } = useDataSourceSetting();
 const { startDataSourceSync: localDataSourceSync } = useDataSourceSetting();
 
+const isShowImportDialog = ref(false);
 const isLoading = ref(false);
 /**
  * 重置loading状态
@@ -320,22 +247,6 @@ const resetLoading = reactive({
   external: false,
 });
 const isDetailsExpanded = ref(false);
-const uploadInfo = reactive({
-  file: {},
-  overwrite: false,
-  incremental: true,
-});
-const uploadRef = ref();
-const isHover = ref(false);
-const textTips = ref('');
-const isError = ref(false);
-
-const importDialog = reactive({
-  isShow: false,
-  loading: false,
-  title: t('导入'),
-  id: 'local',
-});
 
 const updateConfig = reactive({
   isShow: false,
@@ -385,11 +296,9 @@ const visibleDataSourcePlugins = computed(() => {
 // 检查是否有任意数据源正在运行中（用于全部重置按钮）
 const disabledSyncBtn = computed(() => dataSourceStore.dataSource.some((item) => {
   const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(item.id);
-  return syncStatus && isDataSourceSyncing(syncStatus.status);
+  return syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status);
 }));
 
-/** 数据源是否同步中 */
-const isDataSourceSyncing = (status: string) => ['pending', 'running'].includes(status);
 
 /** 判断数据源是否已配置 */
 // eslint-disable-next-line max-len
@@ -400,7 +309,7 @@ const isDataSourceRunning = (pluginId: string) => {
   const dataSourceInfo = dataSourceStore.getDataSourceInfo(pluginId);
   if (!dataSourceInfo?.id) return false;
   const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(dataSourceInfo.id);
-  return syncStatus && isDataSourceSyncing(syncStatus.status);
+  return syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status);
 };
 
 // 获取指定数据源的同步状态
@@ -504,15 +413,7 @@ const handleClickDataSource = async (pluginId: string) => {
     // 未配置的数据源：执行新建/配置逻辑
     if (dataSourceStore.dataSource.length < 2) {
       if (pluginId === 'local') {
-        const res = await getDefaultConfig('local');
-        const newDataSourceData = await newDataSource({
-          plugin_id: 'local',
-          plugin_config: {
-            ...res.data?.config,
-          },
-        });
-        dataSourceStore.setNewDataSourceId(newDataSourceData.data?.id);
-        importDialog.isShow = true;
+        isShowImportDialog.value = true;
       } else {
         router.push({ name: 'newDataSource', query: { type: pluginId } });
       }
@@ -525,87 +426,7 @@ const handleEdit = (dataSourcePlugin: string) => {
   router.push({ name: 'newDataSource', query: { type: dataSourcePlugin, id: dataSourceId } });
 };
 
-const handleImport = () => importDialog.isShow = true;
-
-const customRequest = (data: { file: { size?: any; }; }) => {
-  if (data.file.size > (10 * 1024 * 1024)) {
-    isError.value = true;
-    textTips.value = t('文件大小超出限制');
-  } else {
-    isError.value = false;
-    textTips.value = t('上传成功');
-  }
-  uploadInfo.file = data.file;
-};
-
-const exceed = () => {
-  Message({ theme: 'error', message: t('最多上传1个文件，如需更新，请先删除已上传文件') });
-};
-
-const getSize = (value: number) => {
-  const size = value / 1024;
-  return `${parseFloat(size.toFixed(2))}KB`;
-};
-
-const handleUploadRemove = (file: any) => {
-  uploadRef.value?.handleRemove(file);
-  uploadInfo.file = {};
-};
-
-// 数据源导出模板
-const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${dataSourceStore.localDataSourceId}/operations/download_template/`;
-  window.open(url);
-};
-
-// 导入用户
-const confirmImportUsers = async () => {
-  if (!uploadInfo.file.name) {
-    return Message({ theme: 'warning', message: t('请选择文件再上传') });
-  }
-  if (isError.value) {
-    return Message({ theme: 'warning', message: t('文件大小超出限制，请重新上传') });
-  };
-
-  try {
-    importDialog.loading = true;
-    const formData = new FormData();
-    formData.append('file', uploadInfo.file);
-    formData.append('overwrite', uploadInfo.overwrite);
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
-        'x-requested-with': 'XMLHttpRequest',
-      },
-      withCredentials: true,
-    };
-    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${dataSourceStore.localDataSourceId}/operations/import/`;
-    await axios.post(url, formData, config);
-    Message({ theme: 'success', message: t('导入成功') });
-    localDataSourceSync(dataSourceStore.newDataSourceId, 'local');
-    dataSourceStore.handleFetchCurrentDataSource();
-  } catch (e) {
-    Message({ theme: 'error', message: e.response.data.error.message });
-  } finally {
-    importDialog.isShow = false;
-    importDialog.loading = false;
-  }
-};
-
-const closed = async () => {
-  importDialog.isShow = false;
-  if (dataSourceStore.newDataSourceId) {
-    // 删除新创建的数据源
-    await deleteDataSources({ id: dataSourceStore.newDataSourceId });
-    dataSourceStore.clearNewDataSourceId();
-    // 刷新当前数据源
-    await dataSourceStore.handleFetchCurrentDataSource();
-    uploadInfo.file = {};
-    uploadInfo.overwrite = false;
-    uploadInfo.incremental = true;
-  }
-};
+const handleImport = () => isShowImportDialog.value = true;
 
 const changeLog = () => {
   updateConfig.isShow = true;
@@ -623,7 +444,7 @@ const handleInit = async () => {
     // 初始化完成后，对状态为 pending/running 的数据源启动对应的轮询
     dataSourceStore.dataSource.forEach((item) => {
       const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(item.id);
-      if (syncStatus && isDataSourceSyncing(syncStatus.status)) {
+      if (syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status)) {
         if (item.plugin_id === 'local') {
           localDataSourceSync(item.id, item.plugin_id);
         } else {
@@ -654,15 +475,6 @@ onMounted(async () => {
   height: calc(100vh - 92px);
   padding: 16px 24px;
 
-  .info {
-    margin-bottom: 16px;
-
-    i {
-      font-size: 14px;
-      color: #979BA5;
-    }
-  }
-
   .tag-style {
     .tag-style();
   }
@@ -677,68 +489,6 @@ onMounted(async () => {
   }
 }
 
-.excel-file-error {
-  background: rgb(254 221 220 / 40%);
-  border-color: #ff5656 !important;
-
-  .file-status {
-    color: #ff5656 !important;
-  }
-}
-
-.excel-file {
-  display: flex;
-  padding: 10px;
-  overflow: hidden;
-  font-size: 12px;
-  flex: 1;
-  align-items: center;
-
-  .icon-excel {
-    margin-right: 14px;
-    font-size: 26px;
-    color: #2dcb56;
-  }
-
-  .file-text {
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .file-status {
-    color: #2dcb56;
-  }
-
-  .file-operations {
-    span {
-      font-weight: 700;
-    }
-
-    .icon-delete {
-      margin-left: 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  }
-}
-
-.footer-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  .footer-left {
-    display: flex;
-    align-items: center;
-  }
-
-  .info {
-    margin-left: 5px;
-    font-size: 16px;
-    color: #979BA5;
-    cursor: pointer;
-  }
-}
 
 ::v-deep .card-header {
   &:hover {

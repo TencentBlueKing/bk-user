@@ -1,12 +1,36 @@
 <template>
   <bk-dialog
     :is-show="isShow"
-    :title="importConfig.title"
     :quick-close="false"
     :width="640"
     @closed="closed"
   >
-    <bk-loading :loading="isLoading">
+    <template #header>
+      <span class="text-[#313238] text-[20px]">
+        {{ $t('导入') }}
+      </span>
+    </template>
+    <bk-loading :loading="importLoading || isDataSourceSyncing">
+      <template v-if="isFirstlyImport">
+        <ConflictTips
+          type="alert"
+          :has-other-data-source="!dataSourceStore.isConfiguredOtherPlugin"
+        />
+        <bk-form
+          ref="formRef"
+          :model="formModel"
+          :rules="rules"
+          form-type="vertical"
+          class="mt-[16px]"
+        >
+          <ConflictConfig
+            ref="conflictConfigRef"
+            variant="dialog"
+            :config="conflictConfig"
+            class="mb-[16px]"
+          />
+        </bk-form>
+      </template>
       <bk-upload
         ref="uploadRef"
         accept=".xlsx,.xls"
@@ -49,24 +73,26 @@
     <template #footer>
       <div class="footer-wrapper">
         <div class="footer-left">
-          <bk-checkbox v-model="uploadInfo.overwrite">
-            {{ $t('允许对同名用户覆盖更新') }}
-          </bk-checkbox>
-          <bk-popover
-            ext-cls="popover-wrapper"
-            :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
-            placement="top"
-            width="280"
-          >
-            <InfoLine class="info" />
-          </bk-popover>
+          <template v-if="!isFirstlyImport">
+            <bk-checkbox v-model="uploadInfo.overwrite">
+              {{ $t('允许对同名用户覆盖更新') }}
+            </bk-checkbox>
+            <bk-popover
+              ext-cls="popover-wrapper"
+              :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
+              placement="top"
+              width="280"
+            >
+              <InfoLine class="info" />
+            </bk-popover>
+          </template>
         </div>
         <div>
           <bk-button
             theme="primary"
             class="w-[64px] mr-[8px]"
-            :disabled="isLoading"
-            @click="confirmImportUsers">
+            :disabled="importLoading || isDataSourceSyncing"
+            @click="handleConfirm">
             {{ $t('导入') }}
           </bk-button>
           <bk-button
@@ -87,25 +113,56 @@ import { InfoLine } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
 import { computed, reactive, ref } from 'vue';
 
+import ConflictConfig from '../conflict-config/ConflictConfig.vue';
+import ConflictTips from '../conflict-config/ConflictTips.vue';
+
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
+import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
+import { UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
-import useOrganizationStore from '@/store/organization';
 
 interface IProps {
-  isShow: boolean;
+  dataSourceId?: number;
 }
-defineProps<IProps>();
-const emit = defineEmits(['update:isShow', 'success']);
+const isShow = defineModel<boolean>('isShow');
+const props = defineProps<IProps>();
+const emit = defineEmits(['success']);
 
-const organizationStore = useOrganizationStore();
 const dataSourceStore = useDataSourceStore();
 
-const importConfig = reactive({
-  loading: false,
-  title: t('导入'),
-  id: 'local',
+const rules = {
+  nameGeneration: [
+    {
+      required: true,
+      validator: () => {
+        const { strategy, prefix, suffix } = getConflictData();
+        if (strategy === 'add_affix') {
+          return !!(prefix || suffix);
+        }
+        return true;
+      },
+      message: () => {
+        const mode = conflictConfigRef.value?.nameGeneration;
+        return mode === 'add_suffix' ? t('请输入后缀') : t('请输入前缀');
+      },
+      trigger: 'blur',
+    },
+  ],
+};
+
+const conflictConfigRef = ref();
+const conflictConfig = ref<UsernameConfig>({
+  strategy: 'manual',
+  prefix: '',
+  suffix: '',
 });
+
+/** 这里无实际意义，但为了配合form校验，得有一个model */
+const formModel = ref({});
+
+const currentLocalDataSourceId = ref(props.dataSourceId);
+const importLoading = ref(false);
 const uploadRef = ref();
 const isHover = ref(false);
 const textTips = ref('');
@@ -115,13 +172,19 @@ const uploadInfo = reactive({
   overwrite: false,
   incremental: true,
 });
+const formRef = ref();
+
+const isFirstlyImport = computed(() => !(props?.dataSourceId !== null));
 
 /** 本地数据源插件 - 数据同步状态 */
 // eslint-disable-next-line max-len
-const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(dataSourceStore.localDataSourceId)?.status);
+const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(currentLocalDataSourceId.value)?.status);
 
-/** dialog loading time = 数据导入完毕的时间 + 后端同步数据的时间 */
-const isLoading = computed(() => importConfig.loading || ['pending', 'running'].includes(localDataSourceStatus.value));
+/** 本地数据源是否同步中 */
+const isDataSourceSyncing = computed(() => dataSourceStore.isDataSourceSyncing(localDataSourceStatus.value));
+
+
+const getConflictData = () => conflictConfigRef.value?.getData() ?? { strategy: 'manual', prefix: '', suffix: '' };
 
 const customRequest = (data) => {
   if (data.file.size > (10 * 1024 * 1024)) {
@@ -133,26 +196,63 @@ const customRequest = (data) => {
   }
   uploadInfo.file = data.file;
 };
+
+/** 关闭弹窗 */
 const closed = () => {
-  emit('update:isShow', false);
+  uploadInfo.file = {};
+  uploadInfo.overwrite = false;
+  uploadInfo.incremental = true;
+  isShow.value = false;
 };
 const exceed = () => {
   Message({ theme: 'error', message: t('最多上传1个文件，如需更新，请先删除已上传文件') });
 };
+
 const getSize = (value: number) => {
   const size = value / 1024;
   return `${parseFloat(size.toFixed(2))}KB`;
 };
+
 const handleUploadRemove = (file) => {
   uploadRef.value?.handleRemove(file);
   uploadInfo.file = {};
 };
-  // 数据源导出模板
+
+// 数据源导出模板
 const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${organizationStore.localSourceId}/operations/download_template/`;
+  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/operations/download_template/`;
   window.open(url);
 };
-  // 导入用户
+
+/**
+ * @description 首次导入本地数据源，需要先配置用户名冲突，创建dataSourceId后才可上传
+ */
+const handleConfirm = async () => {
+  let allowUpload = true;
+  if (isFirstlyImport.value) {
+    allowUpload = await createDataSource();
+  }
+  if (!allowUpload) return;
+  await confirmImportUsers();
+};
+
+/** 创建本地数据源 */
+const createDataSource = async () => {
+  const valid = await formRef.value.validate().catch(() => false);
+  if (!valid) return;
+  const res = await getDefaultConfig('local');
+  const newDataSourceData = await newDataSource({
+    plugin_id: 'local',
+    plugin_config: {
+      ...res.data?.config,
+    },
+    username_config: conflictConfigRef.value.getData(),
+  });
+  currentLocalDataSourceId.value = newDataSourceData.data?.id;
+  return Boolean(newDataSourceData.data?.id);
+};
+
+// 导入用户
 const confirmImportUsers = async () => {
   if (!uploadInfo.file.name) {
     return Message({ theme: 'warning', message: t('请选择文件再上传') });
@@ -162,10 +262,14 @@ const confirmImportUsers = async () => {
   };
 
   try {
-    importConfig.loading = true;
+    importLoading.value = true;
     const formData = new FormData();
     formData.append('file', uploadInfo.file);
     formData.append('overwrite', uploadInfo.overwrite);
+    if (conflictConfigRef.value) {
+      const usernameConfig = conflictConfigRef.value.getData();
+      formData.append('username_config', JSON.stringify(usernameConfig));
+    }
     const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -174,28 +278,28 @@ const confirmImportUsers = async () => {
       },
       withCredentials: true,
     };
-    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${organizationStore.localSourceId}/operations/import/`;
+    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentLocalDataSourceId.value}/operations/import/`;
     const res = await axios.post(url, formData, config);
-    // 确保 importConfig.loading 在最终状态(success/failed/backend error) 下才停止loading
+    // 确保 importLoading 在最终状态(success/failed/backend error) 下才停止loading
     // 因此取消在finally中处理loading的逻辑
     if (res.data.data.status === 'success') {
-      importConfig.loading = false;
+      importLoading.value = false;
       importSuccess();
     } else if (res.data.data.status === 'failed') {
-      importConfig.loading = false;
+      importLoading.value = false;
       Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      startDataSourceSync(dataSourceStore.newDataSourceId, 'local');
+      startDataSourceSync(currentLocalDataSourceId.value, 'local');
     }
   } catch (e) {
-    importConfig.loading = false;
+    importLoading.value = false;
     Message({ theme: 'error', message: e.response.data.error.message });
   }
 };
 
 /** 停止轮询时的钩子方法 [获取导入本地数据源状态] */
 const afterSyncImportData = () => {
-  importConfig.loading = false;
+  importLoading.value = false;
   if (localDataSourceStatus.value === 'success') {
     importSuccess();
   } else if (localDataSourceStatus.value === 'failed') {
@@ -207,7 +311,7 @@ const { startDataSourceSync } = useDataSourceSetting(afterSyncImportData);
 
 /** 导入成功时执行 */
 const importSuccess = () => {
-  emit('update:isShow', false);
+  isShow.value = false;
   InfoBox({
     infoType: 'success',
     title: t('导入成功'),

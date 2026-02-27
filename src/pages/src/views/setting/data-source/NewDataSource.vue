@@ -51,7 +51,8 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { onMounted, ref, watch } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Success from './ConfigSuccess.vue';
@@ -60,21 +61,74 @@ import Http from './HttpConfig.vue';
 import Ldap from './LdapConfig.vue';
 
 import DataSourceItem from '@/components/DataSourceItem.vue';
-import { getDataSourcePlugins } from '@/http';
 import { DataSourcePluginsItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import { useMainViewStore, useUser } from '@/store';
+import { useDataSourceStore, useMainViewStore, useUser } from '@/store';
 
 const store = useMainViewStore();
+const dataSourceStore = useDataSourceStore();
 store.customBreadcrumbs = false;
+
+const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
 
 const route = useRoute();
 
 const userStore = useUser();
 
 const currentType = ref('');
+const dataSourceId = ref(null);
 
-const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
+const currentPlugins = ref({} as DataSourcePluginsItemData);
+const isLoading = ref(false);
+
+const curStep = ref(1);
+const typeSteps = ref([
+  { title: t('服务配置') },
+  { title: t('字段设置') },
+]);
+
+// 切换展示状态
+const showContent = ref(true);
+// 数据源创建、更新
+const successText = ref('新建企业微信数据源成功');
+const isSuccess = ref(false);
+const isReset = ref(false);
+
+// 切换步骤
+const updateCurStep = (value: number) => {
+  curStep.value = value;
+};
+const handleCollapse = () => {
+  showContent.value = !showContent.value;
+};
+
+const updateSuccess = ({ text, dataSourceId: newDataSourceId }: { text: string; dataSourceId: number }) => {
+  successText.value = `${text}${currentPlugins.value.name}${t('成功 ')}`;
+  dataSourceId.value = newDataSourceId;
+  isSuccess.value = true;
+};
+
+const handleInit = async () => {
+  try {
+    isLoading.value = true;
+    await Promise.all([
+      dataSourceStore.handleFetchAllDataSourcePlugins(),
+      dataSourceStore.handleFetchCurrentDataSource(),
+    ]);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 获取数据源 id
+watch(() => route.query.id, (val: string | string[]) => {
+  if (val) {
+    dataSourceId.value = Array.isArray(val) ? val[0] : val;
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
 
 // 获取数据源类型
 watch(() => route.query.type, (val: string | string[]) => {
@@ -86,66 +140,10 @@ watch(() => route.query.type, (val: string | string[]) => {
   immediate: true,
 });
 
-const dataSourceId = ref(null);
-// 获取数据源 id
-watch(() => route.query.id, (val: string | string[]) => {
-  if (val) {
-    dataSourceId.value = Array.isArray(val) ? val[0] : val;
-  }
-}, {
-  deep: true,
-  immediate: true,
-});
-
-const currentPlugins = ref({} as DataSourcePluginsItemData);
-const isLoading = ref(false);
-
-const curStep = ref(1);
-const typeSteps = ref([
-  { title: t('服务配置') },
-  { title: t('字段设置') },
-]);
-
 onMounted(() => {
-  initDataSourcePlugins();
+  // 初始化数据源列表 - 若直接在新建/编辑页刷新，store中没有数据源列表
+  handleInit();
 });
-
-const initDataSourcePlugins = () => {
-  isLoading.value = true;
-  getDataSourcePlugins().then((res) => {
-    res.data?.forEach((item) => {
-      if (item.id === currentType.value) {
-        currentPlugins.value = item;
-      }
-    });
-    isLoading.value = false;
-  })
-    .catch(() => {
-      isLoading.value = false;
-    });
-};
-
-// 切换步骤
-const updateCurStep = (value: number) => {
-  curStep.value = value;
-};
-
-// 切换展示状态
-const showContent = ref(true);
-const handleCollapse = () => {
-  showContent.value = !showContent.value;
-};
-
-// 数据源创建、更新
-const successText = ref('新建企业微信数据源成功');
-const isSuccess = ref(false);
-const updateSuccess = ({ text, dataSourceId: newDataSourceId }: { text: string; dataSourceId: number }) => {
-  successText.value = `${text}${currentPlugins.value.name}${t('成功 ')}`;
-  dataSourceId.value = newDataSourceId;
-  isSuccess.value = true;
-};
-
-const isReset = ref(false);
 </script>
 
 <style lang="less" scoped>

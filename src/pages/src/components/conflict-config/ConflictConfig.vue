@@ -1,15 +1,44 @@
 <template>
-  <div class="pl-[40px] pb-[8px]">
-    <bk-form-item :label="$t('用户名冲突规则')" required>
-      <bk-radio-group v-model="strategy" :disabled="disabled">
-        <bk-radio-button label="manual">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
-        <bk-radio-button label="add_affix">{{ $t('为新数据的用户名添加前缀/后缀') }}</bk-radio-button>
-      </bk-radio-group>
+  <div :class="variant === 'default' ? 'pl-[40px] pb-[8px]' : ''">
+    <bk-form-item :label="$t('用户名冲突规则')" :required="variant === 'default'">
+      <!-- default 变体：使用 radio-button -->
+      <template v-if="variant === 'default'">
+        <bk-radio-group v-model="strategy" :disabled="disabled">
+          <bk-radio-button label="manual">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
+          <bk-radio-button label="add_affix">{{ $t('为新数据源统一添加前后缀') }}</bk-radio-button>
+        </bk-radio-group>
+      </template>
+
+      <!-- dialog 变体：竖向 radio 列表 -->
+      <template v-else>
+        <bk-radio-group v-model="strategy" :disabled="disabled" class="conflict-radio-list">
+          <div
+            :class="['conflict-radio-item', { 'conflict-radio-item-active': strategy === 'manual' }]"
+            @click="!disabled && (strategy = 'manual')"
+          >
+            <bk-radio label="manual" :disabled="disabled">
+              {{ $t('不配置，发生冲突时手动处理') }}
+            </bk-radio>
+          </div>
+          <div
+            :class="['conflict-radio-item', { 'conflict-radio-item-active': strategy === 'add_affix' }]"
+            @click="!disabled && (strategy = 'add_affix')"
+          >
+            <bk-radio label="add_affix" :disabled="disabled">
+              {{ $t('为新数据源统一添加前后缀') }}
+            </bk-radio>
+          </div>
+        </bk-radio-group>
+      </template>
     </bk-form-item>
 
     <template v-if="strategy === 'add_affix'">
       <div class="relative">
-        <bk-form-item :label="$t('用户名生成规则')" required>
+        <bk-form-item
+          :label="$t('用户名生成规则')"
+          property="nameGeneration"
+          required
+        >
           <div class="flex flex-col mt-[2px]">
             <bk-radio-group
               v-model="nameGeneration"
@@ -20,7 +49,7 @@
               <bk-radio label="add_suffix">{{ $t('添加后缀') }}</bk-radio>
             </bk-radio-group>
 
-            <div class="mt-[22px] flex items-center">
+            <div class="mt-[2px] flex items-center bg-[#F5F7FA] p-[12px]">
               <span class="text-[14px] text-[#63656E] mr-[8px] whitespace-nowrap">
                 {{ $t('新用户名 ( username )') }} =
               </span>
@@ -113,6 +142,7 @@ import { UsernameConfig } from '@/http/types/dataSourceFiles';
 const props = withDefaults(defineProps<{
   config: UsernameConfig;
   disabled?: boolean;
+  variant?: 'default' | 'dialog';
 }>(), {
   config: () => ({
     strategy: 'manual' as const,
@@ -120,6 +150,7 @@ const props = withDefaults(defineProps<{
     suffix: '',
   }),
   disabled: false,
+  variant: 'default',
 });
 
 const emit = defineEmits<{
@@ -181,9 +212,9 @@ const getData = (): UsernameConfig => {
     return { strategy: 'manual', prefix: '', suffix: '' };
   }
   if (nameGeneration.value === 'add_prefix') {
-    return { strategy: 'add_affix', prefix: `${prefix.value}${prefixConnector.value}`, suffix: '' };
+    return { strategy: 'add_affix', prefix: prefix.value ? `${prefix.value}${prefixConnector.value}` : '', suffix: '' };
   }
-  return { strategy: 'add_affix', prefix: '', suffix: `${suffixConnector.value}${suffix.value}` };
+  return { strategy: 'add_affix', prefix: '', suffix: suffix.value ? `${suffixConnector.value}${suffix.value}` : '' };
 };
 
 const popoverRef = ref();
@@ -203,7 +234,7 @@ const handleClickPreview = () => {
   }
 };
 
-defineExpose({ getData });
+defineExpose({ getData, nameGeneration });
 </script>
 
 <style lang="less" scoped>
@@ -247,6 +278,42 @@ defineExpose({ getData });
   :deep(.bk-select-trigger) {
     .bk-input {
       border-right: 1px solid #C4C6CC;
+    }
+  }
+}
+
+.conflict-radio-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0;
+
+  :deep(.bk-radio-group) {
+    flex-direction: column;
+  }
+}
+
+.conflict-radio-item {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 12px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4D4F56;
+  transition: background-color 0.2s;
+  background-color: #F5F7FA;
+
+  &:first-child {
+    margin-top: unset;
+  }
+
+  &-active {
+    background-color: #E1ECFF;
+
+    &:hover {
+      background-color: #E1ECFF;
     }
   }
 }
