@@ -92,7 +92,7 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         depts = TenantDepartment.objects.select_related("data_source_department").filter(
-            tenant=self.tenant_id, data_source_id__in=self.real_data_source_ids
+            tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         )
 
         # 分页
