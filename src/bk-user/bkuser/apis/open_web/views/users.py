@@ -265,12 +265,11 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     serializer_class = VirtualUserListOutputSLZ
 
-    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
-
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id)
+            .order_by("id")
         )
 
     @swagger_auto_schema(
@@ -280,12 +279,16 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        virtual_users = self.get_queryset()
-        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(virtual_users)
-
-        return Response(
-            VirtualUserListOutputSLZ(virtual_users, many=True, context={"display_name_map": display_name_map}).data
+        tenant_users = self.paginate_queryset(self.get_queryset())
+        slz = VirtualUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+            },
         )
+
+        return self.get_paginated_response(slz.data)
 
 
 class VirtualUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
@@ -301,8 +304,8 @@ class VirtualUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_web.user"],
-        operation_id="search_user",
-        operation_description="搜索用户",
+        operation_id="search_virtual_user",
+        operation_description="搜索虚拟用户",
         query_serializer=VirtualUserSearchInputSLZ(),
         responses={status.HTTP_200_OK: VirtualUserSearchOutputSLZ(many=True)},
     )
@@ -315,7 +318,6 @@ class VirtualUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             self.tenant_id, data["keyword"]
         )
 
-        # 查询条件应该是什么
         queryset = (
             TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id)
             .filter(
@@ -352,7 +354,6 @@ class VirtualUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if field == "bk_username":
             return Q(id__in=lookups)
 
-        # login_name -> data_source_user.username
         return Q(data_source_user__username__in=lookups)
 
     @swagger_auto_schema(
