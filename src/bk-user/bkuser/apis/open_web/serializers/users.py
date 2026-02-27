@@ -134,11 +134,11 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
-    def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_map"][obj.id]
-
     def get_login_name(self, obj: TenantUser) -> str:
         return self.context["login_name_map"][obj.id]
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return self.context["display_name_map"][obj.id]
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return self.context["org_path_map"].get(obj.data_source_user_id, [])

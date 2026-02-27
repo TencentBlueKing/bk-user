@@ -167,7 +167,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(data_source_user__username__icontains=keyword)
             | Q(data_source_user__full_name__icontains=keyword)
             | search_conditions,
-            Q(data_source_type=DataSourceTypeEnum.REAL),
+            Q(data_source__type=DataSourceTypeEnum.REAL),
         ]
 
         # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
@@ -233,7 +233,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             operator.or_, [self._convert_lookup_to_query(field, data["lookups"]) for field in data["lookup_fields"]]
         )
 
-        filter_args = [Q(tenant_id=self.tenant_id), condition, Q(data_source_type=DataSourceTypeEnum.REAL)]
+        filter_args = [Q(tenant_id=self.tenant_id), condition, Q(data_source__type=DataSourceTypeEnum.REAL)]
 
         # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
