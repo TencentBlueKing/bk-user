@@ -40,6 +40,10 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
     VirtualUserListOutputSLZ,
+    VirtualUserLookupInputSLZ,
+    VirtualUserLookupOutputSLZ,
+    VirtualUserSearchInputSLZ,
+    VirtualUserSearchOutputSLZ,
 )
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
@@ -67,14 +71,14 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
+                data_source_id__in=self.real_data_source_ids + self.collaboration_data_source_ids,
             ).select_related("data_source_user"),
             id=kwargs["id"],
         )
 
         return Response(
             {
-                "login_name": tenant_user.data_source_user.username,
+                "login_name": TenantUserHandler.get_login_name(tenant_user),
                 "full_name": tenant_user.data_source_user.full_name,
                 "display_name": TenantUserDisplayNameHandler.generate_tenant_user_display_name(tenant_user),
             }
@@ -100,15 +104,8 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
+            data_source_id__in=self.real_data_source_ids + self.collaboration_data_source_ids,
         ).select_related("data_source_user")
-
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
 
     @swagger_auto_schema(
         tags=["open_web.user"],
@@ -118,12 +115,25 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserDisplayInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+
+        return Response(
+            TenantUserDisplayInfoListOutputSLZ(
+                tenant_users,
+                many=True,
+                context={
+                    "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                        tenant_users
+                    ),
+                    "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+                },
+            ).data
+        )
 
 
 class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    搜索用户（包括协同用户与虚拟用户）
+    搜索用户（包括协同用户）
     """
 
     throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_USER)]
@@ -157,13 +167,8 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(data_source_user__username__icontains=keyword)
             | Q(data_source_user__full_name__icontains=keyword)
             | search_conditions,
+            Q(data_source_type=DataSourceTypeEnum.REAL),
         ]
-
-        # 若指定了数据源类型，则只搜索该类型的用户；否则搜索所有数据源类型（除内置管理）的用户
-        if data_source_type := data.get("data_source_type"):
-            filter_args.append(Q(data_source__type=data_source_type))
-        else:
-            filter_args.append(Q(data_source__type__in=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL]))
 
         # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
@@ -191,12 +196,15 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
 class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    批量查询用户（包括协同用户与虚拟用户）
+    批量查询用户（包括协同用户）
     """
 
-    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_USER)]
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_USER)]
 
     pagination_class = None
+
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
 
     @staticmethod
     def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
@@ -225,13 +233,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             operator.or_, [self._convert_lookup_to_query(field, data["lookups"]) for field in data["lookup_fields"]]
         )
 
-        filter_args = [Q(tenant_id=self.tenant_id), condition]
-
-        # 若指定了数据源类型，则只查询该类型的用户；否则查询所有数据源类型（除内置管理）的用户
-        if data_source_type := data.get("data_source_type"):
-            filter_args.append(Q(data_source__type=data_source_type))
-        else:
-            filter_args.append(Q(data_source__type__in=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL]))
+        filter_args = [Q(tenant_id=self.tenant_id), condition, Q(data_source_type=DataSourceTypeEnum.REAL)]
 
         # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
@@ -263,17 +265,13 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     serializer_class = VirtualUserListOutputSLZ
 
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
+
     def get_queryset(self) -> QuerySet[TenantUser]:
         return TenantUser.objects.select_related("data_source_user").filter(
             tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id
         )
-
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.paginate_queryset(self.get_queryset())
-            )
-        }
 
     @swagger_auto_schema(
         tags=["open_web.user"],
@@ -282,7 +280,109 @@ class VirtualUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        virtual_users = self.get_queryset()
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(virtual_users)
+
+        return Response(
+            VirtualUserListOutputSLZ(virtual_users, many=True, context={"display_name_map": display_name_map}).data
+        )
+
+
+class VirtualUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
+    """
+    查询虚拟用户列表
+    """
+
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_VIRTUAL_USER)]
+
+    pagination_class = None
+
+    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="search_user",
+        operation_description="搜索用户",
+        query_serializer=VirtualUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = VirtualUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        search_conditions = TenantUserDisplayNameHandler.build_display_name_search_queries(
+            self.tenant_id, data["keyword"]
+        )
+
+        # 查询条件应该是什么
+        queryset = (
+            TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.virtual_data_source_id)
+            .filter(
+                Q(data_source_user__username__icontains=data["keyword"])
+                | Q(data_source_user__full_name__icontains=data["keyword"])
+                | search_conditions
+            )
+            .select_related("data_source_user")[: self.search_limit]
+        )
+
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
+
+        return Response(
+            VirtualUserSearchOutputSLZ(queryset, many=True, context={"display_name_map": display_name_map}).data
+        )
+
+
+class VirtualUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
+    """
+    根据用户字段批量查询虚拟用户
+    """
+
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_VIRTUAL_USER)]
+
+    pagination_class = None
+
+    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
+
+    @staticmethod
+    def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
+        if field == "full_name":
+            return Q(data_source_user__full_name__in=lookups)
+
+        if field == "bk_username":
+            return Q(id__in=lookups)
+
+        # login_name -> data_source_user.username
+        return Q(data_source_user__username__in=lookups)
+
+    @swagger_auto_schema(
+        tags=["open_web.user"],
+        operation_id="batch_lookup_virtual_user",
+        operation_description="批量精确查询虚拟用户",
+        query_serializer=VirtualUserLookupInputSLZ(),
+        responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = VirtualUserLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 遍历匹配字段列表，构造 OR 查询条件
+        condition = reduce(
+            operator.or_, [self._convert_lookup_to_query(field, data["lookups"]) for field in data["lookup_fields"]]
+        )
+
+        queryset = TenantUser.objects.filter(
+            Q(tenant_id=self.tenant_id),
+            Q(data_source_id=self.virtual_data_source_id),
+            condition,
+        ).select_related("data_source_user")[: self.search_limit]
+
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
+
+        return Response(
+            VirtualUserLookupOutputSLZ(queryset, many=True, context={"display_name_map": display_name_map}).data
+        )
 
 
 class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMixin, generics.UpdateAPIView):
