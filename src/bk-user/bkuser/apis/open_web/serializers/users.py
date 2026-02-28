@@ -21,7 +21,6 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -96,13 +95,6 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
     lookup_fields = StringArrayField(help_text="匹配字段，多个使用逗号分隔")
-    data_source_type = serializers.ChoiceField(
-        help_text="数据源类型",
-        choices=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL],
-        required=False,
-        allow_blank=True,
-        default="",
-    )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
     with_organization_paths = serializers.BooleanField(
         help_text="是否返回用户所属部门路径", required=False, default=False
@@ -129,7 +121,6 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-    data_source_type = serializers.CharField(help_text="用户类型", source="data_source.type")
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
