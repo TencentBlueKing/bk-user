@@ -1,12 +1,19 @@
 import { Ref } from 'vue';
 
+import { UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
+
+/** ConflictConfig 组件通过 defineExpose 暴露的接口 */
+interface ConflictConfigExposed {
+  getData: () => UsernameConfig;
+  nameGeneration: 'add_prefix' | 'add_suffix';
+}
 
 /**
  * 冲突配置表单校验规则
  * @param conflictConfigRef - ConflictConfig 组件的 ref
  */
-export const useConflictRules = (conflictConfigRef: Ref) => {
+export const useConflictRules = (conflictConfigRef: Ref<ConflictConfigExposed | null>) => {
   const getConflictData = () => conflictConfigRef.value?.getData() ?? { strategy: 'manual', prefix: '', suffix: '' };
 
   const rules = {
@@ -29,5 +36,5 @@ export const useConflictRules = (conflictConfigRef: Ref) => {
     ],
   };
 
-  return { rules, getConflictData };
+  return { rules };
 };

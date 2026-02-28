@@ -17,11 +17,8 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="isSelectedNotLocalSource"
-            v-bk-tooltips="{
-              content: $t('非本地数据源，无法移动至组织'),
-              disabled: !isSelectedNotLocalSource
-            }"
+            :disabled="moveOrgDisabledConfig.disabled"
+            v-bk-tooltips="moveOrgDisabledConfig.tooltips"
             @click="handleMoveOrg"
           >
             {{ $t('移动至组织') }}
@@ -29,15 +26,8 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isEnabledPassword || isSelectedNotLocalSource"
-            v-bk-tooltips="{
-              content: !isEnabledPassword
-                ? $t('当前数据源未启用账密登录，无法重置密码')
-                : isSelectedNotLocalSource
-                  ? $t('非本地数据源，无法重置密码')
-                  : '',
-              disabled: isEnabledPassword && !isSelectedNotLocalSource
-            }"
+            :disabled="resetPasswordDisabledConfig.disabled"
+            v-bk-tooltips="resetPasswordDisabledConfig.tooltips"
             @click="handleResetPassword"
           >
             {{ $t('重置密码') }}
@@ -66,15 +56,13 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="isSelectedNotLocalSource"
-            v-bk-tooltips="{
-              content: $t('非本地数据源，无法删除'),
-              disabled: !isSelectedNotLocalSource
-            }"
+            :disabled="deleteDisabledConfig.disabled"
+            v-bk-tooltips="deleteDisabledConfig.tooltips"
             @click="handleBatchDelete"
           >
             {{ $t('删除') }}
           </bk-button>
+          <!-- 批量操作如果有外部数据源的用户，只能启用停用和续期，续期对所有数据源开放，不再disabled -->
           <bk-button
             text
             class="batch-operate-item"
@@ -284,6 +272,64 @@ const userInfoOptions = ref([
  */
 // eslint-disable-next-line max-len
 const isEnabledPassword = computed(() => !!organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password);
+
+/**
+ * 移动至组织按钮禁用配置
+ * 规则：如果当前选中外部数据源，禁用按钮
+ */
+const moveOrgDisabledConfig = computed(() => {
+  const disabled = isSelectedNotLocalSource.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('非本地数据源，无法移动至组织') : '',
+      disabled: !disabled,
+    },
+  };
+});
+
+/**
+ * 重置密码按钮禁用配置
+ * 规则优先级：
+ * 1. 如果当前选中外部数据源（isSelectedNotLocalSource），优先提示"非本地数据源，无法重置密码"
+ * 2. 如果不满足规则1，再判断本地数据源是否启用账密登录（isEnabledPassword），未启用则提示"当前数据源未启用账密登录，无法重置密码"
+ */
+const resetPasswordDisabledConfig = computed(() => {
+  // 优先判断是否为外部数据源
+  if (isSelectedNotLocalSource.value) {
+    return {
+      disabled: true,
+      tooltips: {
+        content: t('非本地数据源，无法重置密码'),
+        disabled: false,
+      },
+    };
+  }
+  // 再判断是否启用账密登录
+  const disabled = !isEnabledPassword.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('当前数据源未启用账密登录，无法重置密码') : '',
+      disabled: !disabled,
+    },
+  };
+});
+
+/**
+ * 删除按钮禁用配置
+ * 规则：如果当前选中外部数据源，禁用按钮
+ */
+const deleteDisabledConfig = computed(() => {
+  const disabled = isSelectedNotLocalSource.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('非本地数据源，无法删除') : '',
+      disabled: !disabled,
+    },
+  };
+});
 
 /**
  * 移动至组织
