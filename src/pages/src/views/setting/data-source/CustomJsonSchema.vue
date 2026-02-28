@@ -117,6 +117,7 @@ import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
 import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
@@ -152,6 +153,7 @@ const jsonSchema = ref({});
 const schemaFormRef = ref();
 const formRef2 = ref();
 const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 const fieldSettingData = ref({
   field_mapping: {
     // 内置字段
@@ -177,6 +179,7 @@ const validate = useValidate();
 const rulesFieldSetting = {
   target_field: [validate.required],
   source_field: [validate.required],
+  ...conflictRules,
 };
 const apiFields = ref([]);
 const fieldMappingList = ref([]);
@@ -489,7 +492,6 @@ onMounted(async () => {
 
 <style lang="less" scoped>
 .json-schema-container {
-  padding: 24px;
   margin-bottom: 0;
   border-bottom: 1px solid #EAEBF0;
   background: #FFF;
@@ -505,9 +507,20 @@ onMounted(async () => {
       }
     }
   }
+
+  .row-wrapper {
+    padding: 0 24px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #EAEBF0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
   .btn {
     position: relative;
-    padding: 24px;
+    padding: 0px 0 24px 24px;
+    background-color: #fff;
 
     button {
       min-width: 88px;

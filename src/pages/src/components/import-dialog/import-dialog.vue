@@ -19,7 +19,7 @@
         <bk-form
           ref="formRef"
           :model="formModel"
-          :rules="rules"
+          :rules="conflictRules"
           form-type="vertical"
           class="mt-[16px]"
         >
@@ -116,6 +116,7 @@ import { computed, reactive, ref } from 'vue';
 import ConflictConfig from '../conflict-config/ConflictConfig.vue';
 import ConflictTips from '../conflict-config/ConflictTips.vue';
 
+import { useConflictRules } from '@/hooks/useConflictRules';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
 import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
 import { UsernameConfig } from '@/http/types/dataSourceFiles';
@@ -131,27 +132,8 @@ const emit = defineEmits(['success']);
 
 const dataSourceStore = useDataSourceStore();
 
-const rules = {
-  nameGeneration: [
-    {
-      required: true,
-      validator: () => {
-        const { strategy, prefix, suffix } = getConflictData();
-        if (strategy === 'add_affix') {
-          return !!(prefix || suffix);
-        }
-        return true;
-      },
-      message: () => {
-        const mode = conflictConfigRef.value?.nameGeneration;
-        return mode === 'add_suffix' ? t('请输入后缀') : t('请输入前缀');
-      },
-      trigger: 'blur',
-    },
-  ],
-};
-
 const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 const conflictConfig = ref<UsernameConfig>({
   strategy: 'manual',
   prefix: '',
@@ -183,8 +165,6 @@ const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatu
 /** 本地数据源是否同步中 */
 const isDataSourceSyncing = computed(() => dataSourceStore.isDataSourceSyncing(localDataSourceStatus.value));
 
-
-const getConflictData = () => conflictConfigRef.value?.getData() ?? { strategy: 'manual', prefix: '', suffix: '' };
 
 const customRequest = (data) => {
   if (data.file.size > (10 * 1024 * 1024)) {

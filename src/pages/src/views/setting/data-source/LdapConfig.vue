@@ -68,7 +68,7 @@
           </bk-form-item>
         </div>
       </Row>
-      <Row :title="$t('数据配置')">
+      <Row :title="$t('数据配置')" class="!shadow-none !border-b-0">
         <bk-form-item class="w-[560px]" :label="$t('用户对象类')" required property="data_config.user_object_class">
           <bk-input
             placeholder="inetOrgPerson"
@@ -105,7 +105,7 @@
             @input="handleChange" />
         </bk-form-item>
         <bk-form-item
-          class="w-[560px]"
+          class="w-[560px] !mb-0"
           :label="$t('部门 Base DN')"
           :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
           <div
@@ -125,34 +125,34 @@
             {{ $t('新增') }}
           </bk-button>
         </bk-form-item>
-        <div class="btn">
-          <div>
-            <bk-button
-              class="mr-[8px]"
-              theme="primary"
-              :outline="!nextDisabled"
-              :loading="connectionLoading"
-              @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-            <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-              {{ $t('下一步') }}
-            </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-          </div>
-          <div class="connection-alert" v-if="connectionStatus !== null">
-            <bk-alert
-              :theme="connectionStatus ? 'success' : 'error'"
-              :show-icon="false">
-              <template #title>
-                <span>
-                  <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                  <i v-else class="bk-sq-icon icon-close-fill" />
-                  {{ connectionText }}
-                </span>
-              </template>
-            </bk-alert>
-          </div>
-        </div>
       </Row>
+      <div class="btn">
+        <div>
+          <bk-button
+            class="mr-[8px]"
+            theme="primary"
+            :outline="!nextDisabled"
+            :loading="connectionLoading"
+            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+            {{ $t('下一步') }}
+          </bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+        </div>
+        <div class="connection-alert" v-if="connectionStatus !== null">
+          <bk-alert
+            :theme="connectionStatus ? 'success' : 'error'"
+            :show-icon="false">
+            <template #title>
+              <span>
+                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                <i v-else class="bk-sq-icon icon-close-fill" />
+                {{ connectionText }}
+              </span>
+            </template>
+          </bk-alert>
+        </div>
+      </div>
     </bk-form>
     <bk-form
       v-else
@@ -309,6 +309,7 @@ import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import { getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
 import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
@@ -336,6 +337,7 @@ const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
 const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 interface LdapConfigData {
   plugin_id: string,
@@ -465,6 +467,7 @@ const rulesFieldSetting = {
   'user_group_config.group_member_field': [validate.required],
   'user_group_config.search_base_dns': [validate.required],
   'leader_config.leader_field': [validate.required],
+  ...conflictRules,
 };
 
 const editLeaveBefore = inject('editLeaveBefore');
@@ -854,7 +857,8 @@ const handleDelBaseDn = (type: string, index: number) => {
 
 .btn {
   position: relative;
-  padding: 8px 0 32px;
+  padding: 0px 0 24px 24px;
+  background-color: #fff;
 
   button {
     min-width: 88px;
