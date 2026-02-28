@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import type { IMessage } from 'bkui-vue/lib/message/messageConstructor';
-import { defineEmits, inject, reactive, ref } from 'vue';
+import { inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
 
@@ -123,11 +123,12 @@ import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
 import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
+import { SearchOrganizationItemData, SearchUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 
 const emit = defineEmits(['select']);
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -148,8 +149,8 @@ const state = reactive({
 });
 
 const search = ref('');
-const orgs = ref([]);
-const users = ref([]);
+const orgs = ref<SearchOrganizationItemData[]>([]);
+const users = ref<SearchUserItemData[]>([]);
 const searchDialogVisible = ref(false);
 const searchLoading = ref(false);
 const selected = ref({});
@@ -157,14 +158,14 @@ const selected = ref({});
 const handleSearch = () => {
   if (search.value.length === 0) {
     searchDialogVisible.value = false;
-    appStore.isSearchTree = false;
+    organizationStore.isSearchTree = false;
     return;
   }
   searchData();
 };
 
 const handleClear = () => {
-  appStore.isSearchTree = false;
+  organizationStore.isSearchTree = false;
   search.value = '';
   searchDialogVisible.value = false;
 };
@@ -235,15 +236,23 @@ const handleShowErrorMessage = (messageConfig: IMessage) => {
   });
 };
 
-const handleOrgSelect = (org) => {
-  appStore.isSearchTree = true;
+const handleOrgSelect = (org: SearchOrganizationItemData) => {
+  organizationStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
-  appStore.currentOrg = { ...org };
+  organizationStore.updateSelectedOrg({
+    tenantId: org.tenant_id,
+    tenantName: org.tenant_name,
+    tenantLogo: organizationStore.getTenantLogo(org.tenant_id),
+    dataSourceId: org.data_source_id,
+    deptId: org.id,
+    deptName: org.name,
+    organizationPath: org.organization_path,
+  });
   emit('select');
 };
 
-const handleUserSelect = async (user) => {
+const handleUserSelect = async (user: SearchUserItemData) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
@@ -275,6 +284,6 @@ const handleBeforeClose = async () => {
 
 const handleRefresh = () => {
   handleClear();
-  appStore.reloadIndex += 1;
+  organizationStore.reloadIndex += 1;
 };
 </script>

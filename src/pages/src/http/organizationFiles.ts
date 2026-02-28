@@ -1,16 +1,22 @@
-import http from './fetch';
+import http, { Config } from './fetch';
+import { ResponseData } from './types';
 import type {
   BatchUpdateParams,
+  CollaborationItemData,
+  CurrentTenantData,
+  DepartmentsItemData,
   DepartmentsListParams,
+  GetUserListParams,
   OptionalDepartmentsListData,
+  SearchKeywordParams,
+  SearchOrganizationItemData,
+  SearchUserItemData,
   TenantListParams,
+  TenantsUserListData,
   UpdateTenantParams,
 } from './types/organizationFiles';
 
 const prefix = 'api/v3/web/organization';
-interface ResponseData<T> {
-  data: T
-}
 
 /**
  * 组织架构-租户列表
@@ -55,12 +61,14 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
 /**
  * 当前租户
  */
-export const getCurrentTenant = () => http.get(`${prefix}/current-tenant/`);
+export const getCurrentTenant = () => http.get<ResponseData<CurrentTenantData>>(`${prefix}/current-tenant/`);
 
 /**
- * 当前租户下的部门列表，id为0时表示获取根部门
+ * 当前租户下的部门列表，deptId为0时表示获取根部门
+ * @param deptId 部门id
+ * @param tenantId 租户id
  */
-export const getDepartmentsList = (deptId: number, id: string) => http.get(`${prefix}/tenants/${id}/departments/`, { parent_department_id: deptId });
+export const getDepartmentsList = (deptId: number, tenantId: string) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, { parent_department_id: deptId });
 
 /**
  * 创建租户组织
@@ -80,12 +88,12 @@ export const updateDepartment = (id: string, params: any) => http.put(`${prefix}
 /**
  * 获取当前租户的协作租户信息
  */
-export const getCollaboration = () => http.get(`${prefix}/collaboration-tenants/`);
+export const getCollaboration = () => http.get<ResponseData<CollaborationItemData[]>>(`${prefix}/collaboration-tenants/`);
 
 /**
  * 拉取租户用户列表
  */
-export const getTenantsUserList = (id: string, params: any) => http.get(`${prefix}/tenants/${id}/users/`, params);
+export const getTenantsUserList = (tenantId: string, params: any) => http.get<ResponseData<TenantsUserListData>>(`${prefix}/tenants/${tenantId}/users/`, params);
 
 /**
  * 获取租户用户详情
@@ -115,7 +123,7 @@ export const delTenantsUser = (id: string) => http.delete(`${prefix}/tenants/use
 /**
  * 变更租户用户状态（启用/停用）
  */
-export const updateTenantsUserStatus = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/status/`, params);
+export const updateTenantsUserStatus = (id: string, params?: any) => http.put(`${prefix}/tenants/users/${id}/status/`, params);
 
 
 /**
@@ -204,12 +212,12 @@ export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/te
 /**
  * 搜索组织
  */
-export const searchOrganization = (params: any, config?: any) => http.get(`${prefix}/tenants/departments/`, params, config);
+export const searchOrganization = (params: SearchKeywordParams, config?: Config) => http.get<ResponseData<SearchOrganizationItemData[]>>(`${prefix}/tenants/departments/`, params, config);
 
 /**
  * 搜索用户
  */
-export const searchUser = (params: any, config?: any) => http.get(`${prefix}/tenants/users/`, params, config);
+export const searchUser = (params: SearchKeywordParams, config?: Config) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params, config);
 
 /**
  * 租户下部门单个用户详情
@@ -219,7 +227,7 @@ export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/
 /**
  * 搜索租户用户
  */
-export const getUsersList = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+export const getUsersList = (params: GetUserListParams) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params);
 
 /**
  * 密码规则

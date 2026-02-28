@@ -1,5 +1,9 @@
 <template>
-  <bk-loading :loading="isLoading" class="data-source-content user-scroll-y">
+  <bk-loading
+    :loading="isLoading"
+    class="data-source-content user-scroll-y"
+    :z-index="10"
+  >
     <bk-form
       v-if="props.curStep === 1 && serverConfigData.plugin_id"
       form-type="vertical"
@@ -149,34 +153,34 @@
             />
           </bk-form-item>
         </div>
-        <div class="btn">
-          <div>
-            <bk-button
-              class="mr-[8px]"
-              theme="primary"
-              :outline="!nextDisabled"
-              :loading="connectionLoading"
-              @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-            <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-              {{ $t('下一步') }}
-            </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-          </div>
-          <div class="connection-alert" v-if="connectionStatus !== null">
-            <bk-alert
-              :theme="connectionStatus ? 'success' : 'error'"
-              :show-icon="false">
-              <template #title>
-                <span>
-                  <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                  <i v-else class="bk-sq-icon icon-close-fill" />
-                  {{ connectionText }}
-                </span>
-              </template>
-            </bk-alert>
-          </div>
-        </div>
       </Row>
+      <div class="btn">
+        <div>
+          <bk-button
+            class="mr-[8px]"
+            theme="primary"
+            :outline="!nextDisabled"
+            :loading="connectionLoading"
+            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+            {{ $t('下一步') }}
+          </bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+        </div>
+        <div class="connection-alert" v-if="connectionStatus !== null">
+          <bk-alert
+            :theme="connectionStatus ? 'success' : 'error'"
+            :show-icon="false">
+            <template #title>
+              <span>
+                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                <i v-else class="bk-sq-icon icon-close-fill" />
+                {{ connectionText }}
+              </span>
+            </template>
+          </bk-alert>
+        </div>
+      </div>
     </bk-form>
     <bk-form
       v-else
@@ -225,14 +229,24 @@
             />
           </bk-select>
         </bk-form-item>
-        <div class="btn">
-          <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-            {{ dataSourceId ? $t('保存') : $t('提交') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
       </Row>
+      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+        <template #header>
+          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+        </template>
+        <ConflictConfig
+          ref="conflictConfigRef"
+          :config="fieldSettingData.username_config"
+          :disabled="isEdit"
+        />
+      </Row>
+      <div class="btn">
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+          {{ isEdit ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
@@ -242,6 +256,8 @@ import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 
+import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
+import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -253,9 +269,10 @@ import {
   postTestConnection,
   putDataSourceDetails,
 } from '@/http';
+import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { useUser } from '@/store';
+import { useDataSourceStore, useUser } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 const props = defineProps({
@@ -273,14 +290,17 @@ const props = defineProps({
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
+const isEdit = computed(() => props.dataSourceId !== null);
 const validate = useValidate();
 const userStore = useUser();
+const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
 const formRef1 = ref();
 const editLeaveBefore = inject('editLeaveBefore');
 
 const formRef2 = ref();
+const conflictConfigRef = ref();
 
 const defaultServerConfig = () => ({
   plugin_id: 'general',
@@ -320,6 +340,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+  username_config: {
+    strategy: 'manual',
+    prefix: '',
+    suffix: '',
+  } as UsernameConfig,
 });
 
 /** 是否展示服务配置-服务地址 form-item */
@@ -396,7 +421,7 @@ const fieldMappingList = ref([]);
 onMounted(async () => {
   try {
     isLoading.value = true;
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const res = await getDataSourceDetails(props.dataSourceId);
       serverConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
@@ -405,6 +430,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
+      fieldSettingData.value.username_config = res.data?.username_config;
     } else {
       serverConfigData.value = defaultServerConfig();
     }
@@ -424,7 +450,7 @@ const handleNext = async () => {
     emit('updateCurStep', 2);
     isLoading.value = true;
     const res = await getFields();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const list = [];
       const customList = [];
       const mapFields = (fields, item, isDisabled, fieldMappingType) => {
@@ -521,7 +547,7 @@ const handleLastStep = async () => {
   fieldSettingData.value.field_mapping.custom_fields = [];
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
-  if (props?.dataSourceId) {
+  if (isEdit.value) {
     const res = await getDataSourceDetails(props.dataSourceId);
     fieldSettingData.value.sync_config = res.data?.sync_config;
   } else {
@@ -558,7 +584,7 @@ const handleTestConnection = async () => {
         auth_config: serverConfigData.value.auth_config,
       },
     };
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.data_source_id = props.dataSourceId;
     }
     const res = await postTestConnection(params);
@@ -635,7 +661,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params = {
+    const params: Partial<NewDataSourceParams> = {
       plugin_config: {
         server_config: serverConfigData.value.server_config,
         auth_config: serverConfigData.value.auth_config,
@@ -647,14 +673,21 @@ const handleSubmit = async () => {
       sync_config: fieldSettingData.value.sync_config,
     };
 
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.id = props.dataSourceId;
       await putDataSourceDetails(params);
-      emit('updateSuccess', t('更新'));
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+      });
     } else {
       params.plugin_id = serverConfigData.value.plugin_id;
-      await newDataSource(params);
-      emit('updateSuccess', t('新建成功'));
+      params.username_config = conflictConfigRef.value?.getData();
+      const res = await newDataSource(params);
+      emit('updateSuccess', {
+        text: t('新建成功'),
+        dataSourceId: res.data?.id,
+      });
     }
     window.changeInput = false;
   } catch (e) {
@@ -715,7 +748,8 @@ const handleCancel = () => {
 
 .btn {
   position: relative;
-  padding: 8px 0 32px;
+  padding: 0px 0 24px 24px;
+  background-color: #fff;
 
   button {
     min-width: 88px;

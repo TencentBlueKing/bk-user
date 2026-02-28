@@ -23,7 +23,7 @@
       >
         <div class="info-content theme">
           <i class="user-icon icon-info-i theme-icon" />
-          <p>{{$t('快速将用户录入到')}}「{{currentOrgName}}」，{{$t('如需添加到其他组织，请使用')}}
+          <p>{{$t('快速将用户录入到')}}「{{ selectedOrgName }}」，{{$t('如需添加到其他组织，请使用')}}
             <label
               class="text-[#3A84FF] cursor-pointer"
               @click="importClick">{{$t('「导入」')}}</label>
@@ -121,7 +121,7 @@ import { getFields } from '@/http';
 import { batchCreatePreview, getFieldsTips, operationsCreate } from '@/http/organizationFiles';
 import { t } from '@/language/index';
 import router from '@/router';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 const props = defineProps({
   isShow: {
     type: Boolean,
@@ -129,13 +129,13 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['update:isShow', 'success', 'click-import']);
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 const tipsInfo = ref('');
 const validate = useValidate();
 const rules = {
   val: [validate.required],
 };
-const formRef = ref('');
+const formRef = ref();
 const tableData = ref([]);
 const formData = ref({
   val: '',
@@ -146,7 +146,7 @@ const objectSteps = ref([
 ]);
 const isLoading = ref(false);
 const currentId = ref(1);
-const currentOrgName = computed(() => appStore.currentOrg?.name);
+const selectedOrgName = computed(() => organizationStore.selectedOrg.deptName);
 watch(() => props.isShow, async (val) => {
   if (val) {
     currentId.value = 1;
@@ -171,7 +171,7 @@ const handleNext = async () => {
     isLoading.value = true;
     const param = {
       user_infos: formData.value.val.split('\n'),
-      department_id: appStore.currentOrg.id,
+      department_id: organizationStore.selectedOrg.deptId,
     };
     try {
       const res = await batchCreatePreview(param);
@@ -254,7 +254,7 @@ const confirm = async () => {
   try {
     const param = {
       user_infos: formData.value.val.split('\n'),
-      department_id: appStore.currentOrg.id,
+      department_id: organizationStore.selectedOrg.deptId,
     };
     await operationsCreate(param);
     emit('success');
@@ -268,7 +268,7 @@ const confirm = async () => {
 const closed = () => {
   emit('update:isShow', false);
 };
-const goToSetting = (name) => {
+const goToSetting = (name: string) => {
   router.push({ name, query: {
     isLink: true,
   } });

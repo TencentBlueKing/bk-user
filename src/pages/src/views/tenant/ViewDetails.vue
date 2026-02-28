@@ -17,8 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
-
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
 import { tenantStatus } from '@/utils';
