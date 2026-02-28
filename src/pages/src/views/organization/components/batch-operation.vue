@@ -17,10 +17,10 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isLocalDataSource"
+            :disabled="isSelectedNotLocalSource"
             v-bk-tooltips="{
               content: $t('非本地数据源，无法移动至组织'),
-              disabled: isLocalDataSource
+              disabled: !isSelectedNotLocalSource
             }"
             @click="handleMoveOrg"
           >
@@ -29,14 +29,14 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isEnabledPassword || !isLocalDataSource"
+            :disabled="!isEnabledPassword || isSelectedNotLocalSource"
             v-bk-tooltips="{
               content: !isEnabledPassword
-                ? $t('当前租户未启用账密登录，无法修改密码')
-                : !isLocalDataSource
+                ? $t('当前数据源未启用账密登录，无法重置密码')
+                : isSelectedNotLocalSource
                   ? $t('非本地数据源，无法重置密码')
                   : '',
-              disabled: isEnabledPassword && isLocalDataSource
+              disabled: isEnabledPassword && !isSelectedNotLocalSource
             }"
             @click="handleResetPassword"
           >
@@ -66,10 +66,10 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isLocalDataSource"
+            :disabled="isSelectedNotLocalSource"
             v-bk-tooltips="{
               content: $t('非本地数据源，无法删除'),
-              disabled: isLocalDataSource
+              disabled: !isSelectedNotLocalSource
             }"
             @click="handleBatchDelete"
           >
@@ -78,9 +78,6 @@
           <bk-button
             text
             class="batch-operate-item"
-            v-bk-tooltips="{
-              content: $t('非本地数据源或 LDAP 数据源，无法续期')
-            }"
             @click="handleBatchRenewal"
           >
             {{ $t('续期') }}
@@ -161,7 +158,7 @@
             <bk-dropdown-item
               v-for="(item, index) in userInfoOptions"
               :key="index"
-              :class="{ 'is-selected': item.selected, 'is-disabled': item.disabled }"
+              :class="{ 'is-selected': item.selected, 'is-disabled': getOptionDisabled(item) }"
               @click.native="selectOption(item)"
             >
               {{ item.text }}
@@ -246,7 +243,10 @@ const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 're
 
 const organizationStore = useOrganizationStore();
 
-/** 是否为本地数据源 */
+/** 当前选中的是否包含非本地数据源 */
+// eslint-disable-next-line max-len
+const isSelectedNotLocalSource = computed(() => props.selectList.some(item => item.data_source_id !== organizationStore.localSourceId));
+/** 当前数据源是否为本地数据源 */
 const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
@@ -275,23 +275,15 @@ const dropdownVisible = ref(false);
 const isShowRenewal = ref(false);
 
 const userInfoOptions = ref([
-  { text: t('账号过期时间'), type: 'date', selected: false, disabled: false },
-  { text: t('直属上级'), type: 'leader', selected: false, disabled: !isLocalDataSource.value },
+  { text: t('账号过期时间'), type: 'date', selected: false },
+  { text: t('直属上级'), type: 'leader', selected: false },
 ]);
 
 /**
- * @description 当前选中的是否允许修改密码
- *  - 仅本地数据源可以修改密码，若批量处理包含非本地数据源，则不允许修改密码
- *  - 若本地数据源未启用账密登录，则不允许修改密码
+ * @description 本地数据源是否启用了账密登录
  */
 // eslint-disable-next-line max-len
-const isEnabledPassword = computed(() => {
-  // 所有选中的用户都是本地数据源
-  const allLocalSource = props.selectList.every(item => item.data_source_id === organizationStore.localSourceId);
-  // 本地数据源启用了密码
-  const passwordEnabled = organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password;
-  return allLocalSource && passwordEnabled;
-});
+const isEnabledPassword = computed(() => !!organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password);
 
 /**
  * 移动至组织
@@ -372,8 +364,10 @@ watch(infoFormData, (val) => {
   });
 }, { deep: true, immediate: true });
 
+const getOptionDisabled = (item) => isSelectedNotLocalSource.value && item.type === 'leader';
+
 const selectOption = (selectedItem) => {
-  if (selectedItem.disabled) {
+  if (getOptionDisabled(selectedItem)) {
     userInfoVisible.value = false;
     return;
   }
