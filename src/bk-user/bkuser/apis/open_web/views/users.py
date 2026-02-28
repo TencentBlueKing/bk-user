@@ -199,7 +199,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
     批量查询用户（包括协同用户）
     """
 
-    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.SEARCH_USER)]
+    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_USER)]
 
     pagination_class = None
 
