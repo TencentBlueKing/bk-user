@@ -55,7 +55,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 
 class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveAPIView):
     """
-    查询用户展示信息
+    查询用户展示信息（包括协同用户）
     Note: 前端服务专用 API 接口，该接口对性能要求较高，所以不进行序列化，且查询必须按字段
     """
 
@@ -87,7 +87,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
 
 class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     """
-    批量查询用户展示信息
+    批量查询用户展示信息（包括协同用户）
     Note: 前端服务专用 API 接口
     """
 
@@ -239,7 +239,9 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
 
-        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")[
+            : self.search_limit
+        ]
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
