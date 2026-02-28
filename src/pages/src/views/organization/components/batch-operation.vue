@@ -17,11 +17,8 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isLocalDataSource"
-            v-bk-tooltips="{
-              content: $t('非本地数据源，无法移动至组织'),
-              disabled: isLocalDataSource
-            }"
+            :disabled="moveOrgDisabledConfig.disabled"
+            v-bk-tooltips="moveOrgDisabledConfig.tooltips"
             @click="handleMoveOrg"
           >
             {{ $t('移动至组织') }}
@@ -29,15 +26,8 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isEnabledPassword || !isLocalDataSource"
-            v-bk-tooltips="{
-              content: !isEnabledPassword
-                ? $t('当前租户未启用账密登录，无法修改密码')
-                : !isLocalDataSource
-                  ? $t('非本地数据源，无法重置密码')
-                  : '',
-              disabled: isEnabledPassword && isLocalDataSource
-            }"
+            :disabled="resetPasswordDisabledConfig.disabled"
+            v-bk-tooltips="resetPasswordDisabledConfig.tooltips"
             @click="handleResetPassword"
           >
             {{ $t('重置密码') }}
@@ -66,21 +56,16 @@
           <bk-button
             text
             class="batch-operate-item"
-            :disabled="!isLocalDataSource"
-            v-bk-tooltips="{
-              content: $t('非本地数据源，无法删除'),
-              disabled: isLocalDataSource
-            }"
+            :disabled="deleteDisabledConfig.disabled"
+            v-bk-tooltips="deleteDisabledConfig.tooltips"
             @click="handleBatchDelete"
           >
             {{ $t('删除') }}
           </bk-button>
+          <!-- 批量操作如果有外部数据源的用户，只能启用停用和续期，续期对所有数据源开放，不再disabled -->
           <bk-button
             text
             class="batch-operate-item"
-            v-bk-tooltips="{
-              content: $t('非本地数据源或 LDAP 数据源，无法续期')
-            }"
             @click="handleBatchRenewal"
           >
             {{ $t('续期') }}
@@ -161,7 +146,7 @@
             <bk-dropdown-item
               v-for="(item, index) in userInfoOptions"
               :key="index"
-              :class="{ 'is-selected': item.selected, 'is-disabled': item.disabled }"
+              :class="{ 'is-selected': item.selected, 'is-disabled': getOptionDisabled(item) }"
               @click.native="selectOption(item)"
             >
               {{ item.text }}
@@ -246,7 +231,10 @@ const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 're
 
 const organizationStore = useOrganizationStore();
 
-/** 是否为本地数据源 */
+/** 当前选中的是否包含非本地数据源 */
+// eslint-disable-next-line max-len
+const isSelectedNotLocalSource = computed(() => props.selectList.some(item => item.data_source_id !== organizationStore.localSourceId));
+/** 当前数据源是否为本地数据源 */
 const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const formData = ref({
@@ -275,22 +263,72 @@ const dropdownVisible = ref(false);
 const isShowRenewal = ref(false);
 
 const userInfoOptions = ref([
-  { text: t('账号过期时间'), type: 'date', selected: false, disabled: false },
-  { text: t('直属上级'), type: 'leader', selected: false, disabled: !isLocalDataSource.value },
+  { text: t('账号过期时间'), type: 'date', selected: false },
+  { text: t('直属上级'), type: 'leader', selected: false },
 ]);
 
 /**
- * @description 当前选中的是否允许修改密码
- *  - 仅本地数据源可以修改密码，若批量处理包含非本地数据源，则不允许修改密码
- *  - 若本地数据源未启用账密登录，则不允许修改密码
+ * @description 本地数据源是否启用了账密登录
  */
 // eslint-disable-next-line max-len
-const isEnabledPassword = computed(() => {
-  // 所有选中的用户都是本地数据源
-  const allLocalSource = props.selectList.every(item => item.data_source_id === organizationStore.localSourceId);
-  // 本地数据源启用了密码
-  const passwordEnabled = organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password;
-  return allLocalSource && passwordEnabled;
+const isEnabledPassword = computed(() => !!organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password);
+
+/**
+ * 移动至组织按钮禁用配置
+ * 规则：如果当前选中外部数据源，禁用按钮
+ */
+const moveOrgDisabledConfig = computed(() => {
+  const disabled = isSelectedNotLocalSource.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('非本地数据源，无法移动至组织') : '',
+      disabled: !disabled,
+    },
+  };
+});
+
+/**
+ * 重置密码按钮禁用配置
+ * 规则优先级：
+ * 1. 如果当前选中外部数据源（isSelectedNotLocalSource），优先提示"非本地数据源，无法重置密码"
+ * 2. 如果不满足规则1，再判断本地数据源是否启用账密登录（isEnabledPassword），未启用则提示"当前数据源未启用账密登录，无法重置密码"
+ */
+const resetPasswordDisabledConfig = computed(() => {
+  // 优先判断是否为外部数据源
+  if (isSelectedNotLocalSource.value) {
+    return {
+      disabled: true,
+      tooltips: {
+        content: t('非本地数据源，无法重置密码'),
+        disabled: false,
+      },
+    };
+  }
+  // 再判断是否启用账密登录
+  const disabled = !isEnabledPassword.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('当前数据源未启用账密登录，无法重置密码') : '',
+      disabled: !disabled,
+    },
+  };
+});
+
+/**
+ * 删除按钮禁用配置
+ * 规则：如果当前选中外部数据源，禁用按钮
+ */
+const deleteDisabledConfig = computed(() => {
+  const disabled = isSelectedNotLocalSource.value;
+  return {
+    disabled,
+    tooltips: {
+      content: disabled ? t('非本地数据源，无法删除') : '',
+      disabled: !disabled,
+    },
+  };
 });
 
 /**
@@ -372,8 +410,10 @@ watch(infoFormData, (val) => {
   });
 }, { deep: true, immediate: true });
 
+const getOptionDisabled = (item) => isSelectedNotLocalSource.value && item.type === 'leader';
+
 const selectOption = (selectedItem) => {
-  if (selectedItem.disabled) {
+  if (getOptionDisabled(selectedItem)) {
     userInfoVisible.value = false;
     return;
   }

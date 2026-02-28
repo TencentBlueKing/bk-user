@@ -65,7 +65,7 @@
           </bk-form-item>
         </div>
       </Row>
-      <Row :title="$t('服务配置')">
+      <Row :title="$t('服务配置')" class="!shadow-none !border-b-0">
         <bk-form-item
           v-if="isShowServerConfig"
           class="w-[560px]"
@@ -262,6 +262,7 @@ import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import {
   getDataSourceDetails,
   getFields,
@@ -301,6 +302,7 @@ const editLeaveBefore = inject('editLeaveBefore');
 
 const formRef2 = ref();
 const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 const defaultServerConfig = () => ({
   plugin_id: 'general',
@@ -413,6 +415,7 @@ const rulesServerConfig = {
 const rulesFieldSetting = {
   target_field: [validate.required],
   source_field: [validate.required],
+  ...conflictRules,
 };
 
 const apiFields = ref([]);

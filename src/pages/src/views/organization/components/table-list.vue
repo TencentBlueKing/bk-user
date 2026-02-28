@@ -221,7 +221,7 @@
                     class="operate-button-item"
                     :disabled="!organizationStore.getDataSourceInfo(row.data_source_id).enable_password"
                     v-bk-tooltips="{
-                      content: $t('当前租户未启用账密登录，无法修改密码'),
+                      content: $t('当前数据源未启用账密登录，无法重置密码'),
                       disabled: organizationStore.getDataSourceInfo(row.data_source_id).enable_password
                     }"
                     @click="onResetPasswordClick(row, $rowIndex)"
