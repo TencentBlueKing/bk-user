@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts" setup>
-import { PopoverPropTypes } from 'bkui-vue/lib/popover';
+import BkPopover, { PopoverPropTypes } from 'bkui-vue/lib/popover';
 import { computed, ref } from 'vue';
 
 type ListItem<T = any> = {
@@ -49,7 +49,7 @@ const props = withDefaults(defineProps<IProps>(), {
   clickHide: false,
 });
 
-const popoverRef = ref();
+const popoverRef = ref<InstanceType<typeof BkPopover>>();
 const filteredList = computed(() => {
   if (props?.filterRule && typeof props.filterRule === 'function') {
     return props.filterRule(props?.rowData);
@@ -62,7 +62,7 @@ const handleClick = (item: ListItem) => {
     item.onClick(props?.rowData);
   }
   if (props.clickHide) {
-    (popoverRef.value as any)?.hide();
+    popoverRef.value?.hide();
   }
 };
 </script>

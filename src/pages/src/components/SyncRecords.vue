@@ -47,16 +47,6 @@
           </template>
         </TableColumn>
         <TableColumn
-          field="type"
-          :label="$t('数据源类型')"
-          show-overflow="tooltip"
-          :min-width="120"
-        >
-          <template #default="{ row }">
-            <span>{{ row?.type || '--' }}</span>
-          </template>
-        </TableColumn>
-        <TableColumn
           field="operator"
           :label="$t('操作人')"
           show-overflow="tooltip"
