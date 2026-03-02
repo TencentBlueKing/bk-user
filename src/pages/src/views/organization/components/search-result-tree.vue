@@ -38,7 +38,7 @@
           <span class="text-[14px] mr-[6px]">{{ node.name }}</span>
           <bk-tag
             v-if="node.__attr__.isRoot
-              && organizationStore.isEqualLocalSourceId(activeOrg.dataSourceId)
+              && organizationStore.isEqualLocalSourceId(node.data_source_id)
               && organizationStore.hasExternalDataSource"
             theme="info"
           >
@@ -64,7 +64,6 @@ interface IProps {
   activeOrg: {
     id: number | string;
     name: string;
-    dataSourceId: number;
   };
 }
 defineProps<IProps>();

@@ -59,22 +59,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <LabelContent :label="$t('用户名冲突规则')">
-            <span v-if="usernameConfig.strategy === 'manual'">
-              {{ $t('不配置，发生冲突时手动处理') }}
-            </span>
-            <span v-else-if="usernameConfig.strategy === 'add_affix'">
-              {{ $t('为新数据源统一添加前后缀') }}
-            </span>
-          </LabelContent>
-          <LabelContent v-if="usernameConfig.strategy === 'add_affix'" :label="$t('用户名生成规则')">
-            <span v-if="usernameConfig.prefix">
-              {{ $t('新用户名 ( username )') }} = {{ usernameConfig.prefix }} + username
-            </span>
-            <span v-else-if="usernameConfig.suffix">
-              {{ $t('新用户名 ( username )') }} = username + {{ usernameConfig.suffix }}
-            </span>
-          </LabelContent>
+          <ConflictConfigDetail :config="usernameConfig" />
         </Row>
       </div>
       <div v-if="pluginId === 'ldap'">
@@ -129,41 +114,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <LabelContent :label="$t('用户名冲突规则')">
-            <span v-if="usernameConfig.strategy === 'manual'">
-              {{ $t('不配置，发生冲突时手动处理') }}
-            </span>
-            <span v-else-if="usernameConfig.strategy === 'add_affix'">
-              {{ $t('为新数据源统一添加前后缀') }}
-            </span>
-            <div
-              v-if="usernameConfig.strategy === 'add_affix'"
-              class="bg-[#F5F7FA] p-[12px] mt-[2px] text-[#494B50] text-[14px] flex items-center"
-            >
-              <template v-if="usernameConfig.prefix">
-                <span>{{ $t('新用户名 ( username )') }} =</span>
-                <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px] mx-[2px]">
-                  {{ usernameConfig.prefix }}
-                </div>
-                <span>{{ $t('用户名 ( username )') }}</span>
-              </template>
-              <template v-else-if="usernameConfig.suffix">
-                <span>{{ $t('新用户名 ( username )') }} =</span>
-                <span class="mx-[2px]">{{ $t('用户名 ( username )') }}</span>
-                <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px]">
-                  {{ usernameConfig.suffix }}
-                </div>
-              </template>
-            </div>
-          </LabelContent>
-          <LabelContent v-if="usernameConfig.strategy === 'add_affix'" :label="$t('用户名生成规则')">
-            <span v-if="usernameConfig.prefix">
-              {{ $t('新用户名 ( username )') }} = {{ usernameConfig.prefix }} + username
-            </span>
-            <span v-else-if="usernameConfig.suffix">
-              {{ $t('新用户名 ( username )') }} = username + {{ usernameConfig.suffix }}
-            </span>
-          </LabelContent>
+          <ConflictConfigDetail :config="usernameConfig" />
         </Row>
       </div>
     </div>
@@ -178,6 +129,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import ConflictConfigDetail from '@/components/conflict-config/ConflictConfigDetail.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import { getDataSourceDetails, getFields } from '@/http';
@@ -326,18 +278,20 @@ const handleClickEdit = () => {
   }
 }
 
-.row-wrapper {
-  padding: 0 24px 24px;
-  margin-bottom: 0px !important;
-  border-bottom: 1px solid #EAEBF0;
+.details-info-wrapper {
+  :deep(.row-wrapper) {
+    padding: 0 24px 24px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #EAEBF0;
 
-  &:last-child {
-    padding-bottom: 24px;
-    border-bottom: none;
+    &:last-child {
+      padding-bottom: 24px;
+      border-bottom: none;
+    }
   }
-}
 
-::v-deep .label-content .label-key {
-  width: 174px !important;
+  :deep(.label-content .label-key) {
+    width: 174px;
+  }
 }
 </style>
