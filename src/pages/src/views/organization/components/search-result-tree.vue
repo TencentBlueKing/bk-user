@@ -33,6 +33,19 @@
         cache: true,
       }"
     >
+      <template #node="node: IOrg & { __attr__: { isRoot: boolean } }">
+        <div class="pr-[12px] relative">
+          <span class="text-[14px] mr-[6px]">{{ node.name }}</span>
+          <bk-tag
+            v-if="node.__attr__.isRoot
+              && organizationStore.isEqualLocalSourceId(activeOrg.dataSourceId)
+              && organizationStore.hasExternalDataSource"
+            theme="info"
+          >
+            {{ $t('本地') }}
+          </bk-tag>
+        </div>
+      </template>
     </bk-tree>
   </div>
 </template>
@@ -51,6 +64,7 @@ interface IProps {
   activeOrg: {
     id: number | string;
     name: string;
+    dataSourceId: number;
   };
 }
 defineProps<IProps>();

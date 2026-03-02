@@ -46,7 +46,12 @@
           <div class="org-node pr-[12px] relative node-overflow">
             <span class="text-[14px] mr-[6px]">{{ node.name }}</span>
             <template v-if="organizationStore.isEqualLocalSourceId(node.data_source_id)">
-              <bk-tag v-if="node.__attr__.isRoot" theme="info">{{ $t('本地') }}</bk-tag>
+              <bk-tag
+                v-if="node.__attr__.isRoot && organizationStore.hasExternalDataSource"
+                theme="info"
+              >
+                {{ $t('本地') }}
+              </bk-tag>
               <operate-more
                 :dept="node"
                 :tenant="currentTenant"

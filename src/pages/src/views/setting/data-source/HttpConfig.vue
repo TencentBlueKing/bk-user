@@ -256,6 +256,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 
+import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
@@ -291,7 +292,7 @@ const props = defineProps({
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
-const isEdit = computed(() => props.dataSourceId !== null);
+const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
 const userStore = useUser();
 const dataSourceStore = useDataSourceStore();

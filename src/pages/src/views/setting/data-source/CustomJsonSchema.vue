@@ -111,6 +111,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 
+import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
@@ -144,7 +145,7 @@ const props = defineProps({
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
-const isEdit = computed(() => props.dataSourceId !== null);
+const isEdit = computed(() => !isNil(props.dataSourceId));
 
 const formData = reactive({
   plugin_config: {},

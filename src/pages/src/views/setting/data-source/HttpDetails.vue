@@ -58,6 +58,24 @@
             </span>
           </LabelContent>
         </Row>
+        <Row :title="$t('冲突配置')">
+          <LabelContent :label="$t('用户名冲突规则')">
+            <span v-if="usernameConfig.strategy === 'manual'">
+              {{ $t('不配置，发生冲突时手动处理') }}
+            </span>
+            <span v-else-if="usernameConfig.strategy === 'add_affix'">
+              {{ $t('为新数据源统一添加前后缀') }}
+            </span>
+          </LabelContent>
+          <LabelContent v-if="usernameConfig.strategy === 'add_affix'" :label="$t('用户名生成规则')">
+            <span v-if="usernameConfig.prefix">
+              {{ $t('新用户名 ( username )') }} = {{ usernameConfig.prefix }} + username
+            </span>
+            <span v-else-if="usernameConfig.suffix">
+              {{ $t('新用户名 ( username )') }} = username + {{ usernameConfig.suffix }}
+            </span>
+          </LabelContent>
+        </Row>
       </div>
       <div v-if="pluginId === 'ldap'">
         <Row :title="$t('服务配置')">
@@ -110,6 +128,24 @@
             </span>
           </LabelContent>
         </Row>
+        <Row :title="$t('冲突配置')">
+          <LabelContent :label="$t('用户名冲突规则')">
+            <span v-if="usernameConfig.strategy === 'manual'">
+              {{ $t('不配置，发生冲突时手动处理') }}
+            </span>
+            <span v-else-if="usernameConfig.strategy === 'add_affix'">
+              {{ $t('为新数据源统一添加前后缀') }}
+            </span>
+          </LabelContent>
+          <LabelContent v-if="usernameConfig.strategy === 'add_affix'" :label="$t('用户名生成规则')">
+            <span v-if="usernameConfig.prefix">
+              {{ $t('新用户名 ( username )') }} = {{ usernameConfig.prefix }} + username
+            </span>
+            <span v-else-if="usernameConfig.suffix">
+              {{ $t('新用户名 ( username )') }} = username + {{ usernameConfig.suffix }}
+            </span>
+          </LabelContent>
+        </Row>
       </div>
     </div>
     <div class="details-info-box" v-else>
@@ -126,8 +162,12 @@ import { onMounted, ref } from 'vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import { getDataSourceDetails, getFields } from '@/http';
+import type { DataSourceDetails } from '@/http/types/dataSourceFiles';
 import router from '@/router';
 import { SYNC_CONFIG_LIST } from '@/utils';
+
+// 提取类型别名
+type PluginConfig = DataSourceDetails['plugin_config'];
 
 const props = defineProps({
   dataSourceId: {
@@ -136,21 +176,23 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
-const plugin = ref({});
+const plugin = ref<DataSourceDetails['plugin']>({} as DataSourceDetails['plugin']);
 // 服务配置
-const serverConfig = ref({});
+const serverConfig = ref<PluginConfig['server_config']>({} as PluginConfig['server_config']);
 // 鉴权配置
-const authConfig = ref({});
+const authConfig = ref<PluginConfig['auth_config']>({} as PluginConfig['auth_config']);
 // 字段映射
-const fieldMapping = ref([]);
+const fieldMapping = ref<DataSourceDetails['field_mapping']>([]);
 // 同步配置
-const syncConfig = ref({});
+const syncConfig = ref<DataSourceDetails['sync_config']>({} as DataSourceDetails['sync_config']);
 // 数据配置
-const dataConfig = ref({});
-// 数据配置
-const userGroupConfig = ref({});
-// 数据配置
-const leaderConfig = ref({});
+const dataConfig = ref<PluginConfig['data_config']>({} as PluginConfig['data_config']);
+// 用户组配置
+const userGroupConfig = ref<PluginConfig['user_group_config']>({} as PluginConfig['user_group_config']);
+// 上级配置
+const leaderConfig = ref<PluginConfig['leader_config']>({} as PluginConfig['leader_config']);
+// 冲突配置
+const usernameConfig = ref<DataSourceDetails['username_config']>({ strategy: 'manual', prefix: '', suffix: '' });
 
 const isPluginConfig = ref(true);
 
@@ -188,6 +230,7 @@ onMounted(async () => {
     }
     syncConfig.value = res.data?.sync_config;
     plugin.value = res.data?.plugin;
+    usernameConfig.value = res.data?.username_config || { strategy: 'manual', prefix: '', suffix: '' };
   } catch (e) {
     console.warn(e);
   } finally {

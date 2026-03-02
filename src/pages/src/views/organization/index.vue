@@ -75,6 +75,7 @@ const activeOrgInfo = computed(() => {
       id: deptId,
       name: deptName,
       type: 'department' as const,
+      dataSourceId: organizationStore.selectedOrg.dataSourceId,
     };
   }
 
@@ -82,6 +83,7 @@ const activeOrgInfo = computed(() => {
     id: tenantId,
     name: tenantName,
     type: 'tenant' as const,
+    dataSourceId: organizationStore.selectedOrg.dataSourceId,
   };
 });
 
