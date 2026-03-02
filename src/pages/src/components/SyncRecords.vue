@@ -105,7 +105,7 @@
       ext-cls="log-wrapper"
       :is-show="logConfig.isShow"
       :title="$t('日志详情')"
-      :width="800"
+      :width="960"
       quick-close
       :before-close="beforeClose"
       transfer
@@ -166,7 +166,7 @@ const dataRecordConfig = reactive({
 });
 
 const settings = reactive({
-  checked: ['start_at', 'duration', 'plugin', 'operator', 'trigger', 'status'],
+  checked: ['start_at', 'duration', 'plugin', 'operator', 'trigger', 'status', 'action'],
   size: 'small',
 });
 
@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
 .sync-records-wrapper {
   width: 100%;
   height: calc(100vh - 52px);
-  padding: 28px 30px;
+  padding: 28px 15px 28px 30px;
 
   :deep(.user-info-table) {
     .type-icon {

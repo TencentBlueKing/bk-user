@@ -68,6 +68,12 @@ export default defineStore('organization', () => {
   const ldapSourceId = computed(() => currentTenant.value.data_sources?.find(item => item.plugin_id === 'ldap')?.id);
 
   /**
+   * 是否存在外部数据源（非本地数据源）
+   * @description 用于判断是否需要显示"本地"标签，只有存在外部数据源时才需要区分
+   */
+  const hasExternalDataSource = computed(() => currentTenant.value.data_sources?.some(item => item.plugin_id !== 'local'));
+
+  /**
    * 是否选中了协同租户
    * @description 当选中的租户不为本租户，代表选中了协同租户
    */
@@ -143,6 +149,7 @@ export default defineStore('organization', () => {
     isSearchTree,
     localSourceId,
     ldapSourceId,
+    hasExternalDataSource,
     reloadIndex,
     selectedOrg,
     getDataSourceInfo,

@@ -304,6 +304,7 @@
 <script lang="ts" setup>
 import { computed, inject, onMounted, ref, watch } from 'vue';
 
+import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
@@ -332,7 +333,7 @@ const props = defineProps({
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
-const isEdit = computed(() => props.dataSourceId !== null);
+const isEdit = computed(() => !isNil(props.dataSourceId));
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);

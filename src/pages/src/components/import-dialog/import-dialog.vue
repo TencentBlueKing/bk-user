@@ -116,6 +116,7 @@ import { computed, reactive, ref } from 'vue';
 import ConflictConfig from '../conflict-config/ConflictConfig.vue';
 import ConflictTips from '../conflict-config/ConflictTips.vue';
 
+import { isNil } from '@/common/util';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
 import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
@@ -156,7 +157,7 @@ const uploadInfo = reactive({
 });
 const formRef = ref();
 
-const isFirstlyImport = computed(() => !(props?.dataSourceId !== null));
+const isFirstlyImport = computed(() => isNil(props.dataSourceId));
 
 /** 本地数据源插件 - 数据同步状态 */
 // eslint-disable-next-line max-len
