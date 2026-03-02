@@ -421,6 +421,10 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
             data_source__type=DataSourceTypeEnum.REAL,
             data_source__owner_tenant_id=cur_tenant_id,
         ).select_related("data_source_department")
+
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)
 
