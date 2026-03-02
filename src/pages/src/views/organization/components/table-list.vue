@@ -437,6 +437,7 @@
   <!-- 导入弹框 -->
   <ImportDialog
     v-model:is-show="importDialogShow"
+    :data-source-id="organizationStore.localSourceId"
     @success="reloadList"
   />
 </template>

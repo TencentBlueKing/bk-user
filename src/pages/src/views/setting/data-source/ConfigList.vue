@@ -160,8 +160,8 @@
           </div>
         </template>
         <HttpDetails
-          v-if="isDetailsExpanded && item.id !== 'local'"
-          :data-source-id="dataSourceStore.getDataSourceInfo(item.id).id"
+          v-if="expandedDetailsMap[item.id] && item.id !== 'local'"
+          :data-source-id="dataSourceStore.getDataSourceInfo(item.id)?.id"
         />
       </DataSourceItem>
 
@@ -246,7 +246,7 @@ const resetLoading = reactive({
   local: false,
   external: false,
 });
-const isDetailsExpanded = ref(false);
+const expandedDetailsMap = ref<Record<string, boolean>>({});
 
 const updateConfig = reactive({
   isShow: false,
@@ -406,11 +406,11 @@ const handleClickDataSource = async (pluginId: string) => {
   const isConfigured = isDataSourceConfigured(pluginId);
 
   if (isConfigured) {
-    // 已配置的数据源：展开/收起详情（仅限非 local 数据源）
+    // 已配置的数据源:展开/收起详情(仅限非 local 数据源)
     if (pluginId === 'local') return;
-    isDetailsExpanded.value = !isDetailsExpanded.value;
+    expandedDetailsMap.value[pluginId] = !expandedDetailsMap.value[pluginId];
   } else {
-    // 未配置的数据源：执行新建/配置逻辑
+    // 未配置的数据源:执行新建/配置逻辑
     if (dataSourceStore.dataSource.length < 2) {
       if (pluginId === 'local') {
         isShowImportDialog.value = true;

@@ -97,3 +97,8 @@
 .vxe-table--filter-body {
   max-height: unset !important;
 }
+
+/* 设置 Tab 内容区域滚动 */
+.action-tab-wrapper {
+  overflow-y: auto;
+}
