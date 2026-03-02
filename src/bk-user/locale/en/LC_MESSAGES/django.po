@@ -2263,11 +2263,11 @@ msgstr "Required field {} in the file to be imported has empty values"
 #: bkuser/plugins/local/parser.py:174
 msgid ""
 "用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 "
-"(-)、井号 (#) 字符组成，以字母或数字开头及结尾"
+"(-) 字符组成，以字母或数字开头及结尾"
 msgstr ""
 "Username {} does not meet the naming requirements: must be composed of 2-32 "
-"letters, digits, underscores (_), dots (.), hyphens (-), or hash signs (#), "
-"starting and ending with a letter or digit"
+"letters, digits, underscores (_), dots (.), or hyphens (-), starting and "
+"ending with a letter or digit"
 
 #: bkuser/plugins/local/parser.py:180
 msgid "待导入文件中用户 {} 不能是自己的直接上级"
