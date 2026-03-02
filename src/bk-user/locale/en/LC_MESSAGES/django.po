@@ -1387,11 +1387,11 @@ msgstr "Exceeded the limit for sending times"
 #: bkuser/biz/validators.py:46
 msgid ""
 "{} 不符合 用户名 的命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接"
-"符 (-)、井号 (#) 字符组成，以字母或数字开头及结尾"
+"符 (-) 字符组成，以字母或数字开头及结尾"
 msgstr ""
 "{} does not meet the naming requirements for Username: must be composed of "
-"2-32 letters, digits, underscores (_), dots (.), hyphens (-), or hash signs "
-"(#), starting and ending with a letter or digit"
+"2-32 letters, digits, underscores (_), dots (.), or hyphens (-), starting "
+"and ending with a letter or digit"
 
 #: bkuser/biz/validators.py:55
 msgid ""
