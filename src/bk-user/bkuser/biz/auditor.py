@@ -117,7 +117,7 @@ class DataSourceAuditor:
             AuditObject(
                 id=ds_data["id"],
                 type=ObjectTypeEnum.DATA_SOURCE,
-                operation=OperationEnum.BATCH_DELETE_DATA_SOURCE,
+                operation=OperationEnum.DELETE_DATA_SOURCE,
                 data_before=ds_data,
             )
             for ds_data in self.data_befores["data_sources"]
