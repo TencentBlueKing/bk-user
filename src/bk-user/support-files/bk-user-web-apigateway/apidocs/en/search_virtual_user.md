@@ -4,8 +4,8 @@ Search virtual users. The search results return the first 100 data by default (I
 
 ### Parameters
 
-| Name    | Type   | Required | Description                                                                                                                        |
-|---------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------|
+| Name    | Type   | Required | Description                                                                                                                             |
+|---------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | keyword | string | Yes      | Search keywords (you can enter the values of login_name or full_name). The minimum input length is 1 and the maximum input length is 64 |
 
 ### Request Example

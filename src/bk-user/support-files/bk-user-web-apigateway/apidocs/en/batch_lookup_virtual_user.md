@@ -4,10 +4,10 @@ Batch query virtual users
 
 ### Parameters
 
-| Name          | Type   | Required | Description                                                                                                                                          |
-|---------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Name          | Type   | Required | Description                                                                                                                                                  |
+|---------------|--------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | lookups       | string | Yes      | Exact matching values (can be bk_username, login_name or full_name), multiple separated by commas, limit number is 100, maximum input length per value is 64 |
-| lookup_fields | string | Yes      | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`                      |
+| lookup_fields | string | Yes      | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`                              |
 
 ### Request Example
 
