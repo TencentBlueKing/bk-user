@@ -203,9 +203,6 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     pagination_class = None
 
-    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
-
     @staticmethod
     def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
         if field == "full_name":
@@ -239,9 +236,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         if tenant_id := data.get("owner_tenant_id"):
             filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
 
-        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")[
-            : self.search_limit
-        ]
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
@@ -346,8 +341,6 @@ class VirtualUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
     pagination_class = None
 
-    search_limit = settings.SELECTOR_SEARCH_API_LIMIT
-
     @staticmethod
     def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
         if field == "full_name":
@@ -379,7 +372,7 @@ class VirtualUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(tenant_id=self.tenant_id),
             Q(data_source_id=self.virtual_data_source_id),
             condition,
-        ).select_related("data_source_user")[: self.search_limit]
+        ).select_related("data_source_user")
 
         display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
 
