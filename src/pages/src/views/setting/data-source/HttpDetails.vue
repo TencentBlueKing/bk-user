@@ -136,6 +136,25 @@
             <span v-else-if="usernameConfig.strategy === 'add_affix'">
               {{ $t('为新数据源统一添加前后缀') }}
             </span>
+            <div
+              v-if="usernameConfig.strategy === 'add_affix'"
+              class="bg-[#F5F7FA] p-[12px] mt-[2px] text-[#494B50] text-[14px] flex items-center"
+            >
+              <template v-if="usernameConfig.prefix">
+                <span>{{ $t('新用户名 ( username )') }} =</span>
+                <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px] mx-[2px]">
+                  {{ usernameConfig.prefix }}
+                </div>
+                <span>{{ $t('用户名 ( username )') }}</span>
+              </template>
+              <template v-else-if="usernameConfig.suffix">
+                <span>{{ $t('新用户名 ( username )') }} =</span>
+                <span class="mx-[2px]">{{ $t('用户名 ( username )') }}</span>
+                <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px]">
+                  {{ usernameConfig.suffix }}
+                </div>
+              </template>
+            </div>
           </LabelContent>
           <LabelContent v-if="usernameConfig.strategy === 'add_affix'" :label="$t('用户名生成规则')">
             <span v-if="usernameConfig.prefix">
@@ -309,7 +328,7 @@ const handleClickEdit = () => {
 
 .row-wrapper {
   padding: 0 24px 24px;
-  margin-bottom: 0;
+  margin-bottom: 0px !important;
   border-bottom: 1px solid #EAEBF0;
 
   &:last-child {
