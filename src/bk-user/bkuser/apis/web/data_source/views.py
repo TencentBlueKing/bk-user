@@ -71,7 +71,7 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.exporters import DataSourceUserExporter
+from bkuser.biz.exporters import DataSourceUserExporter, get_user_export_template
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
@@ -497,7 +497,7 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
     )
     def get(self, request, *args, **kwargs):
         """本地数据源导出模板"""
-        workbook = DataSourceUserExporter.get_template(self.get_current_tenant_id())
+        workbook = get_user_export_template(self.get_current_tenant_id())
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_tmpl.xlsx")
 
 
