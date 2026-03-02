@@ -17,7 +17,6 @@
 from unittest import mock
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 from django.conf import settings
@@ -355,7 +354,6 @@ class TestTenantUserLookupApi:
         }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
-        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id, collaboration_tenant.id}
         assert {t["status"] for t in resp.data} == {TenantUserStatus.ENABLED}
         assert {p for t in resp.data for p in t["organization_paths"]} == {
@@ -379,7 +377,6 @@ class TestTenantUserLookupApi:
                 "lookups": "zhangsan,lisi",
                 "lookup_fields": "login_name",
                 "owner_tenant_id": random_tenant.id,
-                "data_source_type": "real",
             },
         )
 
@@ -389,7 +386,6 @@ class TestTenantUserLookupApi:
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
-        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
 
     def test_with_collaborative_tenant(self, api_client, collaboration_tenant):
@@ -409,7 +405,6 @@ class TestTenantUserLookupApi:
                 "lookups": "zhangsan,lisi",
                 "lookup_fields": "login_name",
                 "owner_tenant_id": collaboration_tenant.id,
-                "data_source_type": "real",
                 "with_organization_paths": True,
             },
         )
@@ -423,7 +418,6 @@ class TestTenantUserLookupApi:
         }
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
-        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {collaboration_tenant.id}
         assert {p for t in resp.data for p in t["organization_paths"]} == {
             "公司",
@@ -446,7 +440,6 @@ class TestTenantUserLookupApi:
                 "lookups": ",".join([zhangsan.id, lisi.id]),
                 "lookup_fields": "bk_username,login_name",
                 "owner_tenant_id": random_tenant.id,
-                "data_source_type": "real",
                 "with_organization_paths": True,
             },
         )
@@ -457,7 +450,6 @@ class TestTenantUserLookupApi:
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
-        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
         assert {p for t in resp.data for p in t["organization_paths"]} == {
             "公司",
@@ -480,7 +472,6 @@ class TestTenantUserLookupApi:
                 "lookups": "张三,李四",
                 "lookup_fields": "bk_username,login_name,full_name",
                 "owner_tenant_id": random_tenant.id,
-                "data_source_type": "real",
                 "with_organization_paths": True,
             },
         )
@@ -491,7 +482,6 @@ class TestTenantUserLookupApi:
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
-        assert {t["data_source_type"] for t in resp.data} == {DataSourceTypeEnum.REAL}
         assert {t["owner_tenant_id"] for t in resp.data} == {random_tenant.id}
         assert {p for t in resp.data for p in t["organization_paths"]} == {
             "公司",
