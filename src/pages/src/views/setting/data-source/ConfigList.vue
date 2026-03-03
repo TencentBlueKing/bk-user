@@ -179,6 +179,7 @@
     <ImportDialog
       v-model:is-show="isShowImportDialog"
       :data-source-id="dataSourceStore.localDataSourceId"
+      @success="handleImportSuccess"
     />
     <!-- 数据更新记录 -->
     <bk-sideslider
@@ -427,6 +428,10 @@ const handleEdit = (dataSourcePlugin: string) => {
 };
 
 const handleImport = () => isShowImportDialog.value = true;
+
+const handleImportSuccess = () => {
+  router.push({ name: 'organization' });
+};
 
 const changeLog = () => {
   updateConfig.isShow = true;
