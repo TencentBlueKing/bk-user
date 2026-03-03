@@ -146,6 +146,7 @@ const props = defineProps({
   },
   dataSourceId: {
     type: Number,
+    default: undefined,
   },
 });
 

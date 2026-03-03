@@ -117,7 +117,7 @@ import { t } from '@/language/index';
 const props = defineProps({
   dataSourceId: {
     type: Number,
-    default: '',
+    default: undefined,
   },
   currentId: {
     type: String,
