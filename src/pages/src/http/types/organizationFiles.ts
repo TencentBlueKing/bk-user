@@ -110,7 +110,8 @@ export interface TenantsUserListData {
 
 export interface GetUserListParams {
   keyword?: string;
-  tenant_id: string;
+  tenant_id?: string;
+  data_source_id?: number;
 }
 
 export interface OptionalDepartmentsListParams {

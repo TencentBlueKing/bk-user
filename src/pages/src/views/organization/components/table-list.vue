@@ -699,8 +699,16 @@ const handleBatchReplaceOrg = () => {
   handleOperations(t('清空'), t('的现有组织，并加入到以下组织'));
 };
 
+/**
+ * 拉取已有用户
+ * @description 由于仅支持本地数据源拉取已有用户，因此直接使用organizationStore.localSourceId
+ */
 const getUserListFun = async (keyword = '') => {
-  const res = await getUsersList({ tenant_id: organizationStore.selectedOrg.tenantId, keyword });
+  const res = await getUsersList({
+    tenant_id: organizationStore.selectedOrg.tenantId,
+    keyword,
+    data_source_id: organizationStore.localSourceId,
+  });
   getUserList.value = res.data;
 };
 
@@ -815,9 +823,12 @@ const setItemRef = (el: PopoverInstanceType, key: string) => {
   }
 };
 
-/** 生成随机密码 */
+/**
+ * 生成随机密码
+ * @description 仅本地数据源可以重置密码，直接使用organizationStore.localSourceId
+ */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
+  const res = await randomPasswords({ data_source_id: organizationStore.localSourceId });
   password.value = res.data?.password;
 };
 

@@ -216,19 +216,14 @@ export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/te
 export const searchOrganization = (params: SearchKeywordParams, config?: Config) => http.get<ResponseData<SearchOrganizationItemData[]>>(`${prefix}/tenants/departments/`, params, config);
 
 /**
- * 搜索用户
+ * 获取租户用户列表
  */
-export const searchUser = (params: SearchKeywordParams, config?: Config) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params, config);
+export const getUsersList = (params: GetUserListParams, config?: Config) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params, config);
 
 /**
  * 租户下部门单个用户详情
  */
 export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
-
-/**
- * 搜索租户用户
- */
-export const getUsersList = (params: GetUserListParams) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params);
 
 /**
  * 密码规则
