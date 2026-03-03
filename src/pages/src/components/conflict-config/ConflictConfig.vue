@@ -157,10 +157,10 @@ const emit = defineEmits<{
   (e: 'preview'): void;
 }>();
 
-const connectorOptions = ['#', '_', '-'];
-const defaultConnector = '#';
+const connectorOptions = ['_', '-'];
+const defaultConnector = '_';
 
-// 从前缀末尾解析连接符，如 "xxx#" => { value: "xxx", connector: "#" }
+// 从前缀末尾解析连接符，如 "xxx_" => { value: "xxx", connector: "_" }
 const parsePrefixConnector = (raw: string) => {
   const last = raw.slice(-1);
   if (connectorOptions.includes(last)) {
@@ -169,7 +169,7 @@ const parsePrefixConnector = (raw: string) => {
   return { value: raw, connector: defaultConnector };
 };
 
-// 从后缀开头解析连接符，如 "#xxx" => { connector: "#", value: "xxx" }
+// 从后缀开头解析连接符，如 "_xxx" => { connector: "_", value: "xxx" }
 const parseSuffixConnector = (raw: string) => {
   const first = raw.slice(0, 1);
   if (connectorOptions.includes(first)) {
