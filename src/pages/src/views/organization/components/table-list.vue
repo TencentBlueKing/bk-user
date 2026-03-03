@@ -192,6 +192,7 @@
         </template>
       </TableColumn>
       <TableColumn
+        v-if="!isCollaborativeUsers"
         field="operation"
         :label="$t('操作')"
       >
