@@ -248,6 +248,8 @@ const handleOrg = () => {
         id: res.data.id,
         name: deptName.value,
         has_children: false,
+        // 添加子组织后，需要给dataSourceId，用于tree节点 本地Tag及operate-more展示
+        data_source_id: props.dataSourceId,
       };
       emits('addNode', curDeptId, node);
     });
