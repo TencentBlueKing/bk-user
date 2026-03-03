@@ -155,6 +155,9 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         if tenant_id := params.get("tenant_id"):
             queryset = queryset.filter(data_source__owner_tenant_id=tenant_id)
 
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
         if keyword := params.get("keyword"):
             queryset = queryset.filter(
