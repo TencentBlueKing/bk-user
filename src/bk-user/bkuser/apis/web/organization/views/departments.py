@@ -56,6 +56,7 @@ from bkuser.biz.auditor import TenantDepartmentAuditor
 from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.utils import gen_dept_code
 
 
@@ -174,12 +175,12 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
 
         # 必须存在实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(
-            owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL
+            owner_tenant_id=current_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
         ).first()
         if not data_source:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("租户数据源不存在"))
-        if not data_source.is_local:
-            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持创建部门"))
 
         slz = TenantDepartmentCreateInputSLZ(
             data=request.data, context={"tenant_id": current_tenant_id, "data_source": data_source}
