@@ -72,7 +72,7 @@
           @refresh="reloadList"
         />
       </template>
-      <template #prepend v-if="selectList.length > 0">
+      <template #prepend v-if="selectList.length > 0 && !isCollaborativeUsers">
         <div class="table-total">
           <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
           <bk-button
