@@ -13,14 +13,14 @@
       >
         <template v-if="config.prefix">
           <span>{{ $t('新用户名 ( username )') }} =</span>
-          <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px] mx-[2px]">
+          <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px] mx-[8px]">
             {{ config.prefix }}
           </div>
           <span>{{ $t('用户名 ( username )') }}</span>
         </template>
         <template v-else-if="config.suffix">
           <span>{{ $t('新用户名 ( username )') }} =</span>
-          <span class="mx-[2px]">{{ $t('用户名 ( username )') }}</span>
+          <span class="mx-[8px]">{{ $t('用户名 ( username )') }}</span>
           <div class="bg-[#DCDEE5] rounded-[2px] px-[8px] h-[22px] leading-[22px]">
             {{ config.suffix }}
           </div>

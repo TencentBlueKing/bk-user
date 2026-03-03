@@ -121,7 +121,7 @@ import ViewUser from './view-user.vue';
 
 import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
-import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
+import { getTenantsUserDetail, getUsersList, searchOrganization } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { SearchOrganizationItemData, SearchUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
@@ -177,7 +177,7 @@ const searchData = () => {
     keyword: search.value,
   };
   const httpConfig = { customMessage: true };
-  Promise.allSettled([searchOrganization(payload, httpConfig), searchUser(payload, httpConfig)])
+  Promise.allSettled([searchOrganization(payload, httpConfig), getUsersList(payload, httpConfig)])
     .then((results) => {
       const orgResult = results[0];
       const userResult = results[1];

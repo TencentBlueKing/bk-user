@@ -72,7 +72,7 @@
           @refresh="reloadList"
         />
       </template>
-      <template #prepend v-if="selectList.length > 0">
+      <template #prepend v-if="selectList.length > 0 && !isCollaborativeUsers">
         <div class="table-total">
           <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
           <bk-button
@@ -192,6 +192,7 @@
         </template>
       </TableColumn>
       <TableColumn
+        v-if="!isCollaborativeUsers"
         field="operation"
         :label="$t('操作')"
       >
@@ -424,6 +425,7 @@
     <EditDetails
       v-if="isDetailSlider"
       :details-info="editDetailsInfo"
+      :data-source-id="detailsInfo.data_source_id"
       @update-users="updateUsers"
       @handle-cancel-edit="handleBeforeClose" />
     <ViewUser
@@ -437,6 +439,7 @@
   <!-- 导入弹框 -->
   <ImportDialog
     v-model:is-show="importDialogShow"
+    :data-source-id="organizationStore.localSourceId"
     @success="reloadList"
   />
 </template>
@@ -538,7 +541,7 @@ const selectedValue = ref([]);
 const isDetailSlider = ref(false);
 const moveTips = ref('');
 const tableRef = ref();
-const detailsInfo = ref({});
+const detailsInfo = ref<TenantsUserItemData>({} as TenantsUserItemData);
 const selectList = ref([]);
 const password = ref('');
 const dataSource = ref([]);
@@ -697,8 +700,16 @@ const handleBatchReplaceOrg = () => {
   handleOperations(t('清空'), t('的现有组织，并加入到以下组织'));
 };
 
+/**
+ * 拉取已有用户
+ * @description 由于仅支持本地数据源拉取已有用户，因此直接使用organizationStore.localSourceId
+ */
 const getUserListFun = async (keyword = '') => {
-  const res = await getUsersList({ tenant_id: organizationStore.selectedOrg.tenantId, keyword });
+  const res = await getUsersList({
+    tenant_id: organizationStore.selectedOrg.tenantId,
+    keyword,
+    data_source_id: organizationStore.localSourceId,
+  });
   getUserList.value = res.data;
 };
 
@@ -756,7 +767,8 @@ const handleOperations = async (prefix: string, suffix: string) => {
   const isMore = users.length > 3;
   const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
   moveTips.value = `${prefix}${users.slice(0, 3).join('、')}${showStr}${suffix}`;
-  const res = await optionalDepartmentsList();
+  // 这里直接使用organizationStore.localSourceId 因为只有本地数据源支持移动组织
+  const res = await optionalDepartmentsList({ data_source_id: organizationStore.localSourceId });
   dataSource.value = res.data;
 };
 
@@ -812,9 +824,12 @@ const setItemRef = (el: PopoverInstanceType, key: string) => {
   }
 };
 
-/** 生成随机密码 */
+/**
+ * 生成随机密码
+ * @description 仅本地数据源可以重置密码，直接使用organizationStore.localSourceId
+ */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
+  const res = await randomPasswords({ data_source_id: organizationStore.localSourceId });
   password.value = res.data?.password;
 };
 
