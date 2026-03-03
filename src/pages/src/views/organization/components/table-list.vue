@@ -424,6 +424,7 @@
     <EditDetails
       v-if="isDetailSlider"
       :details-info="editDetailsInfo"
+      :data-source-id="detailsInfo.data_source_id"
       @update-users="updateUsers"
       @handle-cancel-edit="handleBeforeClose" />
     <ViewUser
@@ -539,7 +540,7 @@ const selectedValue = ref([]);
 const isDetailSlider = ref(false);
 const moveTips = ref('');
 const tableRef = ref();
-const detailsInfo = ref({});
+const detailsInfo = ref<TenantsUserItemData>({} as TenantsUserItemData);
 const selectList = ref([]);
 const password = ref('');
 const dataSource = ref([]);
@@ -757,7 +758,8 @@ const handleOperations = async (prefix: string, suffix: string) => {
   const isMore = users.length > 3;
   const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
   moveTips.value = `${prefix}${users.slice(0, 3).join('、')}${showStr}${suffix}`;
-  const res = await optionalDepartmentsList();
+  // 这里直接使用organizationStore.localSourceId 因为只有本地数据源支持移动组织
+  const res = await optionalDepartmentsList({ data_source_id: organizationStore.localSourceId });
   dataSource.value = res.data;
 };
 

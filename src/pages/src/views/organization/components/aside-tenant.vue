@@ -55,6 +55,7 @@
               <operate-more
                 :dept="node"
                 :tenant="currentTenant"
+                :data-source-id="node.data_source_id"
                 @add-node="addNode"
                 @delete-node="deleteNode"
                 @update-node="updateNode"

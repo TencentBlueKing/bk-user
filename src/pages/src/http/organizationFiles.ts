@@ -8,6 +8,7 @@ import type {
   DepartmentsListParams,
   GetUserListParams,
   OptionalDepartmentsListData,
+  OptionalDepartmentsListParams,
   SearchKeywordParams,
   SearchOrganizationItemData,
   SearchUserItemData,
@@ -202,7 +203,7 @@ export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/
 /**
  * 可选部门
  */
-export const optionalDepartmentsList = (params: any) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/optional-departments/`, params);
+export const optionalDepartmentsList = (params: OptionalDepartmentsListParams) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/optional-departments/`, params);
 
 /**
  * 可选leader

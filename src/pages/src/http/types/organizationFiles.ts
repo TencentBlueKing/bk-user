@@ -112,3 +112,8 @@ export interface GetUserListParams {
   keyword?: string;
   tenant_id: string;
 }
+
+export interface OptionalDepartmentsListParams {
+  keyword?: string;
+  data_source_id: number;
+}
