@@ -300,7 +300,6 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     根据 bk_username 批量查询用户敏感信息
-    Note: 敏感信息不支持协同用户
     """
 
     pagination_class = None
@@ -313,7 +312,9 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         return TenantUser.objects.filter(
-            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+            id__in=data["bk_usernames"],
+            tenant_id=self.tenant_id,
+            data_source_id__in=self.real_data_source_ids + self.collaboration_data_source_ids,
         ).select_related("data_source_user")
 
     @swagger_auto_schema(
