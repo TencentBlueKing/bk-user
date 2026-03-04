@@ -173,7 +173,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         if self.kwargs["id"] != current_tenant_id:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
 
-        # 必须存在实名用户数据源才可以创建租户部门
+        # 必须存在本地实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(
             owner_tenant_id=current_tenant_id,
             type=DataSourceTypeEnum.REAL,
