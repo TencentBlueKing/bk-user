@@ -72,7 +72,7 @@
           @refresh="reloadList"
         />
       </template>
-      <template #prepend v-if="selectList.length > 0 && !isCollaborativeUsers">
+      <template #prepend v-if="selectList.length > 0">
         <div class="table-total">
           <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
           <bk-button
@@ -112,7 +112,7 @@
       </template>
       <!-- 本地数据源才可操作 -->
       <TableColumn
-        v-if="tableData.length > 0 && organizationStore.isConfiguredLocalSource"
+        v-if="tableData.length > 0 && organizationStore.isConfiguredLocalSource && !isCollaborativeUsers"
         fixed="left"
         type="checkbox"
         width="50"

@@ -23,6 +23,7 @@
           v-if="organizationStore.hasPluginDataSource('local')"
           :dept="currentTenant"
           :tenant="currentTenant"
+          :data-source-id="organizationStore.localSourceId"
           :is-root-add="true"
           @add-node="addNode">
         </operate-more>
