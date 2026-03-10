@@ -33,7 +33,7 @@
           </bk-button>
         </template>
         <template v-if="step === 'sendCode'">
-          <p :class="['text', { 'show-error-info': isError }]">{{$t('已向')}}{{simplePhone}}{{ $t('发送验证码') }}</p>
+          <p :class="['text', { 'show-error-info': isError }]">{{$t('如果账号存在且已绑定手机号，验证码已发送')}}</p>
           <p class="error-text" v-if="isError">
             <i class="icon icon-user-exclamation-circle-shape"></i>
             <span class="text">{{errorMessage}}</span>
@@ -79,9 +79,7 @@ export default {
     return {
       isError: false,
       telephone: '',
-      simplePhone: '',
       verificationCode: '',
-      verificationCodeToken: '',
       step: 'sendSms',
       hasReset: false,
       remainTime: 0,
@@ -99,11 +97,9 @@ export default {
     async sendSms() {
       try {
         const telephoneParams = { telephone: this.telephone };
-        const { result, message, data } = await this.$store.dispatch('password/sendSms', telephoneParams);
+        const { result, message } = await this.$store.dispatch('password/sendSms', telephoneParams);
         if (result) {
           this.step = 'sendCode';
-          this.simplePhone = data.telephone;
-          this.verificationCodeToken = data.verification_code_token;
           this.remainTime = 60; // 1分钟
           // 验证码倒计时
           clearInterval(this.timer);
@@ -124,7 +120,7 @@ export default {
     async sendCode() {
       try {
         const codeParams = {
-          verification_code_token: this.verificationCodeToken,
+          telephone: this.telephone,
           verification_code: this.verificationCode,
         };
         const { result, message, data } = await this.$store.dispatch('password/sendCode', codeParams);
