@@ -94,40 +94,12 @@
     </div>
 
     <!-- 重置密码 -->
-    <bk-dialog
-      :is-show="resetPasswordConfig.isShow"
-      :title="resetPasswordConfig.title"
-      :is-loading="resetPasswordConfig.isLoading"
-      :theme="'primary'"
-      :quick-close="false"
-      :height="200"
-      @closed="closedPassword"
-      @confirm="confirmPassword"
-    >
-      <bk-form
-        class="mt-[8px]"
-        ref="formRef"
-        form-type="vertical"
-        :model="resetPasswordConfig"
-        :rules="rules">
-        <bk-form-item :label="$t('密码')" property="password" required>
-          <div class="flex justify-between">
-            <passwordInput
-              v-model="resetPasswordConfig.password"
-              clearable
-              @change="changePassword"
-              @input="changePassword" />
-            <bk-button
-              outline
-              theme="primary"
-              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
-              @click="handleRandomPassword">
-              {{ $t('随机生成') }}
-            </bk-button>
-          </div>
-        </bk-form-item>
-      </bk-form>
-    </bk-dialog>
+    <ResetPasswordDialog
+      v-model:is-show="resetPasswordConfig.isShow"
+      :loading="resetPasswordConfig.isLoading"
+      :show-password-tips="false"
+      @confirm="handleConfirmPassword"
+    />
   </div>
 </template>
 
@@ -138,16 +110,14 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import DisplayName from '@/components/display-name.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import passwordInput from '@/components/passwordInput.vue';
+import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
 import UserSelector from '@/components/UserSelector.vue';
-import { useValidate } from '@/hooks';
 import {
   deleteRealManagers,
   getRealManagers,
   patchBuiltinManager,
   postRealManagers,
   putBuiltinManagerPassword,
-  randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore, useUser } from '@/store';
@@ -155,8 +125,6 @@ import { useMainViewStore, useUser } from '@/store';
 const userStore = useUser();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
-
-const validate = useValidate();
 
 const adminAccount = ref({
   username: '',
@@ -238,44 +206,16 @@ const editUsername = () => {
 // 重置密码
 const resetPasswordConfig = reactive({
   isShow: false,
-  title: t('重置密码'),
   isLoading: false,
   password: '',
+  confirmPassword: '',
 });
 
-const formRef = ref();
-
-const rules = {
-  password: [validate.required],
-};
-
-const closedPassword = () => {
-  resetPasswordConfig.isShow = false;
-  resetPasswordConfig.password = '';
-};
-
-const changePassword = (val: string) => {
-  resetPasswordConfig.password = val;
-};
-
-// 随机密码
-const handleRandomPassword = async () => {
+const handleConfirmPassword = async (password: string) => {
   try {
-    const passwordRes = await randomPasswords({});
-    resetPasswordConfig.password = passwordRes.data.password;
-  } catch (e) {
-    console.warn(e);
-  }
-};
-
-const confirmPassword = async () => {
-  try {
-    await formRef.value.validate();
     resetPasswordConfig.isLoading = true;
-
-    await putBuiltinManagerPassword({ password: resetPasswordConfig.password });
+    await putBuiltinManagerPassword({ password });
     resetPasswordConfig.isShow = false;
-    resetPasswordConfig.password = '';
     Message({ theme: 'success', message: t('密码重置成功') });
   } catch (e) {
     console.warn(e);

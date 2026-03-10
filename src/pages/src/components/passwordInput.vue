@@ -2,10 +2,7 @@
   <bk-input
     class="input-password"
     :type="isPassword ? 'password' : 'text'"
-    v-model="inputValue"
-    @change="$emit('change', inputValue)"
-    @focus="$emit('focus', inputValue)"
-    @input="$emit('input', inputValue); $emit('update: modelValue', inputValue)"
+    v-model="modelValue"
     @keydown="handleFastClear"
   >
     <template #suffix>
@@ -22,7 +19,7 @@
         <i
           class="user-icon icon-copy text-[#3A84FF] text-[14px] "
           v-bk-tooltips="{ content: $t('复制密码') }"
-          @click="copy(inputValue)" />
+          @click="copy(modelValue)" />
       </div>
     </template>
   </bk-input>
@@ -31,14 +28,13 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips  } from 'bkui-vue';
 import { Eye } from 'bkui-vue/lib/icon';
-import { defineEmits, defineProps, ref, watch } from 'vue';
+import { ref } from 'vue';
 
 import { copy } from '@/utils';
 
+const modelValue = defineModel<string>({ default: '' });
+
 const props = defineProps({
-  modelValue: {
-    type: String,
-  },
   isPasswordDisabled: {
     type: Boolean,
     default: false,
@@ -48,20 +44,13 @@ const props = defineProps({
     default: false,
   },
 });
-defineEmits(['change', 'focus', 'input', 'update: modelValue']);
-
-const inputValue = ref('');
-
-watch(() => props.modelValue, (val) => {
-  inputValue.value = val;
-}, {immediate: true});
 
 const isPassword  = ref(false);
 
-const handleFastClear = (value: any, event: KeyboardEvent) => {
+const handleFastClear = (_value: any, event: KeyboardEvent) => {
   const CLEAR_CODE = ['Delete', 'Backspace'];
   if (props.isFastClearEnable && CLEAR_CODE.includes(event?.code)) {
-    inputValue.value = '';
+    modelValue.value = '';
   }
 };
 

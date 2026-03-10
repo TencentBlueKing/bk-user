@@ -130,10 +130,7 @@
       @confirm="() => confirmOperations()"
     >
       <div class="mb-[16px] text-[#979BA5]">{{moveTips}}</div>
-        <bk-form
-            class="example"
-            form-type="vertical"
-        >
+        <bk-form form-type="vertical">
             <bk-form-item :label="$t('选择组织')">
                 <bk-select
                     v-model="selectedValue"
@@ -159,45 +156,13 @@
         </bk-form>
     </bk-dialog>
     <!-- 重置密码弹框 -->
-    <bk-dialog
-      :width="500"
-      :is-show="passwordDialogShow"
-      :title="$t('重置密码')"
-      :theme="'primary'"
-      :size="'normal'"
-      :height="200"
-      @closed="resetPasswordClose"
-    >
-      <bk-loading :loading="isResetPasswordLoading">
-        <bk-form
-            class="example"
-            form-type="vertical"
-        >
-            <bk-form-item :label="$t('新密码')" required>
-              <passwordInput :style="{width: '80%'}"  v-model="password" clearable
-                  :placeholder="passwordTips.join('、')"
-                  v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-                  @input="inputPassword"
-                  />
-                <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
-            </bk-form-item>
-        </bk-form>
-      </bk-loading>
-      <template #footer>
-        <div class="flex justify-end">
-          <bk-button
-            theme="primary"
-            class="mr-[8px]"
-            @click="resetPasswordConfirm"
-            :disabled="isResetPasswordLoading">
-            {{ t('确定') }}
-          </bk-button>
-          <bk-button @click="resetPasswordClose">
-            {{ t('取消') }}
-          </bk-button>
-        </div>
-      </template>
-    </bk-dialog>
+    <ResetPasswordDialog
+      v-model:is-show="passwordDialogShow"
+      :loading="isResetPasswordLoading"
+      :password-tips="passwordTips"
+      :data-source-id="appStore.currentTenant.data_source.id"
+      @confirm="handleResetPasswordConfirm"
+    />
     <!-- 快速录入弹框 -->
     <FastInputDialog v-model:isShow="fastInputDialogShow" @clickImport="$emit('click-import')"
       @success="fastInputSuccess" />
@@ -241,13 +206,11 @@
   import EditDetails from './edit-detail.vue';
   import ImportDialog from '@/components/import-dialog/import-dialog.vue'
   import ViewUser from '../details/ViewUser.vue'; 
-  import { randomPasswords } from '@/http';
   import { getFields } from '@/http/settingFiles';
-  import passwordInput from '@/components/passwordInput.vue';
+  import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
   import batchOperation from './batch-operation.vue';
   import {
     getTenantsUserList,
-    getFieldsTips,
     resetTenantsUserPassword,
     updateTenantsUserStatus,
     delTenantsUser,
@@ -293,7 +256,6 @@
   })
   const detailsInfo = ref({});
   const selectList = ref([]);
-  const password = ref('');
   const dataSource = ref([]);
   const moveDialogShow = ref(false);
   const currentHandle = ref({});
@@ -306,7 +268,6 @@
   const getUserList = ref([]);
   const chooseDepartments = ref([]);
   const passwordTips = ref([]);
-  const isPassword = ref(false);
   const searchSelectOptions = [
     {
       name: t('用户名'),
@@ -750,32 +711,22 @@
     }
   }
 
-  /** 生成随机密码 */
-  const randomPasswordHandle = async () => {
-    const res = await randomPasswords({data_source_id: appStore.currentTenant.data_source.id});
-      password.value = res.data?.password;
-  };
   const isResetPasswordLoading = ref(false);
-  /** 重置密码 */
-  const resetPasswordConfirm = async () => {
+  /** 重置密码确认 */
+  const handleResetPasswordConfirm = async (password: string) => {
     try {
-        isResetPasswordLoading.value = true;
-        const param = { password: password.value };
-        await resetTenantsUserPassword(detailsInfo.value.id, param);
-        handleClear();
-        resetPasswordClose()
-        Message({ theme: 'success', message: t('重置密码成功') });
+      isResetPasswordLoading.value = true;
+      const param = { password };
+      await resetTenantsUserPassword(detailsInfo.value.id, param);
+      handleClear();
+      passwordDialogShow.value = false;
+      Message({ theme: 'success', message: t('重置密码成功') });
     } catch (e) {
-        console.warn(e);
+      console.warn(e);
     } finally {
       isResetPasswordLoading.value = false;
     }
-  }
-  /** 取消重置密码 */
-  const resetPasswordClose = () => {
-    passwordDialogShow.value = false
-    password.value = ''
-  }
+  };
   /** 点击快速录入按钮 */
   const fastInputHandle = () => {
     fastInputDialogShow.value = true;
@@ -850,10 +801,6 @@
     }, []);
     return values;
   };
-
-  const inputPassword = (val) => {
-    password.value = val;
-};
 
 const importDialogHandle = () => {
   importDialogShow.value = true
@@ -1035,6 +982,10 @@ defineExpose({
       cursor: not-allowed;
     }
   }
+}
+
+.is-error {
+  border-color: #ea3636;
 }
 </style>
 <style lang="less" scoped>
