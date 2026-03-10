@@ -725,5 +725,6 @@
   "新密码不能为空": "New password cannot be empty",
   "确认密码不能为空": "Confirm password cannot be empty",
   "两次输入的密码不一致,请重新输入": "The two passwords entered are not the same, please enter again",
-  "请输入新密码": "Please enter a new password"
+  "请输入新密码": "Please enter a new password",
+  "确定删除该管理员？": "Are you sure you want to delete this administrator?"
 }

@@ -58,7 +58,7 @@
             class="tag-style"
             v-for="item in selectedValue"
             :key="item.id"
-            :closable="item.isMouseenter"
+            :closable="item.id !== userStore.user.username ? item.isMouseenter : false"
             @mouseenter="item.isMouseenter = true"
             @mouseleave="item.isMouseenter = false"
             @close="deleteAccount(item.id)">
@@ -254,8 +254,19 @@ const changeValues = ref([]);
 
 // 删除实名管理员
 const deleteAccount = (id: string) => {
-  deleteRealManagers(id).then(() => {
-    initRealManagers();
+  InfoBox({
+    title: t('确定删除该管理员？'),
+    confirmText: t('确认'),
+    theme: 'danger',
+    onConfirm: () => {
+      deleteRealManagers(id).then(() => {
+        initRealManagers();
+        Message({
+          message: t('删除成功'),
+          theme: 'success',
+        });
+      });
+    },
   });
 };
 
