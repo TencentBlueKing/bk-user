@@ -83,8 +83,10 @@
           <LabelContent :label="$t('账号有效期')">
             {{ validityPeriod}}
           </LabelContent>
-          <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
-          <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
+          <template v-if="isShowItem">
+            <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
+            <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
+          </template>
         </div>
         <bk-button
           class="min-w-[64px]"
