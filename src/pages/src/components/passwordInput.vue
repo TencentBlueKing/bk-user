@@ -47,6 +47,11 @@ const props = defineProps({
 
 const isPassword  = ref(false);
 
+/**
+ * 快速清空密码输入框
+ * @param _value bk-input keydown 事件第一个参数(输入值),此处未使用但需保留以匹配事件签名
+ * @param event 键盘事件对象
+ */
 const handleFastClear = (_value: any, event: KeyboardEvent) => {
   const CLEAR_CODE = ['Delete', 'Backspace'];
   if (props.isFastClearEnable && CLEAR_CODE.includes(event?.code)) {

@@ -85,7 +85,7 @@ interface Props {
   loading?: boolean;
   passwordTips?: string[];
   showPasswordTips?: boolean;
-  dataSourceId?: string;
+  dataSourceId?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -130,13 +130,13 @@ watch(() => props.isShow, (newVal) => {
 });
 
 // 随机生成密码
+// 注意:dataSourceId 在不同场景下为可选参数
+// - 组织架构页面: 需要 dataSourceId,用于生成符合该数据源密码规则的密码
+// - 管理员设置页面: 不需要 dataSourceId,使用默认密码规则
 const handleRandomPassword = async () => {
-  if (!props.dataSourceId) {
-    console.warn('dataSourceId is required for random password generation');
-    return;
-  }
   try {
-    const res = await randomPasswords({ data_source_id: props.dataSourceId });
+    const params = props.dataSourceId ? { data_source_id: props.dataSourceId } : {};
+    const res = await randomPasswords(params);
     formData.password = res.data?.password || '';
   } catch (e) {
     console.warn(e);
@@ -162,5 +162,6 @@ const handleCancel = () => {
 // 关闭
 const handleClose = () => {
   emits('update:isShow', false);
+  emits('cancel');
 };
 </script>

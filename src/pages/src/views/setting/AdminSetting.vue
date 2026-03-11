@@ -207,8 +207,6 @@ const editUsername = () => {
 const resetPasswordConfig = reactive({
   isShow: false,
   isLoading: false,
-  password: '',
-  confirmPassword: '',
 });
 
 const handleConfirmPassword = async (password: string) => {
