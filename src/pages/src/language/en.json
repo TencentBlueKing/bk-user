@@ -721,5 +721,10 @@
   "搜索{0}": "Search for {0}",
   "搜索{0}关键字": "Search for keywords {0}",
   "搜索{0}等关键字": "Search for {0} Waiting for keywords",
-  "可以尝试 调整关键词 或 {0}": "You can try adjusting keywords or {0}"
+  "可以尝试 调整关键词 或 {0}": "You can try adjusting keywords or {0}",
+  "新密码不能为空": "New password cannot be empty",
+  "确认密码不能为空": "Confirm password cannot be empty",
+  "两次输入的密码不一致,请重新输入": "Passwords do not match",
+  "请输入新密码": "Please enter a new password",
+  "确定删除该管理员？": "Are you sure you want to delete this administrator?"
 }

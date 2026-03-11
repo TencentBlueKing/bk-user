@@ -1,48 +1,41 @@
 <template>
-  <div>
-    <ConfigPreview
-      inner-class-name="absolute -top-[28px] left-[90px]"
-      @preview="handlePreview"
-      :preview-list="previewList" />
-    <div class="flex">
-      <div class="mr-[4px]">
-        <bk-loading :loading="isLoading" size="small">
-          <showTags
-            :data="data"
-            :value-map="tagValueMap"
-            :symbol-options="symbolOptions"
-            @delete="handleDeleteTag"
-            @sort="handleSortTag"
-            @symbol-replace="handleSymbolReplace" />
-        </bk-loading>
-      </div>
-      <bk-popover
-        trigger="click"
-        theme="light display-name-config-no-padding-popover"
-        placement="bottom-start"
-        :arrow="false">
-        <div
-          class="bg-[#E1ECFF] text-[#3A84FF] w-[32px] h-[32px] leading-[32px]
-            text-[12px] cursor-pointer text-center hover:bg-[#CDDFFE]">
-          <i class="user-icon icon-add-2"></i>
-        </div>
-        <template #content>
-          <SelectPanelGroup
-            :field-options="fieldOptions"
-            :symbol-options="symbolOptions"
-            @field-change="handleFieldChange"
-            @symbol-change="handleSymbolChange"
-          />
-        </template>
-      </bk-popover>
+  <div class="flex">
+    <div class="mr-[4px]">
+      <bk-loading :loading="isLoading" size="small">
+        <showTags
+          :data="data"
+          :value-map="tagValueMap"
+          :symbol-options="symbolOptions"
+          @delete="handleDeleteTag"
+          @sort="handleSortTag"
+          @symbol-replace="handleSymbolReplace" />
+      </bk-loading>
     </div>
+    <bk-popover
+      trigger="click"
+      theme="light display-name-config-no-padding-popover"
+      placement="bottom-start"
+      :arrow="false">
+      <div
+        class="bg-[#E1ECFF] text-[#3A84FF] w-[32px] h-[32px] leading-[32px]
+          text-[12px] cursor-pointer text-center hover:bg-[#CDDFFE]">
+        <i class="user-icon icon-add-2"></i>
+      </div>
+      <template #content>
+        <SelectPanelGroup
+          :field-options="fieldOptions"
+          :symbol-options="symbolOptions"
+          @field-change="handleFieldChange"
+          @symbol-change="handleSymbolChange"
+        />
+      </template>
+    </bk-popover>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
 
-import ConfigPreview from './configPreview.vue';
 import { SYMBOL_OPTIONS } from './select-panel/data';
 import SelectPanelGroup from './select-panel/selectPanelGroup.vue';
 import { IOption } from './select-panel/type';
@@ -51,15 +44,8 @@ import showTags from './showTags.vue';
 import { useFieldData } from '@/store';
 
 const data = defineModel<any[]>('data');
-defineProps<{
-  previewList: { display_name: string }[]
-}>();
-const emit = defineEmits(['change', 'preview']);
+const emit = defineEmits(['change']);
 const tagValueMap = computed(() => [...fieldOptions.value, ...symbolOptions.value]);
-
-const handlePreview = () => {
-  emit('preview');
-};
 
 const handleDeleteTag = (index: number) => {
   const item = data.value.splice(index, 1);
