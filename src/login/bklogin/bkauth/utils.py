@@ -35,6 +35,24 @@ def get_bk_token(username):
     """
     生成用户的登录态
     """
+
+    # 实现登录终端数量限制
+    max_sessions = settings.BK_TOKEN_MAX_SESSIONS
+    if max_sessions > 0:
+        # 如果设置了最大会话数限制，则保留最新的 (max_sessions - 1) 个 token，将更旧的 token 标记为失效
+        try:
+            # 查询该用户所有有效的 token，按 ID 倒序排列（ID 自增，大的更新）
+            active_tokens = BkToken.objects.filter(username=username, is_logout=False).order_by("-id")
+
+            # 如果当前有效 token 数量 >= 最大会话数，需要将最旧的 token 标记为失效
+            if active_tokens.count() >= max_sessions:
+                # 直接获取需要失效的 token（跳过最新的 max_sessions - 1 个，剩余的都是旧的）
+                tokens_to_invalidate = list(active_tokens[max_sessions - 1:].values_list("id", flat=True))
+                # 将这些旧 token 标记为失效
+                BkToken.objects.filter(id__in=tokens_to_invalidate).update(is_logout=True)
+        except Exception:
+            logger.exception("标记用户 [%s] 的旧 token 失效时发生错误", username)
+
     bk_token = ""
     expire_time = int(time.time())
     # 重试5次
@@ -45,23 +63,6 @@ def get_bk_token(username):
         inactive_expire_time = now_time + BK_INACTIVE_COOKIE_AGE
         plain_token = "%s|%s|%s" % (expire_time, username, salt())
         bk_token = EncryptHandler().encrypt(plain_token)
-
-        # 实现登录终端数量限制
-        max_sessions = settings.BK_TOKEN_MAX_SESSIONS
-        if max_sessions > 0:
-            # 如果设置了最大会话数限制，则保留最新的 (max_sessions - 1) 个 token，将更旧的 token 标记为失效
-            try:
-                # 查询该用户所有有效的 token，按 ID 倒序排列（ID 自增，大的更新）
-                active_tokens = BkToken.objects.filter(username=username, is_logout=False).order_by("-id")
-
-                # 如果当前有效 token 数量 >= 最大会话数，需要将最旧的 token 标记为失效
-                if active_tokens.count() >= max_sessions:
-                    # 直接获取需要失效的 token（跳过最新的 max_sessions - 1 个，剩余的都是旧的）
-                    tokens_to_invalidate = list(active_tokens[max_sessions - 1:].values_list("id", flat=True))
-                    # 将这些旧 token 标记为失效
-                    BkToken.objects.filter(id__in=tokens_to_invalidate).update(is_logout=True)
-            except Exception:
-                logger.exception("标记用户 [%s] 的旧 token 失效时发生错误", username)
 
         try:
             BkToken.objects.create(token=bk_token, username=username, inactive_expire_time=inactive_expire_time)
