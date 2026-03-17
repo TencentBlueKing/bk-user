@@ -47,7 +47,7 @@ def send_mail(receiver_usernames: List[str], message: str, sender: str = None, t
 
     client = get_client_by_raw_username(user=sender or DEFAULT_EMAIL_SENDER)
 
-    message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
+    message_encoded = force_str(base64.b64encode(message.encode("utf-8")))
     logger.debug(
         "going to send email to %s, title: %s, via %s",
         receivers_str,
@@ -87,7 +87,7 @@ def send_sms(receivers: List[str], message: str, sender: str = None):
 
     client = get_client_by_raw_username(user=sender or DEFAULT_SMS_SENDER)
 
-    message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
+    message_encoded = force_str(base64.b64encode(message.encode("utf-8")))
     logger.debug(
         "going to send sms to %s, via %s",
         receivers_str,

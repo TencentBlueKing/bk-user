@@ -113,7 +113,7 @@ export default {
       const obj = {};
       this.profileInfoList.forEach((item) => {
         if (item.key.includes(this.dateKey)) {
-          item.value = (item.value && new Date(item.value)) || new Date();
+          item.value = item.value ? new Date(item.value) : '';
         }
         this.$set(obj, item.key, item.value);
       });

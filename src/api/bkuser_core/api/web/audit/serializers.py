@@ -147,4 +147,6 @@ class LoginLogExportOutputSLZ(serializers.Serializer):
         return str(LOGIN_FAILED_REASON_MAP.get(obj.reason, _("未知失败原因")))
 
     def get_datetime(self, obj):
-        return obj.create_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        # 转换成本地时区时间
+        local_time = timezone.localtime(obj.create_time)
+        return local_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")

@@ -41,7 +41,7 @@ class BkToken(models.Model):
     """
     登录票据
     """
-
+    username = models.CharField("用户名", max_length=128, blank=True, null=True)
     token = models.CharField("登录票据", max_length=255, unique=True, db_index=True)
     # 是否已经退出登录
     is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)

@@ -126,6 +126,7 @@ error_codes.add_codes(
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
+        ErrorCode("EMAIL_MORE_THAN_ONE", _("绑定该邮箱的用户存在多个")),
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),
         ErrorCode("SAVE_USER_INFO_FAILED", _("保存用户信息失败, 失败原因:{exception_message}")),
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),

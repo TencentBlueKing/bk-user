@@ -585,12 +585,6 @@ class CategoryProfileListApi(generics.ListAPIView):
         if keyword:
             # NOTE: 这里相对原来的差异, 抹掉了 id__icontains 的搜索
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
-        create_general_log(
-            operator = self.request.operator,
-            operate_type = OperationType.VIEW.value,
-            operator_obj = queryset[0],
-            request = self.request,
-        )
 
         first_profile = queryset.first()
         if first_profile:

@@ -483,7 +483,8 @@ export default {
             data[key] = info.value;
           }
           if (key === 'account_expiration_date') {
-            data[key] = moment(info.value).format('YYYY-MM-DD');
+            const formattedDate = moment(info.value).format('YYYY-MM-DD');
+            data[key] = formattedDate === 'Invalid date' ? '' : formattedDate;
           }
           if ((type === 'add' || edit) && key === 'telephone') {
             data.iso_code = info.iso_code;

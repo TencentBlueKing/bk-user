@@ -159,7 +159,7 @@ class ProfileSyncHelper:
         for info in handle_with_progress_info(self.target_obj_list, progress_title="handle profile"):
             try:
                 validate_username(value=info.username)
-            except ValidationError as e:
+            except (ValidationError, TypeError) as e:
                 self.context.add_record(
                     step=SyncStep.USERS,
                     success=False,

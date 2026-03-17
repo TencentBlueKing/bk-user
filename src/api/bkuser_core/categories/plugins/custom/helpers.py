@@ -154,7 +154,7 @@ class ProSyncHelper(DBSyncHelper):
         for info in handle_with_progress_info(self.target_obj_list, progress_title="handle profile"):
             try:
                 validate_username(value=info.username)
-            except ValidationError as e:
+            except (ValidationError, TypeError) as e:
                 self.context.add_record(step=SyncStep.USERS, success=False, username=info.username, error=str(e))
                 logger.warning("username<%s:%s> does not meet format, will skip", info.code, info.username)
                 continue

@@ -96,6 +96,11 @@ export default {
       config.data = params;
       return http.delete('api/v1/web/profiles/batch/', config);
     },
+    // 批量禁用
+    disableProfiles(context, params, config = {}) {
+      config.data = params;
+      return http.put('api/v1/web/profiles/batch/', params, config);
+    },
     // 修改用户状态
     patchProfile(context, params, config = {}) {
       const { id, data } = params;
