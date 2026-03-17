@@ -204,6 +204,8 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
 class ProfileBatchDeleteInputSLZ(serializers.Serializer):
     id = serializers.IntegerField()
 
+class ProfileBatchDisableInputSLZ(serializers.Serializer):
+    id = serializers.IntegerField()
 
 class ProfileBatchUpdateInputSLZ(serializers.ModelSerializer):
     # 批量更新时使用

@@ -189,7 +189,7 @@
             </p>
             <p>
               <span>{{$t('初始密码提示2')}}</span>
-              <a :href="mailGateway" target="_blank">{{$t('初始密码提示3')}}</a><span>{{$t('初始密码提示4')}}</span>
+              <span>{{$t('初始密码提示3')}}</span><span>{{$t('初始密码提示4')}}</span>
             </p>
           </div>
         </div>

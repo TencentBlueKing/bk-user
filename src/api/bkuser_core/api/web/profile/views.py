@@ -29,6 +29,7 @@ from bkuser_core.api.web.profile.serializers import (
     ProfileSearchInputSLZ,
     ProfileSearchOutputSLZ,
     ProfileUpdateInputSLZ,
+    ProfileBatchDisableInputSLZ
 )
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password, mask_sensitive_data
 from bkuser_core.api.web.viewset import CustomPagination
@@ -414,9 +415,9 @@ class ProfileCreateApi(generics.CreateAPIView):
 
         try:
             instance = slz.save()
-        except Exception:
+        except Exception as e:
             logger.exception("failed to save profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         # 善后工作
         post_profile_create.send(
@@ -461,6 +462,41 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
 
                 # do
                 instance.delete()
+
+        return Response(status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        """批量禁用"""
+        slz = ProfileBatchDisableInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
+
+        operator = get_operator(request)
+        data = slz.validated_data
+        for obj in data:
+            try:
+                instance = Profile.objects.get(pk=obj["id"])
+                create_general_log(
+                    operator=operator,
+                    operate_type=OperationType.UPDATE.value,
+                    operator_obj=instance,
+                    request=request,
+                )
+            except ObjectDoesNotExist:
+                logger.warning(
+                    "obj <%s-%s> not found or already been deleted.",
+                    self.queryset.model,
+                    obj,
+                )
+                continue
+            else:
+                if settings.ENABLE_IAM:
+                    # check permission
+                    category = ProfileCategory.objects.get(pk=instance.category_id)
+                    Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+
+                # do
+                instance.status = ProfileStatus.DISABLED.value
+                instance.save(update_fields=["status"])
 
         return Response(status=status.HTTP_200_OK)
 

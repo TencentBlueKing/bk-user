@@ -88,7 +88,7 @@
                 <a
                   href="javascript:;"
                   :class="{ 'disable': treeIndex === 9 }"
-                  @click="addChild(item)"
+                  @click="treeIndex === 9 ? null : addChild(item)"
                   @mouseenter="checkAddTips(item)"
                   @mouseleave="closeAddTips(item)">
                   {{$t('添加下级组织')}}

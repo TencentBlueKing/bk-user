@@ -122,6 +122,12 @@
                         @click="deleteProfiles">{{$t('批量删除')}}
                       </a>
                     </li>
+                    <li>
+                      <a
+                        href="javascript:;" :class="{ 'disabled': !isClick }"
+                        @click="disableProfiles">{{$t('批量禁用')}}
+                      </a>
+                    </li>
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 仅显示本级组织成员 -->
@@ -1219,6 +1225,47 @@ export default {
               });
             }
             this.paginationConfig.current = 1;
+            this.getTableData();
+          } catch (e) {
+            console.warn(e);
+            this.basicLoading = false;
+          } finally {
+            this.clickSecond = false;
+          }
+        },
+      });
+    },
+    // 批量禁用用户信息
+    disableProfiles() {
+      if (!this.isClick) {
+        return;
+      }
+      this.$refs.dropdownMore.hide();
+      this.$bkInfo({
+        title: this.$t('确认禁用选中的用户？'),
+        extCls: 'king-info long-title',
+        confirmFn: async () => {
+          if (this.clickSecond) {
+            return;
+          }
+          this.clickSecond = true;
+          this.basicLoading = true;
+          try {
+            const checkIds = [];
+            this.userMessage.userInforList.forEach((element) => {
+              if (element.isCheck) {
+                checkIds.push({
+                  id: element.id,
+                });
+              }
+            });
+            const res = await this.$store.dispatch('organization/disableProfiles', checkIds);
+            if (res.result === true) {
+              this.$bkMessage({
+                message: this.$t('禁用成功'),
+                theme: 'success',
+              });
+            }
             this.getTableData();
           } catch (e) {
             console.warn(e);

@@ -571,6 +571,8 @@ export default {
         background: #e1ecff;
       }
       .match-item-left {
+        flex: 1;
+        min-width: 0;
         .item-title {
           margin-bottom: 4px;
           font-weight: bold;

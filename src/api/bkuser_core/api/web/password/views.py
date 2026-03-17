@@ -64,10 +64,12 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
         # 1. get profile by email
         try:
             profile = Profile.objects.get(email=email)
-        except Exception:  # pylint: disable=broad-except
-            """吞掉异常，保证不能判断出邮箱是否存在"""
-            logger.exception("failed to get profile by email<%s>", email)
-            return Response(data={})
+        except Profile.DoesNotExist:  # pylint: disable=broad-except
+            logger.exception("failed to get profile by email<%s>, does not exist!", email)
+            raise error_codes.EMAIL_NOT_PROVIDED
+        except Profile.MultipleObjectsReturned:  # pylint: disable=broad-except
+            logger.exception("return more than one profile by email<%s>", email)
+            raise error_codes.EMAIL_MORE_THAN_ONE
 
         # 用户状态校验
         if not profile.is_normal:

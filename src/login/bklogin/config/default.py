@@ -281,3 +281,13 @@ if ENABLE_PASSWORD_RSA_ENCRYPTED:
         message = f"password rsa encrypted is enabled, but b64decode fail, {rsa_key_info}"
         print(message)
         raise e
+
+# ==============================================================================
+# BK_TOKEN_MAX_SESSIONS
+# ==============================================================================
+
+# 允许的最大登录终端数量，默认 0 表示不限制
+# - 0: 不限制，允许无限多个终端同时登录
+# - 1: 单端登录，同一时间只能有一个有效 token
+# - N: 最多允许 N 个终端同时登录
+BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)

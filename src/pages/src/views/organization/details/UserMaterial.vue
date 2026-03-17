@@ -69,6 +69,18 @@
               @focus="isCorrectPw = false" />
             <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
           </p>
+          <h4 class="title">{{$t('确认密码')}}</h4>
+          <p class="pw-input-text">
+            <input
+              autocomplete="new-password"
+              :type="passwordInputType['confirmPassword']"
+              :placeholder="$t('请再次输入新密码')"
+              :class="['editor-password',{ 'input-error': isPasswordMismatch }]"
+              :maxlength="32"
+              v-model="confirmPassword"
+              @focus="isPasswordMismatch = false" />
+            <i :class="['bk-icon', confirmPasswordIconClass]" @click="changePasswordInputType('confirmPassword')"></i>
+          </p>
           <div class="reset-btn">
             <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
             <bk-button theme="default" class="editor-btn" @click="isShowReset = false">{{$t('取消')}}</bk-button>
@@ -197,9 +209,12 @@ export default {
       isShowReset: false,
       oldPassword: '',
       newPassword: '',
+      confirmPassword: '',
+      isPasswordMismatch: false,
       passwordInputType: {
         oldPassword: 'password',
         newPassword: 'password',
+        confirmPassword: 'password',
       },
       passwordRules: null,
       // 公钥
@@ -221,6 +236,9 @@ export default {
     },
     passwordIconClass() {
       return this.passwordInputType.newPassword === 'password' ? 'icon-hide' : 'icon-eye';
+    },
+    confirmPasswordIconClass() {
+      return this.passwordInputType.confirmPassword === 'password' ? 'icon-hide' : 'icon-eye';
     },
     passwordValidDays() {
       return this.$store.state.passwordValidDaysList.find(item => (
@@ -328,6 +346,8 @@ export default {
       // 清空上次输入
       this.oldPassword = '';
       this.newPassword = '';
+      this.confirmPassword = '';
+      this.isPasswordMismatch = false;
       const res = await this.$store.dispatch('catalog/ajaxGetPassport', {
         id: this.currentCategoryId,
       });
@@ -402,6 +422,15 @@ export default {
           return;
         }
       }
+      // 确认密码校验
+      if (this.newPassword !== this.confirmPassword) {
+        this.isPasswordMismatch = true;
+        this.$bkMessage({
+          message: this.$t('两次输入的密码不一致'),
+          theme: 'error',
+        });
+        return;
+      }
       if (this.clickSecond) {
         return;
       }
@@ -454,6 +483,8 @@ export default {
       // 清空
       this.oldPassword = '';
       this.newPassword = '';
+      this.confirmPassword = '';
+      this.isPasswordMismatch = false;
     },
     // 查看密码
     changePasswordInputType(type = 'newPassword') {

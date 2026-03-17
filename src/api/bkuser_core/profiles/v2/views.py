@@ -290,9 +290,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             instance = serializer.save()
-        except Exception:
+        except Exception as e:
             logger.exception("failed to save profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         # 善后工作
         post_profile_create.send(
