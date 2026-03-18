@@ -28,6 +28,8 @@ from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
+    TenantUserDetailInfoListInputSLZ,
+    TenantUserDetailInfoListOutputSLZ,
     TenantUserDisplayInfoListInputSLZ,
     TenantUserDisplayInfoListOutputSLZ,
     TenantUserLeaderListOutputSLZ,
@@ -280,6 +282,9 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     根据 bk_username 批量查询用户敏感信息
+
+    Note: 该接口为旧版 bk-cmsi 兼容接口，新版 bk-cmsi 已切换到 TenantUserDetailInfoListApi
+    目前需要保留该接口以保持向后兼容，待所有环境完成切换后可删除
     """
 
     pagination_class = None
@@ -301,6 +306,35 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserDetailInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据 bk_username 批量查询用户详情信息(敏感信息 & data_source_id)
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserDetailInfoListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserDetailInfoListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return TenantUser.objects.filter(
+            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+        ).select_related("data_source_user")
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="batch_query_user_detail_info",
+        operation_description="批量查询用户详情信息(敏感信息 + data_source_id)",
+        query_serializer=TenantUserDetailInfoListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserDetailInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

@@ -245,6 +245,52 @@ class TestTenantUserSensitiveInfoListApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserDetailInfoListApi:
+    def test_list_tenant_user(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.sensitive_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
+        assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
+        assert {t["phone_country_code"] for t in resp.data} == {"86"}
+        assert all("wx_userid" in t for t in resp.data)
+        assert all("data_source_id" in t for t in resp.data)
+
+    def test_with_invalid_bk_usernames(self, api_client):
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.detail_info.list"),
+            data={"bk_usernames": ",".join([zhangsan.id, "invalid"])},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["phone"] == "13512345671"
+        assert resp.data[0]["email"] == "zhangsan@m.com"
+        assert resp.data[0]["phone_country_code"] == "86"
+        assert all("wx_userid" in t for t in resp.data)
+        assert resp.data[0]["data_source_id"] == zhangsan.data_source_id
+
+    def test_with_no_bk_usernames(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant_user.detail_info.list"), data={"bk_usernames": ""})
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_with_invalid_length(self, api_client):
+        resp = api_client.get(
+            reverse("open_v3.tenant_user.detail_info.list"),
+            data={"bk_usernames": ",".join(map(str, range(1, 102)))},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
 class TestTenantUserLookupApi:
     def test_with_login_names(self, api_client, random_tenant):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")

@@ -29,6 +29,7 @@ from .relation import (
 from .tenant import TenantCommonVariableListApi, TenantListApi, TenantUserCustomEnumFieldListApi
 from .user import (
     TenantUserDepartmentListApi,
+    TenantUserDetailInfoListApi,
     TenantUserDisplayInfoListApi,
     TenantUserLeaderListApi,
     TenantUserListApi,
@@ -47,6 +48,7 @@ __all__ = [
     "TenantUserLeaderListApi",
     "TenantUserListApi",
     "TenantUserSensitiveInfoListApi",
+    "TenantUserDetailInfoListApi",
     "TenantUserLookupApi",
     "TenantDepartmentRetrieveApi",
     "TenantDepartmentDescendantListApi",
