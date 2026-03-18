@@ -197,7 +197,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 "user_id", flat=True
             )
             # TODO: 这里存在比较大的性能问题，如何快速获取无归属部门的用户？
-            queryset = queryset.exclude(data_source_user_id__in=user_ids)
+            queryset = queryset.filter(data_source=data_source).exclude(data_source_user_id__in=user_ids)
 
         return queryset
 
