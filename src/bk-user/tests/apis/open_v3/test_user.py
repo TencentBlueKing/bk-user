@@ -250,7 +250,7 @@ class TestTenantUserDetailInfoListApi:
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.sensitive_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
+            reverse("open_v3.tenant_user.detail_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
         )
 
         assert resp.status_code == status.HTTP_200_OK
