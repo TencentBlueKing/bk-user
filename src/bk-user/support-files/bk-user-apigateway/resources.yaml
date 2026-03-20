@@ -284,8 +284,8 @@ paths:
 
   /api/v3/open/internal/tenant/users/-/contact-infos/:
     get:
-      operationId: batch_query_user_contact_info
-      description: 批量查询用户联系信息
+      operationId: batch_query_user_sensitive_info_with_source
+      description: 批量查询用户敏感信息（含数据源 ID）
       tags: []
       responses:
         default:
@@ -305,7 +305,7 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: true
-        descriptionEn: Batch query user contact information
+        descriptionEn: Batch query user sensitive information (with data_source_id)
 
   /api/v3/open/tenant/users/-/lookup/:
     get:

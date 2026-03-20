@@ -111,11 +111,11 @@ class TenantUserSensitiveInfoListOutputSLZ(serializers.Serializer):
         return obj.phone_info[1]
 
 
-class TenantUserContactInfoListInputSLZ(serializers.Serializer):
+class TenantUserSensitiveInfoWithSourceListInputSLZ(serializers.Serializer):
     bk_usernames = StringArrayField(help_text="蓝鲸用户唯一标识，多个使用逗号分隔", max_items=100)
 
 
-class TenantUserContactInfoListOutputSLZ(serializers.Serializer):
+class TenantUserSensitiveInfoWithSourceListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     phone = serializers.SerializerMethodField(help_text="手机号")
     phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")

@@ -26,8 +26,6 @@ from rest_framework.response import Response
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
-    TenantUserContactInfoListInputSLZ,
-    TenantUserContactInfoListOutputSLZ,
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
     TenantUserDisplayInfoListInputSLZ,
@@ -39,6 +37,8 @@ from bkuser.apis.open_v3.serializers.user import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSensitiveInfoListInputSLZ,
     TenantUserSensitiveInfoListOutputSLZ,
+    TenantUserSensitiveInfoWithSourceListInputSLZ,
+    TenantUserSensitiveInfoWithSourceListOutputSLZ,
     VirtualUserListOutputSLZ,
     VirtualUserLookupInputSLZ,
     VirtualUserLookupOutputSLZ,
@@ -283,7 +283,7 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     根据 bk_username 批量查询用户敏感信息
 
-    Note: 该接口为旧版 bk-cmsi 兼容接口，新版 bk-cmsi 已切换到 TenantUserDetailInfoListApi
+    Note: 该接口为旧版 bk-cmsi 兼容接口，新版 bk-cmsi 已切换到 TenantUserSensitiveInfoWithSourceListApi
     目前需要保留该接口以保持向后兼容，后续可考虑删除该接口
     """
 
@@ -311,17 +311,17 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantUserContactInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantUserSensitiveInfoWithSourceListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    根据 bk_username 批量查询用户联系信息(敏感信息 & data_source_id)
+    根据 bk_username 批量查询用户敏感信息(携带数据源信息)
     """
 
     pagination_class = None
 
-    serializer_class = TenantUserContactInfoListOutputSLZ
+    serializer_class = TenantUserSensitiveInfoWithSourceListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = TenantUserContactInfoListInputSLZ(data=self.request.query_params)
+        slz = TenantUserSensitiveInfoWithSourceListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -331,10 +331,10 @@ class TenantUserContactInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.internal.user"],
-        operation_id="batch_query_user_contact_info",
-        operation_description="批量查询用户联系信息(敏感信息 + data_source_id)",
-        query_serializer=TenantUserContactInfoListInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserContactInfoListOutputSLZ(many=True)},
+        operation_id="batch_query_user_sensitive_info_with_source",
+        operation_description="批量查询用户敏感信息",
+        query_serializer=TenantUserSensitiveInfoWithSourceListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserSensitiveInfoWithSourceListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

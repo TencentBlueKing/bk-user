@@ -125,9 +125,9 @@ urlpatterns = [
         include(
             [
                 path(
-                    "tenant/users/-/contact-infos/",
-                    views.TenantUserContactInfoListApi.as_view(),
-                    name="open_v3.internal.tenant_user.contact_info.list",
+                    "tenant/users/-/sensitive-infos-with-source/",
+                    views.TenantUserSensitiveInfoWithSourceListApi.as_view(),
+                    name="open_v3.internal.tenant_user.sensitive_info_with_source.list",
                 ),
             ]
         ),

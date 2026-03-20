@@ -1,6 +1,6 @@
 ### Description
 
-Batch query user contact information (phone, email, WeChat, and other sensitive fields, plus data source ID).
+Batch query user sensitive information with data source ID.
 
 ### Parameters
 

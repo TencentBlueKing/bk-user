@@ -245,7 +245,7 @@ class TestTenantUserSensitiveInfoListApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserContactInfoListApi:
+class TestTenantUserSensitiveInfoWithSourceListApi:
     def test_list_tenant_user(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
