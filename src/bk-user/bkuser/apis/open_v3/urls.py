@@ -50,11 +50,6 @@ urlpatterns = [
                     views.TenantUserSensitiveInfoListApi.as_view(),
                     name="open_v3.tenant_user.sensitive_info.list",
                 ),
-                path(
-                    "users/-/detail-infos/",
-                    views.TenantUserDetailInfoListApi.as_view(),
-                    name="open_v3.tenant_user.detail_info.list",
-                ),
                 path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
                     "users/-/lookup/",
@@ -120,6 +115,19 @@ urlpatterns = [
                     "custom-enum-fields/",
                     views.TenantUserCustomEnumFieldListApi.as_view(),
                     name="open_v3.tenant_user_custom_enum_field.list",
+                ),
+            ]
+        ),
+    ),
+    # 内部定制 API
+    path(
+        "internal/",
+        include(
+            [
+                path(
+                    "tenant/users/-/contact-infos/",
+                    views.TenantUserContactInfoListApi.as_view(),
+                    name="open_v3.internal.tenant_user.contact_info.list",
                 ),
             ]
         ),

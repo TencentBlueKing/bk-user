@@ -1,6 +1,6 @@
 ### Description
 
-Batch query user's detail information
+Batch query user contact information (phone, email, WeChat, and other sensitive fields, plus data source ID).
 
 ### Parameters
 

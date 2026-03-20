@@ -245,12 +245,13 @@ class TestTenantUserSensitiveInfoListApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
-class TestTenantUserDetailInfoListApi:
+class TestTenantUserContactInfoListApi:
     def test_list_tenant_user(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.detail_info.list"), data={"bk_usernames": ",".join([zhangsan.id, lisi.id])}
+            reverse("open_v3.internal.tenant_user.contact_info.list"),
+            data={"bk_usernames": ",".join([zhangsan.id, lisi.id])},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -265,7 +266,7 @@ class TestTenantUserDetailInfoListApi:
     def test_with_invalid_bk_usernames(self, api_client):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(
-            reverse("open_v3.tenant_user.detail_info.list"),
+            reverse("open_v3.internal.tenant_user.contact_info.list"),
             data={"bk_usernames": ",".join([zhangsan.id, "invalid"])},
         )
 
@@ -279,12 +280,12 @@ class TestTenantUserDetailInfoListApi:
         assert resp.data[0]["data_source_id"] == zhangsan.data_source_id
 
     def test_with_no_bk_usernames(self, api_client):
-        resp = api_client.get(reverse("open_v3.tenant_user.detail_info.list"), data={"bk_usernames": ""})
+        resp = api_client.get(reverse("open_v3.internal.tenant_user.contact_info.list"), data={"bk_usernames": ""})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_with_invalid_length(self, api_client):
         resp = api_client.get(
-            reverse("open_v3.tenant_user.detail_info.list"),
+            reverse("open_v3.internal.tenant_user.contact_info.list"),
             data={"bk_usernames": ",".join(map(str, range(1, 102)))},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
