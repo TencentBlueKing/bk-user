@@ -284,7 +284,7 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     根据 bk_username 批量查询用户敏感信息
 
     Note: 该接口为旧版 bk-cmsi 兼容接口，新版 bk-cmsi 已切换到 TenantUserSensitiveInfoWithSourceListApi
-    目前需要保留该接口以保持向后兼容，后续可考虑删除该接口
+    目前需要保留该接口以保持向后兼容
     """
 
     pagination_class = None
@@ -330,7 +330,7 @@ class TenantUserSensitiveInfoWithSourceListApi(OpenApiCommonMixin, generics.List
         ).select_related("data_source_user")
 
     @swagger_auto_schema(
-        tags=["open_v3.internal.user"],
+        tags=["open_v3.user"],
         operation_id="batch_query_user_sensitive_info_with_source",
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoWithSourceListInputSLZ(),
