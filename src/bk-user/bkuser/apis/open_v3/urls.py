@@ -51,6 +51,7 @@ urlpatterns = [
                     views.TenantUserSensitiveInfoListApi.as_view(),
                     name="open_v3.tenant_user.sensitive_info.list",
                 ),
+                # bk-cmsi 专用
                 path(
                     "tenant/users/-/contact-profiles/",
                     views.TenantUserContactProfileListApi.as_view(),
