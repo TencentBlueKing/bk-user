@@ -1,6 +1,6 @@
 ### Description
 
-Batch query user sensitive information with data source ID.
+Batch query user contact profiles.
 
 ### Parameters
 

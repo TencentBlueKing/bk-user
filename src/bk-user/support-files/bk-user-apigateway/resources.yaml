@@ -282,10 +282,10 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
 
-  /api/v3/open/tenant/users/-/sensitive-infos-with-source/:
+  /api/v3/open/tenant/tenant/users/-/contact-profiles/:
     get:
-      operationId: batch_query_user_sensitive_info_with_source
-      description: 批量查询用户敏感信息（含数据源 ID）
+      operationId: batch_query_user_contact_profiles
+      description: 批量查询用户联系档案
       tags: []
       responses:
         default:
@@ -297,7 +297,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/tenant/users/-/sensitive-infos-with-source/
+          path: /api/v3/open/tenant/tenant/users/-/contact-profiles/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
@@ -305,7 +305,7 @@ paths:
           userVerifiedRequired: false
           appVerifiedRequired: true
           resourcePermissionRequired: true
-        descriptionEn: Batch query user sensitive information (with data_source_id)
+        descriptionEn: Batch query user contact profiles
 
   /api/v3/open/tenant/users/-/lookup/:
     get:

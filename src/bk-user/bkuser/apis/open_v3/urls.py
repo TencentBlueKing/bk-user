@@ -24,6 +24,7 @@ urlpatterns = [
     path(
         "tenant/",
         include(
+            # users
             [
                 path(
                     "users/-/display_info/",
@@ -51,9 +52,9 @@ urlpatterns = [
                     name="open_v3.tenant_user.sensitive_info.list",
                 ),
                 path(
-                    "tenant/users/-/sensitive-infos-with-source/",
-                    views.TenantUserSensitiveInfoWithSourceListApi.as_view(),
-                    name="open_v3.tenant_user.sensitive_info_with_source.list",
+                    "tenant/users/-/contact-profiles/",
+                    views.TenantUserContactProfileListApi.as_view(),
+                    name="open_v3.tenant_user.contact_profile.list",
                 ),
                 path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
@@ -61,6 +62,7 @@ urlpatterns = [
                     views.TenantUserLookupApi.as_view(),
                     name="open_v3.tenant_user.lookup",
                 ),
+                # departments
                 path(
                     "departments/<int:id>/",
                     views.TenantDepartmentRetrieveApi.as_view(),
@@ -86,6 +88,7 @@ urlpatterns = [
                     views.TenantDepartmentLookupListApi.as_view(),
                     name="open_v3.tenant_department.lookup",
                 ),
+                # relations
                 path(
                     "department-user-relations/",
                     views.TenantDepartmentUserRelationListApi.as_view(),
@@ -101,6 +104,7 @@ urlpatterns = [
                     views.TenantUserLeaderRelationListApi.as_view(),
                     name="open_v3.tenant_user_leader_relation.list",
                 ),
+                # virtual users
                 path(
                     "virtual-users/-/lookup/",
                     views.VirtualUserLookupApi.as_view(),
@@ -111,6 +115,7 @@ urlpatterns = [
                     views.VirtualUserListApi.as_view(),
                     name="open_v3.virtual_user.list",
                 ),
+                # common
                 path(
                     "common-variables/",
                     views.TenantCommonVariableListApi.as_view(),
