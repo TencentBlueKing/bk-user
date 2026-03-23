@@ -53,7 +53,7 @@ urlpatterns = [
                 path(
                     "tenant/users/-/sensitive-infos-with-source/",
                     views.TenantUserSensitiveInfoWithSourceListApi.as_view(),
-                    name="open_v3.internal.tenant_user.sensitive_info_with_source.list",
+                    name="open_v3.tenant_user.sensitive_info_with_source.list",
                 ),
                 path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
                 path(
