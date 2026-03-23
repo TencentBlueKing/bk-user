@@ -282,7 +282,7 @@ paths:
           resourcePermissionRequired: true
         descriptionEn: Batch query user's sensitive information
 
-  /api/v3/open/internal/tenant/users/-/sensitive-infos-with-source/:
+  /api/v3/open/tenant/users/-/sensitive-infos-with-source/:
     get:
       operationId: batch_query_user_sensitive_info_with_source
       description: 批量查询用户敏感信息（含数据源 ID）
@@ -297,7 +297,7 @@ paths:
         backend:
           name: default
           method: get
-          path: /api/v3/open/internal/tenant/users/-/sensitive-infos-with-source/
+          path: /api/v3/open/tenant/users/-/sensitive-infos-with-source/
           matchSubpath: false
           timeout: 0
         pluginConfigs: []
