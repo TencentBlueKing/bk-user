@@ -50,6 +50,7 @@ grant_permissions:
     resource_names:
       - "list_department_user_relation"
       - "list_user"
+      - "list_virtual_user"
       - "list_department"
   - bk_app_code: "bk_cmdb"
     grant_dimension: "resource"

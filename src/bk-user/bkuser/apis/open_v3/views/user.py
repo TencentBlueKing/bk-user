@@ -313,7 +313,7 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
 
 class TenantUserContactProfileListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
-    根据 bk_username 批量查询用户联系档案信息
+    根据 bk_username 批量查询用户联系信息
 
     Note: 该接口为 bk-cmsi 专用接口,请勿直接用于其他业务场景
     """
@@ -334,7 +334,7 @@ class TenantUserContactProfileListApi(OpenApiCommonMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="batch_query_user_contact_profile",
-        operation_description="批量查询用户联系档案",
+        operation_description="批量查询用户联系信息",
         query_serializer=TenantUserContactProfileListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserContactProfileListOutputSLZ(many=True)},
     )
