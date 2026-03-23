@@ -333,7 +333,7 @@ class TenantUserContactProfileListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
-        operation_id="batch_query_user_contact_profiles",
+        operation_id="batch_query_user_contact_profile",
         operation_description="批量查询用户联系档案",
         query_serializer=TenantUserContactProfileListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserContactProfileListOutputSLZ(many=True)},
