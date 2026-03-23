@@ -285,7 +285,7 @@ paths:
   /api/v3/open/tenant/users/-/contact-profiles/:
     get:
       operationId: batch_query_user_contact_profile
-      description: 批量查询用户联系信息
+      description: 批量查询用户联系档案
       tags: []
       responses:
         default:
