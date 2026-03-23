@@ -24,8 +24,8 @@ urlpatterns = [
     path(
         "tenant/",
         include(
-            # users
             [
+                # users
                 path(
                     "users/-/display_info/",
                     views.TenantUserDisplayInfoListApi.as_view(),
