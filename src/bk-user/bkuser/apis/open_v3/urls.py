@@ -57,6 +57,12 @@ urlpatterns = [
                     views.TenantUserLookupApi.as_view(),
                     name="open_v3.tenant_user.lookup",
                 ),
+                # bk-cmsi 专用
+                path(
+                    "users/-/contact-profiles/",
+                    views.TenantUserContactProfileListApi.as_view(),
+                    name="open_v3.tenant_user.contact_profile.list",
+                ),
                 # departments
                 path(
                     "departments/<int:id>/",
@@ -82,12 +88,6 @@ urlpatterns = [
                     "departments/-/lookup/",
                     views.TenantDepartmentLookupListApi.as_view(),
                     name="open_v3.tenant_department.lookup",
-                ),
-                # bk-cmsi 专用
-                path(
-                    "users/-/contact-profiles/",
-                    views.TenantUserContactProfileListApi.as_view(),
-                    name="open_v3.tenant_user.contact_profile.list",
                 ),
                 # relations
                 path(
