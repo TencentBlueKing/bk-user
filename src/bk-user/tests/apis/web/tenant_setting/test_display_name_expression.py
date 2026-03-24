@@ -98,9 +98,15 @@ class TestTenantUserDisplayNameConfigPreviewApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_builtin_fields(self, api_client, random_tenant):
         # 由于租户用户顺序不固定，所以需要提前获取
-        tenant_users = TenantUser.objects.filter(tenant=random_tenant, data_source__type=DataSourceTypeEnum.REAL)[
-            :3
-        ].select_related("data_source_user")
+        tenant_users = (
+            TenantUser.objects.filter(
+                tenant=random_tenant,
+                data_source__type=DataSourceTypeEnum.REAL,
+                data_source__owner_tenant_id=random_tenant.id,
+            )
+            .order_by("id")[:3]
+            .select_related("data_source_user")
+        )
         resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({full_name})"},
@@ -113,9 +119,15 @@ class TestTenantUserDisplayNameConfigPreviewApi:
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_custom_fields(self, api_client, random_tenant):
-        tenant_users = TenantUser.objects.filter(tenant=random_tenant, data_source__type=DataSourceTypeEnum.REAL)[
-            :3
-        ].select_related("data_source_user")
+        tenant_users = (
+            TenantUser.objects.filter(
+                tenant=random_tenant,
+                data_source__type=DataSourceTypeEnum.REAL,
+                data_source__owner_tenant_id=random_tenant.id,
+            )
+            .order_by("id")[:3]
+            .select_related("data_source_user")
+        )
         resp = api_client.post(
             reverse("tenant_user_display_name_expression_config.preview"),
             data={"expression": "{username}({test_num})({test_str})"},

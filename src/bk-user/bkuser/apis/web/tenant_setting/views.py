@@ -279,9 +279,13 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         fields = TenantUserDisplayNameHandler.parse_display_name_expression(tenant_id, data["expression"])
 
         # 取前三个租户用户进行预览
-        tenant_users = TenantUser.objects.filter(
-            tenant_id=tenant_id, data_source__owner_tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
-        ).select_related("data_source_user", "data_source")[:3]
+        tenant_users = (
+            TenantUser.objects.filter(
+                tenant_id=tenant_id, data_source__owner_tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
+            )
+            .select_related("data_source_user", "data_source")
+            .order_by("id")[:3]
+        )
 
         config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=fields)
 
