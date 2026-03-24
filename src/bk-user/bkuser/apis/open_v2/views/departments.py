@@ -110,9 +110,9 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
             # 若指定 with_ancestors == True，则额外返回祖先 & 孩子部门信息（为什么需要孩子信息？总之老的逻辑是这样的）
             if with_ancestors:
                 dept_info["ancestors"] = [
-                    {"id": tenant_dept_id_map[(id, dept.tenant_id)], "name": dept_id_name_map.get(id, "--")}
-                    for id in rel_tree.get_ancestors(dept.data_source_department_id)
-                    if (id, dept.tenant_id) in tenant_dept_id_map
+                    {"id": tenant_dept_id_map[(dept_id, dept.tenant_id)], "name": dept_id_name_map.get(dept_id, "--")}
+                    for dept_id in rel_tree.get_ancestors(dept.data_source_department_id)
+                    if (dept_id, dept.tenant_id) in tenant_dept_id_map
                 ]
                 children = []
                 for child_dept_id in rel_tree.get_children(dept.data_source_department_id):

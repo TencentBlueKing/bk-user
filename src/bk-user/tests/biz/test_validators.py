@@ -17,6 +17,9 @@
 import datetime
 
 import pytest
+from django.utils import timezone
+from rest_framework.exceptions import ValidationError
+
 from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord, LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.validators import validate_logo, validate_user_new_password
@@ -25,8 +28,6 @@ from bkuser.common.hashers import make_password
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from django.utils import timezone
-from rest_framework.exceptions import ValidationError
 
 pytestmark = pytest.mark.django_db
 

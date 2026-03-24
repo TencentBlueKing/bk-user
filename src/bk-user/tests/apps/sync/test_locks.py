@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.apps.sync.locks import DataSourceSyncTaskLock, TenantSyncTaskLock
 
 pytestmark = pytest.mark.django_db

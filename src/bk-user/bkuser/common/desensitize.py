@@ -50,7 +50,7 @@ def desensitize_email(email: str) -> str:
     return username[:2] + "****@" + domain
 
 
-def desensitize_phone(phone: str) -> str:
+def desensitize_phone(phone: str) -> str:  # noqa: PLR0911
     """对手机号进行脱敏"""
     if not phone:
         return "--"

@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator

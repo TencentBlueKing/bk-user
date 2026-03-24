@@ -17,6 +17,7 @@
 from typing import List
 
 import pytest
+
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 

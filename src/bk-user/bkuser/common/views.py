@@ -57,7 +57,7 @@ def one_line_error(error: ValidationError):
         return "param format error"
 
 
-def _handle_exception(request, exc) -> APIError:
+def _handle_exception(request, exc) -> APIError:  # noqa: PLR0911
     """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
         # Q: 为什么需要 f("")

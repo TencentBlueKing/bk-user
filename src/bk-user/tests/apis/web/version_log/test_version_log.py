@@ -16,8 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apis.web.version_log.file_extractor import FILE_NAME, FILE_NAME_EN, _get_change_log_file_name
 from django.utils import translation
+
+from bkuser.apis.web.version_log.file_extractor import FILE_NAME, FILE_NAME_EN, _get_change_log_file_name
 
 
 class TestVersionLog:

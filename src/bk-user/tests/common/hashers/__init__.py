@@ -14,22 +14,3 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
-import pytest
-
-from bkuser.apps.sync.constants import SyncTaskStatus
-from bkuser.apps.sync.runners import TenantSyncTaskRunner
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-
-pytestmark = pytest.mark.django_db
-
-
-class TestTenantSyncRunner:
-    def test_standard(self, full_local_data_source, tenant_sync_task):
-        TenantSyncTaskRunner(tenant_sync_task).run()
-
-        tenant_sync_task.refresh_from_db()
-        assert tenant_sync_task.status == SyncTaskStatus.SUCCESS
-
-        assert TenantDepartment.objects.filter(data_source=full_local_data_source).count() == 9
-        assert TenantUser.objects.filter(data_source=full_local_data_source).count() == 11

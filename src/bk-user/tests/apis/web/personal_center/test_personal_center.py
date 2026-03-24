@@ -16,11 +16,12 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
-from bkuser.apps.tenant.models import TenantUser
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
+from bkuser.apps.tenant.models import TenantUser
 
 pytestmark = pytest.mark.django_db
 
@@ -84,7 +85,7 @@ class TestTenantUserFieldListApi:
         resp = api_client.get(reverse("personal_center.tenant_users.fields.list", kwargs={"id": tenant_user.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data["builtin_fields"]) == 5  # noqa: PLR2004
+        assert len(resp.data["builtin_fields"]) == 5
         assert [f["name"] for f in resp.data["custom_fields"]] == ["age", "gender", "sport_hobby"]
         assert [f["name"] for f in resp.data["custom_fields"] if f["editable"]] == ["gender", "sport_hobby"]
 

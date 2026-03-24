@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G003, G004
 from typing import Dict, List, Set, Tuple
 
 from django.db import transaction
@@ -216,7 +215,7 @@ class DataSourceUserLeaderRelationSyncer:
         if not_exists_leaders := raw_leader_codes - user_codes:
             self.ctx.logger.warning(
                 f"user leader: {', '.join(not_exists_leaders)} is missing, "
-                + "this may skip some user-leader relations from being created."
+                "this may skip some user-leader relations from being created."
             )
 
     def _sync_relations(self):
@@ -360,7 +359,7 @@ class DataSourceUserDeptRelationSyncer:
         if not_exists_depts := raw_user_dept_codes - exists_dept_codes:
             self.ctx.logger.warning(
                 f"user department: {', '.join(not_exists_depts)} is missing, "
-                + "this may skip some user-dept relations from being created."
+                "this may skip some user-dept relations from being created."
             )
 
     def _sync_relations(self):

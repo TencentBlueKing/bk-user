@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import DataSourceDepartment
 

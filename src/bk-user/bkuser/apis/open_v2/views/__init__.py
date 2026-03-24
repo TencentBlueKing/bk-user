@@ -20,7 +20,7 @@ from .departments import DepartmentChildrenListApi, DepartmentListApi, Departmen
 from .edges import DepartmentProfileRelationListApi, ProfileLeaderRelationListApi
 from .profilers import DepartmentProfileListApi, ProfileLanguageUpdateApi, ProfileListApi, ProfileRetrieveApi
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # 目录类
     "CategoriesListApi",
     # 部门类

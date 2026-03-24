@@ -14,10 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import sentry_sdk
-from sentry_sdk.integrations import Integration
+
+if TYPE_CHECKING:
+    from sentry_sdk.integrations import Integration
 
 
 def init_sentry_sdk(django_integrated: bool = True, redis_integrated: bool = False, celery_integrated: bool = False):

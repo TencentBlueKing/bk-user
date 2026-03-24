@@ -16,11 +16,12 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from django.db.models.signals import post_save
+from django_celery_beat.models import PeriodicTask
+
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.handlers import set_data_source_sync_periodic_task
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
-from django.db.models.signals import post_save
-from django_celery_beat.models import PeriodicTask
 
 pytestmark = pytest.mark.django_db
 
@@ -44,12 +45,12 @@ def test_set_data_source_sync_periodic_task_with_general(bare_general_data_sourc
     """通用 HTTP 数据源，创建任务并更新，最后删除"""
     task_name = gen_data_source_sync_periodic_task_name(bare_general_data_source.id)
     task = PeriodicTask.objects.get(name=task_name)
-    assert task.interval.every == 60  # noqa: PLR2004
+    assert task.interval.every == 60
 
-    bare_general_data_source.sync_config = {"sync_period": 30}  # noqa: PLR2004
+    bare_general_data_source.sync_config = {"sync_period": 30}
     bare_general_data_source.save()
     task = PeriodicTask.objects.get(name=task_name)
-    assert task.interval.every == 30  # noqa: PLR2004
+    assert task.interval.every == 30
 
     bare_general_data_source.sync_config = {}
     bare_general_data_source.save()

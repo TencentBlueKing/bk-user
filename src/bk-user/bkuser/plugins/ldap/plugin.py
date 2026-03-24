@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G004
 import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, List
@@ -154,7 +153,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             try:
                 dept = self._gen_raw_dept(dept_data)
                 user = self._gen_raw_user(user_data)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 err_msg = _("解析用户/部门数据失败，请检查返回的数据格式")
 
         return TestConnectionResult(

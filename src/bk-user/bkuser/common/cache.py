@@ -129,7 +129,7 @@ class Cache:
         self.type = type_
         self.key_prefix = key_prefix
         # 支持获取锁的特性
-        self.lock_supported = type_ in [CacheEnum.REDIS]
+        self.lock_supported = type_ == CacheEnum.REDIS
 
     def _make_key(self, key):
         return f"{self.key_prefix}:{key}"
@@ -155,10 +155,10 @@ class Cache:
         results = self.cache.get_many(map_keys.keys(), version)
 
         data = {}
-        for key in map_keys:
+        for key, value in map_keys.items():
             if key not in results:
                 continue
-            data[map_keys[key]] = results[key]
+            data[value] = results[key]
         return data
 
     def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):

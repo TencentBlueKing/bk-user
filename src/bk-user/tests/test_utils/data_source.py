@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 from datetime import timedelta
 
+from django.utils import timezone
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -26,7 +28,6 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.common.passwd import PasswordGenerator
-from django.utils import timezone
 
 
 def init_data_source_users_depts_and_relations(ds: DataSource) -> None:

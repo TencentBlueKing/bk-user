@@ -32,15 +32,15 @@ from .users import (
 )
 
 __all__ = [
-    "DataSourceOwnerTenantListApi",
-    "TenantDepartmentSearchApi",
-    "TenantDepartmentLookupApi",
-    "TenantUserDisplayInfoRetrieveApi",
-    "TenantUserDisplayInfoListApi",
-    "TenantUserSearchApi",
-    "TenantUserLookupApi",
-    "TenantDepartmentChildrenListApi",
-    "TenantDepartmentUserListApi",
-    "VirtualUserListApi",
     "CurrentUserLanguageUpdateApi",
+    "DataSourceOwnerTenantListApi",
+    "TenantDepartmentChildrenListApi",
+    "TenantDepartmentLookupApi",
+    "TenantDepartmentSearchApi",
+    "TenantDepartmentUserListApi",
+    "TenantUserDisplayInfoListApi",
+    "TenantUserDisplayInfoRetrieveApi",
+    "TenantUserLookupApi",
+    "TenantUserSearchApi",
+    "VirtualUserListApi",
 ]

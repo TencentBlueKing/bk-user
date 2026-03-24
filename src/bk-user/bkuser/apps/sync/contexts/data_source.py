@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G003, G004
 import logging
 import traceback
 from typing import List
@@ -87,7 +86,7 @@ class DataSourceSyncTaskContext:
         # 同步过程中出现异常，需要记录日志，并抛出 DataSourceSyncError
         self.logger.error(
             "data source sync task failed! Data modifications in this sync step will be rollback.\n\n"
-            + f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
+            f"Exception: {''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}"
         )
         self._update_task(SyncTaskStatus.FAILED)
         self._store_logs_into_db()

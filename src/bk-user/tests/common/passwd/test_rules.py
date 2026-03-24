@@ -17,8 +17,9 @@
 from typing import Dict
 
 import pytest
-from bkuser.common.passwd import PasswordRule
 from pydantic import ValidationError
+
+from bkuser.common.passwd import PasswordRule
 
 
 @pytest.fixture

@@ -21,6 +21,12 @@ from typing import Any, Dict, List
 
 import pytest
 import pytz
+from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import urlencode
+from rest_framework import status
+
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -28,12 +34,6 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
-from django.conf import settings
-from django.urls import reverse
-from django.utils import timezone
-from django.utils.http import urlencode
-from rest_framework import status
-
 from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
@@ -45,7 +45,7 @@ class TestTenantUserSearchApi:
         resp = api_client.get(reverse("organization.tenant_user.search"), data={"keyword": "iu"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 3  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 3
 
         assert {u["username"] for u in resp.data} == {"zhaoliu", "liuqi", "yangjiu"}
         assert {u["full_name"] for u in resp.data} == {"赵六", "柳七", "杨九"}
@@ -63,7 +63,7 @@ class TestTenantUserSearchApi:
         resp = api_client.get(reverse("organization.tenant_user.search"), data={"keyword": "hi"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 6  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 6
 
         assert {u["username"] for u in resp.data} == {"lushi", "linshiyi", "baishier"}
         assert {u["tenant_id"] for u in resp.data} == {random_tenant.id, collaboration_tenant.id}
@@ -78,7 +78,7 @@ class TestTenantUserSearchApi:
         resp = api_client.get(reverse("organization.tenant_user.search"), data={"keyword": "十一"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 1
 
         assert resp.data[0]["username"] == "linshiyi"
         assert resp.data[0]["full_name"] == "林十一"
@@ -103,7 +103,7 @@ class TestOptionalTenantUserListApi:
         resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "十二"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 1
         assert resp.data[0]["username"] == "baishier"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -127,19 +127,19 @@ class TestTenantUserListApi:
         # 根部门层级的用户
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004  magic number here is ok
+        assert resp.data["count"] == 1
         assert resp.data["results"][0]["username"] == "freedom"
 
         # 所有层级的用户（根部门递归）
         resp = api_client.get(url, data={"recursive": True, "department_id": 0})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 11  # noqa: PLR2004
-        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+        assert resp.data["count"] == 11
+        assert len(resp.data["results"]) == 10
 
         # 所有层级的用户（根部门递归）+ 关键字搜索
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "username": "shi"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 3  # noqa: PLR2004
+        assert resp.data["count"] == 3
         assert {user["username"] for user in resp.data["results"]} == {"lushi", "linshiyi", "baishier"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -161,7 +161,7 @@ class TestTenantUserListApi:
         # 部门 B 及其子部门的用户 + 关键字搜索
         resp = api_client.get(url, data={"recursive": True, "department_id": dept_b.id, "full_name": "王五"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["count"] == 1
 
         wangwu = resp.data["results"][0]
         assert wangwu["username"] == "wangwu"
@@ -174,18 +174,18 @@ class TestTenantUserListApi:
         # 根部门，不递归
         resp = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004  magic number here is ok
+        assert resp.data["count"] == 1
 
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A", tenant=random_tenant)
         # 子部门，递归
         resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 8  # noqa: PLR2004
+        assert resp.data["count"] == 8
 
         # 子部门，递归 + 关键字搜索，虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
         resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "full_name": "李四"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["count"] == 1
         assert resp.data["results"][0]["username"] == "lisi"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -194,7 +194,7 @@ class TestTenantUserListApi:
         url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "email": "wangwu"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["count"] == 1
         assert resp.data["results"][0]["username"] == "wangwu"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -203,7 +203,7 @@ class TestTenantUserListApi:
         url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "phone": "13512345673"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["count"] == 1
         assert resp.data["results"][0]["username"] == "wangwu"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -224,7 +224,7 @@ class TestTenantUserListApi:
         # 过滤禁用状态的用户
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "status": TenantUserStatus.DISABLED})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["count"] == 1
         assert resp.data["results"][0]["username"] == "lisi"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -436,7 +436,7 @@ class TestTenantUserUpdateApi:
 
         wangwu.refresh_from_db()
         extras = wangwu.data_source_user.extras
-        assert extras[f"{random_tenant.id}_age"] == 18  # noqa: PLR2004  magic number here is ok
+        assert extras[f"{random_tenant.id}_age"] == 18
         assert extras[f"{random_tenant.id}_region"] == "beijing"
 
         # 把自己设置为自己的 leader

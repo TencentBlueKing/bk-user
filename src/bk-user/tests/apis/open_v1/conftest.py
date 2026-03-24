@@ -18,13 +18,13 @@
 from unittest import mock
 
 import pytest
+from rest_framework.test import APIClient
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
 from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from rest_framework.test import APIClient
-
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 

@@ -19,6 +19,7 @@ from typing import Dict, List
 from unittest import mock
 
 import pytest
+
 from bkuser.plugins.ldap.models import LDAPDataSourcePluginConfig
 
 # 部门数据

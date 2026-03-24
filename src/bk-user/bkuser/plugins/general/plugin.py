@@ -107,7 +107,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             try:
                 user = self._gen_raw_user(user_data)
                 dept = self._gen_raw_dept(dept_data)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 err_msg = _("解析用户/部门数据失败，请确保 API 返回数据符合协议规范")
 
         return TestConnectionResult(

@@ -22,7 +22,6 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.auth.models import User
 from bkuser.plugins.constants import DataSourcePluginEnum
-
 from tests.test_utils.helpers import generate_random_string
 
 

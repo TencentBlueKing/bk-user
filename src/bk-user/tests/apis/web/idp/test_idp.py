@@ -17,14 +17,14 @@
 from typing import Any, Dict, List
 
 import pytest
+from django.urls import reverse
+from rest_framework import status
+
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
-from django.urls import reverse
-from rest_framework import status
-
 from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db

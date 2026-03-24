@@ -49,7 +49,7 @@ def requests_response_hook(span: Span, request: requests.Request, response: requ
 
     try:
         result = json.loads(response.content)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # noqa: BLE001
         return
     if not isinstance(result, dict):
         return
@@ -114,7 +114,7 @@ def django_response_hook(span: Span, request: HttpRequest, response: HttpRespons
     span.set_status(StatusCode.ERROR)
     try:
         result = json.loads(response.content)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # noqa: BLE001
         return
     if not isinstance(result, dict):
         return

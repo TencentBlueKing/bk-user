@@ -17,12 +17,12 @@
 from datetime import timedelta
 
 import pytest
+from django.utils import timezone
+
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.utils.time import get_midnight
-from django.utils import timezone
-
 from tests.test_utils.helpers import generate_random_string
 
 

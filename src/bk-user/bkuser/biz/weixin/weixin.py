@@ -243,7 +243,7 @@ class MpBindHandler:
         # 2. 拼接字符串
         s = "".join(params)
         # 3. 使用 sha1 加密
-        hashcode = hashlib.sha1(force_bytes(s)).hexdigest()
+        hashcode = hashlib.sha1(force_bytes(s)).hexdigest()  # noqa: S324
 
         return hashcode == signature
 

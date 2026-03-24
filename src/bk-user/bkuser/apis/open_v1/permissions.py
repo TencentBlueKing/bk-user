@@ -29,4 +29,4 @@ class IsAllowedAppCode(BasePermission):
         目前只允许桌面访问
         桌面 AppCode: https://github.com/TencentBlueKing/blueking-console/blob/7ab1efb189deeed2e95557cd9a90d62c1b4b7735/backend/components/esb.py#L35
         """
-        return hasattr(request, "bk_app_code") and request.bk_app_code in ["bk_paas"]
+        return hasattr(request, "bk_app_code") and request.bk_app_code == "bk_paas"

@@ -166,7 +166,7 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
             tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
             # 2. 校验验证码是否正确
             self._validate_verification_code(phone, phone_country_code, params["verification_code"])
-        except Exception:
+        except Exception:  # noqa: BLE001
             # 与用户名和密码校验相似，用户不存在或验证码错误，均返回相同的错误信息，避免遍历手机号问题
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("手机号码或验证码错误"))
 

@@ -17,10 +17,10 @@
 
 
 import pytest
+
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
-
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db

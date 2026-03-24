@@ -16,9 +16,10 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 pytestmark = pytest.mark.django_db
 

@@ -17,6 +17,7 @@
 from unittest import mock
 
 import pytest
+
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.general.plugin import GeneralDataSourcePlugin
 
@@ -69,7 +70,7 @@ class TestGeneralDataSourcePlugin:
     )
     def test_get_departments(self, general_ds_cfg, logger):
         plugin = GeneralDataSourcePlugin(general_ds_cfg, logger)
-        assert len(plugin.fetch_departments()) == 3  # noqa: PLR2004
+        assert len(plugin.fetch_departments()) == 3
 
     @mock.patch(
         "bkuser.plugins.general.plugin.fetch_all_data",
@@ -117,7 +118,7 @@ class TestGeneralDataSourcePlugin:
     )
     def test_get_users(self, general_ds_cfg, logger):
         plugin = GeneralDataSourcePlugin(general_ds_cfg, logger)
-        assert len(plugin.fetch_users()) == 3  # noqa: PLR2004
+        assert len(plugin.fetch_users()) == 3
 
     @mock.patch("bkuser.plugins.general.plugin.fetch_first_item", new=_mocked_fetch_first_item)
     def test_test_connection(self, general_ds_cfg, logger):

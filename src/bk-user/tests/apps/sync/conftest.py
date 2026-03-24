@@ -19,12 +19,13 @@ import base64
 import io
 
 import pytest
-from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
-from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from django.conf import settings
 from django.utils import timezone
 from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
+
+from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 
 
 @pytest.fixture

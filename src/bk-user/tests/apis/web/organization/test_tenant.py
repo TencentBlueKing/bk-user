@@ -15,10 +15,11 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 pytestmark = pytest.mark.django_db
 

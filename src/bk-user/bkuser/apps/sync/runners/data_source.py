@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G004
 import logging
 from typing import Any, Dict
 

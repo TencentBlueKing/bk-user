@@ -65,7 +65,7 @@ def _http_request(method, url, **kwargs):
             logger.warning("http slow request! method: %s, url: %s, latency: %dms", method, url, latency)
 
         # 状态非20x，说明是异常请求
-        if not (200 <= resp.status_code <= 299):  # noqa: PLR2004
+        if not (200 <= resp.status_code <= 299):
             content = resp.content[:256] if resp.content else ""
             logger.error(
                 "http request fail! %s %s, kwargs: %s, response.status_code: %s, response.body: %s",

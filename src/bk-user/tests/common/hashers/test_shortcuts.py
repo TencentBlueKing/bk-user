@@ -14,9 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from bkuser.common.hashers import check_password, make_password
 from django.conf import settings
 from django.test.utils import override_settings
+
+from bkuser.common.hashers import check_password, make_password
 
 
 def test_make_and_check_password_pbkdf2_sha256(raw_password):

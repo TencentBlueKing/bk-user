@@ -142,8 +142,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         data = slz.validated_data
 
         queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
-        if type := data.get("type"):
-            queryset = queryset.filter(type=type)
+        if type_ := data.get("type"):
+            queryset = queryset.filter(type=type_)
 
         return queryset
 

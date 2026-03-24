@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G004
 from collections import defaultdict
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser

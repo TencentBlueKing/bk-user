@@ -15,9 +15,10 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.tenant.constants import UserFieldDataType
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.tenant.constants import UserFieldDataType
 
 pytestmark = pytest.mark.django_db
 

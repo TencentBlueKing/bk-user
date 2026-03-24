@@ -749,11 +749,11 @@ class TenantUserCustomFieldBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
         ).first()
 
         if not field:
-            raise ValidationError(_("当前租户不存在管理员可编辑的自定义字段 {}".format(field_name)))
+            raise ValidationError(_("当前租户不存在管理员可编辑的自定义字段 {}".format(field_name)))  # noqa: INT002
 
         # 唯一性检查，对于设置了唯一性的字段，不允许在批量操作中修改（前端也需要禁用）
         if field.unique:
-            raise ValidationError(_("不能在批量操作中修改设置了唯一性的自定义字段 {}".format(field.display_name)))
+            raise ValidationError(_("不能在批量操作中修改设置了唯一性的自定义字段 {}".format(field.display_name)))  # noqa: INT002
 
         attrs["value"][field_name] = validate_type_and_convert_field_data(field, attrs["value"][field_name])
 

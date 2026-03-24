@@ -20,16 +20,10 @@ from .models import PasswordRule, ValidateResult
 from .validator import PasswordValidator
 
 __all__ = [
-    # 密码规则
-    "PasswordRule",
-    # 密码生成器
-    "PasswordGenerator",
-    # 密码强度校验器
-    "PasswordValidator",
-    # 密码校验结果
-    "ValidateResult",
-    # 密码强度过低异常
-    "PasswordStrengthError",
-    # 不合理的规则导致生成密码失败
     "PasswordGenerateError",
+    "PasswordGenerator",
+    "PasswordRule",
+    "PasswordStrengthError",
+    "PasswordValidator",
+    "ValidateResult",
 ]

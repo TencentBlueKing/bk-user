@@ -46,7 +46,7 @@ def _validate_options(options: List[Dict[str, str]]):
     try:
         opts = [TenantUserCustomFieldOption(**opt) for opt in options]
     except PDValidationError as e:
-        raise ValidationError(_("枚举选项不合法：{}".format(e)))
+        raise ValidationError(_("枚举选项不合法：{}".format(e)))  # noqa: INT002
 
     # 判断重复枚举 id
     option_ids = [obj.id for obj in opts]
@@ -288,7 +288,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
         if not fields:
             raise ValidationError(_("表达式中至少需要填入一个字段"))
 
-        if len(fields) > 3:  # noqa: PLR2004
+        if len(fields) > 3:
             raise ValidationError(_("表达式中字段个数不能超过 3 个"))
 
         if len(fields) != len(set(fields)):
@@ -296,7 +296,7 @@ class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer
 
         # 校验非字段部分的字符数量是否超过 16
         non_field_length = len(DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub("", expression))
-        if non_field_length > 16:  # noqa: PLR2004
+        if non_field_length > 16:
             raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
 
         # 先解析字段，再一次性校验字段有效性和唯一性

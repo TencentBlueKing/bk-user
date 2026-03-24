@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.common.passwd import PasswordStrengthError, PasswordValidator
 
 
@@ -152,16 +153,14 @@ class TestPasswordValidator:
         with pytest.raises(PasswordStrengthError) as e:
             strict_validator.validate(password, raise_exception=True)
 
-        assert str(e.value) == ", ".join(
-            [
-                "密码长度至少 24 位",
-                "密码必须包含大写字母",
-                "密码强度评级过低",
-                "密码中包含过多的常见单词或弱密码（如：abc123 或 321cba）",
-                "密码不可包含 3 位连续字母序（abc）",
-                "密码不可包含 3 位键盘序（1234）",
-                "密码不可包含连续 3 位数字序（1234）",
-            ]
+        assert str(e.value) == (
+            "密码长度至少 24 位, "
+            "密码必须包含大写字母, "
+            "密码强度评级过低, "
+            "密码中包含过多的常见单词或弱密码（如：abc123 或 321cba）, "
+            "密码不可包含 3 位连续字母序（abc）, "
+            "密码不可包含 3 位键盘序（1234）, "
+            "密码不可包含连续 3 位数字序（1234）"
         )
 
     def test_validate_success(self, strict_validator):

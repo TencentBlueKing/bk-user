@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.plugins.ldap.plugin import LDAPDataSourcePlugin
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
@@ -25,7 +26,7 @@ class TestLDAPDataSourcePlugin:
     def test_get_departments(self, ldap_ds_cfg, logger):
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
-        assert len(departments) == 12  # noqa: PLR2004
+        assert len(departments) == 12
 
         assert departments[0] == RawDataSourceDepartment(
             code="97aaa370-0e9d-103f-8e7f-fb1e46baa127",
@@ -54,14 +55,14 @@ class TestLDAPDataSourcePlugin:
         ldap_ds_cfg.user_group_config.enabled = False
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
-        assert len(departments) == 9  # noqa: PLR2004
+        assert len(departments) == 9
 
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_users(self, ldap_ds_cfg, logger):
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         plugin.fetch_departments()
         users = plugin.fetch_users()
-        assert len(users) == 10  # noqa: PLR2004
+        assert len(users) == 10
 
         assert users[0] == RawDataSourceUser(
             code="97b9bdce-0e9d-103f-8e8c-fb1e46baa127",
@@ -86,7 +87,7 @@ class TestLDAPDataSourcePlugin:
                 "cn": "lushi",
                 "uid": "lushi",
                 "manager": "cn=maiba,ou=center_ab,ou=dept_a,ou=company,dc=bk,dc=example,dc=com"
-                + " cn=wangwu,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
+                " cn=wangwu,ou=dept_a,ou=company,dc=bk,dc=example,dc=com",
             },
             leaders=["97b534de-0e9d-103f-8e86-fb1e46baa127", "97b33a9e-0e9d-103f-8e84-fb1e46baa127"],
             departments=["97a93076-0e9d-103f-8e7d-fb1e46baa127", "97b93908-0e9d-103f-8e8b-fb1e46baa127"],
@@ -105,7 +106,7 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
         # 注意：cn=dept_b,ou=company,dc=bk,dc=example,dc=com 不匹配
-        assert len(departments) == 6  # noqa: PLR2004
+        assert len(departments) == 6
 
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_departments_without_group(self, ldap_ds_cfg, logger):
@@ -116,7 +117,7 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
         ldap_ds_cfg.user_group_config.enabled = False
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
-        assert len(departments) == 5  # noqa: PLR2004
+        assert len(departments) == 5
 
     @pytest.mark.usefixtures("_mock_ldap_client")
     def test_get_users(self, ldap_ds_cfg, logger):
@@ -127,4 +128,4 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         plugin.fetch_departments()
         users = plugin.fetch_users()
-        assert len(users) == 5  # noqa: PLR2004
+        assert len(users) == 5

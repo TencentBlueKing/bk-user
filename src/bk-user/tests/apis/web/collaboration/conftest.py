@@ -16,9 +16,9 @@
 from typing import Dict
 
 import pytest
+
 from bkuser.apps.tenant.constants import CollaborationScopeType, UserFieldDataType
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
-
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant
 

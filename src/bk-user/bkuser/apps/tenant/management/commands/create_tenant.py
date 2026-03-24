@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import re
+from typing import TYPE_CHECKING
 
 from django.core.management.base import BaseCommand
 
@@ -29,7 +30,9 @@ from bkuser.biz.tenant import (
 from bkuser.common.passwd.validator import PasswordValidator
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+
+if TYPE_CHECKING:
+    from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class Command(BaseCommand):

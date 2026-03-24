@@ -15,6 +15,9 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
+from django.urls import reverse
+from rest_framework import status
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -23,9 +26,6 @@ from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from django.urls import reverse
-from rest_framework import status
-
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 
 pytestmark = pytest.mark.django_db
@@ -56,7 +56,7 @@ class TestCollaborationStrategySourceTenantCustomFieldListApi:
                 kwargs={"id": collaborate_from_strategy.id},
             )
         )
-        assert len(resp.data) == 3  # noqa: PLR2004
+        assert len(resp.data) == 3
         assert [field["name"] for field in resp.data] == [
             f"{collaboration_tenant.id}_{f}" for f in ["age", "gender", "region"]
         ]
@@ -251,7 +251,7 @@ class TestCollaborationSyncRecordListAndRetrieveApi:
         resp = api_client.get(reverse("collaboration.sync-record.retrieve", kwargs={"id": record["id"]}))
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["logs"] != ""
-        assert resp.data["created_objs"]["user_count"] == 11  # noqa: PLR2004
-        assert resp.data["created_objs"]["department_count"] == 9  # noqa: PLR2004
+        assert resp.data["created_objs"]["user_count"] == 11
+        assert resp.data["created_objs"]["department_count"] == 9
         assert resp.data["deleted_objs"]["user_count"] == 0
         assert resp.data["deleted_objs"]["department_count"] == 0

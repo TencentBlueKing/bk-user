@@ -534,7 +534,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         # 【审计】记录待删除的租户用户
         data_before_tenant_users = list(TenantUser.objects.filter(data_source_user=data_source_user))
 
-        # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））# noqa: E501
+        # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））
         auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
         auditor.batch_pre_record_data_before(data_before_tenant_users)
 
@@ -955,7 +955,7 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
         # 【审计】记录待删除的租户用户
         data_before_tenant_users = list(TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids))
 
-        # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））# noqa: E501
+        # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））
         auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
         auditor.batch_pre_record_data_before(data_before_tenant_users)
 

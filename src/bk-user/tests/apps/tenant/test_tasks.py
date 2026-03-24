@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
+
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.tasks import update_expired_tenant_user_status
 

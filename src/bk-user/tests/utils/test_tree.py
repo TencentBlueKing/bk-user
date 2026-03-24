@@ -17,6 +17,7 @@
 from typing import List, Tuple
 
 import pytest
+
 from bkuser.utils.tree import Tree, TreeNode, bfs_traversal_tree, build_forest_with_parent_relations
 
 

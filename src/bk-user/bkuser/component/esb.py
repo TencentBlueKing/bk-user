@@ -84,7 +84,7 @@ def _call_esb_api(http_func, url_path, **kwargs):
     # code may be string or int, and login v1 the code is "00"
     try:
         code = int(code)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # noqa: BLE001, S110
         pass
     if code in ("0", 0, "00"):
         return resp_data["data"]

@@ -14,14 +14,16 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from collections import namedtuple
+from typing import NamedTuple
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 
-InnerBearerToken = namedtuple("InnerBearerToken", ["verified"])
+
+class InnerBearerToken(NamedTuple):
+    verified: bool
 
 
 class InnerBearerTokenAuthentication(BaseAuthentication):
@@ -37,7 +39,7 @@ class InnerBearerTokenAuthentication(BaseAuthentication):
 
         if len(auth) == 1:
             raise exceptions.AuthenticationFailed("Invalid token header. No credentials provided.")
-        if len(auth) > 2:  # noqa: PLR2004
+        if len(auth) > 2:
             raise exceptions.AuthenticationFailed("Invalid token header. Token string should not contain spaces.")
 
         try:

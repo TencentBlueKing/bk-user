@@ -18,12 +18,12 @@
 from typing import List
 
 import pytest
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-
 from tests.test_utils.data_source import (
     init_data_source_users_depts_and_relations,
     init_local_data_source_identity_infos,

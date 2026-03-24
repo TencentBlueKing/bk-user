@@ -26,7 +26,7 @@ class TestListCategories:
         resp = api_client.get(reverse("open_v2.list_categories"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 2  # noqa: PLR2004
+        assert resp.data["count"] == 2
         assert {c["id"] for c in resp.data["results"]} == {local_data_source.id, collaboration_data_source.id}
         assert {c["display_name"] for c in resp.data["results"]} == {default_tenant.name, random_tenant.name}
         assert {c["default"] for c in resp.data["results"]} == {True, False}

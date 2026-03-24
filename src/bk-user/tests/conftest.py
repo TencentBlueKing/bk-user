@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from django.db.models.signals import post_save
+
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.handlers import (
     set_data_source_sync_periodic_task,
@@ -23,8 +25,6 @@ from bkuser.apps.sync.handlers import (
 )
 from bkuser.apps.tenant.models import Tenant
 from bkuser.auth.models import User
-from django.db.models.signals import post_save
-
 from tests.fixtures.data_source import (  # noqa: F401
     bare_general_data_source,
     bare_local_data_source,

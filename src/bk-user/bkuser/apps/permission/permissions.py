@@ -52,7 +52,7 @@ def perm_class(action: PermAction):  # noqa: C901
 
             return False
 
-        def has_object_permission(self, request, view, obj):  # noqa: C901
+        def has_object_permission(self, request, view, obj):  # noqa: C901, PLR0911
             username = request.user.username
             cur_tenant_id = request.user.get_property("tenant_id")
 

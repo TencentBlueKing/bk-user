@@ -18,6 +18,12 @@
 from urllib.parse import urlencode
 
 import pytest
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.utils import override_settings
+from django.urls import reverse
+from rest_framework import status
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
@@ -26,12 +32,6 @@ from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
-from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test.utils import override_settings
-from django.urls import reverse
-from rest_framework import status
-
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
@@ -423,7 +423,7 @@ class TestDataSourceSyncRecordApi:
         resp = api_client.get(reverse("data_source.sync_record.list", kwargs={"id": data_source.id}))
         tasks = resp.data["results"]
         # 不属于指定数据源的同步记录是看不到的
-        assert len(tasks) == 2  # noqa: PLR2004
+        assert len(tasks) == 2
         assert set(tasks[0].keys()) == {
             "id",
             "status",
@@ -438,10 +438,10 @@ class TestDataSourceSyncRecordApi:
     def test_list_with_filter(self, api_client, data_source, data_source_sync_tasks):
         url = reverse("data_source.sync_record.list", kwargs={"id": data_source.id})
         resp = api_client.get(url, data={"statuses": "success"})
-        assert len(resp.data["results"]) == 1  # noqa: PLR2004
+        assert len(resp.data["results"]) == 1
 
         resp = api_client.get(url, data={"statuses": "success,failed"})
-        assert len(resp.data["results"]) == 2  # noqa: PLR2004
+        assert len(resp.data["results"]) == 2
 
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]

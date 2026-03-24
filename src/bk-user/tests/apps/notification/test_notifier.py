@@ -17,12 +17,12 @@
 from unittest import mock
 
 import pytest
-from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
-from bkuser.apps.notification.notifier import ContactNotifier, TenantUserNotifier, UserTmplContextGenerator
-from bkuser.apps.tenant.models import TenantUser
 from django.conf import settings
 from django.test import override_settings
 
+from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
+from bkuser.apps.notification.notifier import ContactNotifier, TenantUserNotifier, UserTmplContextGenerator
+from bkuser.apps.tenant.models import TenantUser
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
@@ -45,18 +45,18 @@ class TestTenantUserNotifier:
         tmpl = "{{ username }}, {{ full_name }}, {{ password }}, {{ url }}"
         assert (
             notifier._render_tmpl(tmpl, context_generator)
-            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/personal-center"  # noqa: E501
+            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/personal-center"
         )
 
     def test_get_templates(self, data_source):
         notifier = TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id)
-        assert len(notifier.templates) == 1  # noqa: PLR2004
+        assert len(notifier.templates) == 1
 
     def test_get_templates_from_plugin_config(self, data_source):
         notifier = TenantUserNotifier(
             NotificationScene.USER_INITIALIZE, data_source_id=data_source.id, tenant_id=data_source.owner_tenant_id
         )
-        assert len(notifier.templates) == 2  # noqa: PLR2004
+        assert len(notifier.templates) == 2
 
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_sms", return_value=None)

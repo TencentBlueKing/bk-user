@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from rest_framework.test import APIClient
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
@@ -27,8 +29,6 @@ from bkuser.auth.models import User
 from bkuser.biz.virtual_user import VirtualUserHandler
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from rest_framework.test import APIClient
-
 from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db

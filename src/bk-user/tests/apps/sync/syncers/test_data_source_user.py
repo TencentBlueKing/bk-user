@@ -19,6 +19,7 @@ from itertools import groupby
 from typing import Dict, List, Set
 
 import pytest
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartmentUserRelation,
@@ -124,7 +125,7 @@ class TestSyncDataSourceUser:
         assert zhangsan.email == "zhangsan_rename@m.com"
         assert zhangsan.phone == "13512345655"
         assert zhangsan.phone_country_code == "63"
-        assert zhangsan.extras.get("age") == 30  # noqa: PLR2004
+        assert zhangsan.extras.get("age") == 30
 
         # 覆盖模式下，会追加关联边
         assert {"linshiyi", "baishier"} == set(

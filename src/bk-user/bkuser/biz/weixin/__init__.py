@@ -22,7 +22,7 @@ from .weixin import (
 )
 
 __all__ = [
-    "WecomBindHandler",
     "MpBindHandler",
+    "WecomBindHandler",
     "WeixinConfigProvider",
 ]

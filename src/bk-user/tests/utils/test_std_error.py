@@ -15,8 +15,9 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.utils.std_error import APIError, ErrorCode
 from django.utils.translation import gettext_lazy
+
+from bkuser.utils.std_error import APIError, ErrorCode
 
 
 def _format_message(message, exc):
@@ -35,7 +36,7 @@ class TestErrorCode:
 
         assert isinstance(exc, APIError)
         assert exc.code == "foo_bar"
-        assert exc.status_code == 500  # noqa: PLR2004
+        assert exc.status_code == 500
         assert exc.message == "foo message"
 
     def test_formatted(self):

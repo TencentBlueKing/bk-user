@@ -96,16 +96,16 @@ class PBKDF2SM3PasswordHasher(BasePasswordHasher):
         salt = salt or self.salt()
         iterations = iterations or self.iterations
         hash_bytes = _pbkdf2_hmac_sm3(force_bytes(password), force_bytes(salt), iterations)
-        hash = base64.b64encode(hash_bytes).decode("ascii").strip()
-        return "%s$%d$%s$%s" % (self.algorithm, iterations, salt, hash)
+        hash_value = base64.b64encode(hash_bytes).decode("ascii").strip()
+        return "%s$%d$%s$%s" % (self.algorithm, iterations, salt, hash_value)
 
     def decode(self, encoded: str) -> Dict:
         """将加密信息各部分拆分返回"""
-        algorithm, iterations, salt, hash = encoded.split("$", 3)
+        algorithm, iterations, salt, hash_value = encoded.split("$", 3)
         assert algorithm == self.algorithm
         return {
             "algorithm": algorithm,
-            "hash": hash,
+            "hash": hash_value,
             "iterations": int(iterations),
             "salt": salt,
         }

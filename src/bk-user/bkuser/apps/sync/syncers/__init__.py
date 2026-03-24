@@ -28,11 +28,11 @@ from .tenant_department import TenantDepartmentSyncer
 from .tenant_user import TenantUserSyncer
 
 __all__ = [
-    "DataSourceDepartmentSyncer",
     "DataSourceDepartmentRelationSyncer",
-    "DataSourceUserSyncer",
-    "DataSourceUserLeaderRelationSyncer",
+    "DataSourceDepartmentSyncer",
     "DataSourceUserDeptRelationSyncer",
+    "DataSourceUserLeaderRelationSyncer",
+    "DataSourceUserSyncer",
     "TenantDepartmentSyncer",
     "TenantUserSyncer",
 ]

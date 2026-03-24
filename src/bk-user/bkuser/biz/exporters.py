@@ -57,7 +57,7 @@ class DataSourceUserExporter:
         # 填充自定义字段默认值以供参考
         extras = [self._transform_custom_field_value(f.name, f.data_type, f.default) for f in self.custom_fields]
 
-        self.sheet.append(  # noqa: PERF401 sheet isn't a list
+        self.sheet.append(
             ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
         )
         return self.workbook
@@ -78,7 +78,7 @@ class DataSourceUserExporter:
                 value = u.extras.get(field.name, "")
                 extras.append(self._transform_custom_field_value(field.name, field.data_type, value))
 
-            self.sheet.append(  # noqa: PERF401 sheet isn't a list
+            self.sheet.append(
                 (
                     # 用户名
                     u.username,
@@ -101,7 +101,7 @@ class DataSourceUserExporter:
         return self.workbook
 
     def _transform_custom_field_value(
-        self, name: str, data_type: str, value: List[str | int | float] | str | int | float
+        self, name: str, data_type: str, value: List[str | int | float] | str | float
     ) -> str:
         """
         转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
@@ -194,7 +194,7 @@ class DataSourceUserExporter:
             dept_id = int(rel.department_id)
             dept_name = dept_name_map[dept_id]
 
-            current_org = "/".join([parent_org, dept_name]) if parent_org else dept_name
+            current_org = f"{parent_org}/{dept_name}" if parent_org else dept_name
             dept_org_map[dept_id] = current_org
 
             for child in rel.get_children():

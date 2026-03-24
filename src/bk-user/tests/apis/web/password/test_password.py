@@ -20,16 +20,16 @@ from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from django.test.utils import override_settings
+from django.urls import reverse
+from rest_framework import status
+
 from bkuser.apis.web.password.constants import TokenRelatedObjType
 from bkuser.apis.web.password.tokens import UserResetPasswordTokenManager
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.hashers import check_password
 from bkuser.common.verification_code import PhoneVerificationCodeManager, VerificationCodeScene
-from django.test.utils import override_settings
-from django.urls import reverse
-from rest_framework import status
-
 from tests.test_utils.data_source import init_local_data_source_identity_infos
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant

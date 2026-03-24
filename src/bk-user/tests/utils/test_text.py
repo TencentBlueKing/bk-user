@@ -15,6 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
+
 from bkuser.utils.text import TwoBraceTemplate, basic_str_format
 
 
@@ -58,5 +59,5 @@ class TestBasicStrFormat:
         assert basic_str_format("Hello {{ name }}!", {"name": "foo"}) == "Hello foo!"
 
     def test_index_access_should_fail(self):
-        with pytest.raises(ValueError, match="Invalid placeholder .*"):
+        with pytest.raises(ValueError, match=r"Invalid placeholder .*"):
             basic_str_format("Hello {{ names[0] }}!", {"names": "foobar"})

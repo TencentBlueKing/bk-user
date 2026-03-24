@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G003, G004
 import re
 from typing import Any, Dict, List
 
@@ -118,7 +117,7 @@ class DataSourceUserConverter:
         except pydantic.ValidationError as e:
             self.logger.warning(
                 f"data source (id: {self.data_source.id}) has invalid field mapping: "
-                + f"{self.data_source.field_mapping}, error: {stringify_pydantic_error(e)}"
+                f"{self.data_source.field_mapping}, error: {stringify_pydantic_error(e)}"
             )
 
         return []

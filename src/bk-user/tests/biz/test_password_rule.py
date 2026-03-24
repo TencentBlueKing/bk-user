@@ -14,15 +14,19 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from typing import TYPE_CHECKING
 
 import pytest
+
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.passwd import PasswordRule
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+
+if TYPE_CHECKING:
+    from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 pytestmark = pytest.mark.django_db
 

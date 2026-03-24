@@ -72,7 +72,7 @@ def list_version_log() -> List[Dict[str, str]]:
             content = "\n".join(parts[1:])  # 去除日期注释, 重新组合
 
             data.append({"version": version, "date": date, "content": content})
-        except Exception:  # noqa: PERF203
+        except Exception:  # noqa: BLE001, S110
             pass
 
     return data

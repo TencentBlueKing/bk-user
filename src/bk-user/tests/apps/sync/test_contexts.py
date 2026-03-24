@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, SyncTaskStatus
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext, TenantSyncTaskContext
@@ -145,5 +146,5 @@ class TestTenantSyncTaskContext:
 
         assert tenant_sync_task.logs != ""
         assert tenant_sync_task.status == SyncTaskStatus.SUCCESS
-        assert TenantDepartmentChangeLog.objects.filter(task=tenant_sync_task).count() == 9  # noqa: PLR2004
-        assert TenantUserChangeLog.objects.filter(task=tenant_sync_task).count() == 11  # noqa: PLR2004
+        assert TenantDepartmentChangeLog.objects.filter(task=tenant_sync_task).count() == 9
+        assert TenantUserChangeLog.objects.filter(task=tenant_sync_task).count() == 11

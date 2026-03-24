@@ -16,9 +16,9 @@
 from typing import List
 
 import pytest
+
 from bkuser.apps.audit.models import OperationAuditRecord
 from bkuser.apps.tenant.models import Tenant
-
 from tests.test_utils.auth import create_user
 from tests.test_utils.tenant import create_tenant
 

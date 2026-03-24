@@ -20,15 +20,10 @@ from .exceptions import GenerateCodeTooFrequently, InvalidVerificationCode, Retr
 from .managers import EmailVerificationCodeManager, PhoneVerificationCodeManager
 
 __all__ = [
-    # 验证码管理器
-    "PhoneVerificationCodeManager",
     "EmailVerificationCodeManager",
-    # 验证码使用场景
-    "VerificationCodeScene",
-    # 验证码错误异常
-    "InvalidVerificationCode",
-    # 生成验证码过于频繁
     "GenerateCodeTooFrequently",
-    # 重试次数过多
+    "InvalidVerificationCode",
+    "PhoneVerificationCodeManager",
     "RetryLimitExceeded",
+    "VerificationCodeScene",
 ]

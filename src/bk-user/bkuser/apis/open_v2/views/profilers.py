@@ -22,7 +22,7 @@ from functools import reduce
 from typing import Any, Dict, List, Tuple
 
 import phonenumbers
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 from django.conf import settings
 from django.db.models import Q, QuerySet
 from django.http import Http404
@@ -53,7 +53,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
 
 
-class ProfileStatusEnum(str, StructuredEnum):
+class ProfileStatusEnum(StrStructuredEnum):
     """2.x 版本 用户状态"""
 
     NORMAL = EnumField("NORMAL", label="正常")
@@ -559,7 +559,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
             datetime_values = [
                 datetime.datetime.strptime(v, "%Y-%m-%d %H:%M").replace(tzinfo=datetime.timezone.utc) for v in values
             ]
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             raise error_codes.VALIDATION_ERROR.f(f"unsupported fuzzy create_time values: {values}, error={error}")
 
         # 从小到大

@@ -18,11 +18,11 @@ from typing import List
 from unittest import mock
 
 import pytest
-from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
-from bkuser.apps.tenant.models import TenantCommonVariable
 from django.test.utils import override_settings
 from rest_framework.test import APIClient
 
+from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apps.tenant.models import TenantCommonVariable
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 

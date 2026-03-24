@@ -44,7 +44,7 @@ class PasswordValidator:
             # 基于 zxcvbn 能力进行检查（弱密码字典/连续性）
             self._validate_with_zxcvbn,
         ]:
-            errors = func(password)  # noqa
+            errors = func(password)
             if errors:
                 ret.ok = False
                 ret.errors += errors

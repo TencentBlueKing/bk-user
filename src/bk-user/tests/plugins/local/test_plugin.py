@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.local.plugin import LocalDataSourcePlugin
 
@@ -28,11 +29,11 @@ def local_ds_cfg(local_ds_plugin_cfg):
 class TestLocalDataSourcePlugin:
     def test_get_departments(self, local_ds_cfg, logger, user_workbook):
         plugin = LocalDataSourcePlugin(local_ds_cfg, logger, user_workbook)
-        assert len(plugin.fetch_departments()) == 12  # noqa: PLR2004
+        assert len(plugin.fetch_departments()) == 12
 
     def test_get_users(self, local_ds_cfg, logger, user_workbook):
         plugin = LocalDataSourcePlugin(local_ds_cfg, logger, user_workbook)
-        assert len(plugin.fetch_users()) == 12  # noqa: PLR2004
+        assert len(plugin.fetch_users()) == 12
 
     def test_test_connection(self, local_ds_cfg, logger, user_workbook):
         with pytest.raises(NotImplementedError):

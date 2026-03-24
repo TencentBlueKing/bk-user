@@ -275,7 +275,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
     def get(self, request, *args, **kwargs):
         tenant = self.get_object()
         # 获取内建数据源 & 用户
-        data_source, user = self._get_builtin_data_source_and_user(tenant.id)
+        _data_source, user = self._get_builtin_data_source_and_user(tenant.id)
 
         return Response(TenantBuiltinManagerRetrieveOutputSLZ(instance={"username": user.username}).data)
 

@@ -18,6 +18,7 @@
 from typing import Set
 
 import pytest
+
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.syncers import TenantUserSyncer
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserIDRecord

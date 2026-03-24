@@ -16,6 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from django.urls import reverse
+from rest_framework import status
+
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
@@ -23,9 +26,6 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
 from bkuser.plugins.local.utils import gen_dept_code
-from django.urls import reverse
-from rest_framework import status
-
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
@@ -282,7 +282,7 @@ class TestTenantDepartmentSearchApi:
         resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "小组"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 3  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 3
 
         assert {dept["name"] for dept in resp.data} == {"小组AAA", "小组ABA", "小组BAA"}
         assert all(dept["tenant_id"] == random_tenant.id for dept in resp.data)
@@ -298,7 +298,7 @@ class TestTenantDepartmentSearchApi:
         resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "部门"})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 4  # noqa: PLR2004  magic number here is ok
+        assert len(resp.data) == 4
 
         assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
         assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaboration_tenant.id}

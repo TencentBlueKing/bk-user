@@ -51,12 +51,12 @@ class Command(BaseCommand):
 
         # 4. 如果发现有 logo，还需要检查下尺寸大小，避免有性能问题
         if os.path.exists(logo_path) and os.path.getsize(logo_path) > MAX_LOGO_SIZE:
-            raise RuntimeError(f"plugin logo size must be less than {MAX_LOGO_SIZE/1024}KB!")
+            raise RuntimeError(f"plugin logo size must be less than {MAX_LOGO_SIZE / 1024}KB!")
 
         # 5. 尝试获取下 logo，取不到就用默认的
         try:
             logo = load_image_as_base64(logo_path)
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.stdout.write("failed to load plugin logo, use default logo...")
             logo = ""
 

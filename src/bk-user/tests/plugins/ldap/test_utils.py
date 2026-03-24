@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bkuser.plugins.ldap.utils import has_parent_child_dn_relation
 
 

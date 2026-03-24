@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 # 参考来源：https://github.com/TencentBlueKing/bkpaas-python-sdk/blob/master/sdks/blue-krill/blue_krill/web/std_error.py
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union, overload
+from typing import Any, Callable, Dict, Optional, Self, Type, TypeVar, Union, overload
 
 _DEFAULT_ERROR_CODE_CATEGORY = "INVALID_ARGUMENT"
 _DEFAULT_STATUS_CODE = 400
@@ -59,7 +59,7 @@ class APIError(Exception):
 
         super().__init__(self.message)
 
-    def format(self: T, message: Optional[str] = None, replace: bool = False, **kwargs) -> T:
+    def format(self, message: Optional[str] = None, replace: bool = False, **kwargs) -> Self:
         """Try to mutate and render the original error message, return a cloned `APIError` object
 
         :param message: if not given, default message will be used
@@ -76,18 +76,20 @@ class APIError(Exception):
         obj_message = self._render(obj_message, kwargs)
         return self._clone(message=obj_message)
 
-    def set_data(self: T, data: Any) -> T:
+    def set_data(self, data: Any) -> Self:
         """A chain method which set data property"""
         self.data = data
         return self
 
-    def set_detail(self: T, detail: Dict) -> T:
+    def set_detail(self, detail: Dict) -> Self:
         """A chain method which set detail property"""
         self.detail = detail
         return self
 
     # Shortcut method name
-    f = format
+    @property
+    def f(self) -> Callable[..., Self]:
+        return self.format
 
     @property
     def message(self) -> str:
@@ -96,7 +98,7 @@ class APIError(Exception):
             return self.extra_formatter(self._message, self)
         return self._message
 
-    def _clone(self: T, message: Optional[str] = None) -> T:
+    def _clone(self, message: Optional[str] = None) -> Self:
         """Clone a new APIError object
 
         :param message: if given, the cloned object will use this message instead of current `self._message`

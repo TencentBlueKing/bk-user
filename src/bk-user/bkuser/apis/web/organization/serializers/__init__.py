@@ -65,7 +65,7 @@ from .users import (
     TenantUserUpdateInputSLZ,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # 租户
     "TenantListOutputSLZ",
     "TenantRetrieveOutputSLZ",

@@ -18,6 +18,7 @@
 from typing import List
 
 import pytest
+
 from bkuser.apps.data_source.models import DataSourceDepartment
 from bkuser.biz.organization import TenantOrgPathHandler
 

@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G004
 import datetime
 
 from django.db import transaction
@@ -85,4 +84,4 @@ class TenantUserSyncer:
             return PERMANENT_TIME
 
         expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
-        return expired_at if expired_at < PERMANENT_TIME else PERMANENT_TIME
+        return min(PERMANENT_TIME, expired_at)

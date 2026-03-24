@@ -100,7 +100,7 @@ class UserResetPasswordTokenManager:
 
         md5 -> 32, sha1 -> 40, sha256 -> 64
         """
-        return md5(token.encode("utf-8")).hexdigest()
+        return md5(token.encode("utf-8")).hexdigest()  # noqa: S324
 
     def _gen_lock_key_by_info(self, info: Dict[str, str]) -> str:
         """根据 token 对应信息提供锁，避免短时间重复分配 token"""

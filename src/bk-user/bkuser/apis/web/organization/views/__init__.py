@@ -52,7 +52,7 @@ from .users import (
     TenantUserStatusUpdateApi,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # 租户
     "CurrentTenantRetrieveApi",
     "CollaborationTenantListApi",

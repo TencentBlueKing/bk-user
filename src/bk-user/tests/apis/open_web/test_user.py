@@ -17,12 +17,13 @@
 from unittest import mock
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
 
 pytestmark = pytest.mark.django_db
 
@@ -84,7 +85,7 @@ class TestTenantUserDisplayInfoListApi:
         lisi = TenantUser.objects.get(data_source_user__username="lisi")
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.list"),
-            data={"bk_usernames": ",".join([zhangsan.id, lisi.id])},
+            data={"bk_usernames": f"{zhangsan.id},{lisi.id}"},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -100,7 +101,7 @@ class TestTenantUserDisplayInfoListApi:
         virtual_lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.list"),
-            data={"bk_usernames": ",".join([virtual_zhangsan.id, virtual_lisi.id])},
+            data={"bk_usernames": f"{virtual_zhangsan.id},{virtual_lisi.id}"},
         )
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
@@ -111,7 +112,7 @@ class TestTenantUserDisplayInfoListApi:
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.list"),
-            data={"bk_usernames": ",".join([zhangsan.id, "invalid"])},
+            data={"bk_usernames": f"{zhangsan.id},invalid"},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -457,7 +458,7 @@ class TestTenantUserLookupApi:
         resp = api_client.get(
             reverse("open_web.tenant_user.lookup"),
             data={
-                "lookups": ",".join([zhangsan.id, lisi.id]),
+                "lookups": f"{zhangsan.id},{lisi.id}",
                 "lookup_fields": "bk_username,login_name",
                 "owner_tenant_id": random_tenant.id,
                 "data_source_type": "real",

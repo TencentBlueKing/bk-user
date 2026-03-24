@@ -32,13 +32,13 @@ class TwoBraceTemplate(string.Template):
 
     delim = delimiter
     # The identifier is copied from `string.Template`
-    id = r"(?a:[_a-z][_a-z0-9]*)"
+    id_pattern = r"(?a:[_a-z][_a-z0-9]*)"
 
     # "named" and "braced" patterns are modified
     pattern = rf"""
         {delim}(?:
             (?P<escaped>{delim})        |   # Escape sequence of two delimiters
-            \s*(?P<named>{id})\s*\}}\}} |   # delimiter, optional spaces, identifier, optional spaces, closing braces
+            \s*(?P<named>{id_pattern})\s*\}}\}} |   # delimiter, optional spaces, identifier, optional spaces, closing braces
             (?P<braced>\b\B)            |   # delimiter and a braced identifier, **modified to never match anything**
             (?P<invalid>)               |   # Other ill-formed delimiter exprs
         )

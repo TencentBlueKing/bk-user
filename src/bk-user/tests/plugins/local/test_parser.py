@@ -18,6 +18,7 @@
 from typing import List
 
 import pytest
+
 from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,

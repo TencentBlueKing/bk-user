@@ -62,7 +62,7 @@ class NotificationTmplsGetter:
         ):
             return self._get_from_data_source_plugin_cfg(scene, **scene_kwargs)
 
-        raise ValueError(_("通知场景 {} 未被支持".format(scene)))
+        raise ValueError(_("通知场景 {} 未被支持".format(scene)))  # noqa: INT002
 
     def _get_manager_reset_user_password_tmpls(self) -> List[NotificationTemplate]:
         """获取租户管理员重置本地数据源用户密码通知模板"""
@@ -73,9 +73,9 @@ class NotificationTmplsGetter:
                 sender="",
                 content=(
                     "<p>您好：</p>"
-                    + "<p>您的蓝鲸智云帐户密码已被重置，以下是您的帐户信息</p>"
-                    + "<p>登录帐户：{{ username }}，登录密码：{{ password }}</p>"
-                    + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                    "<p>您的蓝鲸智云帐户密码已被重置，以下是您的帐户信息</p>"
+                    "<p>登录帐户：{{ username }}，登录密码：{{ password }}</p>"
+                    "<p>此邮件为系统自动发送，请勿回复。</p>"
                 ),
             )
         ]
@@ -93,9 +93,9 @@ class NotificationTmplsGetter:
                     sender="",
                     content=(
                         "<p>您好：</p>"
-                        + "<p>您的蓝鲸智云验证码为：{{ verification_code }}</p>"
-                        + "<p>该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码</p>"
-                        + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                        "<p>您的蓝鲸智云验证码为：{{ verification_code }}</p>"
+                        "<p>该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码</p>"
+                        "<p>此邮件为系统自动发送，请勿回复。</p>"
                     ),
                 )
             ]
@@ -108,9 +108,9 @@ class NotificationTmplsGetter:
                     sender="",
                     content=(
                         "您好：\n"
-                        + "您的蓝鲸智云验证码为：{{ verification_code }}\n"
-                        + "该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码\n"
-                        + "此短信为系统自动发送，请勿回复。"
+                        "您的蓝鲸智云验证码为：{{ verification_code }}\n"
+                        "该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码\n"
+                        "此短信为系统自动发送，请勿回复。"
                     ),
                 )
             ]
@@ -391,7 +391,7 @@ class TenantUserNotifier:
             try:
                 scene_kwargs = self._gen_scene_kwargs(user, **kwargs)
                 self.send(user, **scene_kwargs)
-            except Exception:  # noqa: PERF203
+            except Exception:
                 logger.exception("send notification to user %s, scene %s failed", user.id, self.scene)
 
     def send(self, user: TenantUser, **scene_kwargs) -> None:

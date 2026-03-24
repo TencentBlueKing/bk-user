@@ -126,16 +126,16 @@ def fetch_all_data(
                         resp.status_code,
                         get_reason_from_status_code(resp.status_code),
                         resp.content,
-                    )  # noqa: E501
+                    )
                 )
 
             try:
                 resp_data = resp.json()
-            except JSONDecodeError as e:  # noqa: PERF203
+            except JSONDecodeError as e:
                 raise RespDataFormatError(
                     _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
                         url, stringify_params(params), resp.content
-                    )  # noqa: E501
+                    )
                 ) from e
 
             total_cnt = resp_data.get("count", 0)
@@ -183,16 +183,16 @@ def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], 
                 resp.status_code,
                 get_reason_from_status_code(resp.status_code),
                 resp.content,
-            )  # noqa: E501
+            )
         )
 
     try:
         resp_data = resp.json()
-    except JSONDecodeError as e:  # noqa: PERF203
+    except JSONDecodeError as e:
         raise RespDataFormatError(
             _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
                 url, stringify_params(params), resp.content
-            )  # noqa: E501
+            )
         ) from e
 
     results = resp_data.get("results", [])

@@ -15,10 +15,11 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.apps.tenant.models import TenantDepartment
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.tenant.models import TenantDepartment
 
 pytestmark = pytest.mark.django_db
 
@@ -28,8 +29,8 @@ class TestListDeptProfileRelations:
         resp = api_client.get(reverse("open_v2.list_department_profile_relations"), data={"page": 1, "page_size": 10})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 13  # noqa: PLR2004
-        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+        assert resp.data["count"] == 13
+        assert len(resp.data["results"]) == 10
 
         dept_ids = {d["department_id"] for d in resp.data["results"]}
         profile_ids = {d["profile_id"] for d in resp.data["results"]}
@@ -46,7 +47,7 @@ class TestListDeptProfileRelations:
 
         assert resp.status_code == status.HTTP_200_OK
         # 不分页模式下，没有 count, results 结构
-        assert len(resp.data) == 26  # noqa: PLR2004
+        assert len(resp.data) == 26
 
 
 class TestListProfileLeaderRelations:
@@ -54,8 +55,8 @@ class TestListProfileLeaderRelations:
         resp = api_client.get(reverse("open_v2.list_profile_leader_relations"), data={"page": 1, "page_size": 10})
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 11  # noqa: PLR2004
-        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+        assert resp.data["count"] == 11
+        assert len(resp.data["results"]) == 10
 
         from_profile_ids = {d["from_profile_id"] for d in resp.data["results"]}
         to_profile_ids = {d["to_profile_id"] for d in resp.data["results"]}
@@ -72,4 +73,4 @@ class TestListProfileLeaderRelations:
 
         assert resp.status_code == status.HTTP_200_OK
         # 不分页模式下，没有 count, results 结构
-        assert len(resp.data) == 22  # noqa: PLR2004
+        assert len(resp.data) == 22

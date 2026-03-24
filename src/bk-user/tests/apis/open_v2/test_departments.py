@@ -15,9 +15,10 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import pytest
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from django.urls import reverse
 from rest_framework import status
+
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 pytestmark = pytest.mark.django_db
 
@@ -26,8 +27,8 @@ class TestListDepartments:
     def test_standard(self, api_client, local_data_source, collaboration_data_source):
         resp = api_client.get(reverse("open_v2.list_departments"), data={"page": 1, "page_size": 10})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 18  # noqa: PLR2004
-        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+        assert resp.data["count"] == 18
+        assert len(resp.data["results"]) == 10
         # 没有指定 with_ancestors 时，没有 children，ancestors 字段
         assert "children" not in resp.data["results"][0]
         assert "ancestors" not in resp.data["results"][0]
@@ -86,7 +87,7 @@ class TestListDepartments:
     def test_no_page(self, api_client, local_data_source):
         resp = api_client.get(reverse("open_v2.list_departments"), data={"page": 1, "page_size": 5, "no_page": True})
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 9  # noqa: PLR2004
+        assert len(resp.data) == 9
 
 
 class TestRetrieveDepartment:

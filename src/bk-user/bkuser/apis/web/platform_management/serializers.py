@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 import re
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -31,7 +31,9 @@ from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+
+if TYPE_CHECKING:
+    from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class TenantListOutputSLZ(serializers.Serializer):
@@ -109,7 +111,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
                 _(
-                    "{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)",  # noqa: E501
+                    "{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)",
                 ).format(id),
             )
 

@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 # ignore custom logger must use %s string format in this file
-# ruff: noqa: G004
 from collections import Counter
 from typing import List
 
@@ -171,7 +170,7 @@ class LocalDataSourceDataParser:
             if not USERNAME_REGEX.fullmatch(username):
                 raise InvalidUsername(
                     _(
-                        "用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符组成，以字母或数字开头及结尾",  # noqa: E501
+                        "用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符组成，以字母或数字开头及结尾",
                     ).format(username)
                 )
 

@@ -76,7 +76,7 @@ def _validate_source_field(value):
     if not re.fullmatch(SOURCE_FIELD_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
+                "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组成，以字母开头并以字母或数字结尾",
             ).format(value),
         )
 
