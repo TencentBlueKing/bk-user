@@ -257,6 +257,7 @@ class TestTenantUserContactProfileListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["phone"] for t in resp.data} == {"13512345671", "13512345672"}
         assert {t["email"] for t in resp.data} == {"zhangsan@m.com", "lisi@m.com"}
         assert {t["phone_country_code"] for t in resp.data} == {"86"}
@@ -273,6 +274,7 @@ class TestTenantUserContactProfileListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1
         assert resp.data[0]["bk_username"] == zhangsan.id
+        assert resp.data[0]["login_name"] == "zhangsan"
         assert resp.data[0]["phone"] == "13512345671"
         assert resp.data[0]["email"] == "zhangsan@m.com"
         assert resp.data[0]["phone_country_code"] == "86"

@@ -22,6 +22,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
+            "login_name": "zhangsan",
             "phone": "17712341234",
             "phone_country_code": "86",
             "email": "zhangsan@qq.com",
@@ -30,6 +31,7 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
+            "login_name": "lisi",
             "phone": "18712341234",
             "phone_country_code": "86",
             "email": "lisi@qq.com",
@@ -42,11 +44,12 @@ bk_usernames=7idwx3b7nzk6xigs,0wngfim3uzhadh1w
 
 ### Response Parameters Description
 
-| Name               | Type    | Description                       |
-|--------------------|---------|-----------------------------------|
-| bk_username        | string  | Blueking user's unique identifier |
-| phone              | string  | Phone number                      |
-| phone_country_code | string  | Phone number area code            |
-| email              | string  | Email address                     |
-| wx_userid          | string  | Unique identifier of WeChat user  |
-| data_source_id     | integer | Data source ID                    |
+| Name               | Type    | Description                                    |
+|--------------------|---------|------------------------------------------------|
+| bk_username        | string  | Blueking user's unique identifier              |
+| login_name         | string  | User's unique identifier within the enterprise |
+| phone              | string  | Phone number                                   |
+| phone_country_code | string  | Phone number area code                         |
+| email              | string  | Email address                                  |
+| wx_userid          | string  | Unique identifier of WeChat user               |
+| data_source_id     | integer | Data source ID                                 |
