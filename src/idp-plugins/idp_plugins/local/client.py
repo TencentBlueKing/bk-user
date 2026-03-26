@@ -19,10 +19,11 @@ from typing import Any, Dict, List
 
 from requests.auth import HTTPBasicAuth
 
+from idp_plugins.exceptions import RequestAPIError, ValidationError
+from idp_plugins.http import http_post
+from idp_plugins.utils import urljoin
+
 from .settings import BK_USER_API_URL, BK_USER_APP_CODE, BK_USER_APP_SECRET
-from ..exceptions import RequestAPIError, ValidationError
-from ..http import http_post
-from ..utils import urljoin
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class BkUserAPIClient:
         error = resp_data.get("error")
         logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
         raise RequestAPIError(
-            f"request bk_user api error! " f"Request=[{http_func.__name__} {url} Response[error={error}]"
+            f"request bk_user api error! Request=[{http_func.__name__} {url} Response[error={error}]"
         )
 
     def auth_credentials_of_local_user(

@@ -19,10 +19,11 @@ from typing import Any, Dict, Tuple
 
 from django.utils.translation import gettext_lazy as _
 
+from idp_plugins.exceptions import RequestAPIError, UnexpectedDataError
+from idp_plugins.http import http_get_20x
+from idp_plugins.utils import urljoin
+
 from .settings import WECOM_API_BASE_URL
-from ..exceptions import RequestAPIError, UnexpectedDataError
-from ..http import http_get_20x
-from ..utils import urljoin
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +71,7 @@ class WeComAPIClient:
             errmsg,
         )
         raise RequestAPIError(
-            f"request wecom api error! "
-            f"Request=[{http_func.__name__} {url} Response[code={errcode}, message={errmsg}]"
+            f"request wecom api error! Request=[{http_func.__name__} {url} Response[code={errcode}, message={errmsg}]"
         )
 
     def _get_access_token(self) -> Tuple[str, int]:
@@ -88,7 +88,7 @@ class WeComAPIClient:
     def access_token(self) -> str:
         # TODO: 先从缓存获取，获取不到再调用接口查询
         # FIXME: 如何引入外部存储共享缓存呢？比如Redis如何支持多种部署方式(单实例、集群、Sentinel)
-        access_token, expires_in = self._get_access_token()
+        access_token, _expires_in = self._get_access_token()
         return access_token
 
     def get_user_id_by_code(self, code: str) -> str:

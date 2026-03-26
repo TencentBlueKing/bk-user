@@ -19,11 +19,12 @@ from typing import Any, Dict, List
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
+from idp_plugins.base import BaseCredentialIdpPlugin, BasePluginConfig
+from idp_plugins.exceptions import InvalidParamError, UnexpectedDataError
+from idp_plugins.models import TestConnectionResult
+from idp_plugins.utils import parse_request_body_json
+
 from .client import BkUserAPIClient
-from ..base import BaseCredentialIdpPlugin, BasePluginConfig
-from ..exceptions import InvalidParamError, UnexpectedDataError
-from ..models import TestConnectionResult
-from ..utils import parse_request_body_json
 
 
 class LocalIdpPluginConfig(BasePluginConfig):

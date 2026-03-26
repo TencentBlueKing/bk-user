@@ -20,12 +20,13 @@ from urllib.parse import urlencode
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
+from idp_plugins.base import BaseFederationIdpPlugin, BasePluginConfig
+from idp_plugins.exceptions import InvalidParamError
+from idp_plugins.models import TestConnectionResult
+from idp_plugins.utils import generate_random_str
+
 from .client import WeComAPIClient
 from .settings import WECOM_OAUTH_URL
-from ..base import BaseFederationIdpPlugin, BasePluginConfig
-from ..exceptions import InvalidParamError
-from ..models import TestConnectionResult
-from ..utils import generate_random_str
 
 
 class WecomIdpPluginConfig(BasePluginConfig):

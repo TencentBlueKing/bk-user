@@ -62,7 +62,7 @@ def url_has_allowed_host_and_scheme(
 #  (2) 泛域名匹配，比如 .example.com 可匹配 foo.example.com、example.com、foo.example.com:8000、example.com:8080
 #  (3) 精确域名匹配，比如 example.com 可匹配 example.com、example.com:8000
 #  (4) 精确域名&端口匹配，比如 example.com:9000 只可匹配 example.com:9000
-def _url_has_allowed_host_and_scheme(url: str, allowed_hosts: Set, require_https: bool = False):
+def _url_has_allowed_host_and_scheme(url: str, allowed_hosts: Set, require_https: bool = False):  # noqa: PLR0911
     # Chrome considers any URL with more than two slashes to be absolute, but
     # urlparse is not so flexible. Treat any url with three slashes as unsafe.
     if url.startswith("///"):
@@ -100,5 +100,5 @@ def _url_has_allowed_host_and_scheme(url: str, allowed_hosts: Set, require_https
 
     # Check wildcard domain matching
     # Copied from django.http.request.HttpRequest.get_host()
-    domain, port = split_domain_port(url_info.netloc)
+    domain, _port = split_domain_port(url_info.netloc)
     return domain and validate_host(domain, allowed_hosts)

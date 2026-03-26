@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+
 from bklogin.authentication.utils import url_has_allowed_host_and_scheme
 
 

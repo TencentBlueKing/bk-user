@@ -42,35 +42,35 @@ class HttpStatusCode:
 
     @property
     def is_invalid(self) -> bool:
-        return self.code < 0  # noqa: PLR2004
+        return self.code < 0
 
     @property
     def is_success(self) -> bool:
-        return 200 <= self.code <= 299  # noqa: PLR2004
+        return 200 <= self.code <= 299
 
     @property
     def is_redirect(self) -> bool:
-        return 300 <= self.code <= 399  # noqa: PLR2004
+        return 300 <= self.code <= 399
 
     @property
     def is_client_error(self) -> bool:
-        return 400 <= self.code <= 499  # noqa: PLR2004
+        return 400 <= self.code <= 499
 
     @property
     def is_server_error(self) -> bool:
-        return 500 <= self.code <= 599  # noqa: PLR2004
+        return 500 <= self.code <= 599
 
     @property
     def is_unauthorized(self) -> bool:
-        return self.code == 401  # noqa: PLR2004
+        return self.code == 401
 
     @property
     def is_forbidden(self) -> bool:
-        return self.code == 403  # noqa: PLR2004
+        return self.code == 403
 
     @property
     def is_not_found(self) -> bool:
-        return self.code == 404  # noqa: PLR2004
+        return self.code == 404
 
 
 # 定义无效请求的Http状态码
@@ -125,7 +125,7 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
         return HttpStatusCode(resp.status_code), resp.json()
     except Exception as e:
         content = resp.content[:256] if resp.content else ""
-        logging.exception(
+        logger.exception(
             "http request fail, response.body not json! "
             "%s %s, kwargs: %s, response.status_code: %s, response.body: %s",
             method,

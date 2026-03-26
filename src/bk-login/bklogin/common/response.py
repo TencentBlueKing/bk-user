@@ -46,6 +46,6 @@ class APIErrorResponse(JsonResponse):
                 "data": data or {},
             },
         }
-        if status is None or (200 <= status < 300):  # noqa: PLR2004
+        if status is None or (200 <= status < 300):
             status = 400
         super(APIErrorResponse, self).__init__(wrapped_data, status=status)

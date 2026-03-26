@@ -17,9 +17,10 @@
 from unittest import mock
 
 import pytest
+from django.urls import reverse
+
 from bklogin.authentication.manager import BkTokenManager
 from bklogin.component.bk_user.models import TenantUserDetailInfo
-from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
 

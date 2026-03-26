@@ -77,7 +77,7 @@ class BkTokenProcessor:
             logger.exception("分割 bk_token [%s] 失败", bk_token)
             raise ValueError(error_msg)
 
-        if not token_info or len(token_info) < 3:  # noqa: PLR2004
+        if not token_info or len(token_info) < 3:
             raise ValueError(error_msg)
 
         # 按照加密时的顺序取出
@@ -142,7 +142,7 @@ class BkTokenManager:
             # DB 记录
             try:
                 BkToken.objects.create(token=bk_token, user_id=user_id, inactive_expires_at=inactive_expires_at)
-            except Exception:  # noqa: PERF203
+            except Exception:
                 logger.exception("Login ticket failed to be saved during ticket generation")
                 # 循环结束前将 bk_token 置空后重新生成
                 bk_token = "" if retry_count + 1 < self.allowed_retry_count else bk_token
@@ -150,7 +150,7 @@ class BkTokenManager:
         # Note: quote_plus 是为了兼容 2.x 版本，保持一致，避免用于 Cookie 时调用方未进行 url encode
         return quote_plus(bk_token), datetime.datetime.fromtimestamp(expires_at, timezone.get_current_timezone())
 
-    def is_valid(self, bk_token: str) -> Tuple[bool, str, str]:
+    def is_valid(self, bk_token: str) -> Tuple[bool, str, str]:  # noqa: PLR0911
         """
         验证用户登录态
         :return: ok, user_id, msg
@@ -171,7 +171,7 @@ class BkTokenManager:
             bk_token_obj = BkToken.objects.get(token=bk_token)
             is_logout = bk_token_obj.is_logout
             inactive_expires_at = bk_token_obj.inactive_expires_at
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False, "", _("不存在 bk_token[%s] 的记录").format(bk_token)
 
         # token 已注销

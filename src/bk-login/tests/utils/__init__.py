@@ -14,18 +14,3 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-import json
-from typing import Any, Dict
-
-from django.utils.translation import gettext_lazy as _
-
-from .error_codes import error_codes
-
-
-def parse_request_body_json(body: bytes) -> Dict[str, Any]:
-    try:
-        request_body = json.loads(body.decode("utf-8"))
-    except Exception as error:  # noqa: BLE001
-        raise error_codes.INVALID_ARGUMENT.f(_("解析异常，Body 非 Json 格式数据, {}").format(error))
-
-    return request_body

@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import json
 import logging
-from collections import namedtuple
+from typing import NamedTuple
 
 from django.conf import settings
 from django.db import connections
@@ -28,6 +28,10 @@ from bklogin.utils.std_error import APIError
 from .response import APIErrorResponse
 
 logger = logging.getLogger(__name__)
+
+
+class InnerBearerToken(NamedTuple):
+    verified: bool
 
 
 class ExceptionHandlerMiddleware:
@@ -89,7 +93,6 @@ class ExceptionHandlerMiddleware:
 
 class InnerBearerTokenMiddleware:
     keyword = "Bearer"
-    InnerBearerToken = namedtuple("InnerBearerToken", ["verified"])
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -100,7 +103,7 @@ class InnerBearerTokenMiddleware:
         # 从请求头中获取 InnerBearerToken
         auth = request.META.get("HTTP_AUTHORIZATION", "").split()
 
-        if not auth or auth[0].lower() != self.keyword.lower() or len(auth) != 2:  # noqa: PLR2004
+        if not auth or auth[0].lower() != self.keyword.lower() or len(auth) != 2:
             return self.get_response(request)
 
         token = auth[1]
@@ -109,7 +112,7 @@ class InnerBearerTokenMiddleware:
             return self.get_response(request)
 
         # 设置 InnerBearerToken
-        request.inner_bearer_token = self.InnerBearerToken(verified=True)
+        request.inner_bearer_token = InnerBearerToken(verified=True)
 
         return self.get_response(request)
 

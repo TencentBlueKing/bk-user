@@ -48,7 +48,7 @@ def requests_response_hook(span: Span, request: requests.Request, response: requ
 
     try:
         result = json.loads(response.content)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # noqa: BLE001
         return
     if not isinstance(result, dict):
         return
@@ -82,7 +82,7 @@ def requests_response_hook(span: Span, request: requests.Request, response: requ
     # 根据新版本 HTTP API 协议，处理错误详情
     handle_api_error(span, result)
 
-    if 200 <= response.status_code <= 299:  # noqa: PLR2004
+    if 200 <= response.status_code <= 299:
         span.set_status(StatusCode.OK)
     else:
         span.set_status(StatusCode.ERROR)
@@ -106,14 +106,14 @@ def django_response_hook(span: Span, request: HttpRequest, response: HttpRespons
         return
 
     # 新版本协议中按照标准 HTTP 协议，200 <= code < 300 的都是正常
-    if 200 <= response.status_code <= 299:  # noqa: PLR2004
+    if 200 <= response.status_code <= 299:
         span.set_status(StatusCode.OK)
         return
 
     span.set_status(StatusCode.ERROR)
     try:
         result = json.loads(response.content)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # noqa: BLE001
         return
     if not isinstance(result, dict):
         return
