@@ -117,6 +117,7 @@ class TenantUserContactProfileListInputSLZ(serializers.Serializer):
 
 class TenantUserContactProfileListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
+    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
     phone = serializers.SerializerMethodField(help_text="手机号")
     phone_country_code = serializers.SerializerMethodField(help_text="手机国际区号")
     email = serializers.CharField(help_text="邮箱")
