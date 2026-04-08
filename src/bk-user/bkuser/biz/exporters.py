@@ -170,6 +170,25 @@ class DataSourceUserExporter:
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=data_source.owner_tenant_id)
         self.writer = UserExcelWriter(self.custom_fields)
 
+    @staticmethod
+    def get_template(tenant_id: str) -> Workbook:
+        custom_fields = list(TenantUserCustomField.objects.filter(tenant_id=tenant_id))
+        writer = UserExcelWriter(custom_fields)
+
+        # 填充自定义字段默认值以供参考
+        extras = {f.name: f.default for f in custom_fields}
+        base_info = [
+            "zhangsan",
+            "张三",
+            "zhangsan@qq.com",
+            "+8613512345678",
+            "公司/部门A,公司/部门B",
+            "lisi,wangwu",
+        ]
+
+        writer.add_row(base_info, extras)
+        return writer.get_workbook()
+
     def export(self) -> Workbook:
         dept_org_map = self._build_dept_org_map()
         user_departments_map = self._build_user_departments_map()

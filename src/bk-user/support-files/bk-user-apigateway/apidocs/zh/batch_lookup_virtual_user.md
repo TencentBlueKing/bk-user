@@ -13,7 +13,7 @@
 
 ```
 // URL Query 参数
-lookups=zhangsan,lisi&lookup_field=login_name
+lookups=virtual_user_1,virtual_user_2&lookup_field=login_name
 ```
 
 ### 状态码 200 的响应示例
@@ -23,15 +23,15 @@ lookups=zhangsan,lisi&lookup_field=login_name
     "data": [
         {
             "bk_username": "7idwx3b7nzk6xigs",
-            "login_name": "zhangsan",
-            "full_name": "张三",
-            "display_name": "zhangsan(张三)"
+            "login_name": "virtual_user_1",
+            "full_name": "虚拟用户1",
+            "display_name": "virtual_user_1(虚拟用户1)"
         },
         {
             "bk_username": "0wngfim3uzhadh1w",
-            "login_name": "lisi",
-            "full_name": "李四",
-            "display_name": "lisi(李四)"
+            "login_name": "virtual_user_2",
+            "full_name": "虚拟用户2",
+            "display_name": "virtual_user_2(虚拟用户2)"
         }
     ]
 }

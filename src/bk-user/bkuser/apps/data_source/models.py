@@ -20,6 +20,7 @@ from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
 from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK

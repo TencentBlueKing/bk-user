@@ -79,6 +79,16 @@ urlpatterns = [
                     views.VirtualUserListApi.as_view(),
                     name="open_web.tenant.virtual_user.list",
                 ),
+                path(
+                    "virtual-users/-/search/",
+                    views.VirtualUserSearchApi.as_view(),
+                    name="open_web.tenant.virtual_user.search",
+                ),
+                path(
+                    "virtual-users/-/lookup/",
+                    views.VirtualUserLookupApi.as_view(),
+                    name="open_web.tenant.virtual_user.lookup",
+                ),
             ]
         ),
     ),
