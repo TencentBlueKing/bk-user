@@ -58,3 +58,12 @@ export function deepMerge(...objectArray: object[]) {
 export function timeFormatter(val: string, format = 'YYYY-MM-DD HH:mm:ss') {
   return val ? dayjs(val).format(format) : '--';
 }
+
+/**
+ * 判断值是否为 null 或 undefined
+ * @param value 待检测的值
+ * @returns 如果值为 null 或 undefined，则返回 true
+ */
+export function isNil(value: unknown): value is null | undefined {
+  return value === null || value === undefined;
+}

@@ -18,6 +18,10 @@ from typing import List
 
 from django.db import models, transaction
 
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
 from bkuser.plugins.models import BasePluginConfig
 
 
@@ -38,7 +42,21 @@ class DataSourceQuerySet(models.QuerySet):
 
 
 # 数据源管理器类
-DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
+class DataSourceManager(models.Manager.from_queryset(DataSourceQuerySet)):  # type: ignore
+    def check_username_affix_unique(
+        self, tenant_id: str, prefix: str, suffix: str, exclude_id: int | None = None
+    ) -> None:
+        """校验同租户下 ADD_AFFIX 策略的用户名前后缀唯一性"""
+        qs = self.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+        if exclude_id:
+            qs = qs.exclude(id=exclude_id)
+
+        for ds in qs:
+            cfg = ds.username_config or {}
+            if cfg.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+                continue
+            if cfg.get("prefix", "") == prefix and cfg.get("suffix", "") == suffix:
+                raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
 
 
 class DataSourceUserManager(models.Manager):

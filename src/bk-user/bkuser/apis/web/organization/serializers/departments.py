@@ -171,6 +171,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
 
 class OptionalTenantDepartmentListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
+    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
 
 
 class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):
@@ -201,6 +202,10 @@ class TenantDepartmentParentUpdateInputSLZ(serializers.Serializer):
             parent_data_source_dept = TenantDepartment.objects.get(
                 id=parent_dept_id, tenant_id=self.context["tenant_id"]
             ).data_source_department
+
+            if parent_data_source_dept.data_source_id != data_source_dept.data_source_id:
+                raise ValidationError(_("不能跨数据源移动部门"))
+
             # 数据源部门 -> 父部门关系表节点
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(
                 department=parent_data_source_dept, data_source=data_source_dept.data_source

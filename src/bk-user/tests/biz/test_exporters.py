@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import pytest
 from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.biz.exporters import DataSourceUserExporter, UserExcelWriter
+from bkuser.biz.exporters import DataSourceUserExporter, UserExcelWriter, get_user_export_template
 
 pytestmark = pytest.mark.django_db
 
@@ -26,7 +26,7 @@ class TestDataSourceExporter:
 
     def test_get_template(self, bare_local_data_source, tenant_user_custom_fields):
         tenant_id = bare_local_data_source.owner_tenant_id
-        tmpl = DataSourceUserExporter.get_template(tenant_id)
+        tmpl = get_user_export_template(tenant_id)
 
         assert "users" in tmpl.sheetnames
         assert [cell.value for cell in tmpl["users"][UserExcelWriter.HEADER_ROW_IDX]] == [

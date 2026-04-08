@@ -15,7 +15,7 @@ interface ResolveResponseParams<D> {
   config: Record<string, any>,
 }
 
-interface Config extends AxiosRequestConfig {
+export interface Config extends AxiosRequestConfig {
   globalError?: boolean
   customMessage?: boolean
 }

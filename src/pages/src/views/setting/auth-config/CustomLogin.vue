@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref, toRaw, watch } from 'vue';
+import { onMounted, ref, toRaw, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
@@ -109,8 +109,8 @@ import { t } from '@/language/index';
 
 const props = defineProps({
   dataSourceId: {
-    type: String,
-    default: '',
+    type: Number,
+    default: undefined,
   },
   authDetails: {
     type: Object,

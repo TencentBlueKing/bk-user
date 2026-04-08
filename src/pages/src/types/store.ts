@@ -4,3 +4,13 @@ export interface IUser {
   role: string;
   tenant_id: string;
 }
+
+export interface SelectedOrg {
+  tenantId: string;
+  tenantName: string;
+  tenantLogo: string;
+  deptId?: number;
+  deptName?: string;
+  dataSourceId?: number;
+  organizationPath?: string;
+}

@@ -21,6 +21,7 @@ from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
 from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
@@ -117,12 +118,16 @@ class DataSource(AuditedModel):
 
     def generate_username(self, username: str) -> str:
         """根据用户名配置生成用户名"""
+        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+            return username
         prefix = self.username_config.get("prefix", "")
         suffix = self.username_config.get("suffix", "")
         return f"{prefix}{username}{suffix}"
 
     def parse_username(self, username: str) -> str:
         """根据用户名配置解析出原始用户名"""
+        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+            return username
         prefix = self.username_config.get("prefix", "")
         suffix = self.username_config.get("suffix", "")
 

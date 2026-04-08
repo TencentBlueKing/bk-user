@@ -181,6 +181,14 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         ):
             raise ValidationError(_("当前租户已存在外部数据源"))
 
+        username_config = attrs.get("username_config", {})
+        if username_config.get("strategy") == UsernameConfigStrategy.ADD_AFFIX:
+            DataSource.objects.check_username_affix_unique(
+                tenant_id=tenant_id,
+                prefix=username_config.get("prefix", ""),
+                suffix=username_config.get("suffix", ""),
+            )
+
         # 除本地数据源类型外，都需要配置字段映射
         if plugin_id != DataSourcePluginEnum.LOCAL:
             if not attrs["field_mapping"]:

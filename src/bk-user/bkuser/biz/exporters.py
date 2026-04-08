@@ -142,6 +142,25 @@ class UserExcelWriter:
         return {f.name: {opt["id"]: opt["value"] for opt in f.options} for f in fields}
 
 
+def get_user_export_template(tenant_id: str) -> Workbook:
+    """获取用户导入/导出的 Excel 模板"""
+    custom_fields = list(TenantUserCustomField.objects.filter(tenant_id=tenant_id))
+    writer = UserExcelWriter(custom_fields)
+
+    extras = {f.name: f.default for f in custom_fields}
+    base_info = [
+        "zhangsan",
+        "张三",
+        "zhangsan@qq.com",
+        "+8613512345678",
+        "公司/部门A,公司/部门B",
+        "lisi,wangwu",
+    ]
+
+    writer.add_row(base_info, extras)
+    return writer.get_workbook()
+
+
 class DataSourceUserExporter:
     """导出数据源用户 & 组织信息"""
 

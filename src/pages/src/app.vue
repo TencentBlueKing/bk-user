@@ -68,7 +68,7 @@ const handleRoleRedirect = (to: RouteLocationNormalizedGeneric, next: Navigation
     return true;
   }
 
-  // 租户管理员或单租户模式下，不能访问租户管理页
+  // 内置管理员或单租户模式下，不能访问租户管理页
   if ((role === ROLE.TENANT_MANAGER || isSingleTenantMode) && to.name === 'tenant') {
     next({ name: 'organization' });
     return true;
