@@ -46,7 +46,7 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
@@ -92,7 +92,7 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         depts = TenantDepartment.objects.select_related("data_source_department").filter(
-            tenant=self.tenant_id, data_source_id=self.real_data_source_id
+            tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         )
 
         # 分页
@@ -133,11 +133,13 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
             level = parent_level + max_level
             # 按层级 Level 递归查询子部门
             descendant_ids = DataSourceDepartmentRelation.objects.filter(
-                data_source_id=self.real_data_source_id, level__lte=level
+                data_source_id__in=self.real_data_source_ids, level__lte=level
             ).values_list("department_id", flat=True)
         else:
             tenant_department = get_object_or_404(
-                TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+                TenantDepartment.objects.filter(
+                    tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+                ),
                 id=kwargs["id"],
             )
 
@@ -173,7 +175,7 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self):
         tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids),
             id=self.kwargs["id"],
         )
         user_ids = DataSourceDepartmentUserRelation.objects.filter(
@@ -223,7 +225,7 @@ class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         queryset = TenantDepartment.objects.select_related("data_source_department").filter(
-            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         )
 
         with_organization_path = data["with_organization_path"]

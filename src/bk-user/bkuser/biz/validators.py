@@ -24,7 +24,7 @@ from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
+from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX, USERNAME_PREFIX_REGEX, USERNAME_SUFFIX_REGEX
 from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
@@ -213,3 +213,23 @@ def validate_user_extras(
         extras[field.name] = value
 
     return extras
+
+
+def validate_username_prefix(value: str) -> str:
+    if not value:
+        return value
+
+    if not re.fullmatch(USERNAME_PREFIX_REGEX, value):
+        raise ValidationError(_("{} 不符合 用户名前缀 的命名规范，应为 1-6 位大小写字母或数字").format(value))
+
+    return value
+
+
+def validate_username_suffix(value: str) -> str:
+    if not value:
+        return value
+
+    if not re.fullmatch(USERNAME_SUFFIX_REGEX, value):
+        raise ValidationError(_("{} 不符合 用户名后缀 的命名规范，应为 1-6 位大小写字母或数字").format(value))
+
+    return value

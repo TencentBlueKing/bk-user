@@ -26,19 +26,6 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.validators import validate_data_source_user_username
 
 
-def _validate_duplicate_data_source_username(data_source_id: str, username: str, data_source_user_id: int = 0) -> str:
-    """校验数据源用户名是否重复"""
-    queryset = DataSourceUser.objects.filter(data_source_id=data_source_id, username=username)
-    # 过滤掉自身
-    if data_source_user_id:
-        queryset = queryset.exclude(id=data_source_user_id)
-
-    if queryset.exists():
-        raise ValidationError(_("用户名 {} 已存在").format(username))
-
-    return username
-
-
 def _validate_owners(owners: List[str], tenant_id: str) -> List[str]:
     """
     校验责任人列表
@@ -85,7 +72,9 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
     def validate_username(self, username: str) -> str:
-        return _validate_duplicate_data_source_username(self.context["data_source_id"], username)
+        if DataSourceUser.objects.is_username_exists([self.context["data_source_id"]], username):
+            raise ValidationError(_("用户名 {} 已存在").format(username))
+        return username
 
     def validate_app_codes(self, app_codes: List[str]) -> List[str]:
         # 过滤重复值

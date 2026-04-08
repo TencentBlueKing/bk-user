@@ -144,6 +144,7 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+        username_config={"strategy": "manual", "prefix": "", "suffix": ""},
     )
 
 
@@ -205,6 +206,7 @@ def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_pl
         plugin=general_ds_plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
         sync_config={"sync_period": 60},
+        username_config={"strategy": "manual", "prefix": "", "suffix": ""},
     )
 
 

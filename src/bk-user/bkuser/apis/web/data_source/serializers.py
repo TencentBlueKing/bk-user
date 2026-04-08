@@ -26,11 +26,12 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation, UsernameConfigStrategy
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.validators import validate_username_prefix, validate_username_suffix
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -110,6 +111,35 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
 
+class DataSourceUsernameConfigSLZ(serializers.Serializer):
+    """数据源用户名配置"""
+
+    strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConfigStrategy.get_choices())
+    prefix = serializers.CharField(
+        help_text="用户名前缀", required=False, default="", allow_blank=True, validators=[validate_username_prefix]
+    )
+    suffix = serializers.CharField(
+        help_text="用户名后缀", required=False, default="", allow_blank=True, validators=[validate_username_suffix]
+    )
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        strategy = attrs.get("strategy")
+        prefix = attrs.get("prefix")
+        suffix = attrs.get("suffix")
+
+        if strategy == UsernameConfigStrategy.ADD_AFFIX:
+            if not prefix and not suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀请至少配置一项"))
+            if prefix and suffix:
+                raise ValidationError(_("用户名前缀和用户名后缀不能同时配置"))
+
+        elif strategy == UsernameConfigStrategy.MANUAL:
+            if prefix or suffix:
+                raise ValidationError(_("手动处理策略下，不支持配置用户名前缀或后缀"))
+
+        return attrs
+
+
 class DataSourceCreateInputSLZ(serializers.Serializer):
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
@@ -117,6 +147,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
+    username_config = DataSourceUsernameConfigSLZ(help_text="用户名冲突配置")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -132,12 +163,33 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 租户至多拥有一个实体类型的数据源
-        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
-            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+        plugin_id = attrs["plugin_id"]
+        tenant_id = self.context["tenant_id"]
+        # 租户至多拥有一个本地数据源和一个外部数据源
+        if (
+            plugin_id == DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(
+                owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL, plugin_id=DataSourcePluginEnum.LOCAL
+            ).exists()
+        ):
+            raise ValidationError(_("当前租户已存在本地数据源"))
+        if (
+            plugin_id != DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+            .exclude(plugin_id=DataSourcePluginEnum.LOCAL)
+            .exists()
+        ):
+            raise ValidationError(_("当前租户已存在外部数据源"))
+
+        username_config = attrs.get("username_config", {})
+        if username_config.get("strategy") == UsernameConfigStrategy.ADD_AFFIX:
+            DataSource.objects.check_username_affix_unique(
+                tenant_id=tenant_id,
+                prefix=username_config.get("prefix", ""),
+                suffix=username_config.get("suffix", ""),
+            )
 
         # 除本地数据源类型外，都需要配置字段映射
-        plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
             if not attrs["field_mapping"]:
                 raise ValidationError(_("当前数据源类型必须配置字段映射"))
@@ -156,7 +208,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         if plugin_id == DataSourcePluginEnum.GENERAL:
             assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
-            _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
+            _validate_general_plugin_tenant_id(attrs["plugin_config"], tenant_id)
 
         return attrs
 
@@ -184,6 +236,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
+    username_config = serializers.JSONField(help_text="用户名配置")
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
@@ -371,11 +424,18 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
+    plugin_id = serializers.CharField(help_text="插件 ID", required=False)
     statuses = StringArrayField(help_text="数据源同步状态", required=False)
+
+
+class DataSourcePluginSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源插件 ID")
+    name = serializers.CharField(help_text="数据源插件名称")
 
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
+    plugin = DataSourcePluginSLZ(help_text="数据源插件", source="data_source.plugin")
     status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
@@ -420,6 +480,9 @@ class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
 
 class DataSourceDestroyInputSLZ(serializers.Serializer):
     is_delete_idp = serializers.BooleanField(help_text="重置数据源时是否同时删除 Idp 相关配置", default=False)
+
+
+class DataSourceBatchDeleteInputSLZ(DataSourceDestroyInputSLZ): ...
 
 
 class DataSourcePluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):

@@ -17,10 +17,11 @@
 
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
+from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -34,33 +35,13 @@ from bkuser.utils.uuid import generate_uuid
 class DataSourcePlugin(models.Model):
     """
     数据源插件
-    DB初始化内置插件：local/mad/ldap
+    DB 初始化内置插件：local/mad/ldap
     """
 
     id = models.CharField("数据源插件唯一标识", primary_key=True, max_length=128)
     name = models.CharField("数据源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
-
-
-class DataSourceQuerySet(models.QuerySet):
-    """数据源 QuerySet 类"""
-
-    @transaction.atomic()
-    def create(self, **kwargs):
-        if "plugin_config" not in kwargs:
-            return super().create(**kwargs)
-
-        plugin_cfg = kwargs.pop("plugin_config")
-        assert isinstance(plugin_cfg, BasePluginConfig)
-
-        data_source: DataSource = super().create(**kwargs)
-        data_source.set_plugin_cfg(plugin_cfg)
-        return data_source
-
-
-# 数据源管理器类
-DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
 
 
 class DataSource(AuditedModel):
@@ -75,14 +56,13 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
+    # 用户名配置，区分不同数据源的用户，防止用户名重复
+    username_config = models.JSONField("用户名冲突配置", default=dict)
 
     objects = DataSourceManager()
 
     class Meta:
         ordering = ["id"]
-        unique_together = [
-            ("owner_tenant_id", "type"),
-        ]
 
     @property
     def is_local(self) -> bool:
@@ -135,6 +115,27 @@ class DataSource(AuditedModel):
         self.plugin_config = plugin_cfg
         self.save(update_fields=["plugin_config", "updated_at"])
 
+    def generate_username(self, username: str) -> str:
+        """根据用户名配置生成用户名"""
+        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+            return username
+        prefix = self.username_config.get("prefix", "")
+        suffix = self.username_config.get("suffix", "")
+        return f"{prefix}{username}{suffix}"
+
+    def parse_username(self, username: str) -> str:
+        """根据用户名配置解析出原始用户名"""
+        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+            return username
+        prefix = self.username_config.get("prefix", "")
+        suffix = self.username_config.get("suffix", "")
+
+        if prefix and username.startswith(prefix):
+            username = username[len(prefix) :]
+        if suffix and username.endswith(suffix):
+            username = username[: -len(suffix)]
+        return username
+
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
@@ -154,7 +155,9 @@ class DataSourceUser(TimestampedModel):
     extras = models.JSONField("自定义字段", default=dict)
 
     # ----------------------- 状态相关 -----------------------
-    # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态
+    # TODO: (1) 用户管理里涉及的功能状态（2）企业本身的员工状态
+
+    objects = DataSourceUserManager()
 
     class Meta:
         ordering = ["id"]

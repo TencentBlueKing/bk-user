@@ -103,12 +103,12 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
         # 只查询实名数据源关联的认证源 或 实名数据源被删除后，关联的数据源 ID 被设置为无效的
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), type=DataSourceTypeEnum.REAL
-        ).first()
-        data_source_ids = (
-            [data_source.id, INVALID_REAL_DATA_SOURCE_ID] if data_source is not None else [INVALID_REAL_DATA_SOURCE_ID]
+        data_source_ids = list(
+            DataSource.objects.filter(
+                owner_tenant_id=self.get_current_tenant_id(), type=DataSourceTypeEnum.REAL
+            ).values_list("id", flat=True)
         )
+        data_source_ids.append(INVALID_REAL_DATA_SOURCE_ID)
 
         return Idp.objects.filter(
             owner_tenant_id=self.get_current_tenant_id(), data_source_id__in=data_source_ids

@@ -44,9 +44,9 @@ class TenantDepartmentUserRelationListApi(OpenApiCommonMixin, generics.ListAPIVi
     )
     def get(self, request, *args, **kwargs):
         # 获取数据源用户与部门间关系并分页
-        relations = DataSourceDepartmentUserRelation.objects.filter(data_source_id=self.real_data_source_id).order_by(
-            "id"
-        )
+        relations = DataSourceDepartmentUserRelation.objects.filter(
+            data_source_id__in=self.real_data_source_ids
+        ).order_by("id")
         page = self.paginate_queryset(relations)
 
         # 获取所有相关的数据源用户 ID 和部门 ID
@@ -98,7 +98,7 @@ class TenantDepartmentRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
         # 获取数据源部门间的关系并分页
         # Note: 这里为什么没有使用 order_by 保证分页稳定？
         # 因为数据源部门采用 MPTT 模型，Manager 中的 get_queryset 方法已定义按照 tree_id 与 lft 联合排序保证分页稳定性
-        relations = DataSourceDepartmentRelation.objects.filter(data_source_id=self.real_data_source_id)
+        relations = DataSourceDepartmentRelation.objects.filter(data_source_id__in=self.real_data_source_ids)
         page = self.paginate_queryset(relations)
 
         dept_ids = {rel.department_id for rel in page}
@@ -133,7 +133,9 @@ class TenantUserLeaderRelationListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         # 获取数据源用户与 Leader 间关系并分页
-        relations = DataSourceUserLeaderRelation.objects.filter(data_source_id=self.real_data_source_id).order_by("id")
+        relations = DataSourceUserLeaderRelation.objects.filter(data_source_id__in=self.real_data_source_ids).order_by(
+            "id"
+        )
         page = self.paginate_queryset(relations)
 
         # 获取所有相关的数据源用户与 Leader ID

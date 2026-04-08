@@ -45,7 +45,7 @@ from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -67,7 +67,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+                data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
             ).select_related("data_source_user"),
             id=kwargs["id"],
         )
@@ -100,7 +100,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id__in=[self.real_data_source_id, self.virtual_data_source_id],
+            data_source_id__in=self.real_data_source_ids + [self.virtual_data_source_id],
         ).select_related("data_source_user")
 
     def get_serializer_context(self):
@@ -174,8 +174,12 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         ]
 
         with_organization_paths = data["with_organization_paths"]
-        context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
+        context: Dict[str, Any] = {
+            "with_organization_paths": with_organization_paths,
+            "org_path_map": {},
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
+            "login_name_map": TenantUserHandler.batch_get_login_name(queryset),
+        }
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -236,8 +240,12 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")
 
         with_organization_paths = data["with_organization_paths"]
-        context: Dict[str, Any] = {"with_organization_paths": with_organization_paths, "org_path_map": {}}
-        context["display_name_map"] = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
+        context: Dict[str, Any] = {
+            "with_organization_paths": with_organization_paths,
+            "org_path_map": {},
+            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
+            "login_name_map": TenantUserHandler.batch_get_login_name(queryset),
+        }
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
@@ -283,7 +291,7 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
     """
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+        return TenantUser.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
 
     @swagger_auto_schema(
         tags=["open_web.user"],

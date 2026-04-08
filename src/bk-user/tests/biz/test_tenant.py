@@ -26,7 +26,12 @@ from bkuser.apps.tenant.models import (
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.tenant import BuiltinManagerInfo, TenantCreator, TenantInfo, VirtualUserInfo
+from bkuser.biz.tenant import (
+    BuiltinManagerInfo,
+    TenantCreator,
+    TenantInfo,
+    VirtualUserInfo,
+)
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 pytestmark = pytest.mark.django_db

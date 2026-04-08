@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
+    DataSourceBatchDeleteInputSLZ,
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
     DataSourceDestroyInputSLZ,
@@ -70,7 +71,7 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.exporters import DataSourceUserExporter
+from bkuser.biz.exporters import DataSourceUserExporter, get_user_export_template
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
@@ -180,6 +181,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
                 sync_config=data.get("sync_config") or {},
+                username_config=data["username_config"],
                 creator=current_user,
                 updater=current_user,
             )
@@ -314,6 +316,73 @@ class DataSourceRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class DataSourceBatchDeleteApi(CurrentUserTenantMixin, generics.DestroyAPIView):
+    """批量重置数据源"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="批量重置数据源",
+        query_serializer=DataSourceBatchDeleteInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        slz = DataSourceBatchDeleteInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        cur_tenant_id = self.get_current_tenant_id()
+        data_sources = list(
+            DataSource.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                type=DataSourceTypeEnum.REAL,
+            )
+        )
+        is_delete_idp = data["is_delete_idp"]
+        data_source_ids = [ds.id for ds in data_sources]
+
+        if is_delete_idp:
+            waiting_delete_idps = Idp.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, *data_source_ids],
+            )
+        else:
+            waiting_delete_idps = Idp.objects.filter(
+                owner_tenant_id=cur_tenant_id,
+                data_source_id__in=data_source_ids,
+                plugin_id=BuiltinIdpPluginEnum.LOCAL,
+            )
+
+        # 【审计】创建审计对象并记录变更前数据
+        idp_list = list(waiting_delete_idps)
+        auditor = DataSourceAuditor(request.user.username, cur_tenant_id)
+        auditor.batch_pre_record_data_before(data_sources, idp_list)
+
+        with transaction.atomic():
+            IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+            waiting_delete_idps.delete()
+
+            if not is_delete_idp:
+                Idp.objects.filter(
+                    owner_tenant_id=cur_tenant_id,
+                    data_source_id__in=data_source_ids,
+                ).update(
+                    status=IdpStatus.DISABLED,
+                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                    updated_at=timezone.now(),
+                    updater=request.user.username,
+                )
+
+            for ds in data_sources:
+                DataSourceHandler.delete_data_source_and_related_resources(ds)
+
+        # 【审计】将审计记录保存至数据库
+        auditor.record_batch_delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
     """数据源关联资源信息"""
 
@@ -427,13 +496,8 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
         responses={status.HTTP_200_OK: "org_tmpl.xlsx"},
     )
     def get(self, request, *args, **kwargs):
-        """数据源导出模板"""
-        # 获取数据源信息，用于后续填充模板中的自定义字段
-        data_source = self.get_object()
-        if not (data_source.is_local and data_source.is_real_type):
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源有提供导入模板"))
-
-        workbook = DataSourceUserExporter(data_source).get_template()
+        """本地数据源导出模板"""
+        workbook = get_user_export_template(self.get_current_tenant_id())
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_tmpl.xlsx")
 
 
@@ -576,16 +640,16 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
-        ).first()
-        if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源不存在"))
+        cur_tenant_id = self.get_current_tenant_id()
 
-        if not data_source.is_real_type:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的数据源有同步记录"))
+        queryset = DataSourceSyncTask.objects.filter(
+            data_source__owner_tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+        ).select_related("data_source__plugin")
 
-        queryset = DataSourceSyncTask.objects.filter(data_source=data_source)
+        if plugin_id := data.get("plugin_id"):
+            queryset = queryset.filter(data_source__plugin_id=plugin_id)
+
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
 

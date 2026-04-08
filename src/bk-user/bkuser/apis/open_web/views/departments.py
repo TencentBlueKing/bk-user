@@ -123,13 +123,13 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
 
         else:
             # 若指定部门 ID 为 0，则其子部门即为根部门
-            data_source = get_object_or_404(
-                DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
+            data_sources = DataSource.objects.filter(
+                owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL
             )
 
             data_source_dept_ids = (
                 DataSourceDepartmentRelation.objects.root_nodes()
-                .filter(data_source=data_source)
+                .filter(data_source__in=data_sources)
                 .values_list("department_id", flat=True)
             )
 
@@ -190,10 +190,11 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定部门 ID 为 0，则返回无部门的用户
         else:
-            data_source = get_object_or_404(
-                DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
+            data_sources = DataSource.objects.filter(
+                owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL
             )
-            user_ids = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source).values_list(
+
+            user_ids = DataSourceDepartmentUserRelation.objects.filter(data_source__in=data_sources).values_list(
                 "user_id", flat=True
             )
             # TODO: 这里存在比较大的性能问题，如何快速获取无归属部门的用户？
