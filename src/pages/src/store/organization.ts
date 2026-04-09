@@ -134,7 +134,8 @@ export default defineStore('organization', () => {
   const hasPluginDataSource = (pluginId: string) => currentTenant.value.data_sources?.some(item => item.plugin_id === pluginId);
 
   /** 与本地数据源ID是否一致 */
-  const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => dataSourceId === localSourceId.value;
+  // eslint-disable-next-line eqeqeq
+  const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => localSourceId.value != null && dataSourceId === localSourceId.value;
 
   /** 获取数据源信息 */
   const getDataSourceInfo = (dataSourceId: IOrg['data_source_id']) => currentTenant.value.data_sources?.find(item => item.id === dataSourceId);
