@@ -12,7 +12,7 @@
           </bk-radio-button>
         </bk-radio-group>
       </bk-form-item>
-      <div v-if="isShowItem">
+      <div v-if="showExpiryDetails">
         <bk-form-item :label="$t('到期提醒时间')" property="remind_before_expire" required>
           <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
@@ -83,8 +83,10 @@
           <LabelContent :label="$t('账号有效期')">
             {{ validityPeriod}}
           </LabelContent>
-          <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
-          <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
+          <template v-if="showExpiryDetails">
+            <LabelContent :label="$t('到期提醒时间')">{{ remindBeforeBxpire}}</LabelContent>
+            <LabelContent :label="$t('通知方式')">{{ enabledNotificationMethods}}</LabelContent>
+          </template>
         </div>
         <bk-button
           class="min-w-[64px]"
@@ -146,7 +148,8 @@ const enabledNotificationMethods = computed(() => findLabelsByValues(
   NOTIFICATION_METHODS,
 ));
 
-const isShowItem = computed(() => formData.value.validity_period !== -1);
+// 是否显示到期提醒详情(-1 表示永久有效,无需提醒)
+const showExpiryDetails = computed(() => formData.value.validity_period !== -1);
 
 const findLabelsByValues = (values, array) => values?.map((value) => {
   const item = array.find(item => item.value === value);

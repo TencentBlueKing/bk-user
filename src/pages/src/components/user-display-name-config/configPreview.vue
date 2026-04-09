@@ -7,7 +7,7 @@
     <div
       @click="handleClickPreview"
       :class="innerClassName || ''"
-      class="cursor-pointer h-[24px] w-[52px] rounded-[2px] hover:bg-[#E1ECFF] flex justify-center items-center">
+      class="cursor-pointer h-[24px] rounded-[2px] px-[4px] hover:bg-[#E1ECFF] flex justify-center items-center">
       <eye :width="16" :height="16" fill="#3A84FF" />
       <span class="select-none ml-[4px] text-[#3A84FF]">{{ $t('预览') }}</span>
     </div>
@@ -34,7 +34,7 @@ import { ref } from 'vue';
 import { useFieldData } from '@/store';
 
 defineProps<{
-  innerClassName: string
+  innerClassName?: string
   previewList: { display_name: string }[]
 }>();
 const emit = defineEmits(['preview']);

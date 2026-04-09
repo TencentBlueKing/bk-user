@@ -74,53 +74,13 @@
       </template>
     </bk-dropdown>
     <!-- 批量重置密码弹框 -->
-    <bk-dialog
-      :width="500"
-      :is-show="batchPasswordDialogShow"
-      :title="$t('重置密码')"
-      :theme="'primary'"
-      :size="'normal'"
-      :height="200"
-      @closed="batchPasswordDialogShow = false"
-    >
-      <bk-loading :loading="isResetPasswordLoading">
-        <bk-form
-          form-type="vertical"
-          ref="formRef"
-          :model="formData">
-          <bk-form-item :label="$t('新密码')" property="newPassword" required>
-            <passwordInput
-              v-model="formData.newPassword" :style="{ width: '80%' }" clearable
-              :placeholder="passwordTips.join('、')"
-              v-bk-tooltips="{ content: passwordTips.join('\n'), theme: 'light' }"
-              @input="(val) => inputPassword(val, 'newPassword')" />
-            <bk-button outline theme="primary" @click="randomPasswordHandle">{{$t('随机生成')}}</bk-button>
-          </bk-form-item>
-          <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
-            <passwordInput
-              :class="{ 'is-error': isError }"
-              v-model="formData.confirmPassword"
-              :placeholder="$t('请再次输入密码')"
-              @input="(val) => inputPassword(val, 'confirmPassword')" />
-            <div class="bk-form-error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</div>
-          </bk-form-item>
-        </bk-form>
-      </bk-loading>
-      <template #footer>
-        <div class="flex justify-end">
-          <bk-button
-            theme="primary"
-            class="mr-[8px]"
-            @click="resetBatchPasswordConfirm"
-            :disabled="isResetPasswordLoading">
-            {{ t('确定') }}
-          </bk-button>
-          <bk-button @click="batchPasswordDialogShow = false">
-            {{ t('取消') }}
-          </bk-button>
-        </div>
-      </template>
-    </bk-dialog>
+    <ResetPasswordDialog
+      v-model:is-show="batchPasswordDialogShow"
+      :loading="isResetPasswordLoading"
+      :password-tips="passwordTips"
+      :data-source-id="appStore.currentTenant.data_source.id"
+      @confirm="handleBatchResetPasswordConfirm"
+    />
     <!-- 批量修改信息弹窗 -->
     <bk-dialog
       :width="500"
@@ -213,8 +173,7 @@ import batchRenewal from './batch-renewal.vue';
 import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
 import LocalDatePicker from '@/components/LocalDatePicker.vue';
-import passwordInput from '@/components/passwordInput.vue';
-import { randomPasswords } from '@/http';
+import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
 import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdate, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { TenantsUserItemData } from '@/http/types/organizationFiles';
@@ -237,11 +196,6 @@ const isSelectedNotLocalSource = computed(() => props.selectList.some(item => it
 /** 当前数据源是否为本地数据源 */
 const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
-const formData = ref({
-  newPassword: '',
-  confirmPassword: '',
-});
-const formRef = ref();
 const state = reactive({
   logoutDropdown: false,
   helpDropdown: false,
@@ -253,7 +207,6 @@ const batchInfo = ref(false); // 修改用户信息弹窗
 const userInfoVisible = ref(false);
 const selectedOption = ref();
 const passwordTips = ref([]);
-const isError = ref(false);
 const extrasList = ref();
 const infoFormData = ref({});
 const leaderList = ref([]);
@@ -451,18 +404,14 @@ const randomPasswordHandle = async () => {
 
 const isResetPasswordLoading = ref(false);
 /**
-   * 重置密码
-   */
-const resetBatchPasswordConfirm = async () => {
+ * 批量重置密码确认
+ */
+const handleBatchResetPasswordConfirm = async (password: string) => {
   try {
     isResetPasswordLoading.value = true;
-    await formRef.value.validate();
-    if (formData.value.newPassword !== formData.value.confirmPassword) {
-      return isError.value = true;
-    }
     const params = {
       user_ids: userIds.value,
-      password: formData.value.newPassword,
+      password,
     };
     await batchResetPassword(params);
     batchPasswordDialogShow.value = false;

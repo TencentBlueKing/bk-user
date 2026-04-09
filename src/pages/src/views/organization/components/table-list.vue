@@ -1122,6 +1122,10 @@ watch(
     }
   }
 }
+
+.is-error {
+  border-color: #ea3636;
+}
 </style>
 <style lang="less" scoped>
 :deep(.copy-icon) {
