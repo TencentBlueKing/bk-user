@@ -197,7 +197,7 @@
         :label="$t('操作')"
       >
         <template #default="{ row, $rowIndex }: any">
-          <span v-if="row.data_source_id === organizationStore.localSourceId">
+          <span v-if="organizationStore.isEqualLocalSourceId(row.data_source_id)">
             <label class="table-operate" @click="editInfoHandle(row, true)">{{ $t('编辑') }}</label>
             <bk-popover
               ext-cls="operate-popover"
@@ -220,10 +220,10 @@
                   <bk-button
                     text
                     class="operate-button-item"
-                    :disabled="!organizationStore.getDataSourceInfo(row.data_source_id).enable_password"
+                    :disabled="!organizationStore.getDataSourceInfo(row.data_source_id)?.enable_password"
                     v-bk-tooltips="{
                       content: $t('当前数据源未启用账密登录，无法重置密码'),
-                      disabled: organizationStore.getDataSourceInfo(row.data_source_id).enable_password
+                      disabled: organizationStore.getDataSourceInfo(row.data_source_id)?.enable_password
                     }"
                     @click="onResetPasswordClick(row, $rowIndex)"
                   >

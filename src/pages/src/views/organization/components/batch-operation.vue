@@ -78,7 +78,7 @@
       v-model:is-show="batchPasswordDialogShow"
       :loading="isResetPasswordLoading"
       :password-tips="passwordTips"
-      :data-source-id="appStore.currentTenant.data_source.id"
+      :data-source-id="organizationStore.localSourceId"
       @confirm="handleBatchResetPasswordConfirm"
     />
     <!-- 批量修改信息弹窗 -->

@@ -742,7 +742,7 @@
   "当前租户下发现其他数据源，请完成字段冲突时的规则配置": "Other data sources have been found in the current tenant. Please complete the rule configuration when there is a conflict in the field",
   "是否重置所有数据源？": "Are you sure to reset all data sources?",
   "重置后，所有数据源内的用户信息将同步删除，请谨慎操作": "Reset will delete all user information in all data sources. Please operate carefully",
-  "配置用户名冲突规则": "Configure Username Conflict Rule"
+  "配置用户名冲突规则": "Configure Username Conflict Rule",
   "新密码不能为空": "New password cannot be empty",
   "确认密码不能为空": "Confirm password cannot be empty",
   "两次输入的密码不一致,请重新输入": "Passwords do not match",

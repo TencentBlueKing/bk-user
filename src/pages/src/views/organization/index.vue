@@ -22,8 +22,6 @@
         style="height: calc(100vh - 106px)"
         :border="false"
         immediate
-        :min="140"
-        :max="900"
         :initial-divide="isShowCollaboration ? '50%' : '100%'">
         <template #aside>
           <aside-tenant :active-org="activeOrgInfo" />
@@ -94,7 +92,7 @@ const handleSearchSelect = () => {
 
 onMounted(async () => {
   await organizationStore.handleFetchCurrentTenant();
-  if (organizationStore.currentTenant?.data_sources.length === 0) {
+  if (organizationStore.currentTenant?.data_sources?.length === 0) {
     isShow.value = true;
   } else {
     isShow.value = false;
