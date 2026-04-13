@@ -51,10 +51,9 @@ class DataSourceManager(models.Manager.from_queryset(DataSourceQuerySet)):  # ty
 
         for ds in qs:
             cfg = ds.get_conflict_config()
-            username_cfg = cfg.username
-            if username_cfg.strategy != UsernameConflictStrategy.ADD_AFFIX:
+            if cfg.strategy != UsernameConflictStrategy.ADD_AFFIX:
                 continue
-            if username_cfg.prefix == prefix and username_cfg.suffix == suffix:
+            if cfg.prefix == prefix and cfg.suffix == suffix:
                 raise ValueError(_("当前租户已存在相同用户名前后缀的数据源"))
 
 

@@ -123,22 +123,20 @@ class DataSource(AuditedModel):
     def generate_username(self, username: str) -> str:
         """根据冲突配置生成用户名"""
         cfg = self.get_conflict_config()
-        username_cfg = cfg.username
 
-        if username_cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
-            return f"{username_cfg.prefix}{username}{username_cfg.suffix}"
+        if cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+            return f"{cfg.prefix}{username}{cfg.suffix}"
         return username
 
     def parse_username(self, username: str) -> str:
         """根据用户名配置解析出原始用户名"""
         cfg = self.get_conflict_config()
-        username_cfg = cfg.username
 
-        if username_cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
-            if username_cfg.prefix and username.startswith(username_cfg.prefix):
-                username = username[len(username_cfg.prefix) :]
-            if username_cfg.suffix and username.endswith(username_cfg.suffix):
-                username = username[: -len(username_cfg.suffix)]
+        if cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+            if cfg.prefix and username.startswith(cfg.prefix):
+                username = username[len(cfg.prefix) :]
+            if cfg.suffix and username.endswith(cfg.suffix):
+                username = username[: -len(cfg.suffix)]
 
         return username
 

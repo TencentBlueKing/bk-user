@@ -67,7 +67,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
                 # 本地数据源不需要字段映射配置
             },
         )
@@ -79,7 +79,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": {"enable_password": False},
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -90,12 +90,12 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "add_affix", "suffix": "_abc"}},
+                "conflict_config": {"strategy": "add_affix", "suffix": "_abc"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
         data_source = DataSource.objects.get(id=resp.data["id"])
-        assert data_source.conflict_config == {"username": {"strategy": "add_affix", "prefix": "", "suffix": "_abc"}}
+        assert data_source.conflict_config == {"strategy": "add_affix", "prefix": "", "suffix": "_abc"}
 
     def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -103,11 +103,11 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "add_affix", "prefix": "corp_", "suffix": "_abc"}},
+                "conflict_config": {"strategy": "add_affix", "prefix": "corp_", "suffix": "_abc"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户名前缀和用户名后缀不能同时配置" in resp.data["message"]  # Pydantic 校验
+        assert "前缀和后缀不能同时配置" in resp.data["message"]
 
     def test_create_with_invalid_username_config(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -115,11 +115,11 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "add_affix", "suffix": "invalid"}},
+                "conflict_config": {"strategy": "add_affix", "suffix": "invalid"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "后缀格式不正确" in resp.data["message"]
+        assert "用户名后缀" in resp.data["message"]
 
     def test_create_with_manual_strategy(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -127,7 +127,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -138,7 +138,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual", "prefix": "corp_"}},
+                "conflict_config": {"strategy": "manual", "prefix": "corp_"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -147,7 +147,11 @@ class TestDataSourceCreateApi:
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
-            data={"plugin_id": "not_exist_plugin", "plugin_config": {}},
+            data={
+                "plugin_id": "not_exist_plugin",
+                "plugin_config": {},
+                "conflict_config": {"strategy": "manual"},
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "数据源插件不存在" in resp.data["message"]
@@ -155,7 +159,7 @@ class TestDataSourceCreateApi:
     def test_create_without_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
-            data={"plugin_id": DataSourcePluginEnum.LOCAL},
+            data={"plugin_id": DataSourcePluginEnum.LOCAL, "conflict_config": {"strategy": "manual"}},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
@@ -167,7 +171,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -180,7 +184,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -193,7 +197,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -210,7 +214,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -226,7 +230,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [],
                 "sync_config": sync_config,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -247,6 +251,7 @@ class TestDataSourceCreateApi:
                         "target_field": "xxx_username",
                     }
                 ],
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -267,6 +272,7 @@ class TestDataSourceCreateApi:
                         "target_field": "username",
                     }
                 ],
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -279,7 +285,7 @@ class TestDataSourceCreateApi:
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -293,7 +299,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": {"sync_period": -1},
-                "conflict_config": {"username": {"strategy": "manual"}},
+                "conflict_config": {"strategy": "manual"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST

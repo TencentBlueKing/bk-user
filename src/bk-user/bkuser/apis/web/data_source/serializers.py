@@ -32,7 +32,6 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSou
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.biz.validators import validate_username_prefix, validate_username_suffix
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -112,23 +111,12 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
 
-class DataSourceUsernameConfigSLZ(serializers.Serializer):
-    """数据源用户名配置"""
-
-    strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConflictStrategy.get_choices())
-    prefix = serializers.CharField(
-        help_text="用户名前缀", required=False, default="", allow_blank=True, validators=[validate_username_prefix]
-    )
-    suffix = serializers.CharField(
-        help_text="用户名后缀", required=False, default="", allow_blank=True, validators=[validate_username_suffix]
-    )
-
-
 class DataSourceConflictConfigSLZ(serializers.Serializer):
     """数据源冲突配置"""
 
-    # 用户名冲突配置
-    username = DataSourceUsernameConfigSLZ()
+    strategy = serializers.ChoiceField(help_text="冲突处理策略", choices=UsernameConflictStrategy.get_choices())
+    prefix = serializers.CharField(help_text="用户名前缀", required=False, default="", allow_blank=True)
+    suffix = serializers.CharField(help_text="用户名后缀", required=False, default="", allow_blank=True)
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):

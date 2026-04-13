@@ -338,7 +338,7 @@ class TenantUserContactProfileListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         return TenantUser.objects.filter(
-            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_ids
+            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         ).select_related("data_source_user")
 
     @swagger_auto_schema(

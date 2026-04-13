@@ -66,7 +66,10 @@ class TestTenantUserDisplayInfoRetrieveApi:
         resp = api_client.get(
             reverse("open_web.tenant_user.display_info.retrieve", kwargs={"id": virtual_zhangsan.id})
         )
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["display_name"] == "zhangsan(张三)"
+        assert resp.data["login_name"] == "zhangsan"
+        assert resp.data["full_name"] == "张三"
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_user(self, api_client, collaboration_tenant):
@@ -111,7 +114,9 @@ class TestTenantUserDisplayInfoListApi:
             data={"bk_usernames": ",".join([virtual_zhangsan.id, virtual_lisi.id])},
         )
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 0
+        assert len(resp.data) == 2
+        assert {t["bk_username"] for t in resp.data} == {virtual_zhangsan.id, virtual_lisi.id}
+        assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_user(self, api_client, collaboration_tenant):
