@@ -22,8 +22,8 @@ from pydantic import BaseModel, field_validator, model_validator
 from bkuser.apps.data_source.constants import (
     USERNAME_PREFIX_REGEX,
     USERNAME_SUFFIX_REGEX,
+    DataSourceConflictStrategy,
     FieldMappingOperation,
-    UsernameConflictStrategy,
 )
 
 
@@ -50,7 +50,7 @@ class DataSourceConflictConfig(BaseModel):
     """数据源冲突配置"""
 
     # 冲突处理策略，默认为手动处理
-    strategy: UsernameConflictStrategy = UsernameConflictStrategy.MANUAL
+    strategy: DataSourceConflictStrategy = DataSourceConflictStrategy.MANUAL
     # 用户名前缀，格式：1-6 位字母或数字 + 一个分隔符("-" 或 "_")，如 "ldap_"、"http-"
     prefix: str = ""
     # 用户名后缀，格式：一个分隔符("-" 或 "_") + 1-6 位字母或数字，如 "-ldap"、"_http"
@@ -76,13 +76,13 @@ class DataSourceConflictConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_prefix_and_suffix(self) -> "DataSourceConflictConfig":
-        if self.strategy == UsernameConflictStrategy.ADD_AFFIX:
+        if self.strategy == DataSourceConflictStrategy.ADD_AFFIX:
             if not self.prefix and not self.suffix:
                 raise ValueError(_("添加前后缀策略下，前缀和后缀不能同时为空"))
             if self.prefix and self.suffix:
                 raise ValueError(_("添加前后缀策略下，前缀和后缀不能同时配置"))
 
-        elif self.strategy == UsernameConflictStrategy.MANUAL:
+        elif self.strategy == DataSourceConflictStrategy.MANUAL:
             if self.prefix or self.suffix:
                 raise ValueError(_("手动处理策略下，不支持配置用户名前缀或后缀"))
 

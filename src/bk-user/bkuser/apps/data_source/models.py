@@ -20,7 +20,7 @@ from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConflictStrategy
+from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum
 from bkuser.apps.data_source.data_models import DataSourceConflictConfig
 from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK
@@ -124,7 +124,7 @@ class DataSource(AuditedModel):
         """根据冲突配置生成用户名"""
         cfg = self.get_conflict_config()
 
-        if cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+        if cfg.strategy == DataSourceConflictStrategy.ADD_AFFIX:
             return f"{cfg.prefix}{username}{cfg.suffix}"
         return username
 
@@ -132,7 +132,7 @@ class DataSource(AuditedModel):
         """根据用户名配置解析出原始用户名"""
         cfg = self.get_conflict_config()
 
-        if cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+        if cfg.strategy == DataSourceConflictStrategy.ADD_AFFIX:
             if cfg.prefix and username.startswith(cfg.prefix):
                 username = username[len(cfg.prefix) :]
             if cfg.suffix and username.endswith(cfg.suffix):

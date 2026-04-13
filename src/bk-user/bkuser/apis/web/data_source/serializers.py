@@ -26,7 +26,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation, UsernameConflictStrategy
+from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceConflictConfig
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
@@ -114,7 +114,7 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
 class DataSourceConflictConfigSLZ(serializers.Serializer):
     """数据源冲突配置"""
 
-    strategy = serializers.ChoiceField(help_text="冲突处理策略", choices=UsernameConflictStrategy.get_choices())
+    strategy = serializers.ChoiceField(help_text="冲突处理策略", choices=DataSourceConflictStrategy.get_choices())
     prefix = serializers.CharField(help_text="用户名前缀", required=False, default="", allow_blank=True)
     suffix = serializers.CharField(help_text="用户名后缀", required=False, default="", allow_blank=True)
 
