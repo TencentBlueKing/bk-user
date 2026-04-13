@@ -47,7 +47,7 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         plugin_id=DataSourcePluginEnum.LOCAL,
         defaults={
             "plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
-            "username_config": {"strategy": "manual", "prefix": "", "suffix": ""},
+            "conflict_config": {"username": {"strategy": "manual", "prefix": "", "suffix": ""}},
         },
     )
     return ds
@@ -149,7 +149,7 @@ def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
         plugin=plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
         sync_config={"sync_period": 60},
-        username_config={"strategy": "manual", "prefix": "", "suffix": ""},
+        conflict_config={"username": {"strategy": "manual", "prefix": "", "suffix": ""}},
     )
 
 
