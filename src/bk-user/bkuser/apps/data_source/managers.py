@@ -19,7 +19,7 @@ from typing import List
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConflictStrategy
+from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum
 from bkuser.plugins.models import BasePluginConfig
 
 
@@ -51,10 +51,9 @@ class DataSourceManager(models.Manager.from_queryset(DataSourceQuerySet)):  # ty
 
         for ds in qs:
             cfg = ds.get_conflict_config()
-            username_cfg = cfg.username
-            if username_cfg.strategy != UsernameConflictStrategy.ADD_AFFIX:
+            if cfg.strategy != DataSourceConflictStrategy.ADD_AFFIX:
                 continue
-            if username_cfg.prefix == prefix and username_cfg.suffix == suffix:
+            if cfg.prefix == prefix and cfg.suffix == suffix:
                 raise ValueError(_("当前租户已存在相同用户名前后缀的数据源"))
 
 
