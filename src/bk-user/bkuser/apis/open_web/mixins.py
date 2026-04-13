@@ -27,6 +27,8 @@ from rest_framework.request import Request
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy
 
 
 class OpenWebApiCommonMixin:
@@ -92,6 +94,22 @@ class OpenWebApiCommonMixin:
             DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).values_list(
                 "id", flat=True
             )
+        )
+
+    @cached_property
+    def collaboration_data_source_ids(self) -> List[int]:
+        collaboration_tenant_ids = list(
+            CollaborationStrategy.objects.filter(target_tenant_id=self.tenant_id)
+            .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
+            .values_list("source_tenant_id", flat=True)
+        )
+
+        if not collaboration_tenant_ids:
+            return []
+        return list(
+            DataSource.objects.filter(
+                owner_tenant_id__in=collaboration_tenant_ids, type=DataSourceTypeEnum.REAL
+            ).values_list("id", flat=True)
         )
 
     @cached_property

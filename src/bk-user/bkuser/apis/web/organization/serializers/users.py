@@ -97,6 +97,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
     department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
+    id = serializers.CharField(help_text="用户 ID", required=False)
     username = serializers.CharField(help_text="用户名", required=False)
     full_name = serializers.CharField(help_text="用户姓名", required=False)
     email = serializers.CharField(help_text="用户邮箱", required=False)

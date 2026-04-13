@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -116,8 +116,8 @@ import { t } from '@/language/index';
 
 const props = defineProps({
   dataSourceId: {
-    type: String,
-    default: '',
+    type: Number,
+    default: undefined,
   },
   currentId: {
     type: String,

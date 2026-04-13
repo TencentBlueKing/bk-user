@@ -18,9 +18,8 @@ from typing import List
 
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
-from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConflictStrategy
 from bkuser.plugins.models import BasePluginConfig
 
 
@@ -51,11 +50,12 @@ class DataSourceManager(models.Manager.from_queryset(DataSourceQuerySet)):  # ty
             qs = qs.exclude(id=exclude_id)
 
         for ds in qs:
-            cfg = ds.username_config or {}
-            if cfg.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
+            cfg = ds.get_conflict_config()
+            username_cfg = cfg.username
+            if username_cfg.strategy != UsernameConflictStrategy.ADD_AFFIX:
                 continue
-            if cfg.get("prefix", "") == prefix and cfg.get("suffix", "") == suffix:
-                raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
+            if username_cfg.prefix == prefix and username_cfg.suffix == suffix:
+                raise ValueError(_("当前租户已存在相同用户名前后缀的数据源"))
 
 
 class DataSourceUserManager(models.Manager):

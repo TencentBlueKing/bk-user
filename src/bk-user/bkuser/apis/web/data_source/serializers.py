@@ -26,7 +26,8 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation, UsernameConfigStrategy
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation, UsernameConflictStrategy
+from bkuser.apps.data_source.data_models import DataSourceConflictConfig
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -114,7 +115,7 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
 class DataSourceUsernameConfigSLZ(serializers.Serializer):
     """数据源用户名配置"""
 
-    strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConfigStrategy.get_choices())
+    strategy = serializers.ChoiceField(help_text="用户名冲突策略", choices=UsernameConflictStrategy.get_choices())
     prefix = serializers.CharField(
         help_text="用户名前缀", required=False, default="", allow_blank=True, validators=[validate_username_prefix]
     )
@@ -122,22 +123,12 @@ class DataSourceUsernameConfigSLZ(serializers.Serializer):
         help_text="用户名后缀", required=False, default="", allow_blank=True, validators=[validate_username_suffix]
     )
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        strategy = attrs.get("strategy")
-        prefix = attrs.get("prefix")
-        suffix = attrs.get("suffix")
 
-        if strategy == UsernameConfigStrategy.ADD_AFFIX:
-            if not prefix and not suffix:
-                raise ValidationError(_("添加前后缀策略下，前缀和后缀请至少配置一项"))
-            if prefix and suffix:
-                raise ValidationError(_("用户名前缀和用户名后缀不能同时配置"))
+class DataSourceConflictConfigSLZ(serializers.Serializer):
+    """数据源冲突配置"""
 
-        elif strategy == UsernameConfigStrategy.MANUAL:
-            if prefix or suffix:
-                raise ValidationError(_("手动处理策略下，不支持配置用户名前缀或后缀"))
-
-        return attrs
+    # 用户名冲突配置
+    username = DataSourceUsernameConfigSLZ()
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
@@ -147,7 +138,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-    username_config = DataSourceUsernameConfigSLZ(help_text="用户名冲突配置")
+    conflict_config = DataSourceConflictConfigSLZ(help_text="冲突配置")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -161,6 +152,14 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
             return field_mapping
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
+
+    def validate_conflict_config(self, conflict_config: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            conflict_cfg = DataSourceConflictConfig.model_validate(conflict_config)
+        except PDValidationError as e:
+            raise ValidationError(_("冲突配置不合法:{}").format(stringify_pydantic_error(e)))
+
+        return conflict_cfg.model_dump()
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]
@@ -180,14 +179,6 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
             .exists()
         ):
             raise ValidationError(_("当前租户已存在外部数据源"))
-
-        username_config = attrs.get("username_config", {})
-        if username_config.get("strategy") == UsernameConfigStrategy.ADD_AFFIX:
-            DataSource.objects.check_username_affix_unique(
-                tenant_id=tenant_id,
-                prefix=username_config.get("prefix", ""),
-                suffix=username_config.get("suffix", ""),
-            )
 
         # 除本地数据源类型外，都需要配置字段映射
         if plugin_id != DataSourcePluginEnum.LOCAL:
@@ -236,7 +227,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
-    username_config = serializers.JSONField(help_text="用户名配置")
+    conflict_config = serializers.JSONField(help_text="冲突配置")
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):

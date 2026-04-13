@@ -232,6 +232,56 @@ paths:
           resourcePermissionRequired: false
         descriptionEn: Query users information of the department
 
+  /api/v3/open-web/tenant/virtual-users/-/search/:
+    get:
+      operationId: search_virtual_user
+      description: 搜索虚拟用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/virtual-users/-/search/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Search virtual users
+
+  /api/v3/open-web/tenant/virtual-users/-/lookup/:
+    get:
+      operationId: batch_lookup_virtual_user
+      description: 批量精确查询虚拟用户
+      tags: []
+      responses:
+        default:
+          description: ""
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: get
+          path: /api/v3/open-web/tenant/virtual-users/-/lookup/
+          matchSubpath: false
+          timeout: 0
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: true
+          appVerifiedRequired: false
+          resourcePermissionRequired: false
+        descriptionEn: Batch lookup virtual users
+
   /api/v3/open-web/tenant/virtual-users/:
     get:
       operationId: list_virtual_user

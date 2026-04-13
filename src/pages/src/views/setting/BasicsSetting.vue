@@ -29,12 +29,19 @@
             </bk-radio-group>
           </bk-form-item>
 
-          <bk-form-item :label="$t('用户展示名')" required property="display_name_config">
+          <bk-form-item property="display_name_config">
+            <template #label>
+              <div class="flex items-center text-[12px] h-[20px] leading-[20px]">
+                <span class="text-[14px] text-[#63656e]">{{ $t('用户展示名') }}</span>
+                <span class="text-[#ea3636] text-[14px] leading-[14px] ml-[4px] mr-[10px]">*</span>
+                <ConfigPreview
+                  @preview="handlePreviewDisplayNameExpression"
+                  :preview-list="displayNameExpressionPreviewList" />
+              </div>
+            </template>
             <UserDisplayNameConfig
               v-model:data="displayNameExpression"
-              :preview-list="displayNameExpressionPreviewList"
-              @change="handleExpressionChange"
-              @preview="handlePreviewDisplayNameExpression" />
+              @change="handleExpressionChange" />
           </bk-form-item>
         </Row>
       </bk-form>
@@ -82,8 +89,9 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
+import { UPDATE_TENANT_INFO_KEY } from '@/common/inject-keys';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import UploadImg from '@/components/upload-img.vue';
@@ -92,14 +100,16 @@ import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
-import useAppStore from '@/store/app';
+import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
 
-const appStore = useAppStore();
 const validate = useValidate();
 const fieldData = useFieldData();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const formRef = ref();
+
+// 注入更新租户信息的方法
+const updateTenantInfo = inject(UPDATE_TENANT_INFO_KEY);
 
 const formData = ref({
   id: '',
@@ -128,6 +138,9 @@ const displayNameExpressionPreviewList = ref<{ display_name: string }[]>([]);
 const rules = {
   name: [validate.required, validate.name],
   id: [validate.required],
+  /**
+   * @description display_name_config的required校验若放在form-item上，会在preview button后面，因此这里手动加了*校验标识，同时保留这里的逻辑校验，保证校验功能的完整
+   */
   display_name_config: [
     {
       message: t('表达式至少存在一个字段'),
@@ -271,8 +284,8 @@ const saveEdit = async () => {
       PutTenantInfo(params),
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
-    appStore.updateCurrentTenantLogo(formData.value.logo);
-    appStore.updateCurrentTenantName(formData.value.name);
+    // 使用 inject 的方法更新 MainHeader 中的租户信息
+    updateTenantInfo?.updateTenant(formData.value.name, formData.value.logo);
     isEdit.value = false;
     Message({ theme: 'success', message: t('保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效') });
     initTenantInfo();

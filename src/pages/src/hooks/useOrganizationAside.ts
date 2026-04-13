@@ -2,32 +2,26 @@
 import { ref } from 'vue';
 
 import { getDepartmentsList } from '@/http/organizationFiles';
-import useAppStore from '@/store/app';
 import { IOrg } from '@/types/organization';
 
-const appStore = useAppStore();
-
-export default function useOrganizationAside(currentTenant: any) {
+export default function useOrganizationAside() {
   const treeRef = ref();
-  const treeData = ref<any>({});
+  const treeData = ref<IOrg[]>([]);
 
-  const formatTreeData = (data = []) => {
+  /** 格式化为bk-tree可用的数据结构 */
+  const formatTreeData = (data = [] as IOrg[]) => {
     data.forEach((item) => {
       if (item.has_children) {
-        item.children = [{}];
+        item.children = [{} as IOrg];
         item.async = true;
       }
     });
     return data;
   };
 
-  const getRemoteData = async (item: IOrg) => {
-    const res = await getDepartmentsList(item.id, currentTenant.value?.id);
+  const getRemoteData = async (item: Partial<IOrg>, currentTenantId: string) => {
+    const res = await getDepartmentsList(item.id, currentTenantId);
     return formatTreeData(res?.data);
-  };
-
-  const handleNodeClick = (item: IOrg, tenantId: string, isTenant = false) => {
-    appStore.currentOrg = Object.assign(item, { tenantId, isTenant });
   };
 
   const getPrefixIcon = (item: { children?: any[] }, renderType: string) => {
@@ -44,8 +38,7 @@ export default function useOrganizationAside(currentTenant: any) {
     };
   };
 
-
-  const findNode = (item: IOrg, id: number) => {
+  const findNode = (item: IOrg, id: number): IOrg | null => {
     if (item.id === id) {
       return item;
     }
@@ -63,7 +56,7 @@ export default function useOrganizationAside(currentTenant: any) {
   /**
    * 添加子组织
    */
-  const addNode = (id, node) => {
+  const addNode = (id: number, node: IOrg) => {
     // 若id为0，则添加到根节点（租户节点下直接添加组织）
     if (id === 0) {
       treeData.value.push(node);
@@ -84,7 +77,7 @@ export default function useOrganizationAside(currentTenant: any) {
   /**
    * 删除组织
    */
-  const deleteDept = (id, list) => {
+  const deleteDept = (id: number, list: IOrg[]) => {
     for (let i = 0; i < list.length; i++) {
       if (list[i].id === id) {
         list.splice(i, 1);
@@ -95,7 +88,7 @@ export default function useOrganizationAside(currentTenant: any) {
       }
     }
   };
-  const deleteNode = (id) => {
+  const deleteNode = (id: number) => {
     deleteDept(id, treeData.value);
   };
 
@@ -115,7 +108,7 @@ export default function useOrganizationAside(currentTenant: any) {
   return {
     treeRef,
     treeData,
-    handleNodeClick,
+    formatTreeData,
     getRemoteData,
     getPrefixIcon,
     addNode,

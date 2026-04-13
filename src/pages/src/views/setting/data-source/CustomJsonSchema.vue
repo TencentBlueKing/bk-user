@@ -1,6 +1,10 @@
 <template>
-  <bk-loading :loading="isLoading" class="json-schema-container user-scroll-y">
-    <template v-if="props.curStep === 1 && formData.plugin_config.plugin_id"">
+  <bk-loading
+    :loading="isLoading"
+    class="json-schema-container user-scroll-y"
+    :z-index="10"
+  >
+    <template v-if="props.curStep === 1 && formData.plugin_config.plugin_id">
       <SchemaForm
         ref="schemaFormRef"
         :form-data="formData"
@@ -82,29 +86,46 @@
             />
           </bk-select>
         </bk-form-item>
-        <div class="btn">
-          <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-            {{ dataSourceId ? $t('保存') : $t('提交') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
       </Row>
+      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+        <template #header>
+          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+        </template>
+        <ConflictConfig
+          ref="conflictConfigRef"
+          :config="fieldSettingData.username_config"
+          :disabled="isEdit"
+        />
+      </Row>
+      <div class="btn">
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+          {{ isEdit ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { defineEmits, inject, onMounted, reactive, ref, watch } from 'vue';
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 
+import { isNil } from '@/common/util';
+import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
+import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
+import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
+import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
+
 const props = defineProps({
   currentType: {
     type: String,
@@ -122,6 +143,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const dataSourceStore = useDataSourceStore();
+
+const isEdit = computed(() => !isNil(props.dataSourceId));
 
 const formData = reactive({
   plugin_config: {},
@@ -129,6 +153,8 @@ const formData = reactive({
 const jsonSchema = ref({});
 const schemaFormRef = ref();
 const formRef2 = ref();
+const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 const fieldSettingData = ref({
   field_mapping: {
     // 内置字段
@@ -142,6 +168,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+  username_config: {
+    strategy: 'manual' as const,
+    prefix: '',
+    suffix: '',
+  } as UsernameConfig,
 });
 const submitLoading = ref(false);
 
@@ -149,6 +180,7 @@ const validate = useValidate();
 const rulesFieldSetting = {
   target_field: [validate.required],
   source_field: [validate.required],
+  ...conflictRules,
 };
 const apiFields = ref([]);
 const fieldMappingList = ref([]);
@@ -221,7 +253,7 @@ const handleNext = async () => {
     emit('updateCurStep', 2);
     isLoading.value = true;
     const res = await getFields();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const list = [];
       const customList = [];
       const mapFields = (fields, item, isDisabled, fieldMappingType) => {
@@ -319,7 +351,7 @@ const handleLastStep = async () => {
   fieldSettingData.value.field_mapping.custom_fields = [];
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
-  if (props?.dataSourceId) {
+  if (isEdit.value) {
     const res = await getDataSourceDetails(props.dataSourceId);
     fieldSettingData.value.sync_config = res.data?.sync_config;
   } else {
@@ -338,7 +370,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params = {
+    const params: Partial<NewDataSourceParams> = {
       plugin_config: formData.plugin_config,
       field_mapping: [
         ...list,
@@ -347,14 +379,21 @@ const handleSubmit = async () => {
       sync_config: fieldSettingData.value.sync_config,
     };
 
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.id = props.dataSourceId;
       await putDataSourceDetails(params);
-      emit('updateSuccess', t('更新'));
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+      });
     } else {
       params.plugin_id = props.currentType;
-      await newDataSource(params);
-      emit('updateSuccess', t('新建成功'));
+      params.username_config = conflictConfigRef.value?.getData();
+      const res = await newDataSource(params);
+      emit('updateSuccess', {
+        text: t('新建成功'),
+        dataSourceId: res.data?.id,
+      });
     }
     window.changeInput = false;
   } catch (e) {
@@ -431,7 +470,7 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     getJsonSchema();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const res = await getDataSourceDetails(props.dataSourceId);
       formData.plugin_config.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
@@ -440,6 +479,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
+      fieldSettingData.value.username_config = res.data?.username_config;
     } else {
       formData.plugin_config = defaultServerConfig();
     }
@@ -453,7 +493,6 @@ onMounted(async () => {
 
 <style lang="less" scoped>
 .json-schema-container {
-  padding: 24px;
   margin-bottom: 0;
   border-bottom: 1px solid #EAEBF0;
   background: #FFF;
@@ -469,9 +508,20 @@ onMounted(async () => {
       }
     }
   }
+
+  .row-wrapper {
+    padding: 0 24px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #EAEBF0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
   .btn {
     position: relative;
-    padding: 24px;
+    padding: 0px 0 24px 24px;
+    background-color: #fff;
 
     button {
       min-width: 88px;

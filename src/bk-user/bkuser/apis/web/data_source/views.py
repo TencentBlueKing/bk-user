@@ -143,8 +143,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         data = slz.validated_data
 
         queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
-        if type := data.get("type"):
-            queryset = queryset.filter(type=type)
+        if data_source_type := data.get("type"):
+            queryset = queryset.filter(type=data_source_type)
 
         return queryset
 
@@ -181,7 +181,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
                 sync_config=data.get("sync_config") or {},
-                username_config=data["username_config"],
+                conflict_config=data["conflict_config"],
                 creator=current_user,
                 updater=current_user,
             )

@@ -45,8 +45,8 @@ class DataSourceTypeEnum(StrStructuredEnum):
     BUILTIN_MANAGEMENT = EnumField("builtin_management", label=_("内置管理"))
 
 
-class UsernameConfigStrategy(StrStructuredEnum):
-    """用户名冲突配置策略"""
+class UsernameConflictStrategy(StrStructuredEnum):
+    """用户名冲突策略"""
 
     MANUAL = EnumField("manual", label=_("手动处理"))
     ADD_AFFIX = EnumField("add_affix", label=_("添加前后缀"))

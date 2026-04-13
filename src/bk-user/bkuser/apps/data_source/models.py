@@ -20,7 +20,8 @@ from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConfigStrategy
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, UsernameConflictStrategy
+from bkuser.apps.data_source.data_models import DataSourceConflictConfig
 from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
@@ -56,8 +57,8 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
-    # 用户名配置，区分不同数据源的用户，防止用户名重复
-    username_config = models.JSONField("用户名冲突配置", default=dict)
+    # 多数据下的冲突配置，区分不同数据源的用户，防止用户名重复
+    conflict_config = models.JSONField("冲突配置", default=dict)
 
     objects = DataSourceManager()
 
@@ -115,25 +116,30 @@ class DataSource(AuditedModel):
         self.plugin_config = plugin_cfg
         self.save(update_fields=["plugin_config", "updated_at"])
 
+    def get_conflict_config(self) -> "DataSourceConflictConfig":
+        """获取冲突配置"""
+        return DataSourceConflictConfig(**self.conflict_config)
+
     def generate_username(self, username: str) -> str:
-        """根据用户名配置生成用户名"""
-        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
-            return username
-        prefix = self.username_config.get("prefix", "")
-        suffix = self.username_config.get("suffix", "")
-        return f"{prefix}{username}{suffix}"
+        """根据冲突配置生成用户名"""
+        cfg = self.get_conflict_config()
+        username_cfg = cfg.username
+
+        if username_cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+            return f"{username_cfg.prefix}{username}{username_cfg.suffix}"
+        return username
 
     def parse_username(self, username: str) -> str:
         """根据用户名配置解析出原始用户名"""
-        if self.username_config.get("strategy") != UsernameConfigStrategy.ADD_AFFIX:
-            return username
-        prefix = self.username_config.get("prefix", "")
-        suffix = self.username_config.get("suffix", "")
+        cfg = self.get_conflict_config()
+        username_cfg = cfg.username
 
-        if prefix and username.startswith(prefix):
-            username = username[len(prefix) :]
-        if suffix and username.endswith(suffix):
-            username = username[: -len(suffix)]
+        if username_cfg.strategy == UsernameConflictStrategy.ADD_AFFIX:
+            if username_cfg.prefix and username.startswith(username_cfg.prefix):
+                username = username[len(username_cfg.prefix) :]
+            if username_cfg.suffix and username.endswith(username_cfg.suffix):
+                username = username[: -len(username_cfg.suffix)]
+
         return username
 
 

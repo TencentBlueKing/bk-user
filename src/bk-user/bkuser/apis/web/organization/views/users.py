@@ -161,7 +161,8 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
         if keyword := params.get("keyword"):
             queryset = queryset.filter(
-                Q(data_source_user__username__icontains=keyword)
+                Q(id=keyword)
+                | Q(data_source_user__username__icontains=keyword)
                 | Q(data_source_user__full_name__icontains=keyword)
                 | Q(data_source_user__email__icontains=keyword)
                 | Q(data_source_user__phone__icontains=keyword)
@@ -204,6 +205,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         )
         # 字段过滤映射
         filter_map = {
+            "id": "id",
             "username": "data_source_user__username__icontains",
             "full_name": "data_source_user__full_name__icontains",
             "email": "data_source_user__email__icontains",

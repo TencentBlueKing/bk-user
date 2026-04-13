@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='datasource',
-            name='username_config',
-            field=models.JSONField(default=dict, verbose_name='用户名配置'),
+            name='conflict_config',
+            field=models.JSONField(default=dict, verbose_name='冲突配置'),
         ),
     ]

@@ -26,25 +26,24 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { Message } from 'bkui-vue';
 
-import { useDataSource } from '@/hooks';
+import { postOperationsSync } from '@/http/dataSourceFiles';
 import router from '@/router';
-import { useSyncStatus } from '@/store';
 
-defineProps({
-  title: {
-    type: String,
-    default: '',
-  },
+interface IProps {
+  title: string;
+  dataSourceId: number;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  title: '',
 });
 
-const { handleOperationsSync } = useDataSource();
-const syncStatusStore = useSyncStatus();
 // 同步数据后跳转到数据源配置页面
-const handleSync = () => {
-  handleOperationsSync();
-  syncStatusStore.setRefresh(false);
+const handleSync = async () => {
+  const res = await postOperationsSync(props.dataSourceId);
+  Message({ theme: res.data.status, message: res.data.summary });
   router.push({ name: 'dataSource' });
 };
 

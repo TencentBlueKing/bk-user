@@ -26,6 +26,8 @@ from rest_framework.response import Response
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_v3.serializers.user import (
+    TenantUserContactProfileListInputSLZ,
+    TenantUserContactProfileListOutputSLZ,
     TenantUserDepartmentListInputSLZ,
     TenantUserDepartmentListOutputSLZ,
     TenantUserDisplayInfoListInputSLZ,
@@ -49,7 +51,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +78,6 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
             data_source_id__in=self.real_data_source_ids,
         ).select_related("data_source_user")
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="batch_query_user_display_info",
@@ -91,7 +86,14 @@ class TenantUserDisplayInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserDisplayInfoListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
+
+        return Response(
+            TenantUserDisplayInfoListOutputSLZ(
+                tenant_users, many=True, context={"display_name_map": display_name_map}
+            ).data
+        )
 
 
 class TenantUserRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -227,13 +229,6 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
             data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id
         ).select_related("data_source_user")
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="list_user_leader",
@@ -241,7 +236,20 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserLeaderListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+
+        return Response(
+            TenantUserLeaderListOutputSLZ(
+                tenant_users,
+                many=True,
+                context={
+                    "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                        tenant_users
+                    ),
+                    "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+                },
+            ).data
+        )
 
 
 class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -260,13 +268,6 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
             .order_by("id")
         )
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.paginate_queryset(self.get_queryset())
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="list_user",
@@ -274,12 +275,26 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.paginate_queryset(self.get_queryset())
+
+        slz = TenantUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+                "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+            },
+        )
+
+        return self.get_paginated_response(slz.data)
 
 
 class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
     """
     根据 bk_username 批量查询用户敏感信息
+
+    Note: 该接口为旧版 bk-cmsi 兼容接口，新版 bk-cmsi 已切换到 TenantUserContactProfileListApi
+    目前需要保留该接口以保持向后兼容
     """
 
     pagination_class = None
@@ -301,6 +316,37 @@ class TenantUserSensitiveInfoListApi(OpenApiCommonMixin, generics.ListAPIView):
         operation_description="批量查询用户敏感信息",
         query_serializer=TenantUserSensitiveInfoListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSensitiveInfoListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class TenantUserContactProfileListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    根据 bk_username 批量查询用户联系信息
+
+    Note: 该接口为 bk-cmsi 专用接口,请勿直接用于其他业务场景
+    """
+
+    pagination_class = None
+
+    serializer_class = TenantUserContactProfileListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = TenantUserContactProfileListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return TenantUser.objects.filter(
+            id__in=data["bk_usernames"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_ids
+        ).select_related("data_source_user")
+
+    @swagger_auto_schema(
+        tags=["open_v3.user"],
+        operation_id="batch_query_user_contact_profile",
+        operation_description="批量查询用户联系信息",
+        query_serializer=TenantUserContactProfileListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserContactProfileListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -332,13 +378,6 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         # 仅查询本租户的实名用户
         return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_web.user"],
         operation_id="batch_lookup_user",
@@ -347,7 +386,20 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+
+        return Response(
+            TenantUserLookupOutputSLZ(
+                tenant_users,
+                many=True,
+                context={
+                    "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
+                        tenant_users
+                    ),
+                    "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+                },
+            ).data
+        )
 
 
 class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -376,13 +428,6 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
 
         return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="batch_lookup_virtual_user",
@@ -391,7 +436,12 @@ class VirtualUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
+
+        return Response(
+            VirtualUserLookupOutputSLZ(tenant_users, many=True, context={"display_name_map": display_name_map}).data
+        )
 
 
 class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -408,13 +458,6 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
             .order_by("id")
         )
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.paginate_queryset(self.get_queryset())
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.user"],
         operation_id="list_virtual_user",
@@ -422,4 +465,13 @@ class VirtualUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.paginate_queryset(self.get_queryset())
+        slz = VirtualUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+            },
+        )
+
+        return self.get_paginated_response(slz.data)
