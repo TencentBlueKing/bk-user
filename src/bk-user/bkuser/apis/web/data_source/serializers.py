@@ -147,7 +147,12 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise ValidationError(_("冲突配置不合法:{}").format(stringify_pydantic_error(e)))
 
-        return conflict_cfg.model_dump()
+        # 校验同租户下 ADD_AFFIX 策略的前后缀组合唯一性
+        tenant_id = self.context["tenant_id"]
+        if DataSource.objects.is_username_affix_exists(tenant_id, conflict_cfg.prefix, conflict_cfg.suffix):
+            raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
+
+        return conflict_config
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]

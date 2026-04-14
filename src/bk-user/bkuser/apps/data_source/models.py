@@ -129,7 +129,7 @@ class DataSource(AuditedModel):
         return username
 
     def parse_username(self, username: str) -> str:
-        """根据用户名配置解析出原始用户名"""
+        """根据冲突配置解析出原始用户名"""
         cfg = self.get_conflict_config()
 
         if cfg.strategy == DataSourceConflictStrategy.ADD_AFFIX:
