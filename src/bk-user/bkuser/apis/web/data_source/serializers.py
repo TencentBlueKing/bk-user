@@ -174,20 +174,16 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate_username_generate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        slz = DataSourceUsernameGenerateConfigSLZ(data=config)
-        slz.is_valid(raise_exception=True)
-        cfg = slz.validated_data
-
         # 校验同租户下 ADD_AFFIX 策略的前后缀组合唯一性
         tenant_id = self.context["tenant_id"]
-        if cfg[
+        if config[
             "rule"
         ] == DataSourceUsernameGenerateRule.ADD_AFFIX and DataSourceUsernameHandler.is_username_affix_exists(
-            tenant_id, cfg["prefix"], cfg["suffix"]
+            tenant_id, config["prefix"], config["suffix"]
         ):
             raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
 
-        return cfg
+        return config
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]
