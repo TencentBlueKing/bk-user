@@ -21,8 +21,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.validators import validate_data_source_user_username
 
 
@@ -72,7 +72,7 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
 
     def validate_username(self, username: str) -> str:
-        if DataSourceUser.objects.is_username_exists([self.context["data_source_id"]], username):
+        if DataSourceUsernameHandler.is_username_exists([self.context["data_source_id"]], username):
             raise ValidationError(_("用户名 {} 已存在").format(username))
         return username
 

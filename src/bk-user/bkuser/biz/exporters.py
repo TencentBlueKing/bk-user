@@ -35,6 +35,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.biz.data_source import DataSourceUsernameHandler
 
 
 class UserExcelWriter:
@@ -179,9 +180,19 @@ class DataSourceUserExporter:
         for u in self.users:
             phone = f"+{u.phone_country_code}{u.phone}" if u.phone else ""
             departments = ",".join(dept_org_map.get(dept_id, "") for dept_id in user_departments_map.get(u.id, []))
-            leaders = ",".join(user_username_map.get(leader_id, "") for leader_id in user_leaders_map.get(u.id, []))
+            leaders = ",".join(
+                DataSourceUsernameHandler.parse(self.data_source, user_username_map.get(leader_id, ""))
+                for leader_id in user_leaders_map.get(u.id, [])
+            )
 
-            base_info = [u.username, u.full_name, u.email, phone, departments, leaders]
+            base_info = [
+                DataSourceUsernameHandler.parse(self.data_source, u.username),
+                u.full_name,
+                u.email,
+                phone,
+                departments,
+                leaders,
+            ]
             self.writer.add_row(base_info, u.extras or {})
 
         return self.writer.get_workbook()

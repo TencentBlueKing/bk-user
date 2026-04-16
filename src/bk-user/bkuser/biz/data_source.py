@@ -15,6 +15,9 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from typing import List
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -23,6 +26,7 @@ from bkuser.apps.data_source.models import (
     DataSourceSensitiveInfo,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    DataSourceUsernameGenerateConfig,
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.tenant.models import (
@@ -32,6 +36,49 @@ from bkuser.apps.tenant.models import (
     TenantUserIDGenerateConfig,
     TenantUserIDRecord,
 )
+
+
+class DataSourceUsernameHandler:
+    @staticmethod
+    def generate(data_source: DataSource, username: str) -> str:
+        """根据配置生成最终用户名"""
+        cfg = data_source.username_generate_config
+        if cfg.rule == DataSourceUsernameGenerateRule.ADD_AFFIX:
+            return f"{cfg.prefix}{username}{cfg.suffix}"
+        return username
+
+    @staticmethod
+    def parse(data_source: DataSource, username: str) -> str:
+        """根据配置解析出原始用户名"""
+        cfg = data_source.username_generate_config
+        if cfg.rule == DataSourceUsernameGenerateRule.ADD_AFFIX:
+            if cfg.prefix and username.startswith(cfg.prefix):
+                username = username[len(cfg.prefix) :]
+            if cfg.suffix and username.endswith(cfg.suffix):
+                username = username[: -len(cfg.suffix)]
+        return username
+
+    @staticmethod
+    def is_username_affix_exists(tenant_id: str, prefix: str, suffix: str, exclude_id: int | None = None) -> bool:
+        """校验同租户下 ADD_AFFIX 策略的用户名前后缀唯一性"""
+        qs = DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+        if exclude_id:
+            qs = qs.exclude(id=exclude_id)
+
+        return qs.filter(
+            username_generate_config__rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
+            username_generate_config__prefix=prefix,
+            username_generate_config__suffix=suffix,
+        ).exists()
+
+    @staticmethod
+    def is_username_exists(
+        data_source_ids: List[int], username: str, excluded_data_source_user_id: int | None = None
+    ) -> bool:
+        queryset = DataSourceUser.objects.filter(data_source_id__in=data_source_ids, username=username)
+        if excluded_data_source_user_id:
+            queryset = queryset.exclude(id=excluded_data_source_user_id)
+        return queryset.exists()
 
 
 class DataSourceHandler:
@@ -66,5 +113,7 @@ class DataSourceHandler:
         DepartmentRelationMPTTTree.objects.filter(data_source=data_source).delete()
         # 7. 删除数据源敏感信息
         DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
-        # 8. 删除数据源
+        # 8. 删除数据源用户名生成配置
+        DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).delete()
+        # 9. 删除数据源
         data_source.delete()

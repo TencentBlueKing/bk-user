@@ -20,9 +20,8 @@ from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum
-from bkuser.apps.data_source.data_models import DataSourceConflictConfig
-from bkuser.apps.data_source.managers import DataSourceManager, DataSourceUserManager
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
+from bkuser.apps.data_source.managers import DataSourceManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -57,8 +56,6 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
-    # 多数据下的冲突配置，区分不同数据源的用户，防止用户名重复
-    conflict_config = models.JSONField("冲突配置", default=dict)
 
     objects = DataSourceManager()
 
@@ -116,30 +113,6 @@ class DataSource(AuditedModel):
         self.plugin_config = plugin_cfg
         self.save(update_fields=["plugin_config", "updated_at"])
 
-    def get_conflict_config(self) -> "DataSourceConflictConfig":
-        """获取冲突配置"""
-        return DataSourceConflictConfig(**self.conflict_config)
-
-    def generate_username(self, username: str) -> str:
-        """根据冲突配置生成用户名"""
-        cfg = self.get_conflict_config()
-
-        if cfg.strategy == DataSourceConflictStrategy.ADD_AFFIX:
-            return f"{cfg.prefix}{username}{cfg.suffix}"
-        return username
-
-    def parse_username(self, username: str) -> str:
-        """根据冲突配置解析出原始用户名"""
-        cfg = self.get_conflict_config()
-
-        if cfg.strategy == DataSourceConflictStrategy.ADD_AFFIX:
-            if cfg.prefix and username.startswith(cfg.prefix):
-                username = username[len(cfg.prefix) :]
-            if cfg.suffix and username.endswith(cfg.suffix):
-                username = username[: -len(cfg.suffix)]
-
-        return username
-
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
@@ -160,8 +133,6 @@ class DataSourceUser(TimestampedModel):
 
     # ----------------------- 状态相关 -----------------------
     # TODO: (1) 用户管理里涉及的功能状态（2）企业本身的员工状态
-
-    objects = DataSourceUserManager()
 
     class Meta:
         ordering = ["id"]
@@ -291,3 +262,19 @@ class DataSourceSensitiveInfo(TimestampedModel):
 
     class Meta:
         unique_together = [("data_source", "key")]
+
+
+class DataSourceUsernameGenerateConfig(TimestampedModel):
+    """数据源用户名生成配置"""
+
+    data_source = models.OneToOneField(
+        DataSource, on_delete=models.DO_NOTHING, db_constraint=False, related_name="username_generate_config"
+    )
+    rule = models.CharField(
+        "数据源用户名生成规则",
+        max_length=32,
+        choices=DataSourceUsernameGenerateRule.get_choices(),
+        default=DataSourceUsernameGenerateRule.KEEP_ORIGINAL.value,
+    )
+    prefix = models.CharField("用户名前缀", max_length=32, blank=True, default="")
+    suffix = models.CharField("用户名后缀", max_length=32, blank=True, default="")
