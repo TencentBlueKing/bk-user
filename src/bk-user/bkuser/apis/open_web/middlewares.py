@@ -78,14 +78,16 @@ class OpenWebApiAuditMiddleware:
 
         # 请求成功时，提取结果数量
         # 若为 list 分页接口，则返回分页结果数量
-        if self.api == OpenWebApiEnum.LIST_VIRTUAL_USER:
+        if self.api in [
+            OpenWebApiEnum.LIST_VIRTUAL_USER,
+            OpenWebApiEnum.LIST_DEPARTMENT_USER,
+        ]:
             return len(response.data["results"])
 
         # 若为 list 非分页接口，则直接返回结果数量
         if self.api in [
             OpenWebApiEnum.SEARCH_USER,
             OpenWebApiEnum.BATCH_LOOKUP_USER,
-            OpenWebApiEnum.LIST_DEPARTMENT_USER,
             OpenWebApiEnum.SEARCH_DEPARTMENT,
             OpenWebApiEnum.LIST_DEPARTMENT_CHILD,
         ]:
@@ -98,7 +100,10 @@ class OpenWebApiAuditMiddleware:
             return []
 
         # 若为 list 分页接口
-        if self.api == OpenWebApiEnum.LIST_VIRTUAL_USER:
+        if self.api in [
+            OpenWebApiEnum.LIST_VIRTUAL_USER,
+            OpenWebApiEnum.LIST_DEPARTMENT_USER,
+        ]:
             return [item["bk_username"] for item in response.data["results"]]
 
         # 若为 list 非分页接口（部门相关）
@@ -112,7 +117,6 @@ class OpenWebApiAuditMiddleware:
         if self.api in [
             OpenWebApiEnum.SEARCH_USER,
             OpenWebApiEnum.BATCH_LOOKUP_USER,
-            OpenWebApiEnum.LIST_DEPARTMENT_USER,
         ]:
             return [item["bk_username"] for item in response.data]
 
