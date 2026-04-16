@@ -23,6 +23,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apis.open_web.serializers.departments import (
@@ -160,9 +161,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     获取指定部门下的用户列表
     """
 
-    pagination_class = None
-
-    serializer_class = TenantDepartmentUserListOutputSLZ
+    pagination_class = gen_pagination_class(max_page_size=100)
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantDepartmentUserListInputSLZ(
@@ -196,17 +195,9 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             user_ids = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source).values_list(
                 "user_id", flat=True
             )
-            # TODO: 这里存在比较大的性能问题，如何快速获取无归属部门的用户？
             queryset = queryset.filter(data_source=data_source).exclude(data_source_user_id__in=user_ids)
 
-        return queryset
-
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
+        return queryset.order_by("id")
 
     @swagger_auto_schema(
         tags=["open_web.department"],
@@ -216,7 +207,12 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.paginate_queryset(self.get_queryset())
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users, many=True, context={"display_name_map": display_name_map}
+        )
+        return self.get_paginated_response(slz.data)
 
 
 class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
