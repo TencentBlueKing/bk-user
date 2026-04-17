@@ -296,6 +296,7 @@ class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
     error_message = serializers.CharField(help_text="错误信息")
     user = RawDataSourceUserSLZ(help_text="用户")
     department = RawDataSourceDepartmentSLZ(help_text="部门")
+    # extras 内容由插件侧统一清洗过，保证 JSON 可序列化（无法以文本表示的二进制属性会被丢弃）
     extras = serializers.JSONField(help_text="额外信息")
 
 
