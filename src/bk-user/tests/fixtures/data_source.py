@@ -230,6 +230,7 @@ def ldap_ds_plugin_cfg() -> Dict[str, Any]:
             "user_search_base_dns": ["ou=company,dc=bk,dc=example,dc=com"],
             "dept_object_class": "organizationalUnit",
             "dept_search_base_dns": ["ou=company,dc=bk,dc=example,dc=com"],
+            "object_id_attribute": "entryUUID",
         },
         "user_group_config": {
             "enabled": True,
