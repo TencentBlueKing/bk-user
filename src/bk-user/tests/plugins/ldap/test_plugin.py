@@ -26,13 +26,13 @@ from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
     params=[("_mock_ldap_client", "entryUUID"), ("_mock_ad_ldap_client", "objectGUID")], ids=["openldap", "ad"]
 )
 def ldap_directory_case(request):
-    mock_fixture, id_attribute = request.param
+    mock_fixture, object_id_attribute = request.param
     request.getfixturevalue(mock_fixture)
-    return id_attribute
+    return object_id_attribute
 
 
-def _set_id_attribute(ldap_ds_cfg, id_attribute: str):
-    ldap_ds_cfg.data_config.id_attribute = id_attribute
+def _set_object_id_attribute(ldap_ds_cfg, id_attribute: str):
+    ldap_ds_cfg.data_config.object_id_attribute = id_attribute
 
 
 def _assert_first_department(department):
@@ -124,7 +124,7 @@ def _assert_test_connection_user_sample(user):
 
 class TestLDAPDataSourcePlugin:
     def test_get_departments(self, ldap_ds_cfg, logger, ldap_directory_case):
-        _set_id_attribute(ldap_ds_cfg, ldap_directory_case)
+        _set_object_id_attribute(ldap_ds_cfg, ldap_directory_case)
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
         assert len(departments) == 12  # noqa: PLR2004
@@ -133,14 +133,14 @@ class TestLDAPDataSourcePlugin:
         _assert_last_department(departments[-1])
 
     def test_get_departments_without_group(self, ldap_ds_cfg, logger, ldap_directory_case):
-        _set_id_attribute(ldap_ds_cfg, ldap_directory_case)
+        _set_object_id_attribute(ldap_ds_cfg, ldap_directory_case)
         ldap_ds_cfg.user_group_config.enabled = False
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         departments = plugin.fetch_departments()
         assert len(departments) == 9  # noqa: PLR2004
 
     def test_get_users(self, ldap_ds_cfg, logger, ldap_directory_case):
-        _set_id_attribute(ldap_ds_cfg, ldap_directory_case)
+        _set_object_id_attribute(ldap_ds_cfg, ldap_directory_case)
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
         plugin.fetch_departments()
         users = plugin.fetch_users()
@@ -150,7 +150,7 @@ class TestLDAPDataSourcePlugin:
         _assert_lushi_user(users[2])
 
     def test_test_connection(self, ldap_ds_cfg, logger, ldap_directory_case):
-        _set_id_attribute(ldap_ds_cfg, ldap_directory_case)
+        _set_object_id_attribute(ldap_ds_cfg, ldap_directory_case)
         plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
 
         result = plugin.test_connection()
@@ -226,6 +226,19 @@ class TestGetUUIDValue:
     def test_invalid_bytes_value(self):
         with pytest.raises(ValueError, match="invalid LDAP UUID bytes value"):
             LDAPDataSourcePlugin._get_uuid_value(b"invalid-guid")
+
+    def test_list_wrapped_value(self):
+        """ldap3 有时会把 SINGLE-VALUE 属性也包成 list，应取首元素"""
+        uuid_str = "97aaa370-0e9d-103f-8e7f-fb1e46baa127"
+        assert LDAPDataSourcePlugin._get_uuid_value([uuid_str]) == uuid_str
+
+    def test_empty_value_raises(self):
+        """id 属性取不到值时必须显式报错，避免后续同步阶段出现 duplicate code 的隐蔽问题"""
+        with pytest.raises(ValueError, match="LDAP id attribute is empty"):
+            LDAPDataSourcePlugin._get_uuid_value([])
+
+        with pytest.raises(ValueError, match="LDAP id attribute is empty"):
+            LDAPDataSourcePlugin._get_uuid_value("")
 
 
 class TestSafeStrValue:

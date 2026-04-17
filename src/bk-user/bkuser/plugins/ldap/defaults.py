@@ -39,7 +39,7 @@ DEFAULT_PLUGIN_CONFIG = LDAPDataSourcePluginConfig(
         user_search_base_dns=["ou=company,dc=bk,dc=example,dc=com"],
         dept_object_class="organizationalUnit",
         dept_search_base_dns=["ou=company,dc=bk,dc=example,dc=com"],
-        id_attribute="entryUUID",
+        object_id_attribute="entryUUID",
     ),
     user_group_config=UserGroupConfig(
         enabled=True,
