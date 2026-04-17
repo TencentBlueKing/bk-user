@@ -15,23 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-import uuid
-from typing import Dict, List, TypedDict
+from typing import Dict, List
 from unittest import mock
 
 import pytest
 from bkuser.plugins.ldap.models import LDAPDataSourcePluginConfig
 
-LDAPAttributeValue = str | bytes | List[str]
-
-
-class MockLDAPEntry(TypedDict):
-    dn: str
-    attributes: Dict[str, LDAPAttributeValue]
-
-
 # 部门数据
-organizational_unit_data: List[MockLDAPEntry] = [
+organizational_unit_data = [
     {
         "dn": "ou=group_baa,ou=center_ba,ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         "attributes": {
@@ -108,7 +99,7 @@ organizational_unit_data: List[MockLDAPEntry] = [
 
 
 # 用户组数据
-group_of_names_data: List[MockLDAPEntry] = [
+group_of_names_data = [
     {
         "dn": "cn=center_ba,ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         "attributes": {
@@ -140,7 +131,7 @@ group_of_names_data: List[MockLDAPEntry] = [
 
 
 # 用户数据
-inet_org_person_data: List[MockLDAPEntry] = [
+inet_org_person_data = [
     {
         "dn": "cn=baishier,ou=group_baa,ou=center_ba,ou=dept_b,ou=company,dc=bk,dc=example,dc=com",
         "attributes": {
@@ -269,37 +260,8 @@ inet_org_person_data: List[MockLDAPEntry] = [
 ]
 
 
-def _to_ad_objectGUID(uuid_str: str) -> bytes:  # noqa: N802
-    """将 UUID 字符串转换为 AD objectGUID 的 bytes_le 格式"""
-    return uuid.UUID(uuid_str).bytes_le
-
-
-def _to_ad_entry(entry: MockLDAPEntry) -> MockLDAPEntry:
-    attributes = entry["attributes"]
-    entry_uuid = attributes["entryUUID"]
-    assert isinstance(entry_uuid, str)
-
-    return {
-        "dn": entry["dn"],
-        "attributes": {
-            **{k: v for k, v in attributes.items() if k != "entryUUID"},
-            "objectGUID": _to_ad_objectGUID(entry_uuid),
-        },
-    }
-
-
-# AD 场景的部门数据（objectGUID 为 bytes 格式）
-ad_organizational_unit_data: List[MockLDAPEntry] = [_to_ad_entry(d) for d in organizational_unit_data]
-
-# AD 场景的用户组数据（objectGUID 为 bytes 格式）
-ad_group_of_names_data: List[MockLDAPEntry] = [_to_ad_entry(d) for d in group_of_names_data]
-
-# AD 场景的用户数据（objectGUID 为 bytes 格式）
-ad_inet_org_person_data: List[MockLDAPEntry] = [_to_ad_entry(d) for d in inet_org_person_data]
-
-
 def _mocked_paged_search_accumulator(*args, **kwargs) -> List[Dict]:
-    """测试用函数，用于屏蔽 LDAP 服务（OpenLDAP / entryUUID 场景）"""
+    """测试用函数，用于屏蔽 LDAP 服务"""
 
     search_base = kwargs["search_base"]
     search_filter = kwargs["search_filter"]
@@ -312,24 +274,6 @@ def _mocked_paged_search_accumulator(*args, **kwargs) -> List[Dict]:
 
     if "groupOfNames" in search_filter:
         return [g for g in group_of_names_data if g["dn"].endswith(search_base)]  # type: ignore
-
-    return []
-
-
-def _mocked_ad_paged_search_accumulator(*args, **kwargs) -> List[Dict]:
-    """测试用函数，用于屏蔽 LDAP 服务（AD / objectGUID 场景）"""
-
-    search_base = kwargs["search_base"]
-    search_filter = kwargs["search_filter"]
-
-    if "inetOrgPerson" in search_filter:
-        return [p for p in ad_inet_org_person_data if p["dn"].endswith(search_base)]  # type: ignore
-
-    if "organizationalUnit" in search_filter:
-        return [ou for ou in ad_organizational_unit_data if ou["dn"].endswith(search_base)]  # type: ignore
-
-    if "groupOfNames" in search_filter:
-        return [g for g in ad_group_of_names_data if g["dn"].endswith(search_base)]  # type: ignore
 
     return []
 
@@ -351,21 +295,6 @@ def _mock_ldap_client():
         mock.patch(
             "bkuser.plugins.ldap.client.paged_search_accumulator",
             new=_mocked_paged_search_accumulator,
-        ),
-        mock.patch(
-            "bkuser.plugins.ldap.client.LDAPClient._gen_conn",
-            return_value=MockedLDAPConnection(),
-        ),
-    ):
-        yield
-
-
-@pytest.fixture
-def _mock_ad_ldap_client():
-    with (
-        mock.patch(
-            "bkuser.plugins.ldap.client.paged_search_accumulator",
-            new=_mocked_ad_paged_search_accumulator,
         ),
         mock.patch(
             "bkuser.plugins.ldap.client.LDAPClient._gen_conn",
