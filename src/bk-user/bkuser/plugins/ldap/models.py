@@ -69,6 +69,8 @@ class DataConfig(BaseModel):
     dept_object_class: str
     # 部门 Base DN 列表
     dept_search_base_dns: List[str]
+    # 条目唯一标识字段，OpenLDAP 使用 entryUUID，AD 使用 objectGUID
+    id_attribute: Literal["entryUUID", "objectGUID"] = "entryUUID"
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "DataConfig":
