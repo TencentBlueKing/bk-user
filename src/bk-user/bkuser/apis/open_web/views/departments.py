@@ -208,13 +208,12 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_users = self.get_queryset()
+        tenant_users = self.paginate_queryset(self.get_queryset())
         display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
-        return Response(
-            TenantDepartmentUserListOutputSLZ(
-                tenant_users, many=True, context={"display_name_map": display_name_map}
-            ).data
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users, many=True, context={"display_name_map": display_name_map}
         )
+        return self.get_paginated_response(slz.data)
 
 
 class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
