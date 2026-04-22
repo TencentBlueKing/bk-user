@@ -23,9 +23,9 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_v3.pagination import gen_pagination_class
 from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
+from bkuser.apis.open_web.pagination import gen_no_count_pagination_class
 from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentChildrenListInputSLZ,
     TenantDepartmentChildrenListOutputSLZ,
@@ -161,7 +161,8 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     获取指定部门下的用户列表
     """
 
-    pagination_class = gen_pagination_class(max_page_size=100)
+    # 组织架构人员选择器目前仅支持仅支持“加载更多”交互，不依赖总条数,这里使用无 count 的分页处理
+    pagination_class = gen_no_count_pagination_class(max_page_size=100)
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantDepartmentUserListInputSLZ(

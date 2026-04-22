@@ -25,7 +25,7 @@ from .error_codes import error_codes
 
 class CustomPageNumberPagination(PageNumberPagination):
     """
-    该分页器继承PageNumberPagination后只对用于API返回的数据里去除previous和next参数
+    该分页器继承 PageNumberPagination 后只对用于API返回的数据里去除 previous 和 next 参数
     """
 
     page_size_query_param = "page_size"
@@ -48,7 +48,7 @@ class CustomPageNumberPagination(PageNumberPagination):
         return ret
 
     def get_page_number(self, request, paginator=None):
-        """重载：去除支持page_number='last'等用于模板渲染的表达，仅仅支持数字"""
+        """重载：去除支持 page_number='last' 等用于模板渲染的表达，仅仅支持数字"""
         page_number = request.query_params.get(self.page_query_param, 1)
         return self._positive_int(page_number, strict=True)
 
@@ -66,3 +66,25 @@ class CustomPageNumberPagination(PageNumberPagination):
                 "results": schema,
             },
         }
+
+
+class NoCountCustomPageNumberPagination(CustomPageNumberPagination):
+    """
+    基于 CustomPageNumberPagination 实现的轻量分页器,用于不需要 count 的场景
+    """
+
+    def paginate_queryset(self, queryset, request, view=None):
+        self.request = request
+        page = self.get_page_number(request)
+        page_size = self.get_page_size(request)
+        if not page_size:
+            return None
+
+        offset = (page - 1) * page_size
+        return list(queryset[offset : offset + page_size])
+
+    def get_paginated_response(self, data):
+        return Response(data)
+
+    def get_paginated_response_schema(self, schema):
+        return schema
