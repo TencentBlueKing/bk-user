@@ -201,13 +201,6 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         return queryset
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.get_queryset()
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_web.department"],
         operation_id="list_department_user",
@@ -216,7 +209,13 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
+        return Response(
+            TenantDepartmentUserListOutputSLZ(
+                tenant_users, many=True, context={"display_name_map": display_name_map}
+            ).data
+        )
 
 
 class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
