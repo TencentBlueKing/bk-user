@@ -25,6 +25,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.open_web.constants import OpenWebApiEnum
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
+from bkuser.apis.open_web.pagination import gen_no_count_pagination_class
 from bkuser.apis.open_web.serializers.departments import (
     TenantDepartmentChildrenListInputSLZ,
     TenantDepartmentChildrenListOutputSLZ,
@@ -160,9 +161,8 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     获取指定部门下的用户列表
     """
 
-    pagination_class = None
-
-    serializer_class = TenantDepartmentUserListOutputSLZ
+    # 组织架构人员选择器目前仅支持“加载更多”交互，不依赖总条数，这里使用无 count 的分页处理
+    pagination_class = gen_no_count_pagination_class(max_page_size=100)
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantDepartmentUserListInputSLZ(
@@ -199,7 +199,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             # TODO: 这里存在比较大的性能问题，如何快速获取无归属部门的用户？
             queryset = queryset.filter(data_source=data_source).exclude(data_source_user_id__in=user_ids)
 
-        return queryset
+        return queryset.order_by("id")
 
     @swagger_auto_schema(
         tags=["open_web.department"],
@@ -209,13 +209,12 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_users = self.get_queryset()
+        tenant_users = self.paginate_queryset(self.get_queryset())
         display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
-        return Response(
-            TenantDepartmentUserListOutputSLZ(
-                tenant_users, many=True, context={"display_name_map": display_name_map}
-            ).data
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users, many=True, context={"display_name_map": display_name_map}
         )
+        return self.get_paginated_response(slz.data)
 
 
 class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
