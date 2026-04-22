@@ -161,7 +161,7 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     获取指定部门下的用户列表
     """
 
-    # 组织架构人员选择器目前仅支持仅支持“加载更多”交互，不依赖总条数,这里使用无 count 的分页处理
+    # 组织架构人员选择器目前仅支持“加载更多”交互，不依赖总条数，这里使用无 count 的分页处理
     pagination_class = gen_no_count_pagination_class(max_page_size=100)
 
     def get_queryset(self) -> QuerySet[TenantUser]:

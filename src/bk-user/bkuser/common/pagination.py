@@ -25,7 +25,7 @@ from .error_codes import error_codes
 
 class CustomPageNumberPagination(PageNumberPagination):
     """
-    该分页器继承 PageNumberPagination 后只对用于API返回的数据里去除 previous 和 next 参数
+    该分页器继承 PageNumberPagination 后只对用于 API 返回的数据里去除 previous 和 next 参数
     """
 
     page_size_query_param = "page_size"
