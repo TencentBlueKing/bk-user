@@ -83,7 +83,7 @@ class OpenWebApiAuditMiddleware:
         ]:
             return len(response.data["results"])
 
-        # 若为 list 无 count 分页接口，则返回分页结果数量
+        # 若为不返回 count 的 list 分页接口，则返回当前页结果数量
         if self.api in [
             OpenWebApiEnum.LIST_DEPARTMENT_USER,
         ]:
@@ -110,7 +110,7 @@ class OpenWebApiAuditMiddleware:
         ]:
             return [item["bk_username"] for item in response.data["results"]]
 
-        # 若为 list 无 count 分页接口
+        # 若为不返回 count 的 list 分页接口，则返回当前页结果数量
         if self.api in [
             OpenWebApiEnum.LIST_DEPARTMENT_USER,
         ]:
