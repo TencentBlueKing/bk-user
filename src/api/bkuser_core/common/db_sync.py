@@ -130,6 +130,8 @@ class SyncModelManager:
     def get_latest_auto_id(self) -> int:
         """找到最大的自增 id"""
         with connections["default"].cursor() as cursor:
+            # 刷新表，清除 AUTO_INCREMENT 缓存
+            cursor.execute(f"ANALYZE TABLE {self.meta.table_name}")
             cursor.execute(
                 "SELECT `AUTO_INCREMENT` "
                 "FROM  INFORMATION_SCHEMA.TABLES "
