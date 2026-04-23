@@ -19,6 +19,32 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def init_default_username_generate_configs(apps, schema_editor):
+    DataSource = apps.get_model("data_source", "DataSource")
+    DataSourceUsernameGenerateConfig = apps.get_model("data_source", "DataSourceUsernameGenerateConfig")
+
+    existing_config_data_source_ids = set(
+        DataSourceUsernameGenerateConfig.objects.values_list("data_source_id", flat=True)
+    )
+
+    to_create = []
+    for data_source_id in DataSource.objects.values_list("id", flat=True):
+        if data_source_id in existing_config_data_source_ids:
+            continue
+
+        to_create.append(
+            DataSourceUsernameGenerateConfig(
+                data_source_id=data_source_id,
+                rule="unchanged",
+                prefix="",
+                suffix="",
+            )
+        )
+
+    if to_create:
+        DataSourceUsernameGenerateConfig.objects.bulk_create(to_create)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -39,10 +65,11 @@ class Migration(migrations.Migration):
                 ('rule', models.CharField(choices=[('unchanged', '保持原始值'), ('add_affix', '添加前后缀')], default='unchanged', max_length=32, verbose_name='数据源用户名生成规则')),
                 ('prefix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名前缀')),
                 ('suffix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名后缀')),
-                ('data_source', models.OneToOneField(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='username_generate_config', to='data_source.datasource')),
+                ('data_source', models.OneToOneField(db_constraint=False, on_delete=django.db.models.deletion.CASCADE, related_name='username_generate_config', to='data_source.datasource')),
             ],
             options={
                 'abstract': False,
             },
         ),
+        migrations.RunPython(init_default_username_generate_configs),
     ]

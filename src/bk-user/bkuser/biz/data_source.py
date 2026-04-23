@@ -26,7 +26,6 @@ from bkuser.apps.data_source.models import (
     DataSourceSensitiveInfo,
     DataSourceUser,
     DataSourceUserLeaderRelation,
-    DataSourceUsernameGenerateConfig,
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.tenant.models import (
@@ -113,7 +112,5 @@ class DataSourceHandler:
         DepartmentRelationMPTTTree.objects.filter(data_source=data_source).delete()
         # 7. 删除数据源敏感信息
         DataSourceSensitiveInfo.objects.filter(data_source=data_source).delete()
-        # 8. 删除数据源用户名生成配置
-        DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).delete()
-        # 9. 删除数据源
+        # 8. 删除数据源
         data_source.delete()

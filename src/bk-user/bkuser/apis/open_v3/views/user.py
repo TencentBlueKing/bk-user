@@ -227,7 +227,7 @@ class TenantUserLeaderListApi(OpenApiCommonMixin, generics.ListAPIView):
 
         return TenantUser.objects.filter(
             data_source_user_id__in=leader_ids, tenant_id=tenant_user.tenant_id
-        ).select_related("data_source_user")
+        ).select_related("data_source_user", "data_source")
 
     @swagger_auto_schema(
         tags=["open_v3.user"],
@@ -263,7 +263,7 @@ class TenantUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         return (
-            TenantUser.objects.select_related("data_source_user")
+            TenantUser.objects.select_related("data_source_user", "data_source")
             .filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
             .order_by("id")
         )
@@ -376,7 +376,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
             filter_args["id__in"] = data["lookups"]
 
         # 仅查询本租户的实名用户
-        return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
+        return TenantUser.objects.filter(**filter_args).select_related("data_source_user", "data_source")
 
     @swagger_auto_schema(
         tags=["open_web.user"],
