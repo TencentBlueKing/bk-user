@@ -34,7 +34,7 @@ def update_username_generate_config(data_source, *, rule, prefix="", suffix=""):
 class TestDataSourceUsernameHandler:
     """测试 DataSourceUsernameHandler"""
 
-    def test_generate_keep_original(self, bare_local_data_source):
+    def test_generate_unchanged(self, bare_local_data_source):
         assert DataSourceUsernameHandler.generate(bare_local_data_source, "zhangsan") == "zhangsan"
 
     def test_generate_add_affix(self, bare_local_data_source):
@@ -52,7 +52,7 @@ class TestDataSourceUsernameHandler:
         )
         assert DataSourceUsernameHandler.generate(bare_local_data_source, "zhangsan") == "zhangsan_ext"
 
-    def test_parse_keep_original(self, bare_local_data_source):
+    def test_parse_unchanged(self, bare_local_data_source):
         assert DataSourceUsernameHandler.parse(bare_local_data_source, "zhangsan") == "zhangsan"
 
     def test_parse_strip_prefix(self, bare_local_data_source):
@@ -77,7 +77,7 @@ class TestDataSourceUsernameHandler:
         rule = (
             DataSourceUsernameGenerateRule.ADD_AFFIX
             if (prefix or suffix)
-            else DataSourceUsernameGenerateRule.KEEP_ORIGINAL
+            else DataSourceUsernameGenerateRule.UNCHANGED
         )
         update_username_generate_config(
             bare_local_data_source,

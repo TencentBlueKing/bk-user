@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('rule', models.CharField(choices=[('keep_original', '保持原始值'), ('add_affix', '添加前后缀')], default='keep_original', max_length=32, verbose_name='数据源用户名生成规则')),
+                ('rule', models.CharField(choices=[('unchanged', '保持原始值'), ('add_affix', '添加前后缀')], default='unchanged', max_length=32, verbose_name='数据源用户名生成规则')),
                 ('prefix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名前缀')),
                 ('suffix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名后缀')),
                 ('data_source', models.OneToOneField(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='username_generate_config', to='data_source.datasource')),

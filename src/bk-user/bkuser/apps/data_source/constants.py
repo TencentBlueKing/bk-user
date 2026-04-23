@@ -48,5 +48,5 @@ class DataSourceTypeEnum(StrStructuredEnum):
 class DataSourceUsernameGenerateRule(StrStructuredEnum):
     """数据源用户名生成规则"""
 
-    KEEP_ORIGINAL = EnumField("keep_original", label=_("保持原始值"))
+    UNCHANGED = EnumField("unchanged", label=_("保持原始值"))
     ADD_AFFIX = EnumField("add_affix", label=_("添加前后缀"))

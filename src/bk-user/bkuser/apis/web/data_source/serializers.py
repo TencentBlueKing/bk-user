@@ -145,7 +145,7 @@ class DataSourceUsernameGenerateConfigSLZ(serializers.Serializer):
             if prefix and suffix:
                 raise ValidationError(_("添加前后缀策略下，前缀和后缀不能同时配置"))
 
-        if rule == DataSourceUsernameGenerateRule.KEEP_ORIGINAL and (prefix or suffix):
+        if rule == DataSourceUsernameGenerateRule.UNCHANGED and (prefix or suffix):
             raise ValidationError(_("保持原始值策略下，不支持配置用户名前缀或后缀"))
 
         return attrs

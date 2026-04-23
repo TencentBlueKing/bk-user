@@ -73,7 +73,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
                 # 本地数据源不需要字段映射配置
             },
         )
@@ -85,7 +85,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": {"enable_password": False},
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -138,7 +138,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -149,7 +149,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original", "prefix": "corp_"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "corp_"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -161,7 +161,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": "not_exist_plugin",
                 "plugin_config": {},
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -172,7 +172,7 @@ class TestDataSourceCreateApi:
             reverse("data_source.list_create"),
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -185,7 +185,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -198,7 +198,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -211,7 +211,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -228,7 +228,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -244,7 +244,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [],
                 "sync_config": sync_config,
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -265,7 +265,7 @@ class TestDataSourceCreateApi:
                         "target_field": "xxx_username",
                     }
                 ],
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -286,7 +286,7 @@ class TestDataSourceCreateApi:
                         "target_field": "username",
                     }
                 ],
-                "username_generate_config": {"rule": "keep_original", "prefix": "", "suffix": ""},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -299,7 +299,7 @@ class TestDataSourceCreateApi:
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
-                "username_generate_config": {"rule": "keep_original"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -313,11 +313,11 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": {"sync_period": -1},
-                "username_generate_config": {"rule": "keep_original"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "sync_config.sync_period: “-1” 不是合法选项。" in resp.data["message"]
+        assert "sync_config.sync_period: “-1”不是合法选项。" in resp.data["message"]
 
 
 class TestDataSourceListApi:
@@ -377,7 +377,7 @@ class TestDataSourceUpdateApi:
             data={"plugin_config": general_ds_plugin_cfg, "sync_config": sync_config},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须配置字段映射"
+        assert resp.data["message"] == "参数校验不通过：当前数据源类型必须配置字段映射"
 
     def test_update_without_required_sync_config(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping
@@ -388,7 +388,7 @@ class TestDataSourceUpdateApi:
             data={"plugin_config": general_ds_plugin_cfg, "field_mapping": field_mapping},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须提供同步配置"
+        assert resp.data["message"] == "参数校验不通过：当前数据源类型必须提供同步配置"
 
     def test_update_with_sensitive_mask(
         self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
@@ -439,7 +439,7 @@ class TestDataSourceRetrieveApi:
         assert resp.data["field_mapping"] == data_source.field_mapping
         cfg = DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).first()
         assert resp.data["username_generate_config"] == {
-            "rule": cfg.rule if cfg else "keep_original",
+            "rule": cfg.rule if cfg else "unchanged",
             "prefix": cfg.prefix if cfg else "",
             "suffix": cfg.suffix if cfg else "",
         }
