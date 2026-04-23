@@ -194,10 +194,10 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 DataSource.objects.filter(owner_tenant_id=data["owner_tenant_id"], type=DataSourceTypeEnum.REAL)
             )
             # Q: 为什么这里使用 `data_source_user__datasourcedepartmentuserrelation__isnull=True`
-            #    的 join + isnull 写法来获取无部门用户，而不是 `exclude(子查询)` 或在 Python 里做 set 差集？
+            #    join + isnull 写法来获取无部门用户，而不是 `exclude(子查询)` 或在 Python 里做 set 差集？
             # A: 该写法会让数据库直接执行 LEFT JOIN ... IS NULL 来筛选“无部门用户”，
             #    能在一条 SQL 内完成过滤，避免 `exclude(子查询)` 带来的额外子查询复杂度，
-            #    也避免把大量用户 ID 拉到 Python 侧做集合运算造成的内存/网络开销（大数据量下耗时明显）。
+            #    同时避免把大量用户 ID 拉到 Python 侧做集合运算造成的内存/网络开销（大数据量下耗时明显）。
             queryset = queryset.filter(
                 data_source=data_source,
                 data_source_user__datasourcedepartmentuserrelation__isnull=True,
