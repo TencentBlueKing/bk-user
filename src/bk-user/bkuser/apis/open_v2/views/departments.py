@@ -141,6 +141,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
             TenantDepartment.objects.select_related("data_source_department__department_relation")
             .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
+            .order_by("id")
         )
         if not params.get("lookup_field"):
             return queryset
@@ -300,7 +301,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generi
 
     @staticmethod
     def _get_dept_parent_id(tenant_dept: TenantDepartment, dept_relation: DataSourceDepartmentRelation) -> int | None:
-        """获取租户部门的父部门ID"""
+        """获取租户部门的父部门 ID"""
         if not (dept_relation and dept_relation.parent_id):
             return None
 
