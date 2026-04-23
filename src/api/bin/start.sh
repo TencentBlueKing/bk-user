@@ -2,5 +2,7 @@
 python manage.py compilemessages
 
 LISTEN_PORT="${PORT:=8000}"
-gunicorn wsgi -w 8 --threads 2 --max-requests 10240 --max-requests-jitter 50 --worker-class gevent -b [::]:$LISTEN_PORT --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"' --env prometheus_multiproc_dir=/tmp/
+SERVER_TIMEOUT="${WORKER_TIMEOUT:=30}"
+
+gunicorn wsgi -w 8 --threads 2 --max-requests 10240 --max-requests-jitter 50 --worker-class gevent -b [::]:$LISTEN_PORT --timeout $SERVER_TIMEOUT --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"' --env prometheus_multiproc_dir=/tmp/
 

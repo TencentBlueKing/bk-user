@@ -10,6 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import ssl
 
+from django.db.backends.mysql.features import DatabaseFeatures
+from django.utils.functional import cached_property
+
 from . import env
 from bkuser_global.config import get_db_config
 # ==============================================================================
@@ -19,7 +22,16 @@ DB_PREFIX = env("DB_PREFIX", default="DB")
 
 DATABASES = get_db_config(env, DB_PREFIX)
 
+class PatchFeatures:
+    @cached_property
+    def minimum_database_version(self):
+        if self.connection.mysql_is_mariadb:
+            return (10, 4)
+        else:
+            return (5, 7)
 
+# 将补丁应用到 DatabaseFeatures 中
+DatabaseFeatures.minimum_database_version = PatchFeatures.minimum_database_version
 # ==============================================================================
 # Redis
 # ==============================================================================
