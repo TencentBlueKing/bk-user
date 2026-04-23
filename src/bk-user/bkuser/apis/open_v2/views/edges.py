@@ -45,6 +45,7 @@ class DepartmentProfileRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMi
             DataSourceDepartmentUserRelation.objects.filter(data_source_id__in=self.get_real_data_source_ids())
             .only("id", "department_id", "user_id")
             .all()
+            .order_by("id")
         )
 
     def get(self, request, *args, **kwargs):
@@ -107,6 +108,7 @@ class ProfileLeaderRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin,
             DataSourceUserLeaderRelation.objects.filter(data_source_id__in=self.get_real_data_source_ids())
             .only("id", "user_id", "leader_id")
             .all()
+            .order_by("id")
         )
 
     def get(self, request, *args, **kwargs):
