@@ -268,7 +268,7 @@ class DataSourceUsernameGenerateConfig(TimestampedModel):
     """数据源用户名生成配置"""
 
     data_source = models.OneToOneField(
-        DataSource, on_delete=models.DO_NOTHING, db_constraint=False, related_name="username_generate_config"
+        DataSource, on_delete=models.CASCADE, db_constraint=False, related_name="username_generate_config"
     )
     rule = models.CharField(
         "数据源用户名生成规则",

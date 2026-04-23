@@ -74,7 +74,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
                 data_source_id__in=self.real_data_source_ids
                 + self.collaboration_data_source_ids
                 + [self.virtual_data_source_id],
-            ).select_related("data_source_user"),
+            ).select_related("data_source_user", "data_source"),
             id=kwargs["id"],
         )
 
@@ -109,7 +109,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             data_source_id__in=self.real_data_source_ids
             + self.collaboration_data_source_ids
             + [self.virtual_data_source_id],
-        ).select_related("data_source_user")
+        ).select_related("data_source_user", "data_source")
 
     @swagger_auto_schema(
         tags=["open_web.user"],
