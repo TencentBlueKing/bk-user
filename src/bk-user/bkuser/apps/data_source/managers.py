@@ -14,11 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
-
 from django.db import models, transaction
 
-from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum
 from bkuser.plugins.models import BasePluginConfig
 
 
@@ -39,30 +36,4 @@ class DataSourceQuerySet(models.QuerySet):
 
 
 # 数据源管理器类
-class DataSourceManager(models.Manager.from_queryset(DataSourceQuerySet)):  # type: ignore
-    def is_username_affix_exists(
-        self, tenant_id: str, prefix: str, suffix: str, exclude_id: int | None = None
-    ) -> bool:
-        """校验同租户下 ADD_AFFIX 策略的用户名前后缀唯一性"""
-        qs = self.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
-        if exclude_id:
-            qs = qs.exclude(id=exclude_id)
-
-        for ds in qs:
-            cfg = ds.get_conflict_config()
-            if cfg.strategy != DataSourceConflictStrategy.ADD_AFFIX:
-                continue
-            if cfg.prefix == prefix and cfg.suffix == suffix:
-                return True
-
-        return False
-
-
-class DataSourceUserManager(models.Manager):
-    def is_username_exists(
-        self, data_source_ids: List[int], username: str, excluded_data_source_user_id: int | None = None
-    ) -> bool:
-        queryset = self.filter(data_source_id__in=data_source_ids, username=username)
-        if excluded_data_source_user_id:
-            queryset = queryset.exclude(id=excluded_data_source_user_id)
-        return queryset.exists()
+DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)

@@ -46,6 +46,7 @@ from bkuser.apps.tenant.models import (
     TenantUserCustomField,
     UserBuiltinField,
 )
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.validators import (
     validate_data_source_user_username,
@@ -158,7 +159,7 @@ def _validate_duplicate_username_in_tenant(
         type=DataSourceTypeEnum.REAL,
     ).values_list("id", flat=True)
 
-    if DataSourceUser.objects.is_username_exists(real_ds_ids, username, excluded_data_source_user_id):
+    if DataSourceUsernameHandler.is_username_exists(real_ds_ids, username, excluded_data_source_user_id):
         raise ValidationError(_("用户名 {} 已存在").format(username))
 
     return username
@@ -205,7 +206,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     )
 
     def validate_username(self, username: str) -> str:
-        username = self.context["data_source"].generate_username(username)
+        username = DataSourceUsernameHandler.generate(self.context["data_source"], username)
         # 最终的用户名需要再次校验
         validate_data_source_user_username(username)
         return _validate_duplicate_username_in_tenant(self.context["tenant_id"], username)
@@ -543,7 +544,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             user_infos.append(
                 {
                     # 根据 data_source 配置的规则，生成 username
-                    "username": self.context["data_source"].generate_username(props["username"]),
+                    "username": DataSourceUsernameHandler.generate(self.context["data_source"], props["username"]),
                     "full_name": props["full_name"],
                     # 内置字段，联系方式允许非必填
                     "email": props.get("email", ""),

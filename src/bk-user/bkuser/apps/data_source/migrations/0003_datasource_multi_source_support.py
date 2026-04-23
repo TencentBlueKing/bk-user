@@ -14,7 +14,9 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -28,9 +30,19 @@ class Migration(migrations.Migration):
             name='datasource',
             unique_together=set(),
         ),
-        migrations.AddField(
-            model_name='datasource',
-            name='conflict_config',
-            field=models.JSONField(default=dict, verbose_name='冲突配置'),
+        migrations.CreateModel(
+            name='DataSourceUsernameGenerateConfig',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('rule', models.CharField(choices=[('unchanged', '保持原始值'), ('add_affix', '添加前后缀')], default='unchanged', max_length=32, verbose_name='数据源用户名生成规则')),
+                ('prefix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名前缀')),
+                ('suffix', models.CharField(blank=True, default='', max_length=32, verbose_name='用户名后缀')),
+                ('data_source', models.OneToOneField(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='username_generate_config', to='data_source.datasource')),
+            ],
+            options={
+                'abstract': False,
+            },
         ),
     ]

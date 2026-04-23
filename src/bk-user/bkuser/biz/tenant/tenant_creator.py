@@ -23,7 +23,12 @@ from django.utils import timezone
 from pydantic import BaseModel, Field
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceUser,
+    DataSourceUsernameGenerateConfig,
+    LocalDataSourceIdentityInfo,
+)
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import (
@@ -159,6 +164,7 @@ class TenantCreator:
                 "plugin_config": plugin_config,
             },
         )
+        DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
         return ds
 
     @staticmethod
@@ -172,6 +178,7 @@ class TenantCreator:
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
         )
+        DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
         return ds
 
     @staticmethod

@@ -16,15 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 from typing import Optional
 
-from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel
 
-from bkuser.apps.data_source.constants import (
-    USERNAME_PREFIX_REGEX,
-    USERNAME_SUFFIX_REGEX,
-    DataSourceConflictStrategy,
-    FieldMappingOperation,
-)
+from bkuser.apps.data_source.constants import FieldMappingOperation
 
 
 class DataSourceUserFieldMapping(BaseModel):
@@ -44,46 +38,3 @@ class DataSourceUserFieldMapping(BaseModel):
             return f"{self.source_field} --> {self.target_field}"
 
         return f"{self.source_field} --{self.expression}--> {self.target_field}"
-
-
-class DataSourceConflictConfig(BaseModel):
-    """数据源冲突配置"""
-
-    # 冲突处理策略，默认为手动处理
-    strategy: DataSourceConflictStrategy = DataSourceConflictStrategy.MANUAL
-    # 用户名前缀，格式：1-6 位字母或数字 + 一个分隔符("-" 或 "_")，如 "ldap_"、"http-"
-    prefix: str = ""
-    # 用户名后缀，格式：一个分隔符("-" 或 "_") + 1-6 位字母或数字，如 "-ldap"、"_http"
-    suffix: str = ""
-
-    @field_validator("prefix")
-    @classmethod
-    def validate_prefix(cls, v: str) -> str:
-        if not v:
-            return v
-        if not USERNAME_PREFIX_REGEX.fullmatch(v):
-            raise ValueError(_("{} 不符合 用户名前缀 的命名规范，应为 1-6 位大小写字母或数字").format(v))
-        return v
-
-    @field_validator("suffix")
-    @classmethod
-    def validate_suffix(cls, v: str) -> str:
-        if not v:
-            return v
-        if not USERNAME_SUFFIX_REGEX.fullmatch(v):
-            raise ValueError(_("{} 不符合 用户名后缀 的命名规范，应为 1-6 位大小写字母或数字").format(v))
-        return v
-
-    @model_validator(mode="after")
-    def validate_prefix_and_suffix(self) -> "DataSourceConflictConfig":
-        if self.strategy == DataSourceConflictStrategy.ADD_AFFIX:
-            if not self.prefix and not self.suffix:
-                raise ValueError(_("添加前后缀策略下，前缀和后缀不能同时为空"))
-            if self.prefix and self.suffix:
-                raise ValueError(_("添加前后缀策略下，前缀和后缀不能同时配置"))
-
-        elif self.strategy == DataSourceConflictStrategy.MANUAL:
-            if self.prefix or self.suffix:
-                raise ValueError(_("手动处理策略下，不支持配置用户名前缀或后缀"))
-
-        return self

@@ -26,12 +26,22 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceConflictStrategy, DataSourceTypeEnum, FieldMappingOperation
-from bkuser.apps.data_source.data_models import DataSourceConflictConfig
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.data_source.constants import (
+    USERNAME_PREFIX_REGEX,
+    USERNAME_SUFFIX_REGEX,
+    DataSourceTypeEnum,
+    DataSourceUsernameGenerateRule,
+    FieldMappingOperation,
+)
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourcePlugin,
+    DataSourceSensitiveInfo,
+)
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -111,12 +121,34 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
 
-class DataSourceConflictConfigSLZ(serializers.Serializer):
-    """数据源冲突配置"""
+class DataSourceUsernameGenerateConfigSLZ(serializers.Serializer):
+    """数据源用户名生成配置"""
 
-    strategy = serializers.ChoiceField(help_text="冲突处理策略", choices=DataSourceConflictStrategy.get_choices())
+    rule = serializers.ChoiceField(help_text="用户名生成规则", choices=DataSourceUsernameGenerateRule.get_choices())
     prefix = serializers.CharField(help_text="用户名前缀", required=False, default="", allow_blank=True)
     suffix = serializers.CharField(help_text="用户名后缀", required=False, default="", allow_blank=True)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        rule = attrs.get("rule")
+        prefix = attrs.get("prefix")
+        suffix = attrs.get("suffix")
+
+        if prefix and not USERNAME_PREFIX_REGEX.fullmatch(prefix):
+            raise ValidationError(_("{} 不符合 用户名前缀 的命名规范，应为 1-6 位大小写字母或数字").format(prefix))
+
+        if suffix and not USERNAME_SUFFIX_REGEX.fullmatch(suffix):
+            raise ValidationError(_("{} 不符合 用户名后缀 的命名规范，应为 1-6 位大小写字母或数字").format(suffix))
+
+        if rule == DataSourceUsernameGenerateRule.ADD_AFFIX:
+            if not prefix and not suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀不能同时为空"))
+            if prefix and suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀不能同时配置"))
+
+        if rule == DataSourceUsernameGenerateRule.UNCHANGED and (prefix or suffix):
+            raise ValidationError(_("保持原始值策略下，不支持配置用户名前缀或后缀"))
+
+        return attrs
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
@@ -126,7 +158,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-    conflict_config = DataSourceConflictConfigSLZ(help_text="冲突配置")
+    username_generate_config = DataSourceUsernameGenerateConfigSLZ(help_text="用户名生成配置")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -141,18 +173,17 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
-    def validate_conflict_config(self, conflict_config: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            conflict_cfg = DataSourceConflictConfig.model_validate(conflict_config)
-        except PDValidationError as e:
-            raise ValidationError(_("冲突配置不合法:{}").format(stringify_pydantic_error(e)))
-
+    def validate_username_generate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         # 校验同租户下 ADD_AFFIX 策略的前后缀组合唯一性
         tenant_id = self.context["tenant_id"]
-        if DataSource.objects.is_username_affix_exists(tenant_id, conflict_cfg.prefix, conflict_cfg.suffix):
+        if config[
+            "rule"
+        ] == DataSourceUsernameGenerateRule.ADD_AFFIX and DataSourceUsernameHandler.is_username_affix_exists(
+            tenant_id, config["prefix"], config["suffix"]
+        ):
             raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
 
-        return conflict_config
+        return config
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]
@@ -220,7 +251,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
-    conflict_config = serializers.JSONField(help_text="冲突配置")
+    username_generate_config = DataSourceUsernameGenerateConfigSLZ(help_text="用户名生成配置")
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):

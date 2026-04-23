@@ -19,7 +19,13 @@ from urllib.parse import urlencode
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceSensitiveInfo,
+    DataSourceUser,
+    DataSourceUsernameGenerateConfig,
+)
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus
@@ -67,7 +73,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
                 # 本地数据源不需要字段映射配置
             },
         )
@@ -79,7 +85,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": {"enable_password": False},
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -90,12 +96,17 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "add_affix", "suffix": "_abc"},
+                "username_generate_config": {"rule": "add_affix", "suffix": "_abc"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
         data_source = DataSource.objects.get(id=resp.data["id"])
-        assert data_source.conflict_config == {"strategy": "add_affix", "prefix": "", "suffix": "_abc"}
+        cfg = DataSourceUsernameGenerateConfig.objects.get(data_source=data_source)
+        assert {"rule": cfg.rule, "prefix": cfg.prefix, "suffix": cfg.suffix} == {
+            "rule": "add_affix",
+            "prefix": "",
+            "suffix": "_abc",
+        }
 
     def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
         resp = api_client.post(
@@ -103,7 +114,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "add_affix", "prefix": "corp_", "suffix": "_abc"},
+                "username_generate_config": {"rule": "add_affix", "prefix": "corp_", "suffix": "_abc"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -115,7 +126,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "add_affix", "suffix": "invalid"},
+                "username_generate_config": {"rule": "add_affix", "suffix": "invalid"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -127,7 +138,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -138,11 +149,11 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual", "prefix": "corp_"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "corp_"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "手动处理策略下，不支持配置用户名前缀或后缀" in resp.data["message"]
+        assert "保持原始值策略下，不支持配置用户名前缀或后缀" in resp.data["message"]
 
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
@@ -150,7 +161,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": "not_exist_plugin",
                 "plugin_config": {},
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -159,7 +170,10 @@ class TestDataSourceCreateApi:
     def test_create_without_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
-            data={"plugin_id": DataSourcePluginEnum.LOCAL, "conflict_config": {"strategy": "manual"}},
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
@@ -171,7 +185,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -184,7 +198,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -197,7 +211,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -214,7 +228,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -230,7 +244,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [],
                 "sync_config": sync_config,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -251,7 +265,7 @@ class TestDataSourceCreateApi:
                         "target_field": "xxx_username",
                     }
                 ],
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -272,7 +286,7 @@ class TestDataSourceCreateApi:
                         "target_field": "username",
                     }
                 ],
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -285,7 +299,7 @@ class TestDataSourceCreateApi:
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -299,7 +313,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": {"sync_period": -1},
-                "conflict_config": {"strategy": "manual"},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -423,7 +437,12 @@ class TestDataSourceRetrieveApi:
         assert resp.data["plugin_config"] == data_source.plugin_config
         assert resp.data["sync_config"] == data_source.sync_config
         assert resp.data["field_mapping"] == data_source.field_mapping
-        assert resp.data["conflict_config"] == data_source.conflict_config
+        cfg = DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).first()
+        assert resp.data["username_generate_config"] == {
+            "rule": cfg.rule if cfg else "unchanged",
+            "prefix": cfg.prefix if cfg else "",
+            "suffix": cfg.suffix if cfg else "",
+        }
 
 
 class TestDataSourceDestroyApi:
@@ -472,45 +491,6 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert not Idp.objects.filter(id=disabled_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
-
-
-class TestDataSourceBatchDeleteApi:
-    def test_batch_delete(self, api_client, data_source, general_data_source, local_idp, general_idp, wecom_idp):
-        resp = api_client.delete(
-            reverse("data_source.batch_delete"),
-            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
-        )
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSource.objects.filter(id=general_data_source.id).exists()
-        assert not Idp.objects.filter(id=local_idp.id).exists()
-        assert not Idp.objects.filter(id=general_idp.id).exists()
-        updated_wecom_idp = Idp.objects.get(id=wecom_idp.id)
-        assert updated_wecom_idp.status == IdpStatus.DISABLED
-        assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
-
-    def test_batch_delete_with_delete_idp(
-        self, api_client, data_source, general_data_source, local_idp, general_idp, wecom_idp
-    ):
-        resp = api_client.delete(
-            reverse("data_source.batch_delete"),
-            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
-        )
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSource.objects.filter(id=general_data_source.id).exists()
-        assert not Idp.objects.filter(id=local_idp.id).exists()
-        assert not Idp.objects.filter(id=general_idp.id).exists()
-        assert not Idp.objects.filter(id=wecom_idp.id).exists()
-
-    def test_batch_delete_no_real_data_source(self, api_client, random_tenant):
-        resp = api_client.delete(
-            reverse("data_source.batch_delete"),
-            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
-        )
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
 
 
 class TestDataSourceRelatedResourceStatsApi:

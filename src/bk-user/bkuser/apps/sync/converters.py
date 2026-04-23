@@ -30,6 +30,7 @@ from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -55,7 +56,7 @@ class DataSourceUserConverter:
             raise ValueError("username is required")
 
         # 根据数据源配置生成最终的用户名
-        username = self.data_source.generate_username(username)
+        username = DataSourceUsernameHandler.generate(self.data_source, username)
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 

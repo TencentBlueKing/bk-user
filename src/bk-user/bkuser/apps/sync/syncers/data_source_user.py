@@ -35,6 +35,7 @@ from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.tenant.utils import is_username_frozen
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.plugins.models import RawDataSourceUser
 
 
@@ -80,7 +81,8 @@ class DataSourceUserSyncer:
             return
 
         code_username_map = {
-            user.code: self.data_source.generate_username(user.properties["username"]) for user in self.raw_users
+            user.code: DataSourceUsernameHandler.generate(self.data_source, user.properties["username"])
+            for user in self.raw_users
         }
 
         # 查询同租户下其他数据源中已存在的冲突用户名

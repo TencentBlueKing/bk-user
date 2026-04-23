@@ -88,6 +88,7 @@ from bkuser.biz.auditor import (
     TenantUserStatusUpdateAuditor,
     TenantUserUpdateAuditor,
 )
+from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.organization import DataSourceUserHandler, TenantOrgPathHandler
 from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.constants import PERMANENT_TIME
@@ -314,7 +315,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             data_source_user = DataSourceUser.objects.create(
                 data_source=data_source,
                 # 对于本地数据源，code 存放原始用户名
-                code=data_source.parse_username(data["username"]),
+                code=DataSourceUsernameHandler.parse(data_source, data["username"]),
                 username=data["username"],
                 full_name=data["full_name"],
                 email=data["email"],
@@ -802,7 +803,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             data_source_users = [
                 DataSourceUser(
                     data_source=data_source,
-                    code=data_source.parse_username(info["username"]),
+                    code=DataSourceUsernameHandler.parse(data_source, info["username"]),
                     username=info["username"],
                     full_name=info["full_name"],
                     email=info["email"],
