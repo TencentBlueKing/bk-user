@@ -412,7 +412,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         """根据参数过滤，生成 TenantUser QuerySet"""
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         # Note: select_related 会在 optimize_queryset 中根据需要的字段动态添加
-        queryset = TenantUser.objects.filter(tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids())
+        queryset = TenantUser.objects.filter(
+            tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
+        ).order_by("data_source_user_id")
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
         if not lookup_field:
