@@ -20,7 +20,6 @@ from typing import List
 from ldap3 import ALL_ATTRIBUTES, DEREF_NEVER, SAFE_SYNC, Connection, Server
 from ldap3.extend.standard.PagedSearch import paged_search_accumulator
 
-from bkuser.plugins.ldap.constants import REQUIRED_OPERATIONAL_ATTRIBUTES
 from bkuser.plugins.ldap.exceptions import DataNotFoundError
 from bkuser.plugins.ldap.models import LDAPObject, ServerConfig
 
@@ -28,8 +27,9 @@ from bkuser.plugins.ldap.models import LDAPObject, ServerConfig
 class LDAPClient:
     """LDAP 客户端"""
 
-    def __init__(self, server_config: ServerConfig):
+    def __init__(self, server_config: ServerConfig, uuid_attribute: str):
         self.server_config = server_config
+        self.uuid_attribute = uuid_attribute
 
     def __enter__(self):
         self._conn = self._gen_conn(self.server_config)
@@ -69,7 +69,7 @@ class LDAPClient:
             get_operational_attributes=False,
             attributes=[
                 ALL_ATTRIBUTES,
-                *REQUIRED_OPERATIONAL_ATTRIBUTES,
+                self.uuid_attribute,
             ],
             paged_size=page_size,
         )
