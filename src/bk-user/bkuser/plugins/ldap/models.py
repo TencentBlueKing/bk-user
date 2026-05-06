@@ -95,9 +95,6 @@ class DataConfig(BaseModel):
         if not self.dept_search_base_dns:
             raise ValueError(_("需要提供部门 Base DN"))
 
-        if not self.uuid_attribute:
-            raise ValueError(_("需要提供 UUID 属性"))
-
         if len(self.dept_search_base_dns) > MAX_SEARCH_BASE_DN_COUNT:
             raise ValueError(_("部门 Base DN 数量不能超过 {} 个").format(MAX_SEARCH_BASE_DN_COUNT))
 

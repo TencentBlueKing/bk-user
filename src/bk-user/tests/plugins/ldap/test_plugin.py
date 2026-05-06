@@ -172,11 +172,11 @@ class TestLDAPDataSourcePluginUUIDAttribute:
 
 
 class TestLDAPDataSourcePluginSanitizeHelpers:
-    def test_safe_str_value(self):
-        assert LDAPDataSourcePlugin._safe_str_value("alice") == "alice"
-        assert LDAPDataSourcePlugin._safe_str_value(123) == "123"
-        assert LDAPDataSourcePlugin._safe_str_value("中文".encode("utf-8")) == "中文"
-        assert LDAPDataSourcePlugin._safe_str_value(b"\xff\xfe") == ""
+    def test_sanitize_ldap_value(self):
+        assert LDAPDataSourcePlugin._sanitize_ldap_value("alice") == "alice"
+        assert LDAPDataSourcePlugin._sanitize_ldap_value(123) == 123
+        assert LDAPDataSourcePlugin._sanitize_ldap_value("中文".encode("utf-8")) == "中文"
+        assert LDAPDataSourcePlugin._sanitize_ldap_value(b"\xff\xfe") == ""
 
     def test_sanitize_ldap_object(self):
         obj = LDAPObject(
@@ -191,10 +191,12 @@ class TestLDAPDataSourcePluginSanitizeHelpers:
         sanitized = LDAPDataSourcePlugin._sanitize_ldap_object(obj)
 
         assert sanitized == {
-            "cn": ["alice", ""],
-            "givenName": "Alice",
-            "uid": "alice",
             "dn": "cn=alice,ou=company,dc=bk,dc=example,dc=com",
+            "attrs": {
+                "cn": ["alice", ""],
+                "givenName": "Alice",
+                "uid": "alice",
+            },
         }
 
     def test_sanitize_ldap_object_with_none(self):

@@ -84,7 +84,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         # 检查是否有配置不当 / 数据源异常导致有 Code 重复的情况
         self._validate_duplicate_codes(raw_depts)
 
-        # dn -> code (entryUUID) 映射表
+        # dn -> code (uuid_attribute) 映射表
         self.dept_dn_code_map = {d.extras["dn"]: d.code for d in raw_depts}
 
         # 将 parent dn 转换成 parent code，如果找不到对应的 Code，则设置为 None
@@ -222,7 +222,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         return RawDataSourceDepartment(
             code=obj.attrs[uuid_attribute],
             name=cur.attr_value,
-            # 其实这里的 dn 还不是最终需要的值，需要下一步转换成 entryUUID
+            # 这里先填充父 DN，后续会转换为 uuid_attribute 对应的部门 code
             parent=parent_dn,
             extras={"attr_type": cur.attr_type, "dn": obj.dn},
         )
@@ -236,9 +236,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 continue
 
             if isinstance(v, list):
-                properties[k] = " ".join(LDAPDataSourcePlugin._safe_str_value(ele) for ele in v)
+                properties[k] = " ".join(LDAPDataSourcePlugin._sanitize_ldap_value(ele) for ele in v)
             else:
-                properties[k] = LDAPDataSourcePlugin._safe_str_value(v)
+                properties[k] = LDAPDataSourcePlugin._sanitize_ldap_value(v)
 
         # 由于 LDAP 用户数据结果比较特殊，因此生成的时候，不带 leaders，departments 字段，由后续处理
         return RawDataSourceUser(code=obj.attrs[uuid_attribute], properties=properties, leaders=[], departments=[])
@@ -269,17 +269,19 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             exist_codes.add(obj.code)
 
     @staticmethod
-    def _safe_str_value(value: Any) -> str:
-        """安全地将 LDAP 属性值转换为字符串
+    def _sanitize_ldap_value(value: Any) -> Any:
+        """清洗 ldap 属性值
 
-        对于 bytes：先尝试 UTF-8 解码；若失败则返回空字符串
+        对于 bytes：先尝试 UTF-8 解码；若失败则返回空字符串。
+        其他类型直接返回。
         """
         if isinstance(value, bytes):
             try:
                 return value.decode("utf-8")
             except UnicodeDecodeError:
+                logger.warning(f"failed to decode value `{value!r}` to utf-8, transform to empty string.")
                 return ""
-        return str(value)
+        return value
 
     @staticmethod
     def _sanitize_ldap_object(obj: LDAPObject | None) -> Dict[str, Any]:
@@ -290,9 +292,8 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
         sanitized: Dict[str, Any] = {}
         for k, v in obj.attrs.items():
             if isinstance(v, list):
-                sanitized[k] = [LDAPDataSourcePlugin._safe_str_value(ele) for ele in v]
+                sanitized[k] = [LDAPDataSourcePlugin._sanitize_ldap_value(ele) for ele in v]
             else:
-                sanitized[k] = LDAPDataSourcePlugin._safe_str_value(v)
+                sanitized[k] = LDAPDataSourcePlugin._sanitize_ldap_value(v)
 
-        sanitized["dn"] = obj.dn
-        return sanitized
+        return {"dn": obj.dn, "attrs": sanitized}
