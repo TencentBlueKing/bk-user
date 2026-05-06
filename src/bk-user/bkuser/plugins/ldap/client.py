@@ -69,14 +69,15 @@ class LDAPClient:
             get_operational_attributes=False,
             attributes=[
                 ALL_ATTRIBUTES,
-                *self._get_required_operational_attributes(),
+                *self.required_operational_attributes,
             ],
             paged_size=page_size,
         )
         # 丢弃多余的信息，如 type，raw_dn，raw_attributes 等
         return [LDAPObject(dn=r["dn"], attrs=r["attributes"]) for r in results]
 
-    def _get_required_operational_attributes(self) -> List[str]:
+    @property
+    def required_operational_attributes(self) -> List[str]:
         """
         获取同步所需的 LDAP 操作属性。
 

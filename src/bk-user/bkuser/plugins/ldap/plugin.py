@@ -236,9 +236,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 continue
 
             if isinstance(v, list):
-                properties[k] = " ".join(LDAPDataSourcePlugin._sanitize_ldap_value(ele) for ele in v)
+                properties[k] = " ".join(str(LDAPDataSourcePlugin._sanitize_ldap_value(ele)) for ele in v)
             else:
-                properties[k] = LDAPDataSourcePlugin._sanitize_ldap_value(v)
+                properties[k] = str(LDAPDataSourcePlugin._sanitize_ldap_value(v))
 
         # 由于 LDAP 用户数据结果比较特殊，因此生成的时候，不带 leaders，departments 字段，由后续处理
         return RawDataSourceUser(code=obj.attrs[uuid_attribute], properties=properties, leaders=[], departments=[])
