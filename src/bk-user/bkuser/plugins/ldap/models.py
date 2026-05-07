@@ -101,6 +101,9 @@ class DataConfig(BaseModel):
         if has_parent_child_dn_relation(self.dept_search_base_dns):
             raise ValueError(_("部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"))
 
+        if not self.uuid_attribute:
+            raise ValueError(_("需要提供 UUID 属性"))
+
         return self
 
 
@@ -201,3 +204,21 @@ class LDAPObject(BaseModel):
 
     dn: str
     attrs: Dict[str, Any]
+
+    @model_validator(mode="after")
+    def sanitize_attrs(self) -> "LDAPObject":
+        """清洗属性值中的 bytes，确保可安全序列化和使用"""
+        self.attrs = {k: self._sanitize_value(v) for k, v in self.attrs.items()}
+        return self
+
+    @staticmethod
+    def _sanitize_value(value: Any) -> Any:
+        if isinstance(value, list):
+            return [LDAPObject._sanitize_value(v) for v in value]
+
+        if isinstance(value, bytes):
+            try:
+                return value.decode("utf-8")
+            except UnicodeDecodeError:
+                return ""
+        return value

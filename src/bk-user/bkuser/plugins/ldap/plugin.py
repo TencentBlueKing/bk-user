@@ -19,7 +19,7 @@
 # ruff: noqa: G004
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List
+from typing import DefaultDict, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 
@@ -162,8 +162,8 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             user=user,
             department=dept,
             extras={
-                "user_data": self._sanitize_ldap_object(user_data),
-                "department_data": self._sanitize_ldap_object(dept_data),
+                "user_data": user_data,
+                "department_data": dept_data,
             },
         )
 
@@ -236,9 +236,9 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 continue
 
             if isinstance(v, list):
-                properties[k] = " ".join(str(LDAPDataSourcePlugin._sanitize_ldap_value(ele)) for ele in v)
+                properties[k] = " ".join(str(ele) for ele in v)
             else:
-                properties[k] = str(LDAPDataSourcePlugin._sanitize_ldap_value(v))
+                properties[k] = str(v)
 
         # 由于 LDAP 用户数据结果比较特殊，因此生成的时候，不带 leaders，departments 字段，由后续处理
         return RawDataSourceUser(code=obj.attrs[uuid_attribute], properties=properties, leaders=[], departments=[])
@@ -267,33 +267,3 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
                 raise ValueError(f"duplicate code `{obj.code}` found, check your ldap search base dn config!")
 
             exist_codes.add(obj.code)
-
-    @staticmethod
-    def _sanitize_ldap_value(value: Any) -> Any:
-        """清洗 ldap 属性值
-
-        对于 bytes：先尝试 UTF-8 解码；若失败则返回空字符串。
-        其他类型直接返回。
-        """
-        if isinstance(value, bytes):
-            try:
-                return value.decode("utf-8")
-            except UnicodeDecodeError:
-                logger.warning(f"failed to decode value `{value!r}` to utf-8, transform to empty string.")
-                return ""
-        return value
-
-    @staticmethod
-    def _sanitize_ldap_object(obj: LDAPObject | None) -> Dict[str, Any]:
-        """清洗 LDAP 对象属性，使其可 JSON 序列化"""
-        if obj is None:
-            return {}
-
-        sanitized: Dict[str, Any] = {}
-        for k, v in obj.attrs.items():
-            if isinstance(v, list):
-                sanitized[k] = [LDAPDataSourcePlugin._sanitize_ldap_value(ele) for ele in v]
-            else:
-                sanitized[k] = LDAPDataSourcePlugin._sanitize_ldap_value(v)
-
-        return {"dn": obj.dn, "attrs": sanitized}

@@ -18,7 +18,6 @@
 from copy import deepcopy
 
 import pytest
-from bkuser.plugins.ldap.models import LDAPObject
 from bkuser.plugins.ldap.plugin import LDAPDataSourcePlugin
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
@@ -169,35 +168,3 @@ class TestLDAPDataSourcePluginUUIDAttribute:
 
         assert departments[0].code == "97aaa370-0e9d-103f-8e7f-fb1e46baa127"
         assert users[0].code == "97b9bdce-0e9d-103f-8e8c-fb1e46baa127"
-
-
-class TestLDAPDataSourcePluginSanitizeHelpers:
-    def test_sanitize_ldap_value(self):
-        assert LDAPDataSourcePlugin._sanitize_ldap_value("alice") == "alice"
-        assert LDAPDataSourcePlugin._sanitize_ldap_value(123) == 123
-        assert LDAPDataSourcePlugin._sanitize_ldap_value("中文".encode("utf-8")) == "中文"
-        assert LDAPDataSourcePlugin._sanitize_ldap_value(b"\xff\xfe") == ""
-
-    def test_sanitize_ldap_object(self):
-        obj = LDAPObject(
-            dn="cn=alice,ou=company,dc=bk,dc=example,dc=com",
-            attrs={
-                "cn": [b"alice", b"\xff"],
-                "givenName": b"Alice",
-                "uid": "alice",
-            },
-        )
-
-        sanitized = LDAPDataSourcePlugin._sanitize_ldap_object(obj)
-
-        assert sanitized == {
-            "dn": "cn=alice,ou=company,dc=bk,dc=example,dc=com",
-            "attrs": {
-                "cn": ["alice", ""],
-                "givenName": "Alice",
-                "uid": "alice",
-            },
-        }
-
-    def test_sanitize_ldap_object_with_none(self):
-        assert LDAPDataSourcePlugin._sanitize_ldap_object(None) == {}
