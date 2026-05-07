@@ -24,7 +24,7 @@ class TestLDAPObject:
             dn="cn=alice,ou=company,dc=bk,dc=example,dc=com",
             attrs={
                 "cn": ["alice"],
-                "givenName": b"Alice",
+                "givenName": "Alice",
                 "uid": "alice",
                 "uidNumber": 123,
                 "avatar": b"\xff",
