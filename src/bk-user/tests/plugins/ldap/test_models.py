@@ -36,5 +36,4 @@ class TestLDAPObject:
             "givenName": "Alice",
             "uid": "alice",
             "uidNumber": 123,
-            "avatar": "",
         }

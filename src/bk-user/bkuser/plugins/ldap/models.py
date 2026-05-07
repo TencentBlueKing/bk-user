@@ -210,18 +210,5 @@ class LDAPObject(BaseModel):
     @model_validator(mode="after")
     def sanitize_attrs(self) -> "LDAPObject":
         """清洗属性值中的 bytes，确保可安全序列化和使用"""
-        self.attrs = {k: self._sanitize_value(v, attr_name=k) for k, v in self.attrs.items()}
+        self.attrs = {k: v for k, v in self.attrs.items() if not isinstance(v, bytes)}
         return self
-
-    @staticmethod
-    def _sanitize_value(value: Any, attr_name: str = "") -> Any:
-        if isinstance(value, list):
-            return [LDAPObject._sanitize_value(v) for v in value]
-
-        if isinstance(value, bytes):
-            try:
-                return value.decode("utf-8")
-            except UnicodeDecodeError:
-                logger.warning("failed to decode binary LDAP attribute `%s`, fallback to empty string", attr_name)
-                return ""
-        return value
