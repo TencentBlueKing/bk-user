@@ -161,10 +161,7 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
             error_message=str(err_msg),
             user=user,
             department=dept,
-            extras={
-                "user_data": user_data,
-                "department_data": dept_data,
-            },
+            extras={"user_data": user_data, "department_data": dept_data},
         )
 
     def _set_raw_users_departments(self, raw_users: List[RawDataSourceUser]):
