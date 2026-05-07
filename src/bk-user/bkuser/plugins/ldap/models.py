@@ -210,5 +210,16 @@ class LDAPObject(BaseModel):
     @model_validator(mode="after")
     def sanitize_attrs(self) -> "LDAPObject":
         """清洗属性值中的 bytes，确保可安全序列化和使用"""
-        self.attrs = {k: v for k, v in self.attrs.items() if not isinstance(v, bytes)}
+        # LDAP 查询结果中可能包含二进制类型的属性值，目前用户属性字段不支持二进制，这里直接过滤掉
+        self.attrs = {k: v for k, v in self.attrs.items() if not LDAPObject.has_binary_value(v)}
         return self
+
+    @staticmethod
+    def has_binary_value(value: Any) -> bool:
+        if isinstance(value, bytes):
+            return True
+
+        if isinstance(value, list):
+            return any(isinstance(ele, bytes) for ele in value)
+
+        return False
