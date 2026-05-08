@@ -172,6 +172,7 @@ export interface DataSourceDetails {
       user_search_base_dns: string[],
       dept_object_class: string,
       dept_search_base_dns: string[],
+      uuid_attribute: string,
     },
     leader_config: {
       enabled: boolean,
