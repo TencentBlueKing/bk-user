@@ -71,16 +71,12 @@
           :label="$t('UUID 属性')"
           property="data_config.uuid_attribute"
         >
-          <bk-tag-input
+          <bk-select
             v-model="ldapConfigData.data_config.uuid_attribute"
-            :max-data="1"
             allow-create
-            trigger="focus"
-            collapse-tags
-            placeholder="请输入UUID 属性"
             :list="UUID_ATTR_LIST"
-            @focus="handleFocus"
-            @input="handleChange" />
+            placeholder="请输入UUID 属性"
+          />
         </bk-form-item>
         <bk-form-item
           class="w-[560px]"
@@ -350,18 +346,18 @@ interface LdapConfigData {
     user_search_base_dns: string[],
     dept_object_class: string,
     dept_search_base_dns: string[],
-    uuid_attribute: string[]
+    uuid_attribute: string
   }
 }
 /** UUID 属性可选值列表*/
 const UUID_ATTR_LIST = [
   {
-    id: 'entryUUID',
-    name: 'entryUUID',
+    value: 'entryUUID',
+    label: 'entryUUID',
   },
   {
-    id: 'objectGUID',
-    name: 'objectGUID',
+    value: 'objectGUID',
+    label: 'objectGUID',
   },
 ];
 const ldapConfigData = ref<LdapConfigData>({
@@ -379,7 +375,7 @@ const ldapConfigData = ref<LdapConfigData>({
     user_search_base_dns: [],
     dept_object_class: '',
     dept_search_base_dns: [],
-    uuid_attribute: [],
+    uuid_attribute: '',
   },
 });
 
@@ -409,14 +405,8 @@ const defaultLdapConfig = () => ({
     user_search_base_dns: [''] as string[],
     dept_object_class: '',
     dept_search_base_dns: [''] as string[],
-    uuid_attribute: [UUID_ATTR_LIST[0].id],
+    uuid_attribute: UUID_ATTR_LIST[0].value,
   },
-});
-
-/** 提交/连通性测试时，将 data_config 转为后端格式（uuid_attribute: string[] → string）*/
-const getBackendDataConfig = () => ({
-  ...ldapConfigData.value.data_config,
-  uuid_attribute: ldapConfigData.value.data_config?.uuid_attribute?.[0] || '',
 });
 
 // 重置数据
@@ -522,7 +512,7 @@ const handleTestConnection = async () => {
       plugin_id: ldapConfigData.value.plugin_id,
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
-        data_config: getBackendDataConfig(),
+        data_config: ldapConfigData.value.data_config,
         user_group_config: {
           enabled: false,
           object_class: '',
@@ -731,7 +721,7 @@ onMounted(async () => {
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
         ldapConfigData.value.data_config = {
           ...res.data?.plugin_config?.data_config,
-          uuid_attribute: res.data?.plugin_config?.data_config?.uuid_attribute ? [res.data?.plugin_config?.data_config?.uuid_attribute] : [UUID_ATTR_LIST[0].id],
+          uuid_attribute: res.data?.plugin_config?.data_config?.uuid_attribute || UUID_ATTR_LIST[0].value,
         },
         ldapConfigData.value.server_config = res.data?.plugin_config?.server_config;
         fieldSettingData.value.leader_config = res.data?.plugin_config?.leader_config;
@@ -765,7 +755,7 @@ const handleSubmit = async () => {
     const params = {
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
-        data_config: getBackendDataConfig(),
+        data_config: ldapConfigData.value.data_config,
         user_group_config: fieldSettingData.value.user_group_config,
         leader_config: fieldSettingData.value.leader_config,
       },
