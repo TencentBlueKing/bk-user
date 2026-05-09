@@ -75,7 +75,7 @@
             v-model="ldapConfigData.data_config.uuid_attribute"
             allow-create
             :list="UUID_ATTR_LIST"
-            placeholder="请输入UUID 属性"
+            placeholder="请选择UUID 属性"
           />
         </bk-form-item>
         <bk-form-item
