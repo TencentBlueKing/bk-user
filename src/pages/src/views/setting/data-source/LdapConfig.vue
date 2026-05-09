@@ -68,8 +68,30 @@
           </bk-form-item>
         </div>
       </Row>
-      <Row :title="$t('数据配置')" class="!shadow-none !border-b-0">
-        <bk-form-item class="w-[560px]" :label="$t('用户对象类')" required property="data_config.user_object_class">
+      <Row :title="$t('数据配置')">
+        <bk-form-item
+          required
+          class="w-[560px]"
+          :label="$t('UUID 属性')"
+          property="data_config.uuid_attribute"
+        >
+          <bk-tag-input
+            v-model="ldapConfigData.data_config.uuid_attribute"
+            :max-data="1"
+            allow-create
+            trigger="focus"
+            collapse-tags
+            placeholder="请输入UUID 属性"
+            :list="UUID_ATTR_LIST"
+            @focus="handleFocus"
+            @input="handleChange" />
+        </bk-form-item>
+        <bk-form-item
+          class="w-[560px]"
+          :label="$t('用户对象类')"
+          required
+          property="data_config.user_object_class"
+        >
           <bk-input
             placeholder="inetOrgPerson"
             v-model="ldapConfigData.data_config.user_object_class"
@@ -354,10 +376,21 @@ interface LdapConfigData {
     user_object_class: string,
     user_search_base_dns: string[],
     dept_object_class: string,
-    dept_search_base_dns: string[]
+    dept_search_base_dns: string[],
+    uuid_attribute: string[]
   }
 }
-
+/** UUID 属性可选值列表*/
+const UUID_ATTR_LIST = [
+  {
+    id: 'entryUUID',
+    name: 'entryUUID',
+  },
+  {
+    id: 'objectGUID',
+    name: 'objectGUID',
+  },
+];
 const ldapConfigData = ref<LdapConfigData>({
   plugin_id: '',
   server_config: {
@@ -373,6 +406,7 @@ const ldapConfigData = ref<LdapConfigData>({
     user_search_base_dns: [],
     dept_object_class: '',
     dept_search_base_dns: [],
+    uuid_attribute: [],
   },
 });
 
@@ -382,6 +416,7 @@ const rulesLdapConfig = {
   'server_config.bind_dn': [validate.required],
   'server_config.bind_password': [validate.required],
   'server_config.base_dn': [validate.required],
+  'data_config.uuid_attribute': [validate.required],
   'data_config.user_object_class': [validate.required],
   'data_config.dept_object_class': [validate.required],
 };
@@ -401,7 +436,14 @@ const defaultLdapConfig = () => ({
     user_search_base_dns: [''] as string[],
     dept_object_class: '',
     dept_search_base_dns: [''] as string[],
+    uuid_attribute: [UUID_ATTR_LIST[0].id],
   },
+});
+
+/** 提交/连通性测试时，将 data_config 转为后端格式（uuid_attribute: string[] → string）*/
+const getBackendDataConfig = () => ({
+  ...ldapConfigData.value.data_config,
+  uuid_attribute: ldapConfigData.value.data_config?.uuid_attribute?.[0] || '',
 });
 
 // 重置数据
@@ -513,7 +555,7 @@ const handleTestConnection = async () => {
       plugin_id: ldapConfigData.value.plugin_id,
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
-        data_config: ldapConfigData.value.data_config,
+        data_config: getBackendDataConfig(),
         user_group_config: {
           enabled: false,
           object_class: '',
@@ -718,7 +760,10 @@ onMounted(async () => {
       const res = await getDataSourceDetails(props.dataSourceId);
       ldapConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
-        ldapConfigData.value.data_config = res.data?.plugin_config?.data_config;
+        ldapConfigData.value.data_config = {
+          ...res.data?.plugin_config?.data_config,
+          uuid_attribute: res.data?.plugin_config?.data_config?.uuid_attribute ? [res.data?.plugin_config?.data_config?.uuid_attribute] : [UUID_ATTR_LIST[0].id],
+        },
         ldapConfigData.value.server_config = res.data?.plugin_config?.server_config;
         fieldSettingData.value.leader_config = res.data?.plugin_config?.leader_config;
         fieldSettingData.value.user_group_config = res.data?.plugin_config?.user_group_config;
@@ -752,7 +797,7 @@ const handleSubmit = async () => {
     const params: Partial<NewDataSourceParams> = {
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
-        data_config: ldapConfigData.value.data_config,
+        data_config: getBackendDataConfig(),
         user_group_config: fieldSettingData.value.user_group_config,
         leader_config: fieldSettingData.value.leader_config,
       },
