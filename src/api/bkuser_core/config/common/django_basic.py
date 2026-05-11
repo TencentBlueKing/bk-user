@@ -13,7 +13,7 @@ import os
 from . import PROJECT_ROOT, env
 
 # only for django itself(internal hashes), not a specific identity
-SECRET_KEY = "Zfljnbga5QYVqNpOXLwhfGQLplZHHj3FuQWdAcaqTiDrDUfsTS"
+SECRET_KEY = env.str("SECRET_KEY", default="Zfljnbga5QYVqNpOXLwhfGQLplZHHj3FuQWdAcaqTiDrDUfsTS")
 
 SITE_URL = "/"
 

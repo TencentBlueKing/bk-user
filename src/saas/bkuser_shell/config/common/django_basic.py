@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import os
 
-from . import PROJECT_ROOT
+from . import PROJECT_ROOT, env
 
 # 应用密钥
-SECRET_KEY = "MQtd_0cw&AiY5jT&&#w7%9sCK=HW$O_e%ch4xDd*AaP(xU0s3X"
+SECRET_KEY = env.str("SECRET_KEY", default="MQtd_0cw&AiY5jT&&#w7%9sCK=HW$O_e%ch4xDd*AaP(xU0s3X")
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 

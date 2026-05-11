@@ -141,8 +141,8 @@ ACTION_ID_HEADER = "HTTP_ACTION_ID"
 # ===============================================================================
 # API 访问限制（暂未开启）
 # ===============================================================================
-INTERNAL_AUTH_TOKENS = {"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}}
-ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"}
+INTERNAL_AUTH_TOKENS = env.json("INTERNAL_AUTH_TOKENS", default={"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}})
+ACCESS_APP_WHITE_LIST = env.json("ACCESS_APP_WHITE_LIST", default={"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"})
 
 
 # ==============================================================================
