@@ -38,7 +38,7 @@ ALLOWED_HOSTS = ["*"]
 DEBUG = env.bool("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "o7(025idh*fj@)ohujum-ilfxl^n=@d&$xz!_$$7s$8jopd5r#"
+SECRET_KEY = env.str("SECRET_KEY", default="o7(025idh*fj@)ohujum-ilfxl^n=@d&$xz!_$$7s$8jopd5r#")
 
 CSRF_COOKIE_NAME = "bklogin_csrftoken"
 # CSRF 验证失败处理函数
