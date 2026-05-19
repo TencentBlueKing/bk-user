@@ -19,6 +19,7 @@ from rest_framework import filters, status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
+from bkuser_core.api.web.utils import get_operator
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer
 from bkuser_core.apis.v2.viewset import (
     AdvancedListAPIView,
@@ -28,6 +29,8 @@ from bkuser_core.apis.v2.viewset import (
 )
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
+from bkuser_core.bkiam.constants import IAMAction
+from bkuser_core.bkiam.permissions import Permission
 from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
@@ -178,11 +181,20 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     def add_profiles(self, request, *args, **kwargs):
         """在部门内添加人员"""
         instance = self.get_object()
+        if settings.ENABLE_IAM:
+            Permission().allow_department_action(get_operator(request), IAMAction.MANAGE_DEPARTMENT, instance)
+
+        if not ProfileCategory.objects.check_writable(instance.category_id):
+            raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
         serializer = local_serializers.DepartmentAddProfilesSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
 
-        profiles = Profile.objects.filter(id__in=serializer.validated_data["profile_id_list"])
+        profiles = Profile.objects.filter(
+            id__in=serializer.validated_data["profile_id_list"],
+            category_id=instance.category_id,
+            enabled=True,
+        )
         for profile in profiles:
             instance.add_profile(profile)
 

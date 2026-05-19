@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from django.test import override_settings
 
 from bkuser_core.departments.models import Department
 from bkuser_core.departments.v2.views import DepartmentViewSet
@@ -429,3 +430,25 @@ class TestGetProfilesApis:
             lookup_value=d.id,
         )
         assert r1.data["results"][0]["extras"] == expected
+
+    @override_settings(ENABLE_IAM=False)
+    def test_department_add_profiles_only_accepts_same_category_profiles(self, view):
+        target_department = make_simple_department("dept", parent_id=1)
+        same_category_profile = make_simple_profile("same-category-user")
+
+        other_category = make_simple_category("other", display_name="other")
+        other_category_profile = make_simple_profile(
+            "other-category-user",
+            force_create_params={"category_id": other_category.pk, "domain": other_category.domain},
+        )
+
+        request = get_api_factory().post(
+            f"/api/v2/departments/{target_department.id}/profiles/",
+            data={"profile_id_list": [same_category_profile.id, other_category_profile.id, 999999]},
+        )
+        request = make_request_operator_aware(request, "tester")
+        response = view(request=request, lookup_value=target_department.id)
+
+        assert response.status_code == 200
+        assert [profile["id"] for profile in response.data] == [same_category_profile.id]
+        assert list(target_department.profiles.values_list("id", flat=True)) == [same_category_profile.id]
