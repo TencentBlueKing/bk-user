@@ -174,6 +174,12 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     queryset = Department.objects.filter()
     lookup_field = "id"
 
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [ManageDepartmentPermission()]
+
+        return super().get_permissions()
+
     def get_recursive_queryset(self, department):
         # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
         department_ids = department.get_descendants(include_self=True).values_list("id", flat=True)
@@ -228,7 +234,10 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         profile_ids = data.get("profile_id_list")
 
         instance = self.get_object()
-        profiles = Profile.objects.filter(id__in=profile_ids)
+        if not ProfileCategory.objects.check_writable(instance.category_id):
+            raise error_codes.CANNOT_MANUAL_WRITE_INTO
+
+        profiles = Profile.objects.filter(id__in=profile_ids, category_id=instance.category_id, enabled=True)
         for profile in profiles:
             instance.add_profile(profile)
 
