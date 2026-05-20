@@ -5,9 +5,9 @@ description = "bk-user Api"
 authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 
 [tool.poetry.dependencies]
-python = "3.6.14"
+python = ">=3.6,<3.7"
 aenum = "2.2.1"
-Django = "3.2.15"
+Django = "3.2.25"
 django-celery-beat = "2.2.0"
 celery = "4.4.7"
 drf-yasg = "1.20.0"
