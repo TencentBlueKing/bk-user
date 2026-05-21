@@ -110,6 +110,18 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = [ManageDepartmentPermission]
 
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        name = serializer.validated_data.get("name")
+        if name and Department.objects.filter(
+            parent_id=instance.parent_id,
+            category_id=instance.category_id,
+            name=name,
+        ).exclude(id=instance.id).exists():
+            raise error_codes.DEPARTMENT_NAME_CONFLICT
+
+        serializer.save()
+
     @audit_general_log(operate_type=OperationType.DELETE.value)
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()

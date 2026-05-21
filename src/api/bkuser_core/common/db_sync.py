@@ -130,6 +130,15 @@ class SyncModelManager:
     def get_latest_auto_id(self) -> int:
         """找到最大的自增 id"""
         with connections["default"].cursor() as cursor:
+            # Q: Why set this before reading INFORMATION_SCHEMA.TABLES.AUTO_INCREMENT?
+            # A: MySQL 8 may cache INFORMATION_SCHEMA table statistics. Setting the
+            #    session expiry to 0 makes this query read fresh statistics when supported.
+            #    This is session-scoped, so it only affects the current DB connection.
+            try:
+                cursor.execute("SET SESSION information_schema_stats_expiry = 0")
+            except Exception:  # pylint: disable=broad-except
+                pass
+
             cursor.execute(
                 "SELECT `AUTO_INCREMENT` "
                 "FROM  INFORMATION_SCHEMA.TABLES "

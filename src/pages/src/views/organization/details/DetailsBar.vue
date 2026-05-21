@@ -221,6 +221,7 @@ export default {
         department_name: [],
         password_valid_days: null,
       },
+      dynamicRequiredRuleKeys: [],
       rules: {
         username: [
           {
@@ -311,6 +312,7 @@ export default {
         fieldInfo.isError = false;
         return true;
       });
+      this.syncDynamicRequiredRules(this.profileInfoList);
       this.initialDepartments = this.detailsBarInfo.departments;
       this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.getSelectedDepartments = this.initialDepartments;
@@ -356,6 +358,7 @@ export default {
         fieldInfo.isError = false;
         return true;
       });
+      this.syncDynamicRequiredRules(this.profileInfoList);
       const { leader, leaders } = this.currentProfile;
       this.userSettingData.leader = (leader || leaders).map(item => item.id);
       this.initialDepartments = this.currentProfile.departments;
@@ -429,6 +432,28 @@ export default {
     },
     handleCancelSet() {
       this.isShowSetDepartments = false;
+    },
+    syncDynamicRequiredRules(profileInfoList) {
+      this.dynamicRequiredRuleKeys.forEach((key) => {
+        this.$delete(this.rules, key);
+      });
+      this.dynamicRequiredRuleKeys = [];
+
+      profileInfoList.forEach((fieldInfo) => {
+        if (!fieldInfo.require || this.rules[fieldInfo.key]) {
+          return;
+        }
+
+        const trigger = fieldInfo.type === 'string' || fieldInfo.type === 'number' ? 'blur' : 'change';
+        this.$set(this.rules, fieldInfo.key, [
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger,
+          },
+        ]);
+        this.dynamicRequiredRuleKeys.push(fieldInfo.key);
+      });
     },
     handleSubmit() {
       let phoneValue = '';

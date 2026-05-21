@@ -306,6 +306,7 @@ export default {
           this.isForbid = !this.isForbid;
           // eslint-disable-next-line vue/no-mutating-props
           this.currentProfile.status = status;
+          this.updateStatusField(status);
           const message = this.isForbid ? this.$t('禁用') : this.$t('启用');
           this.messageSuccess(message + this.$t('成功'));
         }
@@ -314,6 +315,15 @@ export default {
       } finally {
         this.$emit('closeBarLoading');
       }
+    },
+    updateStatusField(status) {
+      const statusField = this.fieldsList.find(item => item.key === 'status');
+      if (!statusField) {
+        return;
+      }
+
+      const statusText = this.statusMap.status && this.statusMap.status[status];
+      this.$set(statusField, 'value', this.$t(statusText || status));
     },
     // 查看手机号
     // eslint-disable-next-line no-unused-vars

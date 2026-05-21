@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import pytest
 from django.test import override_settings
 
+from bkuser_core.api.web.department.views import DepartmentRetrieveUpdateDeleteApi
 from bkuser_core.departments.models import Department
 from bkuser_core.departments.v2.views import DepartmentViewSet
 from bkuser_core.tests.apis.utils import get_api_factory, make_request_operator_aware
@@ -342,6 +343,26 @@ class TestActionApis:
         response = view(request=request, lookup_value=f"{d.id}")
         assert response.status_code == 200
         assert get_one_object("department", id=d.id, name=d.name).enabled
+
+
+class TestWebDepartmentApis:
+    @pytest.fixture(scope="class")
+    def view(self):
+        return DepartmentRetrieveUpdateDeleteApi.as_view()
+
+    @override_settings(ENABLE_IAM=False)
+    def test_department_rename_rejects_sibling_duplicate_name(self, factory, view):
+        """测试 Web 组织重命名不能与同级组织重名"""
+        target_department = make_simple_department("部门A", parent_id=1)
+        make_simple_department("部门B", parent_id=1)
+
+        request = factory.patch(f"/api/web/departments/{target_department.id}/", data={"name": "部门B"})
+        response = view(request=request, id=target_department.id)
+
+        target_department.refresh_from_db()
+        assert response.status_code == 400
+        assert response.data["code"] == "DEPARTMENT_NAME_CONFLICT"
+        assert target_department.name == "部门A"
 
 
 class TestGetProfilesApis:
