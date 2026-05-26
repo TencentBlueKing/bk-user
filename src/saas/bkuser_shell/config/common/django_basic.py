@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云 - 用户管理 (Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -14,8 +14,8 @@ from . import PROJECT_ROOT, env
 
 # 应用密钥
 SECRET_KEY = env.str("SECRET_KEY", default="MQtd_0cw&AiY5jT&&#w7%9sCK=HW$O_e%ch4xDd*AaP(xU0s3X")
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+DEBUG = env.bool("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 # 应用访问路径
 SITE_URL = "/"
@@ -136,7 +136,7 @@ TEMPLATES = [
 # ==============================================================================
 # session and cache
 # ==============================================================================
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 默认为false,为true时SESSION_COOKIE_AGE无效
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 默认为 false，为 true 时 SESSION_COOKIE_AGE 无效
 SESSION_COOKIE_PATH = SITE_URL
 
 # ===============================================================================
@@ -146,7 +146,7 @@ AUTH_USER_MODEL = "account.BkUser"
 AUTHENTICATION_BACKENDS = ("bkuser_shell.account.backends.UserBackend",)
 
 
-# 验证登录的cookie名
+# 验证登录的 cookie 名
 BK_COOKIE_NAME = "bk_token"
 # 数据库初始化 管理员列表
 INIT_SUPERUSER_NAMES = ["admin"]

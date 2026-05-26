@@ -23,8 +23,8 @@ CSRF_COOKIE_NAME = "bkuser_csrftoken"
 # ==============================================================================
 # Django 基本配置
 # ==============================================================================
-DEBUG = False
-ALLOWED_HOSTS = ["*"]
+DEBUG = env.bool("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 ROOT_URLCONF = "bkuser_core.urls"
 
