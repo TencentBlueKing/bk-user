@@ -10,7 +10,7 @@ from bkuser_core.config.common.system import *  # noqa
 
 from bkuser_global.logging import LoggingType, get_logging
 
-DEBUG = False
+DEBUG = env.bool("DEBUG", default=False)
 
 # use the static root 'static' in production envs
 if not DEBUG:
@@ -53,7 +53,7 @@ BK_COMPONENT_API_URL = "__BK_PAAS_PUBLIC_URL__"
 # cookie访问域
 BK_COOKIE_DOMAIN = ".__BK_DOMAIN__"
 
-SECRET_KEY = "__BK_PAAS_ESB_SECRET_KEY__"
+SECRET_KEY = env.str("SECRET_KEY", default="__BK_PAAS_ESB_SECRET_KEY__")
 
 # ESB Token
 ESB_TOKEN = "__BK_PAAS_APP_SECRET__"

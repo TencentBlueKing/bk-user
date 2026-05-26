@@ -32,10 +32,10 @@ PROJECT_ROOT, PROJECT_MODULE_NAME = os.path.split(PROJECT_PATH)
 BASE_DIR = os.path.dirname(os.path.dirname(PROJECT_PATH))
 
 # ************************************ django basic settings ************************************
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 # Generic Django project settings
-DEBUG = env.bool("DEBUG", False)
+DEBUG = env.bool("DEBUG", default=False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env.str("SECRET_KEY", default="o7(025idh*fj@)ohujum-ilfxl^n=@d&$xz!_$$7s$8jopd5r#")

@@ -34,6 +34,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.v2 import serializers as department_serializer
+from bkuser_core.profiles.constants import PROFILE_ALLOWED_LOOKUP_FIELDS
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.profiles.password import PasswordValidator
@@ -58,6 +59,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
+    ordering_fields = list(PROFILE_ALLOWED_LOOKUP_FIELDS)
     relation_fields = ["departments", "leader", "login_set"]
 
     def get_object(self):
@@ -67,6 +69,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             request_lookup_field = self.request.query_params[LOOKUP_PARAM]
+            if request_lookup_field not in PROFILE_ALLOWED_LOOKUP_FIELDS:
+                raise error_codes.FIELDS_NOT_SUPPORTED_YET.f(request_lookup_field)
             self.lookup_field = request_lookup_field
         except KeyError:
             """使用默认查询字段"""

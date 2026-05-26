@@ -123,6 +123,35 @@ class TypeOfExpiration(AutoLowerEnum):
     )
 
 
+PROFILE_ALLOWED_LOOKUP_FIELDS = frozenset(
+    {
+        "id",
+        "username",
+        "code",
+        "domain",
+        "category_id",
+        "display_name",
+        "status",
+        "staff_status",
+        "password_valid_days",
+        "password_update_time",
+        "position",
+        "account_expiration_date",
+        "time_zone",
+        "language",
+        "country_code",
+        "iso_code",
+        "enabled",
+        "create_time",
+        "update_time",
+        "type",
+        "role",
+        # PII 字段，已有调用方依赖，暂保留；后续应推动调用方改用专用接口后移除
+        "telephone",
+        "email",
+    }
+)
+
 PASSWD_RESET_VIA_SAAS_EMAIL_TMPL = "您的蓝鲸账号【{username}】的密码已被重置，若非本人操作，请及时修改"
 
 NOTICE_METHOD_EMAIL = "send_email"

@@ -113,11 +113,16 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         instance = serializer.instance
         name = serializer.validated_data.get("name")
-        if name and Department.objects.filter(
-            parent_id=instance.parent_id,
-            category_id=instance.category_id,
-            name=name,
-        ).exclude(id=instance.id).exists():
+        if (
+            name
+            and Department.objects.filter(
+                parent_id=instance.parent_id,
+                category_id=instance.category_id,
+                name=name,
+            )
+            .exclude(id=instance.id)
+            .exists()
+        ):
             raise error_codes.DEPARTMENT_NAME_CONFLICT
 
         serializer.save()
