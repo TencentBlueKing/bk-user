@@ -12,15 +12,37 @@ import logging
 from itertools import chain
 
 from django.db.models import QuerySet
+from rest_framework.exceptions import ValidationError
 
 from bkuser_core.apis.v2.viewset import AdvancedSearchFilter
 from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
+from bkuser_core.profiles.constants import PROFILE_ALLOWED_LOOKUP_FIELDS
 
 logger = logging.getLogger(__name__)
 
 
 class ProfileSearchFilter(AdvancedSearchFilter):
     """专供 profile 搜索使用"""
+
+    def _validate_lookup_field(self, field_name: str) -> None:
+        if field_name not in PROFILE_ALLOWED_LOOKUP_FIELDS:
+            raise ValidationError({"lookup_field": f"Field '{field_name}' is not allowed for lookup."})
+
+    def filter_queryset(self, request, queryset, view):
+        serializer = self.serializer_class(data=request.query_params)
+        serializer.is_valid(True)
+        query_data = serializer.validated_data
+
+        search_field = query_data.get(self.search_param) or getattr(view, self.search_param, None)
+        if search_field:
+            self._validate_lookup_field(search_field)
+
+        wildcard_search_fields = query_data.get(self.WILDCARD_SEARCH_FIELDS_PARAM)
+        if wildcard_search_fields:
+            for field in wildcard_search_fields:
+                self._validate_lookup_field(field)
+
+        return super().filter_queryset(request, queryset, view)
 
     def make_lookups(self, query_data: dict, queryset: QuerySet, search_field: str) -> QuerySet:
         """针对 username 字段做特殊处理"""
