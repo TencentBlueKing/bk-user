@@ -101,6 +101,9 @@ STATICFILES_DIRS = (
 STATIC_VERSION = 0.2
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(PROJECT_ROOT, "staticfiles/")
+# Frontend build artifacts are copied into PROJECT_ROOT/static in the SaaS image.
+# Serve them directly when DEBUG is False instead of requiring collectstatic.
+WHITENOISE_USE_FINDERS = True
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
