@@ -285,6 +285,15 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 class DepartmentProfileEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     """部门边"""
 
+    ALLOWED_LOOKUP_FIELDS = frozenset({"id", "department_id", "profile_id"})
+
     queryset = DepartmentThroughModel.objects.filter(profile__enabled=True, department__enabled=True)
     serializer_class = local_serializers.DepartmentProfileEdgesSLZ
     ordering = ["id"]
+    ordering_fields = ["id", "department_id", "profile_id"]
+
+    def filter_queryset(self, queryset):
+        lookup = self.request.query_params.get("lookup_field", self.lookup_field)
+        if lookup not in self.ALLOWED_LOOKUP_FIELDS:
+            raise error_codes.FIELDS_NOT_SUPPORTED_YET.f(lookup)
+        return super().filter_queryset(queryset)
