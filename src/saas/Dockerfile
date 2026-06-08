@@ -5,7 +5,7 @@ ENV NPM_VERSION 6.14.4
 # install requirements & build
 COPY src/pages /
 WORKDIR /
-RUN npm i
+RUN rm -f package-lock.json && npm i
 RUN npm rebuild node-sass --force && npm run build
 
 FROM python:3.11.10-slim-bullseye as SaaS

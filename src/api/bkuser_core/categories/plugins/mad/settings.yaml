@@ -41,6 +41,12 @@ telephone:
   required: true
   region: basic
   namespace: fields
+leader:
+  default: "manager"
+  example: "manager"
+  required: true
+  region: basic
+  namespace: fields
 email:
   default: email
   example: email

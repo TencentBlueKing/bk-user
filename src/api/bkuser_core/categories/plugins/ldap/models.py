@@ -23,6 +23,11 @@ class LdapUserProfile:
     code: str
     departments: List[List[str]]
     extras: Dict
+    leaders: List[str] = None
+
+    def __post_init__(self):
+        if self.leaders is None:
+            self.leaders = []
 
     @property
     def key_field(self):

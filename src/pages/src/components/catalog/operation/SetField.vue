@@ -105,6 +105,10 @@
               <bk-input class="user-key" :value="$t('手机号')" :readonly="true" />
               <bk-input class="user-value" v-model="basicFields.telephone" />
             </div>
+            <div class="user-item">
+              <bk-input class="user-key" :value="$t('上级')" :readonly="true" />
+              <bk-input class="user-value" v-model="basicFields.leader" />
+            </div>
           </div>
         </div>
       </div>
