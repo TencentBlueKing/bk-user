@@ -33,6 +33,7 @@ class ProfileFieldMapper:
         "email",
         "telephone",
     ]
+    leader_field = "leader"
     dynamic_fields: List = field(default_factory=list)
 
     def __post_init__(self):
@@ -102,6 +103,9 @@ class ProfileFieldMapper:
             [self.dynamic_fields_mapping[x] for x in self.dynamic_fields if self.dynamic_fields_mapping.get(x)]
         )
 
+        if self.config_loader.get(self.leader_field):
+            user_attributes.append(self.config_loader[self.leader_field])
+
         return user_attributes
 
 
@@ -109,6 +113,19 @@ def user_adapter(
     code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
 ) -> LdapUserProfile:
     groups = field_mapper.get_value("user_member_of", user_meta["raw_attributes"], True) or []
+
+    # 提取上级信息 (manager/leader)
+    leaders_raw = field_mapper.get_value(field_mapper.leader_field, user_meta["raw_attributes"], True) or []
+    leaders = []
+    for leader_dn in leaders_raw:
+        try:
+            # 从 DN 中提取 CN (用户名)
+            leader_dn_str = force_str(leader_dn)
+            dn_parts = parse_dn_tree(leader_dn_str, restrict_types=["CN"])
+            if dn_parts:
+                leaders.append(dn_parts[0].value)
+        except Exception as e:
+            logger.warning("failed to parse leader dn<%s>: %s", leader_dn, e)
 
     return LdapUserProfile(
         **field_mapper.get_values(user_meta["raw_attributes"]),
@@ -121,6 +138,7 @@ def user_adapter(
             # 用户与用户组之间的关系
             *[list(reversed(parse_dn_value_list(force_str(group), restrict_types))) for group in groups],
         ],
+        leaders=leaders,
     )
 
 

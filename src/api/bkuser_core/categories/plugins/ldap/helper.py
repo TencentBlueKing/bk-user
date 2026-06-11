@@ -25,7 +25,7 @@ from bkuser_core.categories.plugins.utils import handle_with_progress_info
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -234,12 +234,75 @@ class ProfileSyncHelper:
             self.context.add_record(step=SyncStep.USERS, success=True, username=info.username)
 
     def _load_leader_info(self):
-        raise NotImplementedError
+        """处理上下级关系
+
+        由于 Profile.leader 是多对多关系，ORM 操作会立即执行到数据库，
+        所以这里只是将关系信息加载到内存中，等待后续统一同步到数据库
+        """
+        for info in handle_with_progress_info(self.target_obj_list, progress_title="handle leader relationship"):
+            if not info.leaders:
+                continue
+
+            # 从内存中获取当前用户的 Profile 对象
+            profile = self.db_sync_manager.magic_get(info.username, LdapProfileMeta)
+            if not profile:
+                # 如果当前用户不存在，记录错误并跳过
+                self.context.add_record(
+                    step=SyncStep.USERS_RELATIONSHIP,
+                    success=False,
+                    username=info.username,
+                    error=_("用户不存在"),
+                )
+                logger.warning("profile<%s> not found in memory, skip leader relationship", info.username)
+                continue
+
+            # 处理每个上级关系
+            for leader_username in info.leaders:
+                # 从数据库中查找上级用户
+                leader_profile = self.db_profiles.get(leader_username)
+                if not leader_profile:
+                    # 如果上级用户在数据库中不存在，尝试从内存中获取
+                    # 这里需要通过 username 查找，但 magic_get 使用的是 code
+                    # 所以需要遍历 target_obj_list 找到对应的 code
+                    leader_info = None
+                    for obj in self.target_obj_list.values():
+                        if obj.username == leader_username:
+                            leader_info = obj
+                            break
+
+                    if leader_info:
+                        leader_profile = self.db_sync_manager.magic_get(leader_info.username, LdapProfileMeta)
+
+                    if not leader_profile:
+                        self.context.add_record(
+                            step=SyncStep.USERS_RELATIONSHIP,
+                            success=False,
+                            username=info.username,
+                            leader=leader_username,
+                            error=_("上级用户不存在"),
+                        )
+                        logger.warning(
+                            "leader<%s> of profile<%s> not found, skip this relationship",
+                            leader_username,
+                            info.username,
+                        )
+                        continue
+
+                # 添加上下级关系到内存
+                self.try_add_relation(
+                    params={"from_profile_id": profile.pk, "to_profile_id": leader_profile.pk},
+                    target_model=LeaderThroughModel,
+                )
+                self.context.add_record(
+                    step=SyncStep.USERS_RELATIONSHIP,
+                    success=True,
+                    username=info.username,
+                    leader=leader_username,
+                )
 
     def load_to_memory(self):
         self._load_base_info()
-        # TODO: 支持处理上下级关系
-        # self._load_leader_info()
+        self._load_leader_info()
 
     def try_add_relation(self, params: dict, target_model: Type[Model]):
         """增加关联关系"""

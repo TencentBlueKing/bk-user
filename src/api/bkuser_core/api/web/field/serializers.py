@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
-from bkuser_core.profiles.models import DynamicFieldInfo
+from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 
 
 # NOTE: 这里比较分裂的是, 前端输入的数据需要转换, 才能create/update, 并且吐出去之前要转成前端的格式
@@ -69,6 +69,14 @@ class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
 
         if DynamicFieldInfo.objects.filter(display_name=attrs["display_name"]).exists():
             raise ValidationError(_("名称为 {} 的自定义字段已存在").format(attrs["display_name"]))
+
+        # 模型自带字段不能作为自定义字段重复添加
+        if attrs["name"] in [field.name for field in Profile._meta.get_fields()]:
+            raise ValidationError(_("原生自带字段不能作为自定义字段重复添加"))
+
+        if attrs["display_name"] in [field.verbose_name for field in Profile._meta.get_fields() if
+                                     not field.is_relation]:
+            raise ValidationError(_("自定义字段display_name不能与原生自带字段重复"))
 
         return super().validate(attrs)
 
