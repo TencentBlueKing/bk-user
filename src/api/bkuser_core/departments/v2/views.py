@@ -289,6 +289,7 @@ class DepartmentProfileEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     queryset = DepartmentThroughModel.objects.filter(profile__enabled=True, department__enabled=True)
     serializer_class = local_serializers.DepartmentProfileEdgesSLZ
+    lookup_field = "id"
     ordering = ["id"]
     ordering_fields = ["id", "department_id", "profile_id"]
 
