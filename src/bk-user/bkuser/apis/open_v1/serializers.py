@@ -31,7 +31,7 @@ class ProfileUpdateInputSLZ(serializers.Serializer):
     #     max_length=11,
     # )
     # email = serializers.EmailField(help_text="邮箱", required=False)
-    language = serializers.ChoiceField(help_text="语言", required=False, choices=["zh-cn", "en"])
+    language = serializers.CharField(help_text="语言", required=False, max_length=32)
     time_zone = serializers.ChoiceField(help_text="时区", required=False, choices=TIME_ZONE_CHOICES)
     wx_userid = serializers.CharField(help_text="绑定的微信消息通知的账号 ID", required=False, allow_blank=True)
 

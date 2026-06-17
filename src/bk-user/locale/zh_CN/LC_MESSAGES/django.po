@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-02 12:00+0800\n"
+"POT-Creation-Date: 2026-06-17 15:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bkuser/apis/login/serializers.py:55 bkuser/common/error_codes.py:85
+#: bkuser/apis/login/serializers.py:56 bkuser/common/error_codes.py:85
 msgid "用户名或密码错误"
 msgstr "用户名或密码错误"
 
@@ -42,196 +42,196 @@ msgstr "指定查询的值 {} 长度超过 64 个字符限制"
 msgid "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 msgstr "指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username"
 
-#: bkuser/apis/web/audit/serializers.py:40
+#: bkuser/apis/web/audit/serializers.py:39
 msgid "开始时间和结束时间参数不能仅提供其中一个"
 msgstr "开始时间和结束时间参数不能仅提供其中一个"
 
-#: bkuser/apis/web/audit/serializers.py:43
+#: bkuser/apis/web/audit/serializers.py:42
 msgid "开始时间不能大于结束时间"
 msgstr "开始时间不能大于结束时间"
 
-#: bkuser/apis/web/collaboration/serializers.py:75
-#: bkuser/apis/web/collaboration/serializers.py:118
+#: bkuser/apis/web/collaboration/serializers.py:71
+#: bkuser/apis/web/collaboration/serializers.py:114
 msgid "同名协同策略已存在"
 msgstr "同名协同策略已存在"
 
-#: bkuser/apis/web/collaboration/serializers.py:81
+#: bkuser/apis/web/collaboration/serializers.py:77
 msgid "目标租户不能是当前租户"
 msgstr "目标租户不能是当前租户"
 
-#: bkuser/apis/web/collaboration/serializers.py:84
+#: bkuser/apis/web/collaboration/serializers.py:80
 msgid "目标租户不存在"
 msgstr "目标租户不存在"
 
-#: bkuser/apis/web/collaboration/serializers.py:92
-#: bkuser/apis/web/collaboration/serializers.py:126
-#: bkuser/apis/web/collaboration/serializers.py:221
+#: bkuser/apis/web/collaboration/serializers.py:88
+#: bkuser/apis/web/collaboration/serializers.py:122
+#: bkuser/apis/web/collaboration/serializers.py:217
 msgid "策略配置不合法：{}"
 msgstr "策略配置不合法：{}"
 
-#: bkuser/apis/web/collaboration/serializers.py:100
+#: bkuser/apis/web/collaboration/serializers.py:96
 msgid "当前租户到租户 {} 的协同策略已存在"
 msgstr "当前租户到租户 {} 的协同策略已存在"
 
-#: bkuser/apis/web/collaboration/serializers.py:185
+#: bkuser/apis/web/collaboration/serializers.py:181
 msgid "字段映射中的源字段 {} 不属于源租户用户自定义字段"
 msgstr "字段映射中的源字段 {} 不属于源租户用户自定义字段"
 
-#: bkuser/apis/web/collaboration/serializers.py:191
+#: bkuser/apis/web/collaboration/serializers.py:187
 msgid "字段映射中的目标字段 {} 不属于本租户用户自定义字段"
 msgstr "字段映射中的目标字段 {} 不属于本租户用户自定义字段"
 
-#: bkuser/apis/web/collaboration/serializers.py:200
+#: bkuser/apis/web/collaboration/serializers.py:196
 msgid "字段映射中的源字段 {} 和 目标字段 {} 的类型不一致"
 msgstr "字段映射中的源字段 {} 和 目标字段 {} 的类型不一致"
 
-#: bkuser/apis/web/collaboration/serializers.py:209
+#: bkuser/apis/web/collaboration/serializers.py:205
 msgid "字段映射中的源字段 {} 和 目标字段 {} 的枚举值不一致"
 msgstr "字段映射中的源字段 {} 和 目标字段 {} 的枚举值不一致"
 
-#: bkuser/apis/web/collaboration/views.py:159
+#: bkuser/apis/web/collaboration/views.py:155
 msgid "删除前需要先停用协同策略"
 msgstr "删除前需要先停用协同策略"
 
-#: bkuser/apis/web/collaboration/views.py:300
+#: bkuser/apis/web/collaboration/views.py:296
 msgid "无法获取分享方租户的自定义字段"
 msgstr "无法获取分享方租户的自定义字段"
 
-#: bkuser/apis/web/collaboration/views.py:325
+#: bkuser/apis/web/collaboration/views.py:321
 msgid "该协同策略未确认，无法进行更新"
 msgstr "该协同策略未确认，无法进行更新"
 
-#: bkuser/apis/web/collaboration/views.py:366
+#: bkuser/apis/web/collaboration/views.py:362
 msgid "该协同策略已确认，无需重复操作"
 msgstr "该协同策略已确认，无需重复操作"
 
-#: bkuser/apis/web/collaboration/views.py:370
+#: bkuser/apis/web/collaboration/views.py:366
 msgid "无法进行确认，请联系分享方租户管理员启用该策略"
 msgstr "无法进行确认，请联系分享方租户管理员启用该策略"
 
-#: bkuser/apis/web/collaboration/views.py:415
+#: bkuser/apis/web/collaboration/views.py:411
 msgid "请先确认策略，再尝试修改状态"
 msgstr "请先确认策略，再尝试修改状态"
 
-#: bkuser/apis/web/data_source/serializers.py:52
+#: bkuser/apis/web/data_source/serializers.py:53
 msgid "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
 msgstr "蓝鲸网关认证方式中，tenant_id 必须与当前租户保持一致"
 
-#: bkuser/apis/web/data_source/serializers.py:88
+#: bkuser/apis/web/data_source/serializers.py:89
 msgid "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 msgstr "字段映射中的目标字段 {} 不属于用户自定义字段或内置字段"
 
-#: bkuser/apis/web/data_source/serializers.py:95
+#: bkuser/apis/web/data_source/serializers.py:96
 msgid "必填目标字段 {} 缺少字段映射"
 msgstr "必填目标字段 {} 缺少字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:123
+#: bkuser/apis/web/data_source/serializers.py:124
 msgid "数据源插件不存在"
 msgstr "数据源插件不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:137
+#: bkuser/apis/web/data_source/serializers.py:138
 msgid "租户至多拥有一个实体类型的数据源"
 msgstr "租户至多拥有一个实体类型的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:143
-#: bkuser/apis/web/data_source/serializers.py:225
+#: bkuser/apis/web/data_source/serializers.py:144
+#: bkuser/apis/web/data_source/serializers.py:232
 msgid "当前数据源类型必须配置字段映射"
 msgstr "当前数据源类型必须配置字段映射"
 
-#: bkuser/apis/web/data_source/serializers.py:146
-#: bkuser/apis/web/data_source/serializers.py:228
+#: bkuser/apis/web/data_source/serializers.py:147
+#: bkuser/apis/web/data_source/serializers.py:235
 msgid "当前数据源类型必须提供同步配置"
 msgstr "当前数据源类型必须提供同步配置"
 
-#: bkuser/apis/web/data_source/serializers.py:149
-#: bkuser/apis/web/data_source/serializers.py:266
+#: bkuser/apis/web/data_source/serializers.py:150
+#: bkuser/apis/web/data_source/serializers.py:273
 msgid "数据源插件 {} 不存在"
 msgstr "数据源插件 {} 不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:155
-#: bkuser/apis/web/data_source/serializers.py:207
-#: bkuser/apis/web/data_source/serializers.py:286
+#: bkuser/apis/web/data_source/serializers.py:156
+#: bkuser/apis/web/data_source/serializers.py:214
+#: bkuser/apis/web/data_source/serializers.py:293
 msgid "插件配置不合法：{}"
 msgstr "插件配置不合法：{}"
 
-#: bkuser/apis/web/data_source/serializers.py:263
+#: bkuser/apis/web/data_source/serializers.py:270
 #: bkuser/plugins/local/plugin.py:58
 msgid "本地数据源不支持连通性测试"
 msgstr "本地数据源不支持连通性测试"
 
-#: bkuser/apis/web/data_source/serializers.py:274
+#: bkuser/apis/web/data_source/serializers.py:281
 msgid "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 msgstr "当前用户租户 {} 不存在 ID 为 {} 的数据源"
 
-#: bkuser/apis/web/data_source/serializers.py:313
-msgid "密码规则配置不合法: {}"
+#: bkuser/apis/web/data_source/serializers.py:320
+msgid "密码规则配置不合法：{}"
 msgstr "密码规则配置不合法：{}"
 
-#: bkuser/apis/web/data_source/serializers.py:321
+#: bkuser/apis/web/data_source/serializers.py:328
 msgid "指定数据源不存在"
 msgstr "指定数据源不存在"
 
-#: bkuser/apis/web/data_source/serializers.py:325
+#: bkuser/apis/web/data_source/serializers.py:332
 msgid "无法使用该数据源生成随机密码"
 msgstr "无法使用该数据源生成随机密码"
 
-#: bkuser/apis/web/data_source/serializers.py:351
+#: bkuser/apis/web/data_source/serializers.py:358
 msgid "待导入文件必须为 Excel 格式"
 msgstr "待导入文件必须为 Excel 格式"
 
-#: bkuser/apis/web/data_source/serializers.py:354
+#: bkuser/apis/web/data_source/serializers.py:361
 msgid "待导入文件大小不得超过 {} M"
 msgstr "待导入文件大小不得超过 {} M"
 
-#: bkuser/apis/web/data_source/serializers.py:360
+#: bkuser/apis/web/data_source/serializers.py:367
 msgid "出于安全考虑，全量导入模式暂不可用"
 msgstr "出于安全考虑，全量导入模式暂不可用"
 
-#: bkuser/apis/web/data_source/views.py:232
+#: bkuser/apis/web/data_source/views.py:231
 msgid "仅可更新实体类型数据源配置"
 msgstr "仅可更新实体类型数据源配置"
 
-#: bkuser/apis/web/data_source/views.py:272
+#: bkuser/apis/web/data_source/views.py:271
 msgid "仅可重置实体类型数据源"
 msgstr "仅可重置实体类型数据源"
 
-#: bkuser/apis/web/data_source/views.py:435
+#: bkuser/apis/web/data_source/views.py:434
 msgid "仅实体类型的本地数据源有提供导入模板"
 msgstr "仅实体类型的本地数据源有提供导入模板"
 
-#: bkuser/apis/web/data_source/views.py:457
+#: bkuser/apis/web/data_source/views.py:456
 msgid "仅能导出实体类型的本地数据源数据"
 msgstr "仅能导出实体类型的本地数据源数据"
 
-#: bkuser/apis/web/data_source/views.py:482
+#: bkuser/apis/web/data_source/views.py:481
 msgid "仅实体类型的本地数据源支持导入功能"
 msgstr "仅实体类型的本地数据源支持导入功能"
 
-#: bkuser/apis/web/data_source/views.py:489
+#: bkuser/apis/web/data_source/views.py:488
 msgid "文件格式异常"
 msgstr "文件格式异常"
 
-#: bkuser/apis/web/data_source/views.py:534
+#: bkuser/apis/web/data_source/views.py:533
 msgid "本地数据源不支持同步，请使用导入功能"
 msgstr "本地数据源不支持同步，请使用导入功能"
 
-#: bkuser/apis/web/data_source/views.py:537
+#: bkuser/apis/web/data_source/views.py:536
 msgid "仅实体类型的数据源支持同步"
 msgstr "仅实体类型的数据源支持同步"
 
-#: bkuser/apis/web/data_source/views.py:584 bkuser/common/error_codes.py:93
+#: bkuser/apis/web/data_source/views.py:583 bkuser/common/error_codes.py:93
 msgid "数据源不存在"
 msgstr "数据源不存在"
 
-#: bkuser/apis/web/data_source/views.py:587
+#: bkuser/apis/web/data_source/views.py:586
 msgid "仅实体类型的数据源有同步记录"
 msgstr "仅实体类型的数据源有同步记录"
 
-#: bkuser/apis/web/idp/serializers.py:66
+#: bkuser/apis/web/idp/serializers.py:73
 msgid "同名认证源已存在"
 msgstr "同名认证源已存在"
 
-#: bkuser/apis/web/idp/serializers.py:79
+#: bkuser/apis/web/idp/serializers.py:86
 msgid ""
 "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) "
 "字符组成，以字母开头并以字母或数字结尾"
@@ -239,33 +239,33 @@ msgstr ""
 "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) "
 "字符组成，以字母开头并以字母或数字结尾"
 
-#: bkuser/apis/web/idp/serializers.py:101
+#: bkuser/apis/web/idp/serializers.py:108
 msgid "当前租户下不存在 ID 为 {} 的实名数据源"
 msgstr "当前租户下不存在 ID 为 {} 的实名数据源"
 
-#: bkuser/apis/web/idp/serializers.py:110
+#: bkuser/apis/web/idp/serializers.py:117
 msgid "匹配的数据源字段 {} 不属于用户自定义字段或内置字段"
 msgstr "匹配的数据源字段 {} 不属于用户自定义字段或内置字段"
 
-#: bkuser/apis/web/idp/serializers.py:129
+#: bkuser/apis/web/idp/serializers.py:136
 msgid "认证源插件不存在"
 msgstr "认证源插件不存在"
 
-#: bkuser/apis/web/idp/serializers.py:132
+#: bkuser/apis/web/idp/serializers.py:139
 msgid "不允许创建本地账密认证源"
 msgstr "不允许创建本地账密认证源"
 
-#: bkuser/apis/web/idp/serializers.py:145
+#: bkuser/apis/web/idp/serializers.py:152
 msgid "{} 类型的认证源已存在"
 msgstr "{} 类型的认证源已存在"
 
-#: bkuser/apis/web/idp/serializers.py:150
+#: bkuser/apis/web/idp/serializers.py:157
 msgid "认证源插件 {} 不存在"
 msgstr "认证源插件 {} 不存在"
 
-#: bkuser/apis/web/idp/serializers.py:155
-#: bkuser/apis/web/idp/serializers.py:204
-#: bkuser/apis/web/idp/serializers.py:229
+#: bkuser/apis/web/idp/serializers.py:162
+#: bkuser/apis/web/idp/serializers.py:211
+#: bkuser/apis/web/idp/serializers.py:236
 msgid "认证源插件配置不合法：{}"
 msgstr "认证源插件配置不合法：{}"
 
@@ -313,7 +313,7 @@ msgid "不能移动至自己的子部门下"
 msgstr "不能移动至自己的子部门下"
 
 #: bkuser/apis/web/organization/serializers/relations.py:34
-#: bkuser/apis/web/organization/serializers/users.py:616
+#: bkuser/apis/web/organization/serializers/users.py:651
 msgid "用户 ID {} 在当前租户中不存在"
 msgstr "用户 ID {} 在当前租户中不存在"
 
@@ -321,107 +321,115 @@ msgstr "用户 ID {} 在当前租户中不存在"
 msgid "部门 ID {} 在当前租户中不存在"
 msgstr "部门 ID {} 在当前租户中不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:103
+#: bkuser/apis/web/organization/serializers/users.py:113
 msgid "部门不存在"
 msgstr "部门不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:133
-#: bkuser/apis/web/organization/serializers/users.py:584
+#: bkuser/apis/web/organization/serializers/users.py:122
+msgid "创建时间的开始时间不能大于结束时间"
+msgstr "创建时间的开始时间不能大于结束时间"
+
+#: bkuser/apis/web/organization/serializers/users.py:128
+msgid "账户过期时间的开始时间不能大于结束时间"
+msgstr "账户过期时间的开始时间不能大于结束时间"
+
+#: bkuser/apis/web/organization/serializers/users.py:158
+#: bkuser/apis/web/organization/serializers/users.py:619
 #: bkuser/apis/web/virtual_user/serializers.py:37
 msgid "用户名 {} 已存在"
 msgstr "用户名 {} 已存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:145
+#: bkuser/apis/web/organization/serializers/users.py:170
 msgid "指定的直属上级 {} 不存在"
 msgstr "指定的直属上级 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:188
+#: bkuser/apis/web/organization/serializers/users.py:213
 msgid "指定的部门 {} 不存在"
 msgstr "指定的部门 {} 不存在"
 
-#: bkuser/apis/web/organization/serializers/users.py:355
+#: bkuser/apis/web/organization/serializers/users.py:390
 msgid "不能设置自己为自己的直接上级"
 msgstr "不能设置自己为自己的直接上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:370
-#: bkuser/apis/web/organization/serializers/users.py:385
+#: bkuser/apis/web/organization/serializers/users.py:405
+#: bkuser/apis/web/organization/serializers/users.py:420
 msgid "账号有效期时间不能早于当前时间"
 msgstr "账号有效期时间不能早于当前时间"
 
-#: bkuser/apis/web/organization/serializers/users.py:482
+#: bkuser/apis/web/organization/serializers/users.py:517
 msgid "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 msgstr "第 {} 行，用户信息格式不正确，预期 {} 个字段，实际 {} 个字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:496
+#: bkuser/apis/web/organization/serializers/users.py:531
 msgid "第 {} 行，手机号 {} 格式不正确"
 msgstr "第 {} 行，手机号 {} 格式不正确"
 
-#: bkuser/apis/web/organization/serializers/users.py:540
+#: bkuser/apis/web/organization/serializers/users.py:575
 msgid "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不能转换为数字"
 
-#: bkuser/apis/web/organization/serializers/users.py:548
-#: bkuser/apis/web/organization/serializers/users.py:561
+#: bkuser/apis/web/organization/serializers/users.py:583
+#: bkuser/apis/web/organization/serializers/users.py:596
 msgid "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 msgstr "用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中"
 
-#: bkuser/apis/web/organization/serializers/users.py:579
+#: bkuser/apis/web/organization/serializers/users.py:614
 msgid "用户名 {} 重复"
 msgstr "用户名 {} 重复"
 
-#: bkuser/apis/web/organization/serializers/users.py:691
+#: bkuser/apis/web/organization/serializers/users.py:726
 msgid "用户 {} 不能设置为自己的直属上级"
 msgstr "用户 {} 不能设置为自己的直属上级"
 
-#: bkuser/apis/web/organization/serializers/users.py:702
+#: bkuser/apis/web/organization/serializers/users.py:737
 msgid "一次只能批量更新一个自定义字段"
 msgstr "一次只能批量更新一个自定义字段"
 
-#: bkuser/apis/web/organization/serializers/users.py:710
+#: bkuser/apis/web/organization/serializers/users.py:745
 msgid "请提供自定义字段 {} 的值"
 msgstr "请提供自定义字段 {} 的值"
 
-#: bkuser/apis/web/organization/serializers/users.py:718
+#: bkuser/apis/web/organization/serializers/users.py:753
 msgid "当前租户不存在管理员可编辑的自定义字段 {}"
 msgstr "当前租户不存在管理员可编辑的自定义字段 {}"
 
-#: bkuser/apis/web/organization/serializers/users.py:722
+#: bkuser/apis/web/organization/serializers/users.py:757
 msgid "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 msgstr "不能在批量操作中修改设置了唯一性的自定义字段 {}"
 
-#: bkuser/apis/web/organization/views/departments.py:171
+#: bkuser/apis/web/organization/views/departments.py:172
 msgid "仅可创建属于当前租户的部门"
 msgstr "仅可创建属于当前租户的部门"
 
-#: bkuser/apis/web/organization/views/departments.py:178
+#: bkuser/apis/web/organization/views/departments.py:179
 msgid "租户数据源不存在"
 msgstr "租户数据源不存在"
 
-#: bkuser/apis/web/organization/views/departments.py:180
+#: bkuser/apis/web/organization/views/departments.py:181
 msgid "仅本地数据源支持创建部门"
 msgstr "仅本地数据源支持创建部门"
 
-#: bkuser/apis/web/organization/views/departments.py:288
+#: bkuser/apis/web/organization/views/departments.py:296
 msgid "仅本地数据源支持更新部门"
 msgstr "仅本地数据源支持更新部门"
 
-#: bkuser/apis/web/organization/views/departments.py:290
+#: bkuser/apis/web/organization/views/departments.py:298
 msgid "仅可更新属于当前租户的部门"
 msgstr "仅可更新属于当前租户的部门"
 
-#: bkuser/apis/web/organization/views/departments.py:317
+#: bkuser/apis/web/organization/views/departments.py:328
 msgid "仅真实用户类型的本地数据源支持删除部门"
 msgstr "仅真实用户类型的本地数据源支持删除部门"
 
-#: bkuser/apis/web/organization/views/departments.py:327
+#: bkuser/apis/web/organization/views/departments.py:338
 msgid "该部门或其子部门下存在用户，无法删除"
 msgstr "该部门或其子部门下存在用户，无法删除"
 
-#: bkuser/apis/web/organization/views/departments.py:475
+#: bkuser/apis/web/organization/views/departments.py:472
 msgid "仅本地数据源支持移动部门"
 msgstr "仅本地数据源支持移动部门"
 
-#: bkuser/apis/web/organization/views/departments.py:477
+#: bkuser/apis/web/organization/views/departments.py:474
 msgid "仅可移动属于当前租户的部门"
 msgstr "仅可移动属于当前租户的部门"
 
@@ -445,45 +453,45 @@ msgstr "多选枚举，多个值以 / 分隔，可选值：{}"
 msgid "数据类型：{}"
 msgstr "数据类型：{}"
 
-#: bkuser/apis/web/organization/views/users.py:319
+#: bkuser/apis/web/organization/views/users.py:299
 msgid "仅可创建属于当前租户的用户"
 msgstr "仅可创建属于当前租户的用户"
 
-#: bkuser/apis/web/organization/views/users.py:479
+#: bkuser/apis/web/organization/views/users.py:459
 msgid "仅本地实名数据源支持更新用户信息"
 msgstr "仅本地实名数据源支持更新用户信息"
 
-#: bkuser/apis/web/organization/views/users.py:482
+#: bkuser/apis/web/organization/views/users.py:462
 msgid "仅可更新非协同产生的租户用户"
 msgstr "仅可更新非协同产生的租户用户"
 
-#: bkuser/apis/web/organization/views/users.py:499
+#: bkuser/apis/web/organization/views/users.py:479
 msgid "当前用户不允许更新用户名"
 msgstr "当前用户不允许更新用户名"
 
-#: bkuser/apis/web/organization/views/users.py:549
+#: bkuser/apis/web/organization/views/users.py:529
 msgid "仅本地实名数据源支持删除用户"
 msgstr "仅本地实名数据源支持删除用户"
 
-#: bkuser/apis/web/organization/views/users.py:552
+#: bkuser/apis/web/organization/views/users.py:532
 msgid "仅可删除非协同产生的租户用户"
 msgstr "仅可删除非协同产生的租户用户"
 
-#: bkuser/apis/web/organization/views/users.py:647
-#: bkuser/apis/web/personal_center/views.py:599
+#: bkuser/apis/web/organization/views/users.py:627
+#: bkuser/apis/web/personal_center/views.py:601
 msgid "该租户用户没有可用的密码规则"
 msgstr "该租户用户没有可用的密码规则"
 
-#: bkuser/apis/web/organization/views/users.py:680
-#: bkuser/apis/web/personal_center/views.py:553
+#: bkuser/apis/web/organization/views/users.py:660
+#: bkuser/apis/web/personal_center/views.py:555
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 
-#: bkuser/apis/web/organization/views/users.py:822
+#: bkuser/apis/web/organization/views/users.py:796
 msgid "指定的租户部门不存在"
 msgstr "指定的租户部门不存在"
 
-#: bkuser/apis/web/organization/views/users.py:1202
+#: bkuser/apis/web/organization/views/users.py:1176
 msgid "当前数据源未启用密码功能"
 msgstr "当前数据源未启用密码功能"
 
@@ -491,11 +499,11 @@ msgstr "当前数据源未启用密码功能"
 msgid "租户用户"
 msgstr "租户用户"
 
-#: bkuser/apis/web/password/constants.py:25
+#: bkuser/apis/web/password/constants.py:25 bkuser/apps/tenant/i18n.py:24
 msgid "手机号"
 msgstr "手机号"
 
-#: bkuser/apis/web/password/constants.py:26
+#: bkuser/apis/web/password/constants.py:26 bkuser/apps/tenant/i18n.py:23
 msgid "邮箱"
 msgstr "邮箱"
 
@@ -512,20 +520,19 @@ msgid "邮箱 {} 在租户 {} 中匹配不到用户"
 msgstr "邮箱 {} 在租户 {} 中匹配不到用户"
 
 #: bkuser/apis/web/password/views.py:133
-#: bkuser/apis/web/personal_center/views.py:282
+#: bkuser/apis/web/personal_center/views.py:285
 msgid "发送短信验证码过于频繁，请稍后再试"
 msgstr "发送短信验证码过于频繁，请稍后再试"
 
 #: bkuser/apis/web/password/views.py:140
-#: bkuser/apis/web/personal_center/views.py:287
-#: bkuser/apis/web/personal_center/views.py:386
+#: bkuser/apis/web/personal_center/views.py:290
+#: bkuser/apis/web/personal_center/views.py:389
 msgid "今日发送验证码次数超过上限，请明天再试"
 msgstr "今日发送验证码次数超过上限，请明天再试"
 
 #: bkuser/apis/web/password/views.py:143 bkuser/apis/web/password/views.py:237
-#: bkuser/apis/web/personal_center/views.py:290
-#: bkuser/apis/web/personal_center/views.py:389
-#: bkuser/apis/web/personal_center/views.py:631
+#: bkuser/apis/web/personal_center/views.py:293
+#: bkuser/apis/web/personal_center/views.py:392
 msgid "请联系管理员处理"
 msgstr "请联系管理员处理"
 
@@ -534,14 +541,14 @@ msgid "手机号码或验证码错误"
 msgstr "手机号码或验证码错误"
 
 #: bkuser/apis/web/password/views.py:184
-#: bkuser/apis/web/personal_center/views.py:238
-#: bkuser/apis/web/personal_center/views.py:341
+#: bkuser/apis/web/personal_center/views.py:241
+#: bkuser/apis/web/personal_center/views.py:344
 msgid "验证码错误"
 msgstr "验证码错误"
 
 #: bkuser/apis/web/password/views.py:187
-#: bkuser/apis/web/personal_center/views.py:243
-#: bkuser/apis/web/personal_center/views.py:346
+#: bkuser/apis/web/personal_center/views.py:246
+#: bkuser/apis/web/personal_center/views.py:349
 msgid "验证码校验失败，请联系管理员处理"
 msgstr "验证码校验失败，请联系管理员处理"
 
@@ -581,60 +588,61 @@ msgstr "可直接修改"
 msgid "不可修改"
 msgstr "不可修改"
 
-#: bkuser/apis/web/personal_center/serializers.py:180
+#: bkuser/apis/web/personal_center/serializers.py:179
 msgid "自定义手机号码为必填项"
 msgstr "自定义手机号码为必填项"
 
-#: bkuser/apis/web/personal_center/serializers.py:197
+#: bkuser/apis/web/personal_center/serializers.py:196
 msgid "自定义邮箱为必填项"
 msgstr "自定义邮箱为必填项"
 
-#: bkuser/apis/web/personal_center/serializers.py:269
+#: bkuser/apis/web/personal_center/serializers.py:268
 msgid "旧密码校验失败"
 msgstr "旧密码校验失败"
 
-#: bkuser/apis/web/personal_center/serializers.py:330
-msgid "微信公众号签名验证失败"
-msgstr "微信公众号签名验证失败"
-
-#: bkuser/apis/web/personal_center/views.py:202
+#: bkuser/apis/web/personal_center/views.py:205
 msgid "手机号码不可编辑"
 msgstr "手机号码不可编辑"
 
-#: bkuser/apis/web/personal_center/views.py:207
-#: bkuser/apis/web/personal_center/views.py:321
+#: bkuser/apis/web/personal_center/views.py:210
+#: bkuser/apis/web/personal_center/views.py:324
 msgid "验证码不能为空"
 msgstr "验证码不能为空"
 
-#: bkuser/apis/web/personal_center/views.py:240
-#: bkuser/apis/web/personal_center/views.py:343
+#: bkuser/apis/web/personal_center/views.py:243
+#: bkuser/apis/web/personal_center/views.py:346
 #: bkuser/common/verification_code/managers.py:54
 msgid "超过验证码重试次数"
 msgstr "超过验证码重试次数"
 
-#: bkuser/apis/web/personal_center/views.py:261
+#: bkuser/apis/web/personal_center/views.py:264
 msgid "当前租户更新手机号不允许发送验证码"
 msgstr "当前租户更新手机号不允许发送验证码"
 
-#: bkuser/apis/web/personal_center/views.py:316
+#: bkuser/apis/web/personal_center/views.py:319
 msgid "邮箱不可编辑"
 msgstr "邮箱不可编辑"
 
-#: bkuser/apis/web/personal_center/views.py:364
+#: bkuser/apis/web/personal_center/views.py:367
 msgid "当前租户更新邮箱不允许发送验证码"
 msgstr "当前租户更新邮箱不允许发送验证码"
 
-#: bkuser/apis/web/personal_center/views.py:381
+#: bkuser/apis/web/personal_center/views.py:384
 msgid "发送邮箱验证码过于频繁，请稍后再试"
 msgstr "发送邮箱验证码过于频繁，请稍后再试"
 
-#: bkuser/apis/web/personal_center/views.py:619
+#: bkuser/apis/web/personal_center/views.py:634
+msgid "当前账号未绑定微信"
+msgstr "当前账号未绑定微信"
+
+#: bkuser/apis/web/personal_center/views.py:665
 msgid "当前账户已绑定微信"
 msgstr "当前账户已绑定微信"
 
-#: bkuser/apis/web/personal_center/views.py:658
-msgid "当前账号未绑定微信"
-msgstr "当前账号未绑定微信"
+#: bkuser/apis/web/personal_center/views.py:736
+#: bkuser/apis/web/personal_center/views.py:748
+msgid "微信公众号签名验证失败"
+msgstr "微信公众号签名验证失败"
 
 #: bkuser/apis/web/platform_management/serializers.py:58
 msgid "选择邮箱通知方式时，邮箱不能为空"
@@ -672,117 +680,117 @@ msgstr "需要先停用租户才能删除"
 msgid "默认租户不能停用"
 msgstr "默认租户不能停用"
 
-#: bkuser/apis/web/tenant_info/serializers.py:112
+#: bkuser/apis/web/tenant_info/serializers.py:113
 msgid "非本租户实名账号（ids={}）不允许添加"
 msgstr "非本租户实名账号（ids={}）不允许添加"
 
-#: bkuser/apis/web/tenant_info/views.py:140
+#: bkuser/apis/web/tenant_info/views.py:143
 msgid "不存在实名管理员，无法禁用内置管理员账号登录"
 msgstr "不存在实名管理员，无法禁用内置管理员账号登录"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:44
+#: bkuser/apis/web/tenant_setting/serializers.py:45
 msgid "需要提供至少一个枚举选项"
 msgstr "需要提供至少一个枚举选项"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:49
+#: bkuser/apis/web/tenant_setting/serializers.py:50
 msgid "枚举选项不合法：{}"
 msgstr "枚举选项不合法：{}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:54
+#: bkuser/apis/web/tenant_setting/serializers.py:55
 msgid "存在重复枚举 ID：{}"
 msgstr "存在重复枚举 ID：{}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:59
+#: bkuser/apis/web/tenant_setting/serializers.py:60
 msgid "存在重复枚举值：{}"
 msgstr "存在重复枚举值：{}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:65
+#: bkuser/apis/web/tenant_setting/serializers.py:66
 msgid "枚举默认值 {} 需要是可选值 {} 之一"
 msgstr "枚举默认值 {} 需要是可选值 {} 之一"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:71
+#: bkuser/apis/web/tenant_setting/serializers.py:72
 msgid "多选枚举类型自定义字段 默认值 必须是 列表类型"
 msgstr "多选枚举类型自定义字段 默认值 必须是 列表类型"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:74
+#: bkuser/apis/web/tenant_setting/serializers.py:75
 msgid "多选枚举默认值 {} 不是可选值 {} 的子集"
 msgstr "多选枚举默认值 {} 不是可选值 {} 的子集"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:130
+#: bkuser/apis/web/tenant_setting/serializers.py:134
 msgid "字段名称 {} 已存在"
 msgstr "字段名称 {} 已存在"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:133
+#: bkuser/apis/web/tenant_setting/serializers.py:137
 msgid "字段名称 {} 与内置字段冲突"
 msgstr "字段名称 {} 与内置字段冲突"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:139
+#: bkuser/apis/web/tenant_setting/serializers.py:143
 msgid "英文标识 {} 已存在"
 msgstr "英文标识 {} 已存在"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:142
+#: bkuser/apis/web/tenant_setting/serializers.py:146
 msgid "英文标识 {} 与内置字段冲突"
 msgstr "英文标识 {} 与内置字段冲突"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:152
+#: bkuser/apis/web/tenant_setting/serializers.py:156
 msgid "枚举类型字段不支持设置唯一性"
 msgstr "枚举类型字段不支持设置唯一性"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:169
+#: bkuser/apis/web/tenant_setting/serializers.py:173
 msgid "设置为在个人中心可编辑的字段必须也设置可见"
 msgstr "设置为在个人中心可编辑的字段必须也设置可见"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:177
+#: bkuser/apis/web/tenant_setting/serializers.py:181
 msgid ""
 "字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"
 msgstr ""
 "字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:181
+#: bkuser/apis/web/tenant_setting/serializers.py:185
 msgid "枚举选项没有修改，无需配置字段迁移映射"
 msgstr "枚举选项没有修改，无需配置字段迁移映射"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:186
+#: bkuser/apis/web/tenant_setting/serializers.py:190
 msgid "被删除的枚举项 {} 均需要配置字段迁移映射"
 msgstr "被删除的枚举项 {} 均需要配置字段迁移映射"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:190
+#: bkuser/apis/web/tenant_setting/serializers.py:194
 msgid "字段迁移映射的目标值 {} 不在新的枚举选项中"
 msgstr "字段迁移映射的目标值 {} 不在新的枚举选项中"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:207
+#: bkuser/apis/web/tenant_setting/serializers.py:211
 msgid "展示用名称 {} 已存在"
 msgstr "展示用名称 {} 已存在"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:210
+#: bkuser/apis/web/tenant_setting/serializers.py:214
 msgid "展示用名称 {} 与内置字段冲突"
 msgstr "展示用名称 {} 与内置字段冲突"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:240
+#: bkuser/apis/web/tenant_setting/serializers.py:244
 msgid "枚举选项 ID 必须是数字，值 {} 不合法"
 msgstr "枚举选项 ID 必须是数字，值 {} 不合法"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:283
+#: bkuser/apis/web/tenant_setting/serializers.py:293
 msgid "表达式中至少需要填入一个字段"
 msgstr "表达式中至少需要填入一个字段"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:286
+#: bkuser/apis/web/tenant_setting/serializers.py:296
 msgid "表达式中字段个数不能超过 3 个"
 msgstr "表达式中字段个数不能超过 3 个"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:289
+#: bkuser/apis/web/tenant_setting/serializers.py:299
 msgid "表达式中字段不能重复"
 msgstr "表达式中字段不能重复"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:294
+#: bkuser/apis/web/tenant_setting/serializers.py:304
 msgid "表达式中非字段部分的字符数不能超过 16 个"
 msgstr "表达式中非字段部分的字符数不能超过 16 个"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:310
+#: bkuser/apis/web/tenant_setting/serializers.py:320
 msgid "表达式中存在无效字段：{}"
 msgstr "表达式中存在无效字段：{}"
 
-#: bkuser/apis/web/tenant_setting/serializers.py:314
+#: bkuser/apis/web/tenant_setting/serializers.py:324
 msgid "表达式中必须存在唯一字段"
 msgstr "表达式中必须存在唯一字段"
 
@@ -1030,6 +1038,34 @@ msgstr "虚拟"
 msgid "内置管理"
 msgstr "内置管理"
 
+#: bkuser/apps/data_source/i18n.py:23 bkuser/plugins/constants.py:31
+msgid "本地数据源"
+msgstr "本地数据源"
+
+#: bkuser/apps/data_source/i18n.py:24 bkuser/plugins/constants.py:32
+msgid "通用 HTTP 数据源"
+msgstr "通用 HTTP 数据源"
+
+#: bkuser/apps/data_source/i18n.py:25 bkuser/plugins/constants.py:34
+msgid "LDAP 数据源"
+msgstr "LDAP 数据源"
+
+#: bkuser/apps/data_source/i18n.py:29
+msgid "支持用户和部门的增删改查，以及用户的登录认证"
+msgstr ""
+
+#: bkuser/apps/data_source/i18n.py:30
+msgid ""
+"支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据"
+"` API"
+msgstr ""
+
+#: bkuser/apps/data_source/i18n.py:31
+msgid ""
+"支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 "
+"OpenLDAP、Microsoft Active Directory 等"
+msgstr ""
+
 #: bkuser/apps/idp/constants.py:24
 msgid "企业"
 msgstr "企业"
@@ -1060,6 +1096,23 @@ msgstr "部门"
 #: bkuser/apps/idp/constants.py:42
 msgid "任意"
 msgstr "任意"
+
+#: bkuser/apps/idp/i18n.py:23
+msgid "账密登录"
+msgstr "账密登录"
+
+#: bkuser/apps/idp/i18n.py:24 bkuser/biz/weixin/constants.py:24
+#: bkuser/plugins/constants.py:33
+msgid "企业微信"
+msgstr "企业微信"
+
+#: bkuser/apps/idp/i18n.py:28
+msgid "使用本地 DB 数据源提供的用户名和密码进行认证"
+msgstr ""
+
+#: bkuser/apps/idp/i18n.py:29
+msgid "使用腾讯企业微信进行企业身份认证"
+msgstr ""
 
 #: bkuser/apps/notification/constants.py:24
 msgid "邮件"
@@ -1290,7 +1343,7 @@ msgstr "nanoid"
 msgid "uuid4 hex"
 msgstr "uuid4 hex"
 
-#: bkuser/apps/tenant/constants.py:200
+#: bkuser/apps/tenant/constants.py:200 bkuser/apps/tenant/i18n.py:21
 msgid "用户名"
 msgstr "用户名"
 
@@ -1305,6 +1358,14 @@ msgstr "企业内用户唯一标识"
 #: bkuser/apps/tenant/constants.py:208
 msgid "蓝鲸用户唯一标识"
 msgstr "蓝鲸用户唯一标识"
+
+#: bkuser/apps/tenant/i18n.py:22
+msgid "姓名"
+msgstr ""
+
+#: bkuser/apps/tenant/i18n.py:25
+msgid "手机国际区号"
+msgstr ""
 
 #: bkuser/biz/senders.py:44 bkuser/biz/senders.py:75
 msgid "今日发送验证码次数超过上限"
@@ -1398,33 +1459,33 @@ msgstr "当前用户无可编辑的租户自定义字段"
 msgid "提供的自定义字段数据与租户自定义字段不匹配"
 msgstr "提供的自定义字段数据与租户自定义字段不匹配"
 
-#: bkuser/biz/weixin/weixin.py:111
+#: bkuser/biz/weixin/constants.py:25
+msgid "微信公众号"
+msgstr "微信公众号"
+
+#: bkuser/biz/weixin/weixin.py:167
 msgid "获取企业微信用户信息失败"
 msgstr "获取企业微信用户信息失败"
 
-#: bkuser/biz/weixin/weixin.py:116
+#: bkuser/biz/weixin/weixin.py:177
 msgid "企业微信 API 调用失败：{}"
 msgstr "企业微信 API 调用失败：{}"
 
-#: bkuser/biz/weixin/weixin.py:173
+#: bkuser/biz/weixin/weixin.py:210
 msgid "创建微信临时二维码失败"
 msgstr "创建微信临时二维码失败"
 
-#: bkuser/biz/weixin/weixin.py:177
+#: bkuser/biz/weixin/weixin.py:219
 msgid "微信公众号 API 调用失败：{}"
 msgstr "微信公众号 API 调用失败：{}"
 
-#: bkuser/biz/weixin/weixin.py:210
+#: bkuser/biz/weixin/weixin.py:277
 msgid "绑定成功"
 msgstr "绑定成功"
 
-#: bkuser/biz/weixin/weixin.py:220
+#: bkuser/biz/weixin/weixin.py:286
 msgid "微信二维码 ticket 无效或已过期"
 msgstr "微信二维码 ticket 无效或已过期"
-
-#: bkuser/biz/weixin/weixin.py:229
-msgid "微信二维码对应的用户不存在"
-msgstr ""
 
 #: bkuser/common/constants.py:35
 msgid "未认证的用户"
@@ -1658,6 +1719,10 @@ msgstr "state 无效"
 msgid "不支持的微信类型"
 msgstr "不支持的微信类型"
 
+#: bkuser/common/error_codes.py:139
+msgid "微信签名无效"
+msgstr ""
+
 #: bkuser/common/locks.py:30
 msgid "全局锁"
 msgstr "全局锁"
@@ -1798,27 +1863,27 @@ msgstr "密码必须包含数字"
 msgid "密码必须包含特殊符号"
 msgstr "密码必须包含特殊符号"
 
-#: bkuser/common/passwd/validator.py:134
+#: bkuser/common/passwd/validator.py:137
 msgid "密码强度评级过低"
 msgstr "密码强度评级过低"
 
-#: bkuser/common/passwd/validator.py:149
+#: bkuser/common/passwd/validator.py:152
 msgid "密码中包含过多的常见单词或弱密码（如：{} 或 {}）"
 msgstr "密码中包含过多的常见单词或弱密码（如：{} 或 {}）"
 
-#: bkuser/common/passwd/validator.py:184
+#: bkuser/common/passwd/validator.py:187
 msgid "密码不可包含 {} 位键盘序（{}）"
 msgstr "密码不可包含 {} 位键盘序（{}）"
 
-#: bkuser/common/passwd/validator.py:194
+#: bkuser/common/passwd/validator.py:197
 msgid "密码不可包含 {} 位连续字母序（{}）"
 msgstr "密码不可包含 {} 位连续字母序（{}）"
 
-#: bkuser/common/passwd/validator.py:204
+#: bkuser/common/passwd/validator.py:207
 msgid "密码不可包含连续 {} 位数字序（{}）"
 msgstr "密码不可包含连续 {} 位数字序（{}）"
 
-#: bkuser/common/passwd/validator.py:209
+#: bkuser/common/passwd/validator.py:212
 msgid "密码不可包含 {} 位重复字符（{}）"
 msgstr "密码不可包含 {} 位重复字符（{}）"
 
@@ -1861,22 +1926,6 @@ msgstr "验证码错误或已失效"
 #: bkuser/common/verification_code/managers.py:76
 msgid "生成验证码过于频繁，请稍后再试"
 msgstr "生成验证码过于频繁，请稍后再试"
-
-#: bkuser/plugins/constants.py:31
-msgid "本地数据源"
-msgstr "本地数据源"
-
-#: bkuser/plugins/constants.py:32
-msgid "通用 HTTP 数据源"
-msgstr "通用 HTTP 数据源"
-
-#: bkuser/plugins/constants.py:33
-msgid "企业微信"
-msgstr "企业微信"
-
-#: bkuser/plugins/constants.py:34
-msgid "LDAP 数据源"
-msgstr "LDAP 数据源"
 
 #: bkuser/plugins/general/constants.py:50
 msgid ""
@@ -1980,79 +2029,83 @@ msgstr "获取到的用户/部门数据为空，请检查数据源 API 服务"
 msgid "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
 msgstr "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
 
-#: bkuser/plugins/ldap/models.py:56
+#: bkuser/plugins/ldap/models.py:55
 msgid "LDAP 服务需要提供密码"
 msgstr "LDAP 服务需要提供密码"
 
-#: bkuser/plugins/ldap/models.py:79
+#: bkuser/plugins/ldap/models.py:80
 msgid "需要提供用户对象类"
 msgstr "需要提供用户对象类"
 
-#: bkuser/plugins/ldap/models.py:82
+#: bkuser/plugins/ldap/models.py:83
 msgid "需要提供用户 Base DN"
 msgstr "需要提供用户 Base DN"
 
-#: bkuser/plugins/ldap/models.py:85
+#: bkuser/plugins/ldap/models.py:86
 msgid "用户 Base DN 数量不能超过 {} 个"
 msgstr "用户 Base DN 数量不能超过 {} 个"
 
-#: bkuser/plugins/ldap/models.py:88
+#: bkuser/plugins/ldap/models.py:89
 msgid "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 msgstr "用户 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 
-#: bkuser/plugins/ldap/models.py:91
+#: bkuser/plugins/ldap/models.py:92
 msgid "需要提供部门对象类"
 msgstr "需要提供部门对象类"
 
-#: bkuser/plugins/ldap/models.py:94
+#: bkuser/plugins/ldap/models.py:95
 msgid "需要提供部门 Base DN"
 msgstr "需要提供部门 Base DN"
 
-#: bkuser/plugins/ldap/models.py:97
+#: bkuser/plugins/ldap/models.py:98
 msgid "部门 Base DN 数量不能超过 {} 个"
 msgstr "部门 Base DN 数量不能超过 {} 个"
 
-#: bkuser/plugins/ldap/models.py:100
+#: bkuser/plugins/ldap/models.py:101
 msgid "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 msgstr "部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 
-#: bkuser/plugins/ldap/models.py:123
+#: bkuser/plugins/ldap/models.py:104
+msgid "需要提供 UUID 属性"
+msgstr "需要提供 UUID 属性"
+
+#: bkuser/plugins/ldap/models.py:127
 msgid "需要提供用户组对象类"
 msgstr "需要提供用户组对象类"
 
-#: bkuser/plugins/ldap/models.py:126
+#: bkuser/plugins/ldap/models.py:130
 msgid "需要提供用户组 Base DN"
 msgstr "需要提供用户组 Base DN"
 
-#: bkuser/plugins/ldap/models.py:129
+#: bkuser/plugins/ldap/models.py:133
 msgid "用户组 Base DN 数量不能超过 {} 个"
 msgstr "用户组 Base DN 数量不能超过 {} 个"
 
-#: bkuser/plugins/ldap/models.py:132
+#: bkuser/plugins/ldap/models.py:136
 msgid "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 msgstr "用户组 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"
 
-#: bkuser/plugins/ldap/models.py:135
+#: bkuser/plugins/ldap/models.py:139
 msgid "用户组对象类为 groupOfNames 时，成员字段应为 member"
 msgstr "用户组对象类为 groupOfNames 时，成员字段应为 member"
 
-#: bkuser/plugins/ldap/models.py:138
+#: bkuser/plugins/ldap/models.py:142
 msgid "用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"
 msgstr "用户组对象类为 groupOfUniqueNames 时，成员字段应为 uniqueMember"
 
-#: bkuser/plugins/ldap/models.py:157
+#: bkuser/plugins/ldap/models.py:161
 msgid "需要提供 Leader 字段名"
 msgstr "需要提供 Leader 字段名"
 
-#: bkuser/plugins/ldap/models.py:183
+#: bkuser/plugins/ldap/models.py:187
 msgid "用户 Base DN 必须都是 Base DN 的子节点"
 msgstr "用户 Base DN 必须都是 Base DN 的子节点"
 
-#: bkuser/plugins/ldap/models.py:187
+#: bkuser/plugins/ldap/models.py:191
 msgid "部门 Base DN 必须都是 Base DN 的子节点"
 msgstr "部门 Base DN 必须都是 Base DN 的子节点"
 
-#: bkuser/plugins/ldap/models.py:192
+#: bkuser/plugins/ldap/models.py:196
 msgid "用户组 Base DN 必须都是 Base DN 的子节点"
 msgstr "用户组 Base DN 必须都是 Base DN 的子节点"
 
@@ -2076,27 +2129,27 @@ msgstr "随机生成"
 msgid "固定值"
 msgstr "固定值"
 
-#: bkuser/plugins/local/models.py:106
+#: bkuser/plugins/local/models.py:112
 msgid "邮件通知模板需要提供标题"
 msgstr "邮件通知模板需要提供标题"
 
-#: bkuser/plugins/local/models.py:184
+#: bkuser/plugins/local/models.py:190
 msgid "密码生成规则、初始密码设置、密码到期设置均不能为空"
 msgstr "密码生成规则、初始密码设置、密码到期设置均不能为空"
 
-#: bkuser/plugins/local/models.py:189
-msgid "密码生成规则不合法: {}"
+#: bkuser/plugins/local/models.py:195
+msgid "密码生成规则不合法：{}"
 msgstr "密码生成规则不合法：{}"
 
-#: bkuser/plugins/local/models.py:194
+#: bkuser/plugins/local/models.py:200
 msgid "固定密码不能为空"
 msgstr "固定密码不能为空"
 
-#: bkuser/plugins/local/models.py:199
+#: bkuser/plugins/local/models.py:205
 msgid "固定密码的值不符合密码规则：{}"
 msgstr "固定密码的值不符合密码规则：{}"
 
-#: bkuser/plugins/local/models.py:205
+#: bkuser/plugins/local/models.py:211
 msgid "无法根据预设规则生成符合条件的密码，请调整规则"
 msgstr "无法根据预设规则生成符合条件的密码，请调整规则"
 
@@ -2157,9 +2210,6 @@ msgstr "new message"
 
 #~ msgid "缺少 state"
 #~ msgstr "缺少 state"
-
-#~ msgid "管理员账密登录"
-#~ msgstr "管理员账密登录"
 
 #~ msgid "签名验证失败"
 #~ msgstr "签名验证失败"

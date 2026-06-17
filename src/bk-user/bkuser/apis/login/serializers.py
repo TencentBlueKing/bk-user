@@ -24,10 +24,10 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.i18n import get_idp_plugin_name
+from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
-from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -101,7 +101,10 @@ class IdpListOutputSLZ(serializers.Serializer):
 
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件 ID")
-    name = serializers.CharField(help_text="认证源插件名称")
+    name = serializers.SerializerMethodField(help_text="认证源插件名称")
+
+    def get_name(self, obj: IdpPlugin) -> str:
+        return get_idp_plugin_name(obj)
 
     class Meta:
         ref_name = "login.IdpPluginOutputSLZ"
@@ -156,7 +159,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言类型", max_length=32)
 
     class Meta:
         ref_name = "login.TenantUserLanguageUpdateInputSLZ"

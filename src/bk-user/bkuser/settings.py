@@ -175,7 +175,10 @@ AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
 LANGUAGE_CODE = "zh-cn"
-LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
+DEFAULT_LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
+# 支持通过环境变量追加可选语言，格式：EXTRA_LANGUAGES=ja=日本語,ko=한국어
+EXTRA_LANGUAGES = tuple(env.dict("EXTRA_LANGUAGES", default={}).items())
+LANGUAGES = DEFAULT_LANGUAGES + EXTRA_LANGUAGES
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True

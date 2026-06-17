@@ -104,4 +104,4 @@ class DepartmentProfileListInputSLZ(serializers.Serializer):
 
 
 class ProfileLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="需设置的语言", choices=["zh-cn", "en"])
+    language = serializers.CharField(help_text="需设置的语言", max_length=32)

@@ -31,6 +31,7 @@ from bkuser.apps.tenant.constants import (
     UserFieldDataType,
 )
 from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField, TenantUserCustomFieldOption
+from bkuser.apps.tenant.i18n import get_user_builtin_field_display_name
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
@@ -77,12 +78,15 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
 class BuiltinFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
-    display_name = serializers.CharField(help_text="展示用名称")
+    display_name = serializers.SerializerMethodField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     unique = serializers.BooleanField(help_text="是否唯一")
     default = serializers.JSONField(help_text="默认值")
     options = serializers.JSONField(help_text="选项")
+
+    def get_display_name(self, obj: UserBuiltinField) -> str:
+        return get_user_builtin_field_display_name(obj)
 
 
 class TenantUserCustomFieldOutputSLZ(serializers.Serializer):

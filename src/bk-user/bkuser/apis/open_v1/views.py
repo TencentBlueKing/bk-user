@@ -30,6 +30,7 @@ from .mixins import DefaultTenantMixin
 from .permissions import IsAllowedAppCode
 from .renderers import BkLegacyApiJSONRenderer
 from .serializers import ProfileBatchQueryInputSLZ, ProfileUpdateInputSLZ
+from ...apps.tenant.language import update_tenant_user_language
 
 
 class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
@@ -59,10 +60,13 @@ class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
 
         # 有传入字段参数则更新
         update_fields = []
-        for field in ["language", "time_zone", "wx_userid"]:
+        for field in ["time_zone", "wx_userid"]:
             if field in data:
                 setattr(tenant_user, field, data[field])
                 update_fields.append(field)
+
+        if "language" in data:
+            update_tenant_user_language(tenant_user, data["language"])
 
         if update_fields:
             update_fields.append("updated_at")

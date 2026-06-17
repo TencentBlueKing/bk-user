@@ -25,7 +25,6 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
-from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -159,8 +158,8 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
 
 class CurrentUserLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言类型", max_length=32, allow_blank=False)
 
 
 class CurrentUserLanguageUpdateOutputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言类型", max_length=32)

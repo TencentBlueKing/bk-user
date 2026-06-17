@@ -54,6 +54,7 @@ from bkuser.apis.web.personal_center.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.language import update_tenant_user_language
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.auditor import (
     TenantUserPasswordResetAuditor,
@@ -408,8 +409,7 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         data = slz.validated_data
 
         tenant_user = self.get_object()
-        tenant_user.language = data["language"]
-        tenant_user.save(update_fields=["language", "updated_at"])
+        update_tenant_user_language(tenant_user, data["language"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

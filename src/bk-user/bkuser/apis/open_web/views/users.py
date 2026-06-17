@@ -43,6 +43,7 @@ from bkuser.apis.open_web.serializers.users import (
 )
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.language import update_tenant_user_language
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -298,7 +299,6 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
         data = slz.validated_data
 
         tenant_user = get_object_or_404(self.get_queryset(), id=request.user.username)
-        tenant_user.language = data["language"]
-        tenant_user.save(update_fields=["language", "updated_at"])
+        update_tenant_user_language(tenant_user, data["language"])
 
         return Response(CurrentUserLanguageUpdateOutputSLZ(tenant_user).data)

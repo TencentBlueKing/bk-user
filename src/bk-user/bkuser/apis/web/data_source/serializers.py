@@ -27,6 +27,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.i18n import get_data_source_plugin_description, get_data_source_plugin_name
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -167,9 +168,15 @@ class DataSourceCreateOutputSLZ(serializers.Serializer):
 
 class DataSourcePluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="数据源插件唯一标识")
-    name = serializers.CharField(help_text="数据源插件名称")
-    description = serializers.CharField(help_text="数据源插件描述")
+    name = serializers.SerializerMethodField(help_text="数据源插件名称")
+    description = serializers.SerializerMethodField(help_text="数据源插件描述")
     logo = serializers.CharField(help_text="数据源插件 Logo")
+
+    def get_name(self, obj: DataSourcePlugin) -> str:
+        return get_data_source_plugin_name(obj)
+
+    def get_description(self, obj: DataSourcePlugin) -> str:
+        return get_data_source_plugin_description(obj)
 
 
 class DataSourcePluginDefaultConfigOutputSLZ(serializers.Serializer):

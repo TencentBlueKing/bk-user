@@ -26,6 +26,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
+from bkuser.apps.idp.i18n import get_idp_plugin_description, get_idp_plugin_name
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
@@ -39,9 +40,15 @@ from bkuser.utils.pydantic import stringify_pydantic_error
 
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件唯一标识")
-    name = serializers.CharField(help_text="认证源插件名称")
-    description = serializers.CharField(help_text="认证源插件描述")
+    name = serializers.SerializerMethodField(help_text="认证源插件名称")
+    description = serializers.SerializerMethodField(help_text="认证源插件描述")
     logo = serializers.CharField(help_text="认证源插件 Logo")
+
+    def get_name(self, obj: IdpPlugin) -> str:
+        return get_idp_plugin_name(obj)
+
+    def get_description(self, obj: IdpPlugin) -> str:
+        return get_idp_plugin_description(obj)
 
 
 class IdpPluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
