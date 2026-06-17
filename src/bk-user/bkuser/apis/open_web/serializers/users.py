@@ -158,7 +158,7 @@ class VirtualUserListOutputSLZ(serializers.Serializer):
 
 
 class CurrentUserLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.CharField(help_text="语言类型", max_length=32, allow_blank=False)
+    language = serializers.CharField(help_text="语言类型", max_length=32)
 
 
 class CurrentUserLanguageUpdateOutputSLZ(serializers.Serializer):

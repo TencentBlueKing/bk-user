@@ -65,12 +65,12 @@ class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
                 setattr(tenant_user, field, data[field])
                 update_fields.append(field)
 
-        if "language" in data:
-            update_tenant_user_language(tenant_user, data["language"])
-
         if update_fields:
             update_fields.append("updated_at")
             tenant_user.save(update_fields=update_fields)
+
+        if "language" in data:
+            update_tenant_user_language(tenant_user, data["language"])
 
         # Note: 由于调用方是判断非 200 即为异常，所以虽然是更新操作，但是兼容接口不可以返回 204，只能是 200
         return Response(status=status.HTTP_200_OK)

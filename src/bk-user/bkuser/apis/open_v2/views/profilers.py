@@ -842,6 +842,5 @@ class ProfileLanguageUpdateApi(
             raise Http404(f"user username:{kwargs['username']} not found")
 
         update_tenant_user_language(tenant_user, slz.validated_data["language"])
-        tenant_user.save(update_fields=["language"])
 
         return Response()

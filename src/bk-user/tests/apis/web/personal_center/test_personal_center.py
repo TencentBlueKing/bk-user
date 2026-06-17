@@ -117,18 +117,28 @@ class TestTenantUserLanguageUpdateApi:
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    @pytest.mark.parametrize(
-        ("language"),
-        [("zh-US"), ("en-CN"), ""],
-    )
-    def test_update_illegal_lanague(self, api_client, tenant_user, language):
+    def test_update_blank_language(self, api_client, tenant_user):
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": ""},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "该字段不能为空" in resp.data["message"]
+
+    @pytest.mark.parametrize("language", ["zh-US", "en-CN"])
+    def test_update_unsupported_language_should_ignore(self, api_client, tenant_user, language):
+        original_language = tenant_user.language
+
         resp = api_client.put(
             reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
             data={"language": language},
         )
 
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "不是合法选项" in resp.data["message"]
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        tenant_user.refresh_from_db()
+        assert tenant_user.language == original_language
 
 
 class TestTenantUserTimeZoneUpdateApi:

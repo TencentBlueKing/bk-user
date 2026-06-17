@@ -569,4 +569,9 @@ class TestTenantUserLanguageUpdateApi:
             data={"language": "invalid"},
         )
 
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        # 不支持的语言会被忽略，用户语言保持不变
+        zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+        zhangsan.refresh_from_db()
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["language"] == "zh-cn"
+        assert zhangsan.language == "zh-cn"
