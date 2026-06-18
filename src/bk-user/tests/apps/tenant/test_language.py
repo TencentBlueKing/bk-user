@@ -16,15 +16,32 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.tenant.language import get_supported_language_codes, update_tenant_user_language
+from bkuser.apps.tenant.language import (
+    get_supported_language_choices,
+    get_supported_language_codes,
+    update_tenant_user_language,
+)
 from django.test.utils import override_settings
 
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _clear_language_cache():
+    get_supported_language_choices.cache_clear()
+    get_supported_language_codes.cache_clear()
+    yield
+    get_supported_language_choices.cache_clear()
+    get_supported_language_codes.cache_clear()
+
+
 class TestGetSupportedLanguageCodes:
     def test_return_builtin_languages(self):
         assert get_supported_language_codes() == ["zh-cn", "en"]
+
+    def test_return_extra_languages(self):
+        with override_settings(EXTRA_LANGUAGES=[("ja", "日本語")]):
+            assert get_supported_language_codes() == ["zh-cn", "en", "ja"]
 
 
 class TestUpdateTenantUserLanguage:
