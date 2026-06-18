@@ -37,9 +37,15 @@ class UniqueEnabledTenantIdpOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
 
 
+class LanguageOutputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="语言代码")
+    name = serializers.CharField(help_text="语言名称")
+
+
 class GlobalSettingOutputSLZ(serializers.Serializer):
     bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")
     unique_enabled_tenant_idp = UniqueEnabledTenantIdpOutputSLZ(help_text="唯一认证源", required=False, default=None)
+    supported_languages = serializers.ListField(help_text="支持的语言", child=LanguageOutputSLZ())
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):

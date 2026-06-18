@@ -14,7 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
+from functools import lru_cache
+from typing import Dict, List, Tuple
 
 from django.conf import settings
 
@@ -22,10 +23,19 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.constants import BkLanguageEnum
 
 
+@lru_cache(maxsize=1)
+def get_supported_language_choices() -> List[Tuple[str, str]]:
+    choices: Dict[str, str] = {}
+
+    for code, name in BkLanguageEnum.get_choices() + list(settings.EXTRA_LANGUAGES):
+        choices.setdefault(code, name)
+
+    return list(choices.items())
+
+
+@lru_cache(maxsize=1)
 def get_supported_language_codes() -> List[str]:
-    builtin_language_codes = [code for code, _ in BkLanguageEnum.get_choices()]
-    extra_language_codes = [code for code, _ in settings.EXTRA_LANGUAGES]
-    return list(dict.fromkeys(builtin_language_codes + extra_language_codes))
+    return [code for code, _ in get_supported_language_choices()]
 
 
 def update_tenant_user_language(tenant_user: TenantUser, language_code: str) -> bool:

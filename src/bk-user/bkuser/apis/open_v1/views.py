@@ -23,6 +23,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.language import update_tenant_user_language
 from bkuser.apps.tenant.models import TenantUser
 
 from .authentications import ESBAuthentication
@@ -30,7 +31,6 @@ from .mixins import DefaultTenantMixin
 from .permissions import IsAllowedAppCode
 from .renderers import BkLegacyApiJSONRenderer
 from .serializers import ProfileBatchQueryInputSLZ, ProfileUpdateInputSLZ
-from ...apps.tenant.language import update_tenant_user_language
 
 
 class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
