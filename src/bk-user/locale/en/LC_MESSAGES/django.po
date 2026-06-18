@@ -1123,19 +1123,19 @@ msgstr "LDAP Data Source"
 
 #: bkuser/apps/data_source/i18n.py:29
 msgid "支持用户和部门的增删改查，以及用户的登录认证"
-msgstr ""
+msgstr "Supports CRUD operations for users and departments, as well as user authentication."
 
 #: bkuser/apps/data_source/i18n.py:30
 msgid ""
 "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据"
 "` API"
-msgstr ""
+msgstr "Supports integration with general HTTP data sources. Users need to provide `User Data` and `Department Data` APIs at the service provider."
 
 #: bkuser/apps/data_source/i18n.py:31
 msgid ""
 "支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 "
 "OpenLDAP、Microsoft Active Directory 等"
-msgstr ""
+msgstr "Supports integration with LDAP data sources. Users need to provide data services that comply with the LDAP protocol, such as OpenLDAP, Microsoft Active Directory, etc."
 
 #: bkuser/apps/idp/constants.py:24
 msgid "企业"
@@ -1179,11 +1179,11 @@ msgstr "WeCom"
 
 #: bkuser/apps/idp/i18n.py:28
 msgid "使用本地 DB 数据源提供的用户名和密码进行认证"
-msgstr ""
+msgstr "Authenticate using username and password provided by the local DB data source"
 
 #: bkuser/apps/idp/i18n.py:29
 msgid "使用腾讯企业微信进行企业身份认证"
-msgstr ""
+msgstr "Authenticate using Tencent WeCom for corporate identity authentication"
 
 #: bkuser/apps/notification/constants.py:24
 msgid "邮件"
@@ -1426,19 +1426,19 @@ msgstr "Username@Domain"
 
 #: bkuser/apps/tenant/constants.py:207
 msgid "企业内用户唯一标识"
-msgstr ""
+msgstr "Unique ID of the user within the enterprise"
 
 #: bkuser/apps/tenant/constants.py:208
 msgid "蓝鲸用户唯一标识"
-msgstr ""
+msgstr "Blueking user's unique identifier"
 
 #: bkuser/apps/tenant/i18n.py:22
 msgid "姓名"
-msgstr ""
+msgstr "Full Name"
 
 #: bkuser/apps/tenant/i18n.py:25
 msgid "手机国际区号"
-msgstr ""
+msgstr "Phone Country Code"
 
 #: bkuser/biz/senders.py:44 bkuser/biz/senders.py:75
 msgid "今日发送验证码次数超过上限"

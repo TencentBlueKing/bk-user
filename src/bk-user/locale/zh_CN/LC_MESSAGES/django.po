@@ -1052,19 +1052,23 @@ msgstr "LDAP 数据源"
 
 #: bkuser/apps/data_source/i18n.py:29
 msgid "支持用户和部门的增删改查，以及用户的登录认证"
-msgstr ""
+msgstr "支持用户和部门的增删改查，以及用户的登录认证"
 
 #: bkuser/apps/data_source/i18n.py:30
 msgid ""
 "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据"
 "` API"
 msgstr ""
+"支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据"
+"` API"
 
 #: bkuser/apps/data_source/i18n.py:31
 msgid ""
 "支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 "
 "OpenLDAP、Microsoft Active Directory 等"
 msgstr ""
+"支持对接 LDAP 数据源的插件，用户需要提供符合 LDAP 协议的数据服务，如 "
+"OpenLDAP、Microsoft Active Directory 等"
 
 #: bkuser/apps/idp/constants.py:24
 msgid "企业"
@@ -1108,11 +1112,11 @@ msgstr "企业微信"
 
 #: bkuser/apps/idp/i18n.py:28
 msgid "使用本地 DB 数据源提供的用户名和密码进行认证"
-msgstr ""
+msgstr "使用本地 DB 数据源提供的用户名和密码进行认证"
 
 #: bkuser/apps/idp/i18n.py:29
 msgid "使用腾讯企业微信进行企业身份认证"
-msgstr ""
+msgstr "使用腾讯企业微信进行企业身份认证"
 
 #: bkuser/apps/notification/constants.py:24
 msgid "邮件"
@@ -1361,11 +1365,11 @@ msgstr "蓝鲸用户唯一标识"
 
 #: bkuser/apps/tenant/i18n.py:22
 msgid "姓名"
-msgstr ""
+msgstr "姓名"
 
 #: bkuser/apps/tenant/i18n.py:25
 msgid "手机国际区号"
-msgstr ""
+msgstr "手机国际区号"
 
 #: bkuser/biz/senders.py:44 bkuser/biz/senders.py:75
 msgid "今日发送验证码次数超过上限"
