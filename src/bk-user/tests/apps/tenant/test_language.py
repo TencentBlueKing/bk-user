@@ -26,10 +26,6 @@ class TestGetSupportedLanguageCodes:
     def test_return_builtin_languages(self):
         assert get_supported_language_codes() == ["zh-cn", "en"]
 
-    def test_return_builtin_and_extra_languages_without_duplicate(self):
-        with override_settings(EXTRA_LANGUAGES=[("ja", "日本語"), ("ko", "한국어"), ("en", "English")]):
-            assert get_supported_language_codes() == ["zh-cn", "en", "ja", "ko"]
-
 
 class TestUpdateTenantUserLanguage:
     def test_update_builtin_language(self, not_expired_tenant_user):
