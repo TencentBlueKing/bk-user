@@ -30,11 +30,17 @@ class UniqueEnabledTenantIdp(BaseModel):
     owner_tenant_id: str
 
 
+class SupportedLanguage(BaseModel):
+    code: str
+    name: str
+
+
 class GlobalSetting(BaseModel):
     """全局配置信息"""
 
     bk_user_url: str
     unique_enabled_tenant_idp: UniqueEnabledTenantIdp | None
+    supported_languages: List[SupportedLanguage]
 
 
 class CollaborationTenant(BaseModel):
