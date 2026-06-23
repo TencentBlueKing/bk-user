@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from functools import lru_cache
+from functools import cache
 from typing import Dict, List, Tuple
 
 from django.conf import settings
@@ -23,7 +23,7 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.constants import BkLanguageEnum
 
 
-@lru_cache(maxsize=1)
+@cache
 def get_supported_language_choices() -> List[Tuple[str, str]]:
     choices: Dict[str, str] = {}
 
@@ -33,7 +33,7 @@ def get_supported_language_choices() -> List[Tuple[str, str]]:
     return list(choices.items())
 
 
-@lru_cache(maxsize=1)
+@cache
 def get_supported_language_codes() -> List[str]:
     return [code for code, _ in get_supported_language_choices()]
 
