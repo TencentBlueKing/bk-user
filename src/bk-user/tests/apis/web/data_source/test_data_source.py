@@ -26,8 +26,8 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUsernameGenerateConfig,
 )
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -460,7 +460,7 @@ class TestDataSourceDestroyApi:
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert updated_wecom_idp.status == IdpStatus.DISABLED
-        assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
+        assert not IdpDataSourceRelation.objects.filter(idp=updated_wecom_idp, data_source_id=data_source.id).exists()
 
     def test_destroy_with_delete_idp(self, api_client, data_source, local_idp, wecom_idp):
         resp = api_client.delete(

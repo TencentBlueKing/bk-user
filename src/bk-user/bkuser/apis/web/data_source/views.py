@@ -60,8 +60,8 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUsernameGenerateConfig,
 )
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -72,11 +72,11 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter, get_user_export_template
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -282,18 +282,39 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
 
-        idp_filters = {"owner_tenant_id": data_source.owner_tenant_id}
-
+        affected_idp_ids = list(
+            IdpDataSourceRelation.objects.filter(
+                idp_owner_tenant_id=data_source.owner_tenant_id,
+                data_source=data_source,
+            )
+            .values_list("idp_id", flat=True)
+            .distinct()
+        )
+        affected_idps = list(Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, id__in=affected_idp_ids))
         if is_delete_idp:
-            # 删除本地以及其他认证源，包括已禁用的认证源
-            idp_filters["data_source_id__in"] = [INVALID_REAL_DATA_SOURCE_ID, data_source.id]
-        else:
-            # 仅删除本地认证源
-            idp_filters["data_source_id"] = data_source.id
-            idp_filters["plugin_id"] = BuiltinIdpPluginEnum.LOCAL
+            related_idp_ids = list(
+                IdpDataSourceRelation.objects.filter(idp_owner_tenant_id=data_source.owner_tenant_id)
+                .values_list("idp_id", flat=True)
+                .distinct()
+            )
+            orphan_idps = list(
+                Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id).exclude(id__in=related_idp_ids)
+            )
+            affected_idps.extend(orphan_idps)
 
-        # 待删除的认证源
-        waiting_delete_idps = Idp.objects.filter(**idp_filters)
+        waiting_delete_idps = []
+        waiting_disable_idps = []
+        waiting_sync_local_idps = []
+        for idp in affected_idps:
+            has_other_real_relation = IdpDataSourceRelationHandler.has_real_relation(
+                idp, exclude_data_source_id=data_source.id
+            )
+            if is_delete_idp or (idp.is_local and not has_other_real_relation):
+                waiting_delete_idps.append(idp)
+            elif not has_other_real_relation:
+                waiting_disable_idps.append(idp)
+            elif idp.is_local:
+                waiting_sync_local_idps.append(idp)
 
         # 【审计】创建数据源审计对象并记录变更前数据
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
@@ -303,16 +324,23 @@ class DataSourceRetrieveUpdateDestroyApi(
             # 删除认证源敏感信息
             IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
 
-            waiting_delete_idps.delete()
+            Idp.objects.filter(id__in=[idp.id for idp in waiting_delete_idps]).delete()
 
-            if not is_delete_idp:
-                # 禁用其他认证源
-                Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, data_source_id=data_source.id).update(
+            IdpDataSourceRelation.objects.filter(
+                idp_owner_tenant_id=data_source.owner_tenant_id,
+                data_source=data_source,
+            ).delete()
+
+            if waiting_disable_idps:
+                Idp.objects.filter(id__in=[idp.id for idp in waiting_disable_idps]).update(
                     status=IdpStatus.DISABLED,
-                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
                     updated_at=timezone.now(),
                     updater=request.user.username,
                 )
+
+            for idp in waiting_sync_local_idps:
+                IdpDataSourceRelationHandler.sync_local_plugin_config(idp)
+
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 

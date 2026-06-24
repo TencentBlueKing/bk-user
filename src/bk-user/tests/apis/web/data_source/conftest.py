@@ -21,10 +21,12 @@ from typing import Any, Dict, List
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUsernameGenerateConfig
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
@@ -55,20 +57,20 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
 
 @pytest.fixture
 def local_idp(data_source) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name="local",
-        data_source_id=data_source.id,
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
     )
+    IdpDataSourceRelationHandler.set_local_real_relations(idp)
+    return idp
 
 
 @pytest.fixture
 def disabled_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="invalid_wecom",
-        data_source_id=INVALID_REAL_DATA_SOURCE_ID,
         owner_tenant_id=data_source.owner_tenant_id,
         status=IdpStatus.DISABLED,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
@@ -80,15 +82,21 @@ def disabled_idp(data_source) -> Idp:
 
 @pytest.fixture
 def wecom_idp(data_source) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name="wecom",
-        data_source_id=data_source.id,
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
         plugin_config=WecomIdpPluginConfig(
             corp_id=generate_random_string(), agent_id=generate_random_string(), secret=generate_random_string()
         ),
     )
+    IdpDataSourceRelation.objects.create(
+        idp=idp,
+        data_source=data_source,
+        idp_owner_tenant_id=idp.owner_tenant_id,
+        field_compare_rules=[{"source_field": "user_id", "target_field": "username"}],
+    )
+    return idp
 
 
 @pytest.fixture
@@ -156,10 +164,19 @@ def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
 
 @pytest.fixture
 def general_idp(general_data_source) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name="general_local",
-        data_source_id=general_data_source.id,
         owner_tenant_id=general_data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[general_data_source.id]),
     )
+    IdpDataSourceRelation.objects.create(
+        idp=idp,
+        data_source=general_data_source,
+        idp_owner_tenant_id=idp.owner_tenant_id,
+        field_compare_rules=[
+            rule.model_dump()
+            for rule in gen_data_source_match_rule_of_local(general_data_source.id).field_compare_rules
+        ],
+    )
+    return idp

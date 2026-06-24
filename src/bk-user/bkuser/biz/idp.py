@@ -22,7 +22,7 @@ from django.db.models import Q
 
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.idp.data_models import DataSourceMatchRule
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 
@@ -32,6 +32,7 @@ class AuthenticationMatcher:
 
     def __init__(self, idp_id: str):
         self.idp = Idp.objects.get(id=idp_id)
+        self.match_rules = self._get_match_rules()
         # 内置字段
         self.builtin_field_data_type_map = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
         # Note: Local登录允许匹配ID
@@ -59,11 +60,18 @@ class AuthenticationMatcher:
         不同匹配规则之间的关系是OR, 匹配规则里不同字段的关系是AND
         """
         q_list = [
-            q
-            for rule in self.idp.data_source_match_rule_objs
-            if (q := self._convert_one_rule_to_queryset_filter(rule, source_data))
+            q for rule in self.match_rules if (q := self._convert_one_rule_to_queryset_filter(rule, source_data))
         ]
         return reduce(operator.or_, q_list) if q_list else None
+
+    def _get_match_rules(self) -> List[DataSourceMatchRule]:
+        return [
+            DataSourceMatchRule(
+                data_source_id=relation.data_source_id,
+                field_compare_rules=relation.field_compare_rules,
+            )
+            for relation in IdpDataSourceRelation.objects.filter(idp=self.idp).order_by("created_at", "id")
+        ]
 
     def _convert_one_rule_to_queryset_filter(
         self, match_rule: DataSourceMatchRule, source_data: Dict[str, Any]

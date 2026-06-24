@@ -26,10 +26,11 @@ from rest_framework.response import Response
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
@@ -62,20 +63,37 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         if not tenant_ids:
             return None
 
-        # 启用的认证源
-        idps = Idp.objects.filter(status=IdpStatus.ENABLED, owner_tenant_id__in=tenant_ids).values(
-            "id", "owner_tenant_id", "plugin_id", "data_source_id"
+        # FIXME(nan): 内置管理员登录与实名用户登录已经区分入口，但这里似乎没有做区分，还需要靠前端页面上有做什么区分不
+        #  还需要考虑单租户与多租户区别，是否应该仅针对单租户？
+        real_data_source_ids = list(
+            DataSource.objects.filter(owner_tenant_id__in=tenant_ids, type=DataSourceTypeEnum.REAL).values_list(
+                "id", flat=True
+            )
+        )
+        if not real_data_source_ids:
+            return None
+
+        enabled_real_idp_ids = list(
+            IdpDataSourceRelation.objects.filter(
+                idp_owner_tenant_id__in=tenant_ids,
+                data_source_id__in=real_data_source_ids,
+            )
+            .values_list("idp_id", flat=True)
+            .distinct()
+        )
+
+        # 启用的实名认证源
+        idps = list(
+            Idp.objects.filter(
+                status=IdpStatus.ENABLED,
+                owner_tenant_id__in=tenant_ids,
+                id__in=enabled_real_idp_ids,
+            ).values("id", "owner_tenant_id", "plugin_id")
         )
         if len(idps) != 1:
             return None
 
         idp = idps[0]
-        # 协同情况处理
-        # 如果唯一 IDP 关联的数据源是非实名的，则说明该 IDP 只会被用于本租户，不会有其他租户协同的使用
-        # 协同限制：非实名数据源不可被协同
-        if not DataSource.objects.filter(id=idp["data_source_id"], type=DataSourceTypeEnum.REAL).exists():
-            return idp
-
         target_tenant_ids = list(
             CollaborationStrategy.objects.filter(
                 source_status=CollaborationStrategyStatus.ENABLED,
@@ -173,7 +191,14 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     serializer_class = IdpListOutputSLZ
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        return {"data_source_type_map": {ds["id"]: ds["type"] for ds in DataSource.objects.values("id", "type")}}
+        idp_ids = [idp.id for idp in self.get_queryset()]
+        idps_with_real_relation = set(
+            IdpDataSourceRelation.objects.filter(idp_id__in=idp_ids).values_list("idp_id", flat=True).distinct()
+        )
+        real_data_source_type = (
+            DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("type", flat=True).first()
+        )
+        return {"idp_data_source_type_map": {idp_id: real_data_source_type for idp_id in idps_with_real_relation}}
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
@@ -191,17 +216,11 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         ):
             return Idp.objects.none()
 
-        queryset = Idp.objects.filter(owner_tenant_id=idp_owner_tenant_id, status=IdpStatus.ENABLED)
-        # 协同情况，只有实名用户对应的认证源可以登录
-        if tenant_id != idp_owner_tenant_id:
-            real_ds_ids = DataSource.objects.filter(
-                owner_tenant_id=idp_owner_tenant_id, type=DataSourceTypeEnum.REAL
-            ).values_list("id", flat=True)
-            if not real_ds_ids.exists():
-                return Idp.objects.none()
-            queryset = queryset.filter(data_source_id__in=real_ds_ids)
+        real_idp_ids = IdpDataSourceRelationHandler.get_real_idp_ids(idp_owner_tenant_id)
+        if not real_idp_ids:
+            return Idp.objects.none()
 
-        return queryset
+        return Idp.objects.filter(owner_tenant_id=idp_owner_tenant_id, status=IdpStatus.ENABLED, id__in=real_idp_ids)
 
 
 class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):

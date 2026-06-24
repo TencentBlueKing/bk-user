@@ -96,7 +96,7 @@ class IdpListOutputSLZ(serializers.Serializer):
         ref_name = "login.IdpListOutputSLZ"
 
     def get_data_source_type(self, obj: Idp) -> str:
-        return self.context["data_source_type_map"].get(obj.data_source_id, "")
+        return self.context["idp_data_source_type_map"].get(obj.id, "")
 
 
 class IdpPluginOutputSLZ(serializers.Serializer):
@@ -120,6 +120,7 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
 
     def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
         # Note: 不能直接 obj.plugin_config，因为该对象里包含加密的敏感信息，而登录流程是必须使原始数据的
+        # Local 认证源的 data_source_ids 在关系变更时同步到 plugin_config，供 bk-login 初始化插件直接使用。
         return obj.get_plugin_cfg().model_dump()
 
 
