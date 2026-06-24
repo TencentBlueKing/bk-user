@@ -121,6 +121,7 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
         # Note: 不能直接 obj.plugin_config，因为该对象里包含加密的敏感信息，而登录流程是必须使原始数据的
         # Local 认证源的 data_source_ids 在关系变更时同步到 plugin_config，供 bk-login 初始化插件直接使用。
+        # 这里不动态覆盖 data_source_ids，避免登录详情接口承担关系同步职责。
         return obj.get_plugin_cfg().model_dump()
 
 

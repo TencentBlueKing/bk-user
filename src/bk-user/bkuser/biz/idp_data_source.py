@@ -228,6 +228,7 @@ class IdpDataSourceRelationHandler:
         全部实名数据源。新增实名数据源后不会自动追加关系，管理员确认数据源 ready 后再次保存
         登录源即可完成覆盖刷新；若未来需要自动追加，推荐在数据源 ready 事件中复用同租户同插件
         已有 IDP 的首个规则生成新关系，并同步本地登录插件配置。
+        注意：数据源创建流程默认不调用该方法，避免未确认 ready 的实名数据源提前进入登录匹配范围。
         """
         rules = DataSourceMatchRuleList.validate_python(list(match_rules))
         if not rules:

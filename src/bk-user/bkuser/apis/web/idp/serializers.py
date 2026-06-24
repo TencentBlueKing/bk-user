@@ -169,7 +169,8 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     callback_uri = serializers.CharField(help_text="回调地址")
 
     def get_data_source_match_rules(self, obj: Idp) -> List[Dict[str, Any]]:
-        # 当前管理页仍只展示一个实名数据源的登录配置模板；完整多数据源关系为后台内部状态。
+        # 当前管理页仍只展示一个实名数据源的登录配置模板，不返回完整 relations。
+        # 登录匹配必须读取 IdpDataSourceRelation 中的完整关系，不能依赖该响应字段。
         match_rule = IdpDataSourceRelationHandler.get_primary_real_match_rule(obj)
         return [match_rule.model_dump()] if match_rule else []
 

@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
+from collections import defaultdict
 
 import openpyxl
 from django.conf import settings
@@ -185,6 +186,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
+            # 新实名数据源不会自动加入已有登录源。管理员确认数据 ready 后，需重新保存登录源配置。
+            # 若未来需要自动追加，可复用已有主实名匹配规则调用 IdpDataSourceRelationHandler 追加关系。
             DataSourceUsernameGenerateConfig.objects.create(
                 data_source=ds,
                 rule=data["username_generate_config"]["rule"],
@@ -266,6 +269,52 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @staticmethod
+    def _classify_idps_for_deletion(data_source: DataSource, is_delete_idp: bool):
+        """根据 IDP 与实名数据源的关联情况，决定各 IDP 的处置策略：
+
+        - 还有其他实名数据源关联：本地 IDP 需同步插件配置，其他类型无需处理
+        - 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+        """
+        # 查询该租户下所有 IDP 与实名数据源的关联关系
+        idp_ds_map: dict[str, list[int]] = defaultdict(list)
+        relations = IdpDataSourceRelation.objects.filter(
+            idp_owner_tenant_id=data_source.owner_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+        ).values("idp_id", "data_source_id")
+
+        for rel in relations:
+            idp_ds_map[rel["idp_id"]].append(rel["data_source_id"])
+
+        # 查询该租户下所有 IDP，用于后续判断 IDP 类型、变更状态、删除等操作
+        idp_map = {idp.id: idp for idp in Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id)}
+
+        # 根据 IDP 关联的实名数据源情况，决定处置策略：
+        # - 还有其他实名数据源关联：本地 IDP 需同步插件配置，其他类型无需处理
+        # - 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+        waiting_delete_idps = []
+        waiting_disable_idps = []
+        waiting_sync_local_idps = []
+        for idp_id, ds_ids in idp_ds_map.items():
+            # 与当前数据源无关的 IDP，跳过
+            if data_source.id not in ds_ids:
+                continue
+
+            idp = idp_map[idp_id]
+            # 判断是否有其他实名数据源关联
+            has_other = len(ds_ids) > 1
+            if has_other:
+                # 有其他实名数据源关联且是本地 IDP 需同步插件配置
+                if idp.is_local:
+                    waiting_sync_local_idps.append(idp)
+            # 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+            elif is_delete_idp or idp.is_local:
+                waiting_delete_idps.append(idp)
+            else:
+                waiting_disable_idps.append(idp)
+
+        return waiting_delete_idps, waiting_disable_idps, waiting_sync_local_idps
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="重置数据源",
@@ -282,55 +331,27 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
 
-        affected_idp_ids = list(
-            IdpDataSourceRelation.objects.filter(
-                idp_owner_tenant_id=data_source.owner_tenant_id,
-                data_source=data_source,
-            )
-            .values_list("idp_id", flat=True)
-            .distinct()
+        waiting_delete_idps, waiting_disable_idps, waiting_sync_local_idps = self._classify_idps_for_deletion(
+            data_source, is_delete_idp
         )
-        affected_idps = list(Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, id__in=affected_idp_ids))
-        if is_delete_idp:
-            related_idp_ids = list(
-                IdpDataSourceRelation.objects.filter(idp_owner_tenant_id=data_source.owner_tenant_id)
-                .values_list("idp_id", flat=True)
-                .distinct()
-            )
-            orphan_idps = list(
-                Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id).exclude(id__in=related_idp_ids)
-            )
-            affected_idps.extend(orphan_idps)
-
-        waiting_delete_idps = []
-        waiting_disable_idps = []
-        waiting_sync_local_idps = []
-        for idp in affected_idps:
-            has_other_real_relation = IdpDataSourceRelationHandler.has_real_relation(
-                idp, exclude_data_source_id=data_source.id
-            )
-            if is_delete_idp or (idp.is_local and not has_other_real_relation):
-                waiting_delete_idps.append(idp)
-            elif not has_other_real_relation:
-                waiting_disable_idps.append(idp)
-            elif idp.is_local:
-                waiting_sync_local_idps.append(idp)
 
         # 【审计】创建数据源审计对象并记录变更前数据
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
         auditor.pre_record_data_before(data_source, list(waiting_delete_idps))
 
         with transaction.atomic():
-            # 删除认证源敏感信息
-            IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
-
-            Idp.objects.filter(id__in=[idp.id for idp in waiting_delete_idps]).delete()
+            # 删除实名数据源关联的 IDP
+            if waiting_delete_idps:
+                # 删除认证源敏感信息
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                Idp.objects.filter(id__in=[idp.id for idp in waiting_delete_idps]).delete()
 
             IdpDataSourceRelation.objects.filter(
                 idp_owner_tenant_id=data_source.owner_tenant_id,
                 data_source=data_source,
             ).delete()
 
+            # 禁用认证源
             if waiting_disable_idps:
                 Idp.objects.filter(id__in=[idp.id for idp in waiting_disable_idps]).update(
                     status=IdpStatus.DISABLED,
@@ -338,6 +359,7 @@ class DataSourceRetrieveUpdateDestroyApi(
                     updater=request.user.username,
                 )
 
+            # 同步本地 IDP 插件配置
             for idp in waiting_sync_local_idps:
                 IdpDataSourceRelationHandler.sync_local_plugin_config(idp)
 
