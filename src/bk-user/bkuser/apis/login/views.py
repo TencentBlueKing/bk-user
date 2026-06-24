@@ -24,7 +24,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStatus
@@ -65,18 +65,10 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
 
         # FIXME(nan): 内置管理员登录与实名用户登录已经区分入口，但这里似乎没有做区分，还需要靠前端页面上有做什么区分不
         #  还需要考虑单租户与多租户区别，是否应该仅针对单租户？
-        real_data_source_ids = list(
-            DataSource.objects.filter(owner_tenant_id__in=tenant_ids, type=DataSourceTypeEnum.REAL).values_list(
-                "id", flat=True
-            )
-        )
-        if not real_data_source_ids:
-            return None
-
-        enabled_real_idp_ids = list(
+        real_idp_ids = list(
             IdpDataSourceRelation.objects.filter(
                 idp_owner_tenant_id__in=tenant_ids,
-                data_source_id__in=real_data_source_ids,
+                data_source__type=DataSourceTypeEnum.REAL,
             )
             .values_list("idp_id", flat=True)
             .distinct()
@@ -87,25 +79,13 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             Idp.objects.filter(
                 status=IdpStatus.ENABLED,
                 owner_tenant_id__in=tenant_ids,
-                id__in=enabled_real_idp_ids,
+                id__in=real_idp_ids,
             ).values("id", "owner_tenant_id", "plugin_id")
         )
         if len(idps) != 1:
             return None
 
-        idp = idps[0]
-        target_tenant_ids = list(
-            CollaborationStrategy.objects.filter(
-                source_status=CollaborationStrategyStatus.ENABLED,
-                target_status=CollaborationStrategyStatus.ENABLED,
-                source_tenant_id=idp["owner_tenant_id"],
-            ).values_list("target_tenant_id", flat=True)
-        )
-        # 有协同，且协同租户启用了，那就不是唯一认证源了
-        if target_tenant_ids and len(set(target_tenant_ids) & set(tenant_ids)) > 0:
-            return None
-
-        return idp
+        return idps[0]
 
     def get(self, request, *args, **kwargs):
         return Response(
@@ -191,14 +171,12 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     serializer_class = IdpListOutputSLZ
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        idp_ids = [idp.id for idp in self.get_queryset()]
         idps_with_real_relation = set(
-            IdpDataSourceRelation.objects.filter(idp_id__in=idp_ids).values_list("idp_id", flat=True).distinct()
+            IdpDataSourceRelation.objects.filter(data_source__type=DataSourceTypeEnum.REAL)
+            .values_list("idp_id", flat=True)
+            .distinct()
         )
-        real_data_source_type = (
-            DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("type", flat=True).first()
-        )
-        return {"idp_data_source_type_map": {idp_id: real_data_source_type for idp_id in idps_with_real_relation}}
+        return {"idp_data_source_type_map": {idp_id: DataSourceTypeEnum.REAL for idp_id in idps_with_real_relation}}
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
