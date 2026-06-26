@@ -1,14 +1,10 @@
 <template>
   <div class="main-content">
-    <div class="bg-img right-top">
-      <img src="../static/images/right-top.png" alt="">
-    </div>
-    <div class="bg-img right-bottom">
-      <img src="../static/images/right-bottom.png" alt="">
-    </div>
-    <div class="bg-img left-bottom">
-      <img src="../static/images/left-bottom.png" alt="">
-    </div>
+    <canvas
+      ref="dynamicBgRef"
+      class="dynamic-bg"
+      aria-hidden="true">
+    </canvas>
     <div class="login-model">
       <router-view></router-view>
       <div class="tenant-footer">
@@ -27,7 +23,6 @@
       <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
       <ProtocolEn v-if="protocolVisible && activeTab === 'en'" @close="protocolVisible = false" />
     </div>
-    <div id="particles-js"></div>
     <footer class="footer">
       <p>
         <span v-dompurify-html="contact"></span>
@@ -46,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { getPlatformConfig, setShortcutIcon, setDocumentTitle } from '@blueking/platform-config';
 import { platformConfig } from '@/store/platformConfig';
 import Protocol from './views/components/protocol.vue';
@@ -54,133 +49,24 @@ import ProtocolEn from './views/components/protocol-en.vue';
 import I18n from '@/language/index';
 import Cookies from 'js-cookie';
 
+interface DynamicPoint {
+  baseX: number
+  baseY: number
+  driftX: number
+  driftY: number
+  phase: number
+  radius: number
+  speed: number
+}
+
 const activeTab = ref(I18n.global.locale.value);
+const dynamicBgRef = ref<HTMLCanvasElement | null>(null);
+let cleanupDynamicBg: (() => void) | null = null;
+
 /**
  * 用户协议是否显示
  */
 const protocolVisible = ref(false);
-
-onMounted(() => {
-  particlesJS(
-    'particles-js',
-    {
-      particles: {
-        number: {
-          value: 10,
-          density: {
-            enable: true,
-            value_area: 800,
-          },
-        },
-        color: {
-          value: '#D0D9E2',
-        },
-        shape: {
-          type: 'circle',
-          stroke: {
-            width: 0,
-            color: '#000000',
-          },
-          polygon: {
-            nb_sides: 5,
-          },
-          image: {
-            src: 'img/github.svg',
-            width: 100,
-            height: 100,
-          },
-        },
-        opacity: {
-          value: 0.5,
-          random: false,
-          anim: {
-            enable: false,
-            speed: 1,
-            opacity_min: 0.1,
-            sync: false,
-          },
-        },
-        size: {
-          value: 7,
-          random: false,
-          anim: {
-            enable: false,
-            speed: 1,
-            size_min: 0.1,
-            sync: false,
-          },
-        },
-        line_linked: {
-          enable: true,
-          distance: 150,
-          color: '#D0D9E2',
-          opacity: 0.4,
-          width: 2,
-        },
-        move: {
-          enable: true,
-          speed: 1,
-          direction: 'none',
-          random: true,
-          straight: false,
-          out_mode: 'out',
-          attract: {
-            enable: false,
-            rotateX: 600,
-            rotateY: 1200,
-          },
-        },
-      },
-      interactivity: {
-        detect_on: 'canvas',
-        events: {
-          onhover: {
-            enable: true,
-            mode: 'repulse',
-          },
-          onclick: {
-            enable: true,
-            mode: 'push',
-          },
-          resize: true,
-        },
-        modes: {
-          grab: {
-            distance: 400,
-            line_linked: {
-              opacity: 1,
-            },
-          },
-          bubble: {
-            distance: 400,
-            size: 40,
-            duration: 2,
-            opacity: 8,
-            speed: 1,
-          },
-          repulse: {
-            distance: 50,
-          },
-          push: {
-            particles_nb: 4,
-          },
-          remove: {
-            particles_nb: 2,
-          },
-        },
-      },
-      retina_detect: true,
-      config_demo: {
-        hide_card: false,
-        background_color: '#b61924',
-        background_image: '',
-        background_position: '50% 50%',
-        background_repeat: 'no-repeat',
-        background_size: 'cover',
-      },
-    },
-  );
-});
 
 const platformConfigData = platformConfig();
 const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`;  // url 远程配置文件地址
@@ -202,6 +88,139 @@ const getConfigData = async () => {
 getConfigData();
 const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
 const copyright = computed(() => platformConfigData.footerCopyrightContent);
+
+/**
+ * 初始化登录页动态背景
+ * @param canvas 背景画布
+ */
+const initDynamicBackground = (canvas: HTMLCanvasElement) => {
+  const targetCanvas = canvas;
+  const ctx = targetCanvas.getContext('2d');
+  if (!ctx) {
+    return () => {};
+  }
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let animationFrameId = 0;
+  let startTime = 0;
+  let points: DynamicPoint[] = [];
+  // 统一控制背景动画速度，避免分散调整节点运动参数。
+  const motionSpeedRatio = 6;
+
+  const getPointCount = () => Math.max(36, Math.min(72, Math.round((width * height) / 26000)));
+
+  /**
+   * 创建分散在画布上的动态节点
+   */
+  const createPoints = () => Array.from({ length: getPointCount() }, () => ({
+    baseX: Math.random() * width,
+    baseY: Math.random() * height,
+    driftX: 18 + Math.random() * 34,
+    driftY: 14 + Math.random() * 28,
+    phase: Math.random() * Math.PI * 2,
+    radius: 1 + Math.random() * 1.4,
+    speed: 0.11 + Math.random() * 0.2,
+  }));
+
+  const getPointPosition = (point: DynamicPoint, time: number) => ({
+    x: point.baseX + Math.sin(time * point.speed + point.phase) * point.driftX,
+    y: point.baseY + Math.cos(time * point.speed * 0.83 + point.phase) * point.driftY,
+    radius: point.radius + Math.sin(time * point.speed * 1.7 + point.phase) * 0.25,
+  });
+
+  const drawBackground = () => {
+    const baseGradient = ctx.createLinearGradient(0, 0, width, height);
+    baseGradient.addColorStop(0, '#e4efff');
+    baseGradient.addColorStop(0.36, '#f1f6ff');
+    baseGradient.addColorStop(1, '#e8f0ff');
+    ctx.fillStyle = baseGradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const softGlow = ctx.createRadialGradient(width * 0.28, height * 0.16, 0, width * 0.28, height * 0.16, width * 0.72);
+    softGlow.addColorStop(0, 'rgba(168, 200, 255, 0.42)');
+    softGlow.addColorStop(1, 'rgba(232, 240, 255, 0)');
+    ctx.fillStyle = softGlow;
+    ctx.fillRect(0, 0, width, height);
+  };
+
+  const render = (timestamp: number) => {
+    if (!startTime) {
+      startTime = timestamp;
+    }
+
+    const elapsed = ((timestamp - startTime) / 1000) * motionSpeedRatio;
+    const positions = points.map(point => getPointPosition(point, elapsed));
+    const lineLimit = Math.max(128, Math.min(224, Math.min(width, height) * 0.24));
+
+    ctx.clearRect(0, 0, width, height);
+    drawBackground();
+
+    // 节点之间按距离动态连线，形成类似 AI Studio 的轻量网格动效。
+    ctx.lineWidth = 1;
+    for (let index = 0; index < positions.length; index++) {
+      for (let nextIndex = index + 1; nextIndex < positions.length; nextIndex++) {
+        const current = positions[index];
+        const next = positions[nextIndex];
+        const distance = Math.hypot(current.x - next.x, current.y - next.y);
+
+        if (distance < lineLimit) {
+          const opacity = (1 - distance / lineLimit) * 0.18;
+          ctx.strokeStyle = `rgba(91, 123, 214, ${opacity})`;
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          ctx.lineTo(next.x, next.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    positions.forEach((point, index) => {
+      const opacity = 0.16 + (index % 5) * 0.018;
+      ctx.fillStyle = `rgba(83, 111, 205, ${opacity})`;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, Math.max(0.8, point.radius), 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    animationFrameId = requestAnimationFrame(render);
+  };
+
+  const resize = () => {
+    const rect = targetCanvas.parentElement?.getBoundingClientRect() || targetCanvas.getBoundingClientRect();
+    width = Math.max(1, rect.width);
+    height = Math.max(1, rect.height);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    targetCanvas.width = Math.ceil(width * dpr);
+    targetCanvas.height = Math.ceil(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    points = createPoints();
+  };
+
+  const resizeObserver = new ResizeObserver(resize);
+  if (targetCanvas.parentElement) {
+    resizeObserver.observe(targetCanvas.parentElement);
+  }
+
+  resize();
+  animationFrameId = requestAnimationFrame(render);
+
+  return () => {
+    cancelAnimationFrame(animationFrameId);
+    resizeObserver.disconnect();
+  };
+};
+
+onMounted(() => {
+  if (dynamicBgRef.value) {
+    cleanupDynamicBg = initDynamicBackground(dynamicBgRef.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  cleanupDynamicBg?.();
+});
 
 
 /**
@@ -300,47 +319,23 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
 }
 
 .main-content {
-  height: 100%;
-  background-color: #ebf2fa;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #edf4ff;
 }
 
-#particles-js {
-  height: 100%;
-}
-
-.bg-img img {
+.dynamic-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   width: 100%;
-}
-
-.right-top {
-  width: 52%;
-  height: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding-bottom: 10%;
-  background-color: #ebf2fa;
-}
-
-.right-bottom {
-  width: 31%;
-  height: 0;
-  position: absolute;
-  right: 1%;
-  bottom: 0;
-  padding-bottom: 15%;
-}
-
-.left-bottom {
-  width: 35%;
-  height: 0;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding-bottom: 12%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .footer {
+  z-index: 1;
   width: 100%;
   line-height: 20px;
   padding: 2% 0;
