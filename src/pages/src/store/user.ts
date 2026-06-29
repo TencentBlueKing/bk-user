@@ -14,6 +14,8 @@ export const useUser = defineStore('user', {
       display_name: '',
       role: '',
       tenant_id: '',
+      time_zone: '',
+      language: '',
     },
     admin: {} as BuiltinManagerData,
     showAlert: false, // 消息通知显示状态
