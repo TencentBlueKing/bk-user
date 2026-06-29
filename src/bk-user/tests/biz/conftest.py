@@ -14,13 +14,35 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-import pytest
-from bkuser.apps.tenant.constants import TenantUserIdRuleEnum
-from bkuser.apps.tenant.models import TenantUserIDGenerateConfig
+from datetime import timedelta
 
+import pytest
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.tenant.constants import TenantUserIdRuleEnum, TenantUserStatus
+from bkuser.apps.tenant.models import TenantUser, TenantUserIDGenerateConfig
+from django.utils import timezone
+
+from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def not_expired_tenant_user(bare_local_data_source, random_tenant):
+    data_source_user = DataSourceUser.objects.create(
+        username=generate_random_string(length=8),
+        full_name=generate_random_string(length=8),
+        data_source=bare_local_data_source,
+    )
+    return TenantUser.objects.create(
+        id=generate_random_string(),
+        tenant=random_tenant,
+        data_source=bare_local_data_source,
+        data_source_user=data_source_user,
+        status=TenantUserStatus.ENABLED,
+        account_expired_at=timezone.now() + timedelta(days=1),
+    )
 
 
 @pytest.fixture
