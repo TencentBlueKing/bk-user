@@ -14,14 +14,27 @@
       <div class="tenant-footer">
         <div class="cursor-pointer tenant-protocol" @click="protocolVisible = true">{{ $t('用户协议') }} ></div>
         <div class="language-switcher">
-          <div class="language-select">
-            <p class="language-item" :class="{ active: activeTab === 'zh-cn' }" @click="handleSwitchLocale('zh-cn')">
-              <span class="text-active">中文</span>
-            </p>
-            <p class="language-item" :class="{ active: activeTab === 'en' }" @click="handleSwitchLocale('en')">
-              <span class="text-active">English</span>
-            </p>
-          </div>
+          <bk-select
+            v-model="activeTab"
+            :clearable="false"
+            :searchable="false"
+            size="small"
+            class="language-select"
+            @change="handleSwitchLocale">
+            <template #prefix>
+              <div class="language-icon">
+                <LanguageIcon :size="16" />
+              </div>
+            </template>
+            <template #suffix>
+              <DownShape :width="12" :height="12" />
+            </template>
+            <bk-option
+              v-for="item in languageOptions"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label" />
+          </bk-select>
         </div>
       </div>
       <Protocol v-if="protocolVisible && activeTab === 'zh-cn'" @close="protocolVisible = false" />
@@ -46,19 +59,108 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, onBeforeMount } from 'vue';
 import { getPlatformConfig, setShortcutIcon, setDocumentTitle } from '@blueking/platform-config';
 import { platformConfig } from '@/store/platformConfig';
 import Protocol from './views/components/protocol.vue';
 import ProtocolEn from './views/components/protocol-en.vue';
-import I18n from '@/language/index';
+import LanguageIcon from './views/components/language-icon.vue';
+import I18n, { DEFAULT_LANGUAGE_OPTIONS, loadMessages } from '@/language/index';
 import Cookies from 'js-cookie';
+import { getGlobalSettings } from '@/http/api';
+import { DownShape } from 'bkui-vue/lib/icon/index';
 
-const activeTab = ref(I18n.global.locale.value);
+const platformConfigData = platformConfig();
+const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`;  // url 远程配置文件地址
+const defaults = {
+  name: '登录',
+  nameEn: 'Login',
+  brandName: '蓝鲸智云',
+  brandNameEn: 'BlueKing',
+  version: '3.0',
+};
+const activeTab = ref(I18n.global.locale.value as string);
+/** 语言选项（响应式） */
+const languageOptions = ref([...DEFAULT_LANGUAGE_OPTIONS]);
 /**
  * 用户协议是否显示
  */
 const protocolVisible = ref(false);
+const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
+const copyright = computed(() => platformConfigData.footerCopyrightContent);
+
+const getConfigData = async () => {
+  const config =  await getPlatformConfig(url, defaults);
+
+  setShortcutIcon(config.favicon);
+  setDocumentTitle(config.i18n);
+  platformConfigData.update(config);
+};
+
+/** 初始化语言列表并预加载语言包 */
+const initLanguages = async () => {
+  try {
+    const settings = await getGlobalSettings();
+    if (settings?.supported_languages?.length > 0) {
+      // 先加载非默认语言包，记录成功的语言
+      const defaultCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      const nonDefault = settings.supported_languages.filter(lang => !defaultCodes.has(lang.code));
+      const loadResults = await Promise.all(nonDefault.map(lang => loadMessages(lang.code)));
+
+      // 可用的语言 code 集合：默认语言 + 加载成功的非默认语言
+      const availableCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      nonDefault.forEach((lang, i) => {
+        if (loadResults[i]) availableCodes.add(lang.code);
+      });
+
+      // 仅追加可用语言选项（去重）
+      const existingCodes = new Set(languageOptions.value.map(opt => opt.value));
+      settings.supported_languages.forEach(lang => {
+        if (availableCodes.has(lang.code) && !existingCodes.has(lang.code)) {
+          languageOptions.value.push({ value: lang.code, label: lang.name });
+        }
+      });
+    }
+
+    // 加载完语言包后，设置当前 locale 为 cookie 中的语言
+    const cookieLang = Cookies.get('blueking_language') || 'zh-cn';
+    if (cookieLang !== I18n.global.locale.value) {
+      (I18n.global.locale as any).value = cookieLang;
+      activeTab.value = cookieLang;
+    }
+  } catch (err) {
+    console.warn('[i18n] Failed to fetch global settings', err);
+  }
+};
+
+/**
+ * 切换语言
+ * @param lang 语言代码
+ */
+const handleSwitchLocale = (lang: string) => {
+  activeTab.value = lang;
+  // 因为未登录，所以改为后端直接调用接口
+  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  // const scriptId = 'jsonp-script';
+  // const prevJsonpScript = document.getElementById(scriptId);
+  // if (prevJsonpScript) {
+  //   document.body.removeChild(prevJsonpScript);
+  // }
+  // const script = document.createElement('script');
+  // script.type = 'text/javascript';
+  // script.src = `${api}?language=${lang}`;
+  // script.id = scriptId;
+  // document.body.appendChild(script);
+
+  Cookies.set('blueking_language', lang, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  (I18n.global.locale as any).value = lang;
+  document.querySelector('html')?.setAttribute('lang', lang);
+  window.location.reload();
+};
 
 onMounted(() => {
   particlesJS(
@@ -182,56 +284,10 @@ onMounted(() => {
   );
 });
 
-const platformConfigData = platformConfig();
-const url = `${window.BK_SHARED_RES_URL}/bk_login/base.js`;  // url 远程配置文件地址
-const defaults = {
-  name: '登录',
-  nameEn: 'Login',
-  brandName: '蓝鲸智云',
-  brandNameEn: 'BlueKing',
-  version: '3.0',
-};
-
-const getConfigData = async () => {
-  const config =  await getPlatformConfig(url, defaults);
-
-  setShortcutIcon(config.favicon);
-  setDocumentTitle(config.i18n);
-  platformConfigData.update(config);
-};
-getConfigData();
-const contact = computed(() => platformConfigData.i18n.footerInfoHTML);
-const copyright = computed(() => platformConfigData.footerCopyrightContent);
-
-
-/**
- * 切换语言
- * @param locale 语言代码
- */
-const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
-  activeTab.value = locale;
-  // 因为未登录，所以改为后端直接调用接口
-  // const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  // const scriptId = 'jsonp-script';
-  // const prevJsonpScript = document.getElementById(scriptId);
-  // if (prevJsonpScript) {
-  //   document.body.removeChild(prevJsonpScript);
-  // }
-  // const script = document.createElement('script');
-  // script.type = 'text/javascript';
-  // script.src = `${api}?language=${locale}`;
-  // script.id = scriptId;
-  // document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  window.location.reload();
-};
+onBeforeMount(() => {
+  getConfigData();
+  initLanguages();
+});
 </script>
 
 <style lang="postcss" scoped>
@@ -262,6 +318,28 @@ const handleSwitchLocale = (locale: 'zh-cn' | 'en') => {
 
 .language-select {
   display: flex;
+  align-items: center;
+  width: 110px;
+  
+  .language-icon {
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    color: #4D4F56;
+    background-color: #F0F1F5;
+  }
+
+  :deep(.bk-input) {
+    border: none;
+    box-shadow: none !important;
+    &.is-focused {
+      box-shadow: none !important;
+    }
+    .bk-input--text { 
+      background-color: #F0F1F5;
+      color: #4D4F56;
+    }
+  }
 }
 
 .language-item {
