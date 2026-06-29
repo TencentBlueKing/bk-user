@@ -54,7 +54,7 @@ def data_source_match_rules(bare_general_data_source) -> List[Dict[str, Any]]:
 
 
 def get_idp_match_rules(idp: Idp) -> List[Dict[str, Any]]:
-    relation = IdpDataSourceRelation.objects.filter(idp=idp).order_by("created_at", "id").first()
+    relation = IdpDataSourceRelation.objects.filter(idp=idp).first()
     if relation is None:
         return []
 
@@ -76,7 +76,9 @@ def wecom_idp(bk_user, random_tenant, wecom_plugin_cfg, data_source_match_rules)
         creator=bk_user.username,
         updater=bk_user.username,
     )
-    IdpDataSourceRelationHandler.set_real_relations_from_match_rules(idp, data_source_match_rules)
+    IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
+        idp, data_source_match_rules[0]["field_compare_rules"]
+    )
     return idp
 
 

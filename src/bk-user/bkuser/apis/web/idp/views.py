@@ -103,7 +103,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
         current_tenant_id = self.get_current_tenant_id()
-        idp_ids = IdpDataSourceRelationHandler.get_manageable_idp_ids(current_tenant_id)
+        idp_ids = IdpDataSourceRelationHandler.get_real_idp_ids_with_orphan(current_tenant_id)
 
         return Idp.objects.filter(owner_tenant_id=current_tenant_id, id__in=idp_ids).select_related("plugin")
 
@@ -140,7 +140,11 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
                 creator=current_user,
                 updater=current_user,
             )
-            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(idp, data["data_source_match_rules"])
+            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
+                idp,
+                # Note: 当前产品页面只配置一套字段比较规则，应用到同租户全部实名数据源。
+                data["data_source_match_rules"][0]["field_compare_rules"],
+            )
 
         # 【审计】创建认证源审计对象
         auditor = IdpAuditor(request.user.username, current_tenant_id)
@@ -223,7 +227,11 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
             idp.updater = request.user.username
             idp.save(update_fields=["name", "status", "updater", "updated_at"])
             idp.set_plugin_cfg(data["plugin_config"])
-            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(idp, data["data_source_match_rules"])
+            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
+                idp,
+                # Note: 当前产品页面只配置一套字段比较规则，应用到同租户全部实名数据源。
+                data["data_source_match_rules"][0]["field_compare_rules"],
+            )
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(idp)

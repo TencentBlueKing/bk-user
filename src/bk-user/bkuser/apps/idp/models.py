@@ -139,7 +139,13 @@ class IdpSensitiveInfo(TimestampedModel):
 
 
 class IdpDataSourceRelation(TimestampedModel):
-    """认证源与数据源关联关系"""
+    """认证源与数据源关联关系
+
+    注意：当关联的实名数据源被重置时，关系记录会随之删除，IDP 变为孤儿态。
+    虚拟数据源和内置管理数据源场景不会触发孤儿，因此孤儿 IDP 几乎都源自实名数据源重置。
+
+    约束：每个 IDP 只能关联一种类型的数据源。
+    """
 
     idp = models.ForeignKey(Idp, on_delete=models.CASCADE, related_name="data_source_relations", db_constraint=False)
     data_source = models.ForeignKey(
@@ -151,7 +157,7 @@ class IdpDataSourceRelation(TimestampedModel):
     idp_owner_tenant_id = models.CharField("认证源归属租户", max_length=64, db_index=True)
 
     class Meta:
-        ordering = ["created_at", "id"]
+        ordering = ["id"]
         unique_together = [("idp", "data_source")]
         indexes = [
             models.Index(fields=["idp_owner_tenant_id", "data_source"]),

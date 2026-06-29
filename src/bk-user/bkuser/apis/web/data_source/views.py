@@ -17,6 +17,7 @@
 
 import logging
 from collections import defaultdict
+from typing import Dict, List, Set
 
 import openpyxl
 from django.conf import settings
@@ -270,32 +271,42 @@ class DataSourceRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @staticmethod
+    def _get_real_idps_with_orphan(owner_tenant_id: str):
+        """获取租户下与实名数据源相关的 IDP，包括有关联关系的和孤儿（无任何关系记录）的。
+
+        返回 (实名数据源关系映射，孤儿 IDP ID 集合，IDP 映射)
+        """
+        real_idp_ds_map: Dict[str, List[int]] = defaultdict(list)
+        all_related_idp_ids: Set[str] = set()
+
+        relations = IdpDataSourceRelation.objects.filter(
+            idp_owner_tenant_id=owner_tenant_id,
+        ).values("idp_id", "data_source_id", "data_source__type")
+        for rel in relations:
+            all_related_idp_ids.add(rel["idp_id"])
+            if rel["data_source__type"] == DataSourceTypeEnum.REAL:
+                real_idp_ds_map[rel["idp_id"]].append(rel["data_source_id"])
+
+        idp_map = {idp.id: idp for idp in Idp.objects.filter(owner_tenant_id=owner_tenant_id)}
+        orphan_idp_ids = set(idp_map.keys()) - all_related_idp_ids
+        return real_idp_ds_map, orphan_idp_ids, idp_map
+
+    @staticmethod
     def _classify_idps_for_deletion(data_source: DataSource, is_delete_idp: bool):
         """根据 IDP 与实名数据源的关联情况，决定各 IDP 的处置策略：
 
         - 还有其他实名数据源关联：本地 IDP 需同步插件配置，其他类型无需处理
         - 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+        - 孤儿 IDP（无任何关系记录）：用户选了连带删除时一并清理
         """
-        # 查询该租户下所有 IDP 与实名数据源的关联关系
-        idp_ds_map: dict[str, list[int]] = defaultdict(list)
-        relations = IdpDataSourceRelation.objects.filter(
-            idp_owner_tenant_id=data_source.owner_tenant_id,
-            data_source__type=DataSourceTypeEnum.REAL,
-        ).values("idp_id", "data_source_id")
+        real_idp_ds_map, orphan_idp_ids, idp_map = DataSourceRetrieveUpdateDestroyApi._get_real_idps_with_orphan(
+            data_source.owner_tenant_id
+        )
 
-        for rel in relations:
-            idp_ds_map[rel["idp_id"]].append(rel["data_source_id"])
-
-        # 查询该租户下所有 IDP，用于后续判断 IDP 类型、变更状态、删除等操作
-        idp_map = {idp.id: idp for idp in Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id)}
-
-        # 根据 IDP 关联的实名数据源情况，决定处置策略：
-        # - 还有其他实名数据源关联：本地 IDP 需同步插件配置，其他类型无需处理
-        # - 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
         waiting_delete_idps = []
         waiting_disable_idps = []
         waiting_sync_local_idps = []
-        for idp_id, ds_ids in idp_ds_map.items():
+        for idp_id, ds_ids in real_idp_ds_map.items():
             # 与当前数据源无关的 IDP，跳过
             if data_source.id not in ds_ids:
                 continue
@@ -312,6 +323,10 @@ class DataSourceRetrieveUpdateDestroyApi(
                 waiting_delete_idps.append(idp)
             else:
                 waiting_disable_idps.append(idp)
+
+        # 孤儿 IDP（无任何关系记录，通常是之前数据源重置后遗留的）：用户选了连带删除时一并清理
+        if is_delete_idp:
+            waiting_delete_idps.extend(idp_map[idp_id] for idp_id in orphan_idp_ids)
 
         return waiting_delete_idps, waiting_disable_idps, waiting_sync_local_idps
 
