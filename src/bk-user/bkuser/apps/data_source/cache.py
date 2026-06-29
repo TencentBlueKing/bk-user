@@ -17,8 +17,19 @@
 
 from typing import Dict, List
 
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum, cached
+
+
+@cached(timeout=60)
+def get_data_source_id_to_owner_tenant_id_map() -> Dict[int, str]:
+    """数据源 ID → 归属租户 ID 全量映射（带 60s 缓存）"""
+    return dict(DataSource.objects.values_list("id", "owner_tenant_id"))
+
+
+def get_data_source_owner_tenant_id(data_source_id: int) -> str:
+    """获取单个数据源的归属租户 ID（基于全量缓存映射）"""
+    return get_data_source_id_to_owner_tenant_id_map()[data_source_id]
 
 
 class DepartmentAncestorCache:
