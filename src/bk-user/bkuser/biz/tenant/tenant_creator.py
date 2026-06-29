@@ -29,7 +29,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUsernameGenerateConfig,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import (
     DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
@@ -44,6 +43,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
 )
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -252,16 +252,16 @@ class TenantCreator:
     @staticmethod
     def create_builtin_idp(tenant_id: str, data_source_id: int, name: str = "Administrator") -> Idp:
         """创建内置管理员账密登录认证源"""
+        data_source = DataSource.objects.get(id=data_source_id)
         idp, _ = Idp.objects.get_or_create(
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
             owner_tenant_id=tenant_id,
-            data_source_id=data_source_id,
+            name=name,
             defaults={
-                "name": name,
                 "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source_id]),
-                "data_source_match_rules": [gen_data_source_match_rule_of_local(data_source_id).model_dump()],
             },
         )
+        IdpDataSourceRelationHandler.set_builtin_management_relation(idp, data_source)
         return idp
 
     @staticmethod

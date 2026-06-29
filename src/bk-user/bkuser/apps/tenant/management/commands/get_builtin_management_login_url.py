@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import BuiltInTenantIDEnum
 from bkuser.apps.tenant.models import Tenant
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -60,10 +60,14 @@ class Command(BaseCommand):
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         )
 
+        relation = IdpDataSourceRelation.objects.get(
+            idp_owner_tenant_id=tenant_id,
+            data_source_id=data_source.id,
+        )
         idp = Idp.objects.get(
+            id=relation.idp_id,
             owner_tenant_id=tenant_id,
             plugin_id=BuiltinIdpPluginEnum.LOCAL,
-            data_source_id=data_source.id,
         )
 
         login_url = urljoin(settings.BK_LOGIN_URL, f"/builtin-management-auth/idps/{idp.id}/")
