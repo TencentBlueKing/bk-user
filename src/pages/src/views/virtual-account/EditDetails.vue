@@ -127,7 +127,7 @@ const handleChange = () => {
     margin-top: 32px;
 
     .bk-button {
-      width: 88px;
+      min-width: 88px;
       margin-right: 8px;
     }
   }
