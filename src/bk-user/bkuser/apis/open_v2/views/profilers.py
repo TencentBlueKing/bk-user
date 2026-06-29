@@ -154,7 +154,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
         # 根据需要的字段决定是否添加 select_related，避免不必要的关联查询
         # 同时避免 select_related 与 only() 不包含关联字段时的冲突
         if any(field.startswith("data_source_user__") for field in only_fields):
-            tenant_users.select_related("data_source_user")
+            tenant_users = tenant_users.select_related("data_source_user")
 
         return tenant_users.only(*only_fields)
 
