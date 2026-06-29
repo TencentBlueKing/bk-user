@@ -38,6 +38,7 @@ from bkuser.apps.tenant.constants import (
     TenantStatus,
 )
 from bkuser.apps.tenant.display_name_cache import get_display_name_config
+from bkuser.apps.tenant.language import get_supported_language_codes
 from bkuser.apps.tenant.models import (
     Tenant,
     TenantManager,
@@ -349,6 +350,13 @@ class TenantUserHandler:
         if not email_info.is_inherited_email:
             tenant_user.custom_email = email_info.custom_email
         tenant_user.save()
+
+    @staticmethod
+    def update_tenant_user_language(tenant_user: TenantUser, language_code: str) -> None:
+        if language_code not in get_supported_language_codes():
+            return
+        tenant_user.language = language_code
+        tenant_user.save(update_fields=["language", "updated_at"])
 
 
 class TenantUserDisplayNameHandler:

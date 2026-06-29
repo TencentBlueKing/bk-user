@@ -23,8 +23,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.tenant.language import update_tenant_user_language
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 
 from .authentications import ESBAuthentication
 from .mixins import DefaultTenantMixin
@@ -70,7 +70,7 @@ class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
             tenant_user.save(update_fields=update_fields)
 
         if "language" in data:
-            update_tenant_user_language(tenant_user, data["language"])
+            TenantUserHandler.update_tenant_user_language(tenant_user, data["language"])
 
         # Note: 由于调用方是判断非 200 即为异常，所以虽然是更新操作，但是兼容接口不可以返回 204，只能是 200
         return Response(status=status.HTTP_200_OK)

@@ -19,6 +19,7 @@ import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.constants import TenantStatus
+from bkuser.apps.tenant.language import get_supported_language_choices, get_supported_language_codes
 from bkuser.apps.tenant.models import (
     Tenant,
     TenantManager,
@@ -26,8 +27,9 @@ from bkuser.apps.tenant.models import (
     TenantUserDisplayNameExpressionConfig,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.tenant import BuiltinManagerInfo, TenantCreator, TenantInfo, VirtualUserInfo
+from bkuser.biz.tenant import BuiltinManagerInfo, TenantCreator, TenantInfo, TenantUserHandler, VirtualUserInfo
 from bkuser.plugins.constants import DataSourcePluginEnum
+from django.test.utils import override_settings
 
 pytestmark = pytest.mark.django_db
 
@@ -155,3 +157,35 @@ class TestTenantCreator:
         assert idp.owner_tenant_id == "test-tenant"
         assert idp.data_source_id == data_source.id
         assert idp.name == "Administrator"
+
+
+class TestTenantUserHandler:
+    @pytest.fixture(autouse=True)
+    def _clear_language_cache(self):
+        get_supported_language_choices.cache_clear()
+        get_supported_language_codes.cache_clear()
+        yield
+        get_supported_language_choices.cache_clear()
+        get_supported_language_codes.cache_clear()
+
+    def test_update_builtin_language(self, not_expired_tenant_user):
+        TenantUserHandler.update_tenant_user_language(not_expired_tenant_user, "en")
+
+        not_expired_tenant_user.refresh_from_db()
+        assert not_expired_tenant_user.language == "en"
+
+    def test_update_extra_language(self, not_expired_tenant_user):
+        with override_settings(EXTRA_LANGUAGES=[("ja", "日本語")]):
+            TenantUserHandler.update_tenant_user_language(not_expired_tenant_user, "ja")
+
+        not_expired_tenant_user.refresh_from_db()
+        assert not_expired_tenant_user.language == "ja"
+
+    def test_skip_update_invalid_language(self, not_expired_tenant_user):
+        not_expired_tenant_user.language = "zh-cn"
+        not_expired_tenant_user.save(update_fields=["language"])
+
+        TenantUserHandler.update_tenant_user_language(not_expired_tenant_user, "zh-US")
+
+        not_expired_tenant_user.refresh_from_db()
+        assert not_expired_tenant_user.language == "zh-cn"

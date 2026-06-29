@@ -20,4 +20,5 @@ from . import views
 
 urlpatterns = [
     path("current-user/", views.CurrentUserRetrieveApi.as_view(), name="basic.current_user.retrieve"),
+    path("supported-languages/", views.SupportedLanguageListApi.as_view(), name="basic.supported_languages.list"),
 ]

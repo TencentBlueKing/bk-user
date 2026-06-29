@@ -19,7 +19,6 @@ import pytest
 from bkuser.apps.tenant.language import (
     get_supported_language_choices,
     get_supported_language_codes,
-    update_tenant_user_language,
 )
 from django.test.utils import override_settings
 
@@ -42,27 +41,3 @@ class TestGetSupportedLanguageCodes:
     def test_return_extra_languages(self):
         with override_settings(EXTRA_LANGUAGES=[("ja", "日本語")]):
             assert get_supported_language_codes() == ["zh-cn", "en", "ja"]
-
-
-class TestUpdateTenantUserLanguage:
-    def test_update_builtin_language(self, not_expired_tenant_user):
-        assert update_tenant_user_language(not_expired_tenant_user, "en") is True
-
-        not_expired_tenant_user.refresh_from_db()
-        assert not_expired_tenant_user.language == "en"
-
-    def test_update_extra_language(self, not_expired_tenant_user):
-        with override_settings(EXTRA_LANGUAGES=[("ja", "日本語")]):
-            assert update_tenant_user_language(not_expired_tenant_user, "ja") is True
-
-        not_expired_tenant_user.refresh_from_db()
-        assert not_expired_tenant_user.language == "ja"
-
-    def test_skip_update_invalid_language(self, not_expired_tenant_user):
-        not_expired_tenant_user.language = "zh-cn"
-        not_expired_tenant_user.save(update_fields=["language"])
-
-        assert update_tenant_user_language(not_expired_tenant_user, "zh-US") is False
-
-        not_expired_tenant_user.refresh_from_db()
-        assert not_expired_tenant_user.language == "zh-cn"

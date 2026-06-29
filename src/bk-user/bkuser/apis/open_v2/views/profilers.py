@@ -46,8 +46,8 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.language import update_tenant_user_language
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.cache import CacheEnum
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -841,6 +841,6 @@ class ProfileLanguageUpdateApi(
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")
 
-        update_tenant_user_language(tenant_user, slz.validated_data["language"])
+        TenantUserHandler.update_tenant_user_language(tenant_user, slz.validated_data["language"])
 
         return Response()

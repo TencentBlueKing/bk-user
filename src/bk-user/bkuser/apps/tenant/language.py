@@ -19,7 +19,6 @@ from typing import Dict, List, Tuple
 
 from django.conf import settings
 
-from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.constants import BkLanguageEnum
 
 
@@ -36,11 +35,3 @@ def get_supported_language_choices() -> List[Tuple[str, str]]:
 @cache
 def get_supported_language_codes() -> List[str]:
     return [code for code, _ in get_supported_language_choices()]
-
-
-def update_tenant_user_language(tenant_user: TenantUser, language_code: str) -> bool:
-    if language_code not in get_supported_language_codes():
-        return False
-    tenant_user.language = language_code
-    tenant_user.save(update_fields=["language", "updated_at"])
-    return True
