@@ -47,6 +47,7 @@ from bkuser.apis.open_web.serializers.users import (
 )
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
@@ -74,7 +75,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
                 data_source_id__in=self.real_data_source_ids
                 + self.collaboration_data_source_ids
                 + [self.virtual_data_source_id],
-            ).select_related("data_source_user", "data_source"),
+            ).select_related("data_source_user"),
             id=kwargs["id"],
         )
 
@@ -109,7 +110,7 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
             data_source_id__in=self.real_data_source_ids
             + self.collaboration_data_source_ids
             + [self.virtual_data_source_id],
-        ).select_related("data_source_user", "data_source")
+        ).select_related("data_source_user")
 
     @swagger_auto_schema(
         tags=["open_web.user"],
@@ -171,16 +172,16 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(data_source_user__username__icontains=keyword)
             | Q(data_source_user__full_name__icontains=keyword)
             | search_conditions,
-            Q(data_source__type=DataSourceTypeEnum.REAL),
+            Q(data_source_id__in=DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)),
         ]
 
         # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
-            filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
+            filter_args.append(
+                Q(data_source_id__in=DataSource.objects.filter(owner_tenant_id=tenant_id).values_list("id", flat=True))
+            )
 
-        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")[
-            : self.search_limit
-        ]
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")[: self.search_limit]
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
@@ -234,13 +235,19 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             operator.or_, [self._convert_lookup_to_query(field, data["lookups"]) for field in data["lookup_fields"]]
         )
 
-        filter_args = [Q(tenant_id=self.tenant_id), condition, Q(data_source__type=DataSourceTypeEnum.REAL)]
+        filter_args = [
+            Q(tenant_id=self.tenant_id),
+            condition,
+            Q(data_source_id__in=DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)),
+        ]
 
         # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
         if tenant_id := data.get("owner_tenant_id"):
-            filter_args.append(Q(data_source__owner_tenant_id=tenant_id))
+            filter_args.append(
+                Q(data_source_id__in=DataSource.objects.filter(owner_tenant_id=tenant_id).values_list("id", flat=True))
+            )
 
-        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user", "data_source")
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")
 
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {

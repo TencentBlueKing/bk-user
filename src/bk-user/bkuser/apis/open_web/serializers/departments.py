@@ -20,6 +20,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.common.serializers import StringArrayField
 
@@ -32,10 +33,13 @@ class TenantDepartmentSearchInputSLZ(serializers.Serializer):
 class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
-    owner_tenant_id = serializers.CharField(help_text="所属租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.SerializerMethodField(help_text="所属租户 ID")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
     has_child = serializers.SerializerMethodField(help_text="是否有子部门")
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
+
+    def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
+        return get_data_source_owner_tenant_id(obj.data_source_id)
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"][obj.data_source_department_id]
@@ -102,8 +106,11 @@ class TenantDepartmentLookupInputSLZ(serializers.Serializer):
 class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
-    owner_tenant_id = serializers.CharField(help_text="所属租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.SerializerMethodField(help_text="所属租户 ID")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
+
+    def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
+        return get_data_source_owner_tenant_id(obj.data_source_id)
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"][obj.data_source_department_id]

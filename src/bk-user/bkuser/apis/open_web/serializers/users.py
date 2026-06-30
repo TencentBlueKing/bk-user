@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -72,9 +73,12 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     # TODO: 虚拟帐号先暂时使用 display_name 展示，后续根据虚拟帐号方案再进行更改
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-    owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.SerializerMethodField(help_text="归属租户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_owner_tenant_id(self, obj: TenantUser) -> str:
+        return get_data_source_owner_tenant_id(obj.data_source_id)
 
     def get_login_name(self, obj: TenantUser) -> str:
         return self.context["login_name_map"][obj.id]
@@ -121,9 +125,12 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
-    owner_tenant_id = serializers.CharField(help_text="归属租户 ID", source="data_source.owner_tenant_id")
+    owner_tenant_id = serializers.SerializerMethodField(help_text="归属租户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_owner_tenant_id(self, obj: TenantUser) -> str:
+        return get_data_source_owner_tenant_id(obj.data_source_id)
 
     def get_login_name(self, obj: TenantUser) -> str:
         return self.context["login_name_map"][obj.id]

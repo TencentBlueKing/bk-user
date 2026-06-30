@@ -72,9 +72,11 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用
         if tenant_id := data.get("owner_tenant_id"):
-            filters["data_source__owner_tenant_id"] = tenant_id
+            filters["data_source_id__in"] = DataSource.objects.filter(owner_tenant_id=tenant_id).values_list(
+                "id", flat=True
+            )
 
-        queryset = TenantDepartment.objects.filter(**filters).select_related("data_source_department", "data_source")
+        queryset = TenantDepartment.objects.filter(**filters).select_related("data_source_department")
 
         return queryset[: self.search_limit]
 
@@ -234,7 +236,7 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         return TenantDepartment.objects.filter(id__in=data["department_ids"], tenant_id=self.tenant_id).select_related(
-            "data_source_department", "data_source"
+            "data_source_department"
         )
 
     @swagger_auto_schema(
