@@ -21,7 +21,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id
+from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id, get_data_source_type
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
@@ -99,6 +100,13 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 class TenantUserLookupInputSLZ(serializers.Serializer):
     lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
     lookup_fields = StringArrayField(help_text="匹配字段，多个使用逗号分隔")
+    data_source_type = serializers.ChoiceField(
+        help_text="数据源类型",
+        choices=[DataSourceTypeEnum.REAL, DataSourceTypeEnum.VIRTUAL],
+        required=False,
+        allow_blank=True,
+        default="",
+    )
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
     with_organization_paths = serializers.BooleanField(
         help_text="是否返回用户所属部门路径", required=False, default=False
@@ -125,9 +133,13 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
+    data_source_type = serializers.SerializerMethodField(help_text="数据源用户类型")
     owner_tenant_id = serializers.SerializerMethodField(help_text="归属租户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+
+    def get_data_source_type(self, obj: TenantUser) -> str:
+        return get_data_source_type(obj.data_source_id)
 
     def get_owner_tenant_id(self, obj: TenantUser) -> str:
         return get_data_source_owner_tenant_id(obj.data_source_id)
@@ -167,36 +179,6 @@ class VirtualUserSearchOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
-
-    def get_display_name(self, obj: TenantUser) -> str:
-        return self.context["display_name_map"][obj.id]
-
-
-class VirtualUserLookupInputSLZ(serializers.Serializer):
-    lookups = StringArrayField(help_text="精确匹配值，多个使用逗号分隔", max_items=100)
-    lookup_fields = StringArrayField(help_text="匹配字段，多个使用逗号分隔")
-
-    def validate_lookups(self, lookups: List[str]) -> List[str]:
-        max_length = 64
-        if invalid_lookups := [i for i in lookups if len(i) > max_length]:
-            raise ValidationError(_("指定查询的值 {} 长度超过 64 个字符限制").format(", ".join(invalid_lookups)))
-        return lookups
-
-    def validate_lookup_fields(self, lookup_fields: List[str]) -> List[str]:
-        if invalid_fields := set(lookup_fields) - {"login_name", "full_name", "bk_username"}:
-            raise ValidationError(
-                _("指定查询字段 {} 不支持，仅支持 login_name、full_name、bk_username").format(
-                    ", ".join(invalid_fields)
-                )
-            )
-        return lookup_fields
-
-
-class VirtualUserLookupOutputSLZ(serializers.Serializer):
-    bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
-    display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]

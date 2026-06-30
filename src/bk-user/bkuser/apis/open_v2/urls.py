@@ -20,19 +20,19 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # 查询目录列表
+    # 查询目录列表（本租户实名 + 协同租户实名）
     path("categories/", views.CategoriesListApi.as_view(), name="open_v2.list_categories"),
-    # 查询部门列表
+    # 查询部门列表（本租户实名 + 协同租户实名）
     path("departments/", views.DepartmentListApi.as_view(), name="open_v2.list_departments"),
-    # 查询单个部门信息
+    # 查询单个部门信息（本租户实名 + 协同租户实名）
     path("departments/<str:id>/", views.DepartmentRetrieveApi.as_view(), name="open_v2.retrieve_department"),
-    # 查询子部门列表
+    # 查询子部门列表（本租户实名 + 协同租户实名）
     path(
         "departments/<str:lookup_value>/children/",
         views.DepartmentChildrenListApi.as_view(),
         name="open_v2.list_department_children",
     ),
-    # 查询单个用户的部门列表
+    # 查询单个用户的部门列表（本租户实名 + 本租户虚拟 + 协同租户实名）
     path(
         "profiles/<str:lookup_value>/departments/",
         views.ProfileDepartmentListApi.as_view(),
@@ -44,23 +44,23 @@ urlpatterns = [
         views.ProfileDepartmentListApi.as_view(),
         name="open_v2.list_profile_departments.without_slash",
     ),
-    # 查询部门用户关系表
+    # 查询部门用户关系表（本租户实名 + 协同租户实名）
     path(
         "edges/department_profile/",
         views.DepartmentProfileRelationListApi.as_view(),
         name="open_v2.list_department_profile_relations",
     ),
-    # 查询用户 Leader 关系表
+    # 查询用户 Leader 关系表（本租户实名 + 协同租户实名）
     path(
         "edges/leader/",
         views.ProfileLeaderRelationListApi.as_view(),
         name="open_v2.list_profile_leader_relations",
     ),
-    # 查询用户列表
+    # 查询用户列表（本租户实名 + 本租户虚拟 + 协同租户实名）
     path("profiles/", views.ProfileListApi.as_view(), name="open_v2.list_profiles"),
-    # 查询单个用户信息
+    # 查询单个用户信息（本租户实名 + 本租户虚拟 + 协同租户实名）
     path("profiles/<str:lookup_value>/", views.ProfileRetrieveApi.as_view(), name="open_v2.retrieve_profile"),
-    # 查询部门下用户列表
+    # 查询部门下用户列表（本租户实名 + 本租户虚拟 + 协同租户实名）
     path(
         "departments/<str:id>/profiles/",
         views.DepartmentProfileListApi.as_view(),
@@ -72,7 +72,7 @@ urlpatterns = [
         views.DepartmentProfileListApi.as_view(),
         name="open_v2.list_department_profiles.without_slash",
     ),
-    # 更新用户语言
+    # 更新用户语言（本租户实名 + 本租户虚拟 + 协同租户实名）
     path(
         "profiles/<str:username>/languages/",
         views.ProfileLanguageUpdateApi.as_view(),
