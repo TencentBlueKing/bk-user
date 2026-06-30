@@ -337,6 +337,16 @@ class TestTenantUserLookupApi:
         collab_lisi = TenantUser.objects.get(
             data_source_user__username="lisi", data_source__owner_tenant_id=collaboration_tenant.id
         )
+        virtual_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
 
         resp = api_client.get(
             reverse("open_web.tenant_user.lookup"),
@@ -344,12 +354,14 @@ class TestTenantUserLookupApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 4
+        assert len(resp.data) == 6
         assert {t["bk_username"] for t in resp.data} == {
             real_zhangsan.id,
             collab_zhangsan.id,
             real_lisi.id,
             collab_lisi.id,
+            virtual_zhangsan.id,
+            virtual_lisi.id,
         }
         assert {t["login_name"] for t in resp.data} == {
             "zhangsan",
@@ -376,6 +388,16 @@ class TestTenantUserLookupApi:
             data_source__type="real",
             data_source__owner_tenant_id=random_tenant.id,
         )
+        virtual_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
         resp = api_client.get(
             reverse("open_web.tenant_user.lookup"),
             data={
@@ -386,8 +408,8 @@ class TestTenantUserLookupApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 2
-        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert len(resp.data) == 4
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id, virtual_zhangsan.id, virtual_lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
@@ -471,6 +493,16 @@ class TestTenantUserLookupApi:
             data_source__type="real",
             data_source__owner_tenant_id=random_tenant.id,
         )
+        virtual_zhangsan = TenantUser.objects.get(
+            data_source_user__username="zhangsan",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
+        virtual_lisi = TenantUser.objects.get(
+            data_source_user__username="lisi",
+            data_source__type="virtual",
+            data_source__owner_tenant_id=random_tenant.id,
+        )
         resp = api_client.get(
             reverse("open_web.tenant_user.lookup"),
             data={
@@ -482,8 +514,8 @@ class TestTenantUserLookupApi:
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 2
-        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id}
+        assert len(resp.data) == 4
+        assert {t["bk_username"] for t in resp.data} == {zhangsan.id, lisi.id, virtual_zhangsan.id, virtual_lisi.id}
         assert {t["login_name"] for t in resp.data} == {"zhangsan", "lisi"}
         assert {t["full_name"] for t in resp.data} == {"张三", "李四"}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)", "lisi(李四)"}
@@ -600,13 +632,19 @@ class TestVirtualUserSearchApi:
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestVirtualUserLookupApi:
+    """通过统一 lookup API 使用 data_source_type=virtual 过滤虚拟用户"""
+
     def test_with_bk_username(self, api_client):
         """通过 bk_username 批量精确查询虚拟用户"""
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant.virtual_user.lookup"),
-            data={"lookups": ",".join([zhangsan.id, lisi.id]), "lookup_fields": "bk_username"},
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": ",".join([zhangsan.id, lisi.id]),
+                "lookup_fields": "bk_username",
+                "data_source_type": "virtual",
+            },
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -621,8 +659,8 @@ class TestVirtualUserLookupApi:
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant.virtual_user.lookup"),
-            data={"lookups": "张三,李四", "lookup_fields": "full_name"},
+            reverse("open_web.tenant_user.lookup"),
+            data={"lookups": "张三,李四", "lookup_fields": "full_name", "data_source_type": "virtual"},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -637,10 +675,11 @@ class TestVirtualUserLookupApi:
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", data_source__type="virtual")
         lisi = TenantUser.objects.get(data_source_user__username="lisi", data_source__type="virtual")
         resp = api_client.get(
-            reverse("open_web.tenant.virtual_user.lookup"),
+            reverse("open_web.tenant_user.lookup"),
             data={
                 "lookups": ",".join([zhangsan.id, lisi.id]),
                 "lookup_fields": "bk_username,login_name",
+                "data_source_type": "virtual",
             },
         )
 
@@ -654,8 +693,12 @@ class TestVirtualUserLookupApi:
     def test_with_not_match(self, api_client):
         """查询不存在的虚拟用户"""
         resp = api_client.get(
-            reverse("open_web.tenant.virtual_user.lookup"),
-            data={"lookups": "not_exist_user1,not_exist_user2", "lookup_fields": "login_name"},
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "not_exist_user1,not_exist_user2",
+                "lookup_fields": "login_name",
+                "data_source_type": "virtual",
+            },
         )
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
