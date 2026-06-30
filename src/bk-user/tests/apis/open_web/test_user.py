@@ -184,7 +184,7 @@ class TestTenantUserSearchApi:
 
         resp = api_client.get(
             reverse("open_web.tenant_user.search"),
-            data={"keyword": "白十", "data_source_type": "real", "owner_tenant_id": random_tenant.id},
+            data={"keyword": "白十", "owner_tenant_id": random_tenant.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -206,7 +206,6 @@ class TestTenantUserSearchApi:
             reverse("open_web.tenant_user.search"),
             data={
                 "keyword": "lis",
-                "data_source_type": "real",
                 "owner_tenant_id": random_tenant.id,
                 "with_organization_paths": True,
             },
@@ -229,7 +228,6 @@ class TestTenantUserSearchApi:
             reverse("open_web.tenant_user.search"),
             data={
                 "keyword": "wang",
-                "data_source_type": "real",
                 "owner_tenant_id": collaboration_tenant.id,
                 "with_organization_paths": True,
             },
