@@ -27,14 +27,19 @@ export const DEFAULT_LANGUAGE_OPTIONS = [
 
 /** 动态加载语言包并通过 setLocaleMessage 设置到 i18n 实例 */
 export async function loadMessages(langKey: string): Promise<boolean> {
+  const prefix = '[bk-user][i18n]';
   try {
+    console.log(`${prefix} 开始加载语言包 langKey=${langKey}`);
     const res = await fetch(`/staticfiles/${langKey}.json`);
+    console.log(`${prefix} fetch 响应 langKey=${langKey} status=${res.status} ok=${res.ok}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const messages = await res.json();
+    console.log(`${prefix} 解析 JSON 成功 langKey=${langKey}`);
     i18n.global.setLocaleMessage(langKey, messages);
+    console.log(`${prefix} i18n locale message 已设置 langKey=${langKey}`);
     return true;
   } catch (err) {
-    console.warn('[i18n] Failed to load language messages', langKey, err);
+    console.warn(`${prefix} 加载失败 langKey=${langKey}`, err);
     return false;
   }
 }

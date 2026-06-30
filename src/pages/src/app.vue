@@ -27,14 +27,20 @@ const platformConfigData = platformConfig();
 
 /** 获取后端允许的语言列表并预加载语言包 */
 const fetchAllowedLanguages = async () => {
+  const prefix = '[bk-user][i18n]';
   try {
+    console.log(`${prefix} fetchAllowedLanguages 开始`);
     const res = await getSupportedLanguages();
     const supportedLanguages = res?.data || [];
+    console.log(`${prefix} getSupportedLanguages 返回 data=`, supportedLanguages);
     if (supportedLanguages?.length > 0) {
       // 先加载非默认语言包，记录成功的语言
       const defaultCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      console.log(`${prefix} 默认语言列表`, [...defaultCodes]);
       const nonDefault = supportedLanguages.filter(lang => !defaultCodes.has(lang.code));
+      console.log(`${prefix} 需要动态加载的语言`, nonDefault.map(l => l.code));
       const loadResults = await Promise.all(nonDefault.map(lang => loadMessages(lang.code)));
+
       // 可用的语言 code 集合：默认语言 + 加载成功的非默认语言
       const availableCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
       nonDefault.forEach((lang, i) => {
@@ -46,19 +52,26 @@ const fetchAllowedLanguages = async () => {
       supportedLanguages.forEach((lang) => {
         if (availableCodes.has(lang.code) && !existingCodes.has(lang.code)) {
           defaultLanguages.push({ value: lang.code, label: lang.name });
+          console.log(`${prefix} 追加语言选项 code=${lang.code} label=${lang.name}`);
         }
       });
+      console.log(`${prefix} 最终语言选项`, defaultLanguages);
+    } else {
+      console.log(`${prefix} 后端未返回支持的语言，使用默认语言选项`);
     }
 
     // 保存到 store，供 MainHeader 等组件使用
     platformConfigData.languageOptions = [...defaultLanguages];
+    console.log(`${prefix} 已保存到 platformConfigData.languageOptions`);
     // 加载完语言包后，设置当前 locale 为 cookie 中的语言
     const cookieLang = Cookies.get('blueking_language') || 'zh-cn';
+    console.log(`${prefix} cookie 语言=${cookieLang} 当前 locale=${I18n.global.locale.value}`);
     if (cookieLang !== I18n.global.locale.value) {
       (I18n.global.locale as any).value = cookieLang;
+      console.log(`${prefix} locale 已切换为 ${cookieLang}`);
     }
   } catch (err) {
-    console.warn('[i18n] Failed to fetch supported languages', err);
+    console.warn(`${prefix} fetchAllowedLanguages 失败`, err);
   }
 };
 

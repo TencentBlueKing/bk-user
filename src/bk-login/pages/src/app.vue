@@ -99,12 +99,18 @@ const getConfigData = async () => {
 
 /** 初始化语言列表并预加载语言包 */
 const initLanguages = async () => {
+  const prefix = '[bk-login][i18n]';
   try {
+    console.log(`${prefix} initLanguages 开始`);
     const settings = await getGlobalSettings();
+    console.log(`${prefix} getGlobalSettings 返回`, settings);
     if (settings?.supported_languages?.length > 0) {
+      console.log(`${prefix} 后端返回支持的语言`, settings.supported_languages);
       // 先加载非默认语言包，记录成功的语言
       const defaultCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      console.log(`${prefix} 默认语言列表`, [...defaultCodes]);
       const nonDefault = settings.supported_languages.filter(lang => !defaultCodes.has(lang.code));
+      console.log(`${prefix} 需要动态加载的语言`, nonDefault.map(l => l.code));
       const loadResults = await Promise.all(nonDefault.map(lang => loadMessages(lang.code)));
 
       // 可用的语言 code 集合：默认语言 + 加载成功的非默认语言
@@ -118,8 +124,12 @@ const initLanguages = async () => {
       settings.supported_languages.forEach(lang => {
         if (availableCodes.has(lang.code) && !existingCodes.has(lang.code)) {
           languageOptions.value.push({ value: lang.code, label: lang.name });
+          console.log(`${prefix} 追加语言选项 code=${lang.code} label=${lang.name}`);
         }
       });
+      console.log(`${prefix} 最终语言选项`, languageOptions.value);
+    } else {
+      console.log(`${prefix} 后端未返回 supported_languages，使用默认语言选项`);
     }
 
     // 加载完语言包后，设置当前 locale 为 cookie 中的语言
@@ -129,7 +139,7 @@ const initLanguages = async () => {
       activeTab.value = cookieLang;
     }
   } catch (err) {
-    console.warn('[i18n] Failed to fetch global settings', err);
+    console.warn(`${prefix} initLanguages 失败`, err);
   }
 };
 
