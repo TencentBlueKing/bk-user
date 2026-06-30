@@ -35,7 +35,7 @@ from bkuser.apis.open_v3.serializers.department import (
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler, TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -188,13 +188,6 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
             .order_by("id")
         )
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.paginate_queryset(self.get_queryset())
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.department"],
         operation_id="list_department_user",
@@ -202,7 +195,18 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.paginate_queryset(self.get_queryset())
+
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+                "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+            },
+        )
+
+        return self.get_paginated_response(slz.data)
 
 
 class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):

@@ -379,7 +379,7 @@ class TenantUserLookupApi(OpenApiCommonMixin, generics.ListAPIView):
         return TenantUser.objects.filter(**filter_args).select_related("data_source_user")
 
     @swagger_auto_schema(
-        tags=["open_web.user"],
+        tags=["open_v3.user"],
         operation_id="batch_lookup_user",
         operation_description="批量查询用户信息",
         query_serializer=TenantUserLookupInputSLZ(),
