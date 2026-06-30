@@ -32,6 +32,17 @@ def get_data_source_owner_tenant_id(data_source_id: int) -> str:
     return get_data_source_id_to_owner_tenant_id_map()[data_source_id]
 
 
+@cached(timeout=60)
+def get_data_source_id_to_type_map() -> Dict[int, str]:
+    """数据源 ID → 类型全量映射（带 60s 缓存）"""
+    return dict(DataSource.objects.values_list("id", "type"))
+
+
+def get_data_source_type(data_source_id: int) -> str:
+    """获取单个数据源的类型（基于全量缓存映射）"""
+    return get_data_source_id_to_type_map()[data_source_id]
+
+
 class DepartmentAncestorCache:
     """部门祖先缓存"""
 

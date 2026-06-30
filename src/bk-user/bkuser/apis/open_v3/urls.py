@@ -18,116 +18,103 @@ from django.urls import include, path
 
 from . import views
 
+# ==================== 用户（本租户实名） ====================
+_user_patterns = [
+    path(
+        "users/-/display_info/",
+        views.TenantUserDisplayInfoListApi.as_view(),
+        name="open_v3.tenant_user.display_info.list",
+    ),
+    path("users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="open_v3.tenant_user.retrieve"),
+    path(
+        "users/<str:id>/departments/",
+        views.TenantUserDepartmentListApi.as_view(),
+        name="open_v3.tenant_user.department.list",
+    ),
+    path("users/<str:id>/leaders/", views.TenantUserLeaderListApi.as_view(), name="open_v3.tenant_user.leader.list"),
+    path(
+        "users/-/sensitive-infos/",
+        views.TenantUserSensitiveInfoListApi.as_view(),
+        name="open_v3.tenant_user.sensitive_info.list",
+    ),
+    path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
+    path("users/-/lookup/", views.TenantUserLookupApi.as_view(), name="open_v3.tenant_user.lookup"),
+    # bk-cmsi 专用
+    path(
+        "users/-/contact-profiles/",
+        views.TenantUserContactProfileListApi.as_view(),
+        name="open_v3.tenant_user.contact_profile.list",
+    ),
+]
+
+# ==================== 部门（本租户实名） ====================
+_department_patterns = [
+    path(
+        "departments/<int:id>/",
+        views.TenantDepartmentRetrieveApi.as_view(),
+        name="open_v3.tenant_department.retrieve",
+    ),
+    path("departments/", views.TenantDepartmentListApi.as_view(), name="open_v3.tenant_department.list"),
+    path(
+        "departments/<int:id>/descendants/",
+        views.TenantDepartmentDescendantListApi.as_view(),
+        name="open_v3.tenant_department.descendant.list",
+    ),
+    path(
+        "departments/<int:id>/users/",
+        views.TenantDepartmentUserListApi.as_view(),
+        name="open_v3.tenant_department.user.list",
+    ),
+    path(
+        "departments/-/lookup/",
+        views.TenantDepartmentLookupListApi.as_view(),
+        name="open_v3.tenant_department.lookup",
+    ),
+]
+
+# ==================== 关系（本租户实名） ====================
+_relation_patterns = [
+    path(
+        "department-user-relations/",
+        views.TenantDepartmentUserRelationListApi.as_view(),
+        name="open_v3.tenant_department_user_relation.list",
+    ),
+    path(
+        "department-relations/",
+        views.TenantDepartmentRelationListApi.as_view(),
+        name="open_v3.tenant_department_relation.list",
+    ),
+    path(
+        "user-leader-relations/",
+        views.TenantUserLeaderRelationListApi.as_view(),
+        name="open_v3.tenant_user_leader_relation.list",
+    ),
+]
+
+# ==================== 虚拟用户（本租户虚拟） ====================
+_virtual_user_patterns = [
+    path("virtual-users/-/lookup/", views.VirtualUserLookupApi.as_view(), name="open_v3.virtual_user.lookup"),
+    path("virtual-users/", views.VirtualUserListApi.as_view(), name="open_v3.virtual_user.list"),
+]
+
+# ==================== 公共 ====================
+_common_patterns = [
+    path("common-variables/", views.TenantCommonVariableListApi.as_view(), name="open_v3.tenant_common_variable.list"),
+    path(
+        "custom-enum-fields/",
+        views.TenantUserCustomEnumFieldListApi.as_view(),
+        name="open_v3.tenant_user_custom_enum_field.list",
+    ),
+]
+
+# ==================== 汇总 ====================
 urlpatterns = [
     path("tenants/", views.TenantListApi.as_view(), name="open_v3.tenant.list"),
     # 租户级别 API
     path(
         "tenant/",
         include(
-            [
-                # users
-                path(
-                    "users/-/display_info/",
-                    views.TenantUserDisplayInfoListApi.as_view(),
-                    name="open_v3.tenant_user.display_info.list",
-                ),
-                path(
-                    "users/<str:id>/",
-                    views.TenantUserRetrieveApi.as_view(),
-                    name="open_v3.tenant_user.retrieve",
-                ),
-                path(
-                    "users/<str:id>/departments/",
-                    views.TenantUserDepartmentListApi.as_view(),
-                    name="open_v3.tenant_user.department.list",
-                ),
-                path(
-                    "users/<str:id>/leaders/",
-                    views.TenantUserLeaderListApi.as_view(),
-                    name="open_v3.tenant_user.leader.list",
-                ),
-                path(
-                    "users/-/sensitive-infos/",
-                    views.TenantUserSensitiveInfoListApi.as_view(),
-                    name="open_v3.tenant_user.sensitive_info.list",
-                ),
-                path("users/", views.TenantUserListApi.as_view(), name="open_v3.tenant_user.list"),
-                path(
-                    "users/-/lookup/",
-                    views.TenantUserLookupApi.as_view(),
-                    name="open_v3.tenant_user.lookup",
-                ),
-                # bk-cmsi 专用
-                path(
-                    "users/-/contact-profiles/",
-                    views.TenantUserContactProfileListApi.as_view(),
-                    name="open_v3.tenant_user.contact_profile.list",
-                ),
-                # departments
-                path(
-                    "departments/<int:id>/",
-                    views.TenantDepartmentRetrieveApi.as_view(),
-                    name="open_v3.tenant_department.retrieve",
-                ),
-                path(
-                    "departments/",
-                    views.TenantDepartmentListApi.as_view(),
-                    name="open_v3.tenant_department.list",
-                ),
-                path(
-                    "departments/<int:id>/descendants/",
-                    views.TenantDepartmentDescendantListApi.as_view(),
-                    name="open_v3.tenant_department.descendant.list",
-                ),
-                path(
-                    "departments/<int:id>/users/",
-                    views.TenantDepartmentUserListApi.as_view(),
-                    name="open_v3.tenant_department.user.list",
-                ),
-                path(
-                    "departments/-/lookup/",
-                    views.TenantDepartmentLookupListApi.as_view(),
-                    name="open_v3.tenant_department.lookup",
-                ),
-                # relations
-                path(
-                    "department-user-relations/",
-                    views.TenantDepartmentUserRelationListApi.as_view(),
-                    name="open_v3.tenant_department_user_relation.list",
-                ),
-                path(
-                    "department-relations/",
-                    views.TenantDepartmentRelationListApi.as_view(),
-                    name="open_v3.tenant_department_relation.list",
-                ),
-                path(
-                    "user-leader-relations/",
-                    views.TenantUserLeaderRelationListApi.as_view(),
-                    name="open_v3.tenant_user_leader_relation.list",
-                ),
-                # virtual users
-                path(
-                    "virtual-users/-/lookup/",
-                    views.VirtualUserLookupApi.as_view(),
-                    name="open_v3.virtual_user.lookup",
-                ),
-                path(
-                    "virtual-users/",
-                    views.VirtualUserListApi.as_view(),
-                    name="open_v3.virtual_user.list",
-                ),
-                # common
-                path(
-                    "common-variables/",
-                    views.TenantCommonVariableListApi.as_view(),
-                    name="open_v3.tenant_common_variable.list",
-                ),
-                path(
-                    "custom-enum-fields/",
-                    views.TenantUserCustomEnumFieldListApi.as_view(),
-                    name="open_v3.tenant_user_custom_enum_field.list",
-                ),
-            ]
+            _user_patterns + _department_patterns + _relation_patterns + _virtual_user_patterns + _common_patterns
         ),
     ),
 ]
