@@ -191,18 +191,17 @@ const userInfo = computed(() => {
 const route = useRoute();
 const isTenant = computed(() => route.name === 'tenant');
 
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-    language: 'zh-cn',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-    language: 'en',
-  },
-]);
+const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
+  const iconMap: Record<string, string> = {
+    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+  };
+  return {
+    name: option.label,
+    icon: iconMap[option.value] || '',
+    language: option.value,
+  };
+}));
 
 const toIndividualCenter = () => {
   router.push({

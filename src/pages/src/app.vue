@@ -2,7 +2,8 @@
 import { Message } from 'bkui-vue';
 import en from 'bkui-vue/dist/locale/en.esm';
 import zhCn from 'bkui-vue/dist/locale/zh-cn.esm';
-import { computed, ref } from 'vue';
+import Cookies from 'js-cookie';
+import { computed, onBeforeMount, ref } from 'vue';
 import { NavigationGuardNext, RouteLocationNormalizedGeneric, useRouter } from 'vue-router';
 
 import { getPlatformConfig, setDocumentTitle, setShortcutIcon } from '@blueking/platform-config';
@@ -11,7 +12,8 @@ import { ROLE } from './common/constant';
 import { noNeedLoginRouteNames } from './router/routes';
 import HeaderBox from './views/MainHeader.vue';
 
-import { locale as i18nLocal, t } from '@/language/index';
+import { getSupportedLanguages } from '@/http/api';
+import I18n, { DEFAULT_LANGUAGE_OPTIONS, loadMessages, locale as i18nLocal, t } from '@/language/index';
 import { platformConfig, useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
 import ResetPassword from '@/views/reset-password/newPassword.vue';
@@ -19,6 +21,46 @@ import ResetPassword from '@/views/reset-password/newPassword.vue';
 const router = useRouter();
 
 const showName = ref(null);
+/** 语言选项列表 */
+const defaultLanguages = [...DEFAULT_LANGUAGE_OPTIONS];
+const platformConfigData = platformConfig();
+
+/** 获取后端允许的语言列表并预加载语言包 */
+const fetchAllowedLanguages = async () => {
+  try {
+    const res = await getSupportedLanguages();
+    const supportedLanguages = res?.data || [];
+    if (supportedLanguages?.length > 0) {
+      // 先加载非默认语言包，记录成功的语言
+      const defaultCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      const nonDefault = supportedLanguages.filter(lang => !defaultCodes.has(lang.code));
+      const loadResults = await Promise.all(nonDefault.map(lang => loadMessages(lang.code)));
+      // 可用的语言 code 集合：默认语言 + 加载成功的非默认语言
+      const availableCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
+      nonDefault.forEach((lang, i) => {
+        if (loadResults[i]) availableCodes.add(lang.code);
+      });
+
+      // 仅追加可用语言选项（去重）
+      const existingCodes = new Set(defaultLanguages.map(opt => opt.value));
+      supportedLanguages.forEach((lang) => {
+        if (availableCodes.has(lang.code) && !existingCodes.has(lang.code)) {
+          defaultLanguages.push({ value: lang.code, label: lang.name });
+        }
+      });
+    }
+
+    // 保存到 store，供 MainHeader 等组件使用
+    platformConfigData.languageOptions = [...defaultLanguages];
+    // 加载完语言包后，设置当前 locale 为 cookie 中的语言
+    const cookieLang = Cookies.get('blueking_language') || 'zh-cn';
+    if (cookieLang !== I18n.global.locale.value) {
+      (I18n.global.locale as any).value = cookieLang;
+    }
+  } catch (err) {
+    console.warn('[i18n] Failed to fetch supported languages', err);
+  }
+};
 
 // 加载完用户数据才会展示页面
 const isLoading = ref(true);
@@ -34,7 +76,6 @@ const localeData = {
 
 const locale = computed(() => localeData[currentLang.value]);
 
-const platformConfigData = platformConfig();
 const url = `${window.BK_SHARED_RES_URL}/bk_user/base.js`;  // url 远程配置文件地址
 const defaults = {
   name: '用户管理',
@@ -52,7 +93,6 @@ const getConfigData = async () => {
   setDocumentTitle(config.i18n); // 设置document.title
   platformConfigData.update(config);
 };
-getConfigData();
 
 /**
  * 检查用户角色权限并在需要时重定向
@@ -108,6 +148,11 @@ router.beforeEach(async (to, from, next) => {
     next();
     isLoading.value = false;
   }
+});
+
+onBeforeMount(() => {
+  getConfigData();
+  fetchAllowedLanguages();
 });
 </script>
 
