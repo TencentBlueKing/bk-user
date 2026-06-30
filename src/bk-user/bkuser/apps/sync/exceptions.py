@@ -22,3 +22,7 @@ class DataSourceSyncInterrupted(Exception):
 
 class TenantSyncInterrupted(Exception):
     """租户同步被中断（如无法获取同步锁）"""
+
+
+class DataSourceSyncDataInvalid(Exception):
+    """数据源同步数据校验不通过"""

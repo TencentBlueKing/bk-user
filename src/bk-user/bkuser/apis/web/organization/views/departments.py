@@ -199,6 +199,16 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(
                 department=parent_data_source_dept, data_source=data_source
             )
+
+            # Note: parent_dept_relation.level 是 MPTT 中从 0 开始的层级
+            new_dept_level = parent_dept_relation.level + 2
+            if new_dept_level > settings.MAX_DEPARTMENT_LEVEL:
+                raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(
+                    _("创建部门后层级深度将达到 {} 级，超出最大限制 {} 级").format(
+                        new_dept_level, settings.MAX_DEPARTMENT_LEVEL
+                    )
+                )
+
             parent_dept_org_path = TenantOrgPathHandler.get_dept_organization_path_map(
                 [parent_data_source_dept.id], include_self=True
             )

@@ -25,6 +25,7 @@ from bkuser.plugins.local.exceptions import (
     InvalidLeader,
     InvalidOrganization,
     InvalidUsername,
+    OrganizationDepthLimitExceeded,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
     UserSheetNotExists,
@@ -340,3 +341,26 @@ class TestLocalDataSourceDataParser:
                 departments=[],
             ),
         ]
+
+    def test_validate_case_organization_depth_exceeded(self, logger, user_workbook, settings):
+        """组织路径层级深度超出限制时应抛出异常"""
+        # 设置限制为 3 级，测试数据中有 4 级路径 (公司/部门A/中心AA/小组AAA)
+        settings.MAX_DEPARTMENT_LEVEL = 3
+        with pytest.raises(OrganizationDepthLimitExceeded):
+            LocalDataSourceDataParser(logger, user_workbook).parse()
+
+    def test_validate_case_organization_depth_at_limit(self, logger, user_workbook, settings):
+        """组织路径层级深度刚好等于限制值时应通过"""
+        # 测试数据最大深度为 4 (公司/部门A/中心AA/小组AAA)，设置限制为 4
+        settings.MAX_DEPARTMENT_LEVEL = 4
+        parser = LocalDataSourceDataParser(logger, user_workbook)
+        parser.parse()
+        # 能正常解析即代表通过
+        assert len(parser.get_departments()) > 0
+
+    def test_validate_case_organization_depth_below_limit(self, logger, user_workbook, settings):
+        """组织路径层级深度低于限制值时应通过"""
+        settings.MAX_DEPARTMENT_LEVEL = 15
+        parser = LocalDataSourceDataParser(logger, user_workbook)
+        parser.parse()
+        assert len(parser.get_departments()) > 0

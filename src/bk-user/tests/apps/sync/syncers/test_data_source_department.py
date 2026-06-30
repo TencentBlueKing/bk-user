@@ -144,3 +144,98 @@ class TestSyncDataSourceDepartment:
     def _gen_parent_relations_from_db(data_source: DataSource) -> Set[Tuple[str, str | None]]:
         dept_relations = DataSourceDepartmentRelation.objects.filter(data_source=data_source)
         return {(rel.department.code, rel.parent.department.code if rel.parent else None) for rel in dept_relations}
+
+
+class TestGetTreeMaxDepth:
+    """测试 _get_tree_max_depth 方法"""
+
+    def test_single_node(self):
+        """单节点树深度为 1"""
+        from bkuser.utils.tree import TreeNode
+
+        root = TreeNode(id="root")
+        assert DataSourceDepartmentRelationSyncer._get_tree_max_depth(root) == 1
+
+    def test_unbalanced_tree(self):
+        """非平衡树取最大深度"""
+        from bkuser.utils.tree import TreeNode
+
+        deep_leaf = TreeNode(id="deep_leaf")
+        deep_mid = TreeNode(id="deep_mid", children=[deep_leaf])
+        left = TreeNode(id="left", children=[deep_mid])
+        right = TreeNode(id="right")
+        root = TreeNode(id="root", children=[left, right])
+        # root -> left -> deep_mid -> deep_leaf = 4
+        assert DataSourceDepartmentRelationSyncer._get_tree_max_depth(root) == 4
+
+
+class TestDepartmentDepthLimit:
+    """测试组织层级深度限制"""
+
+    def test_sync_within_depth_limit(self, data_source_sync_task_ctx, bare_local_data_source, settings):
+        """层级刚好等于限制值，同步应成功"""
+        # raw_departments 最大深度为 4 (company -> dept_a -> center_aa -> group_aaa)
+        raw_departments = [
+            RawDataSourceDepartment(code="company", name="公司", parent=None),
+            RawDataSourceDepartment(code="dept_a", name="部门A", parent="company"),
+            RawDataSourceDepartment(code="center_aa", name="中心AA", parent="dept_a"),
+            RawDataSourceDepartment(code="group_aaa", name="小组AAA", parent="center_aa"),
+        ]
+        settings.MAX_DEPARTMENT_LEVEL = 4
+
+        kwargs = {
+            "ctx": data_source_sync_task_ctx,
+            "data_source": bare_local_data_source,
+            "raw_departments": raw_departments,
+            "overwrite": True,
+            "incremental": False,
+        }
+        DataSourceDepartmentSyncer(**kwargs).sync()
+        # 不应抛异常
+        DataSourceDepartmentRelationSyncer(**kwargs).sync()
+
+        assert DataSourceDepartmentRelation.objects.filter(data_source=bare_local_data_source).count() == 4
+
+    def test_sync_exceeds_depth_limit(self, data_source_sync_task_ctx, bare_local_data_source, settings):
+        """层级超出限制值，同步应失败"""
+        from bkuser.apps.sync.exceptions import DataSourceSyncDataInvalid
+
+        # 深度为 4，但限制设为 3
+        raw_departments = [
+            RawDataSourceDepartment(code="company", name="公司", parent=None),
+            RawDataSourceDepartment(code="dept_a", name="部门A", parent="company"),
+            RawDataSourceDepartment(code="center_aa", name="中心AA", parent="dept_a"),
+            RawDataSourceDepartment(code="group_aaa", name="小组AAA", parent="center_aa"),
+        ]
+        settings.MAX_DEPARTMENT_LEVEL = 3
+
+        kwargs = {
+            "ctx": data_source_sync_task_ctx,
+            "data_source": bare_local_data_source,
+            "raw_departments": raw_departments,
+            "overwrite": True,
+            "incremental": False,
+        }
+        DataSourceDepartmentSyncer(**kwargs).sync()
+
+        with pytest.raises(DataSourceSyncDataInvalid):
+            DataSourceDepartmentRelationSyncer(**kwargs).sync()
+
+    def test_sync_at_exact_boundary(self, data_source_sync_task_ctx, bare_local_data_source, settings):
+        """层级恰好在边界值（limit=1, depth=1），只有根部门，应通过"""
+        raw_departments = [
+            RawDataSourceDepartment(code="company", name="公司", parent=None),
+        ]
+        settings.MAX_DEPARTMENT_LEVEL = 1
+
+        kwargs = {
+            "ctx": data_source_sync_task_ctx,
+            "data_source": bare_local_data_source,
+            "raw_departments": raw_departments,
+            "overwrite": True,
+            "incremental": False,
+        }
+        DataSourceDepartmentSyncer(**kwargs).sync()
+        DataSourceDepartmentRelationSyncer(**kwargs).sync()
+
+        assert DataSourceDepartmentRelation.objects.filter(data_source=bare_local_data_source).count() == 1

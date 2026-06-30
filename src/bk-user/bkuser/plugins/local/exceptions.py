@@ -55,3 +55,7 @@ class InvalidUsername(LocalDataSourcePluginError):
 
 class DuplicateUsername(LocalDataSourcePluginError):
     """待导入文件中存在重复用户"""
+
+
+class OrganizationDepthLimitExceeded(LocalDataSourcePluginError):
+    """组织层级超出最大深度限制"""

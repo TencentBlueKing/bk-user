@@ -14,14 +14,17 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from collections import deque
 
 # ignore custom logger must use %s string format in this file
 # ruff: noqa: G004
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.data_source.cache import DepartmentAncestorCache
 from bkuser.apps.data_source.models import (
@@ -32,8 +35,9 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
+from bkuser.apps.sync.exceptions import DataSourceSyncDataInvalid
 from bkuser.plugins.models import RawDataSourceDepartment
-from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
+from bkuser.utils.tree import TreeNode, bfs_traversal_tree, build_forest_with_parent_relations
 
 
 class DataSourceDepartmentSyncer:
@@ -205,6 +209,17 @@ class DataSourceDepartmentRelationSyncer:
             tree_id = self._generate_tree_id(self.data_source)
             mptt_tree_ids.add(tree_id)
 
+            max_depth = self._get_tree_max_depth(root)
+            if max_depth > settings.MAX_DEPARTMENT_LEVEL:
+                self.ctx.logger.error(
+                    f"department tree max depth ({max_depth}) exceeds limit ({settings.MAX_DEPARTMENT_LEVEL})"
+                )
+                raise DataSourceSyncDataInvalid(
+                    _("组织层级深度 {} 超出最大限制 {} 级，请调整组织结构后重试").format(
+                        max_depth, settings.MAX_DEPARTMENT_LEVEL
+                    )
+                )
+
             # 通过 bfs 遍历的方式，确保父节点会先被创建
             for node in bfs_traversal_tree(root):
                 parent_code = dept_parent_code_map.get(node.id)
@@ -264,3 +279,16 @@ class DataSourceDepartmentRelationSyncer:
         分配实现：利用 MySQL 自增 ID 分配 tree_id（不需要包含到事务中，虽然可能造成浪费）
         """
         return DepartmentRelationMPTTTree.objects.create(data_source=data_source).id
+
+    @staticmethod
+    def _get_tree_max_depth(root: TreeNode) -> int:
+        """BFS 计算树的最大深度"""
+        max_depth = 0
+        queue: deque[Tuple[TreeNode, int]] = deque([(root, 1)])
+        while queue:
+            node, depth = queue.popleft()
+            max_depth = max(max_depth, depth)
+            for child in node.children:
+                queue.append((child, depth + 1))
+
+        return max_depth

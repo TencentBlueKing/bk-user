@@ -34,6 +34,7 @@ from bkuser.plugins.local.exceptions import (
     InvalidLeader,
     InvalidOrganization,
     InvalidUsername,
+    OrganizationDepthLimitExceeded,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
     UserSheetNotExists,
@@ -209,6 +210,14 @@ class LocalDataSourceDataParser:
                         _(
                             "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符",
                         ).format(username, cur_org)
+                    )
+
+                depth = len(cur_org.split("/"))
+                if depth > settings.MAX_DEPARTMENT_LEVEL:
+                    raise OrganizationDepthLimitExceeded(
+                        _("用户 {} 组织路径 {} 层级深度为 {}，超出最大限制 {} 级").format(
+                            username, cur_org, depth, settings.MAX_DEPARTMENT_LEVEL
+                        )
                     )
 
                 organizations.add(cur_org)
