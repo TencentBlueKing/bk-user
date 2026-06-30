@@ -314,6 +314,8 @@ BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce
 BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
+# 额外的前端 json 翻译文件地址
+BK_USER_EXTRA_I18N_BASE_URL = env.str("BK_USER_EXTRA_I18N_URL", default="/staticfiles")
 
 # ------------------------------------------ 缓存配置 ------------------------------------------
 

@@ -32,6 +32,8 @@ def basic_settings(request):
         "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
         # footer / logo / title 等全局配置
         "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
+        # 额外的前端 json 翻译文件基准地址
+        "BK_LOGIN_EXTRA_I18N_BASE_URL": settings.BK_LOGIN_EXTRA_I18N_BASE_URL,
         # 是否允许浏览器密码自动填充功能
         "ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE": settings.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE,
     }

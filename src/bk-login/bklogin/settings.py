@@ -269,6 +269,8 @@ BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEAR
 
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
+# 额外前端翻译文件基准地址
+BK_LOGIN_EXTRA_I18N_BASE_URL = env.str("BK_LOGIN_EXTRA_I18N_BASE_URL", default="login/staticfiles")
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
