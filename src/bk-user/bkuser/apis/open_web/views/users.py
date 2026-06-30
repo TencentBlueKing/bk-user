@@ -40,12 +40,11 @@ from bkuser.apis.open_web.serializers.users import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
     VirtualUserListOutputSLZ,
-    VirtualUserLookupInputSLZ,
-    VirtualUserLookupOutputSLZ,
     VirtualUserSearchInputSLZ,
     VirtualUserSearchOutputSLZ,
 )
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
+from bkuser.apps.data_source.cache import get_data_source_id_to_owner_tenant_id_map, get_data_source_id_to_type_map
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import TenantUser
@@ -238,13 +237,17 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         filter_args = [
             Q(tenant_id=self.tenant_id),
             condition,
-            Q(data_source_id__in=DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)),
         ]
 
-        # 若指定了 owner_tenant_id，则只查询该租户下的用户；否则查询本租户用户与协同租户用户
+        # 通过缓存映射计算允许的 data_source_id 集合，避免 JOIN data_source 表
+        if data_source_type := data.get("data_source_type"):
+            type_map = get_data_source_id_to_type_map()
+            filter_args.append(Q(data_source_id__in={ds_id for ds_id, t in type_map.items() if t == data_source_type}))
+
         if tenant_id := data.get("owner_tenant_id"):
+            owner_map = get_data_source_id_to_owner_tenant_id_map()
             filter_args.append(
-                Q(data_source_id__in=DataSource.objects.filter(owner_tenant_id=tenant_id).values_list("id", flat=True))
+                Q(data_source_id__in={ds_id for ds_id, owner in owner_map.items() if owner == tenant_id})
             )
 
         queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")
@@ -340,55 +343,6 @@ class VirtualUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         return Response(
             VirtualUserSearchOutputSLZ(queryset, many=True, context={"display_name_map": display_name_map}).data
-        )
-
-
-class VirtualUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
-    """
-    根据用户字段批量查询虚拟用户
-    """
-
-    throttle_classes = [open_web_api_throttle_class(OpenWebApiEnum.BATCH_LOOKUP_VIRTUAL_USER)]
-
-    pagination_class = None
-
-    @staticmethod
-    def _convert_lookup_to_query(field: str, lookups: List[str]) -> Q:
-        if field == "full_name":
-            return Q(data_source_user__full_name__in=lookups)
-
-        if field == "bk_username":
-            return Q(id__in=lookups)
-
-        return Q(data_source_user__username__in=lookups)
-
-    @swagger_auto_schema(
-        tags=["open_web.user"],
-        operation_id="batch_lookup_virtual_user",
-        operation_description="批量精确查询虚拟用户",
-        query_serializer=VirtualUserLookupInputSLZ(),
-        responses={status.HTTP_200_OK: VirtualUserLookupOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        slz = VirtualUserLookupInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        # 遍历匹配字段列表，构造 OR 查询条件
-        condition = reduce(
-            operator.or_, [self._convert_lookup_to_query(field, data["lookups"]) for field in data["lookup_fields"]]
-        )
-
-        queryset = TenantUser.objects.filter(
-            Q(tenant_id=self.tenant_id),
-            Q(data_source_id=self.virtual_data_source_id),
-            condition,
-        ).select_related("data_source_user")
-
-        display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset)
-
-        return Response(
-            VirtualUserLookupOutputSLZ(queryset, many=True, context={"display_name_map": display_name_map}).data
         )
 
 
