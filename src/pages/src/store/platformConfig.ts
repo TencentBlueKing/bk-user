@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
 
-import { DEFAULT_LANGUAGE_OPTIONS } from '@/language/index';
-
 export const platformConfig = defineStore('platformConfig', {
   state: () => ({
     bkAppCode: '', // appcode
@@ -24,9 +22,6 @@ export const platformConfig = defineStore('platformConfig', {
     footerInfoHTML: '',
     footerInfoHTMLEn: '',
     footerCopyrightContent: '',
-
-    // 语言选项列表（包含后端返回的动态语言）
-    languageOptions: [...DEFAULT_LANGUAGE_OPTIONS],
 
     // 需要国际化的字段，根据当前语言cookie自动匹配，页面中应该优先使用这里的字段
     i18n: {

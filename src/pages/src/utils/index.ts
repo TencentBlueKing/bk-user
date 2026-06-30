@@ -61,6 +61,12 @@ export function dateConvert(value: string) {
   }
 }
 
+// 语言
+export const LANGUAGE_OPTIONS = [
+  { value: 'zh-cn', label: '简体中文' },
+  { value: 'en', label: 'English' },
+];
+
 // logo转换
 export function logoConvert(value: string) {
   return value?.charAt(0).toUpperCase();

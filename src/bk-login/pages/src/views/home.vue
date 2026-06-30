@@ -140,7 +140,6 @@
 
 <script setup lang="ts">
 import { getGlobalSettings, getIdpList, getTenantList, getSearchTenantList } from '@/http/api';
-import type { GlobalSettingsResult } from '@/http/types/api';
 import { type Ref, onBeforeMount, ref, computed, watch } from 'vue';
 import Password from './components/password.vue';
 import useAppStore from '@/store/app';
@@ -221,7 +220,7 @@ const activeIdp: Ref<Idp> = ref();
 /**
  * 全局配置
  */
-const settings = ref<GlobalSettingsResult>();
+const settings = ref<Record<string, any>>({});
 
 // 从 localStorage 中加载租户列表
 try {

@@ -370,7 +370,7 @@
                       input-search
                       class="w-[106px]">
                       <bk-option
-                        v-for="option in platformConfigData.languageOptions"
+                        v-for="option in LANGUAGE_OPTIONS"
                         :key="option.value"
                         :id="option.value"
                         :name="option.label">
@@ -477,9 +477,8 @@ import {
 } from '@/http';
 import { CurrentNaturalUserData, PersonalCenterUsersData, WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language/index';
-import { platformConfig } from '@/store/platformConfig';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, handleSwitchLocale } from '@/utils';
+import { customFieldsMap, formatConvert, handleSwitchLocale, LANGUAGE_OPTIONS } from '@/utils';
 
 const userStore = useUser();
 const validate = useValidate();
@@ -493,9 +492,6 @@ type OperateExtrasCustomFields = (ExtrasCustomFields & {
 type CurrentUserInfo = PersonalCenterUsersData & {
   extras: OperateExtrasCustomFields[]
 };
-
-const  platformConfigData = platformConfig();
-
 // 当前用户信息
 const currentUserInfo = ref<CurrentUserInfo>({} as CurrentUserInfo);
 // 当前租户信息
@@ -587,7 +583,7 @@ const changeCustomFields = async (item: OperateExtrasCustomFields) => {
 };
 
 const showLanguage = computed(() => (targetValue: string) => {
-  const foundItem = platformConfigData.languageOptions?.find(item => item.value === targetValue);
+  const foundItem = LANGUAGE_OPTIONS?.find(item => item.value === targetValue);
   return foundItem ? foundItem.label : null;
 });
 

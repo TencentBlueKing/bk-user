@@ -1,7 +1,5 @@
 import fetch from './fetch';
 
-import type { GlobalSettingsResult } from './types/api';
-
 const apiPrefix = '';
 
 interface PasswordParams {
@@ -37,4 +35,4 @@ export const signInByAdmin = (idpId: string, params: PasswordParams) => fetch
   .post(`${apiPrefix}/builtin-management-auth/idps/${idpId}/authenticate/`, params);
 
 // 全局配置
-export const getGlobalSettings = (): Promise<GlobalSettingsResult> => fetch.get(`${apiPrefix}/global-settings/`);
+export const getGlobalSettings = () => fetch.get(`${apiPrefix}/global-settings/`);
