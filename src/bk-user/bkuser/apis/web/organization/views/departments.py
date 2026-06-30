@@ -377,11 +377,12 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         keyword = slz.validated_data["keyword"]
 
+        real_ds_ids = DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__type=DataSourceTypeEnum.REAL,
+            data_source_id__in=real_ds_ids,
             data_source_department__name__icontains=keyword,
-        ).select_related("data_source", "data_source_department")[: self.search_limit]
+        ).select_related("data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
