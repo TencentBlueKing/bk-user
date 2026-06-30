@@ -20,14 +20,14 @@
               <UploadImg v-model:value="formData.logo" />
             </bk-form-item>
           </div>
-          <bk-form-item :label="$t('用户数量')" required>
+          <!-- <bk-form-item :label="$t('用户数量')" required>
             <bk-radio-group
               v-model="formData.user_number_visible"
             >
               <bk-radio-button class="min-w-[100px]" :label="true">{{ $t('显示') }}</bk-radio-button>
               <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
             </bk-radio-group>
-          </bk-form-item>
+          </bk-form-item> -->
 
           <bk-form-item property="display_name_config">
             <template #label>
@@ -66,7 +66,11 @@
           <div>
             <LabelContent :label="$t('租户名称')">{{ formData.name }}</LabelContent>
             <LabelContent :label="$t('租户ID')">{{ formData.id }}</LabelContent>
-            <LabelContent :label="$t('用户数量')">{{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}</LabelContent>
+            <!-- <LabelContent
+              :label="$t('用户数量')"
+            >
+            {{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}
+            </LabelContent> -->
             <LabelContent :label="$t('用户展示名')">{{ displayNameExpressionView }}</LabelContent>
           </div>
           <LabelContent class="tenant-logo" :label="$t('租户logo')">
@@ -94,13 +98,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import UploadImg from '@/components/upload-img.vue';
+import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
 import UserDisplayNameConfig from '@/components/user-display-name-config/userDisplayNameConfig.vue';
 import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
 import useAppStore from '@/store/app';
-import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
 
 const appStore = useAppStore();
 const validate = useValidate();
