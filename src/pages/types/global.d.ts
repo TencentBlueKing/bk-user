@@ -21,4 +21,5 @@ declare interface Window {
   ENABLE_CREATE_TENANT: string
   ENABLE_COLLABORATION_TENANT: string
   ENABLE_MULTI_TENANT_MODE: string
+  BK_USER_EXTRA_I18N_BASE_URL: string
 }

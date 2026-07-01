@@ -97,29 +97,25 @@
               </bk-dropdown-menu>
             </template>
           </bk-dropdown>
-          <bk-dropdown
-            class="pl-[12px]"
-            placement="bottom-end"
-            @hide="() => (state.logoutDropdown = false)"
-            @show="() => (state.logoutDropdown = true)"
-          >
-            <div
-              :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <DisplayName :user-id="userInfo.username" class="help-info-name" />
-              <DownShape class="help-info-icon" />
-            </div>
-            <template #content>
-              <bk-dropdown-menu ext-cls="dropdown-menu-box">
-                <bk-dropdown-item
-                  v-if="!isTenant"
-                  :class="{ 'active-item': isPersonalCenter }"
-                  @click="toIndividualCenter">
-                  {{ $t('个人中心') }}
-                </bk-dropdown-item>
-                <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
-              </bk-dropdown-menu>
+          <BkLoginUserinfo
+            :userinfo="{
+              name: userInfo.username,
+              organization: userInfo.tenant_id,
+              timezone: userInfo.time_zone,
+            }">
+            <DisplayName :user-id="userInfo.username" class="help-info-name" />
+            <template #action>
+              <ActionItem v-if="!isTenant" @click="toIndividualCenter">
+                {{ $t('个人中心') }}
+              </ActionItem>
+              <ActionItem
+                theme="danger"
+                @click="logout"
+              >
+                {{ $t('退出登录') }}
+              </ActionItem>
             </template>
-          </bk-dropdown>
+          </BkLoginUserinfo>
         </div>
       </template>
       <router-view></router-view>
@@ -141,6 +137,7 @@ import { DownShape } from 'bkui-vue/lib/icon';
 import { computed, onMounted, provide, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import BkLoginUserinfo, { ActionItem } from '@blueking/login-userinfo';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
@@ -148,6 +145,7 @@ import logo from '../../static/images/logo.png';
 
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
+import '@blueking/login-userinfo/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { ROLE } from '@/common/constant';
 import { UPDATE_TENANT_INFO_KEY, UpdateTenantInfo } from '@/common/inject-keys';
@@ -160,7 +158,6 @@ import { platformConfig, useUser } from '@/store';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
 
 const state = reactive({
-  logoutDropdown: false,
   helpDropdown: false,
   languageDropdown: false,
 });
@@ -202,21 +199,19 @@ const userInfo = computed(() => {
 });
 
 const route = useRoute();
-const isPersonalCenter = computed(() => route.name === 'personalCenter');
 const isTenant = computed(() => route.name === 'tenant');
 
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-    language: 'zh-cn',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-    language: 'en',
-  },
-]);
+const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
+  const iconMap: Record<string, string> = {
+    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+  };
+  return {
+    name: option.label,
+    icon: iconMap[option.value] || '',
+    language: option.value,
+  };
+}));
 
 const toIndividualCenter = () => {
   router.push({
@@ -449,25 +444,6 @@ const openVersionLog = async () => {
       }
     }
 
-    .active-username {
-      color: #3a84ff;
-      cursor: pointer;
-
-      .help-info-icon {
-        display: inline-block;
-        transform: rotate(180deg);
-        transition: all 0.2s;
-      }
-    }
-
-    .active-route {
-      // color: #3a84ff;
-    }
-
-    .help-info-icon {
-      vertical-align: middle;
-    }
-
     .help-info-name {
       padding-right: 4px;
       font-size: 14px;
@@ -492,4 +468,11 @@ const openVersionLog = async () => {
     background-color: #E1ECFF !important;
   }
 }
+
+  :deep(.bk-login-userinfo-panel) {
+    z-index: 9999;
+    position: fixed !important;
+    top: 52px !important;
+    right: 10px !important;
+  }
 </style>
