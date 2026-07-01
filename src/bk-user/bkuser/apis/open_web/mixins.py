@@ -25,10 +25,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.tenant.constants import CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy
+from bkuser.apps.data_source.cache import DataSourceCache
 
 
 class OpenWebApiCommonMixin:
@@ -90,37 +87,10 @@ class OpenWebApiCommonMixin:
 
     @cached_property
     def real_data_source_ids(self) -> List[int]:
-        return list(
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).values_list(
-                "id", flat=True
-            )
-        )
-
-    @cached_property
-    def collaboration_data_source_ids(self) -> List[int]:
-        collaboration_tenant_ids = list(
-            CollaborationStrategy.objects.filter(target_tenant_id=self.tenant_id)
-            .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
-            .values_list("source_tenant_id", flat=True)
-        )
-
-        if not collaboration_tenant_ids:
-            return []
-        return list(
-            DataSource.objects.filter(
-                owner_tenant_id__in=collaboration_tenant_ids, type=DataSourceTypeEnum.REAL
-            ).values_list("id", flat=True)
-        )
+        """本租户拥有的 REAL 数据源 ID（不含协同），基于全局缓存避免 DB 查询"""
+        return list(DataSourceCache.real_ids_by_owner(self.tenant_id))
 
     @cached_property
     def virtual_data_source_id(self) -> int:
-        # 虚拟数据源不存在时，返回 0
-        data_source = (
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
-            .only("id")
-            .first()
-        )
-        if not data_source:
-            return 0
-
-        return data_source.id
+        """本租户的虚拟数据源 ID，不存在时返回 0，基于全局缓存避免 DB 查询"""
+        return DataSourceCache.virtual_id_by_owner(self.tenant_id)

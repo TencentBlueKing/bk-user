@@ -21,7 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id, get_data_source_type
+from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
@@ -79,7 +79,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_owner_tenant_id(self, obj: TenantUser) -> str:
-        return get_data_source_owner_tenant_id(obj.data_source_id)
+        return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
 
     def get_login_name(self, obj: TenantUser) -> str:
         return self.context["login_name_map"][obj.id]
@@ -139,10 +139,10 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
 
     def get_data_source_type(self, obj: TenantUser) -> str:
-        return get_data_source_type(obj.data_source_id)
+        return DataSourceCache.get_type(obj.data_source_id)
 
     def get_owner_tenant_id(self, obj: TenantUser) -> str:
-        return get_data_source_owner_tenant_id(obj.data_source_id)
+        return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
 
     def get_login_name(self, obj: TenantUser) -> str:
         return self.context["login_name_map"][obj.id]

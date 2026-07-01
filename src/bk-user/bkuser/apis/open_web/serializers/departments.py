@@ -20,7 +20,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id
+from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.common.serializers import StringArrayField
 
@@ -39,7 +39,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
 
     def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
-        return get_data_source_owner_tenant_id(obj.data_source_id)
+        return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"][obj.data_source_department_id]
@@ -110,7 +110,7 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
     def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
-        return get_data_source_owner_tenant_id(obj.data_source_id)
+        return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"][obj.data_source_department_id]

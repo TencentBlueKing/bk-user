@@ -20,7 +20,7 @@ from typing import Dict, List, Optional
 from django.conf import settings
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.cache import get_data_source_owner_tenant_id
+from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantUser
 
 
@@ -58,9 +58,7 @@ class TenantUserHandler:
 
         对于协同过来的用户（即数据源所属租户 != 当前租户），加上来源租户 ID 作为后缀
         """
-        # data_source_id 是 TenantUser 本地字段，
-        # get_data_source_owner_tenant_id 基于内存全量短时效缓存，不产生多次 DB 查询
-        owner_tenant_id = get_data_source_owner_tenant_id(tenant_user.data_source_id)
+        owner_tenant_id = DataSourceCache.get_owner_tenant_id(tenant_user.data_source_id)
         if tenant_user.tenant_id != owner_tenant_id:
             return f"{tenant_user.data_source_user.username}@{owner_tenant_id}"
         return tenant_user.data_source_user.username
