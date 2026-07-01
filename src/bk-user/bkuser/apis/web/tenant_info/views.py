@@ -293,6 +293,11 @@ class TenantRealManagerListCreateDestroyApi(
         slz.is_valid(raise_exception=True)
         ids = slz.validated_data["ids"]
 
+        # 管理员不能删除自己
+        current_user_id = request.user.username
+        if current_user_id in ids:
+            raise error_codes.VALIDATION_ERROR.f(_("不能移除自己的管理员权限"))
+
         # 【审计】创建租户实名管理员审计对象并记录变更前的数据
         auditor = TenantRealManagerAuditor(request.user.username, self.get_current_tenant_id())
         auditor.pre_record_data_before()
