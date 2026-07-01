@@ -44,8 +44,7 @@ from bkuser.apis.open_web.serializers.users import (
     VirtualUserSearchOutputSLZ,
 )
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
-from bkuser.apps.data_source.cache import get_data_source_id_to_owner_tenant_id_map, get_data_source_id_to_type_map
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
@@ -70,9 +69,7 @@ class TenantUserDisplayInfoRetrieveApi(OpenWebApiCommonMixin, generics.RetrieveA
         tenant_user = get_object_or_404(
             TenantUser.objects.filter(
                 tenant_id=self.tenant_id,
-                data_source_id__in=self.real_data_source_ids
-                + self.collaboration_data_source_ids
-                + [self.virtual_data_source_id],
+                data_source_id__in=DataSourceCache.non_builtin_management_ids(),
             ).select_related("data_source_user"),
             id=kwargs["id"],
         )
@@ -101,13 +98,10 @@ class TenantUserDisplayInfoListApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 后续支持表达式，则需要查询表达式可配置的所有字段
         return TenantUser.objects.filter(
             id__in=data["bk_usernames"],
             tenant_id=self.tenant_id,
-            data_source_id__in=self.real_data_source_ids
-            + self.collaboration_data_source_ids
-            + [self.virtual_data_source_id],
+            data_source_id__in=DataSourceCache.non_builtin_management_ids(),
         ).select_related("data_source_user")
 
     @swagger_auto_schema(
@@ -165,9 +159,11 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             tenant_id=self.tenant_id, keyword=keyword
         )
 
-        # 通过缓存映射计算允许的 data_source_id 集合，避免 JOIN data_source 表
-        type_map = get_data_source_id_to_type_map()
-        real_ds_ids = {ds_id for ds_id, t in type_map.items() if t == DataSourceTypeEnum.REAL}
+        # 若指定了 owner_tenant_id，则只搜索该租户的 REAL 数据源用户；否则搜索所有 REAL 数据源用户
+        if tenant_id := data.get("owner_tenant_id"):
+            real_ds_ids = DataSourceCache.real_ids_by_owner(tenant_id)
+        else:
+            real_ds_ids = DataSourceCache.real_ids()
 
         filter_args = [
             Q(tenant_id=self.tenant_id),
@@ -176,13 +172,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             | search_conditions,
             Q(data_source_id__in=real_ds_ids),
         ]
-
-        # 若指定了 owner_tenant_id，则只搜索该租户下的用户；否则搜索本租户用户与协同租户用户
-        if tenant_id := data.get("owner_tenant_id"):
-            owner_map = get_data_source_id_to_owner_tenant_id_map()
-            filter_args.append(
-                Q(data_source_id__in={ds_id for ds_id, owner in owner_map.items() if owner == tenant_id})
-            )
 
         queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")[: self.search_limit]
 
@@ -243,16 +232,16 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             condition,
         ]
 
-        # 通过缓存映射计算允许的 data_source_id 集合，避免 JOIN data_source 表
+        # 通过缓存映射计算允许的 data_source_id 集合，避免 JOIN data_source 表 data_source_type 字段
         if data_source_type := data.get("data_source_type"):
-            type_map = get_data_source_id_to_type_map()
-            filter_args.append(Q(data_source_id__in={ds_id for ds_id, t in type_map.items() if t == data_source_type}))
+            filter_args.append(Q(data_source_id__in=DataSourceCache.ids_by_type(data_source_type)))
+        else:
+            # 未指定类型时，排除内置管理数据源
+            filter_args.append(Q(data_source_id__in=DataSourceCache.non_builtin_management_ids()))
 
+        # 通过缓存映射计算允许的 data_source_id 集合，避免 JOIN data_source 表 owner_tenant_id 字段
         if tenant_id := data.get("owner_tenant_id"):
-            owner_map = get_data_source_id_to_owner_tenant_id_map()
-            filter_args.append(
-                Q(data_source_id__in={ds_id for ds_id, owner in owner_map.items() if owner == tenant_id})
-            )
+            filter_args.append(Q(data_source_id__in=DataSourceCache.ids_by_owner(tenant_id)))
 
         queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")
 
