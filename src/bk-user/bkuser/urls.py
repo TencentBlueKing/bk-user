@@ -33,6 +33,8 @@ urlpatterns = [
     path("api/v3/apigw/", include("bkuser.apis.apigw.urls")),
     # 对外开放的 API
     path("api/v3/open/", include("bkuser.apis.open_v3.urls")),
+    # 数据提供方专用 API
+    path("api/v3/provider/", include("bkuser.apis.open_provider.urls")),
     # 提供给前端使用的开放 API
     path("api/v3/open-web/", include("bkuser.apis.open_web.urls")),
     # 兼容旧版本用户管理 OpenAPI

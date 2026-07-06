@@ -531,3 +531,268 @@ paths:
           appVerifiedRequired: true
           resourcePermissionRequired: false
         descriptionEn: Query the list of tenant user's custom enum fields
+
+  # ===== 数据提供方接口（隐藏，不允许申请） =====
+
+  /api/v3/provider/data-sources/{data_source_id}/users/:
+    post:
+      operationId: provider_batch_create_user
+      description: 数据提供方 - 批量创建用户
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: post
+          path: /api/v3/provider/data-sources/{data_source_id}/users/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch create users"
+    put:
+      operationId: provider_batch_update_user
+      description: 数据提供方 - 批量更新用户
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: put
+          path: /api/v3/provider/data-sources/{data_source_id}/users/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch update users"
+    delete:
+      operationId: provider_batch_delete_user
+      description: 数据提供方 - 批量删除用户
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: delete
+          path: /api/v3/provider/data-sources/{data_source_id}/users/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch delete users"
+
+  /api/v3/provider/data-sources/{data_source_id}/departments/:
+    post:
+      operationId: provider_batch_create_department
+      description: 数据提供方 - 批量创建部门
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: post
+          path: /api/v3/provider/data-sources/{data_source_id}/departments/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch create departments"
+    put:
+      operationId: provider_batch_update_department
+      description: 数据提供方 - 批量更新部门
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: put
+          path: /api/v3/provider/data-sources/{data_source_id}/departments/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch update departments"
+    delete:
+      operationId: provider_batch_delete_department
+      description: 数据提供方 - 批量删除部门
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: delete
+          path: /api/v3/provider/data-sources/{data_source_id}/departments/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch delete departments"
+
+  /api/v3/provider/data-sources/{data_source_id}/department-relations/:
+    post:
+      operationId: provider_batch_create_department_relation
+      description: 数据提供方 - 批量创建部门父子关系
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: post
+          path: /api/v3/provider/data-sources/{data_source_id}/department-relations/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch create department parent-child relations"
+
+  /api/v3/provider/data-sources/{data_source_id}/department-user-relations/:
+    post:
+      operationId: provider_batch_create_department_user_relation
+      description: 数据提供方 - 批量创建用户-部门关系
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: post
+          path: /api/v3/provider/data-sources/{data_source_id}/department-user-relations/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch create user-department relations"
+    delete:
+      operationId: provider_batch_delete_department_user_relation
+      description: 数据提供方 - 批量删除用户-部门关系
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: delete
+          path: /api/v3/provider/data-sources/{data_source_id}/department-user-relations/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch delete user-department relations"
+
+  /api/v3/provider/data-sources/{data_source_id}/user-leader-relations/:
+    post:
+      operationId: provider_batch_create_user_leader_relation
+      description: 数据提供方 - 批量覆盖用户-Leader关系
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: post
+          path: /api/v3/provider/data-sources/{data_source_id}/user-leader-relations/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch overwrite user-leader relations"
+    delete:
+      operationId: provider_batch_delete_user_leader_relation
+      description: 数据提供方 - 批量删除用户-Leader关系
+      tags: []
+      responses:
+        default:
+          description: ''
+      x-bk-apigateway-resource:
+        isPublic: false
+        allowApplyPermission: false
+        matchSubpath: false
+        backend:
+          name: default
+          method: delete
+          path: /api/v3/provider/data-sources/{data_source_id}/user-leader-relations/
+          matchSubpath: false
+          timeout: 60
+        pluginConfigs: []
+        authConfig:
+          userVerifiedRequired: false
+          appVerifiedRequired: true
+          resourcePermissionRequired: true
+        descriptionEn: "Data Provider - Batch delete user-leader relations"
