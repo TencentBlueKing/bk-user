@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -221,7 +221,7 @@ onMounted(async () => {
         type: field.type,
       }));
     });
-    originalData = JSON.parse(JSON.stringify(formData));
+    originalData = JSON.parse(JSON.stringify(formData.value));
   } catch (error) {
     console.error(error);
   } finally {
@@ -230,7 +230,7 @@ onMounted(async () => {
 });
 
 watch(formData, () => {
-  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData.value) : false;
 }, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
