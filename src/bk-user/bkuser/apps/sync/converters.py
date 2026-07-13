@@ -26,11 +26,11 @@ from django.conf import settings
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -42,6 +42,7 @@ class DataSourceUserConverter:
     def __init__(self, data_source: DataSource, logger: TaskLogger):
         self.data_source = data_source
         self.logger = logger
+        self.transformer = UsernameTransformer.load(data_source.id)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
         self.field_mapping = self._get_field_mapping()
 
@@ -55,8 +56,7 @@ class DataSourceUserConverter:
         if not username:
             raise ValueError("username is required")
 
-        # 根据数据源配置生成最终的用户名
-        username = DataSourceUsernameHandler.generate(self.data_source, username)
+        username = self.transformer.to_stored(username)
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 

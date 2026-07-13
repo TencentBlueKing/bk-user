@@ -182,8 +182,6 @@ layers = [
 ]
 ignore_imports = [
     "bkuser.apps.tenant.management.commands.* -> bkuser.biz.tenant",
-    "bkuser.apps.sync.converters -> bkuser.biz.data_source",
-    "bkuser.apps.sync.syncers.data_source_user -> bkuser.biz.data_source",
 ]
 
 # apps 分层

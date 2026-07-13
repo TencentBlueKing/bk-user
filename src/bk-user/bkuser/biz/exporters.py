@@ -33,9 +33,9 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.biz.data_source import DataSourceUsernameHandler
 
 
 class UserExcelWriter:
@@ -56,13 +56,13 @@ class UserExcelWriter:
         self.sheet: Worksheet = self.workbook["users"]
         self.sheet.alignment = Alignment(wrapText=True)
 
-        # 基础列数（用户名, 姓名, 邮箱, 手机, 组织, 上级）
+        # 基础列数（用户名，姓名，邮箱，手机，组织，上级）
         self.base_col_count = 6
         self._init_sheet_structure()
 
     def add_row(self, base_info: List[str], extras: Dict[str, Any]):
         # Q: 为什么不能这样写 extras.get(field.name) or ""
-        # A: 这会导致部分类型的零值被转为空字符串，不符合预期，比如 类型是NUMBER, 0 应该是 "0"，而非 ""
+        # A: 这会导致部分类型的零值被转为空字符串，不符合预期，比如 类型是 NUMBER, 0 应该是 "0"，而非 ""
         extra_values = [
             self._transform_custom_field_value(field, extras.get(field.name, "")) for field in self.custom_fields
         ]
@@ -85,7 +85,7 @@ class UserExcelWriter:
             if field.required:
                 name_cell.font = Font(color=colors.COLOR_INDEX[2])
 
-            # 设置提示信息(字段名的上一行）
+            # 设置提示信息 (字段名的上一行）
             tip_cell = self.sheet.cell(row=self.TIP_ROW_IDX, column=col_idx)
             tip_cell.value = self._get_field_tip(field)
             # 设置吸底 + 自动换行
@@ -102,7 +102,7 @@ class UserExcelWriter:
         """
         转换自定义字段的值，以字符串输出；注意枚举做 id 与 value 的映射输出处理
         """
-        # 对于单枚举（""）、多枚举（[]）、字符串("") 类型，当其为零值时，可提前返回空字符串
+        # 对于单枚举（""）、多枚举（[]）、字符串 ("") 类型，当其为零值时，可提前返回空字符串
         # 对于数值（0）类型，则需要按照正常处理，即 str(0)，不能返回空字符串
         # Note: 无值，value 本身就是空字符串
         if field.data_type != UserFieldDataType.NUMBER and not value:
@@ -154,7 +154,7 @@ def get_user_export_template(tenant_id: str) -> Workbook:
         "张三",
         "zhangsan@qq.com",
         "+8613512345678",
-        "公司/部门A,公司/部门B",
+        "公司/部门 A，公司/部门 B",
         "lisi,wangwu",
     ]
 
@@ -167,6 +167,7 @@ class DataSourceUserExporter:
 
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
+        self.transformer = UsernameTransformer.load(data_source.id)
         self.users = DataSourceUser.objects.filter(data_source=data_source)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=data_source.owner_tenant_id)
         self.writer = UserExcelWriter(self.custom_fields)
@@ -181,12 +182,12 @@ class DataSourceUserExporter:
             phone = f"+{u.phone_country_code}{u.phone}" if u.phone else ""
             departments = ",".join(dept_org_map.get(dept_id, "") for dept_id in user_departments_map.get(u.id, []))
             leaders = ",".join(
-                DataSourceUsernameHandler.parse(self.data_source, user_username_map.get(leader_id, ""))
+                self.transformer.to_raw(user_username_map.get(leader_id, ""))
                 for leader_id in user_leaders_map.get(u.id, [])
             )
 
             base_info = [
-                DataSourceUsernameHandler.parse(self.data_source, u.username),
+                self.transformer.to_raw(u.username),
                 u.full_name,
                 u.email,
                 phone,

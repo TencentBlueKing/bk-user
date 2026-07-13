@@ -26,7 +26,6 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceUser,
-    DataSourceUsernameGenerateConfig,
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.idp.models import Idp
@@ -164,7 +163,6 @@ class TenantCreator:
                 "plugin_config": plugin_config,
             },
         )
-        DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
         return ds
 
     @staticmethod
@@ -178,7 +176,6 @@ class TenantCreator:
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
         )
-        DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
         return ds
 
     @staticmethod

@@ -17,7 +17,7 @@
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUsernameGenerateConfig, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.idp.models import IdpDataSourceRelation
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import (
@@ -73,7 +73,6 @@ class TestTenantCreator:
 
         assert data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT
         assert data_source.owner_tenant_id == "test-tenant"
-        assert DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).exists()
 
     def test_create_complex_builtin_data_source(self):
         """测试创建复杂的内建管理数据源"""
@@ -83,7 +82,6 @@ class TestTenantCreator:
 
         assert data_source.type == DataSourceTypeEnum.BUILTIN_MANAGEMENT
         assert data_source.owner_tenant_id == "test-tenant"
-        assert DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).exists()
 
     def test_create_virtual_data_source(self):
         """测试创建虚拟数据源"""
@@ -91,7 +89,6 @@ class TestTenantCreator:
 
         assert data_source.type == DataSourceTypeEnum.VIRTUAL
         assert data_source.owner_tenant_id == "test-tenant"
-        assert DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).exists()
 
     def test_create_builtin_manager(self):
         """测试创建内置管理员"""

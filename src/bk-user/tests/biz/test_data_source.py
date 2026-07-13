@@ -16,53 +16,38 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceUsernameGenerateRule
-from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.biz.data_source import DataSourceUsernameHandler
+from bkuser.apps.data_source.models import DataSourceUsernameGenerateConfig
+from bkuser.apps.data_source.transform import UsernameTransformer
 
 pytestmark = pytest.mark.django_db
 
 
-def update_username_generate_config(data_source, *, rule, prefix="", suffix=""):
-    cfg = data_source.username_generate_config
-    cfg.rule = rule
-    cfg.prefix = prefix
-    cfg.suffix = suffix
-    cfg.save(update_fields=["rule", "prefix", "suffix", "updated_at"])
+class TestUsernameTransformer:
+    """测试 UsernameTransformer"""
 
+    def test_encode_identity(self):
+        transform = UsernameTransformer()
+        assert transform.to_stored("zhangsan") == "zhangsan"
 
-class TestDataSourceUsernameHandler:
-    """测试 DataSourceUsernameHandler"""
+    def test_encode_with_prefix(self):
+        transform = UsernameTransformer(prefix="corp_")
+        assert transform.to_stored("zhangsan") == "corp_zhangsan"
 
-    def test_generate_unchanged(self, bare_local_data_source):
-        assert DataSourceUsernameHandler.generate(bare_local_data_source, "zhangsan") == "zhangsan"
+    def test_encode_with_suffix(self):
+        transform = UsernameTransformer(suffix="_ext")
+        assert transform.to_stored("zhangsan") == "zhangsan_ext"
 
-    def test_generate_add_affix(self, bare_local_data_source):
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
-            prefix="corp_",
-        )
-        assert DataSourceUsernameHandler.generate(bare_local_data_source, "zhangsan") == "corp_zhangsan"
+    def test_decode_identity(self):
+        transform = UsernameTransformer()
+        assert transform.to_raw("zhangsan") == "zhangsan"
 
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
-            suffix="_ext",
-        )
-        assert DataSourceUsernameHandler.generate(bare_local_data_source, "zhangsan") == "zhangsan_ext"
+    def test_decode_strip_prefix(self):
+        transform = UsernameTransformer(prefix="corp_")
+        assert transform.to_raw("corp_zhangsan") == "zhangsan"
 
-    def test_parse_unchanged(self, bare_local_data_source):
-        assert DataSourceUsernameHandler.parse(bare_local_data_source, "zhangsan") == "zhangsan"
-
-    def test_parse_strip_prefix(self, bare_local_data_source):
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
-            prefix="corp_",
-        )
-
-        assert DataSourceUsernameHandler.parse(bare_local_data_source, "corp_zhangsan") == "zhangsan"
+    def test_decode_strip_suffix(self):
+        transform = UsernameTransformer(suffix="_ext")
+        assert transform.to_raw("zhangsan_ext") == "zhangsan"
 
     @pytest.mark.parametrize(
         ("prefix", "suffix"),
@@ -72,67 +57,22 @@ class TestDataSourceUsernameHandler:
             ("", "_ext"),
         ],
     )
-    def test_generate_and_parse_round_trip(self, bare_local_data_source, prefix, suffix):
-        """generate 和 parse 互逆"""
-        rule = (
-            DataSourceUsernameGenerateRule.ADD_AFFIX
-            if (prefix or suffix)
-            else DataSourceUsernameGenerateRule.UNCHANGED
-        )
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=rule,
-            prefix=prefix,
-            suffix=suffix,
-        )
-
+    def test_encode_decode_round_trip(self, prefix, suffix):
+        transform = UsernameTransformer(prefix=prefix, suffix=suffix)
         original = "zhangsan"
-        generated = DataSourceUsernameHandler.generate(bare_local_data_source, original)
-        parsed = DataSourceUsernameHandler.parse(bare_local_data_source, generated)
-        assert parsed == original
+        assert transform.to_raw(transform.to_stored(original)) == original
 
-    def test_is_username_affix_exists_not_exists(self, bare_local_data_source):
-        assert not DataSourceUsernameHandler.is_username_affix_exists(
-            bare_local_data_source.owner_tenant_id,
-            "corp_",
-            "",
-        )
+    def test_load_no_config(self, bare_local_data_source):
+        transform = UsernameTransformer.load(bare_local_data_source.id)
+        assert transform.unchanged
+        assert transform.to_stored("zhangsan") == "zhangsan"
 
-    def test_is_username_affix_exists_exists(self, bare_local_data_source):
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
-            prefix="corp_",
-        )
-
-        assert DataSourceUsernameHandler.is_username_affix_exists(
-            bare_local_data_source.owner_tenant_id,
-            "corp_",
-            "",
-        )
-
-    def test_is_username_affix_exists_different_affix_not_match(self, bare_local_data_source):
-        update_username_generate_config(
-            bare_local_data_source,
-            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
-            prefix="corp_",
-        )
-
-        assert not DataSourceUsernameHandler.is_username_affix_exists(
-            bare_local_data_source.owner_tenant_id,
-            "other_",
-            "",
-        )
-
-    def test_is_username_exists_not_exists(self, bare_local_data_source):
-        assert not DataSourceUsernameHandler.is_username_exists([bare_local_data_source.id], "nonexistent")
-
-    def test_is_username_exists_exists(self, bare_local_data_source):
-        DataSourceUser.objects.create(
+    def test_load_with_config(self, bare_local_data_source):
+        DataSourceUsernameGenerateConfig.objects.create(
             data_source=bare_local_data_source,
-            code="u1",
-            username="zhangsan",
-            full_name="张三",
+            rule="add_affix",
+            prefix="corp_",
         )
-
-        assert DataSourceUsernameHandler.is_username_exists([bare_local_data_source.id], "zhangsan")
+        transform = UsernameTransformer.load(bare_local_data_source.id)
+        assert not transform.unchanged
+        assert transform.to_stored("zhangsan") == "corp_zhangsan"

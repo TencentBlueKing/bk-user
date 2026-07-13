@@ -31,11 +31,11 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.tenant.utils import is_username_frozen
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.plugins.models import RawDataSourceUser
 
 
@@ -65,6 +65,7 @@ class DataSourceUserSyncer:
         self.raw_users = raw_users
         self.overwrite = overwrite
         self.incremental = incremental
+        self.transformer = UsernameTransformer.load(data_source.id)
         self.converter = DataSourceUserConverter(data_source, ctx.logger)
         # 由于在部分老版本迁移过来的数据源中租户用户 ID 会由 username + 规则 拼接生成，
         # 该类数据源同步时候不可更新 username，而全新数据源对应租户 ID 都是 uuid 则不受影响
@@ -81,8 +82,7 @@ class DataSourceUserSyncer:
             return
 
         code_username_map = {
-            user.code: DataSourceUsernameHandler.generate(self.data_source, user.properties["username"])
-            for user in self.raw_users
+            user.code: self.transformer.to_stored(user.properties["username"]) for user in self.raw_users
         }
 
         # 查询同租户下其他数据源中已存在的冲突用户名

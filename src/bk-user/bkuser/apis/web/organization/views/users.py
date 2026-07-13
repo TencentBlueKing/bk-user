@@ -66,6 +66,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -88,7 +89,6 @@ from bkuser.biz.auditor import (
     TenantUserStatusUpdateAuditor,
     TenantUserUpdateAuditor,
 )
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.organization import DataSourceUserHandler, TenantOrgPathHandler
 from bkuser.biz.password_rule import PasswordRuleHandler
 from bkuser.common.constants import PERMANENT_TIME
@@ -310,13 +310,16 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
+        transform = UsernameTransformer.load(data_source.id)
+        raw_username = data["username"]
+        stored_username = transform.to_stored(raw_username)
+
         with transaction.atomic():
             # 创建数据源用户
             data_source_user = DataSourceUser.objects.create(
                 data_source=data_source,
-                # 对于本地数据源，code 存放原始用户名
-                code=DataSourceUsernameHandler.parse(data_source, data["username"]),
-                username=data["username"],
+                code=raw_username,
+                username=stored_username,
                 full_name=data["full_name"],
                 email=data["email"],
                 phone=data["phone"],
@@ -798,13 +801,15 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         if not tenant_dept:
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("指定的租户部门不存在"))
 
+        transform = UsernameTransformer.load(data_source.id)
+
         with transaction.atomic():
             # 新建数据源用户
             data_source_users = [
                 DataSourceUser(
                     data_source=data_source,
-                    code=DataSourceUsernameHandler.parse(data_source, info["username"]),
-                    username=info["username"],
+                    code=info["username"],
+                    username=transform.to_stored(info["username"]),
                     full_name=info["full_name"],
                     email=info["email"],
                     phone=info["phone"],
@@ -816,9 +821,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             DataSourceUser.objects.bulk_create(data_source_users, batch_size=self.bulk_create_batch_size)
 
             # 重新从 DB 查询以获取带 ID 的数据源用户
-            data_source_users = DataSourceUser.objects.filter(
-                data_source=data_source, username__in=[u["username"] for u in data["user_infos"]]
-            )
+            stored_usernames = [transform.to_stored(u["username"]) for u in data["user_infos"]]
+            data_source_users = DataSourceUser.objects.filter(data_source=data_source, username__in=stored_usernames)
 
             # 绑定数据源部门 - 用户
             relations = [
