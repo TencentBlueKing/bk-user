@@ -37,11 +37,11 @@ from bkuser.apps.data_source.models import (
     DataSource,
     DataSourcePlugin,
     DataSourceSensitiveInfo,
+    DataSourceUsernameGenerateConfig,
 )
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.serializers import StringArrayField
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_cls, is_plugin_exists
@@ -175,11 +175,15 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
     def validate_username_generate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         # 校验同租户下 ADD_AFFIX 策略的前后缀组合唯一性
-        tenant_id = self.context["tenant_id"]
-        if config[
-            "rule"
-        ] == DataSourceUsernameGenerateRule.ADD_AFFIX and DataSourceUsernameHandler.is_username_affix_exists(
-            tenant_id, config["prefix"], config["suffix"]
+        if (
+            config["rule"] == DataSourceUsernameGenerateRule.ADD_AFFIX
+            and DataSourceUsernameGenerateConfig.objects.filter(
+                data_source__owner_tenant_id=self.context["tenant_id"],
+                data_source__type=DataSourceTypeEnum.REAL,
+                rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
+                prefix=config["prefix"],
+                suffix=config["suffix"],
+            ).exists()
         ):
             raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
 
@@ -251,7 +255,17 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
-    username_generate_config = DataSourceUsernameGenerateConfigSLZ(help_text="用户名生成配置")
+    username_generate_config = serializers.SerializerMethodField(help_text="用户名生成配置")
+
+    def get_username_generate_config(self, obj: DataSource) -> Dict[str, str]:
+        cfg = (
+            DataSourceUsernameGenerateConfig.objects.filter(data_source_id=obj.id)
+            .values("rule", "prefix", "suffix")
+            .first()
+        )
+        if cfg is None:
+            return {"rule": DataSourceUsernameGenerateRule.UNCHANGED, "prefix": "", "suffix": ""}
+        return cfg
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):

@@ -25,6 +25,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    DataSourceUsernameGenerateConfig,
 )
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.syncers import (
@@ -383,11 +384,12 @@ class TestSyncDataSourceUser:
     def test_filter_conflict_users_with_username_config(
         self, data_source_sync_task_ctx, bare_local_data_source, local_ds_plugin, local_ds_plugin_cfg
     ):
-        cfg = bare_local_data_source.username_generate_config
-        cfg.rule = DataSourceUsernameGenerateRule.ADD_AFFIX
-        cfg.prefix = "ds1_"
-        cfg.suffix = ""
-        cfg.save(update_fields=["rule", "prefix", "suffix", "updated_at"])
+        DataSourceUsernameGenerateConfig.objects.create(
+            data_source=bare_local_data_source,
+            rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
+            prefix="ds1_",
+            suffix="",
+        )
 
         other_ds = DataSource.objects.create(
             owner_tenant_id=bare_local_data_source.owner_tenant_id,

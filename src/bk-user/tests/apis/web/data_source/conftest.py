@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUsernameGenerateConfig
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
@@ -51,7 +51,6 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
             "plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
         },
     )
-    DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
     return ds
 
 
@@ -151,15 +150,13 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
 def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
     """General HTTP data source in the same tenant for batch-delete tests"""
     plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
-    ds = DataSource.objects.create(
+    return DataSource.objects.create(
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
         sync_config={"sync_period": 60},
     )
-    DataSourceUsernameGenerateConfig.objects.get_or_create(data_source=ds)
-    return ds
 
 
 @pytest.fixture

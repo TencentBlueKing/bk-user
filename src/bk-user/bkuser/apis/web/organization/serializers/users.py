@@ -38,6 +38,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     LocalDataSourceIdentityInfo,
 )
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
@@ -46,7 +47,6 @@ from bkuser.apps.tenant.models import (
     TenantUserCustomField,
     UserBuiltinField,
 )
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.organization import TenantOrgPathHandler
 from bkuser.biz.validators import (
     validate_data_source_user_username,
@@ -154,12 +154,17 @@ def _validate_duplicate_username_in_tenant(
     tenant_id: str, username: str, excluded_data_source_user_id: int | None = None
 ) -> str:
     """校验当前租户实体数据源下用户名是否重复"""
-    real_ds_ids = DataSource.objects.filter(
-        owner_tenant_id=tenant_id,
-        type=DataSourceTypeEnum.REAL,
-    ).values_list("id", flat=True)
+    real_ds_ids = list(
+        DataSource.objects.filter(
+            owner_tenant_id=tenant_id,
+            type=DataSourceTypeEnum.REAL,
+        ).values_list("id", flat=True)
+    )
 
-    if DataSourceUsernameHandler.is_username_exists(real_ds_ids, username, excluded_data_source_user_id):
+    qs = DataSourceUser.objects.filter(data_source_id__in=real_ds_ids, username=username)
+    if excluded_data_source_user_id:
+        qs = qs.exclude(id=excluded_data_source_user_id)
+    if qs.exists():
         raise ValidationError(_("用户名 {} 已存在").format(username))
 
     return username
@@ -206,10 +211,11 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     )
 
     def validate_username(self, username: str) -> str:
-        username = DataSourceUsernameHandler.generate(self.context["data_source"], username)
-        # 最终的用户名需要再次校验
-        validate_data_source_user_username(username)
-        return _validate_duplicate_username_in_tenant(self.context["tenant_id"], username)
+        transform = UsernameTransformer.load(self.context["data_source"].id)
+        stored_username = transform.to_stored(username)
+        validate_data_source_user_username(stored_username)
+        _validate_duplicate_username_in_tenant(self.context["tenant_id"], stored_username)
+        return username
 
     def validate_department_ids(self, department_ids: List[int]) -> List[int]:
         invalid_department_ids = set(department_ids) - set(
@@ -517,7 +523,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 注：raw_info 格式是以英文逗号 (,)、中文逗号 (，)、英文分号 (;) 或中文分号 (；)
             # 为分隔符的用户信息字符串，多选枚举以 / 拼接
             # 字段：username full_name email gender region hobbies
-            # 示例：kafka, 卡芙卡, kafka@starrail.com, 女, StarCoreHunter, 狩猎/阅读
+            # 示例：kafka, 卡芙卡，kafka@starrail.com, 女，StarCoreHunter, 狩猎/阅读
             data: List[str] = [s.strip() for s in re.split(r"[,，;；]", raw_info) if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
@@ -543,8 +549,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 动态构建用户信息：内置字段直接添加，自定义字段放到 extras 中
             user_infos.append(
                 {
-                    # 根据 data_source 配置的规则，生成 username
-                    "username": DataSourceUsernameHandler.generate(self.context["data_source"], props["username"]),
+                    "username": props["username"],
                     "full_name": props["full_name"],
                     # 内置字段，联系方式允许非必填
                     "email": props.get("email", ""),
@@ -616,14 +621,17 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         self, user_infos: List[Dict[str, Any]], custom_fields: QuerySet[TenantUserCustomField]
     ) -> None:
         """校验用户信息列表中数据是否合法"""
-        usernames = [u["username"].lower() for u in user_infos]
+        transform = UsernameTransformer.load(self.context["data_source"].id)
+
+        raw_usernames = [u["username"].lower() for u in user_infos]
         # 检查新增的数据是否有用户名重复的，需要忽略大小写，因为 DB 中是忽略的
-        counter = collections.Counter(usernames)
+        counter = collections.Counter(raw_usernames)
         if duplicate_usernames := [u for u, cnt in counter.items() if cnt > 1]:
             raise ValidationError(_("用户名 {} 重复").format(", ".join(duplicate_usernames)))
 
+        stored_usernames = [transform.to_stored(u["username"]).lower() for u in user_infos]
         if exists_usernames := DataSourceUser.objects.filter(
-            username__in=usernames,
+            username__in=stored_usernames,
             data_source__owner_tenant_id=self.context["tenant_id"],
             data_source__type=DataSourceTypeEnum.REAL,
         ).values_list("username", flat=True):

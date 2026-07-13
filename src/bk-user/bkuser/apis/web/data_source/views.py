@@ -53,7 +53,7 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -189,12 +189,14 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
 
             # 新实名数据源不会自动加入已有登录源。管理员确认数据 ready 后，需重新保存登录源配置。
             # 若未来需要自动追加，可复用已有主实名匹配规则调用 IdpDataSourceRelationHandler 追加关系。
-            DataSourceUsernameGenerateConfig.objects.create(
-                data_source=ds,
-                rule=data["username_generate_config"]["rule"],
-                prefix=data["username_generate_config"]["prefix"],
-                suffix=data["username_generate_config"]["suffix"],
-            )
+            cfg = data["username_generate_config"]
+            if cfg["rule"] == DataSourceUsernameGenerateRule.ADD_AFFIX:
+                DataSourceUsernameGenerateConfig.objects.create(
+                    data_source=ds,
+                    rule=cfg["rule"],
+                    prefix=cfg["prefix"],
+                    suffix=cfg["suffix"],
+                )
 
         # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, current_tenant_id)

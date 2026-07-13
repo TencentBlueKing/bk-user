@@ -265,16 +265,13 @@ class DataSourceSensitiveInfo(TimestampedModel):
 
 
 class DataSourceUsernameGenerateConfig(TimestampedModel):
-    """数据源用户名生成配置"""
+    """数据源用户名生成配置 — 仅在选择 ADD_AFFIX 策略时创建记录"""
 
-    data_source = models.OneToOneField(
-        DataSource, on_delete=models.CASCADE, db_constraint=False, related_name="username_generate_config"
-    )
+    data_source = models.OneToOneField(DataSource, on_delete=models.CASCADE, db_constraint=False)
     rule = models.CharField(
         "数据源用户名生成规则",
         max_length=32,
         choices=DataSourceUsernameGenerateRule.get_choices(),
-        default=DataSourceUsernameGenerateRule.UNCHANGED.value,
     )
     prefix = models.CharField("用户名前缀", max_length=32, blank=True, default="")
     suffix = models.CharField("用户名后缀", max_length=32, blank=True, default="")

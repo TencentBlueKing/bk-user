@@ -22,7 +22,6 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.data_source import DataSourceUsernameHandler
 from bkuser.biz.validators import validate_data_source_user_username
 
 
@@ -70,11 +69,6 @@ class VirtualUserCreateInputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名")
     app_codes = serializers.ListField(help_text="应用编码列表", child=serializers.CharField())
     owners = serializers.ListField(help_text="责任人列表", child=serializers.CharField())
-
-    def validate_username(self, username: str) -> str:
-        if DataSourceUsernameHandler.is_username_exists([self.context["data_source_id"]], username):
-            raise ValidationError(_("用户名 {} 已存在").format(username))
-        return username
 
     def validate_app_codes(self, app_codes: List[str]) -> List[str]:
         # 过滤重复值
