@@ -6,3 +6,13 @@ export interface IUser {
   time_zone: string;
   language: string;
 }
+
+export interface SelectedOrg {
+  tenantId: string;
+  tenantName: string;
+  tenantLogo: string;
+  deptId?: number;
+  deptName?: string;
+  dataSourceId?: number;
+  organizationPath?: string;
+}

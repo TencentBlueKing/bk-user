@@ -44,8 +44,4 @@ class NoCountCustomPageNumberPagination(CustomPageNumberPagination):
 def gen_no_count_pagination_class(max_page_size: int):
     """根据最大页数生成 NoCountCustomPageNumberPagination"""
 
-    class Pagination(NoCountCustomPageNumberPagination):
-        def __init__(self):
-            self.max_page_size = max_page_size
-
-    return Pagination
+    return type("NoCountPagination", (NoCountCustomPageNumberPagination,), {"max_page_size": max_page_size})

@@ -344,3 +344,10 @@ const pageCurrentChange = (current: number) => {
   }
 }
 </style>
+
+<style lang="less">
+/* 隐藏setting Tab的滚动条 */
+.action-tab-wrapper {
+  overflow-y: auto !important;
+}
+</style>

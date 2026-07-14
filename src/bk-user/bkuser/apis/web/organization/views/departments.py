@@ -56,6 +56,7 @@ from bkuser.biz.auditor import TenantDepartmentAuditor
 from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.utils import gen_dept_code
 
 
@@ -84,21 +85,21 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
     def _get_root_depts(self) -> QuerySet[TenantDepartment]:
         owner_tenant_id = self.kwargs["id"]
         # 获取指定租户的数据源，通过数据源部门关系查询部门列表
-        data_source = DataSource.objects.filter(
+        data_sources = DataSource.objects.filter(
             owner_tenant_id=owner_tenant_id,
             type=DataSourceTypeEnum.REAL,
-        ).first()
-        if not data_source:
+        )
+        if not data_sources.exists():
             return TenantDepartment.objects.none()
 
         root_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.root_nodes()
-            .filter(data_source=data_source)
+            .filter(data_source__in=data_sources)
             .values_list("department_id", flat=True)
         )
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__owner_tenant_id=owner_tenant_id,
+            data_source__in=data_sources,
             data_source_department_id__in=root_data_source_dept_ids,
         ).select_related("data_source_department")
 
@@ -155,6 +156,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 "id": tenant_dept.id,
                 "name": tenant_dept.data_source_department.name,
                 "has_children": has_children_map.get(tenant_dept.id, False),
+                "data_source_id": tenant_dept.data_source_id,
             }
             for tenant_dept in tenant_depts
         ]
@@ -171,14 +173,14 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         if self.kwargs["id"] != current_tenant_id:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
 
-        # 必须存在实名用户数据源才可以创建租户部门
+        # 必须存在本地实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(
-            owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL
+            owner_tenant_id=current_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
         ).first()
         if not data_source:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("租户数据源不存在"))
-        if not data_source.is_local:
-            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持创建部门"))
 
         slz = TenantDepartmentCreateInputSLZ(
             data=request.data, context={"tenant_id": current_tenant_id, "data_source": data_source}
@@ -375,11 +377,12 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         keyword = slz.validated_data["keyword"]
 
+        real_ds_ids = DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__type=DataSourceTypeEnum.REAL,
+            data_source_id__in=real_ds_ids,
             data_source_department__name__icontains=keyword,
-        ).select_related("data_source", "data_source_department")[: self.search_limit]
+        ).select_related("data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -420,6 +423,10 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
             data_source__type=DataSourceTypeEnum.REAL,
             data_source__owner_tenant_id=cur_tenant_id,
         ).select_related("data_source_department")
+
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)
 

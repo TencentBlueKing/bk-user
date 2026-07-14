@@ -266,7 +266,7 @@ class LocalDataSourceDataParser:
             properties = {k: str(v) for k, v in properties.items() if v is not None}
             self.users.append(
                 RawDataSourceUser(
-                    # 本地数据源用户，code 就是 username
+                    # 本地数据源用户，code 就是 原始 username
                     code=properties["username"],
                     properties=properties,
                     leaders=leaders,

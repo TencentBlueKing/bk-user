@@ -15,10 +15,82 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple
 
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
-from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation
+from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum, cached
+
+
+class DataSourceCache:
+    """数据源基础信息缓存（单一底层缓存 + 多快捷方法）"""
+
+    @staticmethod
+    @cached(timeout=60)
+    def _get_infos() -> List[Tuple[int, str, str]]:
+        """底层缓存：[(id, type, owner_tenant_id), ...]"""
+        return list(DataSource.objects.values_list("id", "type", "owner_tenant_id"))
+
+    # ---------- 映射 ----------
+
+    @classmethod
+    def get_type_map(cls) -> Dict[int, str]:
+        """数据源 ID → 类型"""
+        return {ds_id: ds_type for ds_id, ds_type, _ in cls._get_infos()}
+
+    @classmethod
+    def get_owner_tenant_id_map(cls) -> Dict[int, str]:
+        """数据源 ID → 归属租户 ID"""
+        return {ds_id: owner for ds_id, _, owner in cls._get_infos()}
+
+    # ---------- 单条查询 ----------
+
+    @classmethod
+    def get_type(cls, data_source_id: int) -> str:
+        return cls.get_type_map()[data_source_id]
+
+    @classmethod
+    def get_owner_tenant_id(cls, data_source_id: int) -> str:
+        return cls.get_owner_tenant_id_map()[data_source_id]
+
+    # ---------- ID 集合快捷方法 ----------
+
+    @classmethod
+    def ids_by_type(cls, ds_type_filter: str) -> Set[int]:
+        """指定类型的所有数据源 ID"""
+        return {ds_id for ds_id, ds_type, _ in cls._get_infos() if ds_type == ds_type_filter}
+
+    @classmethod
+    def real_ids(cls) -> Set[int]:
+        """所有 REAL 类型数据源 ID"""
+        return {ds_id for ds_id, ds_type, _ in cls._get_infos() if ds_type == DataSourceTypeEnum.REAL}
+
+    @classmethod
+    def non_builtin_management_ids(cls) -> Set[int]:
+        """所有非内置管理类型数据源 ID（REAL + VIRTUAL）"""
+        return {ds_id for ds_id, ds_type, _ in cls._get_infos() if ds_type != DataSourceTypeEnum.BUILTIN_MANAGEMENT}
+
+    @classmethod
+    def real_ids_by_owner(cls, owner_tenant_id: str) -> Set[int]:
+        """指定归属租户的 REAL 类型数据源 ID"""
+        return {
+            ds_id
+            for ds_id, ds_type, owner in cls._get_infos()
+            if ds_type == DataSourceTypeEnum.REAL and owner == owner_tenant_id
+        }
+
+    @classmethod
+    def ids_by_owner(cls, owner_tenant_id: str) -> Set[int]:
+        """指定归属租户的所有数据源 ID（不限类型）"""
+        return {ds_id for ds_id, _, owner in cls._get_infos() if owner == owner_tenant_id}
+
+    @classmethod
+    def virtual_id_by_owner(cls, owner_tenant_id: str) -> int:
+        """指定归属租户的虚拟数据源 ID，不存在时返回 0"""
+        for ds_id, ds_type, owner in cls._get_infos():
+            if ds_type == DataSourceTypeEnum.VIRTUAL and owner == owner_tenant_id:
+                return ds_id
+        return 0
 
 
 class DepartmentAncestorCache:

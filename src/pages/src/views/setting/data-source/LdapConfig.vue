@@ -1,5 +1,9 @@
 <template>
-  <bk-loading :loading="isLoading" class="data-source-content user-scroll-y">
+  <bk-loading
+    :loading="isLoading"
+    class="data-source-content user-scroll-y"
+    :z-index="10"
+  >
     <bk-form
       v-if="props.curStep === 1 && ldapConfigData.plugin_id"
       form-type="vertical"
@@ -119,7 +123,7 @@
             @input="handleChange" />
         </bk-form-item>
         <bk-form-item
-          class="w-[560px]"
+          class="w-[560px] !mb-0"
           :label="$t('部门 Base DN')"
           :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
           <div
@@ -139,34 +143,34 @@
             {{ $t('新增') }}
           </bk-button>
         </bk-form-item>
-        <div class="btn">
-          <div>
-            <bk-button
-              class="mr-[8px]"
-              theme="primary"
-              :outline="!nextDisabled"
-              :loading="connectionLoading"
-              @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-            <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-              {{ $t('下一步') }}
-            </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-          </div>
-          <div class="connection-alert" v-if="connectionStatus !== null">
-            <bk-alert
-              :theme="connectionStatus ? 'success' : 'error'"
-              :show-icon="false">
-              <template #title>
-                <span>
-                  <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                  <i v-else class="bk-sq-icon icon-close-fill" />
-                  {{ connectionText }}
-                </span>
-              </template>
-            </bk-alert>
-          </div>
-        </div>
       </Row>
+      <div class="btn">
+        <div>
+          <bk-button
+            class="mr-[8px]"
+            theme="primary"
+            :outline="!nextDisabled"
+            :loading="connectionLoading"
+            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+            {{ $t('下一步') }}
+          </bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+        </div>
+        <div class="connection-alert" v-if="connectionStatus !== null">
+          <bk-alert
+            :theme="connectionStatus ? 'success' : 'error'"
+            :show-icon="false">
+            <template #title>
+              <span>
+                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                <i v-else class="bk-sq-icon icon-close-fill" />
+                {{ connectionText }}
+              </span>
+            </template>
+          </bk-alert>
+        </div>
+      </div>
     </bk-form>
     <bk-form
       v-else
@@ -293,28 +297,45 @@
             />
           </bk-select>
         </bk-form-item>
-        <div class="btn">
-          <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-            {{ true ? $t('保存') : $t('提交') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
       </Row>
+      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+        <template #header>
+          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+        </template>
+        <ConflictConfig
+          ref="conflictConfigRef"
+          :config="fieldSettingData.username_config"
+          :disabled="isEdit"
+        />
+      </Row>
+      <div class="btn">
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+          {{ true ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
 
 <script lang="ts" setup>
-import { inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
+import { isNil } from '@/common/util';
+import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
+import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import { getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
+import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
 import router from '@/router';
+import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
+
 const props = defineProps({
   curStep: {
     type: Number,
@@ -327,9 +348,15 @@ const props = defineProps({
     default: false,
   },
 });
+const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const dataSourceStore = useDataSourceStore();
+
+const isEdit = computed(() => !isNil(props.dataSourceId));
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
+const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 interface LdapConfigData {
   plugin_id: string,
@@ -458,6 +485,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+  username_config: {
+    strategy: 'manual',
+    prefix: '',
+    suffix: '',
+  } as UsernameConfig,
 });
 const apiFields = ref([]);
 const fieldMappingList = ref([]);
@@ -468,6 +500,7 @@ const rulesFieldSetting = {
   'user_group_config.group_member_field': [validate.required],
   'user_group_config.search_base_dns': [validate.required],
   'leader_config.leader_field': [validate.required],
+  ...conflictRules,
 };
 
 const editLeaveBefore = inject('editLeaveBefore');
@@ -488,7 +521,7 @@ const handleLastStep = async () => {
   fieldSettingData.value.field_mapping.custom_fields = [];
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
-  if (props?.dataSourceId) {
+  if (isEdit.value) {
     const res = await getDataSourceDetails(props.dataSourceId);
     fieldSettingData.value.sync_config = res.data?.sync_config;
   } else {
@@ -525,7 +558,7 @@ const handleTestConnection = async () => {
         },
       },
     };
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.data_source_id = props.dataSourceId;
     }
     const res = await postTestConnection(params);
@@ -545,8 +578,6 @@ const handleTestConnection = async () => {
     connectionLoading.value = false;
   }
 };
-
-const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
 interface Field {
   id?: number;
@@ -570,7 +601,7 @@ const handleNext = async () => {
     emit('updateCurStep', 2);
     isLoading.value = true;
     const res = await getFields();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const list = [];
       const customList: any[] = [];
       const mapFields = (fields: Field, item: Item, isDisabled: boolean, fieldMappingType: string) => {
@@ -715,7 +746,7 @@ const changeCustomField = (newValue: string, oldValue: string) => {
 onMounted(async () => {
   try {
     isLoading.value = true;
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const res = await getDataSourceDetails(props.dataSourceId);
       ldapConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
@@ -729,6 +760,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
+      fieldSettingData.value.username_config = res.data?.username_config;
     } else {
       ldapConfigData.value = defaultLdapConfig();
     }
@@ -752,7 +784,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params = {
+    const params: Partial<NewDataSourceParams> = {
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
         data_config: ldapConfigData.value.data_config,
@@ -766,14 +798,21 @@ const handleSubmit = async () => {
       sync_config: fieldSettingData.value.sync_config,
     };
 
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.id = props.dataSourceId;
       await putDataSourceDetails(params);
-      emit('updateSuccess', t('更新'));
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+      });
     } else {
       params.plugin_id = ldapConfigData.value.plugin_id;
-      await newDataSource(params);
-      emit('updateSuccess', t('新建成功'));
+      params.username_config = conflictConfigRef.value?.getData();
+      const res = await newDataSource(params);
+      emit('updateSuccess', {
+        text: t('新建成功'),
+        dataSourceId: res.data?.id,
+      });
     }
     window.changeInput = false;
   } catch (e) {
@@ -854,7 +893,8 @@ const handleDelBaseDn = (type: string, index: number) => {
 
 .btn {
   position: relative;
-  padding: 8px 0 32px;
+  padding: 0px 0 24px 24px;
+  background-color: #fff;
 
   button {
     min-width: 88px;

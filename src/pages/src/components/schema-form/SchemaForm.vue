@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineExpose, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import createForm from '@blueking/bkui-form';
 

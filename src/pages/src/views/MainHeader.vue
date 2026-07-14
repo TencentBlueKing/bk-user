@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <!-- <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" /> -->
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
@@ -24,10 +24,14 @@
           v-is-multiple-tenant
           class="tenant-style">
           <div class="logo">
-            <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
-            <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
+            <img
+              v-if="headerTenantInfo.logo"
+              :src="headerTenantInfo.logo"
+              alt=""
+            >
+            <span v-else>{{logoConvert(headerTenantInfo.name) }}</span>
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
+          <bk-overflow-title type="tips" class="tenant-id">{{ headerTenantInfo.name }}</bk-overflow-title>
           <i
             v-if="role === ROLE.SUPER_MANAGER"
             class="user-icon icon-shezhi"
@@ -129,7 +133,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { DownShape } from 'bkui-vue/lib/icon';
+import { computed, onMounted, provide, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import BkLoginUserinfo, { ActionItem } from '@blueking/login-userinfo';
@@ -143,23 +148,28 @@ import '@blueking/release-note/vue3/vue3.css';
 import '@blueking/login-userinfo/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { ROLE } from '@/common/constant';
+import { UPDATE_TENANT_INFO_KEY, UpdateTenantInfo } from '@/common/inject-keys';
 import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
+import { TenantInfoData } from '@/http/types/settingFiles';
 import { locale, t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
-import useAppStore from '@/store/app';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
 
-const appStore = useAppStore();
 const state = reactive({
   helpDropdown: false,
   languageDropdown: false,
 });
 
 const userStore = useUser();
-const  platformConfigData = platformConfig();
+const platformConfigData = platformConfig();
 const headerNav = ref([]);
+/** 顶部Header栏 - 用于展示的租户信息 */
+const headerTenantInfo = ref<Partial<TenantInfoData>>({
+  name: '',
+  logo: '',
+});
 const role = computed(() => userStore.user.role);
 const appName = computed(() => platformConfigData.i18n.productName);
 const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
@@ -217,8 +227,31 @@ const toTenant = () => {
 
 const initTenantInfo = async () => {
   const res = await getTenantInfo();
-  appStore.currentTenant = res.data;
+  headerTenantInfo.value = res.data;
 };
+
+// 提供更新租户信息的方法给子组件
+const updateTenantInfo: UpdateTenantInfo = {
+  updateName: (name: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+    }
+  },
+  updateLogo: (logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+  updateTenant: (name: string, logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+};
+
+provide(UPDATE_TENANT_INFO_KEY, updateTenantInfo);
+
 onMounted(() => {
   if (role.value && role.value !== ROLE.NATURAL_USER) {
     initTenantInfo();

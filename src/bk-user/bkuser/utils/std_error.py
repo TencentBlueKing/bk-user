@@ -54,7 +54,7 @@ class APIError(Exception):
         self.status_code = status_code
         self.data = data
         self.detail = detail
-        # Save message as private field to expose it as an property
+        # Save message as private field to expose it as a property
         self._message = message
 
         super().__init__(self.message)
