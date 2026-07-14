@@ -17,11 +17,10 @@
 
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
-from bkuser.apps.data_source.managers import DataSourceManager
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -42,6 +41,26 @@ class DataSourcePlugin(models.Model):
     name = models.CharField("数据源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
+
+
+class DataSourceQuerySet(models.QuerySet):
+    """数据源 QuerySet 类"""
+
+    @transaction.atomic()
+    def create(self, **kwargs):
+        if "plugin_config" not in kwargs:
+            return super().create(**kwargs)
+
+        plugin_cfg = kwargs.pop("plugin_config")
+        assert isinstance(plugin_cfg, BasePluginConfig)
+
+        data_source = super().create(**kwargs)
+        data_source.set_plugin_cfg(plugin_cfg)
+        return data_source
+
+
+# 数据源管理器类
+DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
 
 
 class DataSource(AuditedModel):
