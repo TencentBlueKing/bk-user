@@ -15,6 +15,7 @@ from builtins import str
 
 from django.conf import settings
 from django.utils import timezone
+from bkuser_global.utils import get_custom_ui_url
 
 """
 context_processor for common(setting)
@@ -43,4 +44,6 @@ def site_settings(request):
         # password encrypted
         "PASSWORD_RSA_PUBLIC_KEY": password_rsa_public_key,
         "ENABLE_PASSWORD_RSA_ENCRYPTED": enable_password_rsa_encrypted,
+        "CUSTOM_BG_IMG_URL": get_custom_ui_url("bk_login", "loginImg"),
+        "CUSTOM_LOGO_IMG_URL": get_custom_ui_url("bk_login", "loginLogo")
     }

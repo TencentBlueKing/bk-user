@@ -21,7 +21,8 @@
         <span v-if="index !== footerList.length - 1" :key="index + 'gap'" class="gap"> | </span>
       </template>
     </div>
-    <div>Copyright © 2012-{{ new Date().getFullYear() }} Tencent BlueKing. All Rights Reserved. V{{ version }}</div>
+    <div>{{ $root.BK_USER_RIGHT || `Copyright © 2012-${new Date().getFullYear()}
+ Tencent BlueKing. All Rights Reserved. V${version}` }}</div>
   </div>
 </template>
 

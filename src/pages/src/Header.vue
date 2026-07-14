@@ -11,8 +11,9 @@
   <div class="header-container">
     <div class="header-left">
       <h1 class="title-logo" @click="goHome">
-        <i class="user-icon icon-user-logo-i"></i>
-        <span class="title">{{ $t('蓝鲸用户管理') }}</span>
+        <i v-if="!$root.BK_USER_ICON" class="user-icon icon-user-logo-i"></i>
+        <img v-else :src="$root.BK_USER_ICON" class="user-icon-img" alt="logo" />
+        <span class="title">{{ $root.BK_USER_TITLE || $t('蓝鲸用户管理') }}</span>
       </h1>
       <p class="nav-list">
         <a
@@ -225,6 +226,12 @@ export default {
       > .icon-user-logo-i {
         color: #458df4;
         font-size: 30px;
+      }
+
+      > .user-icon-img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
       }
 
       > .title {

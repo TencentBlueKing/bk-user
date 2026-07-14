@@ -12,6 +12,7 @@ from environ import ImproperlyConfigured
 
 from . import env
 from .django_basic import MEDIA_ROOT
+from bkuser_global.utils import get_custom_ui_url
 
 # ==============================================================================
 # 密码配置
@@ -155,21 +156,21 @@ DEFAULT_LOGO_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAACICAIAA
 FOOTER_CONFIG = {
     "footer": [
         {
-            "text": "技术支持",
-            "text_en": "Support",
-            "link": "https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true",
+            "text": get_custom_ui_url("bk_user", "footerInfoText01") or "技术支持",
+            "text_en": get_custom_ui_url("bk_user", "footerInfoTextEn01") or "Support",
+            "link": get_custom_ui_url("bk_user", "footerInfoLink01") or "https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true",
             "is_blank": False,
         },
         {
-            "text": "社区论坛",
-            "text_en": "Forum",
-            "link": "https://bk.tencent.com/s-mart/community/",
+            "text": get_custom_ui_url("bk_user", "footerInfoText02") or "社区论坛",
+            "text_en": get_custom_ui_url("bk_user", "footerInfoTextEn02") or "Forum",
+            "link": get_custom_ui_url("bk_user", "footerInfoLink02") or "https://bk.tencent.com/s-mart/community/",
             "is_blank": True,
         },
         {
-            "text": "蓝鲸官网",
-            "text_en": "Official",
-            "link": "https://bk.tencent.com/",
+            "text": get_custom_ui_url("bk_user", "footerInfoText03") or "蓝鲸官网",
+            "text_en": get_custom_ui_url("bk_user", "footerInfoTextEn03") or "Official",
+            "link": get_custom_ui_url("bk_user", "footerInfoLink03") or "https://bk.tencent.com/",
             "is_blank": True,
         },
     ]

@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 """
 from django.utils.html import escape as html_escape
 
-
 def escape_html_return_msg(func):
     """
     装饰器：用于验证信息返回xss转义

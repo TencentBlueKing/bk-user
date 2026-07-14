@@ -104,13 +104,14 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         config_loader = ConfigProvider(category_id=category.id)
         # 由于安全检测等原因，取消原先对admin用户的检查豁免
         if category.type in [CategoryType.LOCAL.value]:
-            # 判断账户解锁
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
-            from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
-            retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
-            if retry_after_wait <= 0 and profile.status == ProfileStatus.LOCKED.value:
-                profile.status = ProfileStatus.NORMAL.value
-                profile.save(update_fields=["status"])
+            # 判断账户解锁
+            if profile.bad_check_cnt > 0:
+                from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
+                retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
+                if retry_after_wait <= 0 and profile.status == ProfileStatus.LOCKED.value:
+                    profile.status = ProfileStatus.NORMAL.value
+                    profile.save(update_fields=["status"])
 
             # 判断账户状态
             if profile.status in [
@@ -181,38 +182,41 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 request=request,
                 params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
             )
-            # 错误登录次数校验
-            if profile.bad_check_cnt >= max_trail_times > 0:
-                from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
-                retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
-
-                if retry_after_wait > 0:
-                    create_profile_log(
-                        profile=profile,
-                        operation="LogIn",
-                        request=request,
-                        params={"is_success": False, "reason": LogInFailReason.TOO_MANY_FAILURE.value},
-                    )
-
-                    logger.info(f"用户<{profile}> 登录失败错误过多，已被锁定，请 {retry_after_wait}s 后再试")
-                    # 当密码输入错误时，不暴露不同的信息，避免用户名爆破
-                    logger.info(
-                        "login check, profile<%s> of %s entered wrong password too many times",
-                        profile.username,
-                        message_detail,
-                    )
-                    # 将账户锁定
-                    profile.status = ProfileStatus.LOCKED.value
-                    profile.save(update_fields=["status"])
-                    # NOTE: 安全原因, 不能返回账户状态
-                    raise mask_login_error(error_codes.USER_LOCKED_TEMPORARILY.f(wait_seconds=retry_after_wait))
             logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
+            # 只有本地目录登录才进行次数校验
+            if category.type in [CategoryType.LOCAL.value]:
+                # 错误登录次数校验
+                if profile.bad_check_cnt >= max_trail_times > 0:
+                    from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
+                    retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
+
+                    if retry_after_wait > 0:
+                        create_profile_log(
+                            profile=profile,
+                            operation="LogIn",
+                            request=request,
+                            params={"is_success": False, "reason": LogInFailReason.TOO_MANY_FAILURE.value},
+                        )
+
+                        logger.info(f"用户<{profile}> 登录失败错误过多，已被锁定，请 {retry_after_wait}s 后再试")
+                        # 当密码输入错误时，不暴露不同的信息，避免用户名爆破
+                        logger.info(
+                            "login check, profile<%s> of %s entered wrong password too many times",
+                            profile.username,
+                            message_detail,
+                        )
+                        # 将账户锁定
+                        profile.status = ProfileStatus.LOCKED.value
+                        profile.save(update_fields=["status"])
+                        # NOTE: 安全原因, 不能返回账户状态
+                        raise mask_login_error(error_codes.USER_LOCKED_TEMPORARILY.f(wait_seconds=retry_after_wait))
+                    raise mask_login_error(
+                        error_codes.PASSWORD_ERROR_RETRY.f(
+                            retry_password_times=(max_trail_times - profile.bad_check_cnt)
+                        )
+                    )
             # NOTE: 这里不能使用其他错误, 一律是 PASSWORD_ERROR, 安全问题
-            raise mask_login_error(
-                error_codes.PASSWORD_ERROR_RETRY.f(
-                    retry_password_times=(int(config_loader["max_trail_times"]) - profile.bad_check_cnt)
-                )
-            )
+            raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
         self._check_account_status(request, profile)

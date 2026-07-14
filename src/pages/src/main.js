@@ -56,5 +56,10 @@ window.mainComponent = new Vue({
   store,
   i18n,
   components: { App },
+  created() {
+    this.BK_USER_RIGHT = window.BK_USER_RIGHT;
+    this.BK_USER_ICON = window.BK_USER_ICON;
+    this.BK_USER_TITLE = window.BK_USER_TITLE;
+  },
   template: '<App />',
 });

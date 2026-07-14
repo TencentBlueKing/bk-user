@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- htmlhint ignore:all -->
+    {% if BK_LABEL_ICON %}
+    <link rel="icon" href="{{ BK_LABEL_ICON }}" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ BK_LABEL_ICON }}" type="image/x-icon" />
+    {% else %}
     <link rel="icon" href="{{ BK_STATIC_URL }}/images/logo.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="{{ BK_STATIC_URL }}/images/logo.ico" type="image/x-icon" />
+    {% endif %}
+    <!-- htmlhint restore -->
     <meta charset="utf-8">
     <title>{{ TITLE }}</title>
     <script>
@@ -18,6 +25,10 @@
         window.BK_MAIL_GATEWAY = '{{ BK_MAIL_GATEWAY }}'
         // HEAD 产品文档链接
         window.BK_DOC_URL = '{{ BK_DOC_URL }}'
+        // 自定义UI配置
+        window.BK_USER_RIGHT = '{{ BK_USER_RIGHT }}'
+        window.BK_USER_TITLE = '{{ BK_USER_TITLE }}'
+        window.BK_USER_ICON = '{{ BK_USER_ICON }}'
     </script>
 </head>
 <body>
