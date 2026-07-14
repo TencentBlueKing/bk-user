@@ -20,7 +20,7 @@ from rest_framework import serializers
 
 from bkuser.apps.tenant.constants import TenantUserStatus, UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 from bkuser.common.constants import TIME_ZONE_CHOICES
 from bkuser.common.serializers import StringArrayField
 
@@ -43,7 +43,7 @@ class TenantUserDisplayInfoListOutputSLZ(serializers.Serializer):
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
@@ -52,6 +52,9 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     def get_display_name(self, obj: TenantUser) -> str:
         return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.get_login_name(obj)
 
 
 class AncestorSLZ(serializers.Serializer):
@@ -74,23 +77,29 @@ class TenantUserDepartmentListOutputSLZ(serializers.Serializer):
 
 class TenantUserLeaderListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
 
+    def get_login_name(self, obj: TenantUser) -> str:
+        return self.context["login_name_map"][obj.id]
+
 
 class TenantUserListOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return self.context["login_name_map"][obj.id]
 
 
 class TenantUserSensitiveInfoListInputSLZ(serializers.Serializer):
@@ -138,12 +147,15 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
 
 class TenantUserLookupOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
-    login_name = serializers.CharField(help_text="企业内用户唯一标识", source="data_source_user.username")
+    login_name = serializers.SerializerMethodField(help_text="企业内用户唯一标识")
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     language = serializers.CharField(help_text="语言", max_length=32)
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
+
+    def get_login_name(self, obj: TenantUser) -> str:
+        return self.context["login_name_map"][obj.id]
 
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]

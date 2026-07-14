@@ -25,7 +25,7 @@ from bkuser.apps.tenant.models import TenantUserCustomField
 
 
 class DataSourceUserExtrasUniqueValidator:
-    """数据源用户转换器"""
+    """数据源用户额外字段唯一性校验"""
 
     def __init__(self, data_source: DataSource, logger: TaskLogger):
         self.data_source = data_source

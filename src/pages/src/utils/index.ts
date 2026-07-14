@@ -61,12 +61,6 @@ export function dateConvert(value: string) {
   }
 }
 
-// 语言
-export const LANGUAGE_OPTIONS = [
-  { value: 'zh-cn', label: '简体中文' },
-  { value: 'en', label: 'English' },
-];
-
 // logo转换
 export function logoConvert(value: string) {
   return value?.charAt(0).toUpperCase();
@@ -263,9 +257,12 @@ export const SYNC_TIMEOUT_LIST = [
     label: t('6 小时'),
   },
 ];
-
 // 数据更新记录状态
-export const dataRecordStatus = {
+export const dataRecordStatus: Record<string, {
+  icon: string;
+  text: string;
+  theme: string;
+}> = {
   // pending状态下文本由待执行改为同步中
   pending: {
     icon: loadingImg,
@@ -288,8 +285,6 @@ export const dataRecordStatus = {
     theme: 'danger',
   },
 };
-
-export const RUNNING_FIELDS = ['pending', 'running'];
 
 // 有效期
 export const VALID_TIME = [

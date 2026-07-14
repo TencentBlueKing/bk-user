@@ -35,7 +35,7 @@ from bkuser.apis.open_v3.serializers.department import (
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler, TenantOrgPathHandler
-from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 
 
 class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
@@ -46,7 +46,7 @@ class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id)
+        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
 
     @swagger_auto_schema(
         tags=["open_v3.department"],
@@ -92,7 +92,7 @@ class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         depts = TenantDepartment.objects.select_related("data_source_department").filter(
-            tenant=self.tenant_id, data_source_id=self.real_data_source_id
+            tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         )
 
         # 分页
@@ -133,11 +133,13 @@ class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView
             level = parent_level + max_level
             # 按层级 Level 递归查询子部门
             descendant_ids = DataSourceDepartmentRelation.objects.filter(
-                data_source_id=self.real_data_source_id, level__lte=level
+                data_source_id__in=self.real_data_source_ids, level__lte=level
             ).values_list("department_id", flat=True)
         else:
             tenant_department = get_object_or_404(
-                TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+                TenantDepartment.objects.filter(
+                    tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+                ),
                 id=kwargs["id"],
             )
 
@@ -173,7 +175,7 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
 
     def get_queryset(self):
         tenant_department = get_object_or_404(
-            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id=self.real_data_source_id),
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids),
             id=self.kwargs["id"],
         )
         user_ids = DataSourceDepartmentUserRelation.objects.filter(
@@ -186,13 +188,6 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
             .order_by("id")
         )
 
-    def get_serializer_context(self):
-        return {
-            "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(
-                self.paginate_queryset(self.get_queryset())
-            )
-        }
-
     @swagger_auto_schema(
         tags=["open_v3.department"],
         operation_id="list_department_user",
@@ -200,7 +195,18 @@ class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.paginate_queryset(self.get_queryset())
+
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+                "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+            },
+        )
+
+        return self.get_paginated_response(slz.data)
 
 
 class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
@@ -223,7 +229,7 @@ class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
         data = slz.validated_data
 
         queryset = TenantDepartment.objects.select_related("data_source_department").filter(
-            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id=self.real_data_source_id
+            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
         )
 
         with_organization_path = data["with_organization_path"]

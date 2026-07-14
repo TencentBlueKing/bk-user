@@ -66,6 +66,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -155,6 +156,9 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         if tenant_id := params.get("tenant_id"):
             queryset = queryset.filter(data_source__owner_tenant_id=tenant_id)
 
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
         if keyword := params.get("keyword"):
             queryset = queryset.filter(
@@ -193,14 +197,12 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.kwargs["id"], type=DataSourceTypeEnum.REAL
-        ).first()
-        if not data_source:
+        data_sources = DataSource.objects.filter(owner_tenant_id=self.kwargs["id"], type=DataSourceTypeEnum.REAL)
+        if not data_sources.exists():
             return TenantUser.objects.none()
 
         queryset = TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=cur_tenant_id, data_source=data_source
+            tenant_id=cur_tenant_id, data_source__in=data_sources
         )
         # 字段过滤映射
         filter_map = {
@@ -240,7 +242,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             queryset = queryset.filter(data_source_user_id__in=data_source_user_ids)
         # 不指定部门 & 不指定递归查询 -> 查询租户下的游离用户（没有部门）
         elif not params["recursive"]:
-            dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source)
+            dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source__in=data_sources)
             queryset = queryset.exclude(data_source_user_id__in=dept_user_relations.values_list("user_id", flat=True))
 
         return queryset.order_by("data_source_user__username")
@@ -298,22 +300,26 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         if self.kwargs["id"] != cur_tenant_id:
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅可创建属于当前租户的用户"))
 
-        # 必须存在实名用户数据源才可以创建租户部门
+        # 必须存在实名用户数据源才可以创建租户用户
         data_source = self.get_current_tenant_local_real_data_source()
 
         # 创建租户用户参数校验
         slz = TenantUserCreateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source": data_source}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        transform = UsernameTransformer.load(data_source.id)
+        raw_username = data["username"]
+        stored_username = transform.to_stored(raw_username)
 
         with transaction.atomic():
             # 创建数据源用户
             data_source_user = DataSourceUser.objects.create(
                 data_source=data_source,
-                code=data["username"],
-                username=data["username"],
+                code=raw_username,
+                username=stored_username,
                 full_name=data["full_name"],
                 email=data["email"],
                 phone=data["phone"],
@@ -466,7 +472,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             context={
                 "tenant_id": cur_tenant_id,
                 "tenant_user_id": tenant_user.id,
-                "data_source_id": data_source.id,
+                "data_source": data_source,
                 "data_source_user_id": data_source_user.id,
                 "current_expired_at": tenant_user.account_expired_at,
             },
@@ -784,7 +790,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserBatchCreateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source": data_source}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -795,13 +801,15 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         if not tenant_dept:
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("指定的租户部门不存在"))
 
+        transform = UsernameTransformer.load(data_source.id)
+
         with transaction.atomic():
             # 新建数据源用户
             data_source_users = [
                 DataSourceUser(
                     data_source=data_source,
                     code=info["username"],
-                    username=info["username"],
+                    username=transform.to_stored(info["username"]),
                     full_name=info["full_name"],
                     email=info["email"],
                     phone=info["phone"],
@@ -813,9 +821,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             DataSourceUser.objects.bulk_create(data_source_users, batch_size=self.bulk_create_batch_size)
 
             # 重新从 DB 查询以获取带 ID 的数据源用户
-            data_source_users = DataSourceUser.objects.filter(
-                data_source=data_source, code__in=[u["username"] for u in data["user_infos"]]
-            )
+            stored_usernames = [transform.to_stored(u["username"]) for u in data["user_infos"]]
+            data_source_users = DataSourceUser.objects.filter(data_source=data_source, username__in=stored_usernames)
 
             # 绑定数据源部门 - 用户
             relations = [
@@ -913,7 +920,7 @@ class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserBatchCreatePreviewInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source": data_source}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -940,7 +947,7 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserBatchDeleteInputSLZ(
-            data=request.query_params, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.query_params, context={"tenant_id": cur_tenant_id, "data_source_ids": [data_source.id]}
         )
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
@@ -995,10 +1002,11 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_real_data_source()
+        data_sources = self.get_current_tenant_real_data_sources()
 
         slz = TenantUserAccountExpiredAtBatchUpdateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data,
+            context={"tenant_id": cur_tenant_id, "data_source_ids": [ds.id for ds in data_sources]},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -1046,11 +1054,11 @@ class TenantUserStatusBatchUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_real_data_source()
+        data_sources = self.get_current_tenant_real_data_sources()
 
         slz = TenantUserStatusBatchUpdateInputSLZ(
             data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
+            context={"tenant_id": cur_tenant_id, "data_source_ids": [ds.id for ds in data_sources]},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -1113,7 +1121,7 @@ class TenantUserLeaderBatchUpdateApi(
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserLeaderBatchUpdateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_ids": [data_source.id]}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -1179,7 +1187,7 @@ class TenantUserPasswordBatchResetApi(
             data=request.data,
             context={
                 "tenant_id": cur_tenant_id,
-                "data_source_id": data_source.id,
+                "data_source_ids": [data_source.id],
                 "plugin_config": plugin_config,
             },
         )
@@ -1231,7 +1239,7 @@ class TenantUserCustomFieldBatchUpdateApi(
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserCustomFieldBatchUpdateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_ids": [data_source.id]}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data

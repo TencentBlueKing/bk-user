@@ -18,6 +18,7 @@
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
+from bkuser.apps.idp.models import IdpDataSourceRelation
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.language import get_supported_language_choices, get_supported_language_codes
 from bkuser.apps.tenant.models import (
@@ -155,7 +156,7 @@ class TestTenantCreator:
         idp = TenantCreator.create_builtin_idp("test-tenant", data_source.id)
 
         assert idp.owner_tenant_id == "test-tenant"
-        assert idp.data_source_id == data_source.id
+        assert IdpDataSourceRelation.objects.filter(idp=idp, data_source=data_source).exists()
         assert idp.name == "Administrator"
 
 

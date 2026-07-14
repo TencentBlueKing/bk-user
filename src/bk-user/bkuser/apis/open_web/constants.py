@@ -29,4 +29,5 @@ class OpenWebApiEnum(StrStructuredEnum):
     BATCH_LOOKUP_DEPARTMENT = EnumField("batch_lookup_department", label="批量匹配部门")
     LIST_DEPARTMENT_CHILD = EnumField("list_department_child", label="查询部门子部门信息")
     LIST_DEPARTMENT_USER = EnumField("list_department_user", label="查询部门所属用户信息")
+    SEARCH_VIRTUAL_USER = EnumField("search_virtual_user", label="搜索虚拟用户信息")
     LIST_VIRTUAL_USER = EnumField("list_virtual_user", label="查询虚拟用户信息")

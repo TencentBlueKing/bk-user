@@ -26,9 +26,20 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import (
+    USERNAME_PREFIX_REGEX,
+    USERNAME_SUFFIX_REGEX,
+    DataSourceTypeEnum,
+    DataSourceUsernameGenerateRule,
+    FieldMappingOperation,
+)
 from bkuser.apps.data_source.i18n import get_data_source_plugin_description, get_data_source_plugin_name
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourcePlugin,
+    DataSourceSensitiveInfo,
+    DataSourceUsernameGenerateConfig,
+)
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
@@ -111,6 +122,36 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
     )
 
 
+class DataSourceUsernameGenerateConfigSLZ(serializers.Serializer):
+    """数据源用户名生成配置"""
+
+    rule = serializers.ChoiceField(help_text="用户名生成规则", choices=DataSourceUsernameGenerateRule.get_choices())
+    prefix = serializers.CharField(help_text="用户名前缀", required=False, default="", allow_blank=True)
+    suffix = serializers.CharField(help_text="用户名后缀", required=False, default="", allow_blank=True)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        rule = attrs.get("rule")
+        prefix = attrs.get("prefix")
+        suffix = attrs.get("suffix")
+
+        if prefix and not USERNAME_PREFIX_REGEX.fullmatch(prefix):
+            raise ValidationError(_("{} 不符合 用户名前缀 的命名规范，应为 1-6 位大小写字母或数字").format(prefix))
+
+        if suffix and not USERNAME_SUFFIX_REGEX.fullmatch(suffix):
+            raise ValidationError(_("{} 不符合 用户名后缀 的命名规范，应为 1-6 位大小写字母或数字").format(suffix))
+
+        if rule == DataSourceUsernameGenerateRule.ADD_AFFIX:
+            if not prefix and not suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀不能同时为空"))
+            if prefix and suffix:
+                raise ValidationError(_("添加前后缀策略下，前缀和后缀不能同时配置"))
+
+        if rule == DataSourceUsernameGenerateRule.UNCHANGED and (prefix or suffix):
+            raise ValidationError(_("保持原始值策略下，不支持配置用户名前缀或后缀"))
+
+        return attrs
+
+
 class DataSourceCreateInputSLZ(serializers.Serializer):
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
@@ -118,6 +159,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
+    username_generate_config = DataSourceUsernameGenerateConfigSLZ(help_text="用户名生成配置")
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -132,13 +174,42 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
+    def validate_username_generate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        # 校验同租户下 ADD_AFFIX 策略的前后缀组合唯一性
+        if (
+            config["rule"] == DataSourceUsernameGenerateRule.ADD_AFFIX
+            and DataSourceUsernameGenerateConfig.objects.filter(
+                data_source__owner_tenant_id=self.context["tenant_id"],
+                data_source__type=DataSourceTypeEnum.REAL,
+                rule=DataSourceUsernameGenerateRule.ADD_AFFIX,
+                prefix=config["prefix"],
+                suffix=config["suffix"],
+            ).exists()
+        ):
+            raise ValidationError(_("当前租户已存在相同用户名前后缀的数据源"))
+
+        return config
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 租户至多拥有一个实体类型的数据源
-        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
-            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+        plugin_id = attrs["plugin_id"]
+        tenant_id = self.context["tenant_id"]
+        # 租户至多拥有一个本地数据源和一个外部数据源
+        if (
+            plugin_id == DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(
+                owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL, plugin_id=DataSourcePluginEnum.LOCAL
+            ).exists()
+        ):
+            raise ValidationError(_("当前租户已存在本地数据源"))
+        if (
+            plugin_id != DataSourcePluginEnum.LOCAL
+            and DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL)
+            .exclude(plugin_id=DataSourcePluginEnum.LOCAL)
+            .exists()
+        ):
+            raise ValidationError(_("当前租户已存在外部数据源"))
 
         # 除本地数据源类型外，都需要配置字段映射
-        plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
             if not attrs["field_mapping"]:
                 raise ValidationError(_("当前数据源类型必须配置字段映射"))
@@ -157,7 +228,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         if plugin_id == DataSourcePluginEnum.GENERAL:
             assert isinstance(attrs["plugin_config"], GeneralDataSourcePluginConfig)
-            _validate_general_plugin_tenant_id(attrs["plugin_config"], self.context["tenant_id"])
+            _validate_general_plugin_tenant_id(attrs["plugin_config"], tenant_id)
 
         return attrs
 
@@ -191,6 +262,17 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
     field_mapping = serializers.JSONField(help_text="用户字段映射")
+    username_generate_config = serializers.SerializerMethodField(help_text="用户名生成配置")
+
+    def get_username_generate_config(self, obj: DataSource) -> Dict[str, str]:
+        cfg = (
+            DataSourceUsernameGenerateConfig.objects.filter(data_source_id=obj.id)
+            .values("rule", "prefix", "suffix")
+            .first()
+        )
+        if cfg is None:
+            return {"rule": DataSourceUsernameGenerateRule.UNCHANGED, "prefix": "", "suffix": ""}
+        return cfg
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
@@ -378,11 +460,18 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
+    plugin_id = serializers.CharField(help_text="插件 ID", required=False)
     statuses = StringArrayField(help_text="数据源同步状态", required=False)
+
+
+class DataSourcePluginSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源插件 ID")
+    name = serializers.CharField(help_text="数据源插件名称")
 
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
+    plugin = DataSourcePluginSLZ(help_text="数据源插件", source="data_source.plugin")
     status = serializers.SerializerMethodField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())

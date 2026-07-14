@@ -522,6 +522,7 @@ class TenantUserAccountExpiredAtUpdateAuditor:
             operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
+            object_name=tenant_user.data_source_user.username,
             data_before=self.data_befores[tenant_user.id],
             data_after={
                 "account_expired_at": tenant_user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S"),

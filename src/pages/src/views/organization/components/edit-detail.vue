@@ -144,6 +144,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  dataSourceId: {
+    type: Number,
+    default: undefined,
+  },
 });
 
 const emit = defineEmits(['handleCancelEdit', 'updateUsers']);
@@ -193,7 +197,10 @@ const changeTelError = (value: boolean) => {
   telError.value = value;
 };
 const getOptionalDepartmentsList = (value = '') => {
-  optionalDepartmentsList({ keyword: value }).then((res) => {
+  optionalDepartmentsList({
+    keyword: value,
+    data_source_id: props.dataSourceId,
+  }).then((res) => {
     const dataMap = new Map();
     res.data.forEach((item) => {
       dataMap.set(item.id, item);

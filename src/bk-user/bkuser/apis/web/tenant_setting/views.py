@@ -33,6 +33,7 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserValidityPeriodConfigOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.data_source.tasks import (
     migrate_user_extras_with_mapping,
     remove_dropped_field_in_data_source_field_mapping,
@@ -279,9 +280,12 @@ class TenantUserDisplayNameExpressionConfigPreviewApi(CurrentUserTenantMixin, ge
         fields = TenantUserDisplayNameHandler.parse_display_name_expression(tenant_id, data["expression"])
 
         # 取前三个租户用户进行预览
-        tenant_users = TenantUser.objects.filter(
-            tenant_id=tenant_id, data_source__owner_tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
-        ).select_related("data_source_user", "data_source")[:3]
+        real_ds_ids = DataSource.objects.filter(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL).values_list(
+            "id", flat=True
+        )
+        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id, data_source_id__in=real_ds_ids).select_related(
+            "data_source_user"
+        )[:3]
 
         config = TenantUserDisplayNameExpressionConfig(expression=data["expression"], fields=fields)
 

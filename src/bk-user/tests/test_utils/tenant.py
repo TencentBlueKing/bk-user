@@ -18,12 +18,12 @@ from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.tenant.models import Tenant, TenantUserDisplayNameExpressionConfig
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
@@ -64,16 +64,15 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         version=1,
     )
 
-    Idp.objects.get_or_create(
+    idp, _ = Idp.objects.get_or_create(
         name="Administrator",
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         owner_tenant_id=tenant_id,
         defaults={
             "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source.id]),
-            "data_source_match_rules": [gen_data_source_match_rule_of_local(data_source.id).model_dump()],
-            "data_source_id": data_source.id,
         },
     )
+    IdpDataSourceRelationHandler.set_builtin_management_relation(idp, data_source)
 
     return tenant
 

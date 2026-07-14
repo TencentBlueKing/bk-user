@@ -14,8 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
-
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
 from django.db import models, transaction
@@ -29,7 +27,6 @@ from bkuser.utils.url import urljoin
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import IdpStatus
-from .data_models import DataSourceMatchRule, DataSourceMatchRuleList
 
 
 class IdpPlugin(models.Model):
@@ -72,11 +69,6 @@ class Idp(AuditedModel):
     # Note: 认证源插件被删除的前提是，插件没有被任何认证源使用
     plugin = models.ForeignKey(IdpPlugin, on_delete=models.PROTECT)
     plugin_config = models.JSONField("插件配置", default=dict)
-    # 认证源与数据源的匹配规则
-    data_source_match_rules = models.JSONField("匹配规则", default=list)
-    # 冗余字段，用于添加、删除或变更时使用
-    # Note: -1 表示无限制，0 表示 "实名数据源"被删除，但不删除认证源，其他 >=0 则表示实际绑定的数据源 ID
-    data_source_id = models.IntegerField("数据源 ID")
 
     objects = IdpManager()
 
@@ -84,19 +76,12 @@ class Idp(AuditedModel):
         ordering = ["created_at"]
         unique_together = [
             ("name", "owner_tenant_id"),
-            # 同一个数据源对于同一种类型的认证源插件，只允许配置一个
-            ("data_source_id", "plugin", "owner_tenant_id"),
         ]
 
     @property
     def is_local(self) -> bool:
         """检查类型是否为本地账密认证源"""
         return self.plugin.id == BuiltinIdpPluginEnum.LOCAL
-
-    @property
-    def data_source_match_rule_objs(self) -> List[DataSourceMatchRule]:
-        """转换为规则对象列表"""
-        return DataSourceMatchRuleList.validate_python(self.data_source_match_rules)
 
     @property
     def callback_uri(self) -> str:
@@ -151,3 +136,30 @@ class IdpSensitiveInfo(TimestampedModel):
 
     class Meta:
         unique_together = [("idp", "key")]
+
+
+class IdpDataSourceRelation(TimestampedModel):
+    """认证源与数据源关联关系
+
+    注意：当关联的实名数据源被重置时，关系记录会随之删除，IDP 变为孤儿态。
+    虚拟数据源和内置管理数据源场景不会触发孤儿，因此孤儿 IDP 几乎都源自实名数据源重置。
+
+    约束：每个 IDP 只能关联一种类型的数据源。
+    """
+
+    idp = models.ForeignKey(Idp, on_delete=models.CASCADE, related_name="data_source_relations", db_constraint=False)
+    data_source = models.ForeignKey(
+        "data_source.DataSource", on_delete=models.CASCADE, related_name="idp_relations", db_constraint=False
+    )
+    field_compare_rules = models.JSONField("字段匹配规则", default=list)
+
+    # 仅冗余认证源归属租户，用于登录/管理侧按租户过滤关系；数据源类型等条件通过分步查询处理。
+    idp_owner_tenant_id = models.CharField("认证源归属租户", max_length=64, db_index=True)
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [("idp", "data_source")]
+        indexes = [
+            models.Index(fields=["idp_owner_tenant_id", "data_source"]),
+            models.Index(fields=["data_source", "idp"]),
+        ]

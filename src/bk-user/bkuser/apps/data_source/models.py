@@ -20,7 +20,7 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -34,7 +34,7 @@ from bkuser.utils.uuid import generate_uuid
 class DataSourcePlugin(models.Model):
     """
     数据源插件
-    DB初始化内置插件：local/mad/ldap
+    DB 初始化内置插件：local/mad/ldap
     """
 
     id = models.CharField("数据源插件唯一标识", primary_key=True, max_length=128)
@@ -54,7 +54,7 @@ class DataSourceQuerySet(models.QuerySet):
         plugin_cfg = kwargs.pop("plugin_config")
         assert isinstance(plugin_cfg, BasePluginConfig)
 
-        data_source: DataSource = super().create(**kwargs)
+        data_source = super().create(**kwargs)
         data_source.set_plugin_cfg(plugin_cfg)
         return data_source
 
@@ -80,9 +80,6 @@ class DataSource(AuditedModel):
 
     class Meta:
         ordering = ["id"]
-        unique_together = [
-            ("owner_tenant_id", "type"),
-        ]
 
     @property
     def is_local(self) -> bool:
@@ -154,7 +151,7 @@ class DataSourceUser(TimestampedModel):
     extras = models.JSONField("自定义字段", default=dict)
 
     # ----------------------- 状态相关 -----------------------
-    # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态
+    # TODO: (1) 用户管理里涉及的功能状态（2）企业本身的员工状态
 
     class Meta:
         ordering = ["id"]
@@ -284,3 +281,16 @@ class DataSourceSensitiveInfo(TimestampedModel):
 
     class Meta:
         unique_together = [("data_source", "key")]
+
+
+class DataSourceUsernameGenerateConfig(TimestampedModel):
+    """数据源用户名生成配置 — 仅在选择 ADD_AFFIX 策略时创建记录"""
+
+    data_source = models.OneToOneField(DataSource, on_delete=models.CASCADE, db_constraint=False)
+    rule = models.CharField(
+        "数据源用户名生成规则",
+        max_length=32,
+        choices=DataSourceUsernameGenerateRule.get_choices(),
+    )
+    prefix = models.CharField("用户名前缀", max_length=32, blank=True, default="")
+    suffix = models.CharField("用户名后缀", max_length=32, blank=True, default="")

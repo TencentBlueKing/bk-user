@@ -14,6 +14,7 @@ import type {
   PutUserValidityParams,
   RealUsersData,
   RealUsersParams,
+  TenantInfoData,
   TenantItem,
   TenantSettingFieldsData,
 } from './types/settingFiles';
@@ -86,7 +87,7 @@ export const deleteRealManagers = (ids: string) => http.delete(`/api/v3/web/tena
 /**
  * 基础设置-租户详情
  */
-export const getTenantInfo = () => http.get('/api/v3/web/tenant-info/');
+export const getTenantInfo = () => http.get<ResponseData<TenantInfoData>>('/api/v3/web/tenant-info/');
 
 /**
  * 基础设置-更新租户

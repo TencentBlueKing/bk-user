@@ -1,3 +1,9 @@
+/**
+ * 全局类型声明
+ * 用于声明全局变量、接口等
+ */
+
+// Window 全局对象扩展
 declare interface Window {
   SITE_URL: string
   changeInput: boolean
@@ -12,7 +18,8 @@ declare interface Window {
   ENABLE_BK_NOTICE: string
   BK_SHARED_RES_URL: string
   ENABLE_VIRTUAL_USER: string
-  ENABLE_CREATE_TENANT:string
+  ENABLE_CREATE_TENANT: string
   ENABLE_COLLABORATION_TENANT: string
   ENABLE_MULTI_TENANT_MODE: string
+  BK_USER_EXTRA_I18N_BASE_URL: string
 }

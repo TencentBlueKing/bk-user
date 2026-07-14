@@ -16,6 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 from functools import cached_property
+from typing import List
 
 from apigw_manager.drf.authentication import ApiGatewayJWTAuthentication
 from django.conf import settings
@@ -24,8 +25,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.cache import DataSourceCache
 
 
 class OpenWebApiCommonMixin:
@@ -86,25 +86,11 @@ class OpenWebApiCommonMixin:
         return tenant_id
 
     @cached_property
-    def real_data_source_id(self) -> int:
-        # 实名数据源不存在时，返回 0
-        data_source = (
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.REAL).only("id").first()
-        )
-        if not data_source:
-            return 0
-
-        return data_source.id
+    def real_data_source_ids(self) -> List[int]:
+        """本租户拥有的 REAL 数据源 ID（不含协同），基于全局缓存避免 DB 查询"""
+        return list(DataSourceCache.real_ids_by_owner(self.tenant_id))
 
     @cached_property
     def virtual_data_source_id(self) -> int:
-        # 虚拟数据源不存在时，返回 0
-        data_source = (
-            DataSource.objects.filter(owner_tenant_id=self.tenant_id, type=DataSourceTypeEnum.VIRTUAL)
-            .only("id")
-            .first()
-        )
-        if not data_source:
-            return 0
-
-        return data_source.id
+        """本租户的虚拟数据源 ID，不存在时返回 0，基于全局缓存避免 DB 查询"""
+        return DataSourceCache.virtual_id_by_owner(self.tenant_id)

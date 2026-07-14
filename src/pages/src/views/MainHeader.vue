@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <!-- <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" /> -->
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
@@ -24,10 +24,14 @@
           v-is-multiple-tenant
           class="tenant-style">
           <div class="logo">
-            <img v-if="appStore.currentTenant?.logo" :src="appStore.currentTenant.logo" alt="">
-            <span v-else>{{logoConvert(appStore.currentTenant?.name) }}</span>
+            <img
+              v-if="headerTenantInfo.logo"
+              :src="headerTenantInfo.logo"
+              alt=""
+            >
+            <span v-else>{{logoConvert(headerTenantInfo.name) }}</span>
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ appStore.currentTenant?.name }}</bk-overflow-title>
+          <bk-overflow-title type="tips" class="tenant-id">{{ headerTenantInfo.name }}</bk-overflow-title>
           <i
             v-if="role === ROLE.SUPER_MANAGER"
             class="user-icon icon-shezhi"
@@ -93,29 +97,25 @@
               </bk-dropdown-menu>
             </template>
           </bk-dropdown>
-          <bk-dropdown
-            class="pl-[12px]"
-            placement="bottom-end"
-            @hide="() => (state.logoutDropdown = false)"
-            @show="() => (state.logoutDropdown = true)"
-          >
-            <div
-              :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <DisplayName :user-id="userInfo.username" class="help-info-name" />
-              <DownShape class="help-info-icon" />
-            </div>
-            <template #content>
-              <bk-dropdown-menu ext-cls="dropdown-menu-box">
-                <bk-dropdown-item
-                  v-if="!isTenant"
-                  :class="{ 'active-item': isPersonalCenter }"
-                  @click="toIndividualCenter">
-                  {{ $t('个人中心') }}
-                </bk-dropdown-item>
-                <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
-              </bk-dropdown-menu>
+          <BkLoginUserinfo
+            :userinfo="{
+              name: userInfo.username,
+              organization: userInfo.tenant_id,
+              timezone: userInfo.time_zone,
+            }">
+            <DisplayName :user-id="userInfo.username" class="help-info-name" />
+            <template #action>
+              <ActionItem v-if="!isTenant" @click="toIndividualCenter">
+                {{ $t('个人中心') }}
+              </ActionItem>
+              <ActionItem
+                theme="danger"
+                @click="logout"
+              >
+                {{ $t('退出登录') }}
+              </ActionItem>
             </template>
-          </bk-dropdown>
+          </BkLoginUserinfo>
         </div>
       </template>
       <router-view></router-view>
@@ -134,9 +134,10 @@
 
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, provide, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import BkLoginUserinfo, { ActionItem } from '@blueking/login-userinfo';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
@@ -144,26 +145,31 @@ import logo from '../../static/images/logo.png';
 
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
+import '@blueking/login-userinfo/vue3/vue3.css';
 import { logout } from '@/common/auth';
 import { ROLE } from '@/common/constant';
+import { UPDATE_TENANT_INFO_KEY, UpdateTenantInfo } from '@/common/inject-keys';
 import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
+import { TenantInfoData } from '@/http/types/settingFiles';
 import { locale, t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
-import useAppStore from '@/store/app';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
 
-const appStore = useAppStore();
 const state = reactive({
-  logoutDropdown: false,
   helpDropdown: false,
   languageDropdown: false,
 });
 
 const userStore = useUser();
-const  platformConfigData = platformConfig();
+const platformConfigData = platformConfig();
 const headerNav = ref([]);
+/** 顶部Header栏 - 用于展示的租户信息 */
+const headerTenantInfo = ref<Partial<TenantInfoData>>({
+  name: '',
+  logo: '',
+});
 const role = computed(() => userStore.user.role);
 const appName = computed(() => platformConfigData.i18n.productName);
 const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
@@ -193,21 +199,19 @@ const userInfo = computed(() => {
 });
 
 const route = useRoute();
-const isPersonalCenter = computed(() => route.name === 'personalCenter');
 const isTenant = computed(() => route.name === 'tenant');
 
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-    language: 'zh-cn',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-    language: 'en',
-  },
-]);
+const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
+  const iconMap: Record<string, string> = {
+    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+  };
+  return {
+    name: option.label,
+    icon: iconMap[option.value] || '',
+    language: option.value,
+  };
+}));
 
 const toIndividualCenter = () => {
   router.push({
@@ -223,8 +227,31 @@ const toTenant = () => {
 
 const initTenantInfo = async () => {
   const res = await getTenantInfo();
-  appStore.currentTenant = res.data;
+  headerTenantInfo.value = res.data;
 };
+
+// 提供更新租户信息的方法给子组件
+const updateTenantInfo: UpdateTenantInfo = {
+  updateName: (name: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+    }
+  },
+  updateLogo: (logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+  updateTenant: (name: string, logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+};
+
+provide(UPDATE_TENANT_INFO_KEY, updateTenantInfo);
+
 onMounted(() => {
   if (role.value && role.value !== ROLE.NATURAL_USER) {
     initTenantInfo();
@@ -417,25 +444,6 @@ const openVersionLog = async () => {
       }
     }
 
-    .active-username {
-      color: #3a84ff;
-      cursor: pointer;
-
-      .help-info-icon {
-        display: inline-block;
-        transform: rotate(180deg);
-        transition: all 0.2s;
-      }
-    }
-
-    .active-route {
-      // color: #3a84ff;
-    }
-
-    .help-info-icon {
-      vertical-align: middle;
-    }
-
     .help-info-name {
       padding-right: 4px;
       font-size: 14px;
@@ -460,4 +468,11 @@ const openVersionLog = async () => {
     background-color: #E1ECFF !important;
   }
 }
+
+  :deep(.bk-login-userinfo-panel) {
+    z-index: 9999;
+    position: fixed !important;
+    top: 52px !important;
+    right: 10px !important;
+  }
 </style>

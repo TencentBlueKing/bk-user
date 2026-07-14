@@ -20,14 +20,14 @@
               <UploadImg v-model:value="formData.logo" />
             </bk-form-item>
           </div>
-          <bk-form-item :label="$t('用户数量')" required>
+          <!-- <bk-form-item :label="$t('用户数量')" required>
             <bk-radio-group
               v-model="formData.user_number_visible"
             >
               <bk-radio-button class="min-w-[100px]" :label="true">{{ $t('显示') }}</bk-radio-button>
               <bk-radio-button class="min-w-[100px]" :label="false">{{ $t('隐藏') }}</bk-radio-button>
             </bk-radio-group>
-          </bk-form-item>
+          </bk-form-item> -->
 
           <bk-form-item property="display_name_config">
             <template #label>
@@ -66,7 +66,11 @@
           <div>
             <LabelContent :label="$t('租户名称')">{{ formData.name }}</LabelContent>
             <LabelContent :label="$t('租户ID')">{{ formData.id }}</LabelContent>
-            <LabelContent :label="$t('用户数量')">{{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}</LabelContent>
+            <!-- <LabelContent
+              :label="$t('用户数量')"
+            >
+            {{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}
+            </LabelContent> -->
             <LabelContent :label="$t('用户展示名')">{{ displayNameExpressionView }}</LabelContent>
           </div>
           <LabelContent class="tenant-logo" :label="$t('租户logo')">
@@ -89,25 +93,29 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
+import { UPDATE_TENANT_INFO_KEY } from '@/common/inject-keys';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import UploadImg from '@/components/upload-img.vue';
+import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
 import UserDisplayNameConfig from '@/components/user-display-name-config/userDisplayNameConfig.vue';
 import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
-import useAppStore from '@/store/app';
 import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
+import useAppStore from '@/store/app';
 
-const appStore = useAppStore();
 const validate = useValidate();
 const fieldData = useFieldData();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const formRef = ref();
+
+// 注入更新租户信息的方法
+const updateTenantInfo = inject(UPDATE_TENANT_INFO_KEY);
 
 const formData = ref({
   id: '',
@@ -282,8 +290,8 @@ const saveEdit = async () => {
       PutTenantInfo(params),
       putDisplayNameExpression({ expression: handleTransformDisplayNameExpression() }),
     ]);
-    appStore.updateCurrentTenantLogo(formData.value.logo);
-    appStore.updateCurrentTenantName(formData.value.name);
+    // 使用 inject 的方法更新 MainHeader 中的租户信息
+    updateTenantInfo?.updateTenant(formData.value.name, formData.value.logo);
     isEdit.value = false;
     Message({ theme: 'success', message: t('保存成功，用户展示名配置将于10秒之后生效，其他设置立即生效') });
     initTenantInfo();

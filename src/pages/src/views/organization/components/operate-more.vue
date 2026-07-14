@@ -53,8 +53,8 @@
       :title="$t('移至目标组织')"
       :theme="'primary'"
       :size="'normal'"
-      @closed="() => moveDialogShow = false"
-      @confirm="() => confirmOperations()"
+      @closed="moveDialogShow = false"
+      @confirm="confirmOperations"
     >
       <div class="mb-[16px] text-[#979BA5]">{{moveTips}}</div>
       <bk-form class="example" form-type="vertical">
@@ -110,6 +110,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * bk-tree下的operate-more必须传入dataSourceId，用于移至目标组织时获取可选组织列表
+   */
+  dataSourceId: {
+    type: Number,
+  },
 });
 
 const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveNode']);
@@ -144,7 +150,7 @@ const defaultDropdownList = ref<any[]>([
       isAddSubOrg.value = false;
       orgDialogVisible.value = false;
       moveDialogShow.value = true;
-      const res = await optionalDepartmentsList();
+      const res = await optionalDepartmentsList({ data_source_id: props.dataSourceId });
       dataSource.value = res.data;
       moveOrg.value = item.id;
       moveTips.value = `${t('将')}${item.name}${t('从当前组织移出')}, ${t('并追加到以下组织')}`;
@@ -242,6 +248,8 @@ const handleOrg = () => {
         id: res.data.id,
         name: deptName.value,
         has_children: false,
+        // 添加子组织后，需要给dataSourceId，用于tree节点 本地Tag及operate-more展示
+        data_source_id: props.dataSourceId,
       };
       emits('addNode', curDeptId, node);
     });

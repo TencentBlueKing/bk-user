@@ -27,7 +27,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
@@ -107,7 +107,11 @@ class TenantBuiltinManagerRetrieveUpdateApi(
     )
     def get(self, request, *args, **kwargs):
         data_source, user = self.get_builtin_data_source_and_user()
-        idp = Idp.objects.get(data_source_id=data_source.id)
+        relation = IdpDataSourceRelation.objects.get(
+            idp_owner_tenant_id=data_source.owner_tenant_id,
+            data_source=data_source,
+        )
+        idp = Idp.objects.get(id=relation.idp_id)
 
         tenant_user = TenantUser.objects.get(data_source_user=user)
 
@@ -144,7 +148,11 @@ class TenantBuiltinManagerRetrieveUpdateApi(
 
         # 内建数据源 & 用户 & 认证源
         data_source, user = self.get_builtin_data_source_and_user()
-        idp = Idp.objects.get(data_source_id=data_source.id)
+        relation = IdpDataSourceRelation.objects.get(
+            idp_owner_tenant_id=data_source.owner_tenant_id,
+            data_source=data_source,
+        )
+        idp = Idp.objects.get(id=relation.idp_id)
 
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
