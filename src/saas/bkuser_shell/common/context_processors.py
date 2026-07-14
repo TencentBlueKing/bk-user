@@ -14,6 +14,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from bkuser_shell.account.conf import ConfFixture
+from bkuser_global.utils import get_custom_ui_url
 
 
 def shell(request):
@@ -24,7 +25,7 @@ def shell(request):
         "APP_ID": settings.APP_ID,
         "SITE_URL": settings.SITE_URL,
         "AJAX_URL": settings.SITE_URL,
-        "TITLE": _("用户管理 | 腾讯蓝鲸智云"),
+        "TITLE": get_custom_ui_url("bk_user", "labelText") or _("用户管理 | 腾讯蓝鲸智云"),
         # 静态资源
         "STATIC_URL": settings.STATIC_URL,
         "STATIC_VERSION": settings.STATIC_VERSION,
@@ -41,6 +42,11 @@ def shell(request):
         # 静态文件加载目录
         "BK_STATIC_URL": settings.BUILD_STATIC,
         "USERNAME": request.user.username,
+        # 自定义UI配置
+        "BK_USER_RIGHT": get_custom_ui_url("bk_user", "copyRight"),
+        "BK_USER_TITLE": get_custom_ui_url("bk_user", "appTitle"),
+        "BK_USER_ICON": get_custom_ui_url("bk_user", "favIcon"),
+        "BK_LABEL_ICON": get_custom_ui_url("bk_user", "labelIcon"),
     }
 
     return context

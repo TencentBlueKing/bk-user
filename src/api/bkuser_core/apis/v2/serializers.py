@@ -104,6 +104,8 @@ class AdvancedListSerializer(serializers.Serializer):
         help_text=_("筛选某个时间点前的记录"),
     )
     include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
+    page = serializers.IntegerField(required=False)
+    page_size = serializers.IntegerField(required=False)
 
 
 class AdvancedRetrieveSerializer(serializers.Serializer):
