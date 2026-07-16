@@ -47,6 +47,7 @@ from .serializers import (
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
+from ...common.language import get_language_choices
 
 
 class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
@@ -93,8 +94,7 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
                 {
                     "bk_user_url": settings.BK_USER_URL.rstrip("/"),
                     "unique_enabled_tenant_idp": self._get_unique_enabled_tenant_idp(),
-                    # TODO: 获取支持的语言列表
-                    "languages": "",
+                    "supported_languages": [{"code": code, "name": name} for code, name in get_language_choices()],
                 }
             ).data
         )
