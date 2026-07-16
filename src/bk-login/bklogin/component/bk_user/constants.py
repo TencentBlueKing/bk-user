@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -23,3 +23,11 @@ class IdpStatus(StrStructuredEnum):
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("未启用"))
+
+
+class DataSourceTypeEnum(StrStructuredEnum):
+    """数据源类型"""
+
+    REAL = EnumField("real")
+    VIRTUAL = EnumField("virtual")
+    BUILTIN_MANAGEMENT = EnumField("builtin_management")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -22,7 +22,7 @@ from django.db.models import Q
 
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.idp.data_models import DataSourceMatchRule
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 
@@ -32,9 +32,10 @@ class AuthenticationMatcher:
 
     def __init__(self, idp_id: str):
         self.idp = Idp.objects.get(id=idp_id)
+        self.match_rules = self._get_match_rules()
         # 内置字段
         self.builtin_field_data_type_map = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
-        # Note: Local登录允许匹配ID
+        # Note: Local 登录允许匹配 ID
         self.builtin_field_data_type_map["id"] = UserFieldDataType.NUMBER
         # 自定义字段
         self.custom_field_data_type_map = dict(
@@ -42,8 +43,8 @@ class AuthenticationMatcher:
         )
 
     def match(self, idp_users: List[Dict[str, Any]]) -> List[int]:
-        """匹配出数据源用户ID"""
-        # 将规则转换为Django Queryset 过滤条件, 不同用户之间过滤逻辑是OR
+        """匹配出数据源用户 ID"""
+        # 将规则转换为 Django Queryset 过滤条件，不同用户之间过滤逻辑是 OR
         conditions = [
             condition for userinfo in idp_users if (condition := self._convert_rules_to_queryset_filter(userinfo))
         ]
@@ -55,21 +56,28 @@ class AuthenticationMatcher:
 
     def _convert_rules_to_queryset_filter(self, source_data: Dict[str, Any]) -> Q | None:
         """
-        将规则列表转换为Queryset查询条件
-        不同匹配规则之间的关系是OR, 匹配规则里不同字段的关系是AND
+        将规则列表转换为 Queryset 查询条件
+        不同匹配规则之间的关系是 OR, 匹配规则里不同字段的关系是 AND
         """
         q_list = [
-            q
-            for rule in self.idp.data_source_match_rule_objs
-            if (q := self._convert_one_rule_to_queryset_filter(rule, source_data))
+            q for rule in self.match_rules if (q := self._convert_one_rule_to_queryset_filter(rule, source_data))
         ]
         return reduce(operator.or_, q_list) if q_list else None
+
+    def _get_match_rules(self) -> List[DataSourceMatchRule]:
+        return [
+            DataSourceMatchRule(
+                data_source_id=relation.data_source_id,
+                field_compare_rules=relation.field_compare_rules,
+            )
+            for relation in IdpDataSourceRelation.objects.filter(idp=self.idp)
+        ]
 
     def _convert_one_rule_to_queryset_filter(
         self, match_rule: DataSourceMatchRule, source_data: Dict[str, Any]
     ) -> Q | None:
         """
-        将匹配规则转换为Django QuerySet过滤条件
+        将匹配规则转换为 Django QuerySet 过滤条件
         :param match_rule: 匹配规则
         :param source_data: 认证源数据
         :return Django Queryset Q 查询表达式
@@ -100,30 +108,30 @@ class AuthenticationMatcher:
             if not filter_key:
                 return None
 
-            # Note: 目前仅仅是equal的比较操作符，所以这里暂时简单处理，
-            #  后续支持其他操作符再抽象出Converter来处理
+            # Note: 目前仅仅是 equal 的比较操作符，所以这里暂时简单处理，
+            #  后续支持其他操作符再抽象出 Converter 来处理
             conditions.append({filter_key: source_data[rule.source_field]})
 
         return reduce(operator.and_, [Q(**c) for c in conditions])
 
     def _build_field_filter_key(self, field: str) -> str | None:
         """
-        构建字段的Django过滤Key
+        构建字段的 Django 过滤 Key
         1. 内建字段，key=field
-        2. 用户自定义字段，在extras字段里，以JSON方式存储
+        2. 用户自定义字段，在 extras 字段里，以 JSON 方式存储
           - data_type=string/number/enum: key=f"extras__{field}"
           - data_type=multi_enum: key=f"extras__{field}__contains"
 
-        Django JSONField查询: https://docs.djangoproject.com/en/3.2/topics/db/queries/#querying-jsonfield
-        Note: JSON查询性能出现问题时，可以通过额外运维方式创建虚列索引来解决
+        Django JSONField 查询：https://docs.djangoproject.com/en/3.2/topics/db/queries/#querying-jsonfield
+        Note: JSON 查询性能出现问题时，可以通过额外运维方式创建虚列索引来解决
           ALTER TABLE my_table ADD COLUMN field_col INT AS (JSON_UNQUOTE(JSON_EXTRACT(extras, '$.my_field'))) VIRTUAL;
-          CREATE INDEX idx_field_col ON my_table (field_col); 最好与data_source_id字段一起联合索引
+          CREATE INDEX idx_field_col ON my_table (field_col); 最好与 data_source_id 字段一起联合索引
         """
         # 内建字段
         if field in self.builtin_field_data_type_map:
             return field
 
-        # 自定义字段，且data_type=string/number/enum
+        # 自定义字段，且 data_type=string/number/enum
         if field in self.custom_field_data_type_map:
             data_type = self.custom_field_data_type_map[field]
             # string/number/enum

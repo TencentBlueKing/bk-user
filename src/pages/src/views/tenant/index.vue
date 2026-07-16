@@ -1,6 +1,6 @@
 <template>
   <div
-    v-bkloading="{ loading: state.tableLoading, zIndex: 9 }"
+    v-bkloading="{ loading: state.tableLoading, zIndex: 10 }"
     :class="['group-details-wrapper user-scroll-y relative', { 'has-alert': userStore.showAlert }]">
     <div class="main-content">
       <div class="content-search">
@@ -18,29 +18,27 @@
           clearable
         />
       </div>
-      <bk-table
+      <Table
         class="content-table"
         :data="tableSearchData"
-        :border="['outer']"
         :max-height="tableMaxHeight"
-        show-overflow-tooltip
-        @column-sort="columnSort">
+        @filter-change="handleFilterChange">
         <template #empty>
           <Empty
-            :is-data-empty="state.isTableDataEmpty"
-            :is-search-empty="state.isEmptySearch"
-            :is-data-error="state.isTableDataError"
-            @handle-empty="search = ''"
-            @handle-update="fetchTenantsList"
+            :type="curExceptionType"
+            @clear="handleClearSearch"
+            @refresh="fetchTenantsList"
           />
         </template>
-        <bk-table-column
-          prop="name"
-          :label="$t('租户名')">
-          <template #default="{ row, index }">
+        <TableColumn
+          field="name"
+          :label="$t('租户名')"
+          :min-width="300"
+          show-overflow="tooltip">
+          <template #default="{ row, $rowIndex }">
             <div class="item-name">
               <img v-if="row.logo" class="img-logo" :src="row.logo" />
-              <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[index]}`">
+              <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[$rowIndex]}`">
                 {{ logoConvert(row.name) }}
               </span>
               <bk-button
@@ -53,18 +51,28 @@
               <img v-if="row.new" class="icon-new" src="@/images/new.svg" alt="">
             </div>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="id" :label="$t('租户ID')"></bk-table-column>
-        <bk-table-column prop="status" :label="$t('租户状态')" :filter="{ list: statusFilters }">
+        </TableColumn>
+        <TableColumn field="id" :label="$t('租户ID')" :min-width="200" show-overflow="tooltip" />
+        <TableColumn
+          field="status"
+          :label="$t('租户状态')"
+          :min-width="200"
+          show-overflow="tooltip"
+          filter-multiple
+          :filters="statusFilters">
           <template #default="{ row }">
             <div>
               <img :src="tenantStatus[row.status]?.icon" class="status-icon" />
               <span>{{ tenantStatus[row.status]?.text }}</span>
             </div>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="created_at" :label="$t('创建时间')" />
-        <bk-table-column :label="$t('操作')">
+        </TableColumn>
+        <TableColumn
+          field="created_at"
+          :label="$t('创建时间')"
+          show-overflow="tooltip"
+          :min-width="300" />
+        <TableColumn :label="$t('操作')" :width="300">
           <template #default="{ row }">
             <div class="flex items-center">
               <span
@@ -96,6 +104,8 @@
                 placement="bottom-start"
                 theme="light"
                 ext-cls="operate-popover"
+                :popover-delay="[100, 0]"
+                hide-ignore-reference
                 :arrow="false">
                 <i class="user-icon icon-more"></i>
                 <template #content>
@@ -122,8 +132,8 @@
               </bk-popover>
             </div>
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </div>
     <!-- 编辑/预览 -->
     <bk-sideslider
@@ -288,6 +298,8 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import { Table, TableColumn } from '@blueking/table';
+
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
@@ -296,8 +308,8 @@ import passwordInput from '@/components/passwordInput.vue';
 import PhoneInput from '@/components/phoneInput.vue';
 import Empty from '@/components/SearchEmpty.vue';
 import { useAdminPassword, useInfoBoxContent, useTableMaxHeight, useValidate } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
 import {
-  currentUser,
   deleteTenants,
   getTenantDetails,
   getTenants,
@@ -323,15 +335,14 @@ const validate = useValidate();
 const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
+// 前端筛选状态
+const filterStatus = ref('');
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: [search, filterStatus],
+});
 const state = reactive({
   list: [],
   tableLoading: true,
-  // 搜索结果为空
-  isEmptySearch: false,
-  // 表格请求出错
-  isTableDataError: false,
-  // 表格请求结果为空
-  isTableDataEmpty: false,
   // 租户详情数据
   tenantsData: {
     name: '',
@@ -389,10 +400,10 @@ watch(
 const isView = computed(() => detailsConfig.type === 'view');
 const currentTenantId = ref('');
 
-const statusFilters = [
-  { text: t('已启用'), value: 'enabled' },
-  { text: t('未启用'), value: 'disabled' },
-];
+const statusFilters = ref([
+  { label: t('已启用'), value: 'enabled' },
+  { label: t('未启用'), value: 'disabled' },
+]);
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
@@ -422,35 +433,23 @@ const handleCancelEdit = async () => {
   }
 };
 
-onMounted(() => {
-  currentUser()
-    .then((res) => {
-      if (res.data.role === 'tenant_manager') {
-        router.push({ name: 'organization' });
-      } else {
-        fetchTenantsList();
-      }
-    })
-    .catch(() => {
-      Message(t('获取用户信息失败，请检查后再试'));
-    });
-});
-
 // 新建租户状态 id
 const isCreated = ref(false);
 const newId = ref('');
 
-const getRows = () => document.getElementsByClassName('hover-highlight')[0].getElementsByTagName('td');
+const getRows = () => document.getElementsByClassName('vxe-body--row')?.[0]?.getElementsByTagName('td');
 
 watch(() => search.value, (val) => {
   if (val) {
     isCreated.value = false;
     newId.value = '';
     const rows = getRows();
-    for (const i of rows) {
-      i.style.background = '#fff';
+    if (Array.isArray(rows)) {
+      for (const i of rows) {
+        i.style.background = '#fff';
+      }
+      state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
     }
-    state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }
 });
 
@@ -458,15 +457,8 @@ watch(() => search.value, (val) => {
 const fetchTenantsList = () => {
   search.value = '';
   state.tableLoading = true;
-  state.isTableDataEmpty = false;
-  state.isEmptySearch = false;
-  state.isTableDataError = false;
   getTenants()
     .then((res: any) => {
-      if (res.data.length === 0) {
-        state.isTableDataEmpty = true;
-      }
-
       const newDate = new Date().getTime(); // 当前时间
       res.data.forEach((item) => {
         const createdDate = new Date(item.created_at).getTime();
@@ -487,19 +479,45 @@ const fetchTenantsList = () => {
       } else {
         state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
       }
+      clearErrorType();
       state.tableLoading = false;
     })
-    .catch(() => {
-      state.isTableDataError = true;
+    .catch((error) => {
+      console.error(error);
+      setTypeToError();
       state.tableLoading = false;
     });
 };
 
-// 搜索租户列表
-const tableSearchData = computed(() => state.list.filter(item => !search.value || item.name.includes(search.value)));
 
-watch(() => search.value, (val) => {
-  state.isEmptySearch = val && !tableSearchData.value.length;
+// 前端筛选处理
+const handleFilterChange = ({ field, values }: { field: string, values: string[] }) => {
+  if (field === 'status') {
+    filterStatus.value = values.join(',');
+  }
+};
+
+const handleClearSearch = () => {
+  search.value = '';
+  filterStatus.value = '';
+  statusFilters.value = statusFilters.value.map(item => ({ ...item, checked: false }));
+};
+
+// 搜索和筛选租户列表
+const tableSearchData = computed(() => {
+  let filteredList = state.list;
+  // 应用状态筛选
+  if (filterStatus.value) {
+    const statusArray = filterStatus.value.split(',');
+    filteredList = filteredList.filter(item => statusArray.includes(item.status));
+  }
+
+  // 应用搜索
+  if (search.value) {
+    filteredList = filteredList.filter(item => item.name.includes(search.value));
+  }
+
+  return filteredList;
 });
 
 const dialogData = ref({});
@@ -729,6 +747,10 @@ const changeEmail = () => {
 const emailBlur = () => {
   emailValue.value && handleBlur();
 };
+
+onMounted(() => {
+  fetchTenantsList();
+});
 </script>
 
 <style lang="less">
@@ -777,27 +799,25 @@ const emailBlur = () => {
       }
     }
 
-    :deep(.bk-table) {
-      .item-name {
-        display: flex;
-        align-items: center;
-        height: 42px;
-        line-height: 42px;
+    .item-name {
+      display: flex;
+      align-items: center;
+      height: 42px;
+      line-height: 42px;
 
-        .icon-new {
-          width: 26px;
-          margin-left: 8px;
-        }
+      .icon-new {
+        width: 26px;
+        margin-left: 8px;
       }
+    }
 
-      .status-icon {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 5px;
-        color: #999;
-        vertical-align: middle
-      }
+    .status-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      color: #999;
+      vertical-align: middle
     }
   }
 }
@@ -916,5 +936,9 @@ const emailBlur = () => {
   font-size: 12px;
   line-height: 20px;
   text-align: center;
+}
+
+:deep(.vxe-body--row) {
+  height: 44px;
 }
 </style>

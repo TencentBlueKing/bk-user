@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -30,6 +30,7 @@ from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework import status
 
@@ -136,7 +137,7 @@ class TestTenantUserListApi:
         assert len(resp.data["results"]) == 10  # noqa: PLR2004
 
         # 所有层级的用户（根部门递归）+ 关键字搜索
-        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "keyword": "shi"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "username": "shi"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 3  # noqa: PLR2004
         assert {user["username"] for user in resp.data["results"]} == {"lushi", "linshiyi", "baishier"}
@@ -158,7 +159,7 @@ class TestTenantUserListApi:
         assert {user["username"] for user in resp.data["results"]} == {"wangwu", "lushi", "baishier"}
 
         # 部门 B 及其子部门的用户 + 关键字搜索
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_b.id, "keyword": "王五"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": dept_b.id, "full_name": "王五"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
 
@@ -182,10 +183,87 @@ class TestTenantUserListApi:
         assert resp.data["count"] == 8  # noqa: PLR2004
 
         # 子部门，递归 + 关键字搜索，虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "keyword": "李四"})
+        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "full_name": "李四"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "lisi"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_email(self, api_client, random_tenant):
+        """测试通过邮箱过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "email": "wangwu"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "wangwu"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_phone(self, api_client, random_tenant):
+        """测试通过手机号过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "phone": "13512345673"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "wangwu"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_status(self, api_client, random_tenant):
+        """测试通过状态过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        # 先禁用一个用户
+        lisi = TenantUser.objects.get(data_source_user__username="lisi", tenant=random_tenant)
+        lisi.status = TenantUserStatus.DISABLED
+        lisi.save()
+
+        # 过滤启用状态的用户
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "status": TenantUserStatus.ENABLED})
+        assert resp.status_code == status.HTTP_200_OK
+        assert all(user["status"] == "enabled" for user in resp.data["results"])
+
+        # 过滤禁用状态的用户
+        resp = api_client.get(url, data={"recursive": True, "department_id": 0, "status": TenantUserStatus.DISABLED})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 1  # noqa: PLR2004
+        assert resp.data["results"][0]["username"] == "lisi"
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_by_created_at_range(self, api_client, random_tenant):
+        """测试通过创建时间范围过滤用户"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        now = timezone.now()
+        # 查询过去一天内创建的用户
+        resp = api_client.get(
+            url,
+            data={
+                "recursive": True,
+                "department_id": 0,
+                "created_at_start": (now - datetime.timedelta(days=1)).isoformat(),
+                "created_at_end": now.isoformat(),
+            },
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        # 测试数据刚创建，应该都能查到
+        assert resp.data["count"] >= 1
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_created_at_invalid_range(self, api_client, random_tenant):
+        """测试创建时间范围校验：开始时间不能大于结束时间"""
+        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+
+        now = timezone.now()
+        resp = api_client.get(
+            url,
+            data={
+                "recursive": True,
+                "department_id": 0,
+                "created_at_start": now.isoformat(),
+                "created_at_end": (now - datetime.timedelta(days=1)).isoformat(),
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "创建时间的开始时间不能大于结束时间" in resp.data["message"]
 
 
 class TestTenantUserCreateApi:
@@ -451,7 +529,7 @@ class TestTenantUserUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantUserAccountExpiredAtUpdateApii:
+class TestTenantUserAccountExpiredAtUpdateApi:
     @pytest.mark.parametrize(
         ("time_diff"),
         [(datetime.timedelta(minutes=10)), (datetime.timedelta(days=365))],
@@ -493,6 +571,10 @@ class TestTenantUserRetrieveApi:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["username"] == "lushi"
         assert {dept["name"] for dept in resp.data["departments"]} == {"中心BA", "小组ABA"}
+        assert {dept["organization_path"] for dept in resp.data["departments"]} == {
+            "公司/部门A/中心AB/小组ABA",
+            "公司/部门B/中心BA",
+        }
         assert {ld["username"] for ld in resp.data["leaders"]} == {"wangwu", "maiba"}
 
         # 语言和时区字段应为默认值
@@ -522,6 +604,23 @@ class TestTenantUserRetrieveApi:
         assert resp.data["extras"] == {
             f.name: f.default for f in random_tenant_custom_fields if "hobbies" not in f.name
         }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_tenant_users_identity_infos")
+    def test_password_expired_at_display(self, api_client, random_tenant):
+        """测试本地数据源用户的密码过期时间显示"""
+        lushi = TenantUser.objects.get(data_source_user__username="lushi", tenant=random_tenant)
+        resp = api_client.get(reverse("organization.tenant_user.retrieve_update_destroy", kwargs={"id": lushi.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert "password_expired_at" in resp.data
+        expired_at_str = resp.data["password_expired_at"]
+        expired_at = datetime.datetime.strptime(expired_at_str, settings.REST_FRAMEWORK["DATETIME_FORMAT"])
+        # 预期时间
+        expected_time = timezone.now() + datetime.timedelta(days=3)
+
+        # 允许的误差最大为 10 分钟
+        assert abs(expired_at - expected_time) < datetime.timedelta(minutes=10)
 
 
 class TestTenantUserDestroyApi:
@@ -593,13 +692,13 @@ class TestTenantUserBatchCreateAndPreviewApi:
 
     @pytest.fixture
     def raw_user_infos(self) -> List[str]:
-        # username full_name email phone age gender region hobbies
+        # username full_name email age gender region hobbies
         return [
-            "star, Star, trailblazer@railway.com, +8613612345671, 1, female, Nameless, dancing/collecting/traveling",
-            "kafka, Kafka, kafka@railway.com, +4915123456789, 32, female, StarCoreHunter, shopping/hunting",
-            "sam, FireFly, sam@railway.com, +447700123456, 23, female, StarCoreHunter, singing/eating/sleeping",
-            "404, SilverWolf, 404@railway.com, +79123456789, 16, female, StarCoreHunter, gaming/hacking",
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving",
+            "star, Star, trailblazer@railway.com, 1, 女, Nameless, 跳舞/采集/旅游",
+            "kafka, Kafka, kafka@railway.com, 32, 女, StarCoreHunter, 购物/狩猎",
+            "sam, FireFly, sam@railway.com, 23, 女, StarCoreHunter, 唱歌/吃饭/睡觉",
+            "404, SilverWolf, 404@railway.com, 16, 女, StarCoreHunter, 游戏/骇入",
+            "dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶",
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -618,8 +717,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "star",
                 "full_name": "Star",
                 "email": "trailblazer@railway.com",
-                "phone": "13612345671",
-                "phone_country_code": "86",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 1,
                     gender_field.name: "female",
@@ -631,8 +730,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "kafka",
                 "full_name": "Kafka",
                 "email": "kafka@railway.com",
-                "phone": "15123456789",
-                "phone_country_code": "49",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 32,
                     gender_field.name: "female",
@@ -644,8 +743,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "sam",
                 "full_name": "FireFly",
                 "email": "sam@railway.com",
-                "phone": "7700123456",
-                "phone_country_code": "44",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 23,
                     gender_field.name: "female",
@@ -657,8 +756,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "404",
                 "full_name": "SilverWolf",
                 "email": "404@railway.com",
-                "phone": "9123456789",
-                "phone_country_code": "7",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 16,
                     gender_field.name: "female",
@@ -670,8 +769,8 @@ class TestTenantUserBatchCreateAndPreviewApi:
                 "username": "dotKnifeBoy",
                 "full_name": "Blade",
                 "email": "blade@railway.com",
-                "phone": "13612345675",
-                "phone_country_code": "86",
+                "phone": "",
+                "phone_country_code": "",
                 "extras": {
                     age_field.name: 48,
                     gender_field.name: "male",
@@ -698,8 +797,6 @@ class TestTenantUserBatchCreateAndPreviewApi:
         fire_fly = TenantUser.objects.get(data_source_user__username="sam", tenant=random_tenant).data_source_user
         assert fire_fly.full_name == "FireFly"
         assert fire_fly.email == "sam@railway.com"
-        assert fire_fly.phone == "7700123456"
-        assert fire_fly.phone_country_code == "44"
         assert fire_fly.extras == {
             age_field.name: 23,
             gender_field.name: "female",
@@ -712,39 +809,32 @@ class TestTenantUserBatchCreateAndPreviewApi:
         url = reverse("organization.tenant_user.batch_create")
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
-        raw_user_infos.append(
-            "dotKnifeBoy, Blade, blade@railway.com, +8613612345675, 48, male, StarCoreHunter, studying/driving"
-        )
+        raw_user_infos.append("dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶")
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 dotknifeboy 重复" in resp.data["message"]
 
-        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, +8613612345678, 55, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "lisi, 李四, lisi@m.com, 55, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 lisi 已存在" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +8613612345678, 55, male, shenzhen"
+        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, 55, 男, shenzhen"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "第 6 行，用户信息格式不正确，预期 8 个字段，实际 7 个字段" in resp.data["message"]
+        assert "第 6 行，用户信息格式不正确，预期 7 个字段，实际 6 个字段" in resp.data["message"]
 
-        raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, +x-xxxx, 55, male, shenzhen, reading/driving"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "第 6 行，手机号 +x-xxxx 格式不正确" in resp.data["message"]
-
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, helicopter, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, helicopter, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "helicopter 不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 55, male, shenzhen, jumping/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, 男, shenzhen, 跳跃/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不在可选项" in resp.data["message"]
 
-        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, +8613612345678, 1k, male, shenzhen, reading/driving"
+        raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 1k, 男, shenzhen, 阅读/驾驶"
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]

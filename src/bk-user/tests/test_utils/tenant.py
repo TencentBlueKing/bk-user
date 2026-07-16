@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -18,10 +18,14 @@ from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.models import Tenant, TenantUserDisplayNameExpressionConfig
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -42,12 +46,34 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None
 
-    DataSource.objects.get_or_create(
+    data_source, _ = DataSource.objects.get_or_create(
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         defaults={"plugin_config": plugin_config},
     )
+
+    TenantUserDisplayNameExpressionConfig.objects.get_or_create(
+        tenant=tenant,
+        expression="{username}({full_name})",
+        fields={
+            "builtin": ["username", "full_name"],
+            "custom": [],
+            "extra": [],
+        },
+        version=1,
+    )
+
+    idp, _ = Idp.objects.get_or_create(
+        name="Administrator",
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        owner_tenant_id=tenant_id,
+        defaults={
+            "plugin_config": LocalIdpPluginConfig(data_source_ids=[data_source.id]),
+        },
+    )
+    IdpDataSourceRelationHandler.set_builtin_management_relation(idp, data_source)
+
     return tenant
 
 

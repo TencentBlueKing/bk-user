@@ -29,7 +29,7 @@
             >
               <div class="leading-[20px]">
                 <span class="text-[#313238] pr-[8px]">{{ item.name }}</span>
-                <span class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
+                <span v-is-multiple-tenant class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
               <bk-overflow-title class="text-[#979BA5] leading-[20px]">
                 {{ item.organization_path }}
@@ -49,11 +49,8 @@
               @click="handleUserSelect(item)"
             >
               <div class="leading-[20px]">
-                <span class="text-[#313238] pr-[8px]">
-                  {{ item.username }}
-                  ({{ item.full_name }})
-                </span>
-                <span class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
+                <DisplayName :user-id="item.id" class="text-[#313238] pr-[8px]" />
+                <span v-is-multiple-tenant class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
               <div class="inline-flex w-full">
                 <bk-overflow-title
@@ -116,19 +113,22 @@
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { defineEmits, inject, reactive, ref } from 'vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
+import type { IMessage } from 'bkui-vue/lib/message/messageConstructor';
+import { inject, reactive, ref } from 'vue';
 
 import ViewUser from './view-user.vue';
 
+import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
-import { getTenantsUserDetail, searchOrganization, searchUser } from '@/http/organizationFiles';
+import { getTenantsUserDetail, getUsersList, searchOrganization } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
+import { SearchOrganizationItemData, SearchUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
-import useAppStore from '@/store/app';
+import useOrganizationStore from '@/store/organization';
 
 const emit = defineEmits(['select']);
-const appStore = useAppStore();
+const organizationStore = useOrganizationStore();
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -149,23 +149,23 @@ const state = reactive({
 });
 
 const search = ref('');
-const orgs = ref([]);
-const users = ref([]);
+const orgs = ref<SearchOrganizationItemData[]>([]);
+const users = ref<SearchUserItemData[]>([]);
 const searchDialogVisible = ref(false);
 const searchLoading = ref(false);
 const selected = ref({});
 
 const handleSearch = () => {
-  if (search.value.length > 1) {
-    searchData();
-  } else {
+  if (search.value.length === 0) {
     searchDialogVisible.value = false;
-    appStore.isSearchTree = false;
+    organizationStore.isSearchTree = false;
+    return;
   }
+  searchData();
 };
 
 const handleClear = () => {
-  appStore.isSearchTree = false;
+  organizationStore.isSearchTree = false;
   search.value = '';
   searchDialogVisible.value = false;
 };
@@ -176,28 +176,83 @@ const searchData = () => {
   const payload = {
     keyword: search.value,
   };
-  Promise.all([searchOrganization(payload), searchUser(payload)])
-    .then(([orgData, userData]) => {
-      orgs.value = orgData.data || [];
-      users.value = userData.data || [];
-    })
-    .catch((err) => {
-      console.log(err);
+  const httpConfig = { customMessage: true };
+  Promise.allSettled([searchOrganization(payload, httpConfig), getUsersList(payload, httpConfig)])
+    .then((results) => {
+      const orgResult = results[0];
+      const userResult = results[1];
+      // 处理组织数据
+      if (orgResult.status === 'fulfilled') {
+        orgs.value = orgResult.value.data || [];
+      }
+      // 处理用户数据
+      if (userResult.status === 'fulfilled') {
+        users.value = userResult.value.data || [];
+      }
+      // 处理错误信息
+      const orgError = orgResult.status === 'rejected' ? orgResult.reason : null;
+      const userError = userResult.status === 'rejected' ? userResult.reason : null;
+      if (orgError || userError) {
+        const orgErrorMessage = orgError?.[1]?.suggestion;
+        const userErrorMessage = userError?.[1]?.suggestion;
+        // 如果两个错误信息相同，只展示一次
+        if (orgErrorMessage && userErrorMessage && orgErrorMessage === userErrorMessage) {
+          console.error(orgError?.[0]);
+          console.error(userError?.[0]);
+          const messageConfig = orgError?.[1];
+          handleShowErrorMessage(messageConfig);
+        } else {
+          // 错误信息不同，各自展示
+          if (orgError) {
+            console.error(orgError?.[0]);
+            const messageConfig = orgError?.[1];
+            handleShowErrorMessage(messageConfig);
+          }
+          if (userError) {
+            console.error(userError?.[0]);
+            const messageConfig = userError?.[1];
+            handleShowErrorMessage(messageConfig);
+          }
+        }
+      }
     })
     .finally(() => {
       searchLoading.value = false;
     });
 };
 
-const handleOrgSelect = (org) => {
-  appStore.isSearchTree = true;
+const handleShowErrorMessage = (messageConfig: IMessage) => {
+  Message({
+    theme: 'error',
+    message: messageConfig,
+    delay: 10000,
+    extCls: 'message-fix-fixed',
+    actions: [
+      {
+        id: 'assistant',
+        disabled: true,
+      },
+    ],
+  });
+};
+
+const handleOrgSelect = (org: SearchOrganizationItemData) => {
+  organizationStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
-  appStore.currentOrg = { ...org };
+  organizationStore.updateSelectedOrg({
+    tenantId: org.tenant_id,
+    tenantName: org.tenant_name,
+    tenantLogo: organizationStore.getTenantLogo(org.tenant_id),
+    dataSourceId: org.data_source_id,
+    deptId: org.id,
+    deptName: org.name,
+    organizationPath: org.organization_path,
+  });
   emit('select');
 };
 
-const handleUserSelect = async (user) => {
+const handleUserSelect = async (user: SearchUserItemData) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
@@ -229,6 +284,6 @@ const handleBeforeClose = async () => {
 
 const handleRefresh = () => {
   handleClear();
-  appStore.reloadIndex += 1;
+  organizationStore.reloadIndex += 1;
 };
 </script>

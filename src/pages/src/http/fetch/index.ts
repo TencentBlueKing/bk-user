@@ -15,8 +15,9 @@ interface ResolveResponseParams<D> {
   config: Record<string, any>,
 }
 
-interface Config extends AxiosRequestConfig {
+export interface Config extends AxiosRequestConfig {
   globalError?: boolean
+  customMessage?: boolean
 }
 interface ServiceResponseData<T> {
   code: number,
@@ -102,7 +103,8 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
 
     return;
   }
-
+  let returnData: Error | [Error, any] = error;
+  const ignoreMessage = config.customMessage;
   // 全局捕获错误给出提示
   if (config.globalError) {
     try {
@@ -110,26 +112,31 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
     } catch (error) {
       console.log('error', error);
     }
-    const config = {
+    const messageConfig = {
       overview: '',
       code,
       suggestion: message,
       details: details[0],
     };
-    Message({
-      theme: 'error',
-      message: config,
-      delay: 10000,
-      extCls: 'message-fix-fixed',
-      actions: [
-        {
-          id: 'assistant',
-          disabled: true,
-        },
-      ] });
+    if (!ignoreMessage) {
+      Message({
+        theme: 'error',
+        message: messageConfig,
+        delay: 10000,
+        extCls: 'message-fix-fixed',
+        actions: [
+          {
+            id: 'assistant',
+            disabled: true,
+          },
+        ],
+      });
+    } else {
+      returnData = [error, messageConfig];
+    }
   }
 
-  return Promise.reject(error);
+  return Promise.reject(returnData);
 };
 
 // 更新axios实例的cookie

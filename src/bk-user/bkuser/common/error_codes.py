@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -78,8 +78,8 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.RATE_LIMIT_EXCEED,
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     )
-    # 调用外部系统API
-    REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
+    # 调用外部系统 API
+    REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统 API 异常"))
 
     # 用户账密
     USERNAME_OR_PASSWORD_WRONG_ERROR = ErrorCode(_("用户名或密码错误"))
@@ -125,6 +125,18 @@ class ErrorCodes:
     SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
     SEND_RESET_PASSWORD_EMAIL_FAILED = ErrorCode(_("发送重置密码邮件失败"))
     VERIFY_VERIFICATION_CODE_FAILED = ErrorCode(_("验证失败"))
+
+    # 微信相关
+    WEIXIN_ALREADY_UNBOUND = ErrorCode(_("微信已解绑"))
+    WEIXIN_ALREADY_BOUND = ErrorCode(_("微信已绑定"))
+    WEIXIN_CONFIG_NOT_FOUND = ErrorCode(_("微信配置未找到"))
+    WEIXIN_API_ERROR = ErrorCode(_("微信 API 调用失败"))
+    WEIXIN_QRCODE_CREATE_FAILED = ErrorCode(_("二维码生成失败"))
+    WEIXIN_QRCODE_TICKET_INVALID = ErrorCode(_("二维码无效"))
+    WEIXIN_XML_PARSE_FAILED = ErrorCode(_("XML 解析失败"))
+    WEIXIN_STATE_INVALID = ErrorCode(_("state 无效"))
+    WEIXIN_TYPE_UNSUPPORTED = ErrorCode(_("不支持的微信类型"))
+    WEIXIN_SIGN_INVALID = ErrorCode(_("微信签名无效"))
 
 
 # 实例化一个全局对象

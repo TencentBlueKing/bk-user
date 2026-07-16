@@ -2,29 +2,29 @@
  * 新建用户自定义字段
  */
 export interface NewCustomFieldsParams {
-  name: string,
-  display_name: string,
-  data_type: string,
-  required: boolean,
-  default: {},
-  options: {},
+  name: string;
+  display_name: string;
+  data_type: string;
+  required: boolean;
+  default: {};
+  options: {};
 }
 
 /**
  * 修改用户自定义字段
  */
 export interface PutCustomFieldsParams {
-  id: number,
-  display_name: string,
-  required: boolean,
-  default: {},
-  options: {},
-  data_type: string,
-  unique: string,
-  personal_center_visible: boolean,
-  personal_center_editable: boolean,
-  manager_editable: boolean,
-  mapping: {},
+  id: number;
+  display_name: string;
+  required: boolean;
+  default: {};
+  options: {};
+  data_type: string;
+  unique: string;
+  personal_center_visible: boolean;
+  personal_center_editable: boolean;
+  manager_editable: boolean;
+  mapping: {};
 }
 
 /**
@@ -32,116 +32,129 @@ export interface PutCustomFieldsParams {
  */
 export interface PutUserValidityParams {
   enabled: boolean
-  validity_period: number,
-  remind_before_expire: number[],
-  enabled_notification_methods: string[],
-  notification_templates: [],
+  validity_period: number;
+  remind_before_expire: number[];
+  enabled_notification_methods: string[];
+  notification_templates: [];
 }
 
 /**
  * 管理员配置-变更内置管理员账号密码相关信息
  */
 export interface PatchBuiltinManagerParams {
-  username?: string,
-  enable_login?: boolean,
+  username?: string;
+  enable_login?: boolean;
 }
 
 /**
  * 管理员配置-重置内置管理账号密码参数
  */
 export interface PutPasswordParams {
-  password: string,
+  password: string;
 }
 
 /**
  * 管理员配置-租户实名用户列表参数
  */
 export interface RealUsersParams {
-  page?: number,
-  page_size?: number,
-  exclude_manager?: boolean,
-  keyword?: string,
+  page?: number;
+  page_size?: number;
+  exclude_manager?: boolean;
+  keyword?: string;
 }
 
 /**
  * 管理员配置-修改租户实名管理员账号列表参数
  */
 export interface PutRealManagersParams {
-  ids: string[],
+  ids: string[];
 }
 
 /**
  * 管理员配置-更新租户
  */
 export interface PutTenantInfoParams {
-  name: string,
-  logo?: string,
-  visible: boolean,
-  user_number_visible: boolean,
+  name: string;
+  logo?: string;
+  visible: boolean;
+  user_number_visible: boolean;
 }
 
 /**
  * 跨租户协同-新建协同策略
  */
 export interface NewToStrategiesParams {
-  name: string,
-  target_tenant_id: string,
+  name: string;
+  target_tenant_id: string;
   source_config: {
-    organization_scope_type: string,
-    organization_scope_config: object,
-    field_scope_type: string,
-    field_scope_config: object,
-  },
+    organization_scope_type: string;
+    organization_scope_config: object;
+    field_scope_type: string;
+    field_scope_config: object;
+  };
 }
 
 /**
  * 跨租户协同-确认协同策略
  */
 export interface FromStrategiesConfirmParams {
-  id: number,
+  id: number;
   target_config: {
-    organization_scope_type: string,
-    organization_scope_config: object,
+    organization_scope_type: string;
+    organization_scope_config: object;
     field_mapping: {
-      source_field: string,
-      mapping_operation: string,
-      target_field: string,
-    }[],
-  },
+      source_field: string;
+      mapping_operation: string;
+      target_field: string;
+    }[];
+  };
 }
 
 /**
  * 跨租户协同-数据更新记录
  */
 export interface CollaborationSyncRecordsParams {
-  page?: number,
-  pageSize?: number,
+  page?: number;
+  pageSize?: number;
 }
 
 export interface TenantItem {
-  tenant_ids: string
+  tenant_ids: string;
 }
 
 export interface TenantSettingFieldsData {
   builtin_fields: {
-    id: number,
-    name: string,
-    display_name: string,
-    data_type: string,
-    required: boolean,
-    unique: boolean,
-    default: string,
-    options: any[],
-  }[],
-  custom_fields: any[],
+    id: number;
+    name: string;
+    display_name: string;
+    data_type: string;
+    required: boolean;
+    unique: boolean;
+    default: string;
+    options: any[];
+  }[];
+  custom_fields: any[];
 }
 
 
 export interface RealUsersData {
-  count: number,
+  count: number;
   results: {
-    id: string,
-    username: string,
-    full_name: string,
-  }[],
+    id: string;
+    username: string;
+    full_name: string;
+  }[];
+}
+
+export interface BuiltinManagerData {
+  id: string;
+  enable_login: boolean;
+  username: string;
+}
+
+export interface TenantInfoData {
+  id: string;
+  logo: string;
+  name: string;
+  user_number_visible: boolean;
 }

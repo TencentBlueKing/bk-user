@@ -1,6 +1,6 @@
 <template>
-  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
-    <ul v-if="currentDataSource?.plugin_id" class="login-setting-content">
+  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 10 }">
+    <ul v-if="dataSourceStore.dataSource.length > 0" class="login-setting-content">
       <li class="item-box">
         <div class="header">
           <p>{{ $t('基本登录方式') }}</p>
@@ -12,7 +12,7 @@
             :key="index">
             <div
               :class="['login-content',
-                       { 'login-content-disabled': currentDataSource.plugin_id !== 'local' && item.id === 'local' }]">
+                       { 'login-content-disabled': !dataSourceStore.isConfiguredLocalPlugin && item.id === 'local' }]">
               <div
                 :class="['box', { 'disabled-box': item.status === 'disabled' && !item.idp_id }]"
                 v-bk-tooltips="{
@@ -102,7 +102,7 @@
         <template v-else-if="authDetails?.id === 'wecom'">
           <WeCom
             v-if="detailsConfig.isEdit"
-            :data-source-id="currentDataSource?.id"
+            :data-source-id="getDataSourceIdForAuth('wecom')"
             :current-id="authDetails?.idp_id"
             :default-name="authDetails?.name"
             @success="weComSuccess"
@@ -112,7 +112,7 @@
         <template v-else>
           <Custom
             v-if="detailsConfig.isEdit"
-            :data-source-id="currentDataSource?.id"
+            :data-source-id="getDataSourceIdForAuth('custom')"
             :auth-details="authDetails"
             @success="customSuccess"
             @cancel-edit="cancelEdit" />
@@ -134,32 +134,43 @@ import WeCom from './auth-config/WeCom.vue';
 import WeComView from './auth-config/WeComView.vue';
 
 import {
-  getDataSourceList,
   getIdps,
   getIdpsPlugins,
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useMainViewStore } from '@/store';
+import { useDataSourceStore } from '@/store/dataSource';
 import { copy } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const editLeaveBefore = inject('editLeaveBefore');
+const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
 const idpsPlugins = ref([]);
-const currentDataSource = ref({});
 onMounted(() => {
-  getRealDataSource();
+  initDataSources();
   initIdpsPlugins();
 });
 
-// 获取当前实名数据源
-const getRealDataSource = () => {
-  getDataSourceList({ type: 'real' }).then((res) => {
-    currentDataSource.value = res.data[0] || {};
-  });
+// 初始化数据源
+const initDataSources = async () => {
+  await dataSourceStore.handleFetchCurrentDataSource();
+};
+
+// 获取认证源对应的数据源ID
+// 注意：如果对应类型的数据源未配置，将返回 undefined
+const getDataSourceIdForAuth = (authType: 'local' | 'wecom' | 'custom'): number | undefined => {
+  if (authType === 'local') {
+    // 本地认证源使用本地数据源ID
+    return dataSourceStore.localDataSourceId;
+  }
+  // 外部认证源使用第一个非本地数据源ID
+  // 如果没有配置外部数据源，返回 undefined
+  const externalDataSource = dataSourceStore.dataSource.find(ds => ds.plugin_id !== 'local');
+  return externalDataSource?.id;
 };
 
 const initIdpsPlugins = async () => {
@@ -179,7 +190,7 @@ const initIdpsPlugins = async () => {
         plugin.status = idp.status;
       } else {
         plugin.status = 'disabled';
-        plugin.text = currentDataSource.value.plugin_id !== 'local' && plugin.id === 'local'
+        plugin.text = !dataSourceStore.isConfiguredLocalPlugin && plugin.id === 'local'
           ? t('仅对本地数据源启用')
           : t('暂未配置');
       }
@@ -200,7 +211,7 @@ const detailsConfig = reactive({
 const authDetails = ref({});
 
 const handleClickActive = (item) => {
-  if (currentDataSource.value.plugin_id !== 'local' && item.id === 'local') return;
+  if (!dataSourceStore.isConfiguredLocalPlugin && item.id === 'local') return;
   if (!item.idp_id) {
     detailsConfig.isEdit = true;
     detailsConfig.title = `${item.name}${t('登录配置')}`;

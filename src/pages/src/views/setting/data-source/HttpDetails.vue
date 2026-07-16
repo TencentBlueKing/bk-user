@@ -58,6 +58,9 @@
             </span>
           </LabelContent>
         </Row>
+        <Row :title="$t('冲突配置')">
+          <ConflictConfigDetail :config="usernameConfig" />
+        </Row>
       </div>
       <div v-if="pluginId === 'ldap'">
         <Row :title="$t('服务配置')">
@@ -110,6 +113,9 @@
             </span>
           </LabelContent>
         </Row>
+        <Row :title="$t('冲突配置')">
+          <ConflictConfigDetail :config="usernameConfig" />
+        </Row>
       </div>
     </div>
     <div class="details-info-box" v-else>
@@ -123,11 +129,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import ConflictConfigDetail from '@/components/conflict-config/ConflictConfigDetail.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import { getDataSourceDetails, getFields } from '@/http';
+import type { DataSourceDetails } from '@/http/types/dataSourceFiles';
 import router from '@/router';
 import { SYNC_CONFIG_LIST } from '@/utils';
+
+// 提取类型别名
+type PluginConfig = DataSourceDetails['plugin_config'];
 
 const props = defineProps({
   dataSourceId: {
@@ -136,21 +147,23 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
-const plugin = ref({});
+const plugin = ref<DataSourceDetails['plugin']>({} as DataSourceDetails['plugin']);
 // 服务配置
-const serverConfig = ref({});
+const serverConfig = ref<PluginConfig['server_config']>({} as PluginConfig['server_config']);
 // 鉴权配置
-const authConfig = ref({});
+const authConfig = ref<PluginConfig['auth_config']>({} as PluginConfig['auth_config']);
 // 字段映射
-const fieldMapping = ref([]);
+const fieldMapping = ref<DataSourceDetails['field_mapping']>([]);
 // 同步配置
-const syncConfig = ref({});
+const syncConfig = ref<DataSourceDetails['sync_config']>({} as DataSourceDetails['sync_config']);
 // 数据配置
-const dataConfig = ref({});
-// 数据配置
-const userGroupConfig = ref({});
-// 数据配置
-const leaderConfig = ref({});
+const dataConfig = ref<PluginConfig['data_config']>({} as PluginConfig['data_config']);
+// 用户组配置
+const userGroupConfig = ref<PluginConfig['user_group_config']>({} as PluginConfig['user_group_config']);
+// 上级配置
+const leaderConfig = ref<PluginConfig['leader_config']>({} as PluginConfig['leader_config']);
+// 冲突配置
+const usernameConfig = ref<DataSourceDetails['username_config']>({ strategy: 'manual', prefix: '', suffix: '' });
 
 const isPluginConfig = ref(true);
 
@@ -188,6 +201,7 @@ onMounted(async () => {
     }
     syncConfig.value = res.data?.sync_config;
     plugin.value = res.data?.plugin;
+    usernameConfig.value = res.data?.username_config || { strategy: 'manual', prefix: '', suffix: '' };
   } catch (e) {
     console.warn(e);
   } finally {
@@ -264,18 +278,20 @@ const handleClickEdit = () => {
   }
 }
 
-.row-wrapper {
-  padding: 0 24px 24px;
-  margin-bottom: 0;
-  border-bottom: 1px solid #EAEBF0;
+.details-info-wrapper {
+  :deep(.row-wrapper) {
+    padding: 0 24px 24px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #EAEBF0;
 
-  &:last-child {
-    padding-bottom: 24px;
-    border-bottom: none;
+    &:last-child {
+      padding-bottom: 24px;
+      border-bottom: none;
+    }
   }
-}
 
-::v-deep .label-content .label-key {
-  width: 174px !important;
+  :deep(.label-content .label-key) {
+    width: 174px;
+  }
 }
 </style>

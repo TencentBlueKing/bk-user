@@ -1,5 +1,5 @@
 <template>
-  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="details-info-wrapper">
+  <div v-bkloading="{ loading: isLoading, zIndex: 10 }" class="details-info-wrapper">
     <ViewRow :title="$t('基础信息')">
       <LabelContent :label="$t('名称')">{{ idpsName }}</LabelContent>
       <LabelContent :label="$t('是否启用')">

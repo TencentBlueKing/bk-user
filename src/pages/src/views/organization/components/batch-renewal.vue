@@ -19,15 +19,15 @@
         </bk-select>
       </bk-form-item>
       <bk-form-item :label="$t('账号过期时间')" property="custom" required>
-        <bk-date-picker
+        <LocalDatePicker
           v-model="formData.custom"
           :disabled-date="disabledDate"
           :placeholder="$t('自定义')"
           type="datetime"
           format="yyyy-MM-dd HH:mm:ss"
           :with-validate="false"
-          append-to-body>
-        </bk-date-picker>
+          append-to-body
+        />
       </bk-form-item>
     </bk-form>
   </bk-dialog>
@@ -37,6 +37,7 @@
 import dayjs, { ManipulateType } from 'dayjs';
 import { computed, reactive, ref } from 'vue';
 
+import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import { batchAccountExpired } from '@/http/organizationFiles';
 import { t } from '@/language/index';
 
@@ -63,7 +64,7 @@ const dateOptions = computed(() => {
     { num: 1, unit: 'month', label: t('一个月') },
     { num: 3, unit: 'month', label: t('三个月') },
     { num: 6, unit: 'month', label: t('六个月') },
-    { num: 1, unit: 'year', label: t('一年　') },
+    { num: 1, unit: 'year', label: t('一年 ') },
   ] as Array<{
     num: number
     unit: ManipulateType

@@ -73,6 +73,8 @@ export const operationMap = {
 
     delete_tenant: t('删除租户'),
     delete_tenant_real_manager: t('删除租户实名管理员'),
+
+    modify_tenant_user_display_name_expression_config: t('修改用户展示名表达式配置'),
   },
 };
 

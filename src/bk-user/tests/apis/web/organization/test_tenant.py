@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -28,12 +28,12 @@ class TestCurrentTenantRetrieveApi:
         resp = api_client.get(reverse("organization.tenant.retrieve"))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data.keys() == {"id", "name", "logo", "data_source"}
+        assert resp.data.keys() == {"id", "name", "logo", "data_sources"}
 
         assert resp.data["id"] == random_tenant.id
         assert resp.data["name"] == random_tenant.name
 
-        data_source = resp.data["data_source"]
+        data_source = resp.data["data_sources"][0]
         assert data_source["id"] == bare_local_data_source.id
         assert data_source["type"] == DataSourceTypeEnum.REAL
         assert data_source["plugin_id"] == DataSourcePluginEnum.LOCAL

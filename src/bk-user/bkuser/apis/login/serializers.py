@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -26,7 +26,8 @@ from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
+from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -42,14 +43,14 @@ class GlobalSettingOutputSLZ(serializers.Serializer):
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
-    data_source_ids = serializers.ListField(help_text="指定查询的数据源ID列表", child=serializers.IntegerField())
+    data_source_ids = serializers.ListField(help_text="指定查询的数据源 ID 列表", child=serializers.IntegerField())
     username = serializers.CharField(help_text="用户名")
     password = serializers.CharField(help_text="密码")
 
     def validate_username(self, value: str) -> str:
         # Q: 为什么不使用 biz.validators.py 封装的 validate_data_source_user_username
         # A: 这里是登录验证用户名密码，虽然用户名规则不符合，
-        #    但由于安全原因(避免攻击者知道规则)，只能告知用户名或密码错误
+        #    但由于安全原因 (避免攻击者知道规则)，只能告知用户名或密码错误
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
             raise ValidationError(_("用户名或密码错误"))
 
@@ -57,13 +58,13 @@ class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
 
 
 class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
-    data_source_id = serializers.IntegerField(help_text="数据源ID")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
     id = serializers.IntegerField(help_text="用户 ID", source="user_id")
     username = serializers.CharField(help_text="用户名")
 
 
 class TenantListInputSLZ(serializers.Serializer):
-    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+    tenant_ids = StringArrayField(help_text="指定查询的租户，多个使用英文逗号分隔", required=False, default="")
 
 
 class CollaborationTenantSLZ(serializers.Serializer):
@@ -95,7 +96,7 @@ class IdpListOutputSLZ(serializers.Serializer):
         ref_name = "login.IdpListOutputSLZ"
 
     def get_data_source_type(self, obj: Idp) -> str:
-        return self.context["data_source_type_map"].get(obj.data_source_id, "")
+        return self.context["idp_data_source_type_map"].get(obj.id, "")
 
 
 class IdpPluginOutputSLZ(serializers.Serializer):
@@ -119,6 +120,8 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
 
     def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
         # Note: 不能直接 obj.plugin_config，因为该对象里包含加密的敏感信息，而登录流程是必须使原始数据的
+        # Local 认证源的 data_source_ids 在关系变更时同步到 plugin_config，供 bk-login 初始化插件直接使用。
+        # 这里不动态覆盖 data_source_ids，避免登录详情接口承担关系同步职责。
         return obj.get_plugin_cfg().model_dump()
 
 
@@ -145,9 +148,17 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
+    data_source_type = serializers.CharField(help_text="数据源类型", source="data_source.type")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.generate_tenant_user_display_name(obj)
+        return TenantUserDisplayNameHandler.generate_tenant_user_display_name(obj)
 
     class Meta:
         ref_name = "login.TenantUserRetrieveOutputSLZ"
+
+
+class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+
+    class Meta:
+        ref_name = "login.TenantUserLanguageUpdateInputSLZ"

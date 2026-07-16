@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -22,9 +22,12 @@ from functools import reduce
 from typing import Any, Dict, List, Tuple
 
 import phonenumbers
-from blue_krill.data_types.enum import EnumField, StrStructuredEnum
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.conf import settings
 from django.db.models import Q, QuerySet
 from django.http import Http404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -44,12 +47,13 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
+from bkuser.common.cache import CacheEnum
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
 
 
-class ProfileStatusEnum(StrStructuredEnum):
+class ProfileStatusEnum(str, StructuredEnum):
     """2.x 版本 用户状态"""
 
     NORMAL = EnumField("NORMAL", label="正常")
@@ -79,87 +83,209 @@ def _phone_country_code_to_iso_code(phone_country_code: str) -> str:
 class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
     """将 TenantUser 列表转换 对外的用户信息"""
 
-    def build_user_infos(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
+    def build_user_infos(self, tenant_users: List[TenantUser], fields: List[str]) -> List[Dict[str, Any]]:
         """
         构建对外用户信息列表
-        :param tenant_users: 租户用户 Queryset，即已经经过 filter 等后的 QuerySet
-                             且必须保证 select_related("data_source_user")
-        :param fields: 对外的用户字段列表，空时表示所有用户字段都对外
+        :param tenant_users: 租户用户 List，即已经经过 filter、only 等优化后的数据
+                             select_related 会根据 fields 在 optimize_queryset 中动态添加
+        :param fields: 对外的用户字段列表，需要已经标准化处理（调用 _get_default_fields）
         """
-        # 按需提前获取用户 Leader 信息 和 用户部门信息
-        data_source_user_ids = [i.data_source_user.id for i in tenant_users]
-        leader_map = self._get_leader_map(data_source_user_ids) if not fields or "leader" in fields else {}
-        department_map = (
-            self._get_department_map(data_source_user_ids) if not fields or "departments" in fields else {}
-        )
+        # 批量预加载关联数据
+        context = self._prepare_context(tenant_users, fields)
 
-        collaboration_field_mapping = self.get_collaboration_field_mapping()
+        # 构建每个用户的信息
+        return [self._build_single_user_info(tenant_user, fields, context) for tenant_user in tenant_users]
 
-        user_infos = []
-        for tenant_user in tenant_users:
-            # 手机号和手机区号
-            phone, phone_country_code = tenant_user.phone_info
+    @staticmethod
+    def get_default_fields(fields: List[str]) -> List[str]:
+        """获取默认字段列表"""
+        return fields or [
+            "id",
+            "username",
+            "display_name",
+            "email",
+            "telephone",
+            "country_code",
+            "time_zone",
+            "language",
+            "wx_userid",
+            "domain",
+            "category_id",
+            "status",
+            "extras",
+            "position",
+            "leader",
+            "departments",
+        ]
 
-            # 自定义字段
-            source_extras = tenant_user.data_source_user.extras
-            # 协同时按照协同租户配置的用户自定义字段进行输出
-            ds_owner_tenant_id = tenant_user.data_source.owner_tenant_id
-            if ds_owner_tenant_id != tenant_user.tenant_id:
-                extras = {
-                    collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
-                    for k, v in source_extras.items()
-                    if (ds_owner_tenant_id, k) in collaboration_field_mapping
-                }
-            else:
-                extras = source_extras
+    @staticmethod
+    def _get_db_field_map() -> Dict[str, List[str]]:
+        """获取字段到数据库字段的映射"""
+        return {
+            "id": ["data_source_user_id"],
+            "username": ["id"],
+            "display_name": ["data_source_user__full_name"],
+            "email": ["custom_email", "is_inherited_email", "data_source_user__email"],
+            "telephone": ["custom_phone", "is_inherited_phone", "data_source_user__phone"],
+            "country_code": [
+                "custom_phone_country_code",
+                "is_inherited_phone",
+                "data_source_user__phone_country_code",
+            ],
+            "time_zone": ["time_zone"],
+            "language": ["language"],
+            "wx_userid": ["wx_userid"],
+            "domain": ["data_source_id", "tenant_id"],
+            "category_id": ["data_source_id"],
+            "status": ["status"],
+            "extras": ["data_source_user__extras", "data_source_id", "tenant_id"],
+            "position": ["data_source_user__extras", "data_source_id", "tenant_id"],
+            "leader": ["data_source_user_id"],
+            "departments": ["data_source_user_id"],
+        }
 
-            # 不会放大查询的字段
-            user_info = {
-                "id": tenant_user.data_source_user.id,
-                # 租户用户 ID 即为对外的 username / bk_username
-                "username": tenant_user.id,
-                "display_name": tenant_user.data_source_user.full_name,
-                "email": tenant_user.email,
-                "telephone": phone,
-                "country_code": phone_country_code,
-                "iso_code": _phone_country_code_to_iso_code(phone_country_code),
-                "time_zone": tenant_user.time_zone,
-                "language": tenant_user.language,
-                "wx_userid": tenant_user.wx_userid,
-                "domain": self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
-                "category_id": tenant_user.data_source_id,
-                "status": TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
-                "enabled": True,
-                "extras": extras,
-                # 旧版本内置字段，新版本迁移在自定义字段里
-                "position": int(source_extras.get("position", 0)),
-                # 总是返回固定值
-                "logo": "",
-                "staff_status": "IN",
+    def optimize_queryset(self, tenant_users: QuerySet[TenantUser], fields: List[str]) -> QuerySet[TenantUser]:
+        """优化查询，只查询需要的数据库字段"""
+        db_field_map = self._get_db_field_map()
+        only_fields = {"id"}
+        for f in fields:
+            only_fields.update(db_field_map.get(f, []))
+
+        # 根据需要的字段决定是否添加 select_related，避免不必要的关联查询
+        # 同时避免 select_related 与 only() 不包含关联字段时的冲突
+        if any(field.startswith("data_source_user__") for field in only_fields):
+            tenant_users = tenant_users.select_related("data_source_user")
+
+        return tenant_users.only(*only_fields)
+
+    def _prepare_context(self, tenant_users: List[TenantUser], fields: List[str]) -> Dict[str, Any]:
+        """预加载关联数据，减少数据库查询"""
+        data_source_user_ids = []
+        if "leader" in fields or "departments" in fields:
+            data_source_user_ids = [i.data_source_user_id for i in tenant_users]
+
+        return {
+            "leader_map": self._get_leader_map(data_source_user_ids) if "leader" in fields else {},
+            "department_map": self._get_department_map(data_source_user_ids) if "departments" in fields else {},
+            "collaboration_field_mapping": (
+                self.get_collaboration_field_mapping() if "extras" in fields or "position" in fields else {}
+            ),
+        }
+
+    def _build_single_user_info(
+        self, tenant_user: TenantUser, fields: List[str], context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """构建单个用户的信息"""
+        user_info: Dict[str, Any] = {}
+
+        # 添加基础字段
+        self._add_basic_fields(user_info, tenant_user, fields)
+
+        # 添加电话相关字段
+        self._add_phone_fields(user_info, tenant_user, fields)
+
+        # 添加简单字段
+        self._add_simple_fields(user_info, tenant_user, fields)
+
+        # 添加自定义字段
+        self._add_extras_fields(user_info, tenant_user, fields, context["collaboration_field_mapping"])
+
+        # 添加固定值字段
+        user_info["logo"] = ""
+        user_info["staff_status"] = "IN"
+
+        # 添加关联字段
+        self._add_relation_fields(user_info, tenant_user, fields, context)
+
+        return user_info
+
+    @staticmethod
+    def _add_basic_fields(user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加基础字段"""
+        if "id" in fields:
+            user_info["id"] = tenant_user.data_source_user_id
+        if "username" in fields:
+            user_info["username"] = tenant_user.id
+        if "display_name" in fields:
+            user_info["display_name"] = tenant_user.data_source_user.full_name
+        if "email" in fields:
+            user_info["email"] = tenant_user.email
+
+    @staticmethod
+    def _add_phone_fields(user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加电话相关字段"""
+        if not any(f in fields for f in ["telephone", "country_code", "iso_code"]):
+            return
+
+        phone, phone_country_code = tenant_user.phone_info
+        if "telephone" in fields:
+            user_info["telephone"] = phone
+        if "country_code" in fields:
+            user_info["country_code"] = phone_country_code
+        if "iso_code" in fields:
+            user_info["iso_code"] = _phone_country_code_to_iso_code(phone_country_code)
+
+    def _add_simple_fields(self, user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str]) -> None:
+        """添加简单字段"""
+        simple_field_mapping = {
+            "time_zone": lambda: tenant_user.time_zone,
+            "language": lambda: tenant_user.language,
+            "wx_userid": lambda: tenant_user.wx_userid,
+            "domain": lambda: self.get_domain(tenant_user.data_source_id, tenant_user.tenant_id),
+            "category_id": lambda: tenant_user.data_source_id,
+            "status": lambda: TENANT_USER_STATUS_TO_PROFILE_STATUS_MAP.get(tenant_user.status, tenant_user.status),
+        }
+
+        for field_name, value_func in simple_field_mapping.items():
+            if field_name in fields:
+                user_info[field_name] = value_func()
+
+    def _add_extras_fields(
+        self,
+        user_info: Dict[str, Any],
+        tenant_user: TenantUser,
+        fields: List[str],
+        collaboration_field_mapping: Dict[Tuple[str, str], str],
+    ) -> None:
+        """添加自定义字段"""
+        if not ("extras" in fields or "position" in fields):
+            return
+
+        source_extras = tenant_user.data_source_user.extras
+        extras = self._get_collaboration_extras(source_extras, tenant_user, collaboration_field_mapping)
+
+        if "extras" in fields:
+            user_info["extras"] = extras
+        if "position" in fields:
+            user_info["position"] = int(source_extras.get("position", 0))
+
+    def _get_collaboration_extras(
+        self,
+        source_extras: Dict[str, Any],
+        tenant_user: TenantUser,
+        collaboration_field_mapping: Dict[Tuple[str, str], str],
+    ) -> Dict[str, Any]:
+        """获取协同场景下的自定义字段"""
+        ds_owner_tenant_id = self.data_source_id_to_tenant_id_map()[tenant_user.data_source_id]
+        if ds_owner_tenant_id != tenant_user.tenant_id:
+            return {
+                collaboration_field_mapping[(ds_owner_tenant_id, k)]: v
+                for k, v in source_extras.items()
+                if (ds_owner_tenant_id, k) in collaboration_field_mapping
             }
+        return source_extras
 
-            # 指定对外字段，则只返回指定的字段
-            if fields:
-                user_info = {k: v for k, v in user_info.items() if k in fields}
-                # 由于 leader 需要额外计算，因此特殊分支处理
-                if "leader" in fields:
-                    user_info["leader"] = leader_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-                # 由于 department 需要额外计算，因此特殊分支处理
-                if "departments" in fields:
-                    user_info["departments"] = department_map.get(
-                        (tenant_user.tenant.id, tenant_user.data_source_user.id)
-                    )
-
-                user_infos.append(user_info)
-                continue
-
-            # 未指定字段，则关联字段也要返回
-            user_info["leader"] = leader_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-            user_info["departments"] = department_map.get((tenant_user.tenant.id, tenant_user.data_source_user.id))
-
-            user_infos.append(user_info)
-
-        return user_infos
+    @staticmethod
+    def _add_relation_fields(
+        user_info: Dict[str, Any], tenant_user: TenantUser, fields: List[str], context: Dict[str, Any]
+    ) -> None:
+        """添加关联字段"""
+        if "leader" in fields:
+            user_info["leader"] = context["leader_map"].get((tenant_user.tenant_id, tenant_user.data_source_user_id))
+        if "departments" in fields:
+            user_info["departments"] = context["department_map"].get(
+                (tenant_user.tenant_id, tenant_user.data_source_user_id)
+            )
 
     @staticmethod
     def _get_leader_map(data_source_user_ids: List[int]) -> Dict[Tuple[str, int], List[Dict[str, Any]]]:
@@ -181,7 +307,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
 
         # 查询 Leader 对应的租户用户
         leaders = TenantUser.objects.filter(data_source_user_id__in=leader_ids).select_related("data_source_user")
-        # { "数据源 Leader ID": List[租户 Leader ] }， 协同场景下，会出现一个 data_source_user 可以对应多个租户用户
+        # { "数据源 Leader ID": List[租户 Leader ] }，协同场景下，会出现一个 data_source_user 可以对应多个租户用户
         tenant_leader_map = defaultdict(list)
         for i in leaders:
             tenant_leader_map[i.data_source_user_id].append(i)
@@ -236,7 +362,7 @@ class TenantUserListToUserInfosMixin(DefaultTenantMixin, DataSourceDomainMixin):
                     {
                         "id": tenant_dept.id,
                         "name": tenant_dept.data_source_department.name,
-                        # TODO: 协同支持指定范围后，是以 “伪根” 开始，并不是原始数据源的根，需要调整
+                        # TODO: 协同支持指定范围后，是以“伪根”开始，并不是原始数据源的根，需要调整
                         "full_name": "/".join(
                             [
                                 dept_id_name_map[i]
@@ -257,6 +383,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
     pagination_class = LegacyOpenApiPagination
 
+    @method_decorator(cache_page(cache=CacheEnum.REDIS.value, timeout=settings.OPEN_API_V2_LIST_USER_CACHE_TIMEOUT))
     def get(self, request, *args, **kwargs):
         slz = ProfileListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
@@ -265,30 +392,29 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
 
         # 根据参数过滤
         tenant_users = self._filter_queryset(params)
+
+        # 在分页前 (不分页也需优化) 进行 queryset 优化（只查询需要的字段）要的字段
+        fields = params.get("fields")
+        fields = self.get_default_fields(fields)
+        tenant_users = self.optimize_queryset(tenant_users, fields)
+
         if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 根据 fields 构造对外的用户信息
-        user_infos = self.build_user_infos(tenant_users, params.get("fields"))
+        user_infos = self.build_user_infos(tenant_users, fields)
         if not no_page:
             return self.get_paginated_response(user_infos)
 
         return Response(user_infos)
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet[TenantUser]:
-        """根据参数过滤, 生成 TenantUser QuerySet"""
-        # Note: 由于对外很多字段都是继承于数据源用户字段，所以这里直接关联查询 data_source_user
+        """根据参数过滤，生成 TenantUser QuerySet"""
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
-        queryset = (
-            TenantUser.objects.select_related("data_source_user", "data_source")
-            .filter(
-                Q(tenant=self.default_tenant),
-                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
-                Q(data_source__type=DataSourceTypeEnum.REAL)
-                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
-            )
-            .distinct()
-        )
+        # Note: select_related 会在 optimize_queryset 中根据需要的字段动态添加
+        queryset = TenantUser.objects.filter(
+            tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
+        ).order_by("data_source_user_id")
         # 过滤查询的字段
         lookup_field = params.get("lookup_field")
         if not lookup_field:
@@ -319,10 +445,10 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         :param lookup_values: 字段值列表
         :param is_exact: 是否精确匹配
 
-        :return: 生成的 Django Queryset Filter, None 值表示一定过滤不到， 空列表表示无需过滤
+        :return: 生成的 Django Queryset Filter, None 值表示一定过滤不到，空列表表示无需过滤
         """
         if lookup_field == "staff_status":
-            # 员工状态, 3.x 所有用户数据都是 IN 状态，无 OUT 状态
+            # 员工状态，3.x 所有用户数据都是 IN 状态，无 OUT 状态
             return None if "IN" not in lookup_values else []
 
         # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤
@@ -345,11 +471,6 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         if lookup_field == "domain":
             domain_query = self._convert_domain_lookup_to_query(lookup_values, is_exact)
             return None if domain_query is None else [domain_query]
-
-        # 先将部门（3.x 版本中的租户部门）转换为 3.x 版本中的数据源部门 ID，再查询出对应的数据源用户 ID
-        if lookup_field == "departments":
-            department_query = self._convert_department_lookup_to_query(lookup_values, is_exact)
-            return None if department_query is None else [department_query]
 
         # 通用转换处理
         return [Q(**{self._convert_lookup_field(lookup_field, is_exact=is_exact): x}) for x in lookup_values]
@@ -386,30 +507,6 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         return lookup_field_map[lookup_field] if is_exact else f"{lookup_field_map[lookup_field]}__icontains"
 
     @staticmethod
-    def _convert_department_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
-        """对于部门字段的转换查询"""
-        # 不支持模糊查询
-        if not is_exact:
-            raise error_codes.VALIDATION_ERROR.f("unsupported fuzzy lookup field: departments")
-
-        # 3.x 版本中的租户部门 ID 列表
-        tenant_department_ids = [int(v) for v in values if v.isdigit()]
-        # 根据租户部门 ID 查询 3.x 版本中的数据源部门 ID
-        data_source_department_ids = TenantDepartment.objects.filter(id__in=tenant_department_ids).values_list(
-            "data_source_department_id", flat=True
-        )
-        # 根据数据源部门 ID 查询 3.x 版本中的数据源用户 ID
-        data_source_user_ids = DataSourceDepartmentUserRelation.objects.filter(
-            department_id__in=data_source_department_ids
-        ).values_list("user_id", flat=True)
-
-        # 不存在，则说明查询不到任何用户
-        if not data_source_user_ids:
-            return None
-
-        return Q(data_source_user_id__in=data_source_user_ids)
-
-    @staticmethod
     def _convert_status_lookup_to_query(values: List[str], is_exact: bool) -> Q | None:
         """对于状态字段的转换查询"""
         # 不支持模糊查询
@@ -437,7 +534,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInfosMixin, g
         # 目标租户为默认租户的所有数据源 domain 映射
         domain_to_data_source_map = {
             domain: ds_id
-            for (ds_id, tenant_id), domain in self.data_source_to_domain_map.items()
+            for (ds_id, tenant_id), domain in self.data_source_to_domain_map().items()
             if tenant_id == self.default_tenant.id
         }
 
@@ -516,9 +613,9 @@ class ProfileRetrieveApi(
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        lookup_filter = {}
+        lookup_filter: Dict[str, Any] = {}
         if params["lookup_field"] == "username":
-            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
+            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4 / nanoid
             lookup_filter["id"] = kwargs["lookup_value"]
         else:
             lookup_filter["data_source_user__id"] = kwargs["lookup_value"]
@@ -529,9 +626,7 @@ class ProfileRetrieveApi(
             .filter(
                 Q(**lookup_filter),
                 Q(tenant_id=self.default_tenant.id),
-                # Note: 兼容 v2 仅仅允许默认租户下的虚拟账号输出
-                Q(data_source__type=DataSourceTypeEnum.REAL)
-                | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+                Q(data_source_id__in=self.get_data_source_ids()),
             )
             .first()
         )
@@ -691,11 +786,16 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
 
         # 根据部门、是否递归，过滤出 部门下的用户
         tenant_users = self._filter_queryset(tenant_dept, params.get("recursive"))
+
+        # 在分页前 (不分页也需优化) 进行 queryset 优化（只查询需要的字段）要的字段
+        fields = self.get_default_fields([])
+        tenant_users = self.optimize_queryset(tenant_users, fields)
+
         if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 不指定用户字段
-        user_infos = self.build_user_infos(tenant_users, [])
+        user_infos = self.build_user_infos(tenant_users, fields)
         if not no_page:
             return self.get_paginated_response(user_infos)
 
@@ -721,9 +821,8 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, TenantUserListToUserInf
 
         # 租户用户
         # Note: 由于虚拟账号不存在部门关系，所以这里不需要查询虚拟账号情况
-        return TenantUser.objects.filter(
-            tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
-        ).select_related("data_source_user", "data_source")
+        # Note: select_related 会在 optimize_queryset 中根据需要的字段动态添加
+        return TenantUser.objects.filter(tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids)
 
 
 class ProfileLanguageUpdateApi(
@@ -736,10 +835,7 @@ class ProfileLanguageUpdateApi(
         slz.is_valid(raise_exception=True)
 
         tenant_user = TenantUser.objects.filter(
-            Q(id=kwargs["username"]),
-            Q(tenant=self.default_tenant),
-            Q(data_source__type=DataSourceTypeEnum.REAL)
-            | Q(data_source__owner_tenant_id=self.default_tenant.id, data_source__type=DataSourceTypeEnum.VIRTUAL),
+            id=kwargs["username"], tenant=self.default_tenant, data_source_id__in=self.get_data_source_ids()
         ).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")

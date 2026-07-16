@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -30,6 +30,7 @@ from bkuser.apis.web.collaboration.serializers import (
     CollaborationFromStrategyTargetStatusUpdateOutputSLZ,
     CollaborationFromStrategyUpdateInputSLZ,
     CollaborationSourceTenantCustomFieldListOutputSLZ,
+    CollaborationSyncRecordListInputSLZ,
     CollaborationSyncRecordListOutputSLZ,
     CollaborationSyncRecordRetrieveOutputSLZ,
     CollaborationTargetTenantListInputSLZ,
@@ -53,7 +54,6 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserCustomField,
 )
-from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
@@ -72,9 +72,7 @@ class CollaborationToStrategyListCreateApi(CurrentUserTenantMixin, generics.List
         return CollaborationStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        tenant_user_ids = self.get_queryset().values_list("creator", flat=True)
         return {
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
             "tenant_name_map": {t.id: t.name for t in Tenant.objects.all()},
         }
 
@@ -432,10 +430,18 @@ class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
     serializer_class = CollaborationSyncRecordListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantSyncTask]:
+        slz = CollaborationSyncRecordListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
         cur_tenant_id = self.get_current_tenant_id()
-        return TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
+        queryset = TenantSyncTask.objects.filter(tenant_id=cur_tenant_id).exclude(
             data_source_owner_tenant_id=cur_tenant_id
         )
+        if statuses := data.get("statuses"):
+            queryset = queryset.filter(status__in=statuses)
+
+        return queryset
 
     def get_serializer_context(self) -> Dict[str, Any]:
         return {"tenant_name_map": {t.id: t.name for t in Tenant.objects.all()}}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -141,6 +141,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.L
             TenantDepartment.objects.select_related("data_source_department__department_relation")
             .filter(tenant=self.default_tenant, data_source__type=DataSourceTypeEnum.REAL)
             .distinct()
+            .order_by("id")
         )
         if not params.get("lookup_field"):
             return queryset
@@ -300,7 +301,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generi
 
     @staticmethod
     def _get_dept_parent_id(tenant_dept: TenantDepartment, dept_relation: DataSourceDepartmentRelation) -> int | None:
-        """获取租户部门的父部门ID"""
+        """获取租户部门的父部门 ID"""
         if not (dept_relation and dept_relation.parent_id):
             return None
 
@@ -368,7 +369,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, gen
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         lookup_filter = {}
         if params["lookup_field"] == "username":
-            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
+            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4 / nanoid
             lookup_filter["id"] = kwargs["lookup_value"]
         else:
             # 用户 ID 即为数据源用户 ID

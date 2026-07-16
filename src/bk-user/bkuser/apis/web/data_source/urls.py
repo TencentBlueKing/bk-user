@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -52,7 +52,7 @@ urlpatterns = [
     ),
     # 数据源同步记录
     path(
-        "<int:id>/sync-records/",
+        "sync-records/",
         views.DataSourceSyncRecordListApi.as_view(),
         name="data_source.sync_record.list",
     ),
@@ -61,6 +61,12 @@ urlpatterns = [
         "sync-records/<int:id>/",
         views.DataSourceSyncRecordRetrieveApi.as_view(),
         name="data_source.sync_record.retrieve",
+    ),
+    # 获取用户信息导入模板
+    path(
+        "operations/download_template/",
+        views.DataSourceTemplateApi.as_view(),
+        name="data_source.download_template",
     ),
     # 数据源更新/获取/删除
     path(
@@ -73,12 +79,6 @@ urlpatterns = [
         "<int:id>/related-resource-statistics/",
         views.DataSourceRelatedResourceStatsApi.as_view(),
         name="data_source.related_resource_stats",
-    ),
-    # 获取用户信息导入模板
-    path(
-        "<int:id>/operations/download_template/",
-        views.DataSourceTemplateApi.as_view(),
-        name="data_source.download_template",
     ),
     # 导出数据源用户数据
     path(

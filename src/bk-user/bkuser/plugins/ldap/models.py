@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
 from typing import Any, Dict, List, Literal
 
 from django.utils.translation import gettext_lazy as _
@@ -69,6 +68,8 @@ class DataConfig(BaseModel):
     dept_object_class: str
     # 部门 Base DN 列表
     dept_search_base_dns: List[str]
+    # UUID 属性
+    uuid_attribute: str = "entryUUID"
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "DataConfig":
@@ -98,6 +99,9 @@ class DataConfig(BaseModel):
 
         if has_parent_child_dn_relation(self.dept_search_base_dns):
             raise ValueError(_("部门 Base DN 不可重复或者是其他 DN 的祖先节点（后缀）"))
+
+        if not self.uuid_attribute:
+            raise ValueError(_("需要提供 UUID 属性"))
 
         return self
 
@@ -199,3 +203,20 @@ class LDAPObject(BaseModel):
 
     dn: str
     attrs: Dict[str, Any]
+
+    @model_validator(mode="after")
+    def sanitize_attrs(self) -> "LDAPObject":
+        """清洗属性值中的 bytes，确保可安全序列化和使用"""
+        # LDAP 查询结果中可能包含二进制类型的属性值，目前用户属性字段不支持二进制，这里直接过滤掉
+        self.attrs = {k: v for k, v in self.attrs.items() if not LDAPObject.has_binary_value(v)}
+        return self
+
+    @staticmethod
+    def has_binary_value(value: Any) -> bool:
+        if isinstance(value, bytes):
+            return True
+
+        if isinstance(value, list):
+            return any(isinstance(ele, bytes) for ele in value)
+
+        return False

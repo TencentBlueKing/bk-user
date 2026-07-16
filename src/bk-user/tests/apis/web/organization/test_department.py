@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
+from bkuser.plugins.local.utils import gen_dept_code
 from django.urls import reverse
 from rest_framework import status
 
@@ -192,6 +193,10 @@ class TestTenantDepartmentUpdateApi:
 
         company.refresh_from_db()
         assert company.data_source_department.name == "总公司"
+        assert company.data_source_department.code == gen_dept_code("总公司")
+
+        tenant_dept_id_record = TenantDepartmentIDRecord.objects.get(tenant_department_id=company.id)
+        assert tenant_dept_id_record.code == gen_dept_code("总公司")
 
     def test_update_invalid_dept(self, api_client):
         url = reverse("organization.tenant_department.update_destroy", kwargs={"id": 10**7})
@@ -343,6 +348,10 @@ class TestTenantDepartmentParentUpdateApi:
         group_baa_dept_relation = DataSourceDepartmentRelation.objects.get(department=group_baa.data_source_department)
         center_ab_dept_relation = DataSourceDepartmentRelation.objects.get(department=center_ab.data_source_department)
         assert group_baa_dept_relation.parent == center_ab_dept_relation
+        assert group_baa.data_source_department.code == gen_dept_code("公司/部门A/中心AB/小组BAA")
+
+        tenant_dept_id_record = TenantDepartmentIDRecord.objects.get(tenant_department_id=group_baa.id)
+        assert tenant_dept_id_record.code == gen_dept_code("公司/部门A/中心AB/小组BAA")
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_dept_parent_update_to_root(self, api_client, random_tenant):

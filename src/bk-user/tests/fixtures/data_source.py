@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -24,7 +24,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
-from tests.test_utils.data_source import init_data_source_users_depts_and_relations
+from tests.test_utils.data_source import init_data_source_users_depts_and_relations, init_virtual_data_source_users
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                         "method": "email",
                         "scene": "user_initialize",
                         "title": "您的账户已经成功创建",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的账户已经成功创建，请尽快修改密码",
                         "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
                     },
@@ -63,21 +63,21 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                         "method": "email",
                         "scene": "reset_password",
                         "title": "登录密码重置",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>点击以下链接以重置代码</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "user_initialize",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的账户已经成功创建，请尽快修改密码",
                         "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "reset_password",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>点击以下链接以重置代码</p>",
                     },
@@ -94,7 +94,7 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                         "method": "email",
                         "scene": "password_expiring",
                         "title": "【蓝鲸智云】密码即将到期提醒！",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的密码即将到期！",
                         "content_html": "<p>您的密码即将到期！</p>",
                     },
@@ -102,21 +102,21 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                         "method": "email",
                         "scene": "password_expired",
                         "title": "【蓝鲸智云】密码到期提醒！",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>您的密码已到期！</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "password_expiring",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的密码即将到期！",
                         "content_html": "<p>您的密码即将到期！</p>",
                     },
                     {
                         "method": "sms",
                         "scene": "password_expired",
-                        "sender": "蓝鲸智云",
+                        "sender": "",
                         "content": "您的密码已到期！",
                         "content_html": "<p>您的密码已到期！</p>",
                     },
@@ -145,6 +145,24 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
     )
+
+
+@pytest.fixture
+def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
+    """裸虚拟数据源（没有用户数据）"""
+    return DataSource.objects.create(
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.VIRTUAL,
+        plugin=local_ds_plugin,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+    )
+
+
+@pytest.fixture
+def full_virtual_data_source(bare_virtual_data_source) -> DataSource:
+    """携带用户信息的虚拟数据源"""
+    init_virtual_data_source_users(bare_virtual_data_source)
+    return bare_virtual_data_source
 
 
 @pytest.fixture

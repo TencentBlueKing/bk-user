@@ -84,3 +84,16 @@
 .message-fix-fixed .overview .tools .tool.fix {
   position: static;
 }
+
+/* vxe-table 可排序表头样式 */
+.vxe-header--column.is--sortable {
+  cursor: pointer;
+}
+
+.vxe-table--filter-wrapper {
+  min-width: unset !important;
+}
+
+.vxe-table--filter-body {
+  max-height: unset !important;
+}

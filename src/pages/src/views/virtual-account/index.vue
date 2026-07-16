@@ -1,125 +1,171 @@
 <template>
   <div :class="['virtual-account-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <header>
-      <bk-button theme="primary" @click="handleClick('add')">
-        <i class="user-icon icon-add-2 mr8" />
-        {{ $t('新建') }}
-      </bk-button>
+      <div class="flex">
+        <bk-button
+          theme="primary"
+          class="mr-[8px]"
+          @click="handleClick('add')">
+          <i class="user-icon icon-add-2 mr8" />
+          {{ $t('新建') }}
+        </bk-button>
+      </div>
       <bk-input
         class="header-right"
         v-model="searchVal"
-        :placeholder="$t('搜索用户名、姓名')"
+        :placeholder="$t('搜索用户名、全名')"
         type="search"
         clearable
         @enter="handleEnter"
         @clear="handleClear"
       />
     </header>
-    <bk-table
+    <Table
       v-bkloading="{ loading: isLoading }"
       class="table-users"
-      :min-height="150"
+      :max-height="maxHeight"
       :data="tableData"
-      :border="['outer']"
       :pagination="pagination"
-      show-overflow-tooltip
-      @select="handleSelect"
-      @select-all="handleSelectAll"
+      :settings="settings"
+      :show-settings="true"
+      :virtual-y-config="{ enabled: true, gt: 10 }"
       @page-limit-change="pageLimitChange"
       @page-value-change="pageCurrentChange"
+      @setting-change="handleSettingChange"
     >
       <template #empty>
         <Empty
-          :is-data-empty="isDataEmpty"
-          :is-search-empty="isEmptySearch"
-          :is-data-error="isDataError"
-          @handle-empty="handleClear"
-          @handle-update="initVirtualUsers"
+          :type="curExceptionType"
+          @clear="handleClear"
+          @refresh="initVirtualUsers"
         />
       </template>
-      <template #prepend v-if="selectList.length">
-        <div class="batch-operation">
-          {{ $t('当前已选择') }}<span class="font-bold mx-[8px]">{{ selectList.length }}</span>{{ $t('条数据') }}
-          <bk-button class="ml-[8px]" theme="primary" text>{{ $t('批量删除') }}</bk-button>
-        </div>
-      </template>
-      <!-- 暂不支持批量操作 -->
-      <!-- <bk-table-column type="selection" :width="80" align="center" /> -->
-      <bk-table-column prop="id" :label="$t('用户ID')">
+      <TableColumn
+        field="username"
+        :label="$t('用户名')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
         <template #default="{ row }">
-          <span
-            class="cursor-pointer"
-            @mouseenter="row.isShow = true"
-            @mouseleave="row.isShow = false"
-            @click="copy(row.id)"
-          >
-            {{ row.id }}
-            <i v-if="row.isShow" class="user-icon icon-copy text-[#3A84FF] text-[14px]" />
-          </span>
+          <bk-button text theme="primary" @click="handleClick('view', row.id)">{{ row.username }}</bk-button>
         </template>
-      </bk-table-column>
-      <bk-table-column prop="username" :label="$t('用户名')" />
-      <bk-table-column prop="full_name" :label="$t('姓名')" />
-      <bk-table-column prop="email" :label="$t('邮箱')">
-        <template #default="{ row }">{{ row.email || '--' }}</template>
-      </bk-table-column>
-      <bk-table-column prop="phone" :label="$t('手机号')">
-        <template #default="{ row }">{{ row.phone || '--' }}</template>
-      </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="150">
+      </TableColumn>
+      <TableColumn
+        field="full_name"
+        :label="$t('全名')"
+        show-overflow="tooltip"
+        :min-width="200"
+      />
+      <TableColumn
+        field="app_codes"
+        :label="$t('所属应用')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
+        <template #default="{ row }">
+          {{ row.app_codes?.length ? row.app_codes?.join(', ') : '--' }}
+        </template>
+      </TableColumn>
+      <TableColumn
+        field="owners"
+        :label="$t('账号责任人')"
+        show-overflow="tooltip"
+        :min-width="300"
+      >
+        <template #default="{ row }">
+          <DisplayName :user-id="row.owners" />
+        </template>
+      </TableColumn>
+      <TableColumn
+        field="created_at"
+        :label="$t('创建时间')"
+        show-overflow="tooltip"
+        :min-width="200"
+      >
+        <template #default="{ row }">
+          <span>{{ row?.created_at || '--' }}</span>
+        </template>
+      </TableColumn>
+      <TableColumn
+        field="action"
+        :label="$t('操作')"
+        :min-width="160"
+      >
         <template #default="{ row }">
           <bk-button class="mr-[8px]" theme="primary" text @click="handleClick('edit', row.id)">
             {{ $t('编辑') }}
           </bk-button>
-          <bk-button theme="primary" text @click="handleDelete(row)">{{ $t('删除') }}</bk-button>
         </template>
-      </bk-table-column>
-    </bk-table>
+      </TableColumn>
+    </Table>
     <!-- 新建编辑 -->
     <bk-sideslider
       :width="640"
       :is-show="detailsConfig.isShow"
-      :title="detailsConfig.title"
       render-directive="if"
       :before-close="handleBeforeClose"
       quick-close
     >
+      <template #header>
+        <div class="flex justify-between w-full pr-[15px]">
+          <div>{{ detailsConfig.title }}</div>
+          <bk-button
+            v-if="detailsConfig.type === 'view'"
+            outline
+            theme="primary"
+            @click="handleClick('edit')">
+            {{ $t('编辑') }}
+          </bk-button>
+        </div>
+      </template>
       <EditDetails
+        v-if="detailsConfig.type !== 'view'"
         :details-info="detailsInfo"
         @update-users="updateUsers"
         @handle-cancel-edit="handleCancelEdit" />
+      <ViewDetails
+        v-else
+        :details-info="detailsInfo" />
     </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="ts">
-import { InfoBox, Message } from 'bkui-vue';
+import { Message } from 'bkui-vue';
 import { inject, nextTick, onMounted, reactive, ref, watch  } from 'vue';
 
-import EditDetails from './EditDetails.vue';
+import { Table, TableColumn } from '@blueking/table';
 
+import EditDetails from './EditDetails.vue';
+import ViewDetails from './ViewDetails.vue';
+
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
+import DisplayName from '@/components/display-name.vue';
 import Empty from '@/components/SearchEmpty.vue';
-import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
+import { useTableMaxHeight } from '@/hooks';
+import useTableEmpty from '@/hooks/use-table-empty';
+import { getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { useUser } from '@/store';
-import { copy } from '@/utils';
 
 const userStore = useUser();
+const maxHeight = useTableMaxHeight(148);
 
 const editLeaveBefore = inject('editLeaveBefore');
 
 const searchVal = ref('');
 const isLoading = ref(false);
 const tableData = ref([]);
-const isDataEmpty = ref(false);
-const isEmptySearch = ref(false);
-const isDataError = ref(false);
-const selectList = ref([]);
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: searchVal,
+});
 
 const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
+  remote: true,
 });
 
 onMounted(() => {
@@ -130,7 +176,7 @@ onMounted(() => {
 const initVirtualUsers = async () => {
   try {
     isLoading.value = true;
-    isDataError.value = false;
+    clearErrorType();
 
     const params = {
       page: pagination.current,
@@ -138,37 +184,22 @@ const initVirtualUsers = async () => {
       keyword: searchVal.value,
     };
     const res = await getVirtualUsers(params);
-    if (res.data?.count === 0) {
-      isDataEmpty.value = searchVal.value === '';
-      isEmptySearch.value = searchVal.value !== '';
-    }
     pagination.count = res.data?.count;
     tableData.value = res.data?.results;
   } catch (e) {
     console.warn(e);
-    isDataError.value = true;
+    setTypeToError();
   } finally {
     isLoading.value = false;
   }
-};
-
-// 勾选数据行
-const handleSelect = ({ row, checked }) => {
-  checked ? selectList.value.push(row) : selectList.value = selectList.value.filter(item => item.id !== row.id);
-};
-
-// 勾选所有数据行
-const handleSelectAll = ({ checked, data }) => {
-  selectList.value = checked ? data : [];
 };
 
 // 新建/编辑信息
 const detailsInfo = ref({
   username: '',
   full_name: '',
-  email: '',
-  phone: '',
-  phone_country_code: '86',
+  app_codes: '',
+  owners: [],
 });
 
 // 侧栏配置
@@ -178,35 +209,53 @@ const detailsConfig = reactive({
   type: '',
 });
 
+const settings = reactive({
+  checked: ['username', 'full_name', 'app_codes', 'owners', 'created_at', 'action'],
+  size: 'small',
+});
+
+// 更改表格设置时，更新当前行高
+const handleSettingChange = (data: any) => {
+  settings.size = data.size as string;
+};
+
 const enumData = {
   add: {
-    title: t('新增用户'),
+    title: t('新建虚拟账户'),
     type: 'add',
   },
+  view: {
+    title: t('账号详情'),
+    type: 'view',
+  },
   edit: {
-    title: t('编辑用户'),
+    title: t('编辑虚拟账户'),
     type: 'edit',
   },
 };
-
+const isViewToEdit = ref(false);
 watch(() => detailsConfig.isShow, (val) => {
   if (!val) {
     nextTick(() => {
       detailsInfo.value = {
         username: '',
         full_name: '',
-        email: '',
-        phone: '',
-        phone_country_code: '86',
+        app_codes: '',
+        owners: [],
       };
+      isViewToEdit.value = false;
     });
   }
 });
 
 const handleClick = async (type: string, id?: string) => {
-  if (type !== 'add') {
+  if (type !== 'add' && !isViewToEdit.value) {
     const res = await getVirtualUsersDetail(id);
     detailsInfo.value = res.data;
+    detailsInfo.value.app_codes = res.data?.app_codes.join(',');
+    if (type === 'view') {
+      isViewToEdit.value = true;
+    }
   }
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
@@ -238,25 +287,6 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
-
-const handleDelete = (item: any) => {
-  InfoBox({
-    width: 400,
-    title: `${t('确认删除')} ${item.username} ${t('用户')}？`,
-    confirmText: t('删除'),
-    onConfirm: () => {
-      deleteVirtualUsers(item.id)
-        .then(() => {
-          initVirtualUsers();
-          Message({ theme: 'success', message: t('删除成功') });
-        })
-        .catch((error) => {
-          console.warn(error);
-        });
-    },
-  });
-};
-
 const handleEnter = () => {
   pagination.current = 1;
   initVirtualUsers();
@@ -312,5 +342,12 @@ const pageCurrentChange = (current: number) => {
     padding-left: 18px;
     background: #fff;
   }
+}
+</style>
+
+<style lang="less">
+/* 隐藏setting Tab的滚动条 */
+.action-tab-wrapper {
+  overflow-y: auto !important;
 }
 </style>

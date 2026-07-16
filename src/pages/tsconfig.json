@@ -13,6 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
+    "jsxImportSource": "vue",
     "outDir": "dist",
     "types": [
       "node"

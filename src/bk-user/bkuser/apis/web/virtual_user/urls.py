@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -20,7 +20,5 @@ from . import views
 
 urlpatterns = [
     path("", views.VirtualUserListCreateApi.as_view(), name="virtual_user.list_create"),
-    path(
-        "<str:id>/", views.VirtualUserRetrieveUpdateDestroyApi.as_view(), name="virtual_user.retrieve_update_destroy"
-    ),
+    path("<str:id>/", views.VirtualUserRetrieveUpdateApi.as_view(), name="virtual_user.retrieve_update"),
 ]

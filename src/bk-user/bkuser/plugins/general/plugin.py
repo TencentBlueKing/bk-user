@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -47,7 +47,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         """获取部门信息"""
         cfg = self.plugin_config.server_config
         depts = fetch_all_data(
-            cfg.server_base_url + cfg.department_api_path,
+            self.plugin_config.server_base_url + cfg.department_api_path,
             gen_headers(self.plugin_config.auth_config),
             gen_query_params(cfg.department_api_query_params),
             cfg.page_size,
@@ -60,7 +60,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         """获取用户信息"""
         cfg = self.plugin_config.server_config
         users = fetch_all_data(
-            cfg.server_base_url + cfg.user_api_path,
+            self.plugin_config.server_base_url + cfg.user_api_path,
             gen_headers(self.plugin_config.auth_config),
             gen_query_params(cfg.user_api_query_params),
             cfg.page_size,
@@ -76,14 +76,14 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         user_data, dept_data = None, None
         try:
             user_data = fetch_first_item(
-                cfg.server_base_url + cfg.user_api_path,
+                self.plugin_config.server_base_url + cfg.user_api_path,
                 gen_headers(self.plugin_config.auth_config),
                 gen_query_params(cfg.user_api_query_params),
                 cfg.request_timeout,
             )
 
             dept_data = fetch_first_item(
-                cfg.server_base_url + cfg.department_api_path,
+                self.plugin_config.server_base_url + cfg.department_api_path,
                 gen_headers(self.plugin_config.auth_config),
                 gen_query_params(cfg.department_api_query_params),
                 cfg.request_timeout,
@@ -92,7 +92,7 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             err_msg = str(e)
         except Exception as e:
             logger.exception("general data source plugin test connection error")
-            err_msg = _("连接测试失败: 无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息：{}").format(
+            err_msg = _("连接测试失败：无法建立连接或请求超时，请检查服务器地址与网络配置。异常信息：{}").format(
                 str(e)
             )
 

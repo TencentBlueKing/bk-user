@@ -1,13 +1,77 @@
 <template>
-  <bk-loading :loading="isLoading" class="data-source-content user-scroll-y">
+  <bk-loading
+    :loading="isLoading"
+    class="data-source-content user-scroll-y"
+    :z-index="10"
+  >
     <bk-form
       v-if="props.curStep === 1 && serverConfigData.plugin_id"
       form-type="vertical"
       ref="formRef1"
       :model="serverConfigData"
       :rules="rulesServerConfig">
-      <Row :title="$t('服务配置')">
-        <bk-form-item class="w-[560px]" :label="$t('服务地址')" property="server_config.server_base_url" required>
+      <Row :title="$t('认证配置')">
+        <bk-form-item :label="$t('认证方式')" required>
+          <bk-radio-group
+            v-model="serverConfigData.auth_config.method"
+            @change="handleChange">
+            <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
+            <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
+            <bk-radio-button style="width: 120px;" label="bk_apigateway">{{ $t('蓝鲸网关') }}</bk-radio-button>
+          </bk-radio-group>
+        </bk-form-item>
+        <bk-form-item
+          v-if="serverConfigData.auth_config.method === 'bearer_token'"
+          class="w-[560px]"
+          label="Token"
+          property="auth_config.bearer_token"
+          required>
+          <bk-input
+            type="password"
+            autocomplete="new-password"
+            v-model="serverConfigData.auth_config.bearer_token"
+            @focus="handleFocus"
+            @input="handleChange" />
+        </bk-form-item>
+        <div v-else-if="serverConfigData.auth_config.method === 'basic_auth'" class="item-flex w-[560px]">
+          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.username"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
+            <passwordInput
+              v-model="serverConfigData.auth_config.password"
+              @focus="handleFocus"
+              @input="inputPassword" />
+          </bk-form-item>
+        </div>
+        <div v-else-if="serverConfigData.auth_config.method === 'bk_apigateway'" class="item-flex w-[560px]">
+          <bk-form-item label="gateway_name" property="auth_config.gateway_name" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.gateway_name"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+          <bk-form-item label="gateway_stage" property="auth_config.gateway_stage" required>
+            <bk-input
+              v-model="serverConfigData.auth_config.gateway_stage"
+              @focus="handleFocus"
+              @input="handleChange"
+            />
+          </bk-form-item>
+        </div>
+      </Row>
+      <Row :title="$t('服务配置')" class="!shadow-none !border-b-0">
+        <bk-form-item
+          v-if="isShowServerConfig"
+          class="w-[560px]"
+          :label="$t('服务地址')"
+          property="server_config.server_base_url"
+          required>
           <bk-input
             v-model="serverConfigData.server_config.server_base_url"
             :placeholder="validate.serverBaseUrl.message"
@@ -90,72 +154,33 @@
           </bk-form-item>
         </div>
       </Row>
-      <Row :title="$t('认证配置')">
-        <bk-form-item :label="$t('认证方式')" required>
-          <bk-radio-group
-            v-model="serverConfigData.auth_config.method"
-            @change="handleChange"
-          >
-            <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
-            <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
-          </bk-radio-group>
-        </bk-form-item>
-        <bk-form-item
-          v-if="serverConfigData.auth_config.method === 'bearer_token'"
-          class="w-[560px]"
-          label="Token"
-          property="auth_config.bearer_token"
-          required>
-          <bk-input
-            type="password"
-            autocomplete="new-password"
-            v-model="serverConfigData.auth_config.bearer_token"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <div v-else class="item-flex w-[560px]">
-          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
-            <bk-input
-              v-model="serverConfigData.auth_config.username"
-              @focus="handleFocus"
-              @input="handleChange"
-            />
-          </bk-form-item>
-          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <passwordInput
-              v-model="serverConfigData.auth_config.password"
-              @focus="handleFocus"
-              @input="inputPassword" />
-          </bk-form-item>
+      <div class="btn">
+        <div>
+          <bk-button
+            class="mr-[8px]"
+            theme="primary"
+            :outline="!nextDisabled"
+            :loading="connectionLoading"
+            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+            {{ $t('下一步') }}
+          </bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
-        <div class="btn">
-          <div>
-            <bk-button
-              class="mr-[8px]"
-              theme="primary"
-              :outline="!nextDisabled"
-              :loading="connectionLoading"
-              @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-            <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-              {{ $t('下一步') }}
-            </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-          </div>
-          <div class="connection-alert" v-if="connectionStatus !== null">
-            <bk-alert
-              :theme="connectionStatus ? 'success' : 'error'"
-              :show-icon="false">
-              <template #title>
-                <span>
-                  <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                  <i v-else class="bk-sq-icon icon-close-fill" />
-                  {{ connectionText }}
-                </span>
-              </template>
-            </bk-alert>
-          </div>
+        <div class="connection-alert" v-if="connectionStatus !== null">
+          <bk-alert
+            :theme="connectionStatus ? 'success' : 'error'"
+            :show-icon="false">
+            <template #title>
+              <span>
+                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                <i v-else class="bk-sq-icon icon-close-fill" />
+                {{ connectionText }}
+              </span>
+            </template>
+          </bk-alert>
         </div>
-      </Row>
+      </div>
     </bk-form>
     <bk-form
       v-else
@@ -204,27 +229,41 @@
             />
           </bk-select>
         </bk-form-item>
-        <div class="btn">
-          <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-            {{ dataSourceId ? $t('保存') : $t('提交') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
       </Row>
+      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+        <template #header>
+          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+        </template>
+        <ConflictConfig
+          ref="conflictConfigRef"
+          :config="fieldSettingData.username_config"
+          :disabled="isEdit"
+        />
+      </Row>
+      <div class="btn">
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+          {{ isEdit ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 
+import { isNil } from '@/common/util';
+import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
+import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
+import { useConflictRules } from '@/hooks/useConflictRules';
 import {
   getDataSourceDetails,
   getFields,
@@ -232,8 +271,10 @@ import {
   postTestConnection,
   putDataSourceDetails,
 } from '@/http';
+import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
+import { useDataSourceStore, useUser } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 const props = defineProps({
@@ -251,13 +292,18 @@ const props = defineProps({
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 
+const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
+const userStore = useUser();
+const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
 const formRef1 = ref();
 const editLeaveBefore = inject('editLeaveBefore');
 
 const formRef2 = ref();
+const conflictConfigRef = ref();
+const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 const defaultServerConfig = () => ({
   plugin_id: 'general',
@@ -276,6 +322,9 @@ const defaultServerConfig = () => ({
     bearer_token: '',
     username: '',
     password: '',
+    gateway_name: '',
+    gateway_stage: '',
+    tenant_id: '',
   },
 });
 
@@ -294,6 +343,22 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
+  username_config: {
+    strategy: 'manual',
+    prefix: '',
+    suffix: '',
+  } as UsernameConfig,
+});
+
+/** 是否展示服务配置-服务地址 form-item */
+const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigateway');
+
+watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigateway') => {
+  if (curMethod === 'bk_apigateway') {
+    serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
+  } else {
+    serverConfigData.value.auth_config.tenant_id = '';
+  }
 });
 
 // 重置数据
@@ -351,6 +416,7 @@ const rulesServerConfig = {
 const rulesFieldSetting = {
   target_field: [validate.required],
   source_field: [validate.required],
+  ...conflictRules,
 };
 
 const apiFields = ref([]);
@@ -359,7 +425,7 @@ const fieldMappingList = ref([]);
 onMounted(async () => {
   try {
     isLoading.value = true;
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const res = await getDataSourceDetails(props.dataSourceId);
       serverConfigData.value.plugin_id = res.data?.plugin?.id;
       if (JSON.stringify(res.data?.plugin_config) !== '{}') {
@@ -368,6 +434,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
+      fieldSettingData.value.username_config = res.data?.username_config;
     } else {
       serverConfigData.value = defaultServerConfig();
     }
@@ -387,7 +454,7 @@ const handleNext = async () => {
     emit('updateCurStep', 2);
     isLoading.value = true;
     const res = await getFields();
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       const list = [];
       const customList = [];
       const mapFields = (fields, item, isDisabled, fieldMappingType) => {
@@ -484,7 +551,7 @@ const handleLastStep = async () => {
   fieldSettingData.value.field_mapping.custom_fields = [];
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
-  if (props?.dataSourceId) {
+  if (isEdit.value) {
     const res = await getDataSourceDetails(props.dataSourceId);
     fieldSettingData.value.sync_config = res.data?.sync_config;
   } else {
@@ -521,7 +588,7 @@ const handleTestConnection = async () => {
         auth_config: serverConfigData.value.auth_config,
       },
     };
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.data_source_id = props.dataSourceId;
     }
     const res = await postTestConnection(params);
@@ -598,7 +665,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params = {
+    const params: Partial<NewDataSourceParams> = {
       plugin_config: {
         server_config: serverConfigData.value.server_config,
         auth_config: serverConfigData.value.auth_config,
@@ -610,14 +677,21 @@ const handleSubmit = async () => {
       sync_config: fieldSettingData.value.sync_config,
     };
 
-    if (props?.dataSourceId) {
+    if (isEdit.value) {
       params.id = props.dataSourceId;
       await putDataSourceDetails(params);
-      emit('updateSuccess', t('更新'));
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+      });
     } else {
       params.plugin_id = serverConfigData.value.plugin_id;
-      await newDataSource(params);
-      emit('updateSuccess', t('新建成功'));
+      params.username_config = conflictConfigRef.value?.getData();
+      const res = await newDataSource(params);
+      emit('updateSuccess', {
+        text: t('新建成功'),
+        dataSourceId: res.data?.id,
+      });
     }
     window.changeInput = false;
   } catch (e) {
@@ -678,7 +752,8 @@ const handleCancel = () => {
 
 .btn {
   position: relative;
-  padding: 8px 0 32px;
+  padding: 0px 0 24px 24px;
+  background-color: #fff;
 
   button {
     min-width: 88px;

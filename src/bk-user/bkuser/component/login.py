@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -28,7 +28,7 @@ from .http import http_get
 logger = logging.getLogger("component")
 
 
-# FIXME: 后续登录OpenAPI接入APIGateway需重新调整
+# Note: 用户管理模块的调用登录接口，不经过 APIGateway，避免循环依赖
 def _call_login_api(http_func, url_path, **kwargs):
     request_id = local.request_id
 
@@ -38,6 +38,8 @@ def _call_login_api(http_func, url_path, **kwargs):
         {
             "Content-Type": "application/json",
             "X-Request-Id": request_id,
+            "X-Bk-App-Code": settings.BK_APP_CODE,
+            "X-Bk-App-Secret": settings.BK_APP_SECRET,
         }
     )
 
@@ -59,37 +61,12 @@ def _call_login_api(http_func, url_path, **kwargs):
             f"error={resp_data['error']}"
         )
 
-    code = resp_data.get("bk_error_code", -1)
-    message = resp_data.get("bk_error_msg", "unknown")
-    if code == 0:
-        return resp_data["data"]
-
-    logger.error(
-        "login api error! %s %s, kwargs: %s, request_id: %s, code: %s, message: %s",
-        http_func.__name__,
-        url,
-        kwargs,
-        request_id,
-        code,
-        message,
-    )
-
-    raise error_codes.REMOTE_REQUEST_ERROR.format(
-        f"request login error! "
-        f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}] "
-        f"Response[code={code}, message={message}]"
-    )
-
-
-def verify_bk_token(bk_token: str):
-    """验证bk_token"""
-    url_path = "/api/v2/is_login/"
-    return _call_login_api(http_get, url_path, params={"bk_token": bk_token})
+    return resp_data["data"]
 
 
 def get_user_info(bk_token: str):
     """
     获取用户信息
     """
-    url_path = "/api/v2/get_user/"
+    url_path = "api/v3/bkuser/bk-tokens/userinfo/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})

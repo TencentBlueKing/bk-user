@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -32,10 +32,10 @@ def forwards_func(apps, schema_editor):
         id=BuiltinIdpPluginEnum.LOCAL,
         defaults={
             "name": BuiltinIdpPluginEnum.get_choice_label(BuiltinIdpPluginEnum.LOCAL),
-            "name_zh_cn": "本地账密",
-            "name_en_us": "Local Account Password",
-            "description": "使用本地DB数据源提供的用户名和密码进行认证",
-            "description_zh_cn": "使用本地DB数据源提供的用户名和密码进行认证",
+            "name_zh_cn": "账密登录",
+            "name_en_us": "Account Password Login",
+            "description": "使用本地 DB 数据源提供的用户名和密码进行认证",
+            "description_zh_cn": "使用本地 DB 数据源提供的用户名和密码进行认证",
             "description_en_us": "Authenticate using username and password provided by the local DB data source",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/idp_plugins/local/logo.png"),
         },

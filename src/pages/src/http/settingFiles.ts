@@ -1,5 +1,7 @@
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
+  BuiltinManagerData,
   CollaborationSyncRecordsParams,
   FromStrategiesConfirmParams,
   NewCustomFieldsParams,
@@ -12,13 +14,10 @@ import type {
   PutUserValidityParams,
   RealUsersData,
   RealUsersParams,
+  TenantInfoData,
   TenantItem,
   TenantSettingFieldsData,
 } from './types/settingFiles';
-
-interface ResponseData<T> {
-  data: T
-}
 
 /**
  * 用户字段列表
@@ -53,7 +52,7 @@ export const putTenantUserValidityPeriod = (params: PutUserValidityParams) => ht
 /**
  * 管理员配置-租户内置管理账号信息
  */
-export const getBuiltinManager = () => http.get('/api/v3/web/tenant-info/builtin-manager/');
+export const getBuiltinManager = () => http.get<ResponseData<BuiltinManagerData>>('/api/v3/web/tenant-info/builtin-manager/');
 
 /**
  * 管理员配置-变更内置管理账号密码相关信息
@@ -88,7 +87,7 @@ export const deleteRealManagers = (ids: string) => http.delete(`/api/v3/web/tena
 /**
  * 基础设置-租户详情
  */
-export const getTenantInfo = () => http.get('/api/v3/web/tenant-info/');
+export const getTenantInfo = () => http.get<ResponseData<TenantInfoData>>('/api/v3/web/tenant-info/');
 
 /**
  * 基础设置-更新租户
@@ -158,3 +157,18 @@ export const getCollaborationSyncRecordsLogs = (id: number) => http.get(`/api/v3
  * 跨租户协同-新建协同策略-目标租户
  */
 export const getTenantList = (params: TenantItem) => http.get('/api/v3/web/collaboration/target-tenants/', params);
+
+/**
+ * 用户展示名表达式
+ */
+export const getDisplayNameExpression = () => http.get('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/');
+
+/**
+ * 修改用户展示名表达式
+ */
+export const putDisplayNameExpression = (params: { expression: string }) => http.put('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/', params);
+
+/**
+ * 用户展示名配置预览
+ */
+export const getDisplayNameExpressionPreview = (params: { expression: string }) => http.post('/api/v3/web/tenant-setting/settings/tenant-user-display-name-expression/preview/', params);

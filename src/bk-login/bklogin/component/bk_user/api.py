@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -22,7 +22,7 @@ from django.conf import settings
 from requests.auth import HTTPBasicAuth
 
 from bklogin.common.error_codes import error_codes
-from bklogin.component.http import HttpStatusCode, http_get, http_post
+from bklogin.component.http import HttpStatusCode, http_get, http_post, http_put
 from bklogin.utils.url import urljoin
 
 from .models import GlobalSetting, IdpDetail, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
@@ -49,15 +49,16 @@ def _call_bk_user_api(http_func, url_path: str, allow_error_status_func: Callabl
     if allow_error_status_func(status) or status.is_success:
         return resp_data
 
-    error = resp_data.get("error")
+    error = resp_data.get("error") or {}
+    message = error.get("message") or "unknown error"
     logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
-    raise error_codes.REMOTE_REQUEST_ERROR.f(
-        f"request bk_user api error! " f"Request=[{http_func.__name__} {url_path} Response[error={error}]"
-    )
+    # FIXME(nan): 重构错误码体系，关注点在于如何区分用户侧错误和系统侧错误，
+    #  如何更优好的给用户提示且不暴露系统细节，大部分场景下，应该避免代码式的错误展示
+    raise error_codes.REMOTE_REQUEST_ERROR.f(message)
 
 
 def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
-    """只允许20x的用户管理接口"""
+    """只允许 20x 的用户管理接口"""
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
 
 
@@ -86,13 +87,13 @@ def list_idp(tenant_id: str, idp_owner_tenant_id: str) -> List[IdpInfo]:
 
 
 def get_idp(idp_id: str) -> IdpDetail:
-    """获取IDP信息"""
+    """获取 IDP 信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v3/login/idps/{idp_id}/")
     return IdpDetail(**data)
 
 
-def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
-    """根据IDP用户查询匹配的租户用户"""
+def list_matched_tenant_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
+    """根据 IDP 用户查询匹配的租户用户"""
     data = _call_bk_user_api_20x(
         http_post,
         f"/api/v3/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
@@ -102,6 +103,15 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
 
 
 def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
-    """通过租户用户ID获取租户用户信息"""
+    """通过租户用户 ID 获取租户用户信息"""
     data = _call_bk_user_api_20x(http_get, f"/api/v3/login/tenant-users/{tenant_user_id}/")
     return TenantUserDetailInfo(**data)
+
+
+def update_tenant_user_language(tenant_user_id: str, language: str) -> None:
+    """更新租户用户语言"""
+    return _call_bk_user_api_20x(
+        http_put,
+        f"/api/v3/login/tenant-users/{tenant_user_id}/language/",
+        json={"language": language},
+    )

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
@@ -25,9 +25,10 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -56,7 +57,7 @@ class IdpListOutputSLZ(serializers.Serializer):
 
 
 def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") -> str:
-    """校验IDP 是否重名"""
+    """校验 IDP 是否重名"""
     queryset = Idp.objects.filter(name=name, owner_tenant_id=tenant_id)
     # 过滤掉自身名称
     if idp_id:
@@ -76,7 +77,7 @@ def _validate_source_field(value):
     if not re.fullmatch(SOURCE_FIELD_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
+                "{} 不符合认证源字段的命名规范：由 3-32 位字母、数字、下划线 (_)、连接符 (-) 字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
             ).format(value),
         )
 
@@ -137,11 +138,7 @@ class IdpCreateInputSLZ(serializers.Serializer):
         plugin_id = attrs["plugin_id"]
 
         # 同类型的数据源对同一类型插件只允许一个
-        if Idp.objects.filter(
-            owner_tenant_id=self.context["tenant_id"],
-            plugin_id=plugin_id,
-            data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, attrs["data_source_match_rules"][0]["data_source_id"]],
-        ).exists():
+        if IdpDataSourceRelationHandler.has_duplicate_plugin_real_relation(self.context["tenant_id"], plugin_id):
             raise ValidationError(_("{} 类型的认证源已存在").format(plugin_id))
 
         try:
@@ -168,8 +165,14 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
-    data_source_match_rules = serializers.JSONField(help_text="数据源匹配规则", default=list)
+    data_source_match_rules = serializers.SerializerMethodField(help_text="数据源匹配规则")
     callback_uri = serializers.CharField(help_text="回调地址")
+
+    def get_data_source_match_rules(self, obj: Idp) -> List[Dict[str, Any]]:
+        # 当前管理页仍只展示一个实名数据源的登录配置模板，不返回完整 relations。
+        # 登录匹配必须读取 IdpDataSourceRelation 中的完整关系，不能依赖该响应字段。
+        match_rule = IdpDataSourceRelationHandler.get_primary_real_match_rule(obj)
+        return [match_rule.model_dump()] if match_rule else []
 
 
 class IdpPartialUpdateInputSLZ(serializers.Serializer):

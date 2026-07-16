@@ -5,8 +5,14 @@
       {{ $t('其他租户(通过跨租户协同分享)') }}
     </div>
     <div class="h-[calc(100%-36px)] overflow-y-auto">
-      <div v-for="collaboration in collaborations" :key="collaboration.id">
-        <collaboration-item :tenant="collaboration" />
+      <div
+        v-for="collaboration in organizationStore.collaborationList"
+        :key="collaboration.id"
+      >
+        <collaboration-item
+          :active-org="activeOrg"
+          :collaboration-tenant="collaboration"
+        />
       </div>
     </div>
   </section>
@@ -17,15 +23,23 @@ import { onBeforeMount, ref } from 'vue';
 
 import CollaborationItem from './collaboration-item.vue';
 
-import { getCollaboration } from '@/http/organizationFiles';
+import useOrganizationStore from '@/store/organization';
 
-const collaborations = ref([]);
+interface IProps {
+  activeOrg: {
+    id: number | string;
+    name: string;
+  }
+}
+
+defineProps<IProps>();
+
+const organizationStore = useOrganizationStore();
 const loading = ref(false);
 
 onBeforeMount(async () => {
   loading.value = true;
-  const tenantData = await getCollaboration();
-  collaborations.value = tenantData?.data || [];
+  await organizationStore.handleFetchCollaborationList();
   loading.value = false;
 });
 </script>

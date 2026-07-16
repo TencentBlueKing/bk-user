@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -23,9 +23,16 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.tenant.constants import NotificationMethod, NotificationScene, UserFieldDataType
-from bkuser.apps.tenant.data_models import TenantUserCustomFieldOption
+from bkuser.apps.tenant.constants import (
+    DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS,
+    DISPLAY_NAME_EXPRESSION_FIELD_PATTERN,
+    NotificationMethod,
+    NotificationScene,
+    UserFieldDataType,
+)
+from bkuser.apps.tenant.data_models import DisplayNameExpressionExtraField, TenantUserCustomFieldOption
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.tenant import TenantUserDisplayNameHandler
 from bkuser.biz.validators import validate_tenant_custom_field_name
 
 logger = logging.getLogger(__name__)
@@ -41,7 +48,7 @@ def _validate_options(options: List[Dict[str, str]]):
     except PDValidationError as e:
         raise ValidationError(_("枚举选项不合法：{}".format(e)))
 
-    # 判断重复枚举id
+    # 判断重复枚举 id
     option_ids = [obj.id for obj in opts]
     if duplicate_opt_ids := [opt_id for opt_id, cnt in Counter(option_ids).items() if cnt > 1]:
         raise ValidationError(_("存在重复枚举 ID：{}").format(duplicate_opt_ids))
@@ -68,7 +75,7 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
 
 
 class BuiltinFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -79,7 +86,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="字段ID", read_only=True)
+    id = serializers.IntegerField(help_text="字段 ID", read_only=True)
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -98,7 +105,7 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class OptionInputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="枚举ID")
+    id = serializers.CharField(help_text="枚举 ID")
     value = serializers.CharField(help_text="枚举值")
 
 
@@ -239,9 +246,15 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
-    sender = serializers.CharField(help_text="发送人")
+    sender = serializers.EmailField(help_text="发送人", required=False, allow_blank=True, default="")
     content = serializers.CharField(help_text="通知内容")
     content_html = serializers.CharField(help_text="通知内容，页面展示使用")
+
+    def to_internal_value(self, data):
+        # Note: 存量历史数据可能存在 sender=“蓝鲸智云"，而 EmailField 的声明必然会失败，所以这里兼容处理历史数据
+        if data.get("sender") == "蓝鲸智云":
+            data["sender"] = ""
+        return super().to_internal_value(data)
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
@@ -263,3 +276,88 @@ class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
 
 class TenantUserValidityPeriodConfigOutputSLZ(TenantUserValidityPeriodConfigInputSLZ):
     pass
+
+
+class TenantUserDisplayNameExpressionConfigUpdateInputSLZ(serializers.Serializer):
+    expression = serializers.CharField(help_text="display_name 表达式", max_length=128)
+
+    def validate_expression(self, expression: str) -> str:
+        # 匹配表达式中的`{xxx}`提取字段名
+        fields = DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.findall(expression)
+
+        if not fields:
+            raise ValidationError(_("表达式中至少需要填入一个字段"))
+
+        if len(fields) > 3:  # noqa: PLR2004
+            raise ValidationError(_("表达式中字段个数不能超过 3 个"))
+
+        if len(fields) != len(set(fields)):
+            raise ValidationError(_("表达式中字段不能重复"))
+
+        # 校验非字段部分的字符数量是否超过 16
+        non_field_length = len(DISPLAY_NAME_EXPRESSION_FIELD_PATTERN.sub("", expression))
+        if non_field_length > 16:  # noqa: PLR2004
+            raise ValidationError(_("表达式中非字段部分的字符数不能超过 16 个"))
+
+        # 先解析字段，再一次性校验字段有效性和唯一性
+        parsed_fields = TenantUserDisplayNameHandler.parse_display_name_expression(
+            self.context["tenant_id"], expression
+        )
+        self._validate_parsed_fields(fields, parsed_fields)
+
+        return expression
+
+    def _validate_parsed_fields(self, original_fields: List[str], parsed_fields: Dict[str, List[str]]):
+        """校验解析后的字段有效性和唯一性"""
+        # 检查是否有无效字段（解析后不在任何分类中的字段）
+        parsed_field_set = set(parsed_fields["builtin"] + parsed_fields["custom"] + parsed_fields["extra"])
+        invalid_fields = [f for f in original_fields if f not in parsed_field_set]
+        if invalid_fields:
+            raise ValidationError(_("表达式中存在无效字段：{}").format(", ".join(invalid_fields)))
+
+        # 表达式字段必须存在唯一字段
+        if not self._has_unique_field(parsed_fields):
+            raise ValidationError(_("表达式中必须存在唯一字段"))
+
+    def _has_unique_field(self, parsed_fields: Dict[str, List[str]]) -> bool:
+        """检查解析后的字段中是否包含唯一字段"""
+        tenant_id = self.context["tenant_id"]
+
+        # 检查内置字段中的唯一字段
+        if (
+            parsed_fields["builtin"]
+            and UserBuiltinField.objects.filter(name__in=parsed_fields["builtin"], unique=True).exists()
+        ):
+            return True
+
+        # 检查自定义字段中的唯一字段
+        if (
+            parsed_fields["custom"]
+            and TenantUserCustomField.objects.filter(
+                tenant_id=tenant_id, name__in=parsed_fields["custom"], unique=True
+            ).exists()
+        ):
+            return True
+
+        # 检查额外字段中的唯一字段
+        if parsed_fields["extra"]:
+            extra_fields = [
+                DisplayNameExpressionExtraField(**field)  # type: ignore
+                for field in DISPLAY_NAME_EXPRESSION_EXTRA_FIELD_CONFIGS
+            ]
+            for field in extra_fields:
+                if field.name in parsed_fields["extra"] and field.unique:
+                    return True
+
+        return False
+
+
+class TenantUserDisplayNameExpressionConfigRetrieveOutputSLZ(serializers.Serializer):
+    expression = serializers.CharField(help_text="display_name 表达式")
+
+
+class TenantUserDisplayNameExpressionConfigPreviewInputSLZ(TenantUserDisplayNameExpressionConfigUpdateInputSLZ): ...
+
+
+class TenantUserDisplayNameExpressionConfigPreviewOutputSLZ(serializers.Serializer):
+    display_name = serializers.CharField(help_text="预览 display_name")

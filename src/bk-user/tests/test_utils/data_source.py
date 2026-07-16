@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,6 +14,8 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from datetime import timedelta
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -24,6 +26,7 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.common.passwd import PasswordGenerator
+from django.utils import timezone
 
 
 def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
@@ -227,5 +230,27 @@ def init_local_data_source_identity_infos(ds: DataSource) -> None:
                 "data_source": ds,
                 "username": user.username,
                 "password": passwd_generator.generate(),
+                "password_updated_at": timezone.now(),
+                "password_expired_at": timezone.now() + timedelta(days=3),
             },
         )
+
+
+def init_virtual_data_source_users(ds: DataSource) -> None:
+    """初始化虚拟数据源用户"""
+    DataSourceUser.objects.create(
+        code="zhangsan",
+        username="zhangsan",
+        full_name="张三",
+        email="zhangsan@m.com",
+        phone="13512345671",
+        data_source=ds,
+    )
+    DataSourceUser.objects.create(
+        code="lisi",
+        username="lisi",
+        full_name="李四",
+        email="lisi@m.com",
+        phone="13512345672",
+        data_source=ds,
+    )

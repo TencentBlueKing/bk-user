@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -90,7 +90,7 @@ class TestDataSourceUserConverter:
                 "age": "18.5",
                 "region": "beijing",
                 # 字符串表示列表也是支持的
-                "sport_hobby": "running, golf",
+                "sport_hobby": "跑步, 高尔夫",
             },
             leaders=[],
             departments=["company"],
@@ -120,8 +120,8 @@ class TestDataSourceUserConverter:
                 "phone": "13512345672",
                 "phone_country_code": "63",
                 "age": "28",
-                "gender": "female",
-                "sport_hobby": "swimming, golf",
+                "gender": "女",
+                "sport_hobby": "游泳, 高尔夫",
             },
             leaders=["zhangsan"],
             departments=["dept_a", "center_aa"],
@@ -146,8 +146,8 @@ class TestDataSourceUserConverter:
                 "phone": "13512345672",
                 "phone_country_code": "63",
                 "age": "28",
-                "gender": "female",
-                "sport_hobby": "golf",
+                "gender": "女",
+                "sport_hobby": "高尔夫",
                 "custom_region": "shanghai",
             },
             leaders=["zhangsan"],
@@ -207,8 +207,8 @@ class TestDataSourceUserConverter:
                 "phone": "13512345671",
                 "age": "18.5x",
                 "region": "beijing",
-                "gender": "male",
-                "sport_hobby": "running,golf",
+                "gender": "男",
+                "sport_hobby": "跑步,高尔夫",
             },
             leaders=[],
             departments=["company"],
@@ -227,7 +227,7 @@ class TestDataSourceUserConverter:
                 "age": "18.5",
                 "region": "beijing",
                 "gender": "military_helicopter",
-                "sport_hobby": "running,golf",
+                "sport_hobby": "跑步,高尔夫",
             },
             leaders=[],
             departments=["company"],
@@ -246,7 +246,7 @@ class TestDataSourceUserConverter:
                 "phone": "13512345671",
                 "age": "18",
                 "region": "beijing",
-                "sport_hobby": "paragliding, golf",
+                "sport_hobby": "paragliding, 高尔夫",
             },
             leaders=[],
             departments=["company"],

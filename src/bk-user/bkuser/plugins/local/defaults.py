@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -56,7 +56,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.EMAIL,
                     scene=NotificationScene.USER_INITIALIZE,
                     title="蓝鲸智云 - 您的账户已经成功创建！",
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
@@ -76,7 +76,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.EMAIL,
                     scene=NotificationScene.RESET_PASSWORD,
                     title="蓝鲸智云 - 登录密码重置",
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}\n"
@@ -94,7 +94,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.USER_INITIALIZE,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
@@ -114,7 +114,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.RESET_PASSWORD,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "您好：\n"
                         + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{{ url }}\n"
@@ -141,7 +141,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.EMAIL,
                     scene=NotificationScene.PASSWORD_EXPIRING,
                     title="蓝鲸智云 - 密码即将到期提醒",
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码将于 {{ valid_days }} 天后过期，为避免影响使用，请尽快登录平台修改密码。\n"  # noqa: E501
@@ -157,7 +157,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.EMAIL,
                     scene=NotificationScene.PASSWORD_EXPIRED,
                     title="蓝鲸智云 - 密码已过期提醒",
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码已过期，为避免影响正常使用，请尽快联系管理员重置密码。\n"  # noqa: E501
@@ -173,7 +173,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.PASSWORD_EXPIRING,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码将于 {{ valid_days }} 天后过期，为避免影响使用，请尽快登录平台修改密码。\n"  # noqa: E501
@@ -189,7 +189,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                     method=NotificationMethod.SMS,
                     scene=NotificationScene.PASSWORD_EXPIRED,
                     title=None,
-                    sender="蓝鲸智云",
+                    sender="",
                     content=(
                         "{{ username }}，您好：\n"
                         + "您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快联系管理员重置密码。\n"  # noqa: E501

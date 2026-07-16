@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.conf import settings
 from drf_yasg.utils import swagger_serializer_method
@@ -51,18 +51,18 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 
 class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
-    data_source = serializers.SerializerMethodField(help_text="实名用户数据源信息")
+    data_sources = serializers.SerializerMethodField(help_text="实名用户数据源信息列表")
 
     class Meta:
         ref_name = "organization.TenantRetrieveOutputSLZ"
 
-    @swagger_serializer_method(serializer_or_field=TenantDataSourceSLZ())
-    def get_data_source(self, obj: Tenant) -> Dict[str, Any] | None:
-        data_source = DataSource.objects.filter(owner_tenant_id=obj.id, type=DataSourceTypeEnum.REAL).first()
-        if not data_source:
-            return None
+    @swagger_serializer_method(serializer_or_field=TenantDataSourceSLZ(many=True))
+    def get_data_sources(self, obj: Tenant) -> List[Dict[str, Any]]:
+        data_sources = list(DataSource.objects.filter(owner_tenant_id=obj.id, type=DataSourceTypeEnum.REAL))
+        if not data_sources:
+            return []
 
-        return TenantDataSourceSLZ(data_source).data
+        return TenantDataSourceSLZ(data_sources, many=True).data
 
 
 class RequiredTenantUserFieldOutputSLZ(serializers.Serializer):

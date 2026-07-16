@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <!-- <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" /> -->
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
@@ -19,14 +19,21 @@
           <div class="w-[28px]"><img :src="appLogo" /></div>
           <span class="title-desc">{{ appName}}</span>
         </div>
-        <div class="tenant-style" v-if="!isTenant && role !== 'natural_user'">
+        <div
+          v-if="!isTenant && role !== ROLE.NATURAL_USER"
+          v-is-multiple-tenant
+          class="tenant-style">
           <div class="logo">
-            <img v-if="userData.logo" :src="userData.logo" alt="">
-            <span v-else>{{logoConvert(userData?.name) }}</span>
+            <img
+              v-if="headerTenantInfo.logo"
+              :src="headerTenantInfo.logo"
+              alt=""
+            >
+            <span v-else>{{logoConvert(headerTenantInfo.name) }}</span>
           </div>
-          <bk-overflow-title type="tips" class="tenant-id">{{ userData?.name }}</bk-overflow-title>
+          <bk-overflow-title type="tips" class="tenant-id">{{ headerTenantInfo.name }}</bk-overflow-title>
           <i
-            v-if="role === 'super_manager'"
+            v-if="role === ROLE.SUPER_MANAGER"
             class="user-icon icon-shezhi"
             @click="toTenant"
           />
@@ -60,7 +67,7 @@
                 <div v-for="(item, index) in languageNav" :key="index">
                   <bk-dropdown-item
                     :class="[{ 'active-item': $i18n.locale === item.language }]"
-                    @click="handleSwitchLocale(item.language)">
+                    @click="handleSwitchLocale(item.language, userStore.user.tenant_id)">
                     <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
                     <span>{{ item.name }}</span>
                   </bk-dropdown-item>
@@ -78,41 +85,37 @@
             </div>
             <template #content>
               <bk-dropdown-menu>
-                <bk-dropdown-item>
-                  <a :href="docUrl" target="_blank">{{ $t('产品文档') }}</a>
+                <bk-dropdown-item @click="openExternalLink('doc')">
+                  {{ $t('产品文档') }}
                 </bk-dropdown-item>
                 <bk-dropdown-item @click="openVersionLog">
-                  <a href="javascript:void(0);">{{ $t('版本日志') }}</a>
+                  {{ $t('版本日志') }}
                 </bk-dropdown-item>
-                <bk-dropdown-item>
-                  <a :href="feedbackUrl" target="_blank">{{ $t('问题反馈') }}</a>
+                <bk-dropdown-item @click="openExternalLink('feedback')">
+                  {{ $t('问题反馈') }}
                 </bk-dropdown-item>
               </bk-dropdown-menu>
             </template>
           </bk-dropdown>
-          <bk-dropdown
-            class="pl-[12px]"
-            placement="bottom-end"
-            @hide="() => (state.logoutDropdown = false)"
-            @show="() => (state.logoutDropdown = true)"
-          >
-            <div
-              :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-              <span class="help-info-name">{{ userInfo.display_name }}</span>
-              <DownShape class="help-info-icon" />
-            </div>
-            <template #content>
-              <bk-dropdown-menu ext-cls="dropdown-menu-box">
-                <bk-dropdown-item
-                  v-if="!isTenant"
-                  :class="{ 'active-item': isPersonalCenter }"
-                  @click="toIndividualCenter">
-                  {{ $t('个人中心') }}
-                </bk-dropdown-item>
-                <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
-              </bk-dropdown-menu>
+          <BkLoginUserinfo
+            :userinfo="{
+              name: userInfo.username,
+              organization: userInfo.tenant_id,
+              timezone: userInfo.time_zone,
+            }">
+            <DisplayName :user-id="userInfo.username" class="help-info-name" />
+            <template #action>
+              <ActionItem v-if="!isTenant" @click="toIndividualCenter">
+                {{ $t('个人中心') }}
+              </ActionItem>
+              <ActionItem
+                theme="danger"
+                @click="logout"
+              >
+                {{ $t('退出登录') }}
+              </ActionItem>
             </template>
-          </bk-dropdown>
+          </BkLoginUserinfo>
         </div>
       </template>
       <router-view></router-view>
@@ -131,9 +134,10 @@
 
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, provide, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import BkLoginUserinfo, { ActionItem } from '@blueking/login-userinfo';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
@@ -141,22 +145,31 @@ import logo from '../../static/images/logo.png';
 
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/vue3/vue3.css';
+import '@blueking/login-userinfo/vue3/vue3.css';
 import { logout } from '@/common/auth';
+import { ROLE } from '@/common/constant';
+import { UPDATE_TENANT_INFO_KEY, UpdateTenantInfo } from '@/common/inject-keys';
+import DisplayName from '@/components/display-name.vue';
 import { getTenantInfo, getVersionLogs } from '@/http';
-import { t } from '@/language/index';
+import { TenantInfoData } from '@/http/types/settingFiles';
+import { locale, t } from '@/language/index';
 import router from '@/router';
 import { platformConfig, useUser } from '@/store';
 import { handleSwitchLocale, logoConvert  } from '@/utils';
 
 const state = reactive({
-  logoutDropdown: false,
   helpDropdown: false,
   languageDropdown: false,
 });
 
 const userStore = useUser();
-const  platformConfigData = platformConfig();
+const platformConfigData = platformConfig();
 const headerNav = ref([]);
+/** 顶部Header栏 - 用于展示的租户信息 */
+const headerTenantInfo = ref<Partial<TenantInfoData>>({
+  name: '',
+  logo: '',
+});
 const role = computed(() => userStore.user.role);
 const appName = computed(() => platformConfigData.i18n.productName);
 const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
@@ -172,32 +185,33 @@ const userInfo = computed(() => {
   if (window.ENABLE_VIRTUAL_USER === 'False') {
     baseNav?.splice(1, 1);
   }
-  if (role.value === 'super_manager' && !isTenant.value) {
-    headerNav.value = baseNav;
-  } else if (role.value === 'tenant_manager') {
-    headerNav.value = baseNav;
-  } else if (role.value === 'natural_user') {
-    router.push({ name: 'personalCenter' });
+  // headerNav初始化
+  headerNav.value = [];
+  // 避免route.name undefined时照成的headerNav赋值
+  if (route.name) {
+    if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
+      headerNav.value = baseNav;
+    } else if (role.value === ROLE.TENANT_MANAGER) {
+      headerNav.value = baseNav;
+    }
   }
   return userStore.user;
 });
 
 const route = useRoute();
-const isPersonalCenter = computed(() => route.name === 'personalCenter');
 const isTenant = computed(() => route.name === 'tenant');
 
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-    language: 'zh-cn',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-    language: 'en',
-  },
-]);
+const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
+  const iconMap: Record<string, string> = {
+    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+  };
+  return {
+    name: option.label,
+    icon: iconMap[option.value] || '',
+    language: option.value,
+  };
+}));
 
 const toIndividualCenter = () => {
   router.push({
@@ -206,34 +220,61 @@ const toIndividualCenter = () => {
 };
 
 const toTenant = () => {
+  if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
-const userData = ref({});
+
 const initTenantInfo = async () => {
   const res = await getTenantInfo();
-  userData.value = res.data;
+  headerTenantInfo.value = res.data;
 };
+
+// 提供更新租户信息的方法给子组件
+const updateTenantInfo: UpdateTenantInfo = {
+  updateName: (name: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+    }
+  },
+  updateLogo: (logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+  updateTenant: (name: string, logo: string) => {
+    if (headerTenantInfo.value) {
+      headerTenantInfo.value.name = name;
+      headerTenantInfo.value.logo = logo;
+    }
+  },
+};
+
+provide(UPDATE_TENANT_INFO_KEY, updateTenantInfo);
+
 onMounted(() => {
-  if (role.value && role.value !== 'natural_user') {
+  if (role.value && role.value !== ROLE.NATURAL_USER) {
     initTenantInfo();
   }
 });
 
 const onGoBack = () => {
-  if (role.value === 'super_manager' && route.name !== 'tenant') {
+  if (role.value === ROLE.SUPER_MANAGER && route.name !== 'tenant') {
+    if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
     router.push({ name: 'tenant' });
     headerNav.value = [];
-  } else if (role.value === 'tenant_manager' && route.name !== 'organization') {
+  } else if (role.value === ROLE.TENANT_MANAGER && route.name !== 'organization') {
     router.push({ name: 'organization' });
-  } else if (role.value === 'natural_user') return;
+  } else if (role.value === ROLE.NATURAL_USER) return;
 };
 
 // 产品文档
-const docUrl = window.BK_USER_DOC_URL;
-
-// 问题反馈
-const feedbackUrl = window.BK_USER_FEEDBACK_URL;
+const docUrl = computed(() => (
+  window?.BK_USER_DOC_URL?.replace(
+    'markdown',
+    `markdown/${locale.value === 'en' ? 'EN' : 'ZH'}`,
+  )
+));
 
 // 消息通知配置信息
 const apiUrl = `${window.AJAX_BASE_URL}/api/v3/web/notices/announcements/`;
@@ -241,6 +282,18 @@ const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
   userStore.setShowAlert(isShow);
+};
+
+// 打开外部链接
+const openExternalLink = (type: 'doc' | 'feedback') => {
+  const urls = {
+    doc: docUrl.value,
+    feedback: window.BK_USER_FEEDBACK_URL,
+  };
+  const url = urls[type];
+  if (url) {
+    window.open(url, '_blank');
+  }
 };
 
 // 版本日志配置信息
@@ -391,25 +444,6 @@ const openVersionLog = async () => {
       }
     }
 
-    .active-username {
-      color: #3a84ff;
-      cursor: pointer;
-
-      .help-info-icon {
-        display: inline-block;
-        transform: rotate(180deg);
-        transition: all 0.2s;
-      }
-    }
-
-    .active-route {
-      // color: #3a84ff;
-    }
-
-    .help-info-icon {
-      vertical-align: middle;
-    }
-
     .help-info-name {
       padding-right: 4px;
       font-size: 14px;
@@ -434,4 +468,11 @@ const openVersionLog = async () => {
     background-color: #E1ECFF !important;
   }
 }
+
+  :deep(.bk-login-userinfo-panel) {
+    z-index: 9999;
+    position: fixed !important;
+    top: 52px !important;
+    right: 10px !important;
+  }
 </style>

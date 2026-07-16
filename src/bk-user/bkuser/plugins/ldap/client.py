@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -20,7 +20,6 @@ from typing import List
 from ldap3 import ALL_ATTRIBUTES, DEREF_NEVER, SAFE_SYNC, Connection, Server
 from ldap3.extend.standard.PagedSearch import paged_search_accumulator
 
-from bkuser.plugins.ldap.constants import REQUIRED_OPERATIONAL_ATTRIBUTES
 from bkuser.plugins.ldap.exceptions import DataNotFoundError
 from bkuser.plugins.ldap.models import LDAPObject, ServerConfig
 
@@ -28,8 +27,9 @@ from bkuser.plugins.ldap.models import LDAPObject, ServerConfig
 class LDAPClient:
     """LDAP 客户端"""
 
-    def __init__(self, server_config: ServerConfig):
+    def __init__(self, server_config: ServerConfig, uuid_attribute: str):
         self.server_config = server_config
+        self.uuid_attribute = uuid_attribute
 
     def __enter__(self):
         self._conn = self._gen_conn(self.server_config)
@@ -69,12 +69,24 @@ class LDAPClient:
             get_operational_attributes=False,
             attributes=[
                 ALL_ATTRIBUTES,
-                *REQUIRED_OPERATIONAL_ATTRIBUTES,
+                *self.required_operational_attributes,
             ],
             paged_size=page_size,
         )
         # 丢弃多余的信息，如 type，raw_dn，raw_attributes 等
         return [LDAPObject(dn=r["dn"], attrs=r["attributes"]) for r in results]
+
+    @property
+    def required_operational_attributes(self) -> List[str]:
+        """
+        获取同步所需的 LDAP 操作属性。
+
+        Operational Attributes 是由 LDAP 服务器管理的特殊属性，用于记录条目元数据或操作信息，
+        如条目的唯一标识属性、创建者、创建时间等。
+
+        目前同步时只额外请求当前配置的唯一标识属性，避免拉取全部操作属性造成不必要的带宽和内存开销。
+        """
+        return [self.uuid_attribute]
 
     @staticmethod
     def _gen_conn(server_config: ServerConfig) -> Connection:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -20,15 +20,18 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from tests.test_utils.helpers import generate_random_string
@@ -44,27 +47,29 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin_id=DataSourcePluginEnum.LOCAL,
-        defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
+        defaults={
+            "plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+        },
     )
     return ds
 
 
 @pytest.fixture
 def local_idp(data_source) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name="local",
-        data_source_id=data_source.id,
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
     )
+    IdpDataSourceRelationHandler.set_local_real_relations(idp)
+    return idp
 
 
 @pytest.fixture
 def disabled_idp(data_source) -> Idp:
     return Idp.objects.create(
         name="invalid_wecom",
-        data_source_id=INVALID_REAL_DATA_SOURCE_ID,
         owner_tenant_id=data_source.owner_tenant_id,
         status=IdpStatus.DISABLED,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
@@ -76,15 +81,21 @@ def disabled_idp(data_source) -> Idp:
 
 @pytest.fixture
 def wecom_idp(data_source) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name="wecom",
-        data_source_id=data_source.id,
         owner_tenant_id=data_source.owner_tenant_id,
         plugin_id=BuiltinIdpPluginEnum.WECOM,
         plugin_config=WecomIdpPluginConfig(
             corp_id=generate_random_string(), agent_id=generate_random_string(), secret=generate_random_string()
         ),
     )
+    IdpDataSourceRelation.objects.create(
+        idp=idp,
+        data_source=data_source,
+        idp_owner_tenant_id=idp.owner_tenant_id,
+        field_compare_rules=[{"source_field": "user_id", "target_field": "username"}],
+    )
+    return idp
 
 
 @pytest.fixture
@@ -133,3 +144,36 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
         extras={"async_run": True, "overwrite": True},
     )
     return [success_task, failed_task, other_tenant_task]
+
+
+@pytest.fixture
+def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
+    """General HTTP data source in the same tenant for batch-delete tests"""
+    plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
+    return DataSource.objects.create(
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.REAL,
+        plugin=plugin,
+        plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
+        sync_config={"sync_period": 60},
+    )
+
+
+@pytest.fixture
+def general_idp(general_data_source) -> Idp:
+    idp = Idp.objects.create(
+        name="general_local",
+        owner_tenant_id=general_data_source.owner_tenant_id,
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        plugin_config=LocalIdpPluginConfig(data_source_ids=[general_data_source.id]),
+    )
+    IdpDataSourceRelation.objects.create(
+        idp=idp,
+        data_source=general_data_source,
+        idp_owner_tenant_id=idp.owner_tenant_id,
+        field_compare_rules=[
+            rule.model_dump()
+            for rule in gen_data_source_match_rule_of_local(general_data_source.id).field_compare_rules
+        ],
+    )
+    return idp

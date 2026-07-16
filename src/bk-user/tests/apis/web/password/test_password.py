@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-import string
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
@@ -31,7 +30,6 @@ from django.urls import reverse
 from rest_framework import status
 
 from tests.test_utils.data_source import init_local_data_source_identity_infos
-from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
@@ -49,12 +47,15 @@ class TestResetPasswordByPhoneAfterForget:
 
     @pytest.fixture(autouse=True)
     def _mock_cmsi_component(self):
-        with mock.patch(
-            "bkuser.component.cmsi.send_mail",
-            return_value=None,
-        ), mock.patch(
-            "bkuser.component.cmsi.send_sms",
-            return_value=None,
+        with (
+            mock.patch(
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_mail",
+                return_value=None,
+            ),
+            mock.patch(
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_sms",
+                return_value=None,
+            ),
         ):
             yield
 
@@ -96,12 +97,8 @@ class TestResetPasswordByPhoneAfterForget:
         assert resp.status_code == status.HTTP_200_OK
         assert tenant_user.id in [user["tenant_user_id"] for user in resp.data]
 
-        # 5. 通过 Token 重置密码，分批次生成再拼接，确保各种字符都有
-        new_password = (
-            generate_random_string(length=16, chars=string.ascii_letters)
-            + generate_random_string(length=8, chars=string.digits)
-            + generate_random_string(length=8, chars=string.punctuation)
-        )
+        # 5. 通过 Token 重置密码，使用固定密码避免随机生成的密码不符合密码规则
+        new_password = "uric8822IOw039x^#ke&239="
         resp = api_client.post(
             reverse("password.reset_passwd_by_token"),
             data={
@@ -163,12 +160,15 @@ class TestResetPasswordByEmailAfterForget:
 
     @pytest.fixture(autouse=True)
     def _mock_cmsi_component(self):
-        with mock.patch(
-            "bkuser.component.cmsi.send_mail",
-            return_value=None,
-        ), mock.patch(
-            "bkuser.component.cmsi.send_sms",
-            return_value=None,
+        with (
+            mock.patch(
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_mail",
+                return_value=None,
+            ),
+            mock.patch(
+                "bkuser.component.cmsi.BkEsbCmsiClient.send_sms",
+                return_value=None,
+            ),
         ):
             yield
 
@@ -196,12 +196,8 @@ class TestResetPasswordByEmailAfterForget:
         assert resp.status_code == status.HTTP_200_OK
         assert tenant_user.id in [user["tenant_user_id"] for user in resp.data]
 
-        # 4. 通过 Token 重置密码，分批次生成再拼接，确保各种字符都有
-        new_password = (
-            generate_random_string(length=16, chars=string.ascii_letters)
-            + generate_random_string(length=8, chars=string.digits)
-            + generate_random_string(length=8, chars=string.punctuation)
-        )
+        # 4. 通过 Token 重置密码，使用固定密码避免随机生成的密码不符合密码规则
+        new_password = "uric8822IOw039x^#ke&239="
         resp = api_client.post(
             reverse("password.reset_passwd_by_token"),
             data={

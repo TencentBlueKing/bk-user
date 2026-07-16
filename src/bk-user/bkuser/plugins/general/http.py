@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -16,10 +16,12 @@
 # to the current version of the project delivered to anyone in the future.
 
 import base64
+import json
 import logging
 from typing import Any, Dict, List
 
 import requests
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import JSONDecodeError
@@ -53,6 +55,15 @@ def gen_headers(cfg: AuthConfig) -> Dict[str, str]:
         # BasicAuth
         credentials = base64.b64encode(f"{cfg.username}:{cfg.password}".encode("utf-8")).decode("utf-8")
         headers["Authorization"] = f"Basic {credentials}"
+    elif cfg.method == AuthMethod.BK_APIGATEWAY:
+        # 蓝鲸网关认证
+        headers["X-Bkapi-Authorization"] = json.dumps(
+            {
+                "bk_app_code": settings.BK_APP_CODE,
+                "bk_app_secret": settings.BK_APP_SECRET,
+            }
+        )
+        headers["X-Bk-Tenant-Id"] = cfg.tenant_id or ""
 
     return headers
 

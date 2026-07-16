@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -23,10 +23,24 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.core.cache import caches
 
-from tests.test_utils.data_source import init_data_source_users_depts_and_relations
+from tests.test_utils.data_source import (
+    init_data_source_users_depts_and_relations,
+    init_local_data_source_identity_infos,
+)
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """在每个测试前清除缓存，避免缓存的方法返回值影响测试结果"""
+    for cache_name in caches:
+        caches[cache_name].clear()
+    yield
+    for cache_name in caches:
+        caches[cache_name].clear()
 
 
 def _create_tenant_custom_fields(tenant: Tenant) -> List[TenantUserCustomField]:
@@ -107,6 +121,11 @@ def collaboration_tenant_custom_fields(collaboration_tenant) -> List[TenantUserC
 def _init_tenant_users_depts(random_tenant, full_local_data_source, random_tenant_custom_fields) -> None:
     """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def _init_tenant_users_identity_infos(random_tenant, full_local_data_source) -> None:
+    init_local_data_source_identity_infos(full_local_data_source)
 
 
 @pytest.fixture

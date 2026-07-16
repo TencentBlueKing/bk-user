@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -132,7 +132,7 @@ class TestTenantUserLanguageUpdateApi:
 
 
 class TestTenantUserTimeZoneUpdateApi:
-    @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("UTC")])
+    @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("America/New_York")])
     def test_update_legal_timezone(self, api_client, tenant_user, time_zone):
         resp = api_client.put(
             reverse("personal_center.tenant_users.time_zone.update", kwargs={"id": tenant_user.id}),

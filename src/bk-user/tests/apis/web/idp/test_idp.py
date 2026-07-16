@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,12 +14,12 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
 from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp, IdpPlugin
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpPlugin
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
@@ -53,18 +53,33 @@ def data_source_match_rules(bare_general_data_source) -> List[Dict[str, Any]]:
     ]
 
 
+def get_idp_match_rules(idp: Idp) -> List[Dict[str, Any]]:
+    relation = IdpDataSourceRelation.objects.filter(idp=idp).first()
+    if relation is None:
+        return []
+
+    return [
+        {
+            "data_source_id": relation.data_source_id,
+            "field_compare_rules": relation.field_compare_rules,
+        }
+    ]
+
+
 @pytest.fixture
 def wecom_idp(bk_user, random_tenant, wecom_plugin_cfg, data_source_match_rules) -> Idp:
-    return Idp.objects.create(
+    idp = Idp.objects.create(
         name=generate_random_string(),
         owner_tenant_id=random_tenant.id,
         plugin=IdpPlugin.objects.get(id=BuiltinIdpPluginEnum.WECOM),
         plugin_config=WecomIdpPluginConfig(**wecom_plugin_cfg),
-        data_source_match_rules=data_source_match_rules,
-        data_source_id=data_source_match_rules[0]["data_source_id"],
         creator=bk_user.username,
         updater=bk_user.username,
     )
+    IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
+        idp, data_source_match_rules[0]["field_compare_rules"]
+    )
+    return idp
 
 
 class TestIdpPluginListApi:
@@ -200,7 +215,7 @@ class TestIdpUpdateApi:
                 "name": new_name,
                 "status": IdpStatus.ENABLED,
                 "plugin_config": new_plugin_config,
-                "data_source_match_rules": wecom_idp.data_source_match_rules,
+                "data_source_match_rules": get_idp_match_rules(wecom_idp),
             },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -218,7 +233,7 @@ class TestIdpUpdateApi:
             data={
                 "name": wecom_idp.name,
                 "plugin_config": {},
-                "data_source_match_rules": wecom_idp.data_source_match_rules,
+                "data_source_match_rules": get_idp_match_rules(wecom_idp),
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -229,7 +244,7 @@ class TestIdpUpdateApi:
             data={
                 "name": wecom_idp.name,
                 "plugin_config": {"corp_id": generate_random_string()},
-                "data_source_match_rules": wecom_idp.data_source_match_rules,
+                "data_source_match_rules": get_idp_match_rules(wecom_idp),
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -237,6 +252,7 @@ class TestIdpUpdateApi:
 
     def test_partial_update_with_name(self, api_client, wecom_idp):
         new_name = generate_random_string()
+        relation_count = IdpDataSourceRelation.objects.filter(idp=wecom_idp).count()
         resp = api_client.patch(
             reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
             data={"name": new_name, "data_source_match_rules": []},
@@ -245,7 +261,7 @@ class TestIdpUpdateApi:
 
         idp = Idp.objects.get(id=wecom_idp.id)
         assert idp.name == new_name
-        assert len(idp.data_source_match_rules) == len(wecom_idp.data_source_match_rules)
+        assert IdpDataSourceRelation.objects.filter(idp=idp).count() == relation_count
 
     # def test_partial_update_with_duplicate_name(self, bk_user, api_client, wecom_idp):
     #     new_name = generate_random_string()
@@ -254,8 +270,6 @@ class TestIdpUpdateApi:
     #         owner_tenant_id=wecom_idp.owner_tenant_id,
     #         plugin=wecom_idp.plugin,
     #         plugin_config=WecomIdpPluginConfig(**wecom_idp.plugin_config),
-    #         data_source_match_rules=wecom_idp.data_source_match_rules,
-    #         data_source_id=wecom_idp.data_source_match_rules[0]["data_source_id"],
     #         creator=bk_user.username,
     #         updater=bk_user.username,
     #     )
@@ -273,7 +287,7 @@ class TestIdpRetrieveApi:
         assert resp.data["plugin"]["id"] == wecom_idp.plugin.id
         assert resp.data["plugin"]["name"] == wecom_idp.plugin.name
         assert resp.data["plugin_config"] == wecom_idp.plugin_config
-        assert resp.data["data_source_match_rules"] == wecom_idp.data_source_match_rules
+        assert resp.data["data_source_match_rules"] == get_idp_match_rules(wecom_idp)
         assert resp.data["callback_uri"] == wecom_idp.callback_uri
 
 
@@ -284,3 +298,51 @@ class TestIdpStatusUpdateApi:
         assert api_client.put(url).data["status"] == IdpStatus.DISABLED
         # 再次切换，变成可用
         assert api_client.put(url).data["status"] == IdpStatus.ENABLED
+
+
+class TestLocalIdpCreateApi:
+    def test_create_with_valid_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        # 修改邮件发送模版的 sender 为合法邮箱
+        local_ds_plugin_cfg["password_initial"]["notification"]["templates"][0]["sender"] = "test@example.com"
+        local_ds_plugin_cfg["password_expire"]["notification"]["templates"][0]["sender"] = "test@example.com"
+
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_with_empty_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_with_invalid_email_sender(
+        self, api_client, random_tenant, bare_local_data_source, local_ds_plugin_cfg
+    ):
+        local_ds_plugin_cfg["password_initial"]["notification"]["templates"][0]["sender"] = "not-an-email"
+
+        resp = api_client.post(
+            reverse("idp.local.create"),
+            data={
+                "name": generate_random_string(),
+                "status": IdpStatus.ENABLED,
+                "plugin_config": local_ds_plugin_cfg,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "认证源插件配置不合法" in resp.data["message"]

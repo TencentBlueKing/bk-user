@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -318,8 +318,8 @@ class TestLocalDataSourceDataParser:
                     "age": "30",
                     "gender": "female",
                     "region": "region-10",
-                    "phone": "13512245671",
-                    "phone_country_code": "86",
+                    "phone": "",
+                    "phone_country_code": "",
                 },
                 leaders=["lisi"],
                 departments=gen_depts(["公司/部门C/中心CA/小组CAA"]),

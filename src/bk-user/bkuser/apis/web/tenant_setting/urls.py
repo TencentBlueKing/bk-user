@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -30,5 +30,15 @@ urlpatterns = [
         "settings/tenant-user-validity-period/",
         views.TenantUserValidityPeriodConfigRetrieveUpdateApi.as_view(),
         name="tenant_user_validity_period_config.retrieve_update",
+    ),
+    path(
+        "settings/tenant-user-display-name-expression/",
+        views.TenantUserDisplayNameExpressionConfigRetrieveUpdateApi.as_view(),
+        name="tenant_user_display_name_expression_config.retrieve_update",
+    ),
+    path(
+        "settings/tenant-user-display-name-expression/preview/",
+        views.TenantUserDisplayNameExpressionConfigPreviewApi.as_view(),
+        name="tenant_user_display_name_expression_config.preview",
     ),
 ]

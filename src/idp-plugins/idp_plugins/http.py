@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -134,12 +134,15 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
             resp.status_code,
             content,
         )
-        return INVALID_JSON_STATUS_CODE, {
-            "error": (
-                f"http response body not json, http status code is {resp.status_code}! "  # type: ignore
-                f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
-            )
-        }
+        return (
+            INVALID_JSON_STATUS_CODE,
+            {
+                "error": (
+                    f"http response body not json, http status code is {resp.status_code}! "  # type: ignore
+                    f"{method} {urlparse(url).path}, response.body={content}, error:{e}"
+                )
+            },
+        )
 
 
 def _http_request_only_20x(method: str, url: str, **kwargs) -> Tuple[bool, Dict]:

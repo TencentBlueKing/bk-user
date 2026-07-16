@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -19,7 +19,7 @@ from django.conf import settings
 
 def basic_settings(request):
     """
-    项目的基础配置，比如SITE_URL/STATIC_URL等
+    项目的基础配置，比如 SITE_URL/STATIC_URL 等
     """
     return {
         "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
@@ -32,4 +32,6 @@ def basic_settings(request):
         "ENABLE_BK_NOTICE": settings.ENABLE_BK_NOTICE,
         # footer / logo / title 等全局配置
         "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
+        # 是否允许浏览器密码自动填充功能
+        "ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE": settings.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE,
     }

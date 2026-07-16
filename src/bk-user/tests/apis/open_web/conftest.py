@@ -1,0 +1,226 @@
+# -*- coding: utf-8 -*-
+# TencentBlueKing is pleased to support the open source community by making
+# 蓝鲸智云 - 用户管理 (bk-user) available.
+# Copyright (C) 2017 Tencent. All rights reserved.
+# Licensed under the MIT License (the "License"); you may not use this file except
+# in compliance with the License. You may obtain a copy of the License at
+#
+#     http://opensource.org/licenses/MIT
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
+
+from typing import Dict
+from unittest import mock
+
+import pytest
+from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus, UserFieldDataType
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    Tenant,
+    TenantUser,
+    TenantUserCustomField,
+    TenantUserDisplayNameExpressionConfig,
+)
+from bkuser.auth.models import User
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.core.cache import caches
+from django.test.utils import override_settings
+from rest_framework.test import APIClient
+
+from tests.test_utils.data_source import init_data_source_users_depts_and_relations
+from tests.test_utils.helpers import generate_random_string
+from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """在每个测试前清除缓存，避免缓存的方法返回值影响测试结果"""
+    for cache_name in caches:
+        caches[cache_name].clear()
+    yield
+    for cache_name in caches:
+        caches[cache_name].clear()
+
+
+@pytest.fixture
+def api_client(random_tenant, browser_headers):
+    with override_settings(ENABLE_MULTI_TENANT_MODE=True, BK_DOMAIN_SCHEME="https"):
+        client = APIClient()
+        client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
+        client.defaults.update(browser_headers)
+        with (
+            mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []),
+            mock.patch.object(OpenWebApiCommonMixin, "permission_classes", []),
+        ):
+            yield client
+
+
+@pytest.fixture
+def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def browser_headers() -> Dict[str, str]:
+    return {
+        "HTTP_ACCEPT": "application/json",
+        "HTTP_ACCEPT_LANGUAGE": "zh-CN,zh;q=0.9",
+        "HTTP_ACCEPT_ENCODING": "gzip, deflate",
+        "HTTP_USER_AGENT": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+        ),
+        "HTTP_SEC_FETCH_DEST": "empty",
+        "HTTP_SEC_FETCH_MODE": "cors",
+        "HTTP_SEC_FETCH_SITE": "same-site",
+    }
+
+
+@pytest.fixture
+def collaboration_tenant() -> Tenant:
+    """创建随机的协同租户"""
+    return create_tenant(generate_random_string())
+
+
+@pytest.fixture
+def _init_collaboration_users_depts(
+    random_tenant,
+    collaboration_tenant,
+    local_ds_plugin,
+    local_ds_plugin_cfg,
+) -> None:
+    """初始化协同所得的租户部门 & 租户用户（协同租户同步到当前随机租户）"""
+    # 协同策略
+    CollaborationStrategy.objects.create(
+        name=generate_random_string(),
+        source_tenant=collaboration_tenant,
+        target_tenant=random_tenant,
+        source_status=CollaborationStrategyStatus.ENABLED,
+        target_status=CollaborationStrategyStatus.ENABLED,
+        source_config={
+            "organization_scope_type": CollaborationScopeType.ALL,
+            "organization_scope_config": {},
+            "field_scope_type": CollaborationScopeType.ALL,
+            "field_scope_config": {},
+        },
+        target_config={
+            "organization_scope_type": CollaborationScopeType.ALL,
+            "organization_scope_config": {},
+            "field_mapping": [
+                {
+                    "source_field": f"{collaboration_tenant.id}_{field}",
+                    "mapping_operation": "direct",
+                    "target_field": f"{random_tenant.id}_{field}",
+                }
+                for field in ["age", "gender", "region"]
+            ],
+        },
+    )
+    data_source = DataSource.objects.create(
+        owner_tenant_id=collaboration_tenant.id,
+        type=DataSourceTypeEnum.REAL,
+        plugin=local_ds_plugin,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+    )
+    init_data_source_users_depts_and_relations(data_source)
+    sync_users_depts_to_tenant(random_tenant, data_source)
+
+
+@pytest.fixture
+def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
+    """初始化租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_virtual_data_source)
+
+
+@pytest.fixture
+def auth_user() -> User:
+    """用户认证后的 user 对象"""
+    zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
+    return User.objects.create(username=zhangsan.id)
+
+
+@pytest.fixture
+def display_name_expression_config_with_contact_field(random_tenant) -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(
+        tenant_id=random_tenant.id,
+        fields={"builtin": ["phone", "phone_country_code", "email"], "custom": [], "extra": []},
+        expression="{phone_country_code}-{phone}--{email}",
+    )
+
+
+@pytest.fixture
+def display_name_expression_config_with_collaboration_tenant_user(
+    collaboration_tenant,
+) -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(
+        tenant_id=collaboration_tenant.id,
+        fields={"builtin": ["phone", "username", "email"], "custom": [], "extra": []},
+        expression="{username}-{phone}--{email}---",
+    )
+
+
+@pytest.fixture
+def display_name_expression_config_with_custom_field(random_tenant) -> TenantUserDisplayNameExpressionConfig:
+    return TenantUserDisplayNameExpressionConfig(
+        tenant_id=random_tenant.id,
+        fields={"builtin": [], "custom": ["test_num", "test_str", "test_enum"], "extra": []},
+        expression="{test_num}-{test_str}--{test_enum}",
+    )
+
+
+@pytest.fixture
+def _create_custom_fields(random_tenant, full_local_data_source):
+    custom_field_data = [
+        {
+            "tenant": random_tenant,
+            "name": "test_num",
+            "display_name": "数字测试",
+            "data_type": UserFieldDataType.NUMBER,
+            "required": True,
+            "default": 0,
+            "options": [],
+        },
+        {
+            "tenant": random_tenant,
+            "name": "test_str",
+            "display_name": "字符测试",
+            "data_type": UserFieldDataType.STRING,
+            "required": True,
+            "default": "test",
+            "options": [],
+        },
+        {
+            "tenant": random_tenant,
+            "name": "test_enum",
+            "display_name": "test_enum",
+            "data_type": UserFieldDataType.ENUM,
+            "required": True,
+            "default": "test_a",
+            "options": [
+                {"id": "test_a", "value": "test_a"},
+                {"id": "test_b", "value": "test_b"},
+            ],
+        },
+    ]
+    custom_field_list = [TenantUserCustomField(**field) for field in custom_field_data]
+    TenantUserCustomField.objects.bulk_create(custom_field_list)
+
+    # 初始化数据源用户的自定义字段
+    data_source_users = DataSourceUser.objects.filter(data_source=full_local_data_source)
+    for data_source_user in data_source_users:
+        data_source_user.extras = {
+            "test_num": data_source_user.phone,
+            "test_str": data_source_user.username,
+            "test_enum": data_source_user.full_name,
+        }
+        data_source_user.save()

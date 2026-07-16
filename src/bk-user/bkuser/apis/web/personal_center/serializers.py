@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -24,6 +24,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
@@ -56,7 +57,7 @@ class TenantUserInfoSLZ(serializers.Serializer):
 
 
 class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="自然人ID")
+    id = serializers.CharField(help_text="自然人 ID")
     full_name = serializers.CharField(help_text="自然人姓名")
     tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserInfoSLZ())
 
@@ -275,6 +276,11 @@ class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
+class TenantUserPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "personal_center.TenantUserPasswordRuleRetrieveOutputSLZ"
+
+
 class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="用户手机号")
     phone_country_code = serializers.CharField(
@@ -292,3 +298,23 @@ class TenantUserPhoneVerificationCodeSendInputSLZ(serializers.Serializer):
 
 class TenantUserEmailVerificationCodeSendInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="用户邮箱")
+
+
+class TenantUserWeixinRetrieveToBindInfoOutputSLZ(serializers.Serializer):
+    url = serializers.CharField(help_text="绑定 (二维码) URL")
+
+
+class TenantUserWeixinInfoRetrieveOutputSLZ(serializers.Serializer):
+    wx_userid = serializers.CharField(help_text="微信用户 ID", allow_blank=True)
+    type = serializers.CharField(help_text="微信类型（企业微信或者微信公众号）", allow_blank=True)
+
+
+class TenantUserWecomCallbackInputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="企业微信授权 code")
+    state = serializers.CharField(help_text="企业微信 OAuth2.0 流程中的防 CSRF 令牌")
+
+
+class TenantUserMPCallbackInputSLZ(serializers.Serializer):
+    signature = serializers.CharField(help_text="微信公众号回调签名")
+    timestamp = serializers.CharField(help_text="时间戳")
+    nonce = serializers.CharField(help_text="随机数")

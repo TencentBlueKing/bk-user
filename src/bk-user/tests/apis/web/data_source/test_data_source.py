@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -19,9 +19,15 @@ from urllib.parse import urlencode
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceSensitiveInfo,
+    DataSourceUser,
+    DataSourceUsernameGenerateConfig,
+)
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -67,6 +73,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
                 # 本地数据源不需要字段映射配置
             },
         )
@@ -78,14 +85,84 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": {"enable_password": False},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
 
+    def test_create_with_username_config_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "add_affix", "suffix": "_abc"},
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data_source = DataSource.objects.get(id=resp.data["id"])
+        cfg = DataSourceUsernameGenerateConfig.objects.get(data_source=data_source)
+        assert {"rule": cfg.rule, "prefix": cfg.prefix, "suffix": cfg.suffix} == {
+            "rule": "add_affix",
+            "prefix": "",
+            "suffix": "_abc",
+        }
+
+    def test_create_with_username_config_both_prefix_and_suffix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "add_affix", "prefix": "corp_", "suffix": "_abc"},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "前缀和后缀不能同时配置" in resp.data["message"]
+
+    def test_create_with_invalid_username_config(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "add_affix", "suffix": "invalid"},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "用户名后缀" in resp.data["message"]
+
+    def test_create_with_manual_strategy(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged"},
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_with_manual_strategy_but_has_affix(self, api_client, random_tenant, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged", "prefix": "corp_"},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "保持原始值策略下，不支持配置用户名前缀或后缀" in resp.data["message"]
+
     def test_create_with_not_exist_plugin(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
-            data={"plugin_id": "not_exist_plugin", "plugin_config": {}},
+            data={
+                "plugin_id": "not_exist_plugin",
+                "plugin_config": {},
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "数据源插件不存在" in resp.data["message"]
@@ -93,7 +170,10 @@ class TestDataSourceCreateApi:
     def test_create_without_plugin_config(self, api_client, random_tenant):
         resp = api_client.post(
             reverse("data_source.list_create"),
-            data={"plugin_id": DataSourcePluginEnum.LOCAL},
+            data={
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
@@ -105,6 +185,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -117,6 +198,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -129,6 +211,7 @@ class TestDataSourceCreateApi:
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -145,6 +228,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -160,6 +244,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [],
                 "sync_config": sync_config,
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -180,6 +265,7 @@ class TestDataSourceCreateApi:
                         "target_field": "xxx_username",
                     }
                 ],
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -200,6 +286,7 @@ class TestDataSourceCreateApi:
                         "target_field": "username",
                     }
                 ],
+                "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -212,6 +299,7 @@ class TestDataSourceCreateApi:
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -225,6 +313,7 @@ class TestDataSourceCreateApi:
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": {"sync_period": -1},
+                "username_generate_config": {"rule": "unchanged"},
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -348,6 +437,12 @@ class TestDataSourceRetrieveApi:
         assert resp.data["plugin_config"] == data_source.plugin_config
         assert resp.data["sync_config"] == data_source.sync_config
         assert resp.data["field_mapping"] == data_source.field_mapping
+        cfg = DataSourceUsernameGenerateConfig.objects.filter(data_source=data_source).first()
+        assert resp.data["username_generate_config"] == {
+            "rule": cfg.rule if cfg else "unchanged",
+            "prefix": cfg.prefix if cfg else "",
+            "suffix": cfg.suffix if cfg else "",
+        }
 
 
 class TestDataSourceDestroyApi:
@@ -365,7 +460,7 @@ class TestDataSourceDestroyApi:
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
         assert not Idp.objects.filter(id=local_idp.id).exists()
         assert updated_wecom_idp.status == IdpStatus.DISABLED
-        assert updated_wecom_idp.data_source_id == INVALID_REAL_DATA_SOURCE_ID
+        assert not IdpDataSourceRelation.objects.filter(idp=updated_wecom_idp, data_source_id=data_source.id).exists()
 
     def test_destroy_with_delete_idp(self, api_client, data_source, local_idp, wecom_idp):
         resp = api_client.delete(
@@ -420,12 +515,13 @@ class TestDataSourceRelatedResourceStatsApi:
 
 class TestDataSourceSyncRecordApi:
     def test_list(self, api_client, data_source, data_source_sync_tasks):
-        resp = api_client.get(reverse("data_source.sync_record.list", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.sync_record.list"))
         tasks = resp.data["results"]
-        # 不属于指定数据源的同步记录是看不到的
+        # 返回当前租户的所有数据源同步记录
         assert len(tasks) == 2  # noqa: PLR2004
         assert set(tasks[0].keys()) == {
             "id",
+            "plugin",
             "status",
             "has_warning",
             "trigger",
@@ -436,12 +532,20 @@ class TestDataSourceSyncRecordApi:
         }
 
     def test_list_with_filter(self, api_client, data_source, data_source_sync_tasks):
-        url = reverse("data_source.sync_record.list", kwargs={"id": data_source.id})
+        url = reverse("data_source.sync_record.list")
         resp = api_client.get(url, data={"statuses": "success"})
         assert len(resp.data["results"]) == 1  # noqa: PLR2004
 
         resp = api_client.get(url, data={"statuses": "success,failed"})
         assert len(resp.data["results"]) == 2  # noqa: PLR2004
+
+    def test_list_with_plugin_filter(self, api_client, data_source, data_source_sync_tasks):
+        url = reverse("data_source.sync_record.list")
+        resp = api_client.get(url, data={"plugin_id": data_source.plugin_id})
+        assert len(resp.data["results"]) == 2  # noqa: PLR2004
+
+        resp = api_client.get(url, data={"plugin_id": "not_exist_plugin"})
+        assert len(resp.data["results"]) == 0
 
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]

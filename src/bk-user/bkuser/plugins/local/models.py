@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,10 +14,10 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_validator, model_validator
 
 from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.plugins.local.constants import (
@@ -94,11 +94,17 @@ class NotificationTemplate(BaseModel):
     # 模板标题
     title: Optional[str] = None
     # 模板发送方
-    sender: str
+    sender: EmailStr | Literal[""] = ""
     # 模板内容（text）格式
     content: str
     # 模板内容（html）格式
     content_html: str
+
+    @field_validator("sender", mode="before")
+    @classmethod
+    def normalize_sender(cls, sender: str) -> str:
+        """兼容历史数据：将 DB 中已存的“蓝鲸智云”转换为空字符串"""
+        return "" if sender == "蓝鲸智云" else sender
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "NotificationTemplate":
@@ -186,7 +192,7 @@ class LocalDataSourcePluginConfig(BasePluginConfig):
         try:
             rule = self.password_rule.to_rule()
         except ValidationError as e:
-            raise ValueError(_("密码生成规则不合法: {}").format(stringify_pydantic_error(e)))
+            raise ValueError(_("密码生成规则不合法：{}").format(stringify_pydantic_error(e)))
 
         if self.password_initial.generate_method == PasswordGenerateMethod.FIXED:
             # 如果初始密码生成模式为固定密码，则需要为固定密码预设值

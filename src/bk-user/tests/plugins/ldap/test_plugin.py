@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -15,9 +15,13 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
+from copy import deepcopy
+
 import pytest
 from bkuser.plugins.ldap.plugin import LDAPDataSourcePlugin
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+
+from tests.plugins.ldap import conftest as ldap_conftest
 
 
 class TestLDAPDataSourcePlugin:
@@ -128,3 +132,39 @@ class TestLDAPDataSourcePluginMultipleBaseDNs:
         plugin.fetch_departments()
         users = plugin.fetch_users()
         assert len(users) == 5  # noqa: PLR2004
+
+
+class TestLDAPDataSourcePluginUUIDAttribute:
+    @staticmethod
+    def _replace_entry_uuid_with_object_guid(records):
+        data = deepcopy(records)
+        for item in data:
+            attrs = item["attributes"]
+            attrs["objectGUID"] = attrs.pop("entryUUID")
+        return data
+
+    @pytest.mark.usefixtures("_mock_ldap_client")
+    def test_fetch_data_with_custom_uuid_attribute(self, ldap_ds_cfg, logger, monkeypatch):
+        ldap_ds_cfg.data_config.uuid_attribute = "objectGUID"
+        monkeypatch.setattr(
+            ldap_conftest,
+            "organizational_unit_data",
+            self._replace_entry_uuid_with_object_guid(ldap_conftest.organizational_unit_data),
+        )
+        monkeypatch.setattr(
+            ldap_conftest,
+            "group_of_names_data",
+            self._replace_entry_uuid_with_object_guid(ldap_conftest.group_of_names_data),
+        )
+        monkeypatch.setattr(
+            ldap_conftest,
+            "inet_org_person_data",
+            self._replace_entry_uuid_with_object_guid(ldap_conftest.inet_org_person_data),
+        )
+
+        plugin = LDAPDataSourcePlugin(ldap_ds_cfg, logger)
+        departments = plugin.fetch_departments()
+        users = plugin.fetch_users()
+
+        assert departments[0].code == "97aaa370-0e9d-103f-8e7f-fb1e46baa127"
+        assert users[0].code == "97b9bdce-0e9d-103f-8e8c-fb1e46baa127"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -24,12 +24,13 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
@@ -41,6 +42,7 @@ from .serializers import (
     LocalUserCredentialAuthenticateOutputSLZ,
     TenantListInputSLZ,
     TenantListOutputSLZ,
+    TenantUserLanguageUpdateInputSLZ,
     TenantUserMatchInputSLZ,
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
@@ -61,32 +63,29 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         if not tenant_ids:
             return None
 
-        # 启用的认证源
-        idps = Idp.objects.filter(status=IdpStatus.ENABLED, owner_tenant_id__in=tenant_ids).values(
-            "id", "owner_tenant_id", "plugin_id", "data_source_id"
+        # FIXME(nan): 内置管理员登录与实名用户登录已经区分入口，但这里似乎没有做区分，还需要靠前端页面上有做什么区分不
+        #  还需要考虑单租户与多租户区别，是否应该仅针对单租户？
+        real_idp_ids = list(
+            IdpDataSourceRelation.objects.filter(
+                idp_owner_tenant_id__in=tenant_ids,
+                data_source__type=DataSourceTypeEnum.REAL,
+            )
+            .values_list("idp_id", flat=True)
+            .distinct()
+        )
+
+        # 启用的实名认证源
+        idps = list(
+            Idp.objects.filter(
+                status=IdpStatus.ENABLED,
+                owner_tenant_id__in=tenant_ids,
+                id__in=real_idp_ids,
+            ).values("id", "owner_tenant_id", "plugin_id")
         )
         if len(idps) != 1:
             return None
 
-        idp = idps[0]
-        # 协同情况处理
-        # 如果唯一 IDP 关联的数据源是非实名的，则说明该 IDP 只会被用于本租户，不会有其他租户协同的使用
-        # 协同限制：非实名数据源不可被协同
-        if not DataSource.objects.filter(id=idp["data_source_id"], type=DataSourceTypeEnum.REAL).exists():
-            return idp
-
-        target_tenant_ids = list(
-            CollaborationStrategy.objects.filter(
-                source_status=CollaborationStrategyStatus.ENABLED,
-                target_status=CollaborationStrategyStatus.ENABLED,
-                source_tenant_id=idp["owner_tenant_id"],
-            ).values_list("target_tenant_id", flat=True)
-        )
-        # 有协同，且协同租户启用了，那就不是唯一认证源了
-        if target_tenant_ids and len(set(target_tenant_ids) & set(tenant_ids)) > 0:
-            return None
-
-        return idp
+        return idps[0]
 
     def get(self, request, *args, **kwargs):
         return Response(
@@ -111,7 +110,7 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         # TODO: 密码错误次数检测&锁定，如何实现？
         #  不同数据源配置，key=(data_source_id, username)，错误次数如何计算？如何锁定？
 
-        # 由于密码是Hash并加盐, 无法直接查询DB匹配，只能一个个遍历匹配
+        # 由于密码是 Hash 并加盐，无法直接查询 DB 匹配，只能一个个遍历匹配
         users = LocalDataSourceIdentityInfo.objects.filter(
             data_source_id__in=data["data_source_ids"], username=data["username"]
         )
@@ -121,12 +120,12 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         if not matched_users:
             raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
 
-        # Q: 为什么这里不对用户状态、数据源状态、“是否首次登录检测并强制修改” 等进行检测呢？
+        # Q: 为什么这里不对用户状态、数据源状态、“是否首次登录检测并强制修改”等进行检测呢？
         # A: [单一职责] 这里只对用户的凭证进行认证，并不是与登录绑定
         #  多租户下，认证后的数据源用户，
-        #  还需要根据匹配规则和租户信息等最终匹配到租户用户(即对外的蓝鲸用户)，这些是在登录流程里的
+        #  还需要根据匹配规则和租户信息等最终匹配到租户用户 (即对外的蓝鲸用户)，这些是在登录流程里的
 
-        # FIXME (nan): 密码过期检测，过期需要返回重置URI
+        # FIXME (nan): 密码过期检测，过期需要返回重置 URI
 
         return Response(LocalUserCredentialAuthenticateOutputSLZ(instance=matched_users, many=True).data)
 
@@ -141,7 +140,7 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
             source_status=CollaborationStrategyStatus.ENABLED, target_status=CollaborationStrategyStatus.ENABLED
         ).values("source_tenant_id", "target_tenant_id")
 
-        # 所有启用的租户, 对于协同场景，不过滤不可见的
+        # 所有启用的租户，对于协同场景，不过滤不可见的
         tenant_map = {t.id: t for t in Tenant.objects.filter(status=TenantStatus.ENABLED)}
 
         # 每个租户对应的协同租户列表
@@ -163,9 +162,6 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         # 根据指定的租户 ID(s) 查询
         if tenant_ids := data["tenant_ids"]:
             queryset = queryset.filter(id__in=tenant_ids)
-        else:
-            # 无指定需查询的租户，则只查询可见的租户
-            queryset = queryset.filter(visible=True)
 
         return queryset
 
@@ -175,7 +171,12 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     serializer_class = IdpListOutputSLZ
 
     def get_serializer_context(self) -> Dict[str, Any]:
-        return {"data_source_type_map": {ds["id"]: ds["type"] for ds in DataSource.objects.values("id", "type")}}
+        idps_with_real_relation = set(
+            IdpDataSourceRelation.objects.filter(data_source__type=DataSourceTypeEnum.REAL)
+            .values_list("idp_id", flat=True)
+            .distinct()
+        )
+        return {"idp_data_source_type_map": {idp_id: DataSourceTypeEnum.REAL for idp_id in idps_with_real_relation}}
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
@@ -193,16 +194,11 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         ):
             return Idp.objects.none()
 
-        queryset = Idp.objects.filter(owner_tenant_id=idp_owner_tenant_id, status=IdpStatus.ENABLED)
-        # 协同情况，只有实名用户对应的认证源可以登录
-        if tenant_id != idp_owner_tenant_id:
-            ds = DataSource.objects.filter(owner_tenant_id=idp_owner_tenant_id, type=DataSourceTypeEnum.REAL).first()
-            if ds is None:
-                return Idp.objects.none()
+        real_idp_ids = IdpDataSourceRelationHandler.get_real_idp_ids(idp_owner_tenant_id)
+        if not real_idp_ids:
+            return Idp.objects.none()
 
-            queryset = queryset.filter(data_source_id=ds.id)
-
-        return queryset
+        return Idp.objects.filter(owner_tenant_id=idp_owner_tenant_id, status=IdpStatus.ENABLED, id__in=real_idp_ids)
 
 
 class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
@@ -212,7 +208,7 @@ class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
 
 
 class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
-    """通过IDP的用户信息匹配到蓝鲸用户"""
+    """通过 IDP 的用户信息匹配到蓝鲸用户"""
 
     def post(self, request, *args, **kwargs):
         slz = TenantUserMatchInputSLZ(data=request.data)
@@ -231,9 +227,9 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
             raise error_codes.OBJECT_NOT_FOUND.f(_("认证源 {} 不存在").format(idp_id))
 
         # FIXME: 查询是绑定匹配还是直接匹配，
-        #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
+        #  一般社会化登录都得通过绑定匹配方式，比如 QQ，用户得先绑定后才能使用 QQ 登录
         #  直接匹配，一般是企业身份登录方式，
-        #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
+        #  比如企业内部 SAML2.0 登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
         data_source_user_ids = AuthenticationMatcher(idp_id).match(data["idp_users"])
 
         # 查询租户用户
@@ -246,5 +242,25 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
 
 class TenantUserRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
+    queryset = TenantUser.objects.select_related("data_source_user", "data_source").all()
+    lookup_field = "id"
+
+
+class TenantUserLanguageUpdateApi(LoginApiAccessControlMixin, generics.UpdateAPIView):
+    """
+    更新租户用户的语言设置
+    """
+
     queryset = TenantUser.objects.all()
     lookup_field = "id"
+
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        slz = TenantUserLanguageUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_user.language = data["language"]
+        tenant_user.save(update_fields=["language", "updated_at"])
+
+        return Response()

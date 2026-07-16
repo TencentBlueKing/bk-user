@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -21,12 +21,24 @@ from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationSt
 from bkuser.apps.tenant.models import CollaborationStrategy
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from django.core.cache import caches
 
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """在每个测试前清除缓存，避免缓存的方法返回值影响测试结果"""
+    # 清除所有配置的缓存
+    for cache_name in caches:
+        caches[cache_name].clear()
+    yield
+    for cache_name in caches:
+        caches[cache_name].clear()
 
 
 @pytest.fixture

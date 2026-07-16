@@ -58,28 +58,25 @@
             class="tag-style"
             v-for="item in selectedValue"
             :key="item.id"
-            :closable="item.isMouseenter"
+            :closable="item.id !== userStore.user.username ? item.isMouseenter : false"
             @mouseenter="item.isMouseenter = true"
             @mouseleave="item.isMouseenter = false"
             @close="deleteAccount(item.id)">
             <template #icon>
               <i class="user-icon icon-yonghu" />
             </template>
-            {{ `${item.username}（${item.full_name}）` }}
+            <DisplayName :user-id="item.id" />
           </bk-tag>
           <i
             class="user-icon icon-add-2"
             v-if="!showSelectInput"
             @click="handleSelectValue" />
           <div v-else class="mb-[12px] flex">
-            <MemberSelector
-              class="w-[300px]"
-              :state="realUsers"
-              :params="params"
-              @change-select-list="changeSelectList"
-              @search-user-list="fetchRealUsers"
-              @scroll-change="scrollChange"
-            />
+            <UserSelector
+              class="!w-[300px]"
+              v-model:value="changeValues"
+              :show-admin="false"
+              :exclude-user-ids="selectedValue.map(item => item.id)" />
             <bk-button
               text
               theme="primary"
@@ -97,36 +94,12 @@
     </div>
 
     <!-- 重置密码 -->
-    <bk-dialog
-      :is-show="resetPasswordConfig.isShow"
-      :title="resetPasswordConfig.title"
-      :is-loading="resetPasswordConfig.isLoading"
-      :theme="'primary'"
-      :quick-close="false"
-      :height="200"
-      @closed="closedPassword"
-      @confirm="confirmPassword"
-    >
-      <bk-form
-        class="mt-[8px]"
-        ref="formRef"
-        form-type="vertical"
-        :model="resetPasswordConfig"
-        :rules="rules">
-        <bk-form-item :label="$t('密码')" property="password" required>
-          <div class="flex justify-between">
-            <passwordInput v-model="resetPasswordConfig.password" @change="changePassword" @input="changePassword" />
-            <bk-button
-              outline
-              theme="primary"
-              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
-              @click="handleRandomPassword">
-              {{ $t('随机生成') }}
-            </bk-button>
-          </div>
-        </bk-form-item>
-      </bk-form>
-    </bk-dialog>
+    <ResetPasswordDialog
+      v-model:is-show="resetPasswordConfig.isShow"
+      :loading="resetPasswordConfig.isLoading"
+      :show-password-tips="false"
+      @confirm="handleConfirmPassword"
+    />
   </div>
 </template>
 
@@ -134,29 +107,24 @@
 import { bkTooltips as vBkTooltips, InfoBox, Message  } from 'bkui-vue';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
+import DisplayName from '@/components/display-name.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
-import MemberSelector from '@/components/MemberSelector.vue';
-import passwordInput from '@/components/passwordInput.vue';
-import { useValidate } from '@/hooks';
+import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
+import UserSelector from '@/components/UserSelector.vue';
 import {
   deleteRealManagers,
-  getBuiltinManager,
   getRealManagers,
-  getRealUsers,
   patchBuiltinManager,
   postRealManagers,
   putBuiltinManagerPassword,
-  randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store';
+import { useMainViewStore, useUser } from '@/store';
 
-
+const userStore = useUser();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
-
-const validate = useValidate();
 
 const adminAccount = ref({
   username: '',
@@ -173,9 +141,9 @@ onMounted(() => {
 
 const initBuiltinManager = async () => {
   try {
-    const { data } = await getBuiltinManager();
-    adminAccount.value = data;
-    fixedAdminAccount.value = { ...data };
+    await userStore.initAdmin();
+    adminAccount.value = userStore.admin;
+    fixedAdminAccount.value = { ...userStore.admin };
   } catch (e) {
     isLoading.value = false;
     console.warn(e);
@@ -238,44 +206,14 @@ const editUsername = () => {
 // 重置密码
 const resetPasswordConfig = reactive({
   isShow: false,
-  title: t('重置密码'),
   isLoading: false,
-  password: '',
 });
 
-const formRef = ref();
-
-const rules = {
-  password: [validate.required],
-};
-
-const closedPassword = () => {
-  resetPasswordConfig.isShow = false;
-  resetPasswordConfig.password = '';
-};
-
-const changePassword = (val: string) => {
-  resetPasswordConfig.password = val;
-};
-
-// 随机密码
-const handleRandomPassword = async () => {
+const handleConfirmPassword = async (password: string) => {
   try {
-    const passwordRes = await randomPasswords({});
-    resetPasswordConfig.password = passwordRes.data.password;
-  } catch (e) {
-    console.warn(e);
-  }
-};
-
-const confirmPassword = async () => {
-  try {
-    await formRef.value.validate();
     resetPasswordConfig.isLoading = true;
-
-    await putBuiltinManagerPassword({ password: resetPasswordConfig.password });
+    await putBuiltinManagerPassword({ password });
     resetPasswordConfig.isShow = false;
-    resetPasswordConfig.password = '';
     Message({ theme: 'success', message: t('密码重置成功') });
   } catch (e) {
     console.warn(e);
@@ -287,17 +225,6 @@ const confirmPassword = async () => {
 // 实名管理员信息
 const selectedValue = ref([]);
 
-const realUsers = ref({
-  count: 0,
-  results: [],
-});
-
-const params = reactive({
-  page: 1,
-  page_size: 10,
-  keyword: '',
-  exclude_manager: true,
-});
 const isDisabled = ref(false);
 const initRealManagers = async () => {
   try {
@@ -319,38 +246,25 @@ watch(() => showSelectInput.value, (val) => {
 
 const handleSelectValue = async () => {
   showSelectInput.value = true;
-  const res = await getRealUsers({
-    exclude_manager: params.exclude_manager,
-  });
-  realUsers.value = res.data;
 };
 
 const changeValues = ref([]);
-const changeSelectList = (values: string[]) => {
-  changeValues.value = values;
-};
-
-// 获取用户列表
-const fetchRealUsers = (value: string) => {
-  params.keyword = value;
-  params.page = 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value = res.data;
-  });
-};
-
-const scrollChange = () => {
-  params.page += 1;
-  getRealUsers(params).then((res) => {
-    realUsers.value.count = res.data.count;
-    realUsers.value.results.push(...res.data.results);
-  });
-};
 
 // 删除实名管理员
 const deleteAccount = (id: string) => {
-  deleteRealManagers(id).then(() => {
-    initRealManagers();
+  InfoBox({
+    title: t('确定删除该管理员？'),
+    confirmText: t('确认'),
+    theme: 'danger',
+    onConfirm: () => {
+      deleteRealManagers(id).then(() => {
+        initRealManagers();
+        Message({
+          message: t('删除成功'),
+          theme: 'success',
+        });
+      });
+    },
   });
 };
 
@@ -361,11 +275,13 @@ const saveRealUsers = () => {
   postRealManagers({
     ids: changeValues.value,
   }).then(() => {
+    changeValues.value = [];
     initRealManagers();
   });
 };
 
 const cancelRealUsers = () => {
+  changeValues.value = [];
   showSelectInput.value = false;
 };
 </script>

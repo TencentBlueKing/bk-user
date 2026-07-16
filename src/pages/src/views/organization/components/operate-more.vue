@@ -17,7 +17,7 @@
           >
             {{ item.name }}
           </bk-dropdown-item>
-          <div v-if="!isCollaboration">
+          <div v-if="!isCollaboration && !isRootAdd">
             <div class="border-t border-[#EAEBF0] mx-[12px] my-[4px]"></div>
             <bk-dropdown-item
               @click.prevent="handleDelete"
@@ -53,8 +53,8 @@
       :title="$t('移至目标组织')"
       :theme="'primary'"
       :size="'normal'"
-      @closed="() => moveDialogShow = false"
-      @confirm="() => confirmOperations()"
+      @closed="moveDialogShow = false"
+      @confirm="confirmOperations"
     >
       <div class="mb-[16px] text-[#979BA5]">{{moveTips}}</div>
       <bk-form class="example" form-type="vertical">
@@ -106,6 +106,16 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isRootAdd: {
+    type: Boolean,
+    default: false,
+  },
+  /**
+   * bk-tree下的operate-more必须传入dataSourceId，用于移至目标组织时获取可选组织列表
+   */
+  dataSourceId: {
+    type: Number,
+  },
 });
 
 const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveNode']);
@@ -140,7 +150,7 @@ const defaultDropdownList = ref<any[]>([
       isAddSubOrg.value = false;
       orgDialogVisible.value = false;
       moveDialogShow.value = true;
-      const res = await optionalDepartmentsList();
+      const res = await optionalDepartmentsList({ data_source_id: props.dataSourceId });
       dataSource.value = res.data;
       moveOrg.value = item.id;
       moveTips.value = `${t('将')}${item.name}${t('从当前组织移出')}, ${t('并追加到以下组织')}`;
@@ -171,9 +181,18 @@ const collaborationDropdownList = ref<any[]>([
   },
 ]);
 
-const deptDropdownList = computed(() => (props.isCollaboration
-  ? collaborationDropdownList.value
-  : defaultDropdownList.value));
+const deptDropdownList = computed(() => {
+  if (props.isCollaboration) {
+    return collaborationDropdownList.value;
+  }
+
+  // 如果是根节点添加，只显示"添加子组织"
+  if (props.isRootAdd) {
+    return defaultDropdownList.value.filter(item => item.name === t('添加子组织'));
+  }
+
+  return defaultDropdownList.value;
+});
 
 const handleClickOutside = () => {
   setTimeout(() => {
@@ -219,17 +238,20 @@ const handleDelete = () => {
 const handleOrg = () => {
   orgDialogVisible.value = false;
   if (isAddSubOrg.value) {
+    const curDeptId = props.isRootAdd ? 0 : props.dept.id;
     const newOrg = {
       name: deptName.value,
-      parent_department_id: props.dept.id,
+      parent_department_id: curDeptId,
     };
     addDepartment(props.tenant.id, newOrg).then((res) => {
       const node = {
         id: res.data.id,
         name: deptName.value,
         has_children: false,
+        // 添加子组织后，需要给dataSourceId，用于tree节点 本地Tag及operate-more展示
+        data_source_id: props.dataSourceId,
       };
-      emits('addNode', props.dept.id, node);
+      emits('addNode', curDeptId, node);
     });
   } else {
     updateDepartment(props.dept.id, { name: deptName.value }).then(() => {

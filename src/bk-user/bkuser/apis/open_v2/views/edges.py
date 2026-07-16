@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -42,9 +42,10 @@ class DepartmentProfileRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMi
     def get_queryset(self) -> QuerySet[DataSourceDepartmentUserRelation]:
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
-            DataSourceDepartmentUserRelation.objects.filter(data_source__in=self.get_real_user_data_sources())
+            DataSourceDepartmentUserRelation.objects.filter(data_source_id__in=self.get_real_data_source_ids())
             .only("id", "department_id", "user_id")
             .all()
+            .order_by("id")
         )
 
     def get(self, request, *args, **kwargs):
@@ -104,9 +105,10 @@ class ProfileLeaderRelationListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin,
     def get_queryset(self) -> QuerySet[DataSourceUserLeaderRelation]:
         # 注：兼容 v2 的 OpenAPI 只提供默认租户的数据（包括默认租户本身数据源的数据 & 其他租户协同过来的数据）
         return (
-            DataSourceUserLeaderRelation.objects.filter(data_source__in=self.get_real_user_data_sources())
+            DataSourceUserLeaderRelation.objects.filter(data_source_id__in=self.get_real_data_source_ids())
             .only("id", "user_id", "leader_id")
             .all()
+            .order_by("id")
         )
 
     def get(self, request, *args, **kwargs):

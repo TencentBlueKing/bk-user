@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -53,9 +53,11 @@ from bkuser.apps.tenant.constants import CollaborationStrategyStatus
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantDepartmentIDRecord
 from bkuser.apps.tenant.utils import TenantDeptIDGenerator
 from bkuser.biz.auditor import TenantDepartmentAuditor
+from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.utils.uuid import generate_uuid
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -83,21 +85,21 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
     def _get_root_depts(self) -> QuerySet[TenantDepartment]:
         owner_tenant_id = self.kwargs["id"]
         # 获取指定租户的数据源，通过数据源部门关系查询部门列表
-        data_source = DataSource.objects.filter(
+        data_sources = DataSource.objects.filter(
             owner_tenant_id=owner_tenant_id,
             type=DataSourceTypeEnum.REAL,
-        ).first()
-        if not data_source:
+        )
+        if not data_sources.exists():
             return TenantDepartment.objects.none()
 
         root_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.root_nodes()
-            .filter(data_source=data_source)
+            .filter(data_source__in=data_sources)
             .values_list("department_id", flat=True)
         )
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__owner_tenant_id=owner_tenant_id,
+            data_source__in=data_sources,
             data_source_department_id__in=root_data_source_dept_ids,
         ).select_related("data_source_department")
 
@@ -154,6 +156,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 "id": tenant_dept.id,
                 "name": tenant_dept.data_source_department.name,
                 "has_children": has_children_map.get(tenant_dept.id, False),
+                "data_source_id": tenant_dept.data_source_id,
             }
             for tenant_dept in tenant_depts
         ]
@@ -170,14 +173,14 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         if self.kwargs["id"] != current_tenant_id:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
 
-        # 必须存在实名用户数据源才可以创建租户部门
+        # 必须存在本地实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(
-            owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL
+            owner_tenant_id=current_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
         ).first()
         if not data_source:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("租户数据源不存在"))
-        if not data_source.is_local:
-            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持创建部门"))
 
         slz = TenantDepartmentCreateInputSLZ(
             data=request.data, context={"tenant_id": current_tenant_id, "data_source": data_source}
@@ -185,8 +188,11 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 则将部门关联到父部门（根部门也需要关联到 None）
+        # 设置默认值（若父部门不存在，则所创建的部门为根部门）
         parent_dept_relation = None
+        data_source_dept_org_path = data["name"]
+
+        # 若父部门存在，则更新父部门关系与组织路径变量
         if parent_tenant_dept_id := data["parent_department_id"]:
             # 从租户部门 ID 找数据源部门
             parent_data_source_dept = TenantDepartment.objects.get(
@@ -195,10 +201,14 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(
                 department=parent_data_source_dept, data_source=data_source
             )
+            parent_dept_org_path = TenantOrgPathHandler.get_dept_organization_path_map(
+                [parent_data_source_dept.id], include_self=True
+            )
+            data_source_dept_org_path = parent_dept_org_path[parent_data_source_dept.id] + "/" + data["name"]
 
         with transaction.atomic():
             data_source_dept = DataSourceDepartment.objects.create(
-                data_source=data_source, code=generate_uuid(), name=data["name"]
+                data_source=data_source, code=gen_dept_code(data_source_dept_org_path), name=data["name"]
             )
             # 将新的数据源部门和父部门关联起来
             DataSourceDepartmentRelation.objects.create(
@@ -297,8 +307,11 @@ class TenantDepartmentUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_dept.data_source_department.name = data["name"]
-        tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+        with transaction.atomic():
+            tenant_dept.data_source_department.name = data["name"]
+            tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
+            # 更新部门 code 值
+            TenantDepartmentHandler.update_department_code(tenant_dept.data_source_department)
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_dept)
@@ -350,29 +363,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDeptOrgPathMapMixin:
-    def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
-        """获取租户部门的组织路径信息"""
-        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
-
-        # 数据源部门 ID -> 组织路径
-        org_path_map = {}
-        for dept_relation in DataSourceDepartmentRelation.objects.filter(
-            department_id__in=data_source_dept_ids
-        ).select_related("department"):
-            dept_names = list(
-                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
-            )
-            org_path_map[dept_relation.department_id] = "/".join(dept_names)
-
-        # 租户部门 ID -> 组织路径
-        return {
-            dept.id: org_path_map.get(dept.data_source_department_id, dept.data_source_department.name)
-            for dept in tenant_depts
-        }
-
-
-class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     """搜索租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -386,11 +377,12 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixi
         slz.is_valid(raise_exception=True)
         keyword = slz.validated_data["keyword"]
 
+        real_ds_ids = DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__type=DataSourceTypeEnum.REAL,
+            data_source_id__in=real_ds_ids,
             data_source_department__name__icontains=keyword,
-        ).select_related("data_source", "data_source_department")[: self.search_limit]
+        ).select_related("data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -400,15 +392,18 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixi
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
         context = {
             "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
-            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(
+                data_source_dept_ids, include_self=True
+            ),
         }
         resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """可选租户部门列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -428,6 +423,10 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
             data_source__type=DataSourceTypeEnum.REAL,
             data_source__owner_tenant_id=cur_tenant_id,
         ).select_related("data_source_department")
+
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)
 
@@ -441,7 +440,12 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
     )
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
-        context = {"org_path_map": self._get_dept_organization_path_map(tenant_depts)}
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+        context = {
+            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(
+                data_source_dept_ids, include_self=True
+            )
+        }
         resp_data = OptionalTenantDepartmentListOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
 
@@ -507,7 +511,12 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
                 department=parent_data_source_dept, data_source=tenant_dept.data_source
             )
 
-        cur_dept_relation.move_to(parent_dept_relation)
+        with transaction.atomic():
+            cur_dept_relation.move_to(parent_dept_relation)
+            # 更新部门 code 值
+            TenantDepartmentHandler.update_department_code(data_source_dept)
+
+        TenantOrgPathHandler.clear_department_descendants_ancestor_cache(tenant_dept.data_source_department_id)
 
         # 【审计】记录变更后的数据
         auditor.record_update_parent_department(tenant_dept)

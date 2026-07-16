@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.serializers import PasswordRuleSerializer
 from bkuser.apps.notification.constants import NotificationMethod
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX, TenantStatus
 from bkuser.apps.tenant.models import Tenant
@@ -85,10 +86,10 @@ class TenantCreateInputSLZ(serializers.Serializer):
         validators=[validate_logo],
     )
     status = serializers.ChoiceField(help_text="租户状态", choices=TenantStatus.get_choices())
-    # [内置管理]类型的本地数据源配置
+    # [内置管理] 类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_methods = serializers.ListField(
-        help_text="通知方式(支持多选或不选)",
+        help_text="通知方式 (支持多选或不选)",
         child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
         required=False,
         default=[],
@@ -108,7 +109,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
                 _(
-                    "{} 不符合 租户 ID 的命名规范: 由3-32位小写字母、数字、连接符(-)字符组成，以小写字母开头，小写字母或数字结尾",  # noqa: E501
+                    "{} 不符合 租户 ID 的命名规范：由 3-32 位小写字母、数字、连接符 (-) 字符组成，以小写字母开头，小写字母或数字结尾，不支持出现两个连续的连接符 (--)",  # noqa: E501
                 ).format(id),
             )
 
@@ -197,10 +198,10 @@ class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
 
 
 class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
-    # [内置管理]类型的本地数据源配置
+    # [内置管理] 类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_methods = serializers.ListField(
-        help_text="通知方式(支持多选或不选)",
+        help_text="通知方式 (支持多选或不选)",
         child=serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices()),
         required=False,
         default=[],
@@ -232,3 +233,12 @@ class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
         attrs["email"], attrs["phone"], attrs["phone_country_code"] = email, phone, phone_country_code
 
         return attrs
+
+
+class TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    class Meta:
+        ref_name = "platform_management.TenantBuiltinManagerPasswordRuleRetrieveOutputSLZ"
+
+
+class DefaultPasswordRuleRetrieveOutputSLZ(PasswordRuleSerializer):
+    pass

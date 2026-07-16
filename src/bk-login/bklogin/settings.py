@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -24,7 +24,9 @@ from urllib.parse import urlparse
 import environ
 import pymysql
 import urllib3
+from django.db.backends.mysql.features import DatabaseFeatures
 from django.utils.encoding import force_bytes
+from django.utils.functional import cached_property
 
 pymysql.install_as_MySQLdb()
 
@@ -36,11 +38,25 @@ environ.Env.read_env()
 # no more useless warning
 urllib3.disable_warnings()
 
+
+# 定义一个补丁来兼容 MySQL 5.7
+class PatchFeatures:
+    @cached_property
+    def minimum_database_version(self):
+        if self.connection.mysql_is_mariadb:  # type: ignore[attr-defined]
+            return 10, 4
+        return 5, 7
+
+
+# 将补丁应用到 DatabaseFeatures 中
+DatabaseFeatures.minimum_database_version = PatchFeatures.minimum_database_version
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", False)
+DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -53,6 +69,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "django_prometheus",
+    "apigw_manager.apigw",
     "bklogin.authentication",
 ]
 
@@ -68,6 +85,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "bklogin.common.middlewares.ExceptionHandlerMiddleware",
+    "apigw_manager.apigw.authentication.ApiGatewayJWTGenericMiddleware",
+    "apigw_manager.apigw.authentication.ApiGatewayJWTAppMiddleware",
+    "bklogin.common.middlewares.InnerBearerTokenMiddleware",
+    "bklogin.common.middlewares.BkUserAppMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -96,16 +117,38 @@ WSGI_APPLICATION = "bklogin.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME", "bk-login"),
-        "USER": env.str("MYSQL_USER", "root"),
-        "PASSWORD": env.str("MYSQL_PASSWORD", ""),
-        "HOST": env.str("MYSQL_HOST", "localhost"),
-        "PORT": env.int("MYSQL_PORT", 3306),
+        "NAME": env.str("MYSQL_NAME", default="bk-login"),
+        "USER": env.str("MYSQL_USER", default="root"),
+        "PASSWORD": env.str("MYSQL_PASSWORD", default=""),
+        "HOST": env.str("MYSQL_HOST", default="localhost"),
+        "PORT": env.int("MYSQL_PORT", default=3306),
         "TEST": {
             "CHARSET": "utf8mb4",
         },
     },
 }
+
+# Database tls
+MYSQL_TLS_ENABLED = env.bool("MYSQL_TLS_ENABLED", default=False)
+MYSQL_TLS_CERT_CA_FILE = env.str("MYSQL_TLS_CERT_CA_FILE", default="")
+MYSQL_TLS_CERT_FILE = env.str("MYSQL_TLS_CERT_FILE", default="")
+MYSQL_TLS_CERT_KEY_FILE = env.str("MYSQL_TLS_CERT_KEY_FILE", default="")
+MYSQL_TLS_CHECK_HOSTNAME = env.str("MYSQL_TLS_CHECK_HOSTNAME", default=True)
+if MYSQL_TLS_ENABLED:
+    default_ssl_options = {
+        "ca": MYSQL_TLS_CERT_CA_FILE,
+        "check_hostname": MYSQL_TLS_CHECK_HOSTNAME,
+    }
+    # mTLS
+    if MYSQL_TLS_CERT_FILE and MYSQL_TLS_CERT_KEY_FILE:
+        default_ssl_options["cert"] = MYSQL_TLS_CERT_FILE
+        default_ssl_options["key"] = MYSQL_TLS_CERT_KEY_FILE
+
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+
+    DATABASES["default"]["OPTIONS"]["ssl"] = default_ssl_options
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -123,36 +166,36 @@ SITE_URL = env.str("SITE_URL", default="/login/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
-# STATIC_URL 也可以是CDN地址
+# STATIC_URL 也可以是 CDN 地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
-# 登录服务的AppCode/AppSecret
+# 登录服务的 AppCode/AppSecret
 BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
 # [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
-BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
+BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", default="")
 
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 # 详情查看：https://cryptography.io/en/latest/fernet/
 BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
 # 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
-BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", default="CLASSIC")
 ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
-# 蓝鲸统一的基础域和对外SCHEME
-BK_DOMAIN = env.str("BK_DOMAIN", "")
+# 蓝鲸统一的基础域和对外 SCHEME
+BK_DOMAIN = env.str("BK_DOMAIN", default="")
 BK_DOMAIN_SCHEME = env.str("BK_DOMAIN_SCHEME", default="http")
-# 统一登录的外部访问地址，不包括http(s)协议
-BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", "")
+# 统一登录的外部访问地址，不包括 http(s) 协议
+BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", default="")
 BK_LOGIN_URL = f"{BK_DOMAIN_SCHEME}://{BK_LOGIN_ADDR}{SITE_URL}"
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
-# 蓝鲸公共的Cookie的Domain(比如 bk_token和blueking_language)
+# 蓝鲸公共的 Cookie 的 Domain(比如 bk_token 和 blueking_language)
 BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
-# 登录完成后允许重定向的HOST
-# 支持匹配:
+# 登录完成后允许重定向的 HOST
+# 支持匹配：
 #  (1) * 匹配任意域名
 #  (2) 泛域名匹配，比如 .example.com 可匹配 foo.example.com、example.com、foo.example.com:8000、example.com:8080
 #  (3) 精确域名匹配，比如 example.com 可匹配 example.com、example.com:8000
@@ -160,7 +203,7 @@ BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
 # 默认蓝鲸体系域名都可以匹配
 ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[BK_COOKIE_DOMAIN])
 REDIRECT_URL_REQUIRE_HTTPS = env.bool("BK_LOGIN_REDIRECT_URL_REQUIRE_HTTPS", default=bool(BK_DOMAIN_SCHEME == "https"))
-# 语言Cookie（蓝鲸体系共享）
+# 语言 Cookie（蓝鲸体系共享）
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
 
 # session & csrf
@@ -170,11 +213,11 @@ _BK_LOGIN_NETLOC = _BK_LOGIN_URL_PARSE_URL.netloc  # 若有端口，则会带上
 _BK_LOGIN_IS_SPECIAL_PORT = _BK_LOGIN_URL_PARSE_URL.port in [None, 80, 443]
 _BK_LOGIN_SCHEME = _BK_LOGIN_URL_PARSE_URL.scheme
 _BK_LOGIN_URL_MD5_16BIT = hashlib.md5(BK_LOGIN_URL.encode("utf-8")).hexdigest()[8:-8]
-# 注意：Cookie Domain是不支持端口的
+# 注意：Cookie Domain 是不支持端口的
 SESSION_COOKIE_DOMAIN = _BK_LOGIN_HOSTNAME
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 SESSION_COOKIE_NAME = f"bklogin_sessionid_{_BK_LOGIN_URL_MD5_16BIT}"
-SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
+SESSION_COOKIE_AGE = 60 * 60 * 24  # 1 天
 CSRF_COOKIE_NAME = f"bklogin_csrftoken_{_BK_LOGIN_URL_MD5_16BIT}"
 # 对于特殊端口，带端口和不带端口都得添加，其他只需要添加默认原生的即可
 # Django 4.0 之后 CSRF_TRUSTED_ORIGINS 必须以 scheme (http:// 或 https://) 开头
@@ -192,14 +235,24 @@ CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", 
 CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # 登录票据
-# 登录票据Cookie名称
+# 登录票据 Cookie 名称
 BK_TOKEN_COOKIE_NAME = env.str("BK_LOGIN_COOKIE_NAME", default="bk_token")
-# 登录票据Cookie有效期，默认1天
+# 登录票据 Cookie 有效期，默认 1 天
 BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
-# 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步,默认1分钟
+# 登录票据校验有效期时，校验时间允许误差，防止多台机器时间不同步，默认 1 分钟
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
-# 无操作的失效期，默认2个小时. 长时间无操作, BkToken自动过期（Note: 调整为）
+# 无操作的失效期，默认 2 个小时。长时间无操作，BkToken 自动过期
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
+# 无操作失效时间更新间隔（秒），距离上次更新超过该间隔时才更新，减少数据库写操作
+# 默认值为 10 分钟，即距离上次更新超过 10 分钟时才更新
+# 设置为 0 表示每次校验都更新（不推荐，会影响性能）
+# 设置为大于 0 的值表示自定义更新间隔
+BK_TOKEN_INACTIVE_UPDATE_INTERVAL = env.int("BK_TOKEN_INACTIVE_UPDATE_INTERVAL", default=10 * 60)
+# 允许的最大登录终端数量，默认 0 表示不限制
+# - 0: 不限制，允许无限多个终端同时登录
+# - 1: 单端登录，同一时间只能有一个有效 token
+# - N: 最多允许 N 个终端同时登录
+BK_TOKEN_MAX_SESSIONS = env.int("BK_TOKEN_MAX_SESSIONS", default=0)
 
 # 用户管理相关信息
 BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")
@@ -208,6 +261,11 @@ BK_USER_API_URL = env.str("BK_USER_API_URL", default="http://bk-user")
 
 # bk apigw url tmpl
 BK_API_URL_TMPL = env.str("BK_API_URL_TMPL", default="")
+BK_APP_TENANT_ID = env.str("BK_APP_TENANT_ID", default="system")
+BK_APIGW_NAME = env.str("BK_APIGW_NAME", default="bk-login")
+# 是否开启同步网关 API
+ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
+BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN = env.str("BK_APIGW_TO_BK_USER_INNER_BEARER_TOKEN", default="")
 
 # footer / logo / title 等全局配置存储的共享仓库地址
 BK_SHARED_RES_URL = env.str("BK_SHARED_RES_URL", default="")
@@ -326,7 +384,7 @@ LOGGING = build_logging_config(LOG_LEVEL, logging_to_console, logging_directory,
 # ------------------------------------------ Healthz 配置 ------------------------------------------
 
 # 调用 Healthz API 需要的 Token
-HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", default="")
 # 服务健康探针配置
 HEALTHZ_PROBES = env.list(
     "HEALTHZ_PROBES",
@@ -338,25 +396,25 @@ HEALTHZ_PROBES = env.list(
 # ------------------------------------------ Metric 配置 ------------------------------------------
 
 # 调用 Metric API 需要的 Token
-METRIC_TOKEN = env.str("METRIC_TOKEN", "")
+METRIC_TOKEN = env.str("METRIC_TOKEN", default="")
 
 # ------------------------------------------ Tracing 配置 ------------------------------------------
 
 # Sentry DSN 配置
-SENTRY_DSN = env.str("SENTRY_DSN", "")
+SENTRY_DSN = env.str("SENTRY_DSN", default="")
 
 # 是否开启 OTEL 数据上报，默认不启用
-ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
+ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", default=False)
 # 上报数据服务名称，一般使用默认值即可
-OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-login")
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", default="bk-login")
 # sdk 采样规则（always_on / always_off ...）
-OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
+OTEL_SAMPLER = env.str("OTEL_SAMPLER", default="always_on")
 # OTEL 上报地址（grpc）
-OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", "")
+OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", default="")
 # OTEL 上报到监控平台的数据 Token，可通过监控平台上新建应用获得
-OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", "")
+OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", default="")
 # 是否记录 DB 相关 tracing
-OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
+OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", default=False)
 
 if ENABLE_OTEL_TRACE or SENTRY_DSN:
     INSTALLED_APPS += ("bklogin.monitoring.tracing",)
@@ -364,11 +422,11 @@ if ENABLE_OTEL_TRACE or SENTRY_DSN:
 # ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
 
 # 通知中心的功能可通过配置开启
-ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", default=False)
 if ENABLE_BK_NOTICE:
     INSTALLED_APPS += ("bk_notice_sdk",)
     # 对接通知中心的环境，默认为生产环境
-    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", default="prod")
     BK_NOTICE = {
         "STAGE": BK_NOTICE_ENV,
         "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
@@ -380,3 +438,8 @@ if ENABLE_BK_NOTICE:
     }
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
+# 是否开启多租户模式
+ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", default=False)
+
+# 是否允许浏览器保存密码自动填充功能
+ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE = env.bool("ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE", default=True)

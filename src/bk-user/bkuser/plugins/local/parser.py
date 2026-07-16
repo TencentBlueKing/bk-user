@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -83,8 +83,8 @@ class LocalDataSourceDataParser:
         "username",
         "full_name",
         "email",
-        "phone_number",
     ]
+    # TODO: 后续支持根据字段设置的必填情况，调整必填字段
 
     def __init__(self, logger: PluginLogger, workbook: Workbook):
         self.logger = logger
@@ -171,7 +171,7 @@ class LocalDataSourceDataParser:
             if not USERNAME_REGEX.fullmatch(username):
                 raise InvalidUsername(
                     _(
-                        "用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾",  # noqa: E501
+                        "用户名 {} 不符合命名规范：由 2-32 位字母、数字、下划线 (_)、点 (.)、连接符 (-) 字符组成，以字母或数字开头及结尾",  # noqa: E501
                     ).format(username)
                 )
 
@@ -248,12 +248,17 @@ class LocalDataSourceDataParser:
                 # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
                 leaders = [ld.strip() for ld in leader_names.split(",") if ld.strip()]
 
-            phone_number = str(properties.pop("phone_number"))
-            # 默认认为是不带国际代码的
-            phone, country_code = phone_number, settings.DEFAULT_PHONE_COUNTRY_CODE
-            if phone_number.startswith("+"):
-                ret = phonenumbers.parse(phone_number)
-                phone, country_code = str(ret.national_number), str(ret.country_code)
+            phone_number = properties.pop("phone_number")
+            # 如果手机号为空，设置为空字符串
+            if not phone_number:
+                phone, country_code = "", ""
+            else:
+                phone_number = str(phone_number)
+                # 默认认为是不带国际代码的
+                phone, country_code = phone_number, settings.DEFAULT_PHONE_COUNTRY_CODE
+                if phone_number.startswith("+"):
+                    ret = phonenumbers.parse(phone_number)
+                    phone, country_code = str(ret.national_number), str(ret.country_code)
 
             properties.update({"phone": phone, "phone_country_code": country_code})
 
@@ -261,7 +266,7 @@ class LocalDataSourceDataParser:
             properties = {k: str(v) for k, v in properties.items() if v is not None}
             self.users.append(
                 RawDataSourceUser(
-                    # 本地数据源用户，code 就是 username
+                    # 本地数据源用户，code 就是 原始 username
                     code=properties["username"],
                     properties=properties,
                     leaders=leaders,

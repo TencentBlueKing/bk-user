@@ -1,0 +1,243 @@
+# -*- coding: utf-8 -*-
+# TencentBlueKing is pleased to support the open source community by making
+# 蓝鲸智云 - 用户管理 (bk-user) available.
+# Copyright (C) 2017 Tencent. All rights reserved.
+# Licensed under the MIT License (the "License"); you may not use this file except
+# in compliance with the License. You may obtain a copy of the License at
+#
+#     http://opensource.org/licenses/MIT
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# We undertake not to change the open source license (MIT license) applicable
+# to the current version of the project delivered to anyone in the future.
+from typing import Any, Dict
+
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+
+from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apis.open_v3.serializers.department import (
+    TenantDepartmentDescendantListInputSLZ,
+    TenantDepartmentDescendantListOutputSLZ,
+    TenantDepartmentListOutputSLZ,
+    TenantDepartmentLookupInputSLZ,
+    TenantDepartmentLookupOutputSLZ,
+    TenantDepartmentRetrieveInputSLZ,
+    TenantDepartmentRetrieveOutputSLZ,
+    TenantDepartmentUserListOutputSLZ,
+)
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.organization import DataSourceDepartmentHandler, TenantDepartmentHandler, TenantOrgPathHandler
+from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
+
+
+class TenantDepartmentRetrieveApi(OpenApiCommonMixin, generics.RetrieveAPIView):
+    """
+    获取部门信息（支持是否包括祖先部门）
+    """
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids)
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="retrieve_department",
+        operation_description="查询部门信息",
+        query_serializer=TenantDepartmentRetrieveInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentRetrieveInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_department = self.get_object()
+
+        info = {
+            "id": tenant_department.id,
+            "name": tenant_department.data_source_department.name,
+        }
+
+        if data["with_ancestors"]:
+            # 查询部门对应的祖先部门列表
+            ancestor_ids = DataSourceDepartmentHandler.get_dept_ancestors(tenant_department.data_source_department_id)
+            tenant_depts = TenantDepartment.objects.filter(
+                data_source_department_id__in=ancestor_ids, tenant_id=tenant_department.tenant_id
+            ).select_related("data_source_department")
+
+            info["ancestors"] = [{"id": d.id, "name": d.data_source_department.name} for d in tenant_depts]
+
+        return Response(TenantDepartmentRetrieveOutputSLZ(info).data)
+
+
+class TenantDepartmentListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取部门列表
+    """
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="list_department",
+        operation_description="查询部门列表",
+        responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        depts = TenantDepartment.objects.select_related("data_source_department").filter(
+            tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+        )
+
+        # 分页
+        page = self.paginate_queryset(depts)
+
+        # 查询 parent
+        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(self.tenant_id, page)
+
+        return self.get_paginated_response(
+            TenantDepartmentListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
+        )
+
+
+class TenantDepartmentDescendantListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    获取部门下的子部门列表信息（支持递归）
+    """
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="list_department_descendant",
+        operation_description="查询部门下的子部门列表",
+        query_serializer=TenantDepartmentDescendantListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentDescendantListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentDescendantListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        max_level = data["max_level"]
+
+        # 若传入的部门 ID 为 0，表示为根部门的 Parent
+        if not kwargs["id"]:
+            # 根部门在 MPTT 树中的 level = 0，那么父部门则为 -1
+            parent_level = -1
+            # 计算要查询的绝对层级
+            level = parent_level + max_level
+            # 按层级 Level 递归查询子部门
+            descendant_ids = DataSourceDepartmentRelation.objects.filter(
+                data_source_id__in=self.real_data_source_ids, level__lte=level
+            ).values_list("department_id", flat=True)
+        else:
+            tenant_department = get_object_or_404(
+                TenantDepartment.objects.filter(
+                    tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+                ),
+                id=kwargs["id"],
+            )
+
+            relation = DataSourceDepartmentRelation.objects.get(
+                department_id=tenant_department.data_source_department_id
+            )
+
+            # 计算绝对层级 Level
+            level = relation.level + max_level
+            # 按层级 Level 递归查询该部门的子部门
+            descendant_ids = (
+                relation.get_descendants().filter(level__lte=level).values_list("department_id", flat=True)
+            )
+
+        depts = TenantDepartment.objects.filter(
+            tenant_id=self.tenant_id,
+            data_source_department_id__in=descendant_ids,
+        ).select_related("data_source_department")
+
+        # 分页
+        page = self.paginate_queryset(depts)
+
+        # 查询 parent
+        parent_id_map = TenantDepartmentHandler.get_tenant_department_parent_id_map(self.tenant_id, page)
+
+        return self.get_paginated_response(
+            TenantDepartmentDescendantListOutputSLZ(page, many=True, context={"parent_id_map": parent_id_map}).data
+        )
+
+
+class TenantDepartmentUserListApi(OpenApiCommonMixin, generics.ListAPIView):
+    serializer_class = TenantDepartmentUserListOutputSLZ
+
+    def get_queryset(self):
+        tenant_department = get_object_or_404(
+            TenantDepartment.objects.filter(tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids),
+            id=self.kwargs["id"],
+        )
+        user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id=tenant_department.data_source_department_id
+        ).values_list("user_id", flat=True)
+
+        return (
+            TenantUser.objects.select_related("data_source_user")
+            .filter(data_source_user_id__in=user_ids, tenant_id=self.tenant_id)
+            .order_by("id")
+        )
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="list_department_user",
+        operation_description="查询部门的用户列表",
+        responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_users = self.paginate_queryset(self.get_queryset())
+
+        slz = TenantDepartmentUserListOutputSLZ(
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users),
+                "login_name_map": TenantUserHandler.batch_get_login_name(tenant_users),
+            },
+        )
+
+        return self.get_paginated_response(slz.data)
+
+
+class TenantDepartmentLookupListApi(OpenApiCommonMixin, generics.ListAPIView):
+    """
+    批量查询部门信息列表
+    """
+
+    pagination_class = None
+
+    @swagger_auto_schema(
+        tags=["open_v3.department"],
+        operation_id="batch_lookup_department",
+        operation_description="批量查询部门信息",
+        query_serializer=TenantDepartmentLookupInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentLookupOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentLookupInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = TenantDepartment.objects.select_related("data_source_department").filter(
+            id__in=data["department_ids"], tenant_id=self.tenant_id, data_source_id__in=self.real_data_source_ids
+        )
+
+        with_organization_path = data["with_organization_path"]
+        context: Dict[str, Any] = {"with_organization_path": with_organization_path, "org_path_map": {}}
+        # 若指定 with_organization_path 参数，则需要获取部门的组织路径
+        if with_organization_path:
+            # 根据数据源部门 ID 获取部门的组织路径
+            data_source_department_ids = [dept.data_source_department_id for dept in queryset]
+            context["org_path_map"] = TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids)
+
+        return Response(TenantDepartmentLookupOutputSLZ(queryset, context=context, many=True).data)

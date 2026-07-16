@@ -21,7 +21,7 @@
         <div class="details-content-item">
           <span class="details-content-key">{{ $t('手机号') }}：</span>
           <span class="details-content-value">
-            {{ userData.phone_country_code ?
+            {{ userData.phone ?
               `(+${userData.phone_country_code}) ${userData.phone}` : userData.phone || '--' }}
           </span>
         </div>
@@ -55,6 +55,12 @@
             {{ $t('续期') }}
           </button>
         </div>
+        <div class="details-content-item" v-if="detail.password_expired_at">
+          <span class="details-content-key">{{ $t('密码过期时间') }}：</span>
+          <span class="details-content-value">
+            {{ remainingDays(detail.password_expired_at) }}
+          </span>
+        </div>
         <CustomFieldsView :extras="detail.extras" />
       </div>
       <img v-if="detail.logo" class="user-logo" :src="detail.logo" alt="" />
@@ -76,14 +82,14 @@
         </bk-select>
       </bk-form-item>
       <bk-form-item v-if="showExpirationTime" :label="$t('账号过期时间')" property="custom" required>
-        <bk-date-picker
+        <LocalDatePicker
           v-model="formData.custom"
           :disabled-date="disabledDate"
           :placeholder="$t('自定义')"
           type="datetime"
           format="yyyy-MM-dd HH:mm:ss"
-          append-to-body>
-        </bk-date-picker>
+          append-to-body
+        />
       </bk-form-item>
     </bk-form>
   </bk-dialog>
@@ -94,6 +100,7 @@ import dayjs from 'dayjs';
 import { computed, defineEmits, defineProps, ref } from 'vue';
 
 import CustomFieldsView from '@/components/custom-fields/ViewFields.vue';
+import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import { getTenantUserValidityPeriod, updateAccountExpiredAt } from '@/http';
 import { t } from '@/language/index';
 import { formatConvert } from '@/utils';

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -14,7 +14,6 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from django.db.models import QuerySet
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -28,14 +27,11 @@ from bkuser.apps.tenant.models import Tenant, TenantUserIDGenerateConfig
 class CategoriesListApi(LegacyOpenApiCommonMixin, DefaultTenantMixin, generics.ListAPIView):
     pagination_class = LegacyOpenApiPagination
 
-    def get_queryset(self) -> QuerySet[DataSource]:
-        return self.get_real_user_data_sources()
-
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
-        data_sources = self.get_queryset()
+        data_sources = DataSource.objects.filter(id__in=self.get_real_data_source_ids()).only("id", "owner_tenant_id")
 
         data_source_domain_map = {
             cfg.data_source_id: cfg.domain

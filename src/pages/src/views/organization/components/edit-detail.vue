@@ -23,19 +23,11 @@
             />
           </bk-form-item>
         </div>
-        <bk-upload
+        <UploadImg
+          v-model:value="formData.logo"
           class="mt-[26px]"
-          theme="picture"
-          with-credentials
-          :multiple="false"
-          :files="files"
-          :handle-res-code="handleRes"
-          :url="formData.logo"
-          :custom-request="customRequest"
-          :size="2"
-          @delete="handleDelete"
-          @error="handleError"
-          :tip="$t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB')"
+          @success="handleChange"
+          @delete="handleChange"
         />
       </div>
       <bk-form-item :label="$t('姓名')" property="full_name" required>
@@ -45,7 +37,7 @@
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item :label="$t('邮箱')" property="email">
+      <bk-form-item :label="$t('邮箱')" property="email" required>
         <bk-input
           v-model="formData.email"
           @focus="handleChange"
@@ -72,8 +64,6 @@
             id-key="id"
             display-key="organization_path"
             :remote-method="searchDepartments"
-            :scroll-loading="scrollLoading"
-            @scroll-end="departmentsScrollEnd"
             @change="handleChange">
           </bk-select>
         </bk-form-item>
@@ -87,26 +77,36 @@
             collapse-tags
             id-key="id"
             :remote-method="searchLeaders"
-            :scroll-loading="scrollLoading"
-            @scroll-end="leadersScrollEnd"
             @change="handleChange">
+            <template #tagRender="{ value }">
+              <DisplayName :user-id="value" />
+            </template>
             <bk-option
               v-for="item in leaderList"
               :key="item.id"
-              :value="item.id"
-              :name="`${item.username}(${item.full_name})`"
-              :label="`${item.username}(${item.full_name})`" />
+              :value="item.id">
+              <DisplayName :user-id="item.id" />
+            </bk-option>
           </bk-select>
         </bk-form-item>
       </div>
       <div class="form-item-flex">
         <bk-form-item :label="$t('账号过期时间')">
-          <bk-date-picker
+          <LocalDatePicker
             v-model="formData.account_expired_at"
             :placeholder="$t('选择日期时间')"
             type="datetime"
             format="yyyy-MM-dd HH:mm:ss"
-            :disabled-date="disabledDate">
+            :disabled-date="disabledDate"
+          />
+        </bk-form-item>
+        <bk-form-item :label="$t('密码过期时间')" v-if="formData.password_expired_at">
+          <bk-date-picker
+            v-model="formData.password_expired_at"
+            :placeholder="$t('选择日期时间')"
+            type="datetime"
+            format="yyyy-MM-dd HH:mm:ss"
+            :disabled="true">
           </bk-date-picker>
         </bk-form-item>
       </div>
@@ -124,11 +124,13 @@
 </template>
 
 <script setup lang="tsx">
-import { Message } from 'bkui-vue';
-import { computed,  onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
+import DisplayName from '@/components/display-name.vue';
+import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import PhoneInput from '@/components/phoneInput.vue';
+import UploadImg from '@/components/upload-img.vue';
 import { useValidate } from '@/hooks';
 import {
   optionalDepartmentsList,
@@ -136,12 +138,15 @@ import {
   updateTenantsUserDetail,
 } from '@/http/organizationFiles';
 import { t } from '@/language/index';
-import { getBase64 } from '@/utils';
 
 const props = defineProps({
   detailsInfo: {
     type: Object,
     default: {},
+  },
+  dataSourceId: {
+    type: Number,
+    default: undefined,
   },
 });
 
@@ -177,42 +182,6 @@ watch(formData, (val) => {
   window.changeInput = !isDisabled.value;
 }, { deep: true, immediate: true });
 
-// 上传头像
-const files = computed(() => {
-  const img = [];
-  if (formData.logo !== '') {
-    img.push({
-      url: formData.logo,
-    });
-    return img;
-  }
-  return [];
-});
-const handleRes = (response: any) => {
-  if (response.id) {
-    return true;
-  }
-  return false;
-};
-const customRequest = (event) => {
-  getBase64(event.file).then((res) => {
-    formData.logo = res;
-  })
-    .catch((e) => {
-      console.warn(e);
-    });
-  handleChange();
-};
-const handleDelete = () => {
-  formData.logo = '';
-  handleChange();
-};
-const handleError = (file) => {
-  if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
-  }
-};
-
 onMounted(() => {
   getOptionalDepartmentsList();
   getOptionalLeaderList();
@@ -228,8 +197,23 @@ const changeTelError = (value: boolean) => {
   telError.value = value;
 };
 const getOptionalDepartmentsList = (value = '') => {
-  optionalDepartmentsList({ keyword: value }).then((res) => {
-    departmentsList.value = res.data;
+  optionalDepartmentsList({
+    keyword: value,
+    data_source_id: props.dataSourceId,
+  }).then((res) => {
+    const dataMap = new Map();
+    res.data.forEach((item) => {
+      dataMap.set(item.id, item);
+    });
+    // 补充departmentList没有的部门
+    if (props.detailsInfo.departments && Array.isArray(props.detailsInfo.departments)) {
+      props.detailsInfo.departments.forEach((item) => {
+        if (!dataMap.has(item.id)) {
+          dataMap.set(item.id, item);
+        }
+      });
+    }
+    departmentsList.value = Array.from(dataMap.values());
   })
     .catch((e) => {
       console.warn(e);

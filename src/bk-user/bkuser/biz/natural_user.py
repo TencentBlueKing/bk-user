@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -33,10 +33,10 @@ class NatureUserHandler:
     @staticmethod
     def get_nature_user_by_tenant_user_id(tenant_user_id: str) -> NaturalUserInfo:
         """
-        通过租户用户ID获取对应的自然人信息:
-        存在两种情况:
-        1. 未绑定自然人，则返回（伪）自然人=>租户用户的对应信息，及其对应的数据源用户id
-        2. 绑定了自然人，返回自然人数据，及其绑定的数据用户id列表
+        通过租户用户 ID 获取对应的自然人信息：
+        存在两种情况：
+        1. 未绑定自然人，则返回（伪）自然人=>租户用户的对应信息，及其对应的数据源用户 id
+        2. 绑定了自然人，返回自然人数据，及其绑定的数据用户 id 列表
         """
         tenant_user = TenantUser.objects.filter(id=tenant_user_id).first()
         if not tenant_user:

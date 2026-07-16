@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -23,6 +23,7 @@ from django.conf import settings
 
 from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
+from bkuser.common.scrub import scrub_data
 from bkuser.component.http import http_get
 from bkuser.utils.url import urljoin
 
@@ -67,7 +68,7 @@ def _call_esb_api(http_func, url_path, **kwargs):
             "esb api failed! %s %s, kwargs: %s, request_id: %s, error: %s",
             http_func.__name__,
             url,
-            kwargs,  # TODO: 移除敏感信息
+            scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization"]),
             request_id,
             resp_data["error"],
         )
@@ -92,7 +93,7 @@ def _call_esb_api(http_func, url_path, **kwargs):
         "esb api error! %s %s, data: %s, request_id: %s, code: %s, message: %s",
         http_func.__name__,
         url,
-        kwargs,  # TODO: 移除敏感信息
+        scrub_data(kwargs, custom_fields=["X-Bkapi-Authorization"]),
         local.request_id,
         code,
         message,

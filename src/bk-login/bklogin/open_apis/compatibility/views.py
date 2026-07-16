@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -64,11 +64,11 @@ class UserRetrieveCompatibilityApi(View, CompatibilityApiMixin):
             "language": user.language,
             "time_zone": user.time_zone,
             # 多租户版本新增
-            "tenant_id": user.tenant_id,
-            "full_name": user.full_name,  # 姓名
-            "display_name": user.display_name,  # 统一展示名
+            # 规范所有 SaaS 统一展示名
+            "display_name": user.display_name,
             # ----- 兼容 ------
             # 兼容数据
+            # 姓名
             "chname": user.full_name,
             # 【兼容】固定或空值返回
             "qq": "",

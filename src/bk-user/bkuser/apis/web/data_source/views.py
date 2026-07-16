@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -16,6 +16,8 @@
 # to the current version of the project delivered to anyone in the future.
 
 import logging
+from collections import defaultdict
+from typing import Dict, List, Set
 
 import openpyxl
 from django.conf import settings
@@ -51,16 +53,17 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUsernameGenerateRule
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
     DataSourcePlugin,
     DataSourceSensitiveInfo,
     DataSourceUser,
+    DataSourceUsernameGenerateConfig,
 )
-from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
-from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -70,13 +73,12 @@ from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.auditor import DataSourceAuditor
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.exporters import DataSourceUserExporter
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.exporters import DataSourceUserExporter, get_user_export_template
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -143,8 +145,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         data = slz.validated_data
 
         queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
-        if type := data.get("type"):
-            queryset = queryset.filter(type=type)
+        if data_source_type := data.get("type"):
+            queryset = queryset.filter(type=data_source_type)
 
         return queryset
 
@@ -184,6 +186,17 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 creator=current_user,
                 updater=current_user,
             )
+
+            # 新实名数据源不会自动加入已有登录源。管理员确认数据 ready 后，需重新保存登录源配置。
+            # 若未来需要自动追加，可复用已有主实名匹配规则调用 IdpDataSourceRelationHandler 追加关系。
+            cfg = data["username_generate_config"]
+            if cfg["rule"] == DataSourceUsernameGenerateRule.ADD_AFFIX:
+                DataSourceUsernameGenerateConfig.objects.create(
+                    data_source=ds,
+                    rule=cfg["rule"],
+                    prefix=cfg["prefix"],
+                    suffix=cfg["suffix"],
+                )
 
         # 【审计】创建数据源审计对象
         auditor = DataSourceAuditor(request.user.username, current_tenant_id)
@@ -259,6 +272,66 @@ class DataSourceRetrieveUpdateDestroyApi(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @staticmethod
+    def _get_real_idps_with_orphan(owner_tenant_id: str):
+        """获取租户下与实名数据源相关的 IDP，包括有关联关系的和孤儿（无任何关系记录）的。
+
+        返回 (实名数据源关系映射，孤儿 IDP ID 集合，IDP 映射)
+        """
+        real_idp_ds_map: Dict[str, List[int]] = defaultdict(list)
+        all_related_idp_ids: Set[str] = set()
+
+        relations = IdpDataSourceRelation.objects.filter(
+            idp_owner_tenant_id=owner_tenant_id,
+        ).values("idp_id", "data_source_id", "data_source__type")
+        for rel in relations:
+            all_related_idp_ids.add(rel["idp_id"])
+            if rel["data_source__type"] == DataSourceTypeEnum.REAL:
+                real_idp_ds_map[rel["idp_id"]].append(rel["data_source_id"])
+
+        idp_map = {idp.id: idp for idp in Idp.objects.filter(owner_tenant_id=owner_tenant_id)}
+        orphan_idp_ids = set(idp_map.keys()) - all_related_idp_ids
+        return real_idp_ds_map, orphan_idp_ids, idp_map
+
+    @staticmethod
+    def _classify_idps_for_deletion(data_source: DataSource, is_delete_idp: bool):
+        """根据 IDP 与实名数据源的关联情况，决定各 IDP 的处置策略：
+
+        - 还有其他实名数据源关联：本地 IDP 需同步插件配置，其他类型无需处理
+        - 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+        - 孤儿 IDP（无任何关系记录）：用户选了连带删除时一并清理
+        """
+        real_idp_ds_map, orphan_idp_ids, idp_map = DataSourceRetrieveUpdateDestroyApi._get_real_idps_with_orphan(
+            data_source.owner_tenant_id
+        )
+
+        waiting_delete_idps = []
+        waiting_disable_idps = []
+        waiting_sync_local_idps = []
+        for idp_id, ds_ids in real_idp_ds_map.items():
+            # 与当前数据源无关的 IDP，跳过
+            if data_source.id not in ds_ids:
+                continue
+
+            idp = idp_map[idp_id]
+            # 判断是否有其他实名数据源关联
+            has_other = len(ds_ids) > 1
+            if has_other:
+                # 有其他实名数据源关联且是本地 IDP 需同步插件配置
+                if idp.is_local:
+                    waiting_sync_local_idps.append(idp)
+            # 无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
+            elif is_delete_idp or idp.is_local:
+                waiting_delete_idps.append(idp)
+            else:
+                waiting_disable_idps.append(idp)
+
+        # 孤儿 IDP（无任何关系记录，通常是之前数据源重置后遗留的）：用户选了连带删除时一并清理
+        if is_delete_idp:
+            waiting_delete_idps.extend(idp_map[idp_id] for idp_id in orphan_idp_ids)
+
+        return waiting_delete_idps, waiting_disable_idps, waiting_sync_local_idps
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="重置数据源",
@@ -275,37 +348,38 @@ class DataSourceRetrieveUpdateDestroyApi(
         slz.is_valid(raise_exception=True)
         is_delete_idp = slz.validated_data["is_delete_idp"]
 
-        idp_filters = {"owner_tenant_id": data_source.owner_tenant_id}
-
-        if is_delete_idp:
-            # 删除本地以及其他认证源，包括已禁用的认证源
-            idp_filters["data_source_id__in"] = [INVALID_REAL_DATA_SOURCE_ID, data_source.id]
-        else:
-            # 仅删除本地认证源
-            idp_filters["data_source_id"] = data_source.id
-            idp_filters["plugin_id"] = BuiltinIdpPluginEnum.LOCAL
-
-        # 待删除的认证源
-        waiting_delete_idps = Idp.objects.filter(**idp_filters)
+        waiting_delete_idps, waiting_disable_idps, waiting_sync_local_idps = self._classify_idps_for_deletion(
+            data_source, is_delete_idp
+        )
 
         # 【审计】创建数据源审计对象并记录变更前数据
         auditor = DataSourceAuditor(request.user.username, data_source.owner_tenant_id)
         auditor.pre_record_data_before(data_source, list(waiting_delete_idps))
 
         with transaction.atomic():
-            # 删除认证源敏感信息
-            IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+            # 删除实名数据源关联的 IDP
+            if waiting_delete_idps:
+                # 删除认证源敏感信息
+                IdpSensitiveInfo.objects.filter(idp__in=waiting_delete_idps).delete()
+                Idp.objects.filter(id__in=[idp.id for idp in waiting_delete_idps]).delete()
 
-            waiting_delete_idps.delete()
+            IdpDataSourceRelation.objects.filter(
+                idp_owner_tenant_id=data_source.owner_tenant_id,
+                data_source=data_source,
+            ).delete()
 
-            if not is_delete_idp:
-                # 禁用其他认证源
-                Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, data_source_id=data_source.id).update(
+            # 禁用认证源
+            if waiting_disable_idps:
+                Idp.objects.filter(id__in=[idp.id for idp in waiting_disable_idps]).update(
                     status=IdpStatus.DISABLED,
-                    data_source_id=INVALID_REAL_DATA_SOURCE_ID,
                     updated_at=timezone.now(),
                     updater=request.user.username,
                 )
+
+            # 同步本地 IDP 插件配置
+            for idp in waiting_sync_local_idps:
+                IdpDataSourceRelationHandler.sync_local_plugin_config(idp)
+
             # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
@@ -428,13 +502,8 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
         responses={status.HTTP_200_OK: "org_tmpl.xlsx"},
     )
     def get(self, request, *args, **kwargs):
-        """数据源导出模板"""
-        # 获取数据源信息，用于后续填充模板中的自定义字段
-        data_source = self.get_object()
-        if not (data_source.is_local and data_source.is_real_type):
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的本地数据源有提供导入模板"))
-
-        workbook = DataSourceUserExporter(data_source).get_template()
+        """本地数据源导出模板"""
+        workbook = get_user_export_template(self.get_current_tenant_id())
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_tmpl.xlsx")
 
 
@@ -577,16 +646,16 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
-        ).first()
-        if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源不存在"))
+        cur_tenant_id = self.get_current_tenant_id()
 
-        if not data_source.is_real_type:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅实体类型的数据源有同步记录"))
+        queryset = DataSourceSyncTask.objects.filter(
+            data_source__owner_tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+        ).select_related("data_source__plugin")
 
-        queryset = DataSourceSyncTask.objects.filter(data_source=data_source)
+        if plugin_id := data.get("plugin_id"):
+            queryset = queryset.filter(data_source__plugin_id=plugin_id)
+
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
 
@@ -594,13 +663,8 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         cur_tenant_id = self.get_current_tenant_id()
-        data_sources = DataSource.objects.filter(owner_tenant_id=cur_tenant_id)
-        tenant_user_ids = DataSourceSyncTask.objects.filter(
-            data_source__in=data_sources,
-        ).values_list("operator", flat=True)
         tenant_sync_tasks = TenantSyncTask.objects.filter(data_source_owner_tenant_id=cur_tenant_id)
         return {
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
             "tenant_sync_task_map": {task.data_source_sync_task_id: task for task in tenant_sync_tasks},
         }
 

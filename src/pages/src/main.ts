@@ -5,6 +5,7 @@ import { createApp } from 'vue';
 import VueDOMPurifyHTML from 'vue-dompurify-html';
 
 import App from './app.vue';
+import vIsMultipleTenant from './directives/is-multiple-tanent';
 import i18n from './language/index';
 import router from './router';
 
@@ -12,7 +13,9 @@ import './css/index.css';
 import '../static/bk_icon_font/style.css';
 import '../static/blueking-icon/style.css';
 // 全量引入 bkui-vue 样式
-import 'bkui-vue/dist/style.css';
+import 'bkui-vue/dist/style.variable.css';
+import '@blueking/table/vue3/vue3.css';
+import '@blueking/date-picker/vue3/vue3.css';
 
 const leaveBoxInstance = InfoBox({
   isShow: false,
@@ -57,4 +60,5 @@ createApp(App)
   .use(VueDOMPurifyHTML)
   .provide('editLeaveBefore', leaveBox)
   .directive('bkTooltips', bkTooltips)
+  .directive('isMultipleTenant', vIsMultipleTenant)
   .mount('.app');

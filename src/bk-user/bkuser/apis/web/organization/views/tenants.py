@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -88,14 +88,13 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
     )
     def get(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        # 默认的内置字段，虽然邮箱 & 手机在 DB 中不是必填，但是在
-        # 快速录入场景中要求必填，手机国际区号与手机号合并，不需要单独提供
+        # 手机国际区号与手机号合并，不需要单独提供
         field_infos = [
             {"name": f.name, "display_name": f.display_name, "tips": ""}
-            for f in UserBuiltinField.objects.exclude(name="phone_country_code")
+            for f in UserBuiltinField.objects.filter(required=True).exclude(name="phone_country_code")
         ]
         for f in TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True):
-            opts = ", ".join(opt["id"] for opt in f.options)
+            opts = ", ".join(opt["value"] for opt in f.options)
 
             if f.data_type == UserFieldDataType.ENUM:
                 tips = _("单选枚举，可选值：{}").format(opts)

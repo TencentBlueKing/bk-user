@@ -8,92 +8,44 @@
     v-bkloading="{ loading: isLoading }"
   >
     <template #aside>
-      <div class="personal-center-left">
-        <div class="left-natural-user">
-          <div class="natural-user">
-            <i class="bk-sq-icon icon-personal-user" />
-            <bk-overflow-title type="tips" class="name">
-              {{ currentNaturalUser.full_name }}
-            </bk-overflow-title>
-            <bk-overflow-title type="tips" class="id">
-              （{{ currentUserInfo.id }}）
-            </bk-overflow-title>
-            <!-- <i class="user-icon icon-edit" /> -->
-          </div>
-        </div>
-        <div class="left-add">
-          <p>
-            <span class="account">{{ $t('已关联账号') }}</span>
-            <span class="number">{{ currentNaturalUser.tenant_users?.length }}</span>
-          </p>
-          <!-- <bk-button theme="primary" text>
-            <i class="user-icon icon-add-2 mr8" />
-            新增关联
-          </bk-button> -->
-        </div>
-        <ul class="left-list">
-          <li
-            v-for="(item, index) in currentNaturalUser.tenant_users"
-            :key="index"
-            :class="{ isActive: currentUserInfo.id === item.id }"
-            @click="handleClickItem(item)"
-          >
-            <div class="account-item">
-              <div class="w-4/5">
-                <img v-if="item.logo" :src="item.logo" />
-                <i v-else class="user-icon icon-yonghu" />
-                <span class="name text-overflow" v-bk-tooltips="{ content: item.full_name }">{{ item.full_name }}</span>
-                <span
-                  class="tenant text-overflow"
-                  v-bk-tooltips="{ content: `@ ${item.tenant.name}（${item.tenant.id}）` }"
-                >
-                  {{ `@ ${item.tenant.name}（${item.tenant.id}）` }}
-                </span>
-              </div>
-              <bk-tag type="filled" theme="success" v-if="userInfo.username === item.id">
-                {{ $t('当前登录') }}
-              </bk-tag>
-            </div>
-          </li>
-        </ul>
-      </div>
+      <AsideList
+        :current-user-id="currentUserInfo.id"
+        :current-natural-user="currentNaturalUser"
+        @change="(id) => getCurrentUser(id)"
+      />
     </template>
     <template #main>
       <div class="personal-center-main" v-bkloading="{ loading: infoLoading }">
         <header>
           <div class="header-left">
-            <bk-upload
+            <UploadImg
+              v-bk-tooltips="{ content: t('支持 jpg、jpeg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+              v-model:value="currentUserInfo.logo"
               :ext-cls="currentUserInfo.logo ? 'show-logo' : 'normal-logo'"
-              theme="picture"
-              with-credentials
-              :multiple="false"
-              :files="files"
-              :handle-res-code="handleRes"
-              :url="currentUserInfo.logo"
-              :custom-request="customRequest"
-              :size="2"
-              @error="handleError"
-              v-bk-tooltips="{ content: t('支持 jpg、png，尺寸不大于 1024px*1024px，不大于 256KB'), theme: 'light' }"
+              :is-show-tip="false"
+              :after-upload="customRequest"
             >
               <template #trigger>
-                <div class="logo-box" v-if="currentUserInfo.logo">
+                <div v-if="currentUserInfo.logo" class="logo-box">
                   <img :src="currentUserInfo.logo" />
                   <div class="logo-hover">
-                    <i class="user-icon icon-edit" @click="customRequest" />
+                    <i class="user-icon icon-edit" />
                   </div>
                 </div>
                 <i v-else class="user-icon icon-yonghu" />
               </template>
-            </bk-upload>
+            </UploadImg>
             <div>
               <div class="user-info">
                 <span class="name">{{ currentTenantInfo.username }}</span>
-                <div>
+                <div v-is-multiple-tenant>
                   <span class="span-logo">T</span>
                   {{ currentTenantInfo.tenant?.id }}
                 </div>
               </div>
-              <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p>
+              <p class="text-[14px] text-[#313238] leading-[24px]">
+                {{ $t('用户ID') }}：{{ currentUserInfo.id || '--' }}
+              </p>
             </div>
           </div>
           <div class="header-right">
@@ -116,308 +68,356 @@
                 distance: 20,
                 disabled: !isCurrentTenant,
               }">
-              <bk-button :disabled="isCurrentTenant">
+              <!-- <bk-button :disabled="isCurrentTenant">
                 {{ $t('切换为该账号登录') }}
-              </bk-button>
+              </bk-button> -->
             </span>
             <!-- <bk-button>
               取消关联
             </bk-button> -->
           </div>
         </header>
-        <div class="personal-center-details">
-          <ul class="details-info">
-            <li class="details-info-item">
-              <div class="item-header">
-                <p class="item-title">{{ $t('身份信息') }}</p>
-              </div>
-              <bk-form
-                ref="formRef"
-                class="item-content"
-                :model="currentUserInfo"
-                :rules="rules">
-                <div class="item-div">
-                  <li>
-                    <span class="key">{{ $t('用户名') }}：</span>
-                    <span class="value">{{ currentUserInfo.username }}</span>
-                  </li>
-                  <li>
-                    <span class="key">{{ $t('姓名') }}：</span>
-                    <span class="value">{{ currentUserInfo.full_name }}</span>
-                  </li>
-                  <li>
-                    <span class="key">
-                      <span class="required-icon"> * </span>
-                      {{ $t('邮箱') }}：</span>
-                    <div class="value-content">
-                      <div class="value-edit" v-if="isEditEmail">
-                        <bk-select
-                          class="bk-select"
-                          v-model="emailSelect"
-                          @change="toggleEmail"
-                          :filterable="false"
-                          :clearable="false">
-                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
-                          <bk-option :id="OpenDialogSelect.custom" :key="1" :name="$t('自定义')"></bk-option>
-                        </bk-select>
-                        <bk-input
-                          v-if="emailSelect === OpenDialogSelect.inherit"
-                          v-model="currentUserInfo.email"
-                          :disabled="true" />
-                        <bk-form-item v-else class="email-input" property="custom_email">
-                          <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
-                        </bk-form-item>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="changeEmail"
-                          v-if="emailUpdateRestriction === emailEidtable.YES
-                            || emailSelect === OpenDialogSelect.inherit">
-                          {{ $t('确定') }}
-                        </bk-button>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="verifyIdentityInfo(
-                            OpenDialogType.email,
-                            {
-                              email: currentUserInfo.custom_email
-                            }
-                          )"
-                          v-if="emailUpdateRestriction === emailEidtable.Verify
-                            && emailSelect === OpenDialogSelect.custom">
-                          {{ $t('验证') }}
-                        </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditEmail" class="leading-[19px]">
-                          {{ $t('取消') }}
-                        </bk-button>
-                      </div>
-                      <div v-else>
-                        <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_email)">
-                          {{ tagText(currentUserInfo.is_inherited_email) }}
-                        </bk-tag>
-                        <span class="value">
-                          {{ currentUserInfo.is_inherited_email
-                            ? currentUserInfo.email
-                            : currentUserInfo.custom_email }}
-                        </span>
-                        <i
-                          v-if="emailUpdateRestriction !== emailEidtable.No"
-                          class="user-icon icon-edit"
-                          @click="isEditEmail = true">
-                        </i>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="mb-[10px]">
-                    <span class="key">
-                      <span class="required-icon"> * </span>
-                      {{ $t('手机号') }}：</span>
-                    <div class="value-content">
-                      <div class="value-edit" v-if="isEditPhone">
-                        <bk-select
-                          class="bk-select"
-                          v-model="phoneSelect"
-                          @change="togglePhone"
-                          :filterable="false"
-                          :clearable="false">
-                          <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
-                          <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
-                        </bk-select>
-                        <bk-form-item
-                          v-if="phoneSelect === OpenDialogSelect.inherit"
-                          class="phone-input">
-                          <phoneInput
-                            class="phone-input-input"
-                            :form-data="currentUserInfo"
-                            :disabled="true"
-                            autofocus="autofocus"
-                          />
-                        </bk-form-item>
-                        <bk-form-item v-else class="phone-input">
-                          <phoneInput
-                            class="phone-input-input"
-                            :form-data="currentUserInfo"
-                            :tel-error="telError"
-                            :custom="true"
-                            custom-tel-error-text="请输入正确的手机号格式"
-                            @change-country-code="changeCountryCode"
-                            @change-tel-error="changeTelError"
-                            @keydown.enter="changePhone" />
-                        </bk-form-item>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="changePhone"
-                          v-if="phoneUpdateRestriction === phoneEidtable.YES
-                            || phoneSelect === OpenDialogSelect.inherit">
-                          {{ $t('确定') }}
-                        </bk-button>
-                        <bk-button
-                          text theme="primary" class="ml-[12px] mr-[12px]"
-                          @click="verifyIdentityInfo(
-                            OpenDialogType.phone,
-                            {
-                              phone: currentUserInfo.custom_phone,
-                              phone_country_code: currentUserInfo.custom_phone_country_code
-                            }
-                          )"
-                          v-if="phoneUpdateRestriction === phoneEidtable.Verify
-                            && phoneSelect === OpenDialogSelect.custom">
-                          {{ $t('验证') }}
-                        </bk-button>
-                        <bk-button text theme="primary" @click="cancelEditPhone" class="leading-[19px]">
-                          {{ $t('取消') }}
-                        </bk-button>
-                      </div>
-                      <div v-else>
-                        <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_phone)">
-                          {{ tagText(currentUserInfo.is_inherited_phone) }}
-                        </bk-tag>
-                        <span class="value">
-                          {{ currentUserInfo.is_inherited_phone
-                            ? currentUserInfo.phone
-                            : currentUserInfo.custom_phone }}
-                        </span>
-                        <i
-                          v-if="phoneUpdateRestriction !== phoneEidtable.No"
-                          class="user-icon icon-edit"
-                          @click="isEditPhone = true">
-                        </i>
-                      </div>
-                    </div>
-                  </li>
-                </div>
-                <div class="item-div">
-                  <li>
-                    <span class="key">{{ $t('所属租户') }}：</span>
-                    <span class="value">
-                      {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
-                    </span>
-                  </li>
-                  <li>
-                    <span class="key">{{ $t('所属组织') }}：</span>
-                    <span class="value">{{ formatConvert(currentUserInfo.departments) }}</span>
-                  </li>
-                  <li>
-                    <span class="key">{{ $t('直属上级') }}：</span>
-                    <span class="value">{{ formatConvert(currentUserInfo.leaders) }}</span>
-                  </li>
-                </div>
-              </bk-form>
-              <!-- 自定义字段 -->
-              <div class="item-flex">
-                <li
-                  v-for="(item, index) in currentUserInfo.extras"
-                  :key="index"
-                >
-                  <bk-overflow-title class="key" type="tips">
-                    <span v-show="item.required" class="required-icon"> * </span>
-                    {{ item.display_name }}：</bk-overflow-title>
-                  <div class="value-edit custom-input">
-                    <bk-overflow-title v-if="!item.isEdit" class="value" type="tips">
-                      {{ customFieldsMap(item) }}
-                    </bk-overflow-title>
-                    <div v-else class="input-list w-[240px]">
-                      <bk-input
-                        v-if="item.data_type === 'string'"
-                        :class="{ 'custom-error': item.error && !item.value }"
-                        v-model="item.value"
-                        :maxlength="64"
-                        @blur="customBlur(item)"
-                        @input="handleInput(item)"
-                      />
-                      <bk-input
-                        v-else-if="item.data_type === 'number'"
-                        :class="{ 'custom-error': item.error && !item.value }"
-                        type="number"
-                        v-model="item.value"
-                        :max="4294967296"
-                        :min="0"
-                        @blur="customBlur(item)"
-                        @change="handleInput(item)"
-                      />
-                      <bk-select
-                        v-else
-                        :class="{ 'custom-select': item.error && (item.value === '' || !item.value.length) }"
-                        v-model="item.value"
-                        :clearable="item.data_type === 'multi_enum'"
-                        :multiple="item.data_type === 'multi_enum'"
-                        @blur="customBlur(item)"
-                        @change="changeSelect(item, index)"
-                        @clear="clearSelect(item)">
-                        <bk-option
-                          v-for="(option, i) in item.options"
-                          :key="i"
-                          :id="option.id"
-                          :name="option.value">
-                        </bk-option>
-                      </bk-select>
-                      <span class="error-text" v-show="item.error && (!item.value || !item.value.length)">
-                        {{ $t('必填项') }}
-                      </span>
-                    </div>
-                    <i
-                      v-if="item.editable && !item.isEdit"
-                      class="user-icon icon-edit"
-                      @click="editExtra(item, index)" />
-                    <div v-if="item.isEdit" style="line-height: 32px;">
-                      <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeCustomFields(item)">
-                        {{ $t('确定') }}
-                      </bk-button>
-                      <bk-button text theme="primary" @click="cancelCustomFields(item, index)">
-                        {{ $t('取消') }}
-                      </bk-button>
-                    </div>
+        <InfoCard :title="$t('身份信息')">
+          <bk-form
+            ref="formRef"
+            class="item-content"
+            :model="currentUserInfo"
+            :rules="rules">
+            <div class="item-div">
+              <li>
+                <span class="key">{{ $t('用户名') }}：</span>
+                <span class="value">{{ currentUserInfo.username }}</span>
+              </li>
+              <li>
+                <span class="key">{{ $t('姓名') }}：</span>
+                <span class="value">{{ currentUserInfo.full_name }}</span>
+              </li>
+              <li>
+                <span class="key">
+                  <span class="required-icon"> * </span>
+                  {{ $t('邮箱') }}：</span>
+                <div class="value-content">
+                  <div v-if="isEditEmail" class="value-edit">
+                    <bk-select
+                      class="bk-select"
+                      v-model="emailSelect"
+                      @change="toggleEmail"
+                      :filterable="false"
+                      :clearable="false">
+                      <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
+                      <bk-option :id="OpenDialogSelect.custom" :key="1" :name="$t('自定义')"></bk-option>
+                    </bk-select>
+                    <bk-input
+                      v-if="emailSelect === OpenDialogSelect.inherit"
+                      v-model="currentUserInfo.email"
+                      :disabled="true" />
+                    <bk-form-item v-else class="email-input" property="custom_email">
+                      <bk-input v-model="currentUserInfo.custom_email" @enter="changeEmail" autofocus />
+                    </bk-form-item>
+                    <bk-button
+                      v-if="emailUpdateRestriction === emailEditable.YES
+                        || emailSelect === OpenDialogSelect.inherit"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="changeEmail">
+                      {{ $t('确定') }}
+                    </bk-button>
+                    <bk-button
+                      v-if="emailUpdateRestriction === emailEditable.Verify
+                        && emailSelect === OpenDialogSelect.custom"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="verifyIdentityInfo(
+                        OpenDialogType.email,
+                        {
+                          email: currentUserInfo.custom_email
+                        }
+                      )">
+                      {{ $t('验证') }}
+                    </bk-button>
+                    <bk-button text theme="primary" @click="cancelEditEmail" class="leading-[19px]">
+                      {{ $t('取消') }}
+                    </bk-button>
                   </div>
-                </li>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="personal-center-details">
-          <ul class="details-info">
-            <li class="details-info-item">
-              <div class="item-header">
-                <p class="item-title">{{ $t('语言和时区') }}</p>
-              </div>
-              <bk-form
-                class="item-content"
-                :model="currentUserInfo">
-                <div class="item-div" v-for="(item, key) in LanguageAndTimeZone" :key="key">
-                  <li>
-                    <span class="key">{{ $t(item.label) }}：</span>
-                    <div class="value-content">
-                      <div class="value-edit" v-if="item.isEdit">
-                        <bk-form-item>
-                          <bk-select
-                            v-model="currentUserInfo[item.model]"
-                            clearable
-                            :input-search="item.model === 'language'">
-                            <bk-option
-                              v-for="option in item.options"
-                              :key="option.value"
-                              :id="option.value"
-                              :name="option.label">
-                            </bk-option>
-                          </bk-select>
-                        </bk-form-item>
-                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="item.submitChange(item)">
-                          {{ $t('确定') }}
-                        </bk-button>
-                        <bk-button text theme="primary" @click="item.cancel(item)">{{ $t('取消') }}</bk-button>
-                      </div>
-                      <div v-else>
-                        <span class="value">
-                          {{ item.model === 'language' ?
-                            showLanguage(currentUserInfo[item.model]) : currentUserInfo[item.model]}}
-                        </span>
-                        <i class="user-icon icon-edit" @click="item.isEdit = true" />
-                      </div>
-                    </div>
-                  </li>
+                  <div v-else>
+                    <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_email)">
+                      {{ tagText(currentUserInfo.is_inherited_email) }}
+                    </bk-tag>
+                    <span class="value">
+                      {{ currentUserInfo.is_inherited_email
+                        ? currentUserInfo.email
+                        : currentUserInfo.custom_email }}
+                    </span>
+                    <i
+                      v-if="emailUpdateRestriction !== emailEditable.No"
+                      class="user-icon icon-edit"
+                      @click="isEditEmail = true">
+                    </i>
+                  </div>
                 </div>
-              </bk-form>
+              </li>
+              <li class="mb-[10px]">
+                <span class="key">
+                  <span class="required-icon"> * </span>
+                  {{ $t('手机号') }}：</span>
+                <div class="value-content">
+                  <div v-if="isEditPhone" class="value-edit">
+                    <bk-select
+                      class="bk-select"
+                      v-model="phoneSelect"
+                      @change="togglePhone"
+                      :filterable="false"
+                      :clearable="false">
+                      <bk-option :id="OpenDialogSelect.inherit" :key="0" :name="$t('继承数据源')"></bk-option>
+                      <bk-option :id="OpenDialogSelect.custom" :key="0" :name="$t('自定义')"></bk-option>
+                    </bk-select>
+                    <bk-form-item
+                      v-if="phoneSelect === OpenDialogSelect.inherit"
+                      class="phone-input">
+                      <phoneInput
+                        class="phone-input-input"
+                        :form-data="currentUserInfo"
+                        :disabled="true"
+                        autofocus="autofocus"
+                      />
+                    </bk-form-item>
+                    <bk-form-item v-else class="phone-input">
+                      <phoneInput
+                        class="phone-input-input"
+                        :form-data="currentUserInfo"
+                        :tel-error="telError"
+                        :custom="true"
+                        custom-tel-error-text="请输入正确的手机号格式"
+                        @change-country-code="changeCountryCode"
+                        @change-tel-error="changeTelError"
+                        @keydown.enter="changePhone" />
+                    </bk-form-item>
+                    <bk-button
+                      v-if="phoneUpdateRestriction === phoneEditable.YES
+                        || phoneSelect === OpenDialogSelect.inherit"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="changePhone">
+                      {{ $t('确定') }}
+                    </bk-button>
+                    <bk-button
+                      v-if="phoneUpdateRestriction === phoneEditable.Verify
+                        && phoneSelect === OpenDialogSelect.custom"
+                      text theme="primary" class="ml-[12px] mr-[12px]"
+                      @click="verifyIdentityInfo(
+                        OpenDialogType.phone,
+                        {
+                          phone: currentUserInfo.custom_phone,
+                          phone_country_code: currentUserInfo.custom_phone_country_code
+                        }
+                      )">
+                      {{ $t('验证') }}
+                    </bk-button>
+                    <bk-button text theme="primary" @click="cancelEditPhone" class="leading-[19px]">
+                      {{ $t('取消') }}
+                    </bk-button>
+                  </div>
+                  <div v-else>
+                    <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_phone)">
+                      {{ tagText(currentUserInfo.is_inherited_phone) }}
+                    </bk-tag>
+                    <span class="value">
+                      {{ currentUserInfo.is_inherited_phone
+                        ? currentUserInfo.phone
+                        : currentUserInfo.custom_phone }}
+                    </span>
+                    <i
+                      v-if="phoneUpdateRestriction !== phoneEditable.No"
+                      class="user-icon icon-edit"
+                      @click="isEditPhone = true">
+                    </i>
+                  </div>
+                </div>
+              </li>
+            </div>
+            <div class="item-div">
+              <li>
+                <span class="key">{{ $t('用户ID') }}：</span>
+                <span class="value">{{ currentUserInfo.id || '--' }}</span>
+              </li>
+              <li v-is-multiple-tenant>
+                <span class="key">{{ $t('所属租户') }}：</span>
+                <span class="value">
+                  {{ `${currentTenantInfo.tenant?.name }（${currentTenantInfo.tenant?.id}）`}}
+                </span>
+              </li>
+              <li>
+                <span class="key">{{ $t('所属组织') }}：</span>
+                <span class="value">{{ formatConvert(currentUserInfo.departments) }}</span>
+              </li>
+              <li>
+                <span class="key">{{ $t('直属上级') }}：</span>
+                <span class="value">{{ formatConvert(currentUserInfo.leaders) }}</span>
+              </li>
+            </div>
+          </bk-form>
+          <!-- 自定义字段 -->
+          <div class="item-flex">
+            <li
+              v-for="(item, index) in currentUserInfo.extras"
+              :key="index"
+            >
+              <bk-overflow-title class="key" type="tips">
+                <span v-show="item.required" class="required-icon"> * </span>
+                {{ item.display_name }}：</bk-overflow-title>
+              <div class="value-edit custom-input">
+                <bk-overflow-title v-if="!item.isEdit" class="value" type="tips">
+                  {{ customFieldsMap(item) }}
+                </bk-overflow-title>
+                <div v-else class="input-list w-[240px]">
+                  <bk-input
+                    v-if="item.data_type === 'string'"
+                    :class="{ 'custom-error': item.error && !item.value }"
+                    v-model="item.value"
+                    :maxlength="64"
+                    @blur="customBlur(item)"
+                    @input="handleInput(item)"
+                  />
+                  <bk-input
+                    v-else-if="item.data_type === 'number'"
+                    :class="{ 'custom-error': item.error && !item.value }"
+                    type="number"
+                    v-model="item.value"
+                    :max="4294967296"
+                    :min="0"
+                    @blur="customBlur(item)"
+                    @change="handleInput(item)"
+                  />
+                  <bk-select
+                    v-else
+                    :class="{ 'custom-select': item.error && (item.value === '' || !item.value.length) }"
+                    v-model="item.value"
+                    :clearable="item.data_type === 'multi_enum'"
+                    :multiple="item.data_type === 'multi_enum'"
+                    @blur="customBlur(item)"
+                    @change="changeSelect(item)"
+                    @clear="clearSelect(item)">
+                    <bk-option
+                      v-for="(option, i) in item.options"
+                      :key="i"
+                      :id="option.id"
+                      :name="option.value">
+                    </bk-option>
+                  </bk-select>
+                  <span class="error-text" v-show="item.error && (!item.value || !item.value.length)">
+                    {{ $t('必填项') }}
+                  </span>
+                </div>
+                <i
+                  v-if="item.editable && !item.isEdit"
+                  class="user-icon icon-edit"
+                  @click="editExtra(item, index)" />
+                <div v-if="item.isEdit" style="line-height: 32px;">
+                  <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeCustomFields(item)">
+                    {{ $t('确定') }}
+                  </bk-button>
+                  <bk-button text theme="primary" @click="cancelCustomFields(item, index)">
+                    {{ $t('取消') }}
+                  </bk-button>
+                </div>
+              </div>
             </li>
-          </ul>
-        </div>
+          </div>
+        </InfoCard>
+        <InfoCard v-if="bindInfo.type">
+          <template #title>
+            <span>{{ $t('个人社交账号') }}</span>
+            <i
+              class="user-icon icon-info-i text-[14px] text-[#979BA5] ml-[12px] mr-[8px]">
+            </i>
+            <span class="text-[12px] font-normal">
+              {{ $t('已绑定的个人社交账号，将会被用于消息通知、快捷登录等用途。（快捷登录需当前租户开启相关功能）') }}
+            </span>
+          </template>
+          <div class="grid grid-cols-1 p-[24px] mx-[40px] text-[14px]">
+            <WeChatBind
+              :type="bindInfo.type"
+              :wx_userid="bindInfo.wx_userid"
+              @bind="handleBindWx"
+              @unbind="handleFetchBindStatus"
+            />
+          </div>
+        </InfoCard>
+
+        <InfoCard :title="$t('语言和时区')">
+          <div class="grid grid-cols-2 gap-y-[30px] pt-[16px]">
+            <FieldItem :container-height="50">
+              <template #field>
+                <div
+                  class="shrink-0 text-right w-[120px] text-[#63656e] text-[14px] leading-[50px]"
+                >
+                  <span class="required-icon"> * </span>
+                  {{ $t('语言') }}：
+                </div>
+              </template>
+              <template #value>
+                <EditBlock
+                  v-model="currentUserInfo.language"
+                  required
+                  @confirm="submitLanguage"
+                  @cancel="cancelEditLanguage">
+                  <template #text>
+                    <span class="value leading-[50px]">
+                      {{ showLanguage(currentUserInfo.language) }}
+                    </span>
+                  </template>
+                  <template #edit>
+                    <bk-select
+                      v-model="currentUserInfo.language"
+                      clearable
+                      input-search
+                      class="w-[106px]">
+                      <bk-option
+                        v-for="option in platformConfigData.languageOptions"
+                        :key="option.value"
+                        :id="option.value"
+                        :name="option.label">
+                      </bk-option>
+                    </bk-select>
+                  </template>
+                </EditBlock>
+              </template>
+            </FieldItem>
+            <FieldItem :container-height="50">
+              <template #field>
+                <div
+                  class="shrink-0 text-right w-[120px] text-[#63656e] text-[14px] leading-[50px]"
+                >
+                  <span class="required-icon"> * </span>
+                  {{ $t('时区') }}：
+                </div>
+              </template>
+              <template #value>
+                <EditBlock
+                  v-model="currentUserInfo.time_zone"
+                  required
+                  @edit="handleTimezoneEdit"
+                  @confirm="submitTimeZone"
+                  @cancel="cancelEditTimeZone">
+                  <template #text>
+                    <span class="value leading-[50px]">
+                      {{ currentUserInfo.time_zone }}
+                    </span>
+                  </template>
+                  <template #edit>
+                    <TimezonePicker
+                      :key="timezonePickerKey"
+                      v-model:value="currentUserInfo.time_zone"
+                      :popover-min-width="450"
+                      clearable
+                    >
+                      <template #trigger="{ data }">
+                        {{ JSON.stringify(data) }}
+                      </template>
+                    </TimezonePicker>
+                  </template>
+                </EditBlock>
+              </template>
+            </FieldItem>
+          </div>
+        </InfoCard>
       </div>
       <!-- 修改密码 -->
       <ChangePassword
@@ -444,20 +444,30 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { cloneDeep } from 'lodash';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
+import { TimezonePicker } from '@blueking/date-picker';
+
+import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
-import { emailEidtable, OpenDialogSelect, OpenDialogType, phoneEidtable  } from './openDialogType';
+import { emailEditable, OpenDialogSelect, OpenDialogType, phoneEditable  } from './openDialogType';
 import PhoneVerify from './PhoneVerify.vue';
+import WeChatBind from './social-media-account/wechat/WeChatBind.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
+import EditBlock from '@/components/edit-block.vue';
+import FieldItem from '@/components/field-item.vue';
+import InfoCard from '@/components/InfoCard.vue';
 import phoneInput from '@/components/phoneInput.vue';
-import { useCustomFields, useValidate } from '@/hooks';
+import UploadImg from '@/components/upload-img.vue';
+import { ExtrasCustomFields, useCustomFields, useValidate } from '@/hooks';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUserFeature,
   getPersonalCenterUsers,
   getPersonalCenterUserVisibleFields,
+  getWechatBindStatus,
   patchTenantUsersLogo,
   patchUsersEmail,
   patchUsersPhone,
@@ -465,22 +475,31 @@ import {
   putUserLanguage,
   putUserTimeZone,
 } from '@/http';
+import { CurrentNaturalUserData, PersonalCenterUsersData, WechatBindStatusData } from '@/http/types/personalCenterFiles';
 import { t } from '@/language/index';
+import { platformConfig } from '@/store/platformConfig';
 import { useUser } from '@/store/user';
-import { customFieldsMap, formatConvert, getBase64, handleSwitchLocale, LANGUAGE_OPTIONS, TIME_ZONES } from '@/utils';
+import { customFieldsMap, formatConvert, handleSwitchLocale } from '@/utils';
 
-
-const user = useUser();
-const userInfo = ref(user.user);
-
+const userStore = useUser();
 const validate = useValidate();
-const editLeaveBefore = inject('editLeaveBefore');
-const currentNaturalUser = ref({});
+const currentNaturalUser = ref<CurrentNaturalUserData>({} as CurrentNaturalUserData);
+
+type OperateExtrasCustomFields = (ExtrasCustomFields & {
+  isEdit?: boolean
+  error?: boolean
+});
+
+type CurrentUserInfo = PersonalCenterUsersData & {
+  extras: OperateExtrasCustomFields[]
+};
+
+const  platformConfigData = platformConfig();
 
 // 当前用户信息
-const currentUserInfo = ref({});
+const currentUserInfo = ref<CurrentUserInfo>({} as CurrentUserInfo);
 // 当前租户信息
-const currentTenantInfo = ref({});
+const currentTenantInfo = ref({} as CurrentNaturalUserData['tenant_users'][number]);
 
 const isLoading = ref(false);
 const infoLoading = ref(false);
@@ -490,89 +509,30 @@ const isInheritedPhone = ref(true);
 const customEmail = ref('');
 const customPhone = ref('');
 const customPhoneCode = ref('');
-const originalValue = ref({});
+const originalValue = ref<{
+  language: string
+  time_zone: string
+}>({
+  language: '',
+  time_zone: '',
+});
+// 用于强制重新创建 TimezonePicker 组件，避免组件内部状态污染
+const timezonePickerKey = ref(0);
 const rules = {
   custom_email: [validate.required, validate.email],
 };
 const formRef = ref();
 // 保存修改后的extras数据
-const extrasList = ref([]);
+const extrasList = ref<OperateExtrasCustomFields[]>([]);
 // 是否可以修改密码
 const canChangePassword = ref(false);
 // 是否可以修改邮箱
-const emailUpdateRestriction = ref<emailEidtable>(emailEidtable.Verify);
+const emailUpdateRestriction = ref<emailEditable>(emailEditable.Verify);
 // 是否可以修改手机
-const phoneUpdateRestriction = ref<phoneEidtable>(phoneEidtable.Verify);
-
-
-onMounted(() => {
-  getNaturalUser();
-});
-
-const getNaturalUser = () => {
-  isLoading.value = true;
-  // 关联账户列表
-  getCurrentNaturalUser().then((res) => {
-    currentNaturalUser.value = res.data;
-    isLoading.value = false;
-    getCurrentUser(currentNaturalUser.value.tenant_users[0].id);
-  });
-};
-
-const getCurrentUser = async (id) => {
-  try {
-    infoLoading.value = true;
-    isEditEmail.value = false;
-    isEditPhone.value = false;
-    currentNaturalUser.value?.tenant_users.forEach((item) => {
-      if (item.id === id) {
-        currentTenantInfo.value = item;
-      }
-    });
-    // 关联账户详情
-    const [userRes, featureRes, fieldsRes] = await Promise.all([
-      getPersonalCenterUsers(id),
-      getPersonalCenterUserFeature(id),
-      getPersonalCenterUserVisibleFields(id),
-    ]);
-
-    currentUserInfo.value = {
-      ...userRes.data,
-      extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
-    };
-    canChangePassword.value = featureRes.data.can_change_password;
-    emailUpdateRestriction.value = featureRes.data.email_update_restriction;
-    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction;
-    extrasList.value = [...currentUserInfo.value.extras];
-    // 初始化时读取custom data
-    customEmail.value = userRes.data.custom_email;
-    customPhone.value = userRes.data.custom_phone;
-    customPhoneCode.value = userRes.data.custom_phone_country_code;
-    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-    originalValue.value = {
-      language: currentUserInfo.value.language,
-      time_zone: currentUserInfo.value.time_zone,
-    };
-
-    // 根据当前用户是否继承了邮箱和手机，决定是否重置custom缓存
-    if (currentUserInfo.value.is_inherited_email) {
-      currentUserInfo.value.custom_email = '';
-      customEmail.value = '';
-    }
-    if (currentUserInfo.value.is_inherited_phone) {
-      currentUserInfo.value.custom_phone = '';
-      customPhone.value = '';
-    }
-  } catch (error) {
-    console.warn(error);
-  } finally {
-    infoLoading.value = false;
-  }
-};
+const phoneUpdateRestriction = ref<phoneEditable>(phoneEditable.Verify);
 
 // 获取当前编辑框焦点
-const editExtra = (item, index) => {
+const editExtra = (item: OperateExtrasCustomFields, index: number) => {
   item.isEdit = true;
   if (item.data_type === 'multi_enum' && item.value === '') {
     item.value = [];
@@ -589,24 +549,24 @@ const editExtra = (item, index) => {
   });
 };
 // 失焦校验
-const customBlur = (item) => {
-  item.error = item.value === '' || (item.data_type === 'multi_enum' && !item.value.length);
+const customBlur = (item: OperateExtrasCustomFields) => {
+  item.error = item.required && (item.value === '' || (item.data_type === 'multi_enum' && !item.value.length));
 };
 
-const handleInput = (item) => {
+const handleInput = (item: OperateExtrasCustomFields) => {
   item.error = false;
 };
 // 改变枚举值
-const changeSelect = (item) => {
+const changeSelect = (item: OperateExtrasCustomFields) => {
   item.value = item.value;
   item.error = false;
 };
 
-const clearSelect = (item) => {
+const clearSelect = (item: OperateExtrasCustomFields) => {
   item.error = true;
 };
 // 提交修改自定义字段
-const changeCustomFields = async (item) => {
+const changeCustomFields = async (item: OperateExtrasCustomFields) => {
   try {
     if (item.error) {
       return;
@@ -626,58 +586,55 @@ const changeCustomFields = async (item) => {
   }
 };
 
-const showLanguage = computed(() => (targetValue) => {
-  const foundItem = LANGUAGE_OPTIONS?.find(item => item.value === targetValue);
+const showLanguage = computed(() => (targetValue: string) => {
+  const foundItem = platformConfigData.languageOptions?.find(item => item.value === targetValue);
   return foundItem ? foundItem.label : null;
 });
 
-const submitChange  = async (item) => {
-  const { model } = item;
+const submitLanguage = async () => {
   try {
-    if (!currentUserInfo.value[model]) return;
-    const apiCall = model === 'language' ? putUserLanguage : putUserTimeZone;
-    await apiCall({
+    if (!currentUserInfo.value.language) return;
+    await putUserLanguage({
       id: currentUserInfo.value.id,
-      [model]: currentUserInfo.value[model],
+      language: currentUserInfo.value.language,
     });
-
-    item.isEdit = false;
     Message({ theme: 'success', message: t('保存成功') });
-    if (model === 'language') {
-      setTimeout(() => handleSwitchLocale(currentUserInfo.value.language), 100);
-    }
-    originalValue.value[model] = currentUserInfo.value[model];
+    setTimeout(() => handleSwitchLocale(currentUserInfo.value.language, userStore.user.tenant_id), 100);
+    originalValue.value.language = currentUserInfo.value.language;
   } catch (error) {
     console.warn(error);
   }
 };
 
-const cancelChange = (item) => {
-  item.isEdit = false;
-  currentUserInfo.value[item.model] = originalValue.value[item.model];
+const cancelEditLanguage = () => {
+  currentUserInfo.value.language = originalValue.value.language;
 };
 
-const LanguageAndTimeZone = ref({
-  language: {
-    label: t('语言'),
-    isEdit: false,
-    model: 'language',
-    options: LANGUAGE_OPTIONS,
-    submitChange,
-    cancel: cancelChange,
-  },
-  timeZone: {
-    label: t('时区'),
-    isEdit: false,
-    model: 'time_zone',
-    options: TIME_ZONES,
-    submitChange,
-    cancel: cancelChange,
-  },
-});
+const submitTimeZone = async () => {
+  try {
+    if (!currentUserInfo.value.time_zone) return;
+    await putUserTimeZone({
+      id: currentUserInfo.value.id,
+      time_zone: currentUserInfo.value.time_zone,
+    });
+    Message({ theme: 'success', message: t('保存成功') });
+    originalValue.value.time_zone = currentUserInfo.value.time_zone;
+  } catch (error) {
+    console.warn(error);
+  }
+};
+
+const cancelEditTimeZone = () => {
+  currentUserInfo.value.time_zone = originalValue.value.time_zone;
+};
+
+// 每次进入时区编辑模式时更新 key，强制重新创建 TimezonePicker 组件
+const handleTimezoneEdit = () => {
+  timezonePickerKey.value += 1;
+};
 
 // 取消自定义字段修改
-const cancelCustomFields = (item, index) => {
+const cancelCustomFields = (item: OperateExtrasCustomFields, index: number) => {
   item.value = extrasList.value[index]?.value;
   item.isEdit = false;
   item.error = false;
@@ -692,8 +649,8 @@ watch(() => currentUserInfo.value?.extras, (val) => {
   deep: true,
 });
 
-const tagTheme = value => (value ? 'info' : 'warning');
-const tagText = value => (value ? t('继承数据源') : t('自定义'));
+const tagTheme = (value: boolean) => (value ? 'info' : 'warning');
+const tagText = (value: boolean) => (value ? t('继承数据源') : t('自定义'));
 
 const isEditEmail = ref(false);
 
@@ -713,7 +670,7 @@ const toggleEmail = (value: OpenDialogSelect) => {
     if (!currentInherit) {
       currentUserInfo.value.custom_email = customEmail.value;
       const emailInput = document.querySelectorAll('.email-input input');
-      emailInput[0].focus();
+      (emailInput[0] as HTMLInputElement)?.focus();
     }
   });
 };
@@ -778,7 +735,7 @@ const togglePhone = (value: OpenDialogSelect) => {
     // 与input双向绑定的数据为 currentUSerInfo.value.custom_phone
     currentUserInfo.value.custom_phone = customPhone.value;
     const phoneInput = document.querySelectorAll('.phone-input input');
-    phoneInput[0].focus();
+    (phoneInput[0] as HTMLInputElement).focus();
   });
 };
 // 修改手机号
@@ -820,17 +777,6 @@ const cancelEditPhone = () => {
   telError.value = false;
   isEditing();
 };
-// 切换关联账号
-const handleClickItem = async (item) => {
-  let enableLeave = true;
-  if (window.changeInput) {
-    enableLeave = await editLeaveBefore();
-  }
-  if (!enableLeave) {
-    return Promise.resolve(enableLeave);
-  }
-  getCurrentUser(item.id);
-};
 
 const telError = ref(false);
 
@@ -841,13 +787,6 @@ const changeTelError = (value: boolean, phone: string) => {
 
 const changeCountryCode = (code: string) => {
   currentUserInfo.value.custom_phone_country_code = code;
-};
-
-const handleRes = (response: any) => {
-  if (response.id) {
-    return true;
-  }
-  return false;
 };
 
 const showEmailVerify = ref(false);
@@ -899,23 +838,11 @@ const curPhone = computed<string>(() => {
   return result === '--' ? '' : result;
 });
 
-const customRequest = (event) => {
-  getBase64(event.file).then((res) => {
-    currentUserInfo.value.logo = res;
-    patchTenantUsersLogo({
-      id: currentUserInfo.value.id,
-      logo: currentUserInfo.value.logo,
-    });
-  })
-    .catch((e) => {
-      console.warn(e);
-    });
-};
-
-const handleError = (file) => {
-  if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
-  }
+const customRequest = (url: string) => {
+  patchTenantUsersLogo({
+    id: currentUserInfo.value.id,
+    logo: url,
+  });
 };
 
 // 是否是编辑状态
@@ -939,135 +866,119 @@ const showPasswordModal = () => {
 const hidePasswordModal = () => {
   passwordModalConfig.value.isShow = false;
 };
+
+
+const getCurrentUser = async (id: string) => {
+  try {
+    infoLoading.value = true;
+    isEditEmail.value = false;
+    isEditPhone.value = false;
+    currentNaturalUser.value?.tenant_users.forEach((item) => {
+      if (item.id === id) {
+        currentTenantInfo.value = item;
+      }
+    });
+    // 关联账户详情
+    const [userRes, featureRes, fieldsRes] = await Promise.all([
+      getPersonalCenterUsers(id),
+      getPersonalCenterUserFeature(id),
+      getPersonalCenterUserVisibleFields(id),
+    ]);
+
+    currentUserInfo.value = {
+      ...userRes.data,
+      extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
+    };
+    canChangePassword.value = featureRes.data.can_change_password;
+    emailUpdateRestriction.value = featureRes.data.email_update_restriction as emailEditable;
+    phoneUpdateRestriction.value = featureRes.data.phone_update_restriction as phoneEditable;
+    extrasList.value =  cloneDeep(currentUserInfo.value.extras);
+    // 初始化时读取custom data
+    customEmail.value = userRes.data.custom_email;
+    customPhone.value = userRes.data.custom_phone;
+    customPhoneCode.value = userRes.data.custom_phone_country_code;
+    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+    originalValue.value = {
+      language: currentUserInfo.value.language,
+      time_zone: currentUserInfo.value.time_zone,
+    };
+
+    // 根据当前用户是否继承了邮箱和手机，决定是否重置custom缓存
+    if (currentUserInfo.value.is_inherited_email) {
+      currentUserInfo.value.custom_email = '';
+      customEmail.value = '';
+    }
+    if (currentUserInfo.value.is_inherited_phone) {
+      currentUserInfo.value.custom_phone = '';
+      customPhone.value = '';
+    }
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    infoLoading.value = false;
+  }
+};
+
+const getNaturalUser = async () => {
+  isLoading.value = true;
+  // 关联账户列表
+  const res = await getCurrentNaturalUser().finally(() => isLoading.value = false);
+  currentNaturalUser.value = res.data;
+  // 获取当前账号信息
+  await getCurrentUser(currentNaturalUser.value.tenant_users[0].id);
+};
+
+const bindInfo = reactive<WechatBindStatusData>({
+  type: '' as WechatBindStatusData['type'],
+  wx_userid: '',
+});
+
+const interval = ref(null);
+const startPolling = () => {
+  interval.value = setInterval(handleFetchBindStatus, 5000);
+};
+const stopPolling = () => {
+  clearInterval(interval.value);
+};
+
+/** 获取微信绑定状态 */
+const handleFetchBindStatus = async () => {
+  try {
+    const res = await getWechatBindStatus(currentUserInfo.value.id);
+    bindInfo.type = res.data.type;
+    bindInfo.wx_userid = res.data.wx_userid;
+    // 若已有绑定状态或没有type，停止轮询
+    if ((bindInfo.type && bindInfo.wx_userid) || !bindInfo.type) {
+      stopPolling();
+    }
+  } catch (err) {
+    console.error(err);
+    stopPolling();
+  }
+};
+
+const handleBindWx = () => {
+  // 清除轮询
+  stopPolling();
+  // 再次发起轮询
+  startPolling();
+};
+
+onMounted(async () => {
+  await getNaturalUser();
+  await handleFetchBindStatus();
+});
+
+onUnmounted(() => {
+  stopPolling();
+});
 </script>
 
 <style lang="less" scoped>
 .personal-center-wrapper {
   height: calc(100vh - 52px);
   min-width: 1600px;
-
-  .personal-center-left {
-    height: 100%;
-    background-color: #fff;
-
-    .left-natural-user {
-      padding: 16px;
-
-      .natural-user {
-        display: flex;
-        height: 40px;
-        padding: 0 10px;
-        line-height: 40px;
-        background: #F0F1F5;
-        border-radius: 2px;
-        align-items: center;
-
-        i {
-          font-size: 16px;
-          color: #979BA5;
-        }
-
-        .name {
-          max-width: 120px;
-          margin-left: 8px;
-          font-size: 14px;
-          font-weight: 700;
-        }
-
-        .id {
-          min-width: 120px;
-          color: #979BA5;
-        }
-      }
-    }
-
-    .left-add {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 16px 16px;
-
-      .account {
-        margin-right: 8px;
-        font-size: 14px;
-      }
-
-      .number {
-        display: inline-block;
-        height: 16px;
-        padding: 0 8px;
-        line-height: 16px;
-        color: #979ba5;
-        text-align: center;
-        background: #f0f1f5;
-        border-radius: 8px;
-      }
-
-      .bk-button {
-        font-size: 14px;
-      }
-    }
-
-    .left-list {
-      li {
-        padding: 0 12px 0 24px;
-
-        &:hover {
-          background: #f0f1f5;
-        }
-
-        .account-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          height: 40px;
-          line-height: 40px;
-          cursor: pointer;
-
-          div {
-            display: flex;
-            align-items: center;
-          }
-
-          img {
-            display: inline-block;
-            width: 22px;
-            height: 22px;
-            vertical-align: middle;
-            object-fit: contain;
-          }
-
-          .icon-yonghu {
-            padding: 3px;
-            font-size: 16px;
-            color: #FAFBFD;
-            background: #DCDEE5;
-            border-radius: 2px;
-          }
-
-          .name {
-            display: inline-block;
-            margin: 0 8px;
-            font-size: 14px;
-            color: #313238;
-          }
-
-          .tenant {
-            display: inline-block;
-            color: #ff9c01;
-          }
-        }
-      }
-
-      .isActive {
-        background-color: #e1ecff;
-
-        &:hover {
-          background-color: #e1ecff;
-        }
-      }
-    }
-  }
 
   .personal-center-main {
     padding: 24px;
@@ -1190,198 +1101,168 @@ const hidePasswordModal = () => {
             }
           }
         }
+      }
+    }
 
-        .login-time {
+    .item-content {
+      display: flex;
+      margin-top: 16px;
+
+      .item-div {
+        width: 50%;
+        min-width: 600px;
+
+        li {
+          display: flex;
+          width: 100%;
+          min-width: 600px;
           font-size: 14px;
+          line-height: 50px;
+
+          .key {
+            display: inline-block;
+            width: 120px;
+            text-align: right;
+          }
+
+          .value {
+            max-width: 500px;
+            overflow: hidden;
+            color: #313238;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .value-content {
+            .value-edit {
+              display: flex;
+              align-items: center;
+              height: 50px;
+              .bk-select {
+                width: 106px;
+                line-height: 0px;
+              }
+              .email-input {
+                height: 32px;
+                .bk-form-content {
+                  height: 100%;
+                  .bk-input--text {
+                    height: 100%;
+                  }
+                }
+              }
+              .phone-input {
+                width: 269px;
+                margin-left: -1px;
+                ::v-deep .iti__tel-input {
+                  border-top-left-radius: 0px;
+                  border-bottom-left-radius: 0px;
+                }
+              }
+
+              .bk-input {
+                width: 269px;
+                margin: -1px;
+                border-top-left-radius: 0px;
+                border-bottom-left-radius: 0px;
+              }
+
+              ::v-deep .bk-button-text {
+                line-height: 19px;
+              }
+            }
+
+            .icon-edit {
+              margin-left: 10px;
+              font-size: 16px;
+              color: #979BA5;
+              cursor: pointer;
+
+              &:hover {
+                color: #3A84FF;
+              }
+            }
+
+            ::v-deep .bk-form-item {
+              margin-bottom: 0;
+
+              .bk-form-content {
+                margin-left: 0 !important;
+              }
+            }
+          }
         }
       }
     }
 
-    .personal-center-details {
-      // height: calc(100vh - 196px);
-      margin-top: 24px;
+    .item-flex {
+      display: flex;
+      flex-wrap: wrap;
 
-      .details-info {
-        .details-info-item {
-          padding: 16px 24px;
-          margin-bottom: 16px;
-          background: #fff;
-          border-radius: 2px;
-          box-shadow: 0 2px 4px 0 #1919290d;
+      li {
+        display: flex;
+        width: 50%;
+        font-size: 14px;
 
-          .item-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
+        .key {
+          display: inline-block;
+          width: 120px;
+          line-height: 32px;
+          text-align: right;
+
+          ::v-deep .text-ov {
+            width: 120px;
+          }
+        }
+
+        .value-edit {
+          display: flex;
+          min-width: 480px;
+          padding-bottom: 18px;
+          overflow: hidden;
+          color: #313238;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          align-items: center;
+
+          .value {
+            max-width: 400px;
+            line-height: 32px;
           }
 
-          .item-title {
-            font-size: 14px;
-            font-weight: 700;
-          }
+          .input-list {
+            position: relative;
 
-          .item-content {
-            display: flex;
-            margin-top: 16px;
+            .custom-error {
+              border: 1px solid #ea3636 !important;
+            }
 
-            .item-div {
-              width: 50%;
-              min-width: 600px;
-
-              li {
-                display: flex;
-                width: 100%;
-                min-width: 600px;
-                font-size: 14px;
-                line-height: 50px;
-
-                .key {
-                  display: inline-block;
-                  width: 120px;
-                  text-align: right;
-                }
-
-                .value {
-                  max-width: 500px;
-                  overflow: hidden;
-                  color: #313238;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                }
-
-                .value-content {
-                  .value-edit {
-                    display: flex;
-                    align-items: center;
-                    height: 50px;
-                    .bk-select {
-                      width: 106px;
-                      line-height: 0px;
-                    }
-                    .email-input {
-                      height: 32px;
-                      .bk-form-content {
-                        height: 100%;
-                        .bk-input--text {
-                          height: 100%;
-                        }
-                      }
-                    }
-                    .phone-input {
-                      width: 269px;
-                      margin-left: -1px;
-                      ::v-deep .iti__tel-input {
-                        border-top-left-radius: 0px;
-                        border-bottom-left-radius: 0px;
-                      }
-                    }
-
-                    .bk-input {
-                      width: 269px;
-                      margin: -1px;
-                      border-top-left-radius: 0px;
-                      border-bottom-left-radius: 0px;
-                    }
-
-                    ::v-deep .bk-button-text {
-                      line-height: 19px;
-                    }
-                  }
-
-                  .icon-edit {
-                    margin-left: 10px;
-                    font-size: 16px;
-                    color: #979BA5;
-                    cursor: pointer;
-
-                    &:hover {
-                      color: #3A84FF;
-                    }
-                  }
-
-                  ::v-deep .bk-form-item {
-                    margin-bottom: 0;
-
-                    .bk-form-content {
-                      margin-left: 0 !important;
-                    }
-                  }
-                }
+            .custom-select {
+              ::v-deep .bk-input {
+                border: 1px solid #ea3636 !important;
               }
+            }
+
+            .error-text {
+              position: absolute;
+              top: 32px;
+              left: 0;
+              display: inline-block;
+              padding-top: 4px;
+              font-size: 12px;
+              line-height: 1;
+              color: #ea3636;
             }
           }
 
-          .item-flex {
-            display: flex;
-            flex-wrap: wrap;
+          .icon-edit {
+            margin-left: 10px;
+            font-size: 16px;
+            color: #979BA5;
+            cursor: pointer;
 
-            li {
-              display: flex;
-              width: 50%;
-              font-size: 14px;
-
-              .key {
-                display: inline-block;
-                width: 120px;
-                line-height: 32px;
-                text-align: right;
-
-                ::v-deep .text-ov {
-                  width: 120px;
-                }
-              }
-
-              .value-edit {
-                display: flex;
-                min-width: 480px;
-                padding-bottom: 18px;
-                overflow: hidden;
-                color: #313238;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                align-items: center;
-
-                .value {
-                  max-width: 400px;
-                  line-height: 32px;
-                }
-
-                .input-list {
-                  position: relative;
-
-                  .custom-error {
-                    border: 1px solid #ea3636 !important;
-                  }
-
-                  .custom-select {
-                    ::v-deep .bk-input {
-                      border: 1px solid #ea3636 !important;
-                    }
-                  }
-
-                  .error-text {
-                    position: absolute;
-                    top: 32px;
-                    left: 0;
-                    display: inline-block;
-                    padding-top: 4px;
-                    font-size: 12px;
-                    line-height: 1;
-                    color: #ea3636;
-                  }
-                }
-
-                .icon-edit {
-                  margin-left: 10px;
-                  font-size: 16px;
-                  color: #979BA5;
-                  cursor: pointer;
-
-                  &:hover {
-                    color: #3A84FF;
-                  }
-                }
-              }
+            &:hover {
+              color: #3A84FF;
             }
           }
         }

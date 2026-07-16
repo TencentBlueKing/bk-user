@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 import pytest
 from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.biz.exporters import DataSourceUserExporter
+from bkuser.biz.exporters import DataSourceUserExporter, UserExcelWriter, get_user_export_template
 
 pytestmark = pytest.mark.django_db
 
@@ -25,11 +25,11 @@ class TestDataSourceExporter:
     """测试用户数据导出 & 模板获取"""
 
     def test_get_template(self, bare_local_data_source, tenant_user_custom_fields):
-        exporter = DataSourceUserExporter(bare_local_data_source)
-        tmpl = exporter.get_template()
+        tenant_id = bare_local_data_source.owner_tenant_id
+        tmpl = get_user_export_template(tenant_id)
 
         assert "users" in tmpl.sheetnames
-        assert [cell.value for cell in tmpl["users"][exporter.col_name_row_idx]] == [
+        assert [cell.value for cell in tmpl["users"][UserExcelWriter.HEADER_ROW_IDX]] == [
             "用户名/username",
             "姓名/full_name",
             "邮箱/email",
@@ -62,7 +62,7 @@ class TestDataSourceExporter:
             assert row[3].value == f"+{exists_users[idx].phone_country_code}{exists_users[idx].phone}"
             # 第四第五列分别是组织，直接上级，不在这个循环做检查
             assert row[6].value == str(20 + idx)
-            assert row[7].value == "male"
+            assert row[7].value == "男"
             assert row[8].value == "region-" + str(idx)
             assert row[9].value == ""
 

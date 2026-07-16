@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -136,12 +136,10 @@ class ErrorCode:
         self._error_kwargs = kwargs
 
     @overload
-    def __get__(self, obj: None, obj_type: None) -> "ErrorCode":
-        ...
+    def __get__(self, obj: None, obj_type: None) -> "ErrorCode": ...
 
     @overload
-    def __get__(self, obj: object, obj_type: Type) -> APIError:
-        ...
+    def __get__(self, obj: object, obj_type: Type) -> APIError: ...
 
     def __get__(self, obj: Union[None, object], obj_type: Union[None, Type]) -> Union["ErrorCode", APIError]:
         """When retrieving `ErrorCode` via object attribute, always making a brand new `APIError`

@@ -1,13 +1,15 @@
 <template>
   <div
     :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
-    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+    v-bkloading="{ loading: isLoading, zIndex: 10 }"
   >
-    <DataSourceCard
+    <DataSourceItem
       v-if="!isSuccess"
-      :plugins="currentPlugins"
-      @handle-collapse="handleCollapse">
-      <template #content v-if="showContent">
+      :data="currentPlugins"
+      :open-hover="false"
+      @click="handleCollapse"
+    >
+      <template v-if="showContent">
         <div class="steps-wrapper">
           <bk-steps
             ext-cls="steps"
@@ -40,12 +42,17 @@
             @update-success="updateSuccess" />
         </div>
       </template>
-    </DataSourceCard>
-    <Success v-else :title="successText" />
+    </DataSourceItem>
+    <Success
+      v-else
+      :title="successText"
+      :data-source-id="dataSourceId"
+    />
   </div>
 </template>
 
-<script setup lang="ts"> import { onMounted, ref, watch } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Success from './ConfigSuccess.vue';
@@ -53,44 +60,25 @@ import CustomJsonSchema from './CustomJsonSchema.vue';
 import Http from './HttpConfig.vue';
 import Ldap from './LdapConfig.vue';
 
-import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
-import { getDataSourcePlugins } from '@/http';
+import DataSourceItem from '@/components/DataSourceItem.vue';
+import { DataSourcePluginsItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import { useMainViewStore, useUser } from '@/store';
+import { useDataSourceStore, useMainViewStore, useUser } from '@/store';
 
 const store = useMainViewStore();
+const dataSourceStore = useDataSourceStore();
 store.customBreadcrumbs = false;
+
+const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
 
 const route = useRoute();
 
 const userStore = useUser();
 
 const currentType = ref('');
-
-const isNotJsonSchemaIds = ['general', 'local', 'ldap'];
-
-// 获取数据源类型
-watch(() => route.query.type, (val: string) => {
-  if (val) {
-    currentType.value = val;
-  }
-}, {
-  deep: true,
-  immediate: true,
-});
-
 const dataSourceId = ref(null);
-// 获取数据源类型
-watch(() => route.query.id, (val: number) => {
-  if (val) {
-    dataSourceId.value = val;
-  }
-}, {
-  deep: true,
-  immediate: true,
-});
 
-const currentPlugins = ref([]);
+const currentPlugins = ref({} as DataSourcePluginsItemData);
 const isLoading = ref(false);
 
 const curStep = ref(1);
@@ -99,45 +87,63 @@ const typeSteps = ref([
   { title: t('字段设置') },
 ]);
 
-onMounted(() => {
-  initDataSourcePlugins();
-});
-
-const initDataSourcePlugins = () => {
-  isLoading.value = true;
-  getDataSourcePlugins().then((res) => {
-    res.data?.forEach((item) => {
-      if (item.id === currentType.value) {
-        currentPlugins.value = [item];
-      }
-    });
-    isLoading.value = false;
-  })
-    .catch(() => {
-      isLoading.value = false;
-    });
-};
+// 切换展示状态
+const showContent = ref(true);
+// 数据源创建、更新
+const successText = ref('新建企业微信数据源成功');
+const isSuccess = ref(false);
+const isReset = ref(false);
 
 // 切换步骤
 const updateCurStep = (value: number) => {
   curStep.value = value;
 };
-
-// 切换展示状态
-const showContent = ref(true);
 const handleCollapse = () => {
   showContent.value = !showContent.value;
 };
 
-// 数据源创建、更新
-const successText = ref('新建企业微信数据源成功');
-const isSuccess = ref(false);
-const updateSuccess = (value: string) => {
-  successText.value = `${value}${currentPlugins.value[0].name}${t('成功 ')}`;
+const updateSuccess = ({ text, dataSourceId: newDataSourceId }: { text: string; dataSourceId: number }) => {
+  successText.value = `${text}${currentPlugins.value.name}${t('成功 ')}`;
+  dataSourceId.value = newDataSourceId;
   isSuccess.value = true;
 };
 
-const isReset = ref(false);
+const handleInit = async () => {
+  try {
+    isLoading.value = true;
+    await Promise.all([
+      dataSourceStore.handleFetchAllDataSourcePlugins(),
+      dataSourceStore.handleFetchCurrentDataSource(),
+    ]);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 获取数据源 id
+watch(() => route.query.id, (val: string | string[]) => {
+  if (val) {
+    dataSourceId.value = Array.isArray(val) ? val[0] : val;
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
+
+// 获取数据源类型
+watch(() => route.query.type, (val: string | string[]) => {
+  if (val) {
+    currentType.value = Array.isArray(val) ? val[0] : val;
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
+
+onMounted(() => {
+  // 初始化数据源列表 - 若直接在新建/编辑页刷新，store中没有数据源列表
+  handleInit();
+});
 </script>
 
 <style lang="less" scoped>

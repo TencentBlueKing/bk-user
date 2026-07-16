@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -23,12 +23,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.auditor import VirtualUserAuditor
+from bkuser.biz.virtual_user import VirtualUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .mixins import CurrentTenantVirtualDataSource
@@ -45,8 +44,6 @@ from .serializers import (
 class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = VirtualUserListOutputSLZ
-
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = VirtualUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -62,7 +59,10 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
-        return queryset
+
+        # TODO: 后续需要支持排序
+        # 默认先按照创建时间倒序排列
+        return queryset.order_by("-created_at")
 
     @swagger_auto_schema(
         tags=["virtual_user"],
@@ -71,7 +71,11 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         responses={status.HTTP_200_OK: VirtualUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        detailed_vusers = VirtualUserHandler.to_detailed_virtual_users(page)
+        return self.get_paginated_response(VirtualUserListOutputSLZ(detailed_vusers, many=True).data)
 
     @swagger_auto_schema(
         tags=["virtual_user"],
@@ -81,45 +85,40 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
     )
     def post(self, request, *args, **kwargs):
         data_source = self.get_current_virtual_data_source()
-        slz = VirtualUserCreateInputSLZ(data=request.data, context={"data_source_id": data_source.id})
+        cur_tenant_id = self.get_current_tenant_id()
+
+        slz = VirtualUserCreateInputSLZ(
+            data=request.data, context={"data_source_id": data_source.id, "tenant_id": cur_tenant_id}
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         with transaction.atomic():
-            # 创建数据源用户
-            user = DataSourceUser.objects.create(
+            # 创建虚拟用户
+            tenant_user = VirtualUserHandler.create(
                 data_source=data_source,
-                code=data["username"],
                 username=data["username"],
                 full_name=data["full_name"],
-                email=data["email"],
-                phone=data["phone"],
-                phone_country_code=data["phone_country_code"],
-            )
-            # 虚拟用户只会同步到数据源所属租户下
-            tenant_id = data_source.owner_tenant_id
-            tenant_user = TenantUser.objects.create(
-                id=TenantUserIDGenerator(tenant_id, data_source).gen(user),
-                data_source_user=user,
-                tenant_id=tenant_id,
-                data_source=data_source,
             )
 
+            # 创建虚拟用户与应用的关联
+            VirtualUserHandler.add_app_codes(tenant_user, data["app_codes"])
+            # 创建虚拟用户与责任人的关联
+            VirtualUserHandler.add_owners(tenant_user, data["owners"])
+
         # 【审计】创建虚拟用户审计对象
-        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor = VirtualUserAuditor(request.user.username, cur_tenant_id)
         # 【审计】将审计记录保存至数据库
         auditor.record_create(tenant_user)
 
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
 
-class VirtualUserRetrieveUpdateDestroyApi(
-    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
+class VirtualUserRetrieveUpdateApi(
+    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
     lookup_url_kwarg = "id"
-    serializer_class = VirtualUserRetrieveOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
@@ -133,7 +132,9 @@ class VirtualUserRetrieveUpdateDestroyApi(
         responses={status.HTTP_200_OK: VirtualUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        virtual_user = self.get_object()
+        detailed_vuser = VirtualUserHandler.to_detailed_virtual_users([virtual_user])[0]
+        return Response(VirtualUserRetrieveOutputSLZ(detailed_vuser).data)
 
     @swagger_auto_schema(
         tags=["virtual_user"],
@@ -143,47 +144,29 @@ class VirtualUserRetrieveUpdateDestroyApi(
     )
     def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        slz = VirtualUserUpdateInputSLZ(data=request.data)
+        cur_tenant_id = self.get_current_tenant_id()
+
+        slz = VirtualUserUpdateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         # 【审计】创建虚拟用户审计对象并记录变更前的数据
-        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
+        auditor = VirtualUserAuditor(request.user.username, cur_tenant_id)
         auditor.pre_record_data_before(tenant_user)
 
-        # 实际修改的字段属性都在关联的数据源用户上
         data_source_user = tenant_user.data_source_user
 
-        # 覆盖更新
-        data_source_user.full_name = data["full_name"]
-        data_source_user.email = data["email"]
-        data_source_user.phone = data["phone"]
-        data_source_user.phone_country_code = data["phone_country_code"]
-        data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
+        with transaction.atomic():
+            # 覆盖更新
+            data_source_user.full_name = data["full_name"]
+            data_source_user.save(update_fields=["full_name", "updated_at"])
+
+            # 更新虚拟用户与应用的关联
+            VirtualUserHandler.update_app_codes(tenant_user, data["app_codes"])
+            # 更新虚拟用户与责任人的关联
+            VirtualUserHandler.update_owners(tenant_user, data["owners"])
 
         # 【审计】将审计记录保存至数据库
         auditor.record_update(tenant_user)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @swagger_auto_schema(
-        tags=["virtual_user"],
-        operation_description="删除虚拟用户",
-        responses={status.HTTP_204_NO_CONTENT: ""},
-    )
-    def delete(self, request, *args, **kwargs):
-        tenant_user = self.get_object()
-        data_source_user = tenant_user.data_source_user
-
-        # 【审计】创建虚拟用户审计对象并记录变更前的数据
-        auditor = VirtualUserAuditor(request.user.username, self.get_current_tenant_id())
-        auditor.pre_record_data_before(tenant_user)
-
-        with transaction.atomic():
-            tenant_user.delete()
-            data_source_user.delete()
-
-        # 【审计】将审计记录保存至数据库
-        auditor.record_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

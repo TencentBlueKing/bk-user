@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -38,10 +38,8 @@ def start_collaboration_tenant_sync(strategy: CollaborationStrategy):
         logger.info("collaboration strategy %s is not enabled by target, skip sync...", strategy.id)
         return
 
-    data_source = DataSource.objects.filter(
-        owner_tenant_id=strategy.source_tenant_id, type=DataSourceTypeEnum.REAL
-    ).first()
-    if not data_source:
+    data_sources = DataSource.objects.filter(owner_tenant_id=strategy.source_tenant_id, type=DataSourceTypeEnum.REAL)
+    if not data_sources.exists():
         logger.info(
             "collaboration strategy %s source tenant %s didn't have real user data source, skip sync...",
             strategy.id,
@@ -49,5 +47,6 @@ def start_collaboration_tenant_sync(strategy: CollaborationStrategy):
         )
         return
 
-    sync_opts = TenantSyncOptions(operator=strategy.updater, async_run=True, trigger=SyncTaskTrigger.MANUAL)
-    TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()
+    for data_source in data_sources:
+        sync_opts = TenantSyncOptions(operator=strategy.updater, async_run=True, trigger=SyncTaskTrigger.MANUAL)
+        TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()

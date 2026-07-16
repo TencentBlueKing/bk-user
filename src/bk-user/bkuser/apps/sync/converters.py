@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -26,6 +26,7 @@ from django.conf import settings
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.loggers import TaskLogger
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -41,6 +42,7 @@ class DataSourceUserConverter:
     def __init__(self, data_source: DataSource, logger: TaskLogger):
         self.data_source = data_source
         self.logger = logger
+        self.transformer = UsernameTransformer.load(data_source.id)
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
         self.field_mapping = self._get_field_mapping()
 
@@ -54,6 +56,7 @@ class DataSourceUserConverter:
         if not username:
             raise ValueError("username is required")
 
+        username = self.transformer.to_stored(username)
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 
@@ -70,15 +73,15 @@ class DataSourceUserConverter:
             )
 
         phone = props.get(mapping.get("phone")) or ""  # type: ignore
-        country_code = (
-            props.get(
-                mapping.get("phone_country_code"),  # type: ignore
-            )
-            or settings.DEFAULT_PHONE_COUNTRY_CODE
-        )
         # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
         if phone:
+            country_code = (
+                props.get(mapping.get("phone_country_code"))  # type: ignore
+                or settings.DEFAULT_PHONE_COUNTRY_CODE
+            )
             validate_phone_with_country_code(phone, country_code)
+        else:
+            country_code = ""
 
         return DataSourceUser(
             data_source=self.data_source,
@@ -144,9 +147,19 @@ class DataSourceUserConverter:
             if f.name not in mapping:
                 continue
 
-            opt_ids = [opt["id"] for opt in f.options]
-            value = props.get(mapping[f.name], f.default)
+            # 如果没有提供该字段，则使用默认值
+            if not props.get(mapping[f.name]):
+                # 只有字符串类型需要进行必填校验，其他类型一定有默认值
+                if f.data_type == UserFieldDataType.STRING and f.required and not f.default:
+                    raise ValueError(f"username: {username}, field {f.name} is required")
+                extras[f.name] = f.default
+                continue
 
+            # 提前预取枚举类型的选择项，便于后续校验和取 value 对应的 id
+            opt_values = [opt["value"] for opt in f.options]
+            opt_value_to_id_map = {opt["value"]: opt["id"] for opt in f.options}
+
+            value = props[mapping[f.name]]
             # 数字类型，转换成整型不丢精度就转，不行就浮点数
             if f.data_type == UserFieldDataType.NUMBER:
                 try:
@@ -156,26 +169,24 @@ class DataSourceUserConverter:
                     raise ValueError(
                         f"username: {username}, number field {f.name} value `{value}` cannot convert to number"
                     )
-            # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+            # 枚举类型，值（value）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
-                if value not in opt_ids:
+                if value not in opt_values:
                     raise ValueError(
-                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_ids}"
+                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_values}"
                     )
+                value = opt_value_to_id_map[value]
+
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 兼容 xlsx 导入，统一所有插件输出的多选枚举，都是通过 "," 分隔的字符串表示列表
-                # 但是，默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
-                if isinstance(value, str):
-                    value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
+                value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
 
-                if set(value) - set(opt_ids):
+                if set(value) - set(opt_values):
                     raise ValueError(
-                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_ids}"
+                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_values}"
                     )
-            # 必填字段检查仅适用于字符串类型字段，因为数字类型即使是 0 也不能判断是空，枚举类型都有值检查
-            elif f.data_type == UserFieldDataType.STRING and f.required and not value:
-                raise ValueError(f"username: {username}, field {f.name} is required")
+                value = [opt_value_to_id_map[v] for v in value]  # type: ignore
 
             extras[f.name] = value
 

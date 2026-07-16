@@ -269,3 +269,18 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-youxiang:before {
 	content: "\e156";
 }
+.icon-variable:before {
+	content: "\e15c";
+}
+.icon-constant:before {
+	content: "\e15d";
+}
+.icon-link:before {
+	content: "\e15e";
+}
+.icon-right-shape:before {
+	content: "\e160";
+}
+.icon-down-shape:before {
+	content: "\e15f";
+}

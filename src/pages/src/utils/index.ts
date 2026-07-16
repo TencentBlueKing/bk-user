@@ -1,7 +1,6 @@
 import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import moment from 'moment';
-import momentTimeZone from 'moment-timezone';
 import { ref } from 'vue';
 
 import abnormalImg from '@/images/abnormal.svg';
@@ -61,18 +60,6 @@ export function dateConvert(value: string) {
       return value;
   }
 }
-
-// 时区获取
-export const TIME_ZONES = momentTimeZone.tz.names()?.map(item => ({
-  value: item,
-  label: item,
-}));
-
-// 语言
-export const LANGUAGE_OPTIONS = [
-  { value: 'zh-cn', label: '简体中文' },
-  { value: 'en', label: 'English' },
-];
 
 // logo转换
 export function logoConvert(value: string) {
@@ -270,9 +257,12 @@ export const SYNC_TIMEOUT_LIST = [
     label: t('6 小时'),
   },
 ];
-
 // 数据更新记录状态
-export const dataRecordStatus = {
+export const dataRecordStatus: Record<string, {
+  icon: string;
+  text: string;
+  theme: string;
+}> = {
   // pending状态下文本由待执行改为同步中
   pending: {
     icon: loadingImg,
@@ -295,8 +285,6 @@ export const dataRecordStatus = {
     theme: 'danger',
   },
 };
-
-export const RUNNING_FIELDS = ['pending', 'running'];
 
 // 有效期
 export const VALID_TIME = [
@@ -377,27 +365,31 @@ export const tenantStatus = {
 };
 
 // 语言切换
-export const handleSwitchLocale = (locale: string) => {
-  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
-  const scriptId = 'jsonp-script';
-  const prevJsonpScript = document.getElementById(scriptId);
-  if (prevJsonpScript) {
-    document.body.removeChild(prevJsonpScript);
+export const handleSwitchLocale = async (locale: string, tenant_id: string) => {
+  try {
+    const url = `${window.BK_USER_WEB_APIGW_URL}/api/v3/open-web/tenant/current-user/language/`;
+    await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'X-Bk-Tenant-Id': tenant_id,
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        language: locale,
+      }),
+      credentials: 'include',
+    });
+    Cookies.set('blueking_language', locale, {
+      expires: 3600,
+      path: '/',
+      domain: window.BK_DOMAIN,
+    });
+    I18n.global.locale.value = locale as any;
+    document.querySelector('html')?.setAttribute('lang', locale);
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
   }
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = `${api}?language=${locale}`;
-  script.id = scriptId;
-  document.body.appendChild(script);
-
-  Cookies.set('blueking_language', locale, {
-    expires: 3600,
-    path: '/',
-    domain: window.BK_DOMAIN,
-  });
-  I18n.global.locale.value = locale as any;
-  document.querySelector('html')?.setAttribute('lang', locale);
-  window.location.reload();
 };
 
 export const durationText = (value: string) => {

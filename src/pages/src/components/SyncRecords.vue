@@ -1,46 +1,89 @@
 <template>
-  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper">
+  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 10 }" class="sync-records-wrapper">
     <div class="data-record-content">
-      <bk-table
+      <Table
         class="user-info-table"
         :data="dataRecordConfig.list"
-        show-overflow-tooltip
-        remote-pagination
         :pagination="pagination"
-        @column-filter="dataRecordFilter"
+        :border="'inner'"
+        :settings="settings"
+        :show-settings="true"
+        @filter-change="handleFilterChange"
         @page-limit-change="pageLimitChange"
         @page-value-change="pageCurrentChange"
+        @setting-change="handleSettingChange"
       >
         <template #empty>
           <Empty
-            :is-data-empty="dataRecordConfig.isDataEmpty"
-            :is-data-error="dataRecordConfig.isDataError"
-            @handle-update="getSyncRecordsList"
+            :type="curExceptionType"
+            @clear="handleClearSearch"
+            @refresh="getSyncRecordsList"
           />
         </template>
-        <bk-table-column prop="start_at" :label="$t('开始时间')" :width="160" />
-        <bk-table-column prop="duration" :label="$t('耗时')">
+        <TableColumn
+          field="start_at"
+          :label="$t('开始时间')"
+          show-overflow="tooltip"
+          :min-width="160"
+        />
+        <TableColumn
+          field="duration"
+          :label="$t('耗时')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <span>{{ durationText(row.duration) }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="operator" :label="$t('操作人')">
+        </TableColumn>
+        <TableColumn
+          field="plugin"
+          :label="$t('数据源类型')"
+          show-overflow="tooltip"
+          :min-width="160"
+        >
           <template #default="{ row }">
-            <span>{{ row.operator || '--' }}</span>
+            <span>{{ row?.plugin?.name || '--' }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="trigger" :label="$t('触发类型')">
+        </TableColumn>
+        <TableColumn
+          field="operator"
+          :label="$t('操作人')"
+          show-overflow="tooltip"
+          :min-width="120"
+        >
+          <template #default="{ row }">
+            <DisplayName :user-id="row.operator" />
+          </template>
+        </TableColumn>
+        <TableColumn
+          field="trigger"
+          :label="$t('触发类型')"
+          show-overflow="tooltip"
+          :min-width="80"
+        >
           <template #default="{ row }">
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters, height: '130px' }">
+        </TableColumn>
+        <TableColumn
+          field="status"
+          :label="$t('状态')"
+          show-overflow="tooltip"
+          filter-multiple
+          :filters="updateStatusFilters"
+          :min-width="120"
+        >
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
           </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('操作')">
+        </TableColumn>
+        <TableColumn
+          field="action"
+          :label="$t('操作')"
+          :min-width="100"
+        >
           <template #default="{ row }">
             <bk-button
               text
@@ -55,14 +98,14 @@
               v-if="row.has_warning"
               v-bk-tooltips="{ content: t('有部分数据失败') }" />
           </template>
-        </bk-table-column>
-      </bk-table>
+        </TableColumn>
+      </Table>
     </div>
     <bk-sideslider
       ext-cls="log-wrapper"
       :is-show="logConfig.isShow"
       :title="$t('日志详情')"
-      :width="800"
+      :width="960"
       quick-close
       :before-close="beforeClose"
       transfer
@@ -90,12 +133,20 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, toRef } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { Table, TableColumn } from '@blueking/table';
+
+import DisplayName from './display-name.vue';
+
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
 import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
+import useTableEmpty from '@/hooks/use-table-empty';
 import { getSyncLogs, getSyncRecords } from '@/http';
+import { SyncRecordsParams } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { dataRecordStatus, durationText } from '@/utils';
 
@@ -111,17 +162,23 @@ const route = useRoute();
 const dataRecordConfig = reactive({
   loading: false,
   list: [],
-  // 表格请求出错
-  isDataError: false,
-  // 表格请求结果为空
-  isDataEmpty: false,
   status: '',
+});
+
+const settings = reactive({
+  checked: ['start_at', 'duration', 'plugin', 'operator', 'trigger', 'status', 'action'],
+  size: 'small',
+});
+
+const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
+  filters: toRef(dataRecordConfig, 'status'),
 });
 
 const pagination = reactive({
   current: 1,
   count: 0,
   limit: 10,
+  remote: true,
 });
 
 const logConfig = ref({
@@ -135,12 +192,11 @@ const triggeMode = {
   manual: t('手动'),
 };
 
-const updateStatusFilters = [
-  { text: t('待执行'), value: 'pending' },
-  { text: t('同步中'), value: 'running' },
-  { text: t('成功'), value: 'success' },
-  { text: t('失败'), value: 'failed' },
-];
+const updateStatusFilters = ref([
+  { label: t('同步中'), value: 'pending,running' },
+  { label: t('同步成功'), value: 'success' },
+  { label: t('同步失败'), value: 'failed' },
+]);
 
 const interval = ref(null);
 onMounted(() => {
@@ -153,24 +209,33 @@ onMounted(() => {
 const getSyncRecordsList = async () => {
   try {
     dataRecordConfig.loading = true;
+    clearErrorType();
     const { list } = await handleSyncRecords();
     const record = list[0];
     if (route.params.type && (record.status === 'failed' || (record.status === 'success' && record.has_warning))) {
       handleLogDetails(record);
     }
   } catch (e) {
-    dataRecordConfig.isDataError = true;
     console.warn(e);
+    setTypeToError();
   } finally {
     dataRecordConfig.loading = false;
   }
 };
 
-const dataRecordFilter = ({ checked }) => {
-  if (checked.length === 0) {
+const handleClearSearch = () => {
+  dataRecordConfig.status = '';
+  updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
+  pagination.current = 1;
+  getSyncRecordsList();
+};
+
+// 增加防抖，避免 bk-table 筛选重置时触发两次，导致重复请求
+const handleFilterChange = ({ values }: { values: string[] }) => {
+  if (values.length === 0) {
     pagination.current = 1;
   }
-  dataRecordConfig.status = checked.join(',');
+  dataRecordConfig.status = values.join(',');
   pagination.current = 1;
   getSyncRecordsList();
 };
@@ -195,22 +260,22 @@ const beforeClose = () => {
   logConfig.value.isShow = false;
 };
 
+const handleSettingChange = (data: any) => {
+  settings.size = data.size as string;
+};
+
 const handleSyncRecords = async () => {
-  dataRecordConfig.isDataEmpty = false;
-  dataRecordConfig.isDataError = false;
-  const params = {
+  const params: SyncRecordsParams = {
     page: pagination.current,
     page_size: pagination.limit,
-    status: dataRecordConfig.status,
-    id: props.dataSource?.id,
+    statuses: dataRecordConfig.status,
   };
   try {
-    const res = await getSyncRecords(params);
+    const res = await getSyncRecords(props.dataSource?.id, params);
     dataRecordConfig.list = res.data.results;
-    dataRecordConfig.isDataEmpty = res.data.count === 0;
     pagination.count = res.data.count;
     // stop time polling
-    const curStatus = res.data.results[0].status;
+    const curStatus = res.data.results?.[0]?.status;
     if (curStatus === 'success' || curStatus === 'failed') {
       clearInterval(interval.value);
     }
@@ -219,7 +284,6 @@ const handleSyncRecords = async () => {
       list: res.data.results,
     };
   } catch (e) {
-    dataRecordConfig.isDataError = true;
     console.warn(e);
   }
 };
@@ -233,24 +297,9 @@ onBeforeUnmount(() => {
 .sync-records-wrapper {
   width: 100%;
   height: calc(100vh - 52px);
-  padding: 28px 30px;
+  padding: 28px 15px 28px 30px;
 
   :deep(.user-info-table) {
-    .bk-table-head {
-      table thead th {
-        text-align: center;
-      }
-
-      .table-head-settings {
-        border-right: none;
-      }
-    }
-
-    .bk-table-footer {
-      padding: 0 15px;
-      background: #fff;
-    }
-
     .type-icon {
       margin-right: 8px;
       font-size: 14px;
@@ -341,3 +390,11 @@ onBeforeUnmount(() => {
   // }
 }
 </style>
+
+<style lang="less">
+/* 隐藏 setting Tab 的滚动条 */
+.action-tab-wrapper {
+  overflow-y: auto !important;
+}
+</style>
+

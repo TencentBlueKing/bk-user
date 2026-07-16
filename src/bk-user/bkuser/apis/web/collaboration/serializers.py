@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # TencentBlueKing is pleased to support the open source community by making
 # 蓝鲸智云 - 用户管理 (bk-user) available.
-# Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2017 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
 #
@@ -44,7 +44,7 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     target_tenant_name = serializers.SerializerMethodField(help_text="目标租户名称")
-    creator = serializers.SerializerMethodField(help_text="创建人")
+    creator = serializers.CharField(help_text="创建人")
     created_at = serializers.DateTimeField(help_text="创建时间")
     source_status = serializers.ChoiceField(
         help_text="策略状态（分享方）",
@@ -59,10 +59,6 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_target_tenant_name(self, obj: CollaborationStrategy) -> str:
         return self.context["tenant_name_map"][obj.target_tenant_id]
-
-    @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_creator(self, obj: CollaborationStrategy) -> str:
-        return self.context["user_display_name_map"][obj.creator]
 
 
 class CollaborationToStrategyCreateInputSLZ(serializers.Serializer):
@@ -133,7 +129,7 @@ class CollaborationToStrategySourceStatusUpdateOutputSLZ(serializers.Serializer)
 
 
 class CollaborationTargetTenantListInputSLZ(serializers.Serializer):
-    tenant_ids = StringArrayField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
+    tenant_ids = StringArrayField(help_text="指定查询的租户，多个使用英文逗号分隔", required=False, default="")
 
 
 class CollaborationTargetTenantListOutputSLZ(serializers.Serializer):
@@ -184,7 +180,7 @@ def _validate_field_mapping_with_tenant_user_fields(
     if not_allowed_fields := source_fields - set(source_tenant_custom_field_map.keys()):
         raise ValidationError(_("字段映射中的源字段 {} 不属于源租户用户自定义字段").format(not_allowed_fields))
 
-    # 目标字段检查（是否合法） 注：不需要检查必填字段是否已配置
+    # 目标字段检查（是否合法）注：不需要检查必填字段是否已配置
     target_fields = {m.get("target_field") for m in field_mapping}
     if not_allowed_fields := target_fields - set(target_tenant_custom_field_map.keys()):
         raise ValidationError(
@@ -226,12 +222,15 @@ class CollaborationFromStrategyUpdateInputSLZ(serializers.Serializer):
         return config
 
 
-class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ):
-    ...
+class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ): ...
 
 
 class CollaborationFromStrategyTargetStatusUpdateOutputSLZ(serializers.Serializer):
     target_status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
+
+
+class CollaborationSyncRecordListInputSLZ(serializers.Serializer):
+    statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
