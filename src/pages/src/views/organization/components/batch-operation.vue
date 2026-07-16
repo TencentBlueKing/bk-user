@@ -299,10 +299,6 @@ const handleResetPassword = () => {
   passwordRule(userIds.value[0]).then((res) => {
     passwordTips.value = res.data?.rule_tips;
   });
-  formData.value = {
-    newPassword: '',
-    confirmPassword: '',
-  };
 };
 
 /**
@@ -383,23 +379,6 @@ const handleClickOutside = () => {
   setTimeout(() => {
     dropdownVisible.value = false;
   });
-};
-
-/**
-   * 重置密码
-  */
-const inputPassword = (val: string, type) => {
-  formData.value[type] = val;
-  if (type === 'confirmPassword') isError.value = false;
-};
-
-/**
-   * 生成随机密码
- * @description 仅本地数据源可以重置密码，直接使用organizationStore.localSourceId
-  */
-const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: organizationStore.localSourceId });
-  formData.value.newPassword = res.data?.password;
 };
 
 const isResetPasswordLoading = ref(false);
