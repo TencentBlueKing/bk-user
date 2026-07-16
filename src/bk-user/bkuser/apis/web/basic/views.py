@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from bkuser.apps.permission.permissions import get_user_role
 from bkuser.common.language import get_language_choices
 
-from .serializers import CurrentUserRetrieveOutputSLZ, SupportedLanguageOutputSLZ
+from .serializers import CurrentUserRetrieveOutputSLZ, LanguageOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
@@ -47,14 +47,14 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
 
 
-class SupportedLanguageListApi(generics.ListAPIView):
+class LanguageListApi(generics.ListAPIView):
     pagination_class = None
 
     @swagger_auto_schema(
         operation_description="获取支持的语言列表",
-        responses={status.HTTP_200_OK: SupportedLanguageOutputSLZ(many=True)},
-        tags=["basic.supported_languages"],
+        responses={status.HTTP_200_OK: LanguageOutputSLZ(many=True)},
+        tags=["basic.languages"],
     )
     def get(self, request, *args, **kwargs):
         languages = [{"code": code, "name": name} for code, name in get_language_choices()]
-        return Response(SupportedLanguageOutputSLZ(languages, many=True).data)
+        return Response(LanguageOutputSLZ(languages, many=True).data)

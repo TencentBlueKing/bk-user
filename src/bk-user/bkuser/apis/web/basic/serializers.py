@@ -30,6 +30,6 @@ class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     language = serializers.CharField(help_text="语言", max_length=32)
 
 
-class SupportedLanguageOutputSLZ(serializers.Serializer):
+class LanguageOutputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="语言代码")
     name = serializers.CharField(help_text="语言名称")
