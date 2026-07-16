@@ -107,7 +107,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     extras = serializers.SerializerMethodField(help_text="自定义字段")
 
     # 语言与时区信息
-    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言", max_length=32)
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
     class Meta:

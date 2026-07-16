@@ -21,7 +21,7 @@ from rest_framework import serializers
 from bkuser.apps.tenant.constants import TenantUserStatus, UserLookupFieldEnum
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import TIME_ZONE_CHOICES
 from bkuser.common.serializers import StringArrayField
 
 
@@ -47,7 +47,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
-    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言", max_length=32)
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
 
     def get_display_name(self, obj: TenantUser) -> str:
@@ -151,7 +151,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户展示名称")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
-    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言", max_length=32)
     time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
 
     def get_login_name(self, obj: TenantUser) -> str:

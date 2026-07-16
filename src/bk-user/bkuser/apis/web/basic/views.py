@@ -19,8 +19,9 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apps.permission.permissions import get_user_role
+from bkuser.common.language import get_language_choices
 
-from .serializers import CurrentUserRetrieveOutputSLZ
+from .serializers import CurrentUserRetrieveOutputSLZ, SupportedLanguageOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
@@ -39,6 +40,21 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
             "tenant_id": current_tenant_id,
             "role": get_user_role(current_tenant_id, current_user.username),
             "display_name": current_user.get_property("display_name"),
+            "time_zone": current_user.get_property("time_zone"),
+            "language": current_user.get_property("language"),
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
+
+
+class SupportedLanguageListApi(generics.ListAPIView):
+    pagination_class = None
+
+    @swagger_auto_schema(
+        operation_description="获取支持的语言列表",
+        responses={status.HTTP_200_OK: SupportedLanguageOutputSLZ(many=True)},
+        tags=["basic.supported_languages"],
+    )
+    def get(self, request, *args, **kwargs):
+        languages = [{"code": code, "name": name} for code, name in get_language_choices()]
+        return Response(SupportedLanguageOutputSLZ(languages, many=True).data)

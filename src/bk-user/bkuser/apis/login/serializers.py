@@ -27,7 +27,6 @@ from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
-from bkuser.common.constants import BkLanguageEnum
 from bkuser.common.serializers import StringArrayField
 
 
@@ -37,9 +36,15 @@ class UniqueEnabledTenantIdpOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
 
 
+class LanguageOutputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="语言代码")
+    name = serializers.CharField(help_text="语言名称")
+
+
 class GlobalSettingOutputSLZ(serializers.Serializer):
     bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")
     unique_enabled_tenant_idp = UniqueEnabledTenantIdpOutputSLZ(help_text="唯一认证源", required=False, default=None)
+    languages = serializers.ListField(help_text="支持的语言列表", child=LanguageOutputSLZ())
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
@@ -158,7 +163,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="语言类型", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言类型", max_length=32)
 
     class Meta:
         ref_name = "login.TenantUserLanguageUpdateInputSLZ"

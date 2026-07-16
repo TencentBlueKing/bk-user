@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.common.language import get_language_codes
 
 
 class TenantUserPhoneInfo(BaseModel):
@@ -74,3 +75,10 @@ class TenantUserHandler:
         否则可能导致 N+1 查询问题
         """
         return {user.id: TenantUserHandler.get_login_name(user) for user in tenant_users}
+
+    @staticmethod
+    def update_tenant_user_language(tenant_user: TenantUser, language: str) -> None:
+        if language not in get_language_codes():
+            return
+        tenant_user.language = language
+        tenant_user.save(update_fields=["language", "updated_at"])

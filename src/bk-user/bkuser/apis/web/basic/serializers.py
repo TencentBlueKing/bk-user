@@ -14,9 +14,11 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from rest_framework import serializers
 
 from bkuser.apps.permission.constants import UserRole
+from bkuser.common.constants import TIME_ZONE_CHOICES
 
 
 class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
@@ -24,3 +26,10 @@ class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     role = serializers.ChoiceField(help_text="用户角色", choices=UserRole.get_choices())
     display_name = serializers.CharField(help_text="展示用名称")
+    time_zone = serializers.ChoiceField(help_text="时区", choices=TIME_ZONE_CHOICES)
+    language = serializers.CharField(help_text="语言", max_length=32)
+
+
+class SupportedLanguageOutputSLZ(serializers.Serializer):
+    code = serializers.CharField(help_text="语言代码")
+    name = serializers.CharField(help_text="语言名称")
