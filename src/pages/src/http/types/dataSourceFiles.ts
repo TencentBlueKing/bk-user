@@ -425,3 +425,22 @@ export interface SyncRecords {
     }
   }[],
 }
+
+export interface SyncRecords {
+  count: number,
+  results: {
+    id: number,
+    status: string,
+    has_warning: boolean,
+    trigger: string,
+    operator: string,
+    start_at: string,
+    duration: string,
+    extras: {
+      incremental: boolean,
+      overwrite: boolean,
+      async_run: boolean,
+      sync_timeout: number,
+    }
+  }[],
+}

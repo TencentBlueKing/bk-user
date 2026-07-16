@@ -64,7 +64,7 @@ const dateOptions = computed(() => {
     { num: 1, unit: 'month', label: t('一个月') },
     { num: 3, unit: 'month', label: t('三个月') },
     { num: 6, unit: 'month', label: t('六个月') },
-    { num: 1, unit: 'year', label: t('一年　') },
+    { num: 1, unit: 'year', label: t('一年 ') },
   ] as Array<{
     num: number
     unit: ManipulateType

@@ -62,7 +62,7 @@
           >
             {{ $t('删除') }}
           </bk-button>
-          <!-- 批量操作如果有外部数据源的用户，只能启用停用和续期，续期对所有数据源开放，不再disabled -->
+          <!-- 批量操作如果有外部数据源的用户，只能启用停用和续期，续期对所有数据源开放，不再 disabled -->
           <bk-button
             text
             class="batch-operate-item"
@@ -214,7 +214,6 @@ const rules = ref({});
 const infoFormRef = ref();
 const dropdownVisible = ref(false);
 const isShowRenewal = ref(false);
-
 const userInfoOptions = ref([
   { text: t('账号过期时间'), type: 'date', selected: false },
   { text: t('直属上级'), type: 'leader', selected: false },
@@ -245,7 +244,7 @@ const moveOrgDisabledConfig = computed(() => {
  * 重置密码按钮禁用配置
  * 规则优先级：
  * 1. 如果当前选中外部数据源（isSelectedNotLocalSource），优先提示"非本地数据源，无法重置密码"
- * 2. 如果不满足规则1，再判断本地数据源是否启用账密登录（isEnabledPassword），未启用则提示"当前数据源未启用账密登录，无法重置密码"
+ * 2. 如果不满足规则 1，再判断本地数据源是否启用账密登录（isEnabledPassword），未启用则提示"当前数据源未启用账密登录，无法重置密码"
  */
 const resetPasswordDisabledConfig = computed(() => {
   // 优先判断是否为外部数据源
@@ -451,7 +450,7 @@ const confirmBatchInfo = () => {
 const confirmBatchAction = (actionType: string) => {
   const actions = {
     enable: {
-      title: t('确认批量启用所选用户 ？'),
+      title: t('确认批量启用所选用户？'),
       confirmText: t('启用'),
       params: {
         user_ids: userIds.value,
@@ -459,7 +458,7 @@ const confirmBatchAction = (actionType: string) => {
       },
     },
     disabled: {
-      title: t('确认批量停用所选用户 ？'),
+      title: t('确认批量停用所选用户？'),
       confirmText: t('停用'),
       params: {
         user_ids: userIds.value,

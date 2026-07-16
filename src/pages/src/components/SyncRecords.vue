@@ -230,7 +230,7 @@ const handleClearSearch = () => {
   getSyncRecordsList();
 };
 
-// 增加防抖，避免bk-table筛选重置时触发两次，导致重复请求
+// 增加防抖，避免 bk-table 筛选重置时触发两次，导致重复请求
 const handleFilterChange = ({ values }: { values: string[] }) => {
   if (values.length === 0) {
     pagination.current = 1;
@@ -392,7 +392,7 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="less">
-/* 隐藏setting Tab的滚动条 */
+/* 隐藏 setting Tab 的滚动条 */
 .action-tab-wrapper {
   overflow-y: auto !important;
 }

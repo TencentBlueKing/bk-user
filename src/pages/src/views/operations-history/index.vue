@@ -4,34 +4,34 @@
       <!-- 筛选表单 -->
       <Transition>
         <div
-          v-if="!isFold.curFold"
-          :class="['filter-operation-history-container', isFold.preFold ? 'overflow-hidden' : '']">
+            v-if="!isFold.curFold"
+            :class="['filter-operation-history-container', isFold.preFold ? 'overflow-hidden' : '']">
           <bk-form
-            form-type="vertical"
-            :model="formData"
-            class="w-full mt-[24px]">
+              form-type="vertical"
+              :model="formData"
+              class="w-full mt-[24px]">
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作人')">
               <UserSelector
-                class="!w-[300px]"
-                v-model:value="formData.creator"
-                :multiple="false" />
+                  class="!w-[300px]"
+                  v-model:value="formData.creator"
+                  :multiple="false" />
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作对象')">
               <bk-select class="items-select" v-model="formData.object_type">
                 <bk-option
-                  v-for="item in curOperationType"
-                  :key="item.key"
-                  :id="item.key"
-                  :name="item.label" />
+                    v-for="item in curOperationType"
+                    :key="item.key"
+                    :id="item.key"
+                    :name="item.label" />
               </bk-select>
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作类型')">
               <bk-select class="items-select" v-model="formData.operation">
                 <bk-option
-                  v-for="item in curOperationOptions"
-                  :key="item.key"
-                  :id="item.key"
-                  :name="item.label" />
+                    v-for="item in curOperationOptions"
+                    :key="item.key"
+                    :id="item.key"
+                    :name="item.label" />
               </bk-select>
             </bk-form-item>
             <bk-form-item class="inline-block ml-[20px]" :label="$t('操作实例')">
@@ -39,23 +39,23 @@
             </bk-form-item>
             <bk-form-item class="inline-block ml-[24px]" :label="$t('操作时间')">
               <bk-date-picker
-                class="items-picker"
-                v-model="formData.operation_time"
-                type="datetimerange" />
+                  class="items-picker"
+                  v-model="formData.operation_time"
+                  type="datetimerange" />
             </bk-form-item>
             <bk-form-item class="ml-[24px]">
               <bk-button
-                class="w-[88px] h-[32px]"
-                theme="primary"
-                :loading="isLoading"
-                @click="() => handleFetchAudit('search')"
+                  class="w-[88px] h-[32px]"
+                  theme="primary"
+                  :loading="isLoading"
+                  @click="() => handleFetchAudit('search')"
               >
                 {{ $t('查询') }}
               </bk-button>
               <bk-button
-                class="w-[88px] h-[32px] ml-[8px]"
-                @click="handleReset"
-                :loading="isLoading"
+                  class="w-[88px] h-[32px] ml-[8px]"
+                  @click="handleReset"
+                  :loading="isLoading"
               >
                 {{ $t('重置') }}
               </bk-button>
@@ -67,26 +67,26 @@
       <div class="flex justify-center w-full h-[24px]">
         <div @mouseover="handleHoverFoldBtn" @mouseleave="handleLeaveFoldBtn" v-if="!isFold.curFold">
           <bk-button
-            v-if="isHover" theme="primary"
-            @click="toggleFold"
-            @mousedown="togglePreFold"
-            class="w-[120px] !h-[24px] text-bold !border-none">
+              v-if="isHover" theme="primary"
+              @click="toggleFold"
+              @mousedown="togglePreFold"
+              class="w-[120px] !h-[24px] text-bold !border-none">
             <i class="user-icon icon-angle-up text-[30px]"></i>
           </bk-button>
           <bk-button
-            v-else
-            @click="toggleFold"
-            @mousedown="togglePreFold"
-            class="w-[120px] !h-[24px] !bg-[#DCDEE5] !text-[#ffffff] text-bold !border-none">
+              v-else
+              @click="toggleFold"
+              @mousedown="togglePreFold"
+              class="w-[120px] !h-[24px] !bg-[#DCDEE5] !text-[#ffffff] text-bold !border-none">
             <i class="user-icon icon-angle-up text-[30px]"></i>
           </bk-button>
         </div>
         <div v-else>
           <bk-button
-            theme="primary"
-            @click="toggleFold"
-            @mousedown="togglePreFold"
-            class="w-[120px] !h-[24px] text-bold !border-none">
+              theme="primary"
+              @click="toggleFold"
+              @mousedown="togglePreFold"
+              class="w-[120px] !h-[24px] text-bold !border-none">
             <i class="user-icon icon-angle-down text-[30px]"></i>
           </bk-button>
         </div>
@@ -94,32 +94,32 @@
       <!-- 展示列表 -->
       <div class="data-operation-history-container">
         <Table
-          v-bkloading="{ loading: isLoading }"
-          :pagination="pagination"
-          :data="tableData"
-          :settings="settings"
-          :show-settings="true"
-          :max-height="curTableMaxHeight"
-          :height="curTableHeight"
-          :virtual-y-config="{ enabled: true, gt: 10 }"
-          :sort-config="sortConfig"
-          class="operation-history-table"
-          @page-limit-change="pageLimitChange"
-          @page-value-change="pageCurrentChange"
-          @setting-change="handleSettingChange"
+            v-bkloading="{ loading: isLoading }"
+            :pagination="pagination"
+            :data="tableData"
+            :settings="settings"
+            :show-settings="true"
+            :max-height="curTableMaxHeight"
+            :height="curTableHeight"
+            :virtual-y-config="{ enabled: true, gt: 10 }"
+            :sort-config="sortConfig"
+            class="operation-history-table"
+            @page-limit-change="pageLimitChange"
+            @page-value-change="pageCurrentChange"
+            @setting-change="handleSettingChange"
         >
           <template #empty>
             <Empty
-              :type="curExceptionType"
-              @clear="handleReset"
-              @refresh="handleFetchAudit('search')"
+                :type="curExceptionType"
+                @clear="handleReset"
+                @refresh="handleFetchAudit('search')"
             />
           </template>
           <TableColumn
-            field="operation"
-            :label="$t('操作类型')"
-            show-overflow="tooltip"
-            :min-width="100"
+              field="operation"
+              :label="$t('操作类型')"
+              show-overflow="tooltip"
+              :min-width="100"
           >
             <template #default="{ row }">
               <span>{{ getOperationLabel(row.operation) }}</span>
@@ -127,41 +127,41 @@
           </TableColumn>
 
           <TableColumn
-            field="object_type"
-            :label="$t('操作对象')"
-            show-overflow="tooltip"
-            :min-width="100"
+              field="object_type"
+              :label="$t('操作对象')"
+              show-overflow="tooltip"
+              :min-width="100"
           >
             <template #default="{ row }">
               <span>{{ getOperationTypeLabel(row.object_type) }}</span>
             </template>
           </TableColumn>
           <TableColumn
-            field="object_name"
-            :label="$t('操作实例')"
-            show-overflow="tooltip"
-            :min-width="100"
+              field="object_name"
+              :label="$t('操作实例')"
+              show-overflow="tooltip"
+              :min-width="100"
           >
             <template #default="{ row }">
               <span>{{ row.object_name || '--' }}</span>
             </template>
           </TableColumn>
           <TableColumn
-            field="creator"
-            :label="$t('操作人')"
-            show-overflow="tooltip"
-            :min-width="100"
+              field="creator"
+              :label="$t('操作人')"
+              show-overflow="tooltip"
+              :min-width="100"
           >
             <template #default="{ row }">
               <DisplayName :user-id="row.creator" />
             </template>
           </TableColumn>
           <TableColumn
-            field="created_at"
-            :label="$t('操作时间')"
-            sortable
-            show-overflow="tooltip"
-            :min-width="100"
+              field="created_at"
+              :label="$t('操作时间')"
+              sortable
+              show-overflow="tooltip"
+              :min-width="100"
           >
             <template #default="{ row }">
               <span>{{ row.created_at || '--' }}</span>
@@ -205,11 +205,11 @@ const rowHeightSizeMap: Record<string, number> = {
   small: 40,
   medium: 44,
 };
-// // 使用max-height来限制表格高度
+// // 使用 max-height 来限制表格高度
 const curTableMaxHeight = computed(() => {
   // header(52) + button-height(24) + margin-bottom(24) 固定表格最大高度，对当前高度进行响应式计算，纵享丝滑
   const tableMaxHeight = window.innerHeight - 100;
-  // 计算当前分页下table高度
+  // 计算当前分页下 table 高度
   const targetTableHeight = 42 + (rowHeightSizeMap?.[settings.size] || 0) * pagination.limit + 62;
   // 若超出页面允许的最大高度，返回最大高度，否则返回数据铺满高度，防止出现空白区域未铺满数据的情况
   if (targetTableHeight < tableMaxHeight) return targetTableHeight;
@@ -226,7 +226,7 @@ const curRedundantHeight = computed(() => {
   }
   return redundantHeight.unfold;
 });
-// table height继续采用响应式hook，用于处理window resize以及折叠功能高度的计算(curRedundantHeight is ref data)
+// table height 继续采用响应式 hook，用于处理 window resize 以及折叠功能高度的计算 (curRedundantHeight is ref data)
 const curTableHeight = useTableMaxHeight(curRedundantHeight);
 
 // 更改表格设置时，更新当前行高
@@ -270,7 +270,7 @@ const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: formData,
 });
 
-// 获取audit数据
+// 获取 audit 数据
 const handleFetchAudit = async (type = '') => {
   try {
     isLoading.value = true;
@@ -301,20 +301,20 @@ const handleFetchAudit = async (type = '') => {
   }
 };
 
-// pageSize更改回调方法
+// pageSize 更改回调方法
 const pageLimitChange = (pageSize: number) => {
   pagination.limit = pageSize;
   pagination.current = 1;
   handleFetchAudit();
 };
 
-// page更改回调方法
+// page 更改回调方法
 const pageCurrentChange = (page: number) => {
   pagination.current = page;
   handleFetchAudit();
 };
 
-// 折叠button处理
+// 折叠 button 处理
 const handleHoverFoldBtn = () => isHover.value = true;
 const handleLeaveFoldBtn = () => isHover.value = false;
 const togglePreFold = () =>  isFold.preFold = !isFold.preFold;
@@ -332,21 +332,21 @@ const handleReset = () => {
   handleFetchAudit('search');
 };
 
-// 当前关联操作对象，当操作类型或操作对象有数据时，“锁死”操作类型及操作对象的option，当且仅当两者均为空，relyKey才可以为null
+// 当前关联操作对象，当操作类型或操作对象有数据时，“锁死”操作类型及操作对象的 option，当且仅当两者均为空，relyKey 才可以为 null
 const relyKey = ref(null);
 // 所有的操作类型
 const operationOptions = getCurrentOperationOptions();
 
-// 基于relyKey筛选后的操作类型
+// 基于 relyKey 筛选后的操作类型
 const curOperationOptions = computed(() => {
   if (relyKey.value) {
     return operationOptions
-      .filter((option: {key: string, label: string, relyKey: string}) => option.relyKey === relyKey.value);
+        .filter((option: {key: string, label: string, relyKey: string}) => option.relyKey === relyKey.value);
   }
   return operationOptions;
 });
 
-// 基于relyKey筛选后的操作对象，操作对象选项不完全被relyKey限制，除非操作类型有数据
+// 基于 relyKey 筛选后的操作对象，操作对象选项不完全被 relyKey 限制，除非操作类型有数据
 const curOperationType = computed(() => {
   if (relyKey.value && formData.operation !== '') {
     return operationType.filter((type: {key: string, label: string}) => type.key === relyKey.value);
@@ -354,26 +354,26 @@ const curOperationType = computed(() => {
   return operationType;
 });
 
-// 根据后台返回的操作对象的值，找对应label
+// 根据后台返回的操作对象的值，找对应 label
 const getOperationTypeLabel = (key: string) => {
   const curType = operationType.find((type: {key: string, label: string}) => type.key === key);
   return curType ? curType.label : '--';
 };
 
-// 根据后台返回的操作类型的值，找对应的label
+// 根据后台返回的操作类型的值，找对应的 label
 const getOperationLabel = (key: string) => {
   const curOperation = operationOptions.find((type: {key: string, label: string}) => type.key === key);
   return curOperation ? curOperation.label : '--';
 };
 
-// 监听操作类型，若操作对象此时未选择，可以清空relyKey
+// 监听操作类型，若操作对象此时未选择，可以清空 relyKey
 watch(() => formData.operation, (value) => {
   if (value === '' && formData.object_type === '') {
     relyKey.value = '';
   } else {
     const curRelyKey = (curOperationOptions.value.find(option => option.key === value))?.relyKey;
     if (curRelyKey) {
-      // 更新relyKey
+      // 更新 relyKey
       relyKey.value = curRelyKey;
       // 同步操作对象数据
       formData.object_type = curRelyKey;
@@ -381,7 +381,7 @@ watch(() => formData.operation, (value) => {
   }
 });
 
-// 监听操作对象，若操作类型此时未选择，可以清空relyKey
+// 监听操作对象，若操作类型此时未选择，可以清空 relyKey
 watch(() => formData.object_type, (value) => {
   if (value === '' && formData.operation === '') {
     relyKey.value = '';
@@ -439,7 +439,7 @@ onMounted(() => {
 </style>
 
 <style lang="less">
-/* 隐藏setting Tab的滚动条 */
+/* 隐藏 setting Tab 的滚动条 */
 .action-tab-wrapper {
   overflow-y: auto !important;
 }
