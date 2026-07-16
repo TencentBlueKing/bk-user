@@ -44,7 +44,7 @@ class LanguageOutputSLZ(serializers.Serializer):
 class GlobalSettingOutputSLZ(serializers.Serializer):
     bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")
     unique_enabled_tenant_idp = UniqueEnabledTenantIdpOutputSLZ(help_text="唯一认证源", required=False, default=None)
-    supported_languages = serializers.ListField(help_text="支持的语言列表", child=LanguageOutputSLZ())
+    languages = serializers.ListField(help_text="支持的语言列表", child=LanguageOutputSLZ())
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
