@@ -34,7 +34,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
-from bkuser.common.constants import TIME_ZONE_CHOICES, BkLanguageEnum
+from bkuser.common.constants import TIME_ZONE_CHOICES
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
@@ -199,7 +199,7 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantUserLanguageUpdateInputSLZ(serializers.Serializer):
-    language = serializers.ChoiceField(help_text="语言", choices=BkLanguageEnum.get_choices())
+    language = serializers.CharField(help_text="语言", max_length=32)
 
 
 class TenantUserTimeZoneUpdateInputSLZ(serializers.Serializer):
