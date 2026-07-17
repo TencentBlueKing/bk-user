@@ -115,10 +115,10 @@ const getConfigData = async () => {
 const initLanguages = async () => {
   try {
     const settings = await getGlobalSettings();
-    if (settings?.supported_languages?.length > 0) {
+    if (settings?.languages?.length > 0) {
       // 先加载非默认语言包，记录成功的语言
       const defaultCodes = new Set(DEFAULT_LANGUAGE_OPTIONS.map(opt => opt.value));
-      const nonDefault = settings.supported_languages.filter(lang => !defaultCodes.has(lang.code));
+      const nonDefault = settings.languages.filter(lang => !defaultCodes.has(lang.code));
       const loadResults = await Promise.all(nonDefault.map(lang => loadMessages(lang.code)));
 
       // 可用的语言 code 集合：默认语言 + 加载成功的非默认语言
@@ -129,7 +129,7 @@ const initLanguages = async () => {
 
       // 仅追加可用语言选项（去重）
       const existingCodes = new Set(languageOptions.value.map(opt => opt.value));
-      settings.supported_languages.forEach(lang => {
+      settings.languages.forEach(lang => {
         if (availableCodes.has(lang.code) && !existingCodes.has(lang.code)) {
           languageOptions.value.push({ value: lang.code, label: lang.name });
         }

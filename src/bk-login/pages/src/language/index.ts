@@ -28,7 +28,7 @@ export const DEFAULT_LANGUAGE_OPTIONS = [
 /** 动态加载语言包并通过 setLocaleMessage 设置到 i18n 实例 */
 export async function loadMessages(langKey: string): Promise<boolean> {
   try {
-    const res = await fetch(`${window.BK_USER_EXTRA_I18N_BASE_URL}/${langKey}.json`);
+    const res = await fetch(`${window.BK_STATIC_URL}/${langKey}.json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const messages = await res.json();
     i18n.global.setLocaleMessage(langKey, messages);

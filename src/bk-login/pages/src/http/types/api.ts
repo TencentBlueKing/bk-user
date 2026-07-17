@@ -4,7 +4,7 @@
 export interface GlobalSettingsResult {
   bk_user_url: string;
   unique_enabled_tenant_idp: string | null;
-  supported_languages: SupportedLanguage[];
+  languages: SupportedLanguage[];
 }
 
 /** 语言代码类型，必定包含 'zh-cn' 和 'en'，同时允许其他语言代码 */
