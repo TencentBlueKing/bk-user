@@ -17,12 +17,3 @@ export interface SupportedLanguage {
   code: LanguageCode;
   name: string;
 }
-
-/**
- * 全局配置返回结果
- */
-export interface GlobalSettingsResult {
-  bk_user_url: string;
-  unique_enabled_tenant_idp: string | null,
-  supported_languages: SupportedLanguage[];
-}
