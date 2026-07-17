@@ -176,6 +176,8 @@ AUTH_USER_MODEL = "bkuser_auth.User"
 # Internationalization
 LANGUAGE_CODE = "zh-cn"
 DEFAULT_LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
+# 蓝鲸体系内置语言（使用蓝鲸规范语言码，如 en 而非 en-us）
+BK_LANGUAGES = (("zh-cn", "中文"), ("en", "英文"))
 # 支持通过环境变量追加可选语言，格式：EXTRA_LANGUAGES=ja=日本語,ko=한국어
 EXTRA_LANGUAGES = tuple(env.dict("EXTRA_LANGUAGES", default={}).items())
 LANGUAGES = DEFAULT_LANGUAGES + EXTRA_LANGUAGES
