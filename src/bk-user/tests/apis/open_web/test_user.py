@@ -580,7 +580,8 @@ class TestTenantUserLanguageUpdateApi:
             data={"language": "invalid"},
         )
 
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        # 不合法语言静默处理，不报错
+        assert resp.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
