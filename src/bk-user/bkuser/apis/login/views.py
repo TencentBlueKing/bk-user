@@ -32,6 +32,7 @@ from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.error_codes import error_codes
+from bkuser.common.language import get_language_choices
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
@@ -47,7 +48,6 @@ from .serializers import (
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from ...common.language import get_language_choices
 
 
 class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
@@ -94,7 +94,7 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
                 {
                     "bk_user_url": settings.BK_USER_URL.rstrip("/"),
                     "unique_enabled_tenant_idp": self._get_unique_enabled_tenant_idp(),
-                    "supported_languages": [{"code": code, "name": name} for code, name in get_language_choices()],
+                    "languages": [{"code": code, "name": name} for code, name in get_language_choices()],
                 }
             ).data
         )

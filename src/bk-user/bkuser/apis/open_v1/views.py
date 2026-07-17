@@ -24,13 +24,13 @@ from rest_framework.response import Response
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 
 from .authentications import ESBAuthentication
 from .mixins import DefaultTenantMixin
 from .permissions import IsAllowedAppCode
 from .renderers import BkLegacyApiJSONRenderer
 from .serializers import ProfileBatchQueryInputSLZ, ProfileUpdateInputSLZ
-from ...biz.tenant import TenantUserHandler
 
 
 class ProfileUpdateApi(DefaultTenantMixin, generics.GenericAPIView):
