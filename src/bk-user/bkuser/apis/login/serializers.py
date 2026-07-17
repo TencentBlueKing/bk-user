@@ -149,7 +149,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.ReadOnlyField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.ReadOnlyField(help_text="用户姓名", source="data_source_user.full_name")
     display_name = serializers.SerializerMethodField(help_text="用户姓名")
-    language = serializers.CharField(help_text="语言")
+    language = serializers.CharField(help_text="语言", max_length=32)
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
