@@ -40,6 +40,9 @@ class LanguageOutputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="语言代码")
     name = serializers.CharField(help_text="语言名称")
 
+    class Meta:
+        ref_name = "login.LanguageOutputSLZ"
+
 
 class GlobalSettingOutputSLZ(serializers.Serializer):
     bk_user_url = serializers.CharField(help_text="用户管理本身 SaaS URL")

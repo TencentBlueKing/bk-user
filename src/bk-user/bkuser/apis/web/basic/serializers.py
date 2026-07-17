@@ -33,3 +33,6 @@ class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
 class LanguageOutputSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="语言代码")
     name = serializers.CharField(help_text="语言名称")
+
+    class Meta:
+        ref_name = "web.basic.LanguageOutputSLZ"

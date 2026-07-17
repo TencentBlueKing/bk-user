@@ -81,7 +81,7 @@ class TenantUserHandler:
     @staticmethod
     def update_tenant_user_language(tenant_user: TenantUser, language: str) -> None:
         if language not in get_language_codes():
-            logger.warning("unsupported language %s for tenant_user %s, skipped")
+            logger.warning("unsupported language %s for tenant_user %s, skipped", language, tenant_user.id)
             return
         tenant_user.language = language
         tenant_user.save(update_fields=["language", "updated_at"])
