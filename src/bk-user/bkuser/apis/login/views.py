@@ -31,6 +31,7 @@ from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantStat
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.language import get_language_choices
 
@@ -262,7 +263,6 @@ class TenantUserLanguageUpdateApi(LoginApiAccessControlMixin, generics.UpdateAPI
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_user.language = data["language"]
-        tenant_user.save(update_fields=["language", "updated_at"])
+        TenantUserHandler.update_tenant_user_language(tenant_user, data["language"])
 
         return Response()
