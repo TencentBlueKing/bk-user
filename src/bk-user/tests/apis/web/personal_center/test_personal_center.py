@@ -146,6 +146,18 @@ class TestTenantUserLanguageUpdateApi:
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
+    @override_settings(EXTRA_LANGUAGES=(("ja", "日本語"),))
+    def test_update_extra_language_supported(self, api_client, tenant_user):
+        """动态配置的 EXTRA_LANGUAGES 也应被视为受支持语言"""
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": "ja"},
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        tenant_user.refresh_from_db()
+        assert tenant_user.language == "ja"
+
 
 class TestTenantUserTimeZoneUpdateApi:
     @pytest.mark.parametrize(("time_zone"), [("Asia/Shanghai"), ("America/New_York")])
