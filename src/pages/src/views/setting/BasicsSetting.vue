@@ -105,8 +105,7 @@ import { useValidate } from '@/hooks';
 import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInfo, putDisplayNameExpression, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
-import ConfigPreview from '@/components/user-display-name-config/configPreview.vue';
-import useAppStore from '@/store/app';
+
 
 const validate = useValidate();
 const fieldData = useFieldData();
