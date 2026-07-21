@@ -57,6 +57,7 @@ opentelemetry-exporter-jaeger = "1.21.0"
 rsa = "^4.9"
 concurrent-log-handler = "^0.9.25"
 blueapps = "4.15.8"
+setuptools = "80.9.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.30"
