@@ -356,6 +356,9 @@ const originalTableData = ref([]); // 保存原始数据副本
 const filterValues = ref([]);
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: filterValues,
+  clearTableData: () => {
+    tableData.value = [];
+  },
 });
 
 const statusFilters = ref([
@@ -467,6 +470,9 @@ const {
   curExceptionType: curRecordExceptionType,
 } = useTableEmpty({
   filters: toRef(dialogConfig, 'status'),
+  clearTableData: () => {
+    dialogConfig.list = [];
+  },
 });
 
 const pagination = reactive({

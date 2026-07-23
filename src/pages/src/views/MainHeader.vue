@@ -106,12 +106,18 @@
             <DisplayName :user-id="userInfo.username" class="help-info-name" />
             <template #action>
               <ActionItem v-if="!isTenant" @click="toIndividualCenter">
-                {{ $t('个人中心') }}
+                <template #icon>
+                  <i class="user-icon icon-yonghu text-[12px]"></i>
+                </template>
+                {{ $t('个人设置') }}
               </ActionItem>
               <ActionItem
                 theme="danger"
                 @click="logout"
               >
+                <template #icon>
+                  <i class="user-icon icon-logout text-[12px]"></i>
+                </template>
                 {{ $t('退出登录') }}
               </ActionItem>
             </template>

@@ -178,6 +178,9 @@ const filterValues = ref([]);
 
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: [search, filterValues],
+  clearTableData: () => {
+    tableData.value = [];
+  },
 });
 
 // 获取协同策略列表

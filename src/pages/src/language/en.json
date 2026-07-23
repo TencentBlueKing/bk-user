@@ -750,5 +750,6 @@
   "请输入新密码": "Please enter a new password",
   "确定删除该管理员？": "Are you sure you want to delete this administrator?",
   "UUID 属性": "UUID Property",
-  "请选择UUID 属性": "Please select a UUID property"
+  "请选择UUID 属性": "Please select a UUID property",
+  "个人设置": "Personal Settings"
 }
