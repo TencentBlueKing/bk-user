@@ -402,16 +402,12 @@
                     </span>
                   </template>
                   <template #edit>
-                    <TimezonePicker
+                    <StableTimezonePicker
                       :key="timezonePickerKey"
                       v-model:value="currentUserInfo.time_zone"
                       :popover-min-width="450"
                       clearable
-                    >
-                      <template #trigger="{ data }">
-                        {{ JSON.stringify(data) }}
-                      </template>
-                    </TimezonePicker>
+                    />
                   </template>
                 </EditBlock>
               </template>
@@ -447,13 +443,12 @@ import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { cloneDeep } from 'lodash';
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
-import { TimezonePicker } from '@blueking/date-picker';
-
 import AsideList from './AsideList.vue';
 import EmailVerify from './EmailVerify.vue';
 import { emailEditable, OpenDialogSelect, OpenDialogType, phoneEditable  } from './openDialogType';
 import PhoneVerify from './PhoneVerify.vue';
 import WeChatBind from './social-media-account/wechat/WeChatBind.vue';
+import StableTimezonePicker from './StableTimezonePicker.vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import EditBlock from '@/components/edit-block.vue';
