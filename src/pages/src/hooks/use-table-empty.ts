@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 interface FilterOptions {
   filters: any[] | Record<string, any>;
   ignoreKeys?: string[];
+  clearTableData: () => void;
 }
 type TableEmptyType = 'empty' | 'error' | 'search';
 /**
@@ -15,6 +16,10 @@ type TableEmptyType = 'empty' | 'error' | 'search';
  * const { curExceptionType, setTypeToError, clearErrorType } = useTableEmpty({
  *   filters: searchValue,           // 监听的筛选条件
  *   ignoreKeys: ['dateRange']       // 可选：忽略某些字段的监听
+ *   clearTableData: () => {         // 必选：清空表格数据的回调函数
+ *     // 清空表格数据
+ *     tableData.value = [];
+ *   }
  * });
  *
  * // curExceptionType 会自动返回: 'empty' | 'search' | 'error'
@@ -34,6 +39,7 @@ export default function useTableEmpty(opts: FilterOptions) {
    * 通常在接口请求失败时调用
    */
   function setTypeToError() {
+    opts.clearTableData();
     isError.value = true;
   }
 

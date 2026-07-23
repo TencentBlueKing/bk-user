@@ -109,6 +109,9 @@ const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: null,
+  clearTableData: () => {
+    tableData.value = [];
+  },
 });
 const fieldData = reactive({
   isShow: false,

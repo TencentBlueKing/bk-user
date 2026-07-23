@@ -536,6 +536,9 @@ const dropdownRefs = ref<Record<string, PopoverInstanceType>>({});
 const keyword = ref([]);
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: keyword,
+  clearTableData: () => {
+    tableData.value = [];
+  }
 });
 const selectedValue = ref([]);
 const isDetailSlider = ref(false);

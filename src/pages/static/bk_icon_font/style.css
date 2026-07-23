@@ -284,3 +284,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-down-shape:before {
 	content: "\e15f";
 }
+.icon-world:before {
+	content: "\e161";
+}
+.icon-logout:before {
+	content: "\e162";
+}

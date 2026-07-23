@@ -159,6 +159,9 @@ const isLoading = ref(false);
 const tableData = ref([]);
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: searchVal,
+  clearTableData: () => {
+    tableData.value = [];
+  },
 });
 
 const pagination = reactive({

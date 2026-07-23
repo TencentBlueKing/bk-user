@@ -172,6 +172,9 @@ const settings = reactive({
 
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: toRef(dataRecordConfig, 'status'),
+  clearTableData: () => {
+    dataRecordConfig.list = [];
+  }
 });
 
 const pagination = reactive({
