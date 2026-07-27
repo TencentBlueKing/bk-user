@@ -3,26 +3,26 @@
     <bk-form-item :label="$t('用户名冲突规则')" :required="variant === 'default'">
       <!-- default 变体：使用 radio-button -->
       <template v-if="variant === 'default'">
-        <bk-radio-group v-model="strategy" :disabled="disabled">
-          <bk-radio-button label="manual">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
+        <bk-radio-group v-model="rule" :disabled="disabled">
+          <bk-radio-button label="unchange">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
           <bk-radio-button label="add_affix">{{ $t('为新数据源统一添加前后缀') }}</bk-radio-button>
         </bk-radio-group>
       </template>
 
       <!-- dialog 变体：竖向 radio 列表 -->
       <template v-else>
-        <bk-radio-group v-model="strategy" :disabled="disabled" class="conflict-radio-list">
+        <bk-radio-group v-model="rule" :disabled="disabled" class="conflict-radio-list">
           <div
-            :class="['conflict-radio-item', { 'conflict-radio-item-active': strategy === 'manual' }]"
-            @click="!disabled && (strategy = 'manual')"
+            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'unchange' }]"
+            @click="!disabled && (rule = 'unchange')"
           >
-            <bk-radio label="manual" :disabled="disabled">
+            <bk-radio label="unchange" :disabled="disabled">
               {{ $t('不配置，发生冲突时手动处理') }}
             </bk-radio>
           </div>
           <div
-            :class="['conflict-radio-item', { 'conflict-radio-item-active': strategy === 'add_affix' }]"
-            @click="!disabled && (strategy = 'add_affix')"
+            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'add_affix' }]"
+            @click="!disabled && (rule = 'add_affix')"
           >
             <bk-radio label="add_affix" :disabled="disabled">
               {{ $t('为新数据源统一添加前后缀') }}
@@ -32,7 +32,7 @@
       </template>
     </bk-form-item>
 
-    <template v-if="strategy === 'add_affix'">
+    <template v-if="rule === 'add_affix'">
       <div class="relative">
         <bk-form-item
           :label="$t('用户名生成规则')"
@@ -137,15 +137,15 @@
 import { Eye } from 'bkui-vue/lib/icon';
 import { computed, ref, watch } from 'vue';
 
-import { UsernameConfig } from '@/http/types/dataSourceFiles';
+import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 
 const props = withDefaults(defineProps<{
-  config: UsernameConfig;
+  config: UsernameGenerateConfig;
   disabled?: boolean;
   variant?: 'default' | 'dialog';
 }>(), {
   config: () => ({
-    strategy: 'manual' as const,
+    rule: 'unchange' as const,
     prefix: '',
     suffix: '',
   }),
@@ -183,7 +183,7 @@ const initPrefix = parsePrefixConnector(props.config.prefix);
 const initSuffix = parseSuffixConnector(props.config.suffix);
 
 // 内部状态
-const strategy = ref<UsernameConfig['strategy']>(props.config.strategy);
+const rule = ref<UsernameGenerateConfig['rule']>(props.config.rule);
 const nameGeneration = ref<'add_prefix' | 'add_suffix'>(props.config.suffix ? 'add_suffix' : 'add_prefix');
 const prefix = ref(initPrefix.value);
 const suffix = ref(initSuffix.value);
@@ -192,7 +192,7 @@ const suffixConnector = ref(initSuffix.connector);
 
 // watch props 更新内部数据
 watch(() => props.config, (val) => {
-  strategy.value = val.strategy;
+  rule.value = val.rule;
   const p = parsePrefixConnector(val.prefix);
   const s = parseSuffixConnector(val.suffix);
   prefix.value = p.value;
@@ -207,14 +207,14 @@ watch(() => props.config, (val) => {
 }, { deep: true });
 
 // 暴露获取最终数据的方法，连接符直接拼到前缀/后缀中
-const getData = (): UsernameConfig => {
-  if (strategy.value === 'manual') {
-    return { strategy: 'manual', prefix: '', suffix: '' };
+const getData = (): UsernameGenerateConfig => {
+  if (rule.value === 'unchange') {
+    return { rule: 'unchange', prefix: '', suffix: '' };
   }
   if (nameGeneration.value === 'add_prefix') {
-    return { strategy: 'add_affix', prefix: prefix.value ? `${prefix.value}${prefixConnector.value}` : '', suffix: '' };
+    return { rule: 'add_affix', prefix: prefix.value ? `${prefix.value}${prefixConnector.value}` : '', suffix: '' };
   }
-  return { strategy: 'add_affix', prefix: '', suffix: suffix.value ? `${suffixConnector.value}${suffix.value}` : '' };
+  return { rule: 'add_affix', prefix: '', suffix: suffix.value ? `${suffixConnector.value}${suffix.value}` : '' };
 };
 
 const popoverRef = ref();

@@ -73,8 +73,8 @@ export interface DataSourceUsersParams {
 /**
  * 新建数据源参数
  */
-export interface UsernameConfig {
-  strategy: 'manual' | 'add_affix';
+export interface UsernameGenerateConfig {
+  rule: 'unchange' | 'add_affix';
   prefix: string;
   suffix: string;
 }
@@ -84,7 +84,7 @@ export interface NewDataSourceParams {
   plugin_config: GeneralDataSourcePluginConfig | LDAPDataSourcePluginConfig | LocalDataSourcePluginConfig;
   field_mapping?: FieldMapping[];
   sync_config?: SyncConfig;
-  username_config?: UsernameConfig;
+  username_generate_config?: UsernameGenerateConfig;
 }
 
 /**
@@ -101,7 +101,7 @@ export interface PutDataSourceParams {
   id: string;
   plugin_config: {};
   field_mapping: FieldMapping[];
-  username_config?: UsernameConfig;
+  username_generate_config?: UsernameGenerateConfig;
 }
 
 /**
@@ -189,8 +189,8 @@ export interface DataSourceDetails {
   };
   sync_config: SyncConfig;
   field_mapping: FieldMapping[];
-  username_config: {
-    strategy: 'manual' | 'add_affix';
+  username_generate_config: {
+    rule: 'unchange' | 'add_affix';
     prefix: string;
     suffix: string;
   };

@@ -93,7 +93,7 @@
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
-          :config="fieldSettingData.username_config"
+          :config="fieldSettingData.username_generate_config"
           :disabled="isEdit"
         />
       </Row>
@@ -120,7 +120,7 @@ import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
-import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
+import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { useDataSourceStore } from '@/store';
@@ -168,11 +168,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
-  username_config: {
-    strategy: 'manual' as const,
+  username_generate_config: {
+    rule: 'unchange' as const,
     prefix: '',
     suffix: '',
-  } as UsernameConfig,
+  } as UsernameGenerateConfig,
 });
 const submitLoading = ref(false);
 
@@ -388,7 +388,7 @@ const handleSubmit = async () => {
       });
     } else {
       params.plugin_id = props.currentType;
-      params.username_config = conflictConfigRef.value?.getData();
+      params.username_generate_config = conflictConfigRef.value?.getData();
       const res = await newDataSource(params);
       emit('updateSuccess', {
         text: t('新建成功'),
@@ -479,7 +479,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_config = res.data?.username_config;
+      fieldSettingData.value.username_generate_config = res.data?.username_generate_config;
     } else {
       formData.plugin_config = defaultServerConfig();
     }

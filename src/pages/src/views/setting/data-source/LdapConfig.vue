@@ -304,7 +304,7 @@
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
-          :config="fieldSettingData.username_config"
+          :config="fieldSettingData.username_generate_config"
           :disabled="isEdit"
         />
       </Row>
@@ -330,7 +330,7 @@ import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
-import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
+import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
 import router from '@/router';
 import { useDataSourceStore } from '@/store';
@@ -485,11 +485,11 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
-  username_config: {
-    strategy: 'manual',
+  username_generate_config: {
+    rule: 'unchange',
     prefix: '',
     suffix: '',
-  } as UsernameConfig,
+  } as UsernameGenerateConfig,
 });
 const apiFields = ref([]);
 const fieldMappingList = ref([]);
@@ -760,7 +760,7 @@ onMounted(async () => {
       }
       fieldSettingData.value.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_config = res.data?.username_config;
+      fieldSettingData.value.username_generate_config = res.data?.username_generate_config;
     } else {
       ldapConfigData.value = defaultLdapConfig();
     }
@@ -807,7 +807,7 @@ const handleSubmit = async () => {
       });
     } else {
       params.plugin_id = ldapConfigData.value.plugin_id;
-      params.username_config = conflictConfigRef.value?.getData();
+      params.username_generate_config = conflictConfigRef.value?.getData();
       const res = await newDataSource(params);
       emit('updateSuccess', {
         text: t('新建成功'),

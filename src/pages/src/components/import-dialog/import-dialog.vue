@@ -120,7 +120,7 @@ import { isNil } from '@/common/util';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
 import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
-import { UsernameConfig } from '@/http/types/dataSourceFiles';
+import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
 
@@ -135,8 +135,8 @@ const dataSourceStore = useDataSourceStore();
 
 const conflictConfigRef = ref();
 const { rules: conflictRules } = useConflictRules(conflictConfigRef);
-const conflictConfig = ref<UsernameConfig>({
-  strategy: 'manual',
+const conflictConfig = ref<UsernameGenerateConfig>({
+  rule: 'unchange',
   prefix: '',
   suffix: '',
 });
@@ -227,7 +227,7 @@ const createDataSource = async () => {
     plugin_config: {
       ...res.data?.config,
     },
-    username_config: conflictConfigRef.value.getData(),
+    username_generate_config: conflictConfigRef.value.getData(),
   });
   currentLocalDataSourceId.value = newDataSourceData.data?.id;
   return Boolean(newDataSourceData.data?.id);
@@ -249,7 +249,7 @@ const confirmImportUsers = async () => {
     formData.append('overwrite', uploadInfo.overwrite);
     if (conflictConfigRef.value) {
       const usernameConfig = conflictConfigRef.value.getData();
-      formData.append('username_config', JSON.stringify(usernameConfig));
+      formData.append('username_generate_config', JSON.stringify(usernameConfig));
     }
     const config = {
       headers: {
