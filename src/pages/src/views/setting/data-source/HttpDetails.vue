@@ -59,7 +59,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <ConflictConfigDetail :config="usernameConfig" />
+          <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
       </div>
       <div v-if="pluginId === 'ldap'">
@@ -114,7 +114,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <ConflictConfigDetail :config="usernameConfig" />
+          <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
       </div>
     </div>
@@ -163,7 +163,7 @@ const userGroupConfig = ref<PluginConfig['user_group_config']>({} as PluginConfi
 // 上级配置
 const leaderConfig = ref<PluginConfig['leader_config']>({} as PluginConfig['leader_config']);
 // 冲突配置
-const usernameConfig = ref<DataSourceDetails['username_config']>({ strategy: 'manual', prefix: '', suffix: '' });
+const usernameGenerateConfig = ref<DataSourceDetails['username_generate_config']>({ rule: 'unchange', prefix: '', suffix: '' });
 
 const isPluginConfig = ref(true);
 
@@ -201,7 +201,7 @@ onMounted(async () => {
     }
     syncConfig.value = res.data?.sync_config;
     plugin.value = res.data?.plugin;
-    usernameConfig.value = res.data?.username_config || { strategy: 'manual', prefix: '', suffix: '' };
+    usernameGenerateConfig.value = res.data?.username_generate_config || { rule: 'unchange', prefix: '', suffix: '' };
   } catch (e) {
     console.warn(e);
   } finally {
