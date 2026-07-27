@@ -125,7 +125,7 @@ export function notificationMap(value: any) {
 
 export const passwordMustIncludes = {
   contain_lowercase: t('小写字母'),
-  contain_uppercase: t('连续字母序'),
+  contain_uppercase: t('大写字母'),
   contain_digit: t('数字'),
   contain_punctuation: t('特殊字符（除空格）'),
 };

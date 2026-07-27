@@ -14,7 +14,7 @@
       <template v-if="isFirstlyImport">
         <ConflictTips
           type="alert"
-          :has-other-data-source="!dataSourceStore.isConfiguredOtherPlugin"
+          :has-other-data-source="dataSourceStore.isConfiguredOtherPlugin"
         />
         <bk-form
           ref="formRef"

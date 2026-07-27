@@ -140,7 +140,7 @@
   "至少包含一类字符": "Must contain at least one type of character",
   "密码不允许连续": "The password cannot appear in",
   "位 出现": "digits consecutively",
-  "可选值范围：0-10": "Optional value range: 0-10",
+  "可选值范围：0（不限制）或 3-10": "Optional value range: 0 (no limit) or 3-10",
   "至少包含一类连续性场景": "Must contain at least one type of sequential scenario",
   "初始密码设置": "Initial Password Setup",
   "首次登录强制修改密码": "Force password change on first login",
