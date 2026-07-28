@@ -1,7 +1,7 @@
 <template>
   <div>
     <LabelContent :label="$t('用户名冲突规则')">
-      <span v-if="config.rule === 'unchange'">
+      <span v-if="config.rule === 'unchanged'">
         {{ $t('不配置，发生冲突时手动处理') }}
       </span>
       <span v-else-if="config.rule === 'add_affix'">
@@ -34,7 +34,7 @@
 import LabelContent from '@/components/layouts/LabelContent.vue';
 
 interface UsernameGenerateConfig {
-  rule: 'unchange' | 'add_affix';
+  rule: 'unchanged' | 'add_affix';
   prefix?: string;
   suffix?: string;
 }

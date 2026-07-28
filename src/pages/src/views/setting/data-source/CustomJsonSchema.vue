@@ -169,7 +169,7 @@ const fieldSettingData = ref({
   },
   addFieldList: [],
   username_generate_config: {
-    rule: 'unchange' as const,
+    rule: 'unchanged' as const,
     prefix: '',
     suffix: '',
   } as UsernameGenerateConfig,

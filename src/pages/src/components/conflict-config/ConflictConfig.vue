@@ -4,7 +4,7 @@
       <!-- default 变体：使用 radio-button -->
       <template v-if="variant === 'default'">
         <bk-radio-group v-model="rule" :disabled="disabled">
-          <bk-radio-button label="unchange">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
+          <bk-radio-button label="unchanged">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
           <bk-radio-button label="add_affix">{{ $t('为新数据源统一添加前后缀') }}</bk-radio-button>
         </bk-radio-group>
       </template>
@@ -13,10 +13,10 @@
       <template v-else>
         <bk-radio-group v-model="rule" :disabled="disabled" class="conflict-radio-list">
           <div
-            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'unchange' }]"
-            @click="!disabled && (rule = 'unchange')"
+            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'unchanged' }]"
+            @click="!disabled && (rule = 'unchanged')"
           >
-            <bk-radio label="unchange" :disabled="disabled">
+            <bk-radio label="unchanged" :disabled="disabled">
               {{ $t('不配置，发生冲突时手动处理') }}
             </bk-radio>
           </div>
@@ -145,7 +145,7 @@ const props = withDefaults(defineProps<{
   variant?: 'default' | 'dialog';
 }>(), {
   config: () => ({
-    rule: 'unchange' as const,
+    rule: 'unchanged' as const,
     prefix: '',
     suffix: '',
   }),
@@ -208,8 +208,8 @@ watch(() => props.config, (val) => {
 
 // 暴露获取最终数据的方法，连接符直接拼到前缀/后缀中
 const getData = (): UsernameGenerateConfig => {
-  if (rule.value === 'unchange') {
-    return { rule: 'unchange', prefix: '', suffix: '' };
+  if (rule.value === 'unchanged') {
+    return { rule: 'unchanged', prefix: '', suffix: '' };
   }
   if (nameGeneration.value === 'add_prefix') {
     return { rule: 'add_affix', prefix: prefix.value ? `${prefix.value}${prefixConnector.value}` : '', suffix: '' };
