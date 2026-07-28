@@ -379,12 +379,19 @@ const continuousRuleList = computed({
 });
 /** 密码不能连续出现的次数 */
 function handleNotContinuousCountInput(value) {
+  // 空字符串/undefined/null 视为不合法
+  if (value === '' || value === undefined || value === null) {
+    passwordCountError.value = true;
+    triggerPasswordConfigValidate();
+    return;
+  }
   const numValue = Number(value);
   const isValueInRange = numValue === 0 || (numValue >= 3 && numValue <= 10);
   passwordCountError.value = !isValueInRange;
   triggerPasswordConfigValidate();
-  if (value === 0) {
+  if (numValue === 0) {
     continuousRuleList.value = [];
+    passwordConfigError.value = false;
   }
 }
 /** 密码规则 */
@@ -504,9 +511,12 @@ const inputPassword = (val) => {
   formData.config.password_initial.fixed_password = val;
 };
 
+let isInitialized = false;
+
 watch(formData, () => {
+  if (!isInitialized) return;
   isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
-  window.changeInput = true;
+  window.changeInput = !isDisabled.value;
 }, { deep: true });
 
 // 监听密码生成方式
@@ -540,6 +550,7 @@ onMounted(async () => {
       formData.config.enable_password = true;
     }
     originalData = JSON.parse(JSON.stringify(formData));
+    isInitialized = true;
 
     setIsIntPutEyesDisabled(formData.config?.password_initial?.fixed_password);
     handleMustIncludeRuleChange();
