@@ -37,10 +37,14 @@
           />
         </bk-form-item>
         <bk-form-item :label="$t('密码必须包含')" required>
-          <bk-checkbox v-model="formData.config.password_rule.contain_lowercase">{{ $t('小写字母') }}</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_uppercase">{{ $t('大写字母') }}</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_digit">{{ $t('数字') }}</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_punctuation">{{ $t('特殊字符（除空格）') }}</bk-checkbox>
+          <bk-checkbox-group v-model="mustIncludeList" @change="handleMustIncludeRuleChange">
+            <bk-checkbox
+              v-for="opt in mustIncludeOptions"
+              :key="opt.label"
+              :label="opt.label">
+              {{ $t(opt.text) }}
+            </bk-checkbox>
+          </bk-checkbox-group>
           <p class="error-text" v-show="passwordRuleError">{{ $t('至少包含一类字符') }}</p>
         </bk-form-item>
         <bk-form-item label="" required>
@@ -53,22 +57,29 @@
               :min="0"
               :max="10"
               v-model="formData.config.password_rule.not_continuous_count"
+              @input="handleNotContinuousCountInput"
             />
             <span>{{ $t('位 出现') }}</span>
           </div>
-          <p class="error-text" v-show="passwordCountError">{{ $t('可选值范围：0-10') }}</p>
-          <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">
-            {{ $t('键盘序') }}
-          </bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">
-            {{ $t('连续字母序') }}
-          </bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">
-            {{ $t('连续数字序') }}
-          </bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_repeated_symbol">
-            {{ $t('重复字母、数字、特殊符号') }}
-          </bk-checkbox>
+          <p
+            v-show="passwordCountError"
+            class="error-text"
+          >
+            {{ $t('可选值范围：0（不限制）或 3-10') }}
+          </p>
+          <bk-checkbox-group
+            v-model="continuousRuleList"
+            @change="triggerPasswordConfigValidate"
+          >
+            <bk-checkbox
+              v-for="opt in continuousOptions"
+              :key="opt.label"
+              :label="opt.label"
+              :disabled="isContinuousDisabled"
+            >
+              {{ $t(opt.text) }}
+            </bk-checkbox>
+          </bk-checkbox-group>
           <p class="error-text" v-show="passwordConfigError">{{ $t('至少包含一类连续性场景') }}</p>
         </bk-form-item>
       </Row>
@@ -250,7 +261,7 @@
 <script setup lang="ts">
 import { InfoBox } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
@@ -281,6 +292,30 @@ const emit = defineEmits(['cancel', 'success']);
 
 const validate = useValidate();
 
+const rulesInfo = {
+  name: [validate.required, validate.loginName],
+  min_length: [validate.required],
+};
+
+// 不允许连续场景的复选项，key 需与 password_rule 字段一致
+const continuousOptions = [
+  { label: 'not_keyboard_order', text: '键盘序' },
+  { label: 'not_continuous_letter', text: '连续字母序' },
+  { label: 'not_continuous_digit', text: '连续数字序' },
+  { label: 'not_repeated_symbol', text: '重复字母、数字、特殊符号' },
+];
+
+/**
+ * 密码必须包含的复选项，key 需与 password_rule 字段一致
+ * bk-checkbox-group 绑定数组与接口布尔字段的转换
+ */
+const mustIncludeOptions = [
+  { label: 'contain_lowercase', text: '小写字母' },
+  { label: 'contain_uppercase', text: '大写字母' },
+  { label: 'contain_digit', text: '数字' },
+  { label: 'contain_punctuation', text: '特殊字符（除空格）' },
+];
+
 const formRef = ref();
 // 初始密码
 const isPasswordInitial = ref(false);
@@ -295,6 +330,7 @@ const passwordConfigError = ref(false);
 const enabledMethodsError = ref(false);
 let originalData = {};
 const isDisabled = ref(true);
+const isInputEyesDisabled = ref(false);
 
 const formData = reactive({
   name: props?.defaultName,
@@ -302,98 +338,78 @@ const formData = reactive({
   config: {},
 });
 
-const rulesInfo = {
-  name: [validate.required, validate.loginName],
-  min_length: [validate.required],
-};
-
-onMounted(async () => {
-  isLoading.value = true;
-  try {
-    if (props.currentId) {
-      // 获取数据源详情
-      const res = await getLocalIdps(props.currentId);
-      formData.name = res?.data?.name;
-      formData.status = res?.data?.status;
-      formData.config = res?.data?.plugin_config;
-    } else {
-      // 获取默认配置
-      const res = await getDefaultConfig('local');
-      formData.config = res?.data?.config || {};
-      formData.config.enable_password = true;
-    }
-    originalData = JSON.parse(JSON.stringify(formData));
-
-    setIsIntPutEyesDisabled(formData.config?.password_initial?.fixed_password);
-  } catch (e) {
-    console.warn(e);
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-watch(formData, () => {
-  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
-}, { deep: true });
-
-// 监听密码规则
-watch(() => formData.config?.password_rule, (value) => {
-  if (!value) return;
-  const list = Object.entries(value).filter(([key]) => passwordMustIncludes[key]);
-  const list2 = Object.entries(value).filter(([key]) => passwordNotAllowed[key]);
-
-  passwordRuleError.value = !list.some(([, val]) => val);
-  passwordConfigError.value = !list2.some(([, val]) => val);
-
-  const count = formData.config?.password_rule?.not_continuous_count;
-  const isCountInRange = count >= 0 && count <= 10;
-
-  if (!passwordConfigError.value && isCountInRange) {
-    passwordCountError.value = false;
-  } else if (!passwordConfigError.value && !isCountInRange) {
-    passwordCountError.value = !isCountInRange;
-  } else {
-    passwordCountError.value = count === 0 && !passwordConfigError.value;
-    passwordConfigError.value = count !== 0 && passwordConfigError.value;
-  }
-}, { deep: true });
-
-watch(() => formData.config?.password_rule?.not_continuous_count, (value, oldVal) => {
-  if (!value) return;
-  if (value !== oldVal) {
-    window.changeInput = true;
-  }
-  const list = Object.entries(formData.config?.password_rule)
-    .filter(([key, val]) => passwordNotAllowed[key] && val)
-    .map(val => val);
-
-  if (value === 0) return;
-
-  const isValueInRange = value >= 0 && value <= 10;
-  passwordCountError.value = !isValueInRange;
-  passwordConfigError.value = !!list.every(v => !v);
-});
-
-// 监听密码生成方式
-watch(() => formData.config?.password_initial?.generate_method, (value) => {
-  enabledMethodsError.value = value === 'random' && !formData.config.password_initial.notification.enabled_methods.length;
-  if (value === 'random') {
-    formData.config.password_initial.fixed_password = null;
-  }
-});
-
-watch(() => formData.config?.password_initial?.notification?.enabled_methods, (value) => {
-  if (formData.config?.password_initial?.generate_method === 'fixed') {
-    return enabledMethodsError.value = false;
-  }
-  enabledMethodsError.value = !value.length;
-});
-
 const maxTrailTimesList = reactive([
   { times: 3, text: `3 ${t('次')}` },
   { times: 5, text: `5 ${t('次')}` },
   { times: 10, text: `10 ${t('次')}` },
 ]);
+
+
+const isContinuousDisabled = computed(() => Number(formData.config?.password_rule?.not_continuous_count) === 0);
+
+const mustIncludeList = computed({
+  get: () => {
+    const rule = formData.config?.password_rule;
+    if (!rule) return [];
+    return mustIncludeOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
+  },
+  set: (value: string[]) => {
+    const rule = formData.config?.password_rule;
+    if (!rule) return;
+    mustIncludeOptions.forEach((opt) => {
+      rule[opt.label] = value.includes(opt.label);
+    });
+  },
+});
+
+// bk-checkbox-group 绑定数组与接口布尔字段的转换
+const continuousRuleList = computed({
+  get: () => {
+    const rule = formData.config?.password_rule;
+    if (!rule) return [];
+    return continuousOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
+  },
+  set: (value: string[]) => {
+    const rule = formData.config?.password_rule;
+    if (!rule) return;
+    continuousOptions.forEach((opt) => {
+      rule[opt.label] = value.includes(opt.label);
+    });
+  },
+});
+/** 密码不能连续出现的次数 */
+function handleNotContinuousCountInput(value) {
+  // 空字符串/undefined/null 视为不合法
+  if (value === '' || value === undefined || value === null) {
+    passwordCountError.value = true;
+    triggerPasswordConfigValidate();
+    return;
+  }
+  const numValue = Number(value);
+  const isValueInRange = numValue === 0 || (numValue >= 3 && numValue <= 10);
+  passwordCountError.value = !isValueInRange;
+  triggerPasswordConfigValidate();
+  if (numValue === 0) {
+    continuousRuleList.value = [];
+    passwordConfigError.value = false;
+  }
+}
+/** 密码规则 */
+function triggerPasswordConfigValidate() {
+  const list = Object.entries(formData.config?.password_rule)
+    .filter(([key, val]) => passwordNotAllowed[key] && val)
+    .map(val => val);
+  // 密码不能连续出现的次数不为0时，必须选择至少一个密码不能连续出现的规则
+  if (formData.config?.password_rule?.not_continuous_count !== 0) {
+    passwordConfigError.value = !!list.every(v => !v);
+  }
+}
+/** 密码必须包含规则校验 */
+function handleMustIncludeRuleChange() {
+  const list = Object.entries(formData.config?.password_rule)
+    .filter(([key, val]) => passwordMustIncludes[key] && val);
+  passwordRuleError.value = !list.some(([, val]) => val);
+}
 
 // 编辑通知方式
 const handleEditorText = (html, text, key, type) => {
@@ -486,8 +502,6 @@ const handleRandomPassword = async () => {
     console.warn(e);
   }
 };
-
-const isInputEyesDisabled = ref(false);
 /** 密码生成方式 - 固定时是否禁用eyes */
 const setIsIntPutEyesDisabled = (fixed_password: string) => {
   isInputEyesDisabled.value = !!fixed_password;
@@ -496,6 +510,57 @@ const setIsIntPutEyesDisabled = (fixed_password: string) => {
 const inputPassword = (val) => {
   formData.config.password_initial.fixed_password = val;
 };
+
+let isInitialized = false;
+
+watch(formData, () => {
+  if (!isInitialized) return;
+  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  window.changeInput = !isDisabled.value;
+}, { deep: true });
+
+// 监听密码生成方式
+watch(() => formData.config?.password_initial?.generate_method, (value) => {
+  enabledMethodsError.value = value === 'random' && !formData.config.password_initial.notification.enabled_methods.length;
+  if (value === 'random') {
+    formData.config.password_initial.fixed_password = null;
+  }
+});
+
+watch(() => formData.config?.password_initial?.notification?.enabled_methods, (value) => {
+  if (formData.config?.password_initial?.generate_method === 'fixed') {
+    return enabledMethodsError.value = false;
+  }
+  enabledMethodsError.value = !value.length;
+});
+
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    if (props.currentId) {
+      // 获取数据源详情
+      const res = await getLocalIdps(props.currentId);
+      formData.name = res?.data?.name;
+      formData.status = res?.data?.status;
+      formData.config = res?.data?.plugin_config;
+    } else {
+      // 获取默认配置
+      const res = await getDefaultConfig('local');
+      formData.config = res?.data?.config || {};
+      formData.config.enable_password = true;
+    }
+    originalData = JSON.parse(JSON.stringify(formData));
+    isInitialized = true;
+
+    setIsIntPutEyesDisabled(formData.config?.password_initial?.fixed_password);
+    handleMustIncludeRuleChange();
+    triggerPasswordConfigValidate();
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <style lang="less" scoped>

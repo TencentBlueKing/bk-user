@@ -16,7 +16,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   const isConfiguredGeneralPlugin = computed(() => dataSource.value.some(item => item.plugin_id === 'general'));
 
   /** 是否已配置其他数据源插件 */
-  const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 1 && !isConfiguredLocalPlugin.value);
+  const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 0 && !isConfiguredLocalPlugin.value);
 
   /** 本地数据源ID */
   const localDataSourceId = computed(() => getDataSourceInfo('local')?.id);
