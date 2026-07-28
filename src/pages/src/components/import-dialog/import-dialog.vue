@@ -136,7 +136,7 @@ const dataSourceStore = useDataSourceStore();
 const conflictConfigRef = ref();
 const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 const conflictConfig = ref<UsernameGenerateConfig>({
-  rule: 'unchange',
+  rule: 'unchanged',
   prefix: '',
   suffix: '',
 });

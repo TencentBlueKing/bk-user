@@ -14,7 +14,7 @@ interface ConflictConfigExposed {
  * @param conflictConfigRef - ConflictConfig 组件的 ref
  */
 export const useConflictRules = (conflictConfigRef: Ref<ConflictConfigExposed | null>) => {
-  const getConflictData = () => conflictConfigRef.value?.getData() ?? { rule: 'unchange', prefix: '', suffix: '' };
+  const getConflictData = () => conflictConfigRef.value?.getData() ?? { rule: 'unchanged', prefix: '', suffix: '' };
 
   const rules = {
     nameGeneration: [

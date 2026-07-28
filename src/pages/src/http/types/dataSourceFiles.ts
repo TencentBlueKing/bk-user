@@ -74,7 +74,7 @@ export interface DataSourceUsersParams {
  * 新建数据源参数
  */
 export interface UsernameGenerateConfig {
-  rule: 'unchange' | 'add_affix';
+  rule: 'unchanged' | 'add_affix';
   prefix: string;
   suffix: string;
 }
@@ -190,7 +190,7 @@ export interface DataSourceDetails {
   sync_config: SyncConfig;
   field_mapping: FieldMapping[];
   username_generate_config: {
-    rule: 'unchange' | 'add_affix';
+    rule: 'unchanged' | 'add_affix';
     prefix: string;
     suffix: string;
   };
