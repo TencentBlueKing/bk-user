@@ -186,6 +186,8 @@ class ProfileSyncHelper:
             # 2. 更新或创建 Profile 对象
             if info.username in self.db_profiles:
                 profile = self.db_profiles[info.username]
+                # 保留本地已有扩展字段，同名字段以本轮 LDAP 同步值为准。
+                profile_params["extras"] = {**profile.extras, **info.extras}
                 for key, value in profile_params.items():
                     setattr(profile, key, value)
                 self.db_sync_manager.magic_add(profile, SyncOperation.UPDATE.value)
