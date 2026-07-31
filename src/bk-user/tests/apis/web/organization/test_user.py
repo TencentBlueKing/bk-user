@@ -91,31 +91,46 @@ class TestTenantUserSearchApi:
 
 class TestOptionalTenantUserListApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_username(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "shi"})
+    def test_search_username(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_leader.list"),
+            data={"keyword": "shi", "data_source_id": full_local_data_source.id},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {user["username"] for user in resp.data} == {"lushi", "linshiyi", "baishier"}
         assert {user["full_name"] for user in resp.data} == {"鲁十", "林十一", "白十二"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_full_name(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "十二"})
+    def test_search_full_name(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_leader.list"),
+            data={"keyword": "十二", "data_source_id": full_local_data_source.id},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
         assert resp.data[0]["username"] == "baishier"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_with_excluded_user(self, api_client, random_tenant):
+    def test_search_with_excluded_user(self, api_client, random_tenant, full_local_data_source):
         baishier = TenantUser.objects.get(data_source_user__username="baishier", tenant=random_tenant)
         resp = api_client.get(
             reverse("organization.optional_leader.list"),
-            data={"keyword": "shi", "excluded_user_id": baishier.id},
+            data={
+                "keyword": "shi",
+                "excluded_user_id": baishier.id,
+                "data_source_id": full_local_data_source.id,
+            },
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {user["username"] for user in resp.data} == {"lushi", "linshiyi"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_requires_data_source_id(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "shi"})
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestTenantUserListApi:
@@ -268,9 +283,10 @@ class TestTenantUserListApi:
 
 class TestTenantUserCreateApi:
     @pytest.fixture
-    def tenant_user_data(self, random_tenant) -> Dict[str, Any]:
+    def tenant_user_data(self, random_tenant, full_local_data_source) -> Dict[str, Any]:
         username = generate_random_string()
         return {
+            "data_source_id": full_local_data_source.id,
             "username": username,
             "full_name": "这里放一个姓名",
             "email": f"{username}@example.com",
@@ -708,7 +724,11 @@ class TestTenantUserBatchCreateAndPreviewApi:
 
         resp = api_client.post(
             reverse("organization.tenant_user.batch_create_preview"),
-            data={"user_infos": raw_user_infos, "department_id": company.id},
+            data={
+                "data_source_id": company.data_source_id,
+                "user_infos": raw_user_infos,
+                "department_id": company.id,
+            },
         )
 
         assert resp.status_code == status.HTTP_200_OK
@@ -787,7 +807,11 @@ class TestTenantUserBatchCreateAndPreviewApi:
 
         resp = api_client.post(
             reverse("organization.tenant_user.batch_create"),
-            data={"user_infos": raw_user_infos, "department_id": company.id},
+            data={
+                "data_source_id": company.data_source_id,
+                "user_infos": raw_user_infos,
+                "department_id": company.id,
+            },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -808,34 +832,39 @@ class TestTenantUserBatchCreateAndPreviewApi:
     def test_invalid_case(self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos):
         url = reverse("organization.tenant_user.batch_create")
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+        payload = {
+            "data_source_id": company.data_source_id,
+            "user_infos": raw_user_infos,
+            "department_id": company.id,
+        }
 
         raw_user_infos.append("dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶")
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 dotknifeboy 重复" in resp.data["message"]
 
         raw_user_infos[-1] = "lisi, 李四, lisi@m.com, 55, 男, shenzhen, 阅读/驾驶"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "用户名 lisi 已存在" in resp.data["message"]
 
         raw_user_infos[-1] = "meishisan, 梅十三, meishisan@m.com, 55, 男, shenzhen"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "第 6 行，用户信息格式不正确，预期 7 个字段，实际 6 个字段" in resp.data["message"]
 
         raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, helicopter, shenzhen, 阅读/驾驶"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "helicopter 不在可选项" in resp.data["message"]
 
         raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 55, 男, shenzhen, 跳跃/驾驶"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不在可选项" in resp.data["message"]
 
         raw_user_infos[-1] = "aiwu, 艾五, aiwu@m.com, 1k, 男, shenzhen, 阅读/驾驶"
-        resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
+        resp = api_client.post(url, data=payload)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]
 
@@ -844,7 +873,7 @@ class TestTenantUserBatchDeleteApi:
     """测试批量删除租户用户"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_layoffs(self, api_client, random_tenant):
+    def test_layoffs(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -853,7 +882,10 @@ class TestTenantUserBatchDeleteApi:
 
         resp = api_client.delete(
             reverse("organization.tenant_user.batch_delete"),
-            QUERY_STRING=urlencode({"user_ids": ",".join(user_ids)}, doseq=True),
+            QUERY_STRING=urlencode(
+                {"user_ids": ",".join(user_ids), "data_source_id": full_local_data_source.id},
+                doseq=True,
+            ),
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -1097,7 +1129,7 @@ class TestTenantUserBatchUpdateLeaderApi:
     """测试批量更新租户用户 - 上级关系"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_valid_leader(self, api_client, random_tenant):
+    def test_batch_update_valid_leader(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
 
         tenant_users = TenantUser.objects.filter(
@@ -1109,6 +1141,7 @@ class TestTenantUserBatchUpdateLeaderApi:
 
         # 用户列表中前两个作为上级，其余作为下属
         tenant_user_data: Dict[str, Any] = {
+            "data_source_id": full_local_data_source.id,
             "user_ids": user_ids[2:],
             "leader_ids": user_ids[:2],
         }
@@ -1125,7 +1158,7 @@ class TestTenantUserBatchUpdateLeaderApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_invalid_leader(self, api_client, random_tenant):
+    def test_batch_update_invalid_leader(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -1134,6 +1167,7 @@ class TestTenantUserBatchUpdateLeaderApi:
 
         # 将用户列表中的前两个作为上级
         tenant_user_data: Dict[str, Any] = {
+            "data_source_id": full_local_data_source.id,
             "user_ids": user_ids,
             "leader_ids": user_ids[:2],
         }

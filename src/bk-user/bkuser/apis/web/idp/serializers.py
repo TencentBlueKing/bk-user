@@ -26,13 +26,14 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp, IdpPlugin
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_plugin_cfg_schema_map
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -113,6 +114,22 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
         return attrs
 
 
+class LocalDataSourceMatchRuleSLZ(serializers.Serializer):
+    # 本地认证源字段匹配规则默认就是 id -> id
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
+
+    def validate_data_source_id(self, data_source_id: int) -> int:
+        if not DataSource.objects.filter(
+            id=data_source_id,
+            owner_tenant_id=self.context["tenant_id"],
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
+        ).exists():
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的本地数据源").format(data_source_id))
+
+        return data_source_id
+
+
 class IdpCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称", max_length=128)
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
@@ -167,12 +184,19 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
     data_source_match_rules = serializers.SerializerMethodField(help_text="数据源匹配规则")
     callback_uri = serializers.CharField(help_text="回调地址")
+    scope_pending_confirm = serializers.SerializerMethodField(help_text="是否待管理员确认生效范围")
 
     def get_data_source_match_rules(self, obj: Idp) -> List[Dict[str, Any]]:
-        # 当前管理页仍只展示一个实名数据源的登录配置模板，不返回完整 relations。
-        # 登录匹配必须读取 IdpDataSourceRelation 中的完整关系，不能依赖该响应字段。
-        match_rule = IdpDataSourceRelationHandler.get_primary_real_match_rule(obj)
-        return [match_rule.model_dump()] if match_rule else []
+        return [rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(obj)]
+
+    def get_scope_pending_confirm(self, obj: Idp) -> bool:
+        # 非本地、已启用、却无任何 REAL 关系 -> 迁移遗留/重置遗留的孤儿，待管理员确认生效范围
+        if obj.is_local:
+            return False
+        return (
+            obj.status == IdpStatus.ENABLED
+            and not IdpDataSourceRelation.objects.filter(idp=obj, data_source__type=DataSourceTypeEnum.REAL).exists()
+        )
 
 
 class IdpPartialUpdateInputSLZ(serializers.Serializer):
@@ -221,6 +245,9 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     # Note: 本地认证源的密码配置实际上是写入本地数据源的
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源插件配置")
+    data_source_match_rules = serializers.ListField(
+        help_text="数据源匹配规则", child=LocalDataSourceMatchRuleSLZ(), allow_empty=False, default=list
+    )
 
     def validate_name(self, name: str) -> str:
         return _validate_duplicate_idp_name(name, self.context["tenant_id"])
@@ -250,6 +277,7 @@ class LocalIdpRetrieveOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源密码配置")
+    data_source_match_rules = serializers.ListField(help_text="数据源匹配规则", child=LocalDataSourceMatchRuleSLZ())
 
 
 class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):

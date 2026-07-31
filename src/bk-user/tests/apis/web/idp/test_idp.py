@@ -18,6 +18,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.data_models import DataSourceMatchRule
 from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpPlugin
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import SENSITIVE_MASK
@@ -77,7 +78,7 @@ def wecom_idp(bk_user, random_tenant, wecom_plugin_cfg, data_source_match_rules)
         updater=bk_user.username,
     )
     IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
-        idp, data_source_match_rules[0]["field_compare_rules"]
+        idp, [DataSourceMatchRule(**rule) for rule in data_source_match_rules]
     )
     return idp
 
@@ -176,17 +177,18 @@ class TestIdpCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不属于用户自定义字段或内置字段" in resp.data["message"]
 
-    def test_create_with_empty_data_source_match_rules(self, api_client, wecom_plugin_cfg):
-        request_data = {
-            "name": generate_random_string(),
-            "status": IdpStatus.ENABLED,
-            "plugin_id": BuiltinIdpPluginEnum.WECOM,
-            "plugin_config": wecom_plugin_cfg,
-            "data_source_match_rules": [],
-        }
-        resp = api_client.post(reverse("idp.list_create"), data=request_data)
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert " data_source_match_rules: 列表字段不能为空值" in resp.data["message"]
+    def test_create_rejects_empty_data_source_match_rules(self, api_client, wecom_plugin_cfg):
+        # 产品约定：生效范围不允许为空（遗留孤儿 IdP 仅通过详情 scope_pending_confirm 暴露）
+        for idp_status in (IdpStatus.ENABLED, IdpStatus.DISABLED):
+            request_data = {
+                "name": generate_random_string(),
+                "status": idp_status,
+                "plugin_id": BuiltinIdpPluginEnum.WECOM,
+                "plugin_config": wecom_plugin_cfg,
+                "data_source_match_rules": [],
+            }
+            resp = api_client.post(reverse("idp.list_create"), data=request_data)
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestIdpListApi:
@@ -226,6 +228,62 @@ class TestIdpUpdateApi:
         assert idp.plugin_config["agent_id"] == new_plugin_config["agent_id"]
         assert idp.plugin_config["secret"] == SENSITIVE_MASK
         assert idp.get_plugin_cfg().model_dump() == new_plugin_config
+
+    def test_update_persists_full_scope(
+        self, api_client, wecom_idp, wecom_plugin_cfg, bare_general_data_source, bare_local_data_source
+    ):
+        # 生效范围改为 {general, local} 两个源，全部持久化并可完整回显
+        rules = [
+            {
+                "data_source_id": bare_general_data_source.id,
+                "field_compare_rules": [{"source_field": "user_id", "target_field": "username"}],
+            },
+            {
+                "data_source_id": bare_local_data_source.id,
+                "field_compare_rules": [{"source_field": "user_id", "target_field": "username"}],
+            },
+        ]
+        resp = api_client.put(
+            reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+            data={
+                "name": wecom_idp.name,
+                "status": IdpStatus.ENABLED,
+                "plugin_config": wecom_plugin_cfg,
+                "data_source_match_rules": rules,
+            },
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        relation_ds_ids = set(
+            IdpDataSourceRelation.objects.filter(idp=wecom_idp).values_list("data_source_id", flat=True)
+        )
+        assert relation_ds_ids == {bare_general_data_source.id, bare_local_data_source.id}
+
+        detail = api_client.get(reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}))
+        assert {r["data_source_id"] for r in detail.data["data_source_match_rules"]} == relation_ds_ids
+
+    def test_update_rejects_empty_data_source_match_rules(self, api_client, wecom_idp, wecom_plugin_cfg):
+        # 产品约定：更新时生效范围也不允许为空（含停用态）
+        before_ds_ids = set(
+            IdpDataSourceRelation.objects.filter(idp=wecom_idp).values_list("data_source_id", flat=True)
+        )
+        for idp_status in (IdpStatus.ENABLED, IdpStatus.DISABLED):
+            resp = api_client.put(
+                reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+                data={
+                    "name": wecom_idp.name,
+                    "status": idp_status,
+                    "plugin_config": wecom_plugin_cfg,
+                    "data_source_match_rules": [],
+                },
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+        # 关系未被清空
+        after_ds_ids = set(
+            IdpDataSourceRelation.objects.filter(idp=wecom_idp).values_list("data_source_id", flat=True)
+        )
+        assert after_ds_ids == before_ds_ids
 
     def test_update_with_invalid_plugin_config(self, api_client, wecom_idp):
         resp = api_client.put(
@@ -289,6 +347,16 @@ class TestIdpRetrieveApi:
         assert resp.data["plugin_config"] == wecom_idp.plugin_config
         assert resp.data["data_source_match_rules"] == get_idp_match_rules(wecom_idp)
         assert resp.data["callback_uri"] == wecom_idp.callback_uri
+        # 启用且有 REAL 关系 -> 非待确认态
+        assert resp.data["scope_pending_confirm"] is False
+
+    def test_retrieve_scope_pending_confirm_for_orphan(self, api_client, wecom_idp):
+        # 启用中但无任何 REAL 关系（孤儿）-> 待管理员确认范围
+        IdpDataSourceRelation.objects.filter(idp=wecom_idp).delete()
+        resp = api_client.get(reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}))
+        assert resp.data["status"] == IdpStatus.ENABLED
+        assert resp.data["data_source_match_rules"] == []
+        assert resp.data["scope_pending_confirm"] is True
 
 
 class TestIdpStatusUpdateApi:

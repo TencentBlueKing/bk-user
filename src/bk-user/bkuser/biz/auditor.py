@@ -40,6 +40,7 @@ from bkuser.apps.tenant.models import (
     VirtualUserAppRelation,
     VirtualUserOwnerRelation,
 )
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.utils.django import get_model_dict
 
 
@@ -54,6 +55,11 @@ class DataSourceAuditor:
     def pre_record_data_before(self, data_source: DataSource, waiting_delete_idps: List[Idp] | None = None):
         """记录变更前的相关数据记录"""
         self.data_befores["data_source"] = get_model_dict(data_source)
+        self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
+
+    def pre_record_batch_delete(self, data_sources: List[DataSource], waiting_delete_idps: List[Idp] | None = None):
+        """记录批量删除数据源前的相关数据记录"""
+        self.data_befores["data_source"] = [get_model_dict(ds) for ds in data_sources]
         self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
 
     def record_create(self, data_source: DataSource):
@@ -114,6 +120,29 @@ class DataSourceAuditor:
             object_id=data_source.id,
             extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
+
+    def record_batch_delete(self):
+        """记录批量删除数据源操作"""
+        objects = [
+            AuditObject(
+                id=ds["id"],
+                type=ObjectTypeEnum.DATA_SOURCE,
+                operation=OperationEnum.DELETE_DATA_SOURCE,
+                data_before=ds,
+            )
+            for ds in self.data_befores["data_sources"]
+        ]
+        objects.extend(
+            AuditObject(
+                id=idp["id"],
+                type=ObjectTypeEnum.IDP,
+                operation=OperationEnum.DELETE_IDP,
+                data_before=idp,
+            )
+            for idp in self.data_befores["idps"]
+        )
+
+        batch_add_audit_records(self.operator, self.tenant_id, objects)
 
 
 class TenantUserUpdateAuditor:
@@ -639,9 +668,15 @@ class IdpAuditor:
         self.tenant_id = tenant_id
         self.data_before: Dict[str, Any] = {}
 
+    def _snapshot_real_match_rules(self, idp: Idp) -> List[Dict]:
+        return [rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(idp)]
+
     def pre_record_data_before(self, idp: Idp):
         """记录变更前的相关数据记录"""
-        self.data_before = get_model_dict(idp)
+        self.data_before = {
+            **get_model_dict(idp),
+            "data_source_match_rules": self._snapshot_real_match_rules(idp),
+        }
 
     def record_create(self, idp: Idp):
         """记录认证源创建操作"""
@@ -651,7 +686,10 @@ class IdpAuditor:
             operation=OperationEnum.CREATE_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
-            data_after=get_model_dict(idp),
+            data_after={
+                **get_model_dict(idp),
+                "data_source_match_rules": self._snapshot_real_match_rules(idp),
+            },
         )
 
     def record_update(self, idp: Idp):
@@ -663,7 +701,10 @@ class IdpAuditor:
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
             data_before=self.data_before,
-            data_after=get_model_dict(idp),
+            data_after={
+                **get_model_dict(idp),
+                "data_source_match_rules": self._snapshot_real_match_rules(idp),
+            },
         )
 
 

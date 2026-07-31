@@ -40,6 +40,7 @@ class TestTenantDeptUserRelationBatchCreateApi:
         resp = api_client.post(
             reverse("organization.tenant_dept_user_relation.batch_create"),
             data={
+                "data_source_id": linshiyi.data_source_id,
                 "user_ids": [linshiyi.id, baishier.id],
                 "target_department_ids": [group_aaa.id, group_aba.id],
             },
@@ -66,11 +67,15 @@ class TestTenantDeptUserRelationBatchCreateApi:
 
         resp = api_client.post(
             reverse("organization.tenant_dept_user_relation.batch_create"),
-            data={"user_ids": ["not_exists"], "target_department_ids": [company.id]},
+            data={
+                "data_source_id": company.data_source_id,
+                "user_ids": ["not_exists"],
+                "target_department_ids": [company.id],
+            },
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 ID not_exists 在当前租户中不存在" in resp.data["message"]
+        assert "用户 ID not_exists 不存在或不属于当前数据源" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_department_id(self, api_client, random_tenant):
@@ -78,11 +83,15 @@ class TestTenantDeptUserRelationBatchCreateApi:
 
         resp = api_client.post(
             reverse("organization.tenant_dept_user_relation.batch_create"),
-            data={"user_ids": [zhangsan.id], "target_department_ids": [-1]},
+            data={
+                "data_source_id": zhangsan.data_source_id,
+                "user_ids": [zhangsan.id],
+                "target_department_ids": [-1],
+            },
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "部门 ID {-1} 在当前租户中不存在" in resp.data["message"]
+        assert "部门 ID {-1} 不存在或不属于当前数据源" in resp.data["message"]
 
 
 class TestTenantDeptUserRelationBatchUpdatePutApi:
@@ -98,6 +107,7 @@ class TestTenantDeptUserRelationBatchUpdatePutApi:
         resp = api_client.put(
             reverse("organization.tenant_dept_user_relation.batch_update"),
             data={
+                "data_source_id": wangwu.data_source_id,
                 "user_ids": [wangwu.id, liuqi.id],
                 "target_department_ids": [dept_b.id, center_ab.id],
             },
@@ -128,6 +138,7 @@ class TestTenantDeptUserRelationBatchUpdatePatchApi:
         resp = api_client.patch(
             reverse("organization.tenant_dept_user_relation.batch_update"),
             data={
+                "data_source_id": lushi.data_source_id,
                 "user_ids": [lushi.id, linshiyi.id],
                 "target_department_ids": [group_aaa.id, group_baa.id],
                 "source_department_id": group_aba.id,
@@ -164,6 +175,7 @@ class TestTenantDeptUserRelationBatchDeleteApi:
             reverse("organization.tenant_dept_user_relation.batch_delete"),
             QUERY_STRING=urlencode(
                 {
+                    "data_source_id": lisi.data_source_id,
                     "user_ids": ",".join([lisi.id, zhaoliu.id]),
                     "source_department_id": center_aa.id,
                 },

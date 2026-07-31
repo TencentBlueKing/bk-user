@@ -24,8 +24,9 @@ from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
+from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX, DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceUser,
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
@@ -34,6 +35,7 @@ from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX, Us
 from bkuser.apps.tenant.models import Tenant, TenantUserCustomField
 from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 logger = logging.getLogger(__name__)
@@ -213,3 +215,15 @@ def validate_user_extras(
         extras[field.name] = value
 
     return extras
+
+
+def validate_local_real_data_source_id(data_source_id: int, tenant_id: str) -> int:
+    if not DataSource.objects.filter(
+        id=data_source_id,
+        owner_tenant_id=tenant_id,
+        type=DataSourceTypeEnum.REAL,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    ).exists():
+        raise ValidationError(_("指定的本地实名数据源在当前租户中不存在"))
+
+    return data_source_id

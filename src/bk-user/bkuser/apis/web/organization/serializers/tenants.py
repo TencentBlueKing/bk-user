@@ -28,9 +28,14 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 
 class TenantDataSourceSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
+    name = serializers.CharField(help_text="数据源名称")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    logo = serializers.SerializerMethodField(help_text="数据源 Logo")
     enable_password = serializers.SerializerMethodField(help_text="是否启用密码")
+
+    def get_logo(self, obj: DataSource) -> str:
+        return obj.plugin.logo or settings.DEFAULT_DATA_SOURCE_PLUGIN_LOGO
 
     @swagger_serializer_method(serializer_or_field=serializers.BooleanField)
     def get_enable_password(self, obj: DataSource) -> bool:
@@ -58,7 +63,9 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
 
     @swagger_serializer_method(serializer_or_field=TenantDataSourceSLZ(many=True))
     def get_data_sources(self, obj: Tenant) -> List[Dict[str, Any]]:
-        data_sources = list(DataSource.objects.filter(owner_tenant_id=obj.id, type=DataSourceTypeEnum.REAL))
+        data_sources = list(
+            DataSource.objects.filter(owner_tenant_id=obj.id, type=DataSourceTypeEnum.REAL).select_related("plugin")
+        )
         if not data_sources:
             return []
 

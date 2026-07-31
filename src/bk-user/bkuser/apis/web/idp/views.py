@@ -26,6 +26,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
 from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.data_models import DataSourceMatchRule
 from bkuser.apps.idp.models import Idp, IdpPlugin, IdpSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -141,9 +142,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
                 updater=current_user,
             )
             IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
-                idp,
-                # Note: 当前产品页面只配置一套字段比较规则，应用到同租户全部实名数据源。
-                data["data_source_match_rules"][0]["field_compare_rules"],
+                idp, [DataSourceMatchRule(**rule) for rule in data["data_source_match_rules"]]
             )
 
         # 【审计】创建认证源审计对象
@@ -229,8 +228,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
             idp.set_plugin_cfg(data["plugin_config"])
             IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
                 idp,
-                # Note: 当前产品页面只配置一套字段比较规则，应用到同租户全部实名数据源。
-                data["data_source_match_rules"][0]["field_compare_rules"],
+                [DataSourceMatchRule(**rule) for rule in data["data_source_match_rules"]],
             )
 
         # 【审计】将审计记录保存至数据库
@@ -316,7 +314,7 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
                 creator=current_user,
                 updater=current_user,
             )
-            IdpDataSourceRelationHandler.set_local_real_relations(idp)
+            IdpDataSourceRelationHandler.set_local_real_relations(idp, data_sources)
 
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             for data_source in data_sources:
@@ -361,6 +359,10 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         if data_source is None:
             raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源未配置或非本地类型数据源"))
 
+        data_source_match_rules = [
+            rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(idp)
+        ]
+
         return Response(
             LocalIdpRetrieveOutputSLZ(
                 instance={
@@ -368,6 +370,7 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
                     "name": idp.name,
                     "status": idp.status,
                     "plugin_config": data_source.plugin_config,
+                    "data_source_match_rules": data_source_match_rules,
                 }
             ).data
         )

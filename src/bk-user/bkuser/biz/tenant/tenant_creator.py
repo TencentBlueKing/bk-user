@@ -159,6 +159,7 @@ class TenantCreator:
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
             owner_tenant_id=tenant_id,
             defaults={
+                "name": "内置管理数据源",
                 "plugin_id": plugin_id,
                 "plugin_config": plugin_config,
             },
@@ -172,6 +173,7 @@ class TenantCreator:
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
+                "name": "虚拟用户数据源",
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
