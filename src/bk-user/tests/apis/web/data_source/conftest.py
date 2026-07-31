@@ -62,7 +62,7 @@ def local_idp(data_source) -> Idp:
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
     )
-    IdpDataSourceRelationHandler.set_local_real_relations(idp)
+    IdpDataSourceRelationHandler.set_local_real_relations(idp, [data_source])
     return idp
 
 

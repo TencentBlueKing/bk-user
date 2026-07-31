@@ -59,7 +59,7 @@ class DataSourceAuditor:
 
     def pre_record_batch_delete(self, data_sources: List[DataSource], waiting_delete_idps: List[Idp] | None = None):
         """记录批量删除数据源前的相关数据记录"""
-        self.data_befores["data_source"] = [get_model_dict(ds) for ds in data_sources]
+        self.data_befores["data_sources"] = [get_model_dict(ds) for ds in data_sources]
         self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
 
     def record_create(self, data_source: DataSource):
