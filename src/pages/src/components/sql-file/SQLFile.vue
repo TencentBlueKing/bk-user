@@ -62,7 +62,7 @@ const isFullscreen = ref(false);
 let editor: monaco.editor.IStandaloneCodeEditor;
 
 watch(() => props.modelValue, () => {
-  if (props.modelValue !== editor.getValue()) {
+  if (editor && props.modelValue !== editor.getValue()) {
     editor.setValue(props.modelValue);
   }
 });
@@ -142,7 +142,7 @@ onMounted(() => {
   });
 
   editor = monaco.editor.create(editorRef.value, {
-    value: '',
+    value: props.modelValue || '',
     language: 'logLanguage',
     theme: 'logTheme',
     readOnly: props.readonly,

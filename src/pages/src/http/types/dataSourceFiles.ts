@@ -81,6 +81,7 @@ export interface UsernameGenerateConfig {
 
 export interface NewDataSourceParams {
   plugin_id: string;
+  name: string;
   plugin_config: GeneralDataSourcePluginConfig | LDAPDataSourcePluginConfig | LocalDataSourcePluginConfig;
   field_mapping?: FieldMapping[];
   sync_config?: SyncConfig;
@@ -151,6 +152,11 @@ export interface GeneratePasswordParams {
   password_rule_config?: {};
 }
 
+/** 生成随机密码返回值 */
+export interface RandomPasswordsData {
+  password: string;
+}
+
 /**
  * 数据源用户密码重置参数
  */
@@ -172,6 +178,8 @@ export interface DeleteDataSourcesParams {
  */
 export interface DataSourceDetails {
   id: number;
+  /** 数据源名称 */
+  name?: string;
   owner_tenant_id: string;
   type: string;
   plugin: {
@@ -249,6 +257,8 @@ export interface SyncRecords {
   count: number;
   results: {
     id: number;
+    data_source_id?: number;
+    data_source_name?: string;
     status: string;
     has_warning: boolean;
     trigger: string;
@@ -265,10 +275,11 @@ export interface SyncRecords {
 }
 
 export interface GetDataSourceListParams {
-  type: 'real' | 'virtual' | 'builtin_management';
+  type?: 'real' | 'virtual' | 'builtin_management';
 }
 
 export interface DataSourceItemData {
+  name: string;
   id: number;
   owner_tenant_id: string;
   type: string;
@@ -405,23 +416,4 @@ export interface RelatedResourceStatistics {
 
 export interface BatchDeleteDataSourcesParams {
   is_delete_idp?: boolean;
-}
-
-export interface SyncRecords {
-  count: number,
-  results: {
-    id: number,
-    status: string,
-    has_warning: boolean,
-    trigger: string,
-    operator: string,
-    start_at: string,
-    duration: string,
-    extras: {
-      incremental: boolean,
-      overwrite: boolean,
-      async_run: boolean,
-      sync_timeout: number,
-    }
-  }[],
 }

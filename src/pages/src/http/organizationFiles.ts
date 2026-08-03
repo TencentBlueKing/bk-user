@@ -1,6 +1,8 @@
 import http, { Config } from './fetch';
 import { ResponseData } from './types';
 import type {
+  AddDepartmentParams,
+  AddDepartmentResult,
   BatchUpdateParams,
   CollaborationItemData,
   CurrentTenantData,
@@ -9,10 +11,13 @@ import type {
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
+  OrganizationPathsData,
+  PasswordRuleData,
   SearchKeywordParams,
   SearchOrganizationItemData,
   SearchUserItemData,
   TenantListParams,
+  TenantsUserDetailData,
   TenantsUserListData,
   UpdateTenantParams,
 } from './types/organizationFiles';
@@ -74,7 +79,7 @@ export const getDepartmentsList = (deptId: number, tenantId: string) => http.get
 /**
  * 创建租户组织
  */
-export const addDepartment = (id: string, params: any) => http.post(`${prefix}/tenants/${id}/departments/`, params);
+export const addDepartment = (id: string, params: AddDepartmentParams) => http.post<ResponseData<AddDepartmentResult>>(`${prefix}/tenants/${id}/departments/`, params);
 
 /**
  * 删除租户组织
@@ -99,7 +104,7 @@ export const getTenantsUserList = (tenantId: string, params: any) => http.get<Re
 /**
  * 获取租户用户详情
  */
-export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
+export const getTenantsUserDetail = (id: string) => http.get<ResponseData<TenantsUserDetailData>>(`${prefix}/tenants/users/${id}/`);
 
 /**
  * 租户用户续期
@@ -114,7 +119,7 @@ export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${
 /**
  * 更新租户用户
  */
-export const getOrganizationPaths = (id: string, params?: any) => http.get(`${prefix}/tenants/users/${id}/organization-paths/`, params);
+export const getOrganizationPaths = (id: string, params?: any) => http.get<ResponseData<OrganizationPathsData>>(`${prefix}/tenants/users/${id}/organization-paths/`, params);
 
 /**
  * 删除租户用户
@@ -228,7 +233,7 @@ export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/
 /**
  * 密码规则
  */
-export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/`);
+export const passwordRule = (id: string) => http.get<ResponseData<PasswordRuleData>>(`${prefix}/tenants/users/${id}/password-rule/`);
 
 /**
  * 组织树拖拽功能

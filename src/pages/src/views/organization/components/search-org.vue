@@ -184,10 +184,14 @@ const searchData = () => {
       // 处理组织数据
       if (orgResult.status === 'fulfilled') {
         orgs.value = orgResult.value.data || [];
+      } else {
+        orgs.value = [];
       }
       // 处理用户数据
       if (userResult.status === 'fulfilled') {
         users.value = userResult.value.data || [];
+      } else {
+        users.value = [];
       }
       // 处理错误信息
       const orgError = orgResult.status === 'rejected' ? orgResult.reason : null;
@@ -248,6 +252,7 @@ const handleOrgSelect = (org: SearchOrganizationItemData) => {
     deptId: org.id,
     deptName: org.name,
     organizationPath: org.organization_path,
+    nodeType: 'department',
   });
   emit('select');
 };
@@ -255,11 +260,11 @@ const handleOrgSelect = (org: SearchOrganizationItemData) => {
 const handleUserSelect = async (user: SearchUserItemData) => {
   searchDialogVisible.value = false;
   showSideBar.value = true;
-  const [userRes, fieldsRes] = await Promise.all([
-    getTenantsUserDetail(user.id),
+  const [userData, fieldsRes] = await Promise.all([
+    getTenantsUserDetail(user.id).then(res => res.data),
     getFields(),
   ]);
-  state.userInfo = userRes.data;
+  state.userInfo = userData;
   state.userInfo.extras = useCustomFields(state.userInfo?.extras, fieldsRes.data.custom_fields);
   detailsConfig.title = t('用户详情');
   detailsConfig.isShow = true;
