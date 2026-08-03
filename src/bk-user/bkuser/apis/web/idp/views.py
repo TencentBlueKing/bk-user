@@ -131,11 +131,6 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         current_user = request.user.username
         plugin = IdpPlugin.objects.get(id=data["plugin_id"])
 
-        data_source_match_rules = [
-            DataSourceMatchRule(data_source_id=ds_id, field_compare_rules=data["field_compare_rules"])
-            for ds_id in data["data_source_ids"]
-        ]
-
         with transaction.atomic():
             idp = Idp.objects.create(
                 name=data["name"],
@@ -146,7 +141,9 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
                 creator=current_user,
                 updater=current_user,
             )
-            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(idp, data_source_match_rules)
+            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
+                idp, [DataSourceMatchRule(**rule) for rule in data["data_source_match_rules"]]
+            )
 
         # 【审计】创建认证源审计对象
         auditor = IdpAuditor(request.user.username, current_tenant_id)

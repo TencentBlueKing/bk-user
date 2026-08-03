@@ -178,7 +178,7 @@ class TestIdpCreateApi:
         assert "不属于用户自定义字段或内置字段" in resp.data["message"]
 
     def test_create_rejects_empty_data_source_match_rules(self, api_client, wecom_plugin_cfg):
-        # 产品约定：生效范围不允许为空（遗留孤儿 IdP 仅通过详情 scope_pending_confirm 暴露）
+        # 产品约定：生效范围不允许为空
         for idp_status in (IdpStatus.ENABLED, IdpStatus.DISABLED):
             request_data = {
                 "name": generate_random_string(),
@@ -347,16 +347,6 @@ class TestIdpRetrieveApi:
         assert resp.data["plugin_config"] == wecom_idp.plugin_config
         assert resp.data["data_source_match_rules"] == get_idp_match_rules(wecom_idp)
         assert resp.data["callback_uri"] == wecom_idp.callback_uri
-        # 启用且有 REAL 关系 -> 非待确认态
-        assert resp.data["scope_pending_confirm"] is False
-
-    def test_retrieve_scope_pending_confirm_for_orphan(self, api_client, wecom_idp):
-        # 启用中但无任何 REAL 关系（孤儿）-> 待管理员确认范围
-        IdpDataSourceRelation.objects.filter(idp=wecom_idp).delete()
-        resp = api_client.get(reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}))
-        assert resp.data["status"] == IdpStatus.ENABLED
-        assert resp.data["data_source_match_rules"] == []
-        assert resp.data["scope_pending_confirm"] is True
 
 
 class TestIdpStatusUpdateApi:
@@ -382,6 +372,7 @@ class TestLocalIdpCreateApi:
                 "name": generate_random_string(),
                 "status": IdpStatus.ENABLED,
                 "plugin_config": local_ds_plugin_cfg,
+                "data_source_ids": [bare_local_data_source.id],
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -395,6 +386,7 @@ class TestLocalIdpCreateApi:
                 "name": generate_random_string(),
                 "status": IdpStatus.ENABLED,
                 "plugin_config": local_ds_plugin_cfg,
+                "data_source_ids": [bare_local_data_source.id],
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -410,6 +402,7 @@ class TestLocalIdpCreateApi:
                 "name": generate_random_string(),
                 "status": IdpStatus.ENABLED,
                 "plugin_config": local_ds_plugin_cfg,
+                "data_source_ids": [bare_local_data_source.id],
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
