@@ -665,6 +665,9 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
 
+        if data_source_id := data.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
         return queryset
 
     def get_serializer_context(self):

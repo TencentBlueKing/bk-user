@@ -1166,6 +1166,8 @@ class TenantUserPasswordBatchResetApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
+        # Note: 密码策略是数据源级配置，SLZ 校验密码合规性以来 plugin_config,
+        #       因此 view 层先按 data_source_id 获取数据源，加载配置，再传给 SLZ 完成业务校验
         data_source = self.get_local_real_data_source(request.data["data_source_id"])
 
         # 数据源配置

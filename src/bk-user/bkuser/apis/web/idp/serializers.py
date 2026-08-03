@@ -26,7 +26,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpPlugin
+from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.constants import SENSITIVE_MASK
@@ -114,22 +114,6 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
         return attrs
 
 
-class LocalDataSourceMatchRuleSLZ(serializers.Serializer):
-    # 本地认证源字段匹配规则默认就是 id -> id
-    data_source_id = serializers.IntegerField(help_text="数据源 ID")
-
-    def validate_data_source_id(self, data_source_id: int) -> int:
-        if not DataSource.objects.filter(
-            id=data_source_id,
-            owner_tenant_id=self.context["tenant_id"],
-            type=DataSourceTypeEnum.REAL,
-            plugin_id=DataSourcePluginEnum.LOCAL,
-        ).exists():
-            raise ValidationError(_("当前租户下不存在 ID 为 {} 的本地数据源").format(data_source_id))
-
-        return data_source_id
-
-
 class IdpCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称", max_length=128)
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
@@ -184,19 +168,9 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
     data_source_match_rules = serializers.SerializerMethodField(help_text="数据源匹配规则")
     callback_uri = serializers.CharField(help_text="回调地址")
-    scope_pending_confirm = serializers.SerializerMethodField(help_text="是否待管理员确认生效范围")
 
     def get_data_source_match_rules(self, obj: Idp) -> List[Dict[str, Any]]:
         return [rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(obj)]
-
-    def get_scope_pending_confirm(self, obj: Idp) -> bool:
-        # 非本地、已启用、却无任何 REAL 关系 -> 迁移遗留/重置遗留的孤儿，待管理员确认生效范围
-        if obj.is_local:
-            return False
-        return (
-            obj.status == IdpStatus.ENABLED
-            and not IdpDataSourceRelation.objects.filter(idp=obj, data_source__type=DataSourceTypeEnum.REAL).exists()
-        )
 
 
 class IdpPartialUpdateInputSLZ(serializers.Serializer):
@@ -245,8 +219,8 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     # Note: 本地认证源的密码配置实际上是写入本地数据源的
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源插件配置")
-    data_source_match_rules = serializers.ListField(
-        help_text="数据源匹配规则", child=LocalDataSourceMatchRuleSLZ(), allow_empty=False, default=list
+    data_source_ids = serializers.ListField(
+        help_text="生效范围数据源 ID 列表", child=serializers.IntegerField(), allow_empty=False, min_length=1
     )
 
     def validate_name(self, name: str) -> str:
@@ -258,9 +232,29 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
 
+    def validate_data_source_ids(self, data_source_ids: List[int]) -> List[int]:
+        tenant_id = self.context["tenant_id"]
+        exists_ids = set(
+            DataSource.objects.filter(
+                id__in=data_source_ids,
+                owner_tenant_id=tenant_id,
+                type=DataSourceTypeEnum.REAL,
+                plugin_id=DataSourcePluginEnum.LOCAL,
+            ).values_list("id", flat=True)
+        )
+        if not_found := set(data_source_ids) - exists_ids:
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的本地数据源").format(not_found))
+        return data_source_ids
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_config = attrs["plugin_config"]
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+
+        # 检查是否已经存在对应的认证源
+        if IdpDataSourceRelationHandler.has_duplicate_plugin_real_relation(
+            self.context["tenant_id"], idp_plugin_id=DataSourcePluginEnum.LOCAL
+        ):
+            raise ValidationError(_("本地账密登录已存在"))
 
         status = attrs["status"]
         # 启动登录和启用密码功能必须保持一致
@@ -277,7 +271,7 @@ class LocalIdpRetrieveOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源密码配置")
-    data_source_match_rules = serializers.ListField(help_text="数据源匹配规则", child=LocalDataSourceMatchRuleSLZ())
+    data_source_ids = serializers.ListField(help_text="生效范围数据源 ID 列表", child=serializers.IntegerField())
 
 
 class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):

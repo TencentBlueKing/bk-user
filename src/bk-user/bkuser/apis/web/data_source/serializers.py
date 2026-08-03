@@ -463,6 +463,7 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
+    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
     plugin_id = serializers.CharField(help_text="插件 ID", required=False)
     statuses = StringArrayField(help_text="数据源同步状态", required=False)
 
