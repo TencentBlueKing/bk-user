@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
@@ -280,19 +280,9 @@ class IdpDataSourceRelationHandler:
         - 删除后无其他实名数据源关联：用户选了连带删除 or 本地 IDP → 删除，否则 → 禁用
         - 孤儿 IDP（无任何关系记录）：用户选了连带删除时一并清理
         """
-        real_idp_ds_map: Dict[str, List[int]] = defaultdict(list)
-        all_related_idp_ids: set[str] = set()
-
-        relations = IdpDataSourceRelation.objects.filter(
-            idp_owner_tenant_id=owner_tenant_id,
-        ).values("idp_id", "data_source_id", "data_source__type")
-        for rel in relations:
-            all_related_idp_ids.add(rel["idp_id"])
-            if rel["data_source__type"] == DataSourceTypeEnum.REAL:
-                real_idp_ds_map[rel["idp_id"]].append(rel["data_source_id"])
-
-        idp_map = {idp.id: idp for idp in Idp.objects.filter(owner_tenant_id=owner_tenant_id)}
-        orphan_idp_ids = set(idp_map.keys()) - all_related_idp_ids
+        real_idp_ds_map, orphan_idp_ids, idp_map = IdpDataSourceRelationHandler._get_real_idps_with_orphan(
+            owner_tenant_id
+        )
 
         plan = IdpDeletionPlan()
         for idp_id, ds_ids in real_idp_ds_map.items():
@@ -320,7 +310,7 @@ class IdpDataSourceRelationHandler:
         return plan
 
     @staticmethod
-    def _get_real_idps_with_orphan(owner_tenant_id: str):
+    def _get_real_idps_with_orphan(owner_tenant_id: str) -> Tuple[Dict[str, List[int]], Set[str], Dict[str, Idp]]:
         """获取租户下与实名数据源相关的 IDP，包括有关联关系的和孤儿（无任何关系记录）的。
 
         返回 (实名数据源关系映射，孤儿 IDP ID 集合，IDP 映射)
@@ -343,7 +333,7 @@ class IdpDataSourceRelationHandler:
     @staticmethod
     @transaction.atomic()
     def set_local_real_relations(idp: Idp, data_sources: List[DataSource]) -> None:
-        """为本地登录源自动建立与同租户全部本地实名数据源的关系，并使用默认匹配规则。
+        """为本地登录源建立与同租户指定本地实名数据源的关系，并使用默认匹配规则。
 
         先清除旧关系再全量重建，适用于初始化或数据源变更后的关系重置场景。
         """
@@ -351,7 +341,7 @@ class IdpDataSourceRelationHandler:
         if not data_source_ids:
             return
 
-        IdpDataSourceRelation.objects.filter(idp=idp, data_source_id__in=data_source_ids).delete()
+        IdpDataSourceRelation.objects.filter(idp=idp).delete()
         IdpDataSourceRelation.objects.bulk_create(
             [
                 IdpDataSourceRelation(

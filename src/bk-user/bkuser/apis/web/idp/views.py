@@ -131,6 +131,11 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         current_user = request.user.username
         plugin = IdpPlugin.objects.get(id=data["plugin_id"])
 
+        data_source_match_rules = [
+            DataSourceMatchRule(data_source_id=ds_id, field_compare_rules=data["field_compare_rules"])
+            for ds_id in data["data_source_ids"]
+        ]
+
         with transaction.atomic():
             idp = Idp.objects.create(
                 name=data["name"],
@@ -141,9 +146,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
                 creator=current_user,
                 updater=current_user,
             )
-            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(
-                idp, [DataSourceMatchRule(**rule) for rule in data["data_source_match_rules"]]
-            )
+            IdpDataSourceRelationHandler.set_real_relations_from_match_rules(idp, data_source_match_rules)
 
         # 【审计】创建认证源审计对象
         auditor = IdpAuditor(request.user.username, current_tenant_id)
@@ -289,17 +292,12 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
         # 检测本地账密数据源是否存在
         data_sources = list(
             DataSource.objects.filter(
-                owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL, plugin_id=DataSourcePluginEnum.LOCAL
+                id__in=data["data_source_ids"],
+                owner_tenant_id=current_tenant_id,
+                type=DataSourceTypeEnum.REAL,
+                plugin_id=DataSourcePluginEnum.LOCAL,
             )
         )
-        if not data_sources:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源未配置或非本地类型数据源"))
-
-        # 检查是否已经存在对应的认证源
-        if IdpDataSourceRelationHandler.has_duplicate_plugin_real_relation(
-            current_tenant_id, BuiltinIdpPluginEnum.LOCAL
-        ):
-            raise error_codes.IDP_CREATE_FAILED.f(_("本地账密登录已存在"))
 
         plugin_config = data["plugin_config"]
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
@@ -353,15 +351,11 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
     )
     def get(self, request, *args, **kwargs):
         idp = self.get_object()
-        data_source = IdpDataSourceRelationHandler.get_primary_real_data_source(
+        data_sources = IdpDataSourceRelationHandler.get_related_real_data_sources(
             idp, data_source_plugin_id=DataSourcePluginEnum.LOCAL
         )
-        if data_source is None:
+        if not data_sources:
             raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源未配置或非本地类型数据源"))
-
-        data_source_match_rules = [
-            rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(idp)
-        ]
 
         return Response(
             LocalIdpRetrieveOutputSLZ(
@@ -369,8 +363,9 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
                     "id": idp.id,
                     "name": idp.name,
                     "status": idp.status,
-                    "plugin_config": data_source.plugin_config,
-                    "data_source_match_rules": data_source_match_rules,
+                    # 各本地数据源的密码配置一致，取首个展示
+                    "plugin_config": data_sources[0].plugin_config,
+                    "data_source_ids": [ds.id for ds in data_sources],
                 }
             ).data
         )
@@ -383,14 +378,14 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
     )
     def put(self, request, *args, **kwargs):
         idp = self.get_object()
-        data_sources = IdpDataSourceRelationHandler.get_related_real_data_sources(
+        current_tenant_id = self.get_current_tenant_id()
+        # Note: 取本地数据源，用于获取敏感信息供校验回填
+        primary_data_source = IdpDataSourceRelationHandler.get_primary_real_data_source(
             idp, data_source_plugin_id=DataSourcePluginEnum.LOCAL
         )
-        if not data_sources:
+        if not primary_data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("数据源未配置或非本地类型数据源"))
 
-        current_tenant_id = self.get_current_tenant_id()
-        primary_data_source = data_sources[0]
         slz = LocalIdpUpdateInputSLZ(
             data=request.data,
             context={
@@ -401,6 +396,15 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+        data_sources = DataSource.objects.filter(
+            id__in=data["data_source_ids"],
+            owner_tenant_id=current_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
+        )
+
+        plugin_config = data["plugin_config"]
+        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
 
         # 【审计】创建认证源审计对象并记录变更前数据
         idp_auditor = IdpAuditor(request.user.username, current_tenant_id)
@@ -417,9 +421,11 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
             idp.status = data["status"]
             idp.updater = request.user.username
             idp.save(update_fields=["name", "status", "updater", "updated_at"])
+            # 重建 IDP 与本地实名数据源的关系
+            IdpDataSourceRelationHandler.set_local_real_relations(idp, data_sources)
+
             for data_source in data_sources:
                 data_source.set_plugin_cfg(data["plugin_config"])
-            IdpDataSourceRelationHandler.sync_local_plugin_config(idp)
 
         # 【审计】将审计记录保存至数据库
         idp_auditor.record_update(idp)
