@@ -138,7 +138,6 @@ import {
   updateTenantsUserDetail,
 } from '@/http/organizationFiles';
 import { t } from '@/language/index';
-
 const props = defineProps({
   detailsInfo: {
     type: Object,
@@ -236,18 +235,17 @@ const searchLeaders = (value: string) => {
 
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate().then(async () => {
-      if (telError.value) return;
-      isLoading.value = true;
-      const { id, status, extras, departments, leaders, ...param } = formData;
-      const extraData = {};
-      extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, { ...param, ...{ extras: extraData } });
-      emit('updateUsers', t('更新成功'));
-    })
-      .catch((err) => {
-        console.log(err, 'err');
-      });
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
+    if (telError.value) return;
+    isLoading.value = true;
+    const { id, status, extras, departments, leaders, ...param } = formData;
+    const extraData = {};
+    extras.map(item => extraData[item.name] = item.value || item.default);
+    await updateTenantsUserDetail(id, { ...param, extras: extraData });
+    emit('updateUsers', t('更新成功'));
+  } catch (err) {
+    console.log(err, 'err');
   } finally {
     isLoading.value = false;
   }

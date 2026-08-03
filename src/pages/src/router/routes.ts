@@ -67,8 +67,9 @@ export const routes: RouteRecordRaw[] = [
         name: 'newDataSource',
         meta: {
           routeParentName: 'setting',
-          navName: t('数据源配置'),
+          navName: t('添加数据源'),
           activeMenu: 'dataSource',
+          showBack: true,
         },
         component: () => import('@/views/setting/data-source/NewDataSource.vue'),
       },

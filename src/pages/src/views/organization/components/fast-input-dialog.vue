@@ -166,7 +166,8 @@ const showColumns = computed(() => {
   return columns;
 });
 const handleNext = async () => {
-  formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   if (!!formData.value.val && (currentId.value < objectSteps.value.length)) {
     isLoading.value = true;
     const param = {
@@ -175,7 +176,7 @@ const handleNext = async () => {
     };
     try {
       const res = await batchCreatePreview(param);
-      const sourceData = res.data.map(item => Object.assign(item, item.extras));
+      const sourceData = res.data.results.map(item => Object.assign({}, item, item.extras));
       const transformData = transformEnumFields(sourceData);
       tableData.value = transformData;
       currentId.value += 1;

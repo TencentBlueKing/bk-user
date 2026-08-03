@@ -19,6 +19,7 @@ import type {
   OperationsSyncData,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  RandomPasswordsData,
   RelatedResourceStatistics,
   ResetPasswordParams,
   SyncRecords,
@@ -69,7 +70,7 @@ export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => htt
 /**
  * 数据源列表
  */
-export const getDataSourceList = (params: GetDataSourceListParams) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
+export const getDataSourceList = (params?: GetDataSourceListParams) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
 
 /**
  * 数据源插件列表
@@ -114,7 +115,7 @@ export const postOperationsSync = (id: number) => http.post<ResponseData<Operati
 /**
  * 生成数据源用户随机密码
  */
-export const randomPasswords = (params: GeneratePasswordParams) => http.post('/api/v3/web/data-sources/random-passwords/', params);
+export const randomPasswords = (params: GeneratePasswordParams) => http.post<ResponseData<RandomPasswordsData>>('/api/v3/web/data-sources/random-passwords/', params);
 
 /**
  * 数据源更新记录

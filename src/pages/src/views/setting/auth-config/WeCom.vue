@@ -41,6 +41,10 @@
           </bk-radio-group>
         </bk-form-item>
       </Row>
+      <EffectiveScopeEditor
+        v-model="scopedIds"
+        @change="handleScopeChange"
+      />
       <Row :title="$t('登录认证匹配')">
         <div class="item-flex-header">
           <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
@@ -60,11 +64,11 @@
               >
                 <bk-option
                   class="option-select"
-                  v-for="option in item.targetFields"
+                  v-for="option in fieldOptions"
                   :key="option.name"
                   :id="option.name"
                   :name="option.name"
-                  :disabled="option.disabled">
+                  :disabled="item.field_compare_rules.some(c => c.target_field === option.name)">
                   <span>{{option.name}}</span>
                   <span>{{option.type}}</span>
                 </bk-option>
@@ -86,7 +90,7 @@
             <bk-button
               text
               :disabled="item.field_compare_rules.length === 1"
-              @click="handleDeleteItem(field.target_field, index, item.field_compare_rules, i)">
+              @click="handleDeleteItem(index, item.field_compare_rules, i)">
               <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
             </bk-button>
           </div>
@@ -97,7 +101,7 @@
       <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit" :disabled="isDisabled">
         {{ $t('提交') }}
       </bk-button>
-      <bk-button @click="emit('cancelEdit')">
+      <bk-button @click="emit('cancel')">
         {{ $t('取消') }}
       </bk-button>
     </div>
@@ -106,38 +110,34 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+
+import EffectiveScopeEditor from './EffectiveScopeEditor.vue';
+import { buildDataSourceMatchRules } from './utils';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
-import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
+import { getDataSourceList, getFields, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
 
 const props = defineProps({
-  dataSourceId: {
-    type: Number,
-    default: undefined,
-  },
-  currentId: {
-    type: String,
-    default: '',
-  },
-  defaultName: {
-    type: String,
-    default: '',
+  data: {
+    type: Object,
+    default: null,
   },
 });
 
-const emit = defineEmits(['cancelEdit', 'success']);
+const emit = defineEmits(['cancel', 'success']);
 
 const validate = useValidate();
 
 const formRef = ref();
 const isLoading = ref(false);
 const btnLoading = ref(false);
+const scopedIds = ref<number[]>([]);
 const formData = ref({
-  name: props?.defaultName,
+  name: '',
   status: 'enabled',
   plugin_id: 'wecom',
   plugin_config: {
@@ -147,19 +147,19 @@ const formData = ref({
   },
   data_source_match_rules: [
     {
-      data_source_id: props?.dataSourceId,
+      data_source_id: undefined,
       field_compare_rules: [
         {
           target_field: '',
           source_field: '',
         },
       ],
-      targetFields: [],
     },
   ],
 });
 
 let originalData = {};
+let originalScope: number[] = [];
 const isDisabled = ref(true);
 
 const LoginMethod = ref('a');
@@ -181,57 +181,23 @@ const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
 
-onMounted(async () => {
-  try {
-    isLoading.value = true;
-    const [sourceRes, fieldRes] = await Promise.all([
-      getDataSourceList({ type: 'real' }),
-      getFields(),
-    ]);
-    if (props?.currentId) {
-      // 获取已配置详情
-      const authRes = await getIdpsDetails(props.currentId);
-      if (authRes.data?.id) {
-        formData.value = authRes.data;
-        formData.value.data_source_match_rules[0].data_source_id = props?.dataSourceId;
-      }
-    }
-    // 获取数据源字段
-    const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
+// 目标字段下拉选项（全局一份，disabled 由各规则的 field_compare_rules 实时计算）
+const fieldOptions = computed(() => [
+  ...(builtinFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('内置') })),
+  ...(customFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('自定义') })),
+]);
 
-    dataSourceList.value = sourceRes.data?.map(item => ({
-      key: item.id,
-      name: item.name,
-      disabled: sourceIds.has(item.id),
-    })) || [];
+const {
+  changeSourceField,
+  handleToggle,
+  handleAddItem,
+  handleDeleteItem,
+  handleChange,
+} = useCustomPlugin(
+  formData,
+  dataSourceList,
+);
 
-    const allFields = [
-      ...(fieldRes.data?.builtin_fields?.map(item => ({ ...item, type: t('内置') })) || []),
-      ...(fieldRes.data?.custom_fields?.map(item => ({ ...item, type: t('自定义') })) || []),
-    ];
-
-    builtinFields.value = fieldRes.data?.builtin_fields || [];
-    customFields.value = fieldRes.data?.custom_fields || [];
-
-    formData.value.data_source_match_rules?.forEach((rule) => {
-      rule.targetFields = allFields.map(field => ({
-        key: field.id,
-        name: field.name,
-        disabled: rule.field_compare_rules.some(compareRule => compareRule.target_field === field.name),
-        type: field.type,
-      }));
-    });
-    originalData = JSON.parse(JSON.stringify(formData.value));
-  } catch (error) {
-    console.error(error);
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-watch(formData, () => {
-  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData.value) : false;
-}, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {
@@ -241,7 +207,7 @@ const changeStatus = (value: boolean) => {
       onConfirm() {
         formData.value.status = 'disabled';
       },
-      onClosed() {
+      onCancel() {
         formData.value.status = 'enabled';
       },
       quickClose: false,
@@ -255,20 +221,21 @@ const changeStatus = (value: boolean) => {
 //  提交企业微信认证源配置信息
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     btnLoading.value = true;
     const data = formData.value;
-    data.data_source_match_rules.forEach((item) => {
-      delete item.targetFields;
-    });
-
+    data.data_source_match_rules = buildDataSourceMatchRules(
+      data.data_source_match_rules[0]?.field_compare_rules || [],
+      scopedIds.value,
+    );
     if (!formData.value.id) {
       const res = await postIdps(data);
       emit('success', res.data?.callback_uri);
     } else {
       await putIdps(data);
       Message({ theme: 'success', message: t('认证源更新成功') });
-      emit('success');
+      emit('success', '');
     }
   } catch (e) {
     console.warn(e);
@@ -277,22 +244,64 @@ const handleSubmit = async () => {
   }
 };
 
-const {
-  changeSourceField,
-  handleToggle,
-  handleAddItem,
-  handleDeleteItem,
-  handleChange,
-} = useCustomPlugin(
-  formData,
-  dataSourceList,
-  builtinFields,
-  customFields,
-);
-
-const inputPassword = (val) => {
+const inputPassword = (val: string) => {
   formData.value.plugin_config.secret = val;
 };
+
+const handleScopeChange = () => {
+  window.changeInput = true;
+};
+
+watch(formData, () => {
+  isDisabled.value = props.data?.id
+    ? JSON.stringify(originalData) === JSON.stringify(formData.value)
+      && JSON.stringify(scopedIds.value) === JSON.stringify(originalScope)
+    : false;
+}, { deep: true });
+
+watch(scopedIds, () => {
+  isDisabled.value = false;
+}, { deep: true });
+
+onMounted(async () => {
+  try {
+    isLoading.value = true;
+    const [sourceRes, fieldRes] = await Promise.all([
+      getDataSourceList({ type: 'real' }),
+      getFields(),
+    ]);
+    if (props.data?.id) {
+      // 从查看态传入的详情数据直接合并回填，避免重复请求
+      formData.value = { ...formData.value, ...props.data };
+      scopedIds.value = props.data.data_source_match_rules?.map(item => item.data_source_id) || [];
+    } else {
+      // 新增态：回填认证源名称（父组件传入的默认对象）
+      formData.value.name = props.data?.name || '';
+    }
+    // 获取数据源字段
+    const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
+
+    dataSourceList.value = sourceRes.data?.map(item => ({
+      key: item.id,
+      name: item.name,
+      disabled: sourceIds.has(item.id),
+    })) || [];
+
+    builtinFields.value = fieldRes.data?.builtin_fields || [];
+    customFields.value = fieldRes.data?.custom_fields || [];
+
+    originalData = JSON.parse(JSON.stringify(formData.value));
+    originalScope = [...scopedIds.value];
+    nextTick(() => {
+      // 回填会触发 watch(scopedIds) 把 isDisabled 覆盖为 false，这里重置为无改动状态
+      isDisabled.value = !!props.data?.id;
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <style lang="less" scoped>

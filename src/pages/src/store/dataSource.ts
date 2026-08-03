@@ -39,22 +39,19 @@ export const useDataSourceStore = defineStore('dataSource', () => {
    */
   const handleFetchSyncStatus = async (dataSources: { id: number; pluginId: string }[]) => {
     if (!dataSources || dataSources.length === 0) return;
-
     // 并发获取所有目标数据源的同步记录
-    const results = await Promise.all(
-      dataSources.map(({ id, pluginId }) => {
-        const params: SyncRecordsParams = {
-          plugin_id: pluginId,
-          page: 1,
-          page_size: 10,
-        };
-        return getSyncRecords(id, params);
-      }),
-    );
+    const results = await Promise.all(dataSources.map(({ id, pluginId }) => {
+      const params: SyncRecordsParams = {
+        plugin_id: pluginId,
+        page: 1,
+        page_size: 10,
+      };
+      return getSyncRecords(id, params);
+    }));
     // 将每个数据源的最新状态存入 Map
     results.forEach((res, index) => {
       const dataSourceId = dataSources[index].id;
-      const data = res.data.results?.[0];
+      const data = res?.data?.results?.[0];
       if (data) {
         dataSourceSyncStatusMap.value.set(dataSourceId, data);
       }
@@ -63,6 +60,12 @@ export const useDataSourceStore = defineStore('dataSource', () => {
 
   /** 获取指定数据源信息 */
   const getDataSourceInfo = (pluginId: string) => dataSource.value.find(item => item.plugin_id === pluginId);
+
+  /** 获取指定数据源实例 */
+  const getDataSourceById = (id?: number | string) => dataSource.value.find(item => item.id === Number(id));
+
+  /** 获取指定插件类型下的所有数据源实例 */
+  const getDataSourcesByPlugin = (pluginId: string) => dataSource.value.filter(item => item.plugin_id === pluginId);
 
   /**
    * 初始化所有已配置数据源的同步状态
@@ -84,6 +87,8 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     isConfiguredOtherPlugin,
     localDataSourceId,
     getDataSourceInfo,
+    getDataSourceById,
+    getDataSourcesByPlugin,
     handleFetchCurrentDataSource,
     handleFetchAllDataSourcePlugins,
     handleFetchSyncStatus,

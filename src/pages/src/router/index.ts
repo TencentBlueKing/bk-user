@@ -1,9 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 
 import { routes } from './routes';
 
 const router = createRouter({
-  history: createWebHistory(window.SITE_URL),
+  history: process.env.BK_DESIGN_PREVIEW === 'true'
+    ? createWebHashHistory()
+    : createWebHistory(window.SITE_URL),
   routes,
 });
 

@@ -76,7 +76,9 @@ const localeData = {
 
 const locale = computed(() => localeData[currentLang.value]);
 
-const url = `${window.BK_SHARED_RES_URL}/bk_user/base.js`;  // url 远程配置文件地址
+const url = process.env.BK_DESIGN_PREVIEW === 'true'
+  ? ''
+  : `${window.BK_SHARED_RES_URL}/bk_user/base.js`;  // url 远程配置文件地址
 const defaults = {
   name: '用户管理',
   nameEn: 'User Management',

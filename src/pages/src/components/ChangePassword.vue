@@ -80,7 +80,8 @@ const inputPassword = (param, val) => {
 
 const confirm = async () => {
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     if (formData.newPassword !== formData.confirmPassword) {
       return isError.value = true;
     }

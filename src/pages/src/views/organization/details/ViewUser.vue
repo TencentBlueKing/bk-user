@@ -171,7 +171,8 @@ const remainingDays = computed(() => (params) => {
 });
 
 const handleConfirm = async () => {
-  await formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   const  params = {
     account_expired_at: formData.value.dateTime === '-2' ? formData.value.custom : formData.value.dateTime,
   };

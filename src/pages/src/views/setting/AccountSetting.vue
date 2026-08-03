@@ -201,7 +201,8 @@ const handleChange = () => {
 const handleSubmit = () => {
   (async () => {
     try {
-      await formRef.value.validate();
+      const valid = await formRef.value?.validate?.().catch(() => false);
+      if (!valid) return;
       await putTenantUserValidityPeriod(formData.value);
       Message({ theme: 'success', message: t('更新成功') });
       cancelEdit();

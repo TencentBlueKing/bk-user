@@ -676,7 +676,7 @@ const toggleEmail = (value: OpenDialogSelect) => {
 };
 // 修改邮箱
 const changeEmail = async () => {
-  const result = await formRef.value.validate().catch(() => false);
+  const result = await formRef.value?.validate?.().catch(() => false);
   if (!result) return;
   patchUsersEmail({
     id: currentUserInfo.value.id,
@@ -819,7 +819,7 @@ const verifyIdentityInfo = async (type: OpenDialogType, value: any) => {
     showPhoneVerify.value = true;
   }
   if (type === OpenDialogType.email) {
-    const result = await formRef.value.validate();
+    const result = await formRef.value?.validate?.().catch(() => false);
     if (!result) return;
     emailInitialData.email = value.email;
     showEmailVerify.value = true;

@@ -4,7 +4,7 @@
       :class="[
         'flex items-center justify-between p-[16px] mb-[2px] bg-white rounded-sm shadow-sm cursor-pointer',
         'border border-white transition-all',
-        { 'hover:border-[1px] hover:border-solid hover:border-[#A3C5FD]': openHover && !disabled},
+        { 'hover:border-[1px] hover:border-solid hover:border-[#A3C5FD]': openHover && !disabled },
         { 'hover:border-white': disabled }
       ]"
       v-bk-tooltips="{
@@ -17,13 +17,24 @@
     >
       <div class="flex items-center">
         <img
-          v-if="data.logo"
+          v-if="data.logo && !logoLoadFailed"
           :src="data.logo"
           :class="[
             'w-[24px] h-[24px] mr-[12px]',
             { 'opacity-50': disabled }
           ]"
           :alt="data.name"
+          @error="logoLoadFailed = true"
+        />
+        <i
+          v-else-if="data.icon"
+          :class="[
+            'user-icon',
+            data.icon,
+            'w-[24px] h-[24px] mr-[12px] text-[24px] leading-[24px] text-[#979BA5]',
+            { 'opacity-50': disabled }
+          ]"
+          aria-hidden="true"
         />
         <div>
           <p
@@ -53,10 +64,12 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { ref, watch } from 'vue';
 
 interface CardItem {
   id?: string | number;
   logo?: string;
+  icon?: string;
   name: string;
   description?: string;
   [key: string]: any;
@@ -78,6 +91,12 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   click: [data: CardItem];
 }>();
+
+const logoLoadFailed = ref(false);
+
+watch(() => props.data.logo, () => {
+  logoLoadFailed.value = false;
+});
 
 /** 处理卡片点击 */
 const handleCardClick = () => {

@@ -70,7 +70,7 @@
     </div>
     <!-- 认证源详情 -->
     <bk-sideslider
-      :width="(authDetails?.id === 'local' && detailsConfig.isEdit) ? 960 : 640"
+      :width="(activeItem?.id === 'local' && detailsConfig.isEdit) ? 960 : 640"
       :is-show="detailsConfig.show"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
@@ -90,40 +90,54 @@
         </div>
       </template>
       <template #default>
-        <template v-if="authDetails?.id === 'local'">
+        <template v-if="activeItem?.id === 'local'">
+          <LocalView
+            v-if="!detailsConfig.isEdit"
+            :idp-id="activeItem?.idp_id"
+            @detail-loaded="handleDetailLoaded"
+          />
           <Local
-            v-if="detailsConfig.isEdit"
-            :current-id="authDetails?.idp_id"
-            :default-name="authDetails?.name"
+            v-else
+            :data="editData"
+            @success="localSuccess"
             @cancel="cancelEdit"
-            @success="localSuccess" />
-          <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
+          />
         </template>
-        <template v-else-if="authDetails?.id === 'wecom'">
+        <template v-else-if="activeItem?.id === 'wecom'">
+          <WeComView
+            v-if="!detailsConfig.isEdit"
+            :idp-id="activeItem?.idp_id"
+            @detail-loaded="handleDetailLoaded"
+          />
           <WeCom
-            v-if="detailsConfig.isEdit"
-            :data-source-id="getDataSourceIdForAuth('wecom')"
-            :current-id="authDetails?.idp_id"
-            :default-name="authDetails?.name"
+            v-else
+            :data="editData"
             @success="weComSuccess"
-            @cancel-edit="cancelEdit" />
-          <WeComView v-else :current-id="authDetails?.idp_id" />
+            @cancel="cancelEdit"
+          />
         </template>
         <template v-else>
+          <CustomView
+            v-if="!detailsConfig.isEdit"
+            :idp-id="activeItem?.idp_id"
+            :plugin-id="activeItem?.id"
+            @detail-loaded="handleDetailLoaded"
+          />
           <Custom
-            v-if="detailsConfig.isEdit"
-            :data-source-id="getDataSourceIdForAuth('custom')"
-            :auth-details="authDetails"
+            v-else
+            :data="editData"
+            :plugin-id="activeItem?.id"
             @success="customSuccess"
-            @cancel-edit="cancelEdit" />
-          <CustomView v-else :current-id="authDetails?.idp_id" :auth-details-id="authDetails?.id" />
+            @cancel="cancelEdit"
+          />
         </template>
       </template>
     </bk-sideslider>
   </div>
 </template>
 
-<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+<script setup lang="ts">
+import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
 import { h, inject, onMounted, reactive, ref } from 'vue';
 
 import Custom from './auth-config/CustomLogin.vue';
@@ -137,6 +151,9 @@ import {
   getIdps,
   getIdpsPlugins,
 } from '@/http';
+import type { IdpsPluginsDataItem } from '@/http/types/authSourceFiles';
+import fallbackLogo from '@/images/source.png';
+import wecomLogo from '@/images/wecom.svg';
 import { t } from '@/language/index';
 import router from '@/router';
 import { useMainViewStore } from '@/store';
@@ -149,29 +166,25 @@ const editLeaveBefore = inject('editLeaveBefore');
 const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
-const idpsPlugins = ref([]);
-onMounted(() => {
-  initDataSources();
-  initIdpsPlugins();
+interface IdpPluginItem extends IdpsPluginsDataItem {
+  idp_id?: string;
+  status?: string;
+  text?: string;
+}
+const idpsPlugins = ref<IdpPluginItem[]>([]);
+onMounted(async () => {
+  await initDataSources();
+  await initIdpsPlugins();
 });
 
 // 初始化数据源
 const initDataSources = async () => {
-  await dataSourceStore.handleFetchCurrentDataSource();
+  await Promise.all([
+    dataSourceStore.handleFetchCurrentDataSource(),
+    dataSourceStore.handleFetchAllDataSourcePlugins(),
+  ]);
 };
 
-// 获取认证源对应的数据源ID
-// 注意：如果对应类型的数据源未配置，将返回 undefined
-const getDataSourceIdForAuth = (authType: 'local' | 'wecom' | 'custom'): number | undefined => {
-  if (authType === 'local') {
-    // 本地认证源使用本地数据源ID
-    return dataSourceStore.localDataSourceId;
-  }
-  // 外部认证源使用第一个非本地数据源ID
-  // 如果没有配置外部数据源，返回 undefined
-  const externalDataSource = dataSourceStore.dataSource.find(ds => ds.plugin_id !== 'local');
-  return externalDataSource?.id;
-};
 
 const initIdpsPlugins = async () => {
   try {
@@ -181,10 +194,18 @@ const initIdpsPlugins = async () => {
       getIdps(''),
     ]);
 
-    idpsPlugins.value = pluginsRes.data;
+    const plugins = pluginsRes.data;
 
+    idpsPlugins.value = plugins.map(plugin => ({
+      ...plugin,
+      logo: plugin.logo || (plugin.id === 'wecom' ? wecomLogo : fallbackLogo),
+    }));
+
+    // 插件列表包含全部可配置的认证源，而已配置列表可能少于插件列表，
+    // 因此以插件列表为基准遍历：已配置的标记 idp_id 和状态，未配置的置灰并给出提示
+    const idpMap = new Map(idpsRes.data.map(idp => [idp.plugin.id, idp]));
     idpsPlugins.value.forEach((plugin) => {
-      const idp = idpsRes.data.find(idp => idp.plugin.id === plugin.id);
+      const idp = idpMap.get(plugin.id);
       if (idp) {
         plugin.idp_id = idp.id;
         plugin.status = idp.status;
@@ -208,24 +229,31 @@ const detailsConfig = reactive({
   isEdit: false,
 });
 
-const authDetails = ref({});
+
+const activeItem = ref<IdpPluginItem | null>(null);
 
 const handleClickActive = (item) => {
+  // 本地数据源未配置时，不支持点击
   if (!dataSourceStore.isConfiguredLocalPlugin && item.id === 'local') return;
-  if (!item.idp_id) {
+  const isNewConfig = !item.idp_id;
+  // 新增态构造默认对象传入 Edit，编辑态等 View emit 详情后再传入
+  editData.value = isNewConfig
+    ? { name: item.name }
+    : null;
+  if (isNewConfig) {
     detailsConfig.isEdit = true;
     detailsConfig.title = `${item.name}${t('登录配置')}`;
   } else {
     detailsConfig.isEdit = false;
     detailsConfig.title = `${item.name}${t('登录详情')}`;
   }
-  authDetails.value = item;
+  activeItem.value = item;
   detailsConfig.show = true;
 };
 
-const currentRow = ref({});
-const updateRow = (row) => {
-  currentRow.value = row;
+const editData = ref(null);
+const handleDetailLoaded = (data) => {
+  editData.value = data;
 };
 
 const handleEditDetails = () => {
@@ -405,6 +433,7 @@ const customSuccess = (url: string) => {
     initIdpsPlugins();
   }
 };
+
 const handleDataSource = () => {
   router.push({ name: 'dataSource' });
 };

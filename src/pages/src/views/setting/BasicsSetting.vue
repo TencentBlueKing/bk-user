@@ -106,7 +106,6 @@ import { getDisplayNameExpression, getDisplayNameExpressionPreview, getTenantInf
 import { t } from '@/language/index';
 import { useFieldData, useMainViewStore } from '@/store';
 
-
 const validate = useValidate();
 const fieldData = useFieldData();
 const store = useMainViewStore();
@@ -222,7 +221,9 @@ const processTemplateString = (template: string) => {
   const result = parts.map((char) => {
     if (char === placeholder && currentIndex < fields.length) {
       // 如果是占位符且还有字段，返回字段对象
-      return { type: 'field' as const, value: fields[currentIndex++] };
+      const field = fields[currentIndex];
+      currentIndex += 1;
+      return { type: 'field' as const, value: field };
     }
     // 否则返回文本对象
     return { type: 'symbol' as const, value: char };
@@ -282,7 +283,7 @@ watch(formData, () => {
 
 const saveEdit = async () => {
   try {
-    const result = await formRef.value.validate().catch(() => false);
+    const result = await formRef.value?.validate?.().catch(() => false);
     if (!result) return;
     const { id, ...params } = formData.value;
     await Promise.all([

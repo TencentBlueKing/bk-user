@@ -34,6 +34,10 @@
           </bk-radio-group>
         </bk-form-item>
       </Row>
+      <EffectiveScopeEditor
+        v-model="scopeValue"
+        @change="handleScopeChange"
+      />
       <Row :title="$t('登录认证匹配')">
         <div class="item-flex-header">
           <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
@@ -53,11 +57,11 @@
               >
                 <bk-option
                   class="option-select"
-                  v-for="option in item.targetFields"
+                  v-for="option in fieldOptions"
                   :key="option.name"
                   :id="option.name"
                   :name="option.name"
-                  :disabled="option.disabled">
+                  :disabled="item.field_compare_rules.some(c => c.target_field === option.name)">
                   <span>{{option.name}}</span>
                   <span>{{option.type}}</span>
                 </bk-option>
@@ -79,7 +83,7 @@
             <bk-button
               text
               :disabled="item.field_compare_rules.length === 1"
-              @click="handleDeleteItem(field.target_field, index, item.field_compare_rules, i)">
+              @click="handleDeleteItem(index, item.field_compare_rules, i)">
               <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
             </bk-button>
           </div>
@@ -90,7 +94,7 @@
       <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit" :disabled="isDisabled">
         {{ $t('提交') }}
       </bk-button>
-      <bk-button @click="emit('cancelEdit')">
+      <bk-button @click="emit('cancel')">
         {{ $t('取消') }}
       </bk-button>
     </div>
@@ -99,25 +103,29 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { onMounted, ref, toRaw, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue';
+
+import EffectiveScopeEditor from './EffectiveScopeEditor.vue';
+import { buildDataSourceMatchRules } from './utils';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
-import { getDataSourceList, getFields, getIdpsDetails, getIdpsPluginsConfig, postIdps, putIdps } from '@/http';
+import { getDataSourceList, getFields, getIdpsPluginsConfig, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
 
 const props = defineProps({
-  dataSourceId: {
-    type: Number,
-    default: undefined,
-  },
-  authDetails: {
+  data: {
     type: Object,
+    default: null,
+  },
+  pluginId: {
+    type: String,
+    default: '',
   },
 });
 
-const emit = defineEmits(['cancelEdit', 'success']);
+const emit = defineEmits(['cancel', 'success']);
 
 const validate = useValidate();
 
@@ -125,26 +133,27 @@ const formRef = ref();
 const schemaFormRef = ref();
 const isLoading = ref(false);
 const btnLoading = ref(false);
+const scopeValue = ref<number[]>([]);
 const formData = ref({
-  name: props?.authDetails?.name,
+  name: '',
   status: 'enabled',
-  plugin_id: props?.authDetails?.id,
+  plugin_id: '',
   plugin_config: {},
   data_source_match_rules: [
     {
-      data_source_id: props?.dataSourceId,
+      data_source_id: undefined,
       field_compare_rules: [
         {
           target_field: '',
           source_field: '',
         },
       ],
-      targetFields: [],
     },
   ],
 });
 
 let originalData = {};
+let originalScope: number[] = [];
 const isDisabled = ref(true);
 
 const LoginMethod = ref('a');
@@ -163,6 +172,12 @@ const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
 
+// 目标字段下拉选项（全局一份，disabled 由各规则的 field_compare_rules 实时计算）
+const fieldOptions = computed(() => [
+  ...(builtinFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('内置') })),
+  ...(customFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('自定义') })),
+]);
+
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -171,40 +186,34 @@ onMounted(async () => {
       getFields(),
     ]);
     getJsonSchema(); // 获取自定义配置
-    if (props?.authDetails?.idp_id) {
-      // 获取已配置详情
-      const authRes = await getIdpsDetails(props.authDetails.idp_id);
-      if (authRes.data?.id) {
-        formData.value = authRes.data;
-        formData.value.data_source_match_rules[0].data_source_id = props?.dataSourceId;
-      }
+    if (props.data?.id) {
+      // 从查看态传入的详情数据直接合并回填，避免重复请求
+      formData.value = { ...formData.value, ...props.data };
+      scopeValue.value = props.data.data_source_match_rules?.map(item => item.data_source_id) || [];
+    } else {
+      // 新增态：回填插件标识和认证源名称
+      formData.value.plugin_id = props.pluginId;
+      formData.value.name = props.data?.name || '';
     }
     // 获取数据源字段
     const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
 
-    dataSourceList.value = sourceRes.data?.map(item => ({
+    const availableSources = sourceRes.data || [];
+    dataSourceList.value = availableSources.map(item => ({
       key: item.id,
-      name: item.name,
+      name: item.name || String(item.id),
       disabled: sourceIds.has(item.id),
-    })) || [];
-
-    const allFields = [
-      ...(fieldRes.data?.builtin_fields?.map(item => ({ ...item, type: t('内置') })) || []),
-      ...(fieldRes.data?.custom_fields?.map(item => ({ ...item, type: t('自定义') })) || []),
-    ];
+    }));
 
     builtinFields.value = fieldRes.data?.builtin_fields || [];
     customFields.value = fieldRes.data?.custom_fields || [];
 
-    formData.value.data_source_match_rules?.forEach((rule) => {
-      rule.targetFields = allFields.map(field => ({
-        key: field.id,
-        name: field.name,
-        disabled: rule.field_compare_rules.some(compareRule => compareRule.target_field === field.name),
-        type: field.type,
-      }));
-    });
     originalData = JSON.parse(JSON.stringify(toRaw(formData.value)));
+    originalScope = [...scopeValue.value];
+    // watch(scopeValue) 回调异步执行会把 isDisabled 覆盖为 false，需等其执行完再重置
+    nextTick(() => {
+      isDisabled.value = !!props.data?.id;
+    });
   } catch (error) {
     console.error(error);
   } finally {
@@ -214,27 +223,30 @@ onMounted(async () => {
 
 const jsonSchema = ref({});
 const getJsonSchema = () => {
-  //
-  getIdpsPluginsConfig(props?.authDetails?.id).then((res) => {
+  getIdpsPluginsConfig(props.pluginId).then((res) => {
     jsonSchema.value = res.data?.json_schema;
   });
 };
 watch(formData, () => {
-  isDisabled.value = props?.authDetails?.idp_id
+  isDisabled.value = props.data?.id
     ? JSON.stringify(originalData) === JSON.stringify(toRaw(formData.value))
+      && JSON.stringify(scopeValue.value) === JSON.stringify(originalScope)
     : false;
+}, { deep: true });
+watch(scopeValue, () => {
+  isDisabled.value = false;
 }, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {
-    const plugName = props.authDetails.name;
+    const plugName = props.data?.name;
     InfoBox({
       title: t('确认要关闭x登录吗？', { name: plugName }),
       subTitle: t('关闭后用户将无法通过x登录', { name: plugName }),
       onConfirm() {
         formData.value.status = 'disabled';
       },
-      onClosed() {
+      onCancel() {
         formData.value.status = 'enabled';
       },
       quickClose: false,
@@ -248,21 +260,23 @@ const changeStatus = (value: boolean) => {
 //  提交企自定义认证源配置信息
 const handleSubmit = async () => {
   try {
-    await schemaFormRef.value.element.validate();
-    await formRef.value.validate();
+    let valid = await schemaFormRef.value.element.validate().catch(() => false);
+    if (!valid) return;
+    valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     btnLoading.value = true;
     const data = formData.value;
-    data.data_source_match_rules.forEach((item) => {
-      delete item.targetFields;
-    });
-
+    data.data_source_match_rules = buildDataSourceMatchRules(
+      data.data_source_match_rules[0]?.field_compare_rules || [],
+      scopeValue.value,
+    );
     if (!formData.value.id) {
       const res = await postIdps(data);
       emit('success', res.data?.callback_uri);
     } else {
       await putIdps(data);
       Message({ theme: 'success', message: t('认证源更新成功') });
-      emit('success');
+      emit('success', '');
     }
   } catch (e) {
     console.warn(e);
@@ -280,12 +294,14 @@ const {
 } = useCustomPlugin(
   formData,
   dataSourceList,
-  builtinFields,
-  customFields,
 );
 
 const changePluginConfig = (value: any) => {
   formData.value.plugin_config = value;
+};
+
+const handleScopeChange = () => {
+  window.changeInput = true;
 };
 </script>
 

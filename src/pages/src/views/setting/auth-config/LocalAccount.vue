@@ -24,6 +24,11 @@
           />
         </bk-form-item>
       </Row>
+      <EffectiveScopeEditor
+        v-model="formData.scopeIds"
+        local-only
+        @change="handleChange"
+      />
       <Row :title="$t('密码规则')" v-if="formData.config?.password_rule">
         <bk-form-item :label="$t('密码长度')" property="config.password_rule.min_length" required>
           <bk-input
@@ -263,30 +268,26 @@ import { InfoBox } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
+import EffectiveScopeEditor from './EffectiveScopeEditor.vue';
+
 import Row from '@/components/layouts/ItemRow.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import {
   getDefaultConfig,
-  getLocalIdps,
   postLocalIdps,
   putLocalIdps,
   randomPasswords,
 } from '@/http';
+import { LocalIdpDetail, LocalIdpPluginConfig, NewLocalIdpsParams } from '@/http/types/authSourceFiles';
 import { t } from '@/language/index';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
-const props = defineProps({
-  currentId: {
-    type: String,
-    default: '',
-  },
-  defaultName: {
-    type: String,
-    default: '',
-  },
-});
+interface IProps {
+  data?: LocalIdpDetail;
+}
+const props = defineProps<IProps>();
 
 const emit = defineEmits(['cancel', 'success']);
 
@@ -333,9 +334,10 @@ const isDisabled = ref(true);
 const isInputEyesDisabled = ref(false);
 
 const formData = reactive({
-  name: props?.defaultName,
+  name: '',
   status: '',
-  config: {},
+  config: {} as LocalIdpPluginConfig,
+  scopeIds: [],
 });
 
 const maxTrailTimesList = reactive([
@@ -343,7 +345,6 @@ const maxTrailTimesList = reactive([
   { times: 5, text: `5 ${t('次')}` },
   { times: 10, text: `10 ${t('次')}` },
 ]);
-
 
 const isContinuousDisabled = computed(() => Number(formData.config?.password_rule?.not_continuous_count) === 0);
 
@@ -377,42 +378,11 @@ const continuousRuleList = computed({
     });
   },
 });
-/** 密码不能连续出现的次数 */
-function handleNotContinuousCountInput(value) {
-  // 空字符串/undefined/null 视为不合法
-  if (value === '' || value === undefined || value === null) {
-    passwordCountError.value = true;
-    triggerPasswordConfigValidate();
-    return;
-  }
-  const numValue = Number(value);
-  const isValueInRange = numValue === 0 || (numValue >= 3 && numValue <= 10);
-  passwordCountError.value = !isValueInRange;
-  triggerPasswordConfigValidate();
-  if (numValue === 0) {
-    continuousRuleList.value = [];
-    passwordConfigError.value = false;
-  }
-}
-/** 密码规则 */
-function triggerPasswordConfigValidate() {
-  const list = Object.entries(formData.config?.password_rule)
-    .filter(([key, val]) => passwordNotAllowed[key] && val)
-    .map(val => val);
-  // 密码不能连续出现的次数不为0时，必须选择至少一个密码不能连续出现的规则
-  if (formData.config?.password_rule?.not_continuous_count !== 0) {
-    passwordConfigError.value = !!list.every(v => !v);
-  }
-}
-/** 密码必须包含规则校验 */
-function handleMustIncludeRuleChange() {
-  const list = Object.entries(formData.config?.password_rule)
-    .filter(([key, val]) => passwordMustIncludes[key] && val);
-  passwordRuleError.value = !list.some(([, val]) => val);
-}
+
+const btnLoading = ref(false);
 
 // 编辑通知方式
-const handleEditorText = (html, text, key, type) => {
+const handleEditorText = (html: string, text: string, key: string, type: string) => {
   const templates = ref(key === 'password_expiring' || key === 'password_expired'
     ? formData.config.password_expire.notification.templates
     : formData.config.password_initial.notification.templates);
@@ -424,7 +394,7 @@ const handleEditorText = (html, text, key, type) => {
   });
 };
 
-const handleClickLabel = (item) => {
+const handleClickLabel = (item: typeof NOTIFICATION_METHODS[number]) => {
   NOTIFICATION_METHODS.forEach((element) => {
     element.status = element.value === item.value;
   });
@@ -440,22 +410,25 @@ const passwordExpireTemplate = () => {
   isDropdownPasswordExpire.value = !isDropdownPasswordExpire.value;
 };
 
-const btnLoading = ref(false);
 const handleSubmit = async () => {
   try {
     if (passwordRuleError.value
       || passwordCountError.value
       || passwordConfigError.value
       || enabledMethodsError.value) return;
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     btnLoading.value = true;
-    const params = {
+    const params: NewLocalIdpsParams = {
       name: formData.name,
       status: formData.config?.enable_password ? 'enabled' : 'disabled',
       plugin_config: formData.config,
+      data_source_match_rules: formData.scopeIds.map(id => ({
+        data_source_id: id,
+      })),
     };
-    if (props.currentId) {
-      params.id = props.currentId;
+    if (props.data?.id) {
+      params.id = props.data?.id;
       await putLocalIdps(params);
       emit('success', formData.config?.enable_password);
     } else {
@@ -473,7 +446,7 @@ const handleChange = () => {
   window.changeInput = true;
 };
 
-const changeAccountPassword = (value) => {
+const changeAccountPassword = (value: boolean) => {
   if (!value) {
     InfoBox({
       title: t('确认要关闭账密登录吗？'),
@@ -481,7 +454,7 @@ const changeAccountPassword = (value) => {
       onConfirm() {
         formData.config.enable_password = value;
       },
-      onClosed() {
+      onCancel() {
         formData.config.enable_password = !value;
       },
       quickClose: false,
@@ -502,20 +475,56 @@ const handleRandomPassword = async () => {
     console.warn(e);
   }
 };
+
 /** 密码生成方式 - 固定时是否禁用eyes */
 const setIsIntPutEyesDisabled = (fixed_password: string) => {
   isInputEyesDisabled.value = !!fixed_password;
 };
 
-const inputPassword = (val) => {
+const inputPassword = (val: string) => {
   formData.config.password_initial.fixed_password = val;
 };
+
+/** 密码不能连续出现的次数 */
+function handleNotContinuousCountInput(value) {
+  // 空字符串/undefined/null 视为不合法
+  if (value === '' || value === undefined || value === null) {
+    passwordCountError.value = true;
+    triggerPasswordConfigValidate();
+    return;
+  }
+  const numValue = Number(value);
+  const isValueInRange = numValue === 0 || (numValue >= 3 && numValue <= 10);
+  passwordCountError.value = !isValueInRange;
+  triggerPasswordConfigValidate();
+  if (numValue === 0) {
+    continuousRuleList.value = [];
+    passwordConfigError.value = false;
+  }
+}
+
+/** 密码规则 */
+function triggerPasswordConfigValidate() {
+  const list = Object.entries(formData.config?.password_rule)
+    .filter(([key, val]) => passwordNotAllowed[key] && val)
+    .map(val => val);
+  // 密码不能连续出现的次数不为0时，必须选择至少一个密码不能连续出现的规则
+  if (formData.config?.password_rule?.not_continuous_count !== 0) {
+    passwordConfigError.value = !!list.every(v => !v);
+  }
+}
+/** 密码必须包含规则校验 */
+function handleMustIncludeRuleChange() {
+  const list = Object.entries(formData.config?.password_rule)
+    .filter(([key, val]) => passwordMustIncludes[key] && val);
+  passwordRuleError.value = !list.some(([, val]) => val);
+}
 
 let isInitialized = false;
 
 watch(formData, () => {
   if (!isInitialized) return;
-  isDisabled.value = props?.currentId ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
+  isDisabled.value = props?.data?.id ? JSON.stringify(originalData) === JSON.stringify(formData) : false;
   window.changeInput = !isDisabled.value;
 }, { deep: true });
 
@@ -537,16 +546,22 @@ watch(() => formData.config?.password_initial?.notification?.enabled_methods, (v
 onMounted(async () => {
   isLoading.value = true;
   try {
-    if (props.currentId) {
-      // 获取数据源详情
-      const res = await getLocalIdps(props.currentId);
-      formData.name = res?.data?.name;
-      formData.status = res?.data?.status;
-      formData.config = res?.data?.plugin_config;
+    if (props.data?.id) {
+      // 从查看态传入的详情数据直接回填，避免重复请求
+      formData.name = props.data.name;
+      formData.status = props.data.status;
+      formData.config = props.data.plugin_config;
+      if (props.data.data_source_match_rules?.length) {
+        formData.scopeIds = props.data.data_source_match_rules.map(item => item.data_source_id);
+      }
     } else {
-      // 获取默认配置
+      // 新增态：回填认证源名称（父组件传入的默认对象）
+      formData.name = props.data?.name || '';
+      // 新增本地认证源：本地认证源依赖本地数据源（未配置本地数据源时无法进入此表单），
+      // 其密码规则等配置继承自 local 插件的默认配置，需走接口获取；
+      // 其他认证源（WeCom/Custom）的 plugin_config 结构固定，在组件内初始化默认结构即可，无需请求
       const res = await getDefaultConfig('local');
-      formData.config = res?.data?.config || {};
+      formData.config = (res?.data?.config || {})  as LocalIdpPluginConfig;
       formData.config.enable_password = true;
     }
     originalData = JSON.parse(JSON.stringify(formData));

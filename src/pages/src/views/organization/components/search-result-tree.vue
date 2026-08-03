@@ -24,22 +24,32 @@
       :data="treeData"
       :selected="selectedNode"
       label="name"
-      node-key="id"
+      node-key="treeKey"
       children="children"
-      :prefix-icon="getPrefixIcon"
       @node-click="(node: IOrg) => handleNodeClick(node)"
       :async="{
-        callback: (node: IOrg) => getRemoteData(node, organizationStore.currentTenant.id),
+        callback: loadNodeChildren,
         cache: true,
       }"
     >
-      <template #node="node: IOrg & { __attr__: { isRoot: boolean } }">
+      <template #nodeType="node: IOrg">
+        <img
+          v-if="node.nodeType === 'source' && node.logo"
+          class="source-node-logo"
+          :src="node.logo"
+          alt=""
+          @error="handleLogoError(node)" />
+        <i
+          v-else-if="node.nodeType === 'source'"
+          :class="['user-icon', getDataSourceIcon(node.plugin_id), 'source-node-fallback']" />
+        <i v-else class="bk-sq-icon icon-file-close department-node-icon" />
+      </template>
+      <template #node="node: IOrg">
         <div class="pr-[12px] relative">
           <span class="text-[14px] mr-[6px]">{{ node.name }}</span>
           <bk-tag
-            v-if="node.__attr__.isRoot
-              && organizationStore.isEqualLocalSourceId(node.data_source_id)
-              && organizationStore.hasExternalDataSource"
+            v-if="node.nodeType === 'source'
+              && organizationStore.isEqualLocalSourceId(node.data_source_id)"
             theme="info"
           >
             {{ $t('本地') }}
@@ -56,6 +66,7 @@ import { ref, toRef } from 'vue';
 import useOrganizationAside from '@/hooks/useOrganizationAside';
 import { getDepartmentsList } from '@/http/organizationFiles';
 import { CollaborationItemData, CurrentTenantData } from '@/http/types/organizationFiles';
+import { t } from '@/language/index';
 import useOrganizationStore from '@/store/organization';
 import { IOrg } from '@/types/organization';
 import { SelectedOrg } from '@/types/store';
@@ -71,76 +82,167 @@ defineProps<IProps>();
 const organizationStore = useOrganizationStore();
 const {
   getRemoteData,
-  getPrefixIcon,
 } = useOrganizationAside();
 
-const treeData = ref([]);
-const selectedNode = ref();
+const treeData = ref<IOrg[]>([]);
+const selectedNode = ref<IOrg | CurrentTenantData>();
 const currentTenant = toRef(organizationStore, 'currentTenant');
 
 /**
  * 根据organization_path转化为树结构
  */
-const getData =  (isChildren: boolean): Partial<IOrg>[] => {
-  const orgs = organizationStore.selectedOrg.organizationPath || '';
-  let root: Partial<IOrg> | null = null;
-  let currentParent: Partial<IOrg> | null = null;
-  orgs.split('/').forEach((item) => {
-    const node = {
-      id: organizationStore.selectedOrg.deptName === item ? organizationStore.selectedOrg.deptId : item,
-      name: item,
-      children: [] as IOrg[],
-      async: isChildren,
-    } as unknown as IOrg;
-    if (!root) {
-      root = node;
-    } else {
-      currentParent.children.push(node);
-    }
+const getData = (isChildren: boolean): IOrg[] => {
+  const { selectedOrg } = organizationStore;
+  const dataSourceId = Number(selectedOrg.dataSourceId);
+  const pathSegments = (selectedOrg.organizationPath || '')
+    .split('/')
+    .map(item => item.trim())
+    .filter(Boolean);
+  const tenantNames = new Set([
+    selectedOrg.tenantName,
+    organizationStore.currentTenant.name,
+  ].filter(Boolean));
+  while (pathSegments.length && tenantNames.has(pathSegments[0])) {
+    pathSegments.shift();
+  }
+
+  const sourceInfo = selectedOrg.tenantId === organizationStore.currentTenant.id
+    ? organizationStore.getDataSourceInfo(dataSourceId)
+    : undefined;
+  const sourceName = sourceInfo?.name || t('数据源');
+  if (sourceInfo && pathSegments[0] === sourceName) {
+    pathSegments.shift();
+  }
+
+  const sourceNode: IOrg = {
+    id: dataSourceId,
+    name: sourceName,
+    has_children: pathSegments.length > 0,
+    data_source_id: dataSourceId,
+    nodeType: 'source',
+    treeKey: `source:${selectedOrg.tenantId}:${dataSourceId}`,
+    logo: sourceInfo?.logo,
+    plugin_id: sourceInfo?.plugin_id,
+    children: [],
+    async: false,
+  };
+  let currentParent = sourceNode;
+
+  pathSegments.forEach((name, index) => {
+    const isLast = index === pathSegments.length - 1;
+    const departmentId = isLast ? Number(selectedOrg.deptId) : undefined;
+    const node: IOrg = {
+      id: departmentId || 0,
+      name,
+      has_children: isLast ? isChildren : true,
+      data_source_id: dataSourceId,
+      nodeType: 'department',
+      treeKey: isLast
+        ? `department:${dataSourceId}:${departmentId}`
+        : `department-path:${dataSourceId}:${index}:${pathSegments.slice(0, index + 1).join('/')}`,
+      departmentId,
+      children: [],
+      async: isLast && isChildren,
+    };
+    currentParent.children?.push(node);
     currentParent = node;
-    if (organizationStore.selectedOrg.deptName === item) {
+    if (isLast) {
       selectedNode.value = node;
     }
   });
-  return [root];
+
+  if (pathSegments.length === 0) {
+    selectedNode.value = sourceNode;
+  }
+  return [sourceNode];
 };
 
 const handleNodeClick = (data: CurrentTenantData | CollaborationItemData | IOrg, isTenant = false) => {
-  selectedNode.value = data;
+  const tenantContext = {
+    tenantId: organizationStore.selectedOrg.tenantId,
+    tenantName: organizationStore.selectedOrg.tenantName,
+    tenantLogo: organizationStore.selectedOrg.tenantLogo,
+  };
   if (isTenant) {
-    // 点击租户节点，只传入租户信息
+    selectedNode.value = data as CurrentTenantData;
     organizationStore.updateSelectedOrg({
-      tenantId: currentTenant.value.id,
-      tenantName: currentTenant.value.name,
-      tenantLogo: currentTenant.value?.logo,
+      ...tenantContext,
+      nodeType: 'tenant',
     });
-  } else {
-    // 点击部门节点，传入完整信息
+  } else if ((data as IOrg).nodeType === 'source') {
+    selectedNode.value = data as IOrg;
     organizationStore.updateSelectedOrg({
-      tenantId: currentTenant.value.id,
-      tenantName: currentTenant.value.name,
-      tenantLogo: currentTenant.value?.logo,
+      ...tenantContext,
       dataSourceId: (data as IOrg).data_source_id,
-      deptId: (data as IOrg).id,
+      deptId: 0,
       deptName: (data as IOrg).name,
+      nodeType: 'source',
+    } as SelectedOrg);
+  } else {
+    const { departmentId } = data as IOrg;
+    // 搜索路径只包含末级部门 ID，中间路径节点不触发无效部门查询。
+    if (departmentId === undefined) {
+      return;
+    }
+    selectedNode.value = data as IOrg;
+    organizationStore.updateSelectedOrg({
+      ...tenantContext,
+      dataSourceId: (data as IOrg).data_source_id,
+      deptId: departmentId,
+      deptName: (data as IOrg).name,
+      nodeType: 'department',
     } as SelectedOrg);
   }
 };
 
+const loadNodeChildren = (node: IOrg) => {
+  if (node.nodeType !== 'department' || node.departmentId === undefined) {
+    return Promise.resolve([]);
+  }
+  return getRemoteData(node, organizationStore.selectedOrg.tenantId);
+};
+
+const handleLogoError = (node: IOrg) => {
+  node.logo = '';
+};
+
+const getDataSourceIcon = (pluginId?: string) => ({
+  general: 'icon-http',
+  ldap: 'icon-user-directory',
+  local: 'icon-shujuku',
+}[pluginId || ''] || 'icon-shujuyuanshu');
+
 /**
  * 根据搜索选中的组织路径(organization_path)构建树结构并加载子部门
- * 1. 解析 organization_path (如: "租户/部门A/部门B") 构建父子层级关系
+ * 1. 解析 organization_path (如: "租户/数据源/部门A/部门B") 构建父子层级关系
  * 2. 为最底层节点异步加载其子部门数据
  */
 const getTreeData = async () => {
-  const { data = [] } = await getDepartmentsList(
-    organizationStore.selectedOrg.deptId,
-    organizationStore.selectedOrg.tenantId,
-  );
-  treeData.value = getData(Boolean(data?.length));
+  const { selectedOrg } = organizationStore;
+  const departmentId = Number(selectedOrg.deptId);
+  const res = await getDepartmentsList(departmentId, selectedOrg.tenantId);
+  treeData.value = getData(Boolean(res.data?.length));
 };
 
 defineExpose({
   getTreeData,
 });
 </script>
+
+<style lang="less" scoped>
+.source-node-logo,
+.source-node-fallback,
+.department-node-icon {
+  width: 18px;
+  height: 18px;
+  margin: 0 6px;
+  color: #A3C5FD;
+  object-fit: contain;
+}
+
+.source-node-fallback,
+.department-node-icon {
+  font-size: 18px;
+  line-height: 18px;
+}
+</style>
