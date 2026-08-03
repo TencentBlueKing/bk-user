@@ -1,10 +1,19 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
+import { getDataSourcePlugins } from '@/http/dataSourceFiles';
 import { getCollaboration, getCurrentTenant } from '@/http/organizationFiles';
+import { DataSourcePluginsItemData } from '@/http/types/dataSourceFiles';
 import { CollaborationItemData, CurrentTenantData } from '@/http/types/organizationFiles';
 import { IOrg } from '@/types/organization';
 import { SelectedOrg } from '@/types/store';
+
+/** 富化后的数据源实例（含前端拼接字段） */
+type EnrichedDataSourceItem = CurrentTenantData['data_sources'][number] & {
+  name: string;
+  logo?: string;
+  description?: string;
+};
 
 /**
  * @description 原appStore 改为 organizationStore 因为该store只用于组织架构相关
@@ -23,7 +32,7 @@ export default defineStore('organization', () => {
   /**
    * 本租户信息 - 此账号的租户信息（不与协同租户信息混用）
    */
-  const currentTenant = ref<CurrentTenantData>({
+  const currentTenant = ref<Omit<CurrentTenantData, 'data_sources'> & { data_sources: EnrichedDataSourceItem[] }>({
     id: '',
     name: '',
     logo: '',
@@ -41,7 +50,6 @@ export default defineStore('organization', () => {
 
   const isSearchTree = ref(false);
   const reloadIndex = ref(1);
-
   /**
    * 是否配置了本地数据源
    * @description 数据源配置允许有一个本地数据源和一个外部数据源
@@ -52,27 +60,11 @@ export default defineStore('organization', () => {
    * 当前选中的数据源
    */
   const curSelectedDataSource = computed(() => {
-    if (selectedOrg.value.dataSourceId) {
+    if (selectedOrg.value.dataSourceId !== undefined) {
       return currentTenant.value.data_sources?.find(item => item.id === selectedOrg.value.dataSourceId);
     }
     return null;
   });
-  /**
-   * 本地数据源ID
-   */
-  const localSourceId = computed(() => currentTenant.value.data_sources?.find(item => item.plugin_id === 'local')?.id);
-
-  /**
-   * LDAP数据源ID
-   */
-  const ldapSourceId = computed(() => currentTenant.value.data_sources?.find(item => item.plugin_id === 'ldap')?.id);
-
-  /**
-   * 是否存在外部数据源（非本地数据源）
-   * @description 用于判断是否需要显示"本地"标签，只有存在外部数据源时才需要区分
-   */
-  const hasExternalDataSource = computed(() => currentTenant.value.data_sources?.some(item => item.plugin_id !== 'local'));
-
   /**
    * 是否选中了协同租户
    * @description 当选中的租户不为本租户，代表选中了协同租户
@@ -86,9 +78,12 @@ export default defineStore('organization', () => {
 
   /**
    * 当前选中的类型
-   * @description tenant: 租户，department: 部门
+   * @description tenant: 租户，source: 数据源，department: 部门
    */
   const curSelectedType = computed(() => {
+    if (selectedOrg.value.nodeType) {
+      return selectedOrg.value.nodeType;
+    }
     if (selectedOrg.value.deptId === 0) {
       return 'tenant';
     }
@@ -101,10 +96,51 @@ export default defineStore('organization', () => {
     Object.assign(selectedOrg.value, { ...defaultOrg, ...org });
   };
 
+  const enrichDataSources = (
+    sources: (CurrentTenantData['data_sources'][number] & {
+      name?: string;
+      logo?: string;
+      description?: string;
+    })[],
+    plugins: DataSourcePluginsItemData[],
+  ): EnrichedDataSourceItem[] => {
+    const pluginMap = new Map(plugins.map(plugin => [plugin.id, plugin]));
+    return sources.map((source) => {
+      const plugin = pluginMap.get(source.plugin_id);
+      return {
+        ...source,
+        name: source.name,
+        logo: plugin?.logo || '',
+        description: plugin?.description || '',
+      };
+    });
+  };
+
   /** 获取当前租户信息 */
   const handleFetchCurrentTenant = async () => {
-    const res = await getCurrentTenant();
-    currentTenant.value = res?.data;
+    try {
+      const [tenantResult, pluginResult] = await Promise.allSettled([
+        getCurrentTenant(),
+        getDataSourcePlugins(),
+      ]);
+
+      const tenant = tenantResult.status === 'fulfilled' ? tenantResult.value?.data : undefined;
+      if (!tenant) {
+        throw tenantResult.status === 'rejected' ? tenantResult.reason : new TypeError('Invalid current tenant response');
+      }
+
+      const plugins = pluginResult.status === 'fulfilled' && Array.isArray(pluginResult.value?.data)
+        ? pluginResult.value.data
+        : [];
+
+      currentTenant.value = {
+        ...tenant,
+        logo: typeof tenant.logo === 'string' ? tenant.logo : '',
+        data_sources: enrichDataSources(tenant.data_sources || [], plugins),
+      };
+    } catch (e) {
+      console.warn('Failed to fetch current tenant', e);
+    }
   };
 
   /** 获取协同租户列表 */
@@ -133,12 +169,13 @@ export default defineStore('organization', () => {
   // eslint-disable-next-line max-len
   const hasPluginDataSource = (pluginId: string) => currentTenant.value.data_sources?.some(item => item.plugin_id === pluginId);
 
-  /** 与本地数据源ID是否一致 */
-  // eslint-disable-next-line eqeqeq
-  const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => localSourceId.value != null && dataSourceId === localSourceId.value;
-
   /** 获取数据源信息 */
   const getDataSourceInfo = (dataSourceId: IOrg['data_source_id']) => currentTenant.value.data_sources?.find(item => item.id === dataSourceId);
+
+  /** 数据源实例是否为本地数据源 */
+  const isEqualLocalSourceId = (dataSourceId: IOrg['data_source_id']) => (
+    getDataSourceInfo(dataSourceId)?.plugin_id === 'local'
+  );
 
   return {
     collaborationList,
@@ -148,9 +185,6 @@ export default defineStore('organization', () => {
     curSelectedDataSource,
     isConfiguredLocalSource,
     isSearchTree,
-    localSourceId,
-    ldapSourceId,
-    hasExternalDataSource,
     reloadIndex,
     selectedOrg,
     getDataSourceInfo,

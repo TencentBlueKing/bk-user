@@ -10,6 +10,9 @@
       ref="formRef1"
       :model="serverConfigData"
       :rules="rulesServerConfig">
+      <DataSourceBasicInfo
+        v-model="serverConfigData.name"
+      />
       <Row :title="$t('认证配置')">
         <bk-form-item :label="$t('认证方式')" required>
           <bk-radio-group
@@ -232,7 +235,7 @@
       </Row>
       <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
         <template #header>
-          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+          <ConflictTips :has-other-data-source="hasOtherDataSource" />
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
@@ -259,6 +262,7 @@ import QueryParams from './query-params/QueryParams.vue';
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
+import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -296,6 +300,8 @@ const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
 const userStore = useUser();
 const dataSourceStore = useDataSourceStore();
+const hasOtherDataSource = computed(() => dataSourceStore.dataSource
+  .some(item => item.id !== props.dataSourceId));
 
 const isLoading = ref(false);
 const formRef1 = ref();
@@ -307,6 +313,7 @@ const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 const defaultServerConfig = () => ({
   plugin_id: 'general',
+  name: '',
   server_config: {
     server_base_url: '',
     user_api_path: '',
@@ -426,15 +433,15 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     if (isEdit.value) {
-      const res = await getDataSourceDetails(props.dataSourceId);
-      serverConfigData.value.plugin_id = res.data?.plugin?.id;
-      if (JSON.stringify(res.data?.plugin_config) !== '{}') {
-        serverConfigData.value.server_config = res.data?.plugin_config?.server_config;
-        serverConfigData.value.auth_config = res.data?.plugin_config?.auth_config;
+      const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      serverConfigData.value.plugin_id = details?.plugin?.id;
+      if (JSON.stringify(details?.plugin_config) !== '{}') {
+        serverConfigData.value.server_config = details?.plugin_config?.server_config;
+        serverConfigData.value.auth_config = details?.plugin_config?.auth_config;
       }
-      fieldSettingData.value.sync_config = res.data?.sync_config;
-      fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_generate_config = res.data?.username_generate_config;
+      fieldSettingData.value.sync_config = details?.sync_config;
+      fieldMappingList.value = details?.field_mapping;
+      fieldSettingData.value.username_generate_config = details?.username_generate_config;
     } else {
       serverConfigData.value = defaultServerConfig();
     }
@@ -552,8 +559,8 @@ const handleLastStep = async () => {
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
   if (isEdit.value) {
-    const res = await getDataSourceDetails(props.dataSourceId);
-    fieldSettingData.value.sync_config = res.data?.sync_config;
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    fieldSettingData.value.sync_config = details?.sync_config;
   } else {
     fieldSettingData.value.sync_config.sync_period = 24 * 60;
   }
@@ -683,14 +690,17 @@ const handleSubmit = async () => {
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
+        name: serverConfigData.value.name,
       });
     } else {
       params.plugin_id = serverConfigData.value.plugin_id;
+      params.name = serverConfigData.value.name;
       params.username_generate_config = conflictConfigRef.value?.getData();
       const res = await newDataSource(params);
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,
+        name: serverConfigData.value.name,
       });
     }
     window.changeInput = false;

@@ -90,7 +90,8 @@ const isLoading = ref(false);
 
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
 
     isLoading.value = true;
     if (formData.id) {

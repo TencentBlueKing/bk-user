@@ -78,7 +78,7 @@
       v-model:is-show="batchPasswordDialogShow"
       :loading="isResetPasswordLoading"
       :password-tips="passwordTips"
-      :data-source-id="organizationStore.localSourceId"
+      :data-source-id="selectedLocalSourceId"
       @confirm="handleBatchResetPasswordConfirm"
     />
     <!-- 批量修改信息弹窗 -->
@@ -107,7 +107,7 @@
               v-for="(item, index) in userInfoOptions"
               :key="index"
               :class="{ 'is-selected': item.selected, 'is-disabled': getOptionDisabled(item) }"
-              @click.native="selectOption(item)"
+              @click="selectOption(item)"
             >
               {{ item.text }}
               <i v-if="item.selected" class="user-icon icon-check-line" />
@@ -154,10 +154,11 @@
       </bk-form>
     </bk-dialog>
     <!-- 批量续期弹窗 -->
-    <batchRenewal
+    <BatchRenewal
       v-model:is-show-renewal="isShowRenewal"
       @batch-renewal="handleRenewal"
-      :user-ids="userIds" />
+      :user-ids="userIds"
+      :data-source-id="selectedLocalSourceId" />
   </div>
 </template>
 
@@ -168,7 +169,7 @@ import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
-import batchRenewal from './batch-renewal.vue';
+import BatchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
@@ -182,6 +183,7 @@ import useOrganizationStore from '@/store/organization';
 
 interface IProps {
   selectList: TenantsUserItemData[];
+  dataSourceId?: number;
 }
 
 const props = defineProps<IProps>();
@@ -191,10 +193,18 @@ const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 're
 const organizationStore = useOrganizationStore();
 
 /** 当前选中的是否包含非本地数据源 */
-// eslint-disable-next-line max-len
-const isSelectedNotLocalSource = computed(() => props.selectList.some(item => item.data_source_id !== organizationStore.localSourceId));
+const isSelectedNotLocalSource = computed(() => (
+  props.selectList.some(item => !organizationStore.isEqualLocalSourceId(item.data_source_id))
+));
 /** 当前数据源是否为本地数据源 */
 const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
+const selectedLocalSourceId = computed(() => (
+  props.dataSourceId
+    ?? (
+      props.selectList.find(item => organizationStore.isEqualLocalSourceId(item.data_source_id))?.data_source_id
+      || (isLocalDataSource.value ? organizationStore.selectedOrg.dataSourceId : undefined)
+    )
+));
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const state = reactive({
   logoutDropdown: false,
@@ -222,8 +232,9 @@ const userInfoOptions = ref([
 /**
  * @description 本地数据源是否启用了账密登录
  */
-// eslint-disable-next-line max-len
-const isEnabledPassword = computed(() => !!organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password);
+const isEnabledPassword = computed(() => (
+  !!organizationStore.getDataSourceInfo(selectedLocalSourceId.value)?.enable_password
+));
 
 /**
  * 移动至组织按钮禁用配置
@@ -341,6 +352,7 @@ onMounted(async () => {
     isLocalDataSource.value ? optionalLeaderList() : Promise.resolve([]),
   ]);
   extrasList.value = fieldsRes.data.custom_fields;
+  leaderList.value = leadersRes.data;
   extrasList.value.forEach((item) => {
     userInfoOptions.value.push({
       text: item.display_name,
@@ -349,7 +361,6 @@ onMounted(async () => {
       selected: false,
     });
   });
-  leaderList.value = leadersRes.data;
 });
 
 watch(infoFormData, (val) => {
@@ -358,7 +369,7 @@ watch(infoFormData, (val) => {
   });
 }, { deep: true, immediate: true });
 
-const getOptionDisabled = (item) => isSelectedNotLocalSource.value && item.type === 'leader';
+const getOptionDisabled = item => isSelectedNotLocalSource.value && item.type === 'leader';
 
 const selectOption = (selectedItem) => {
   if (getOptionDisabled(selectedItem)) {

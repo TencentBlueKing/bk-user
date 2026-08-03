@@ -5,6 +5,9 @@
       <LabelContent :label="$t('是否启用')">
         {{ idpsStatus ? $t('是') : $t('否') }}
       </LabelContent>
+      <LabelContent :label="$t('生效范围')">
+        <EffectiveScopeView :source-ids="scopeIds" />
+      </LabelContent>
     </ViewRow>
     <ViewRow :title="$t('密码规则')">
       <LabelContent :label="$t('密码长度')">
@@ -54,7 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+
+import EffectiveScopeView from './EffectiveScopeView.vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
@@ -62,14 +67,16 @@ import { getLocalIdps } from '@/http';
 import { t } from '@/language/index';
 import { noticeTimeMap, notificationMap, passwordMustIncludesMap, passwordNotAllowedMap } from '@/utils';
 
-const props = defineProps({
-  currentId: {
-    type: String,
-    default: '',
-  },
-});
+interface IProps {
+  idpId: string;
+}
+
+const props = defineProps<IProps>();
+
+const emit = defineEmits(['detail-loaded']);
 
 const isLoading = ref(false);
+const scopeIds = ref([]);
 const idpsName = ref({});
 const idpsStatus = ref(true);
 const passwordRule = ref({});
@@ -82,13 +89,15 @@ const passwordMethod = computed(() => (passwordInitial.value?.generate_method ==
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const res = await getLocalIdps(props.currentId);
-    idpsName.value = res.data?.name;
-    idpsStatus.value = res.data?.plugin_config?.enable_password;
-    passwordRule.value = res.data?.plugin_config?.password_rule;
-    passwordInitial.value = res.data?.plugin_config?.password_initial;
-    passwordExpire.value = res.data?.plugin_config?.password_expire;
-    loginLimit.value = res.data?.plugin_config?.login_limit;
+    const data = (await getLocalIdps(props.idpId))?.data;
+    idpsName.value = data?.name;
+    idpsStatus.value = data?.plugin_config?.enable_password;
+    passwordRule.value = data?.plugin_config?.password_rule;
+    passwordInitial.value = data?.plugin_config?.password_initial;
+    passwordExpire.value = data?.plugin_config?.password_expire;
+    loginLimit.value = data?.plugin_config?.login_limit;
+    scopeIds.value = data?.data_source_match_rules?.map(item => item.data_source_id) || [];
+    emit('detail-loaded', data);
   } catch (e) {
     console.warn(e);
   } finally {

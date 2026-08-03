@@ -10,6 +10,9 @@
       ref="formRef1"
       :model="ldapConfigData"
       :rules="rulesLdapConfig">
+      <DataSourceBasicInfo
+        v-model="ldapConfigData.name"
+      />
       <Row :title="$t('服务配置')">
         <bk-form-item class="w-[560px]" :label="$t('LDAP 服务地址')" required property="server_config.server_url">
           <bk-input
@@ -300,7 +303,7 @@
       </Row>
       <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
         <template #header>
-          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+          <ConflictTips :has-other-data-source="hasOtherDataSource" />
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
@@ -325,6 +328,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue';
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
+import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
@@ -336,22 +340,23 @@ import router from '@/router';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
-const props = defineProps({
-  curStep: {
-    type: Number,
-  },
-  dataSourceId: {
-    type: String,
-  },
-  isReset: {
-    type: Boolean,
-    default: false,
-  },
+
+interface IProps {
+  curStep: number;
+  dataSourceId: number;
+  isReset?: boolean;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  isReset: false,
 });
+
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
+const hasOtherDataSource = computed(() => dataSourceStore.dataSource
+  .some(item => item.id !== props.dataSourceId));
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
@@ -360,6 +365,7 @@ const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 interface LdapConfigData {
   plugin_id: string,
+  name: string,
   server_config: {
     server_url: string,
     bind_dn: string,
@@ -389,6 +395,7 @@ const UUID_ATTR_LIST = [
 ];
 const ldapConfigData = ref<LdapConfigData>({
   plugin_id: '',
+  name: '',
   server_config: {
     server_url: '',
     bind_dn: '',
@@ -522,8 +529,8 @@ const handleLastStep = async () => {
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
   if (isEdit.value) {
-    const res = await getDataSourceDetails(props.dataSourceId);
-    fieldSettingData.value.sync_config = res.data?.sync_config;
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    fieldSettingData.value.sync_config = details?.sync_config;
   } else {
     fieldSettingData.value.sync_config.sync_period = 24 * 60;
   }
@@ -747,20 +754,20 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     if (isEdit.value) {
-      const res = await getDataSourceDetails(props.dataSourceId);
-      ldapConfigData.value.plugin_id = res.data?.plugin?.id;
-      if (JSON.stringify(res.data?.plugin_config) !== '{}') {
+      const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      ldapConfigData.value.plugin_id = details?.plugin?.id;
+      if (JSON.stringify(details?.plugin_config) !== '{}') {
         ldapConfigData.value.data_config = {
-          ...res.data?.plugin_config?.data_config,
-          uuid_attribute: res.data?.plugin_config?.data_config?.uuid_attribute || UUID_ATTR_LIST[0].value,
-        },
-        ldapConfigData.value.server_config = res.data?.plugin_config?.server_config;
-        fieldSettingData.value.leader_config = res.data?.plugin_config?.leader_config;
-        fieldSettingData.value.user_group_config = res.data?.plugin_config?.user_group_config;
+          ...details?.plugin_config?.data_config,
+          uuid_attribute: details?.plugin_config?.data_config?.uuid_attribute || UUID_ATTR_LIST[0].value,
+        };
+        ldapConfigData.value.server_config = details?.plugin_config?.server_config;
+        fieldSettingData.value.leader_config = details?.plugin_config?.leader_config;
+        fieldSettingData.value.user_group_config = details?.plugin_config?.user_group_config;
       }
-      fieldSettingData.value.sync_config = res.data?.sync_config;
-      fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_generate_config = res.data?.username_generate_config;
+      fieldSettingData.value.sync_config = details?.sync_config;
+      fieldMappingList.value = details?.field_mapping;
+      fieldSettingData.value.username_generate_config = details?.username_generate_config;
     } else {
       ldapConfigData.value = defaultLdapConfig();
     }
@@ -804,14 +811,17 @@ const handleSubmit = async () => {
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
+        name: ldapConfigData.value.name,
       });
     } else {
       params.plugin_id = ldapConfigData.value.plugin_id;
+      params.name = ldapConfigData.value.name;
       params.username_generate_config = conflictConfigRef.value?.getData();
       const res = await newDataSource(params);
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,
+        name: ldapConfigData.value.name,
       });
     }
     window.changeInput = false;

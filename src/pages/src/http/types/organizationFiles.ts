@@ -37,6 +37,23 @@ export interface OptionalDepartmentsListData {
   organization_path: string;
 }
 
+/**
+ * 创建部门参数
+ */
+export interface AddDepartmentParams {
+  /** 数据源ID */
+  data_source_id: number;
+  /** 父部门 ID（为 0 表示创建根部门） */
+  parent_department_id?: number;
+  /** 部门名称 */
+  name: string;
+}
+
+/** 创建部门返回 */
+export interface AddDepartmentResult {
+  id: number;
+}
+
 /** 移至目标组织参数 */
 export interface BatchUpdateParams {
   user_ids: string[];
@@ -48,6 +65,7 @@ export interface CurrentTenantData {
   name: string;
   logo: string;
   data_sources: {
+    name: string;
     id: number;
     type: string;
     plugin_id: string;
@@ -76,6 +94,7 @@ export interface SearchOrganizationItemData {
 }
 
 export interface SearchUserItemData {
+  data_source_id?: number;
   full_name: string;
   id: string;
   organization_paths: string[];
@@ -117,4 +136,52 @@ export interface GetUserListParams {
 export interface OptionalDepartmentsListParams {
   keyword?: string;
   data_source_id: number;
+}
+
+/** 租户用户详情 */
+export interface TenantsUserDetailData {
+  id: string;
+  status: string;
+  username: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  phone_country_code: string;
+  account_expired_at: string;
+  password_expired_at: string;
+  extras: Record<string, string>;
+  logo: string;
+  language: string;
+  time_zone: string;
+  departments: {
+    id: number;
+    name: string;
+    organization_path: string;
+  }[];
+  leaders: {
+    id: string;
+    username: string;
+    full_name: string;
+  }[];
+}
+
+/** 用户组织路径 */
+export interface OrganizationPathsData {
+  organization_paths: string[];
+}
+
+/** 密码规则 */
+export interface PasswordRuleData {
+  min_length: number;
+  max_length: number;
+  contain_lowercase: boolean;
+  contain_uppercase: boolean;
+  contain_digit: boolean;
+  contain_punctuation: boolean;
+  not_continuous_count: number;
+  not_keyboard_order: boolean;
+  not_continuous_letter: boolean;
+  not_continuous_digit: boolean;
+  not_repeated_symbol: boolean;
+  rule_tips: string[];
 }
