@@ -337,7 +337,7 @@ const handleSyncRecords = async () => {
     statuses: dataRecordConfig.status,
   };
 
-  const res = await getSyncRecords(props.dataSource[0]?.id || 0, params);
+  const res = await getSyncRecords(params);
   dataRecordConfig.list = res.data.results;
   pagination.count = res.data.count;
   // stop time polling

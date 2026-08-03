@@ -29,6 +29,7 @@ export default function useDataSourceSetting(callback?: Function) {
    * @param pluginId 数据源的插件 ID
    */
   const startDataSourceSync = (dataSourceId: number, pluginId: string) => {
+    console.log('startDataSourceSync', dataSourceId, pluginId);
     // 如果已经在轮询中，先停止
     if (isActive.value) {
       stopDataSourceSync();
@@ -41,6 +42,7 @@ export default function useDataSourceSetting(callback?: Function) {
 
     // 定义轮询回调函数
     const pollingCallback = async () => {
+      console.log('pollingCallback', dataSourceId, pluginId);
       await dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }]);
 
       // 检查数据源是否已完成同步
@@ -83,6 +85,7 @@ export default function useDataSourceSetting(callback?: Function) {
 
   // 组件卸载时清理定时器
   onUnmounted(() => {
+    console.log('stop!!!')
     stopDataSourceSync();
   });
 

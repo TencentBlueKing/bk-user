@@ -14,16 +14,18 @@
         v-model="formModel.name"
       />
       <Row :title="$t('导入')" class="!shadow-none !border-b-0">
-        <ConflictTips
-          type="alert"
-          :has-other-data-source="hasOtherDataSource"
-        />
-        <ConflictConfig
-          ref="conflictConfigRef"
-          variant="dialog"
-          :config="conflictConfig"
-          class="my-[16px]"
-        />
+        <div class="mb-[16px] w-[560px]">
+          <ConflictTips
+            type="alert"
+            :has-other-data-source="hasOtherDataSource"
+          />
+          <ConflictConfig
+            ref="conflictConfigRef"
+            variant="dialog"
+            :config="conflictConfig"
+            class="mt-[16px]"
+          />
+        </div>
         <ExcelUpload v-model="uploadFile" class="w-[560px]" />
         <div class="btn mt-[16px]">
           <bk-button

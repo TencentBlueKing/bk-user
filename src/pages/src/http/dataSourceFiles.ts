@@ -120,7 +120,7 @@ export const randomPasswords = (params: GeneratePasswordParams) => http.post<Res
 /**
  * 数据源更新记录
  */
-export const getSyncRecords = (id: number, params: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>('/api/v3/web/data-sources/sync-records/', params);
+export const getSyncRecords = (params: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>('/api/v3/web/data-sources/sync-records/', params);
 
 /**
  * 数据源更新日志

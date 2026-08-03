@@ -54,8 +54,16 @@ export interface AddDepartmentResult {
   id: number;
 }
 
+export interface PatchBatchUpdateParams {
+  data_source_id: number;
+  user_ids: string[];
+  target_department_ids: string[];
+  source_department_id: string[];
+}
+
 /** 移至目标组织参数 */
-export interface BatchUpdateParams {
+export interface PutBatchUpdateParams {
+  data_source_id: number;
   user_ids: string[];
   target_department_ids: string[];
 }
@@ -184,4 +192,60 @@ export interface PasswordRuleData {
   not_continuous_digit: boolean;
   not_repeated_symbol: boolean;
   rule_tips: string[];
+}
+
+export interface BatchCreatePreviewParams {
+  data_source_id: number;
+  user_infos: string[];
+  department_id: number;
+}
+
+export interface OptionalLeaderListParams {
+  keyword?: string;
+  data_source_id: number;
+  exclude_user_id: string;
+}
+
+export interface BatchResetPasswordParams {
+  data_source_id: number;
+  user_ids: string[];
+  password: string;
+}
+
+export interface BatchLeaderParams {
+  data_source_id: number;
+  user_ids: string[];
+  leader_ids: string[];
+}
+
+export interface BatchDeleteUserParams {
+  data_source_id: number;
+  user_ids: string;
+}
+
+export interface BatchCreateParams {
+  data_source_id: number;
+  user_ids: string[];
+  target_department_ids: number[];
+}
+
+export interface BatchDeleteParams {
+  data_source_id: number;
+  user_ids: string;
+  source_department_id: number;
+}
+
+export interface OptionalLeaderListItemData {
+  id: string;
+  username: string;
+  full_name: string;
+}
+
+export interface BatchCreatePreviewItemData {
+  username: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  phone_country_code: string;
+  extras: Record<string, string>;
 }

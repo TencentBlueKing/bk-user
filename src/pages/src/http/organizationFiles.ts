@@ -3,7 +3,14 @@ import { ResponseData } from './types';
 import type {
   AddDepartmentParams,
   AddDepartmentResult,
-  BatchUpdateParams,
+  BatchCreateParams,
+  BatchCreatePreviewData,
+  BatchCreatePreviewItemData,
+  BatchCreatePreviewParams,
+  BatchDeleteParams,
+  BatchDeleteUserParams,
+  BatchLeaderParams,
+  BatchResetPasswordParams,
   CollaborationItemData,
   CurrentTenantData,
   DepartmentsItemData,
@@ -11,8 +18,12 @@ import type {
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
+  OptionalLeaderListItemData,
+  OptionalLeaderListParams,
   OrganizationPathsData,
   PasswordRuleData,
+  PatchBatchUpdateParams,
+  PutBatchUpdateParams,
   SearchKeywordParams,
   SearchOrganizationItemData,
   SearchUserItemData,
@@ -142,27 +153,27 @@ export const resetTenantsUserPassword = (id: string, params: any) => http.put(`$
 /**
  * 批量删除用户
  */
-export const batchDeleteUser = (user_ids: any) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, { user_ids });
+export const batchDeleteUser = (params: BatchDeleteUserParams) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, params);
 
 /**
  * 移出当前组织
  */
-export const batchDelete = (params: any) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
+export const batchDelete = (params: BatchDeleteParams) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
 
 /**
  * 移至目标组织
  */
-export const batchUpdate = (params: BatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const patchBatchUpdate = (params: PatchBatchUpdateParams) => http.patch(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 从其他组织拉取 / 追加目标组织
  */
-export const batchCreate = (params: any) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
+export const batchCreate = (params: BatchCreateParams) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
 
 /**
  * 清空并加入组织
  */
-export const batchDelUpdate = (params: any) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const putBatchUpdate = (params: PutBatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 批量停用/启用
@@ -172,7 +183,7 @@ export const batchUpdateStatus = (params: any) => http.put(`${prefix}/tenants/us
 /**
  * 批量重置密码
  */
-export const batchResetPassword = (params: any) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
+export const batchResetPassword = (params: BatchResetPasswordParams) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
 
 /**
  * 批量续期
@@ -182,7 +193,7 @@ export const batchAccountExpired = (params: any) => http.put(`${prefix}/tenants/
 /**
  * 批量修改上级
  */
-export const batchLeader = (params: any) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
+export const batchLeader = (params: BatchLeaderParams) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
 
 /**
  * 批量修改自定义字段
@@ -193,7 +204,7 @@ export const batchCustomField = (params: any) => http.put(`${prefix}/tenants/use
 /**
  * 快速录入
  */
-export const operationsCreate = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
+export const operationsCreate = (params: BatchCreatePreviewParams) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
 
 /**
  * 快速录入字段 tips 来源
@@ -203,7 +214,7 @@ export const getFieldsTips = () => http.get(`${prefix}/tenants/required-user-fie
 /**
  * 快速录入数据预览
  */
-export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
+export const batchCreatePreview = (params: BatchCreatePreviewParams) => http.post<ResponseData<BatchCreatePreviewItemData[]>>(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
 
 /**
  * 可选部门
@@ -213,7 +224,7 @@ export const optionalDepartmentsList = (params: OptionalDepartmentsListParams) =
 /**
  * 可选leader
  */
-export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/tenants/optional-leaders/`, params);
+export const optionalLeaderList = (params: OptionalLeaderListParams) => http.get<ResponseData<OptionalLeaderListItemData[]>>(`${prefix}/tenants/optional-leaders/`, params);
 
 /**
  * 搜索组织

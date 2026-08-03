@@ -40,13 +40,13 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   const handleFetchSyncStatus = async (dataSources: { id: number; pluginId: string }[]) => {
     if (!dataSources || dataSources.length === 0) return;
     // 并发获取所有目标数据源的同步记录
-    const results = await Promise.all(dataSources.map(({ id, pluginId }) => {
+    const results = await Promise.all(dataSources.map(({ pluginId }) => {
       const params: SyncRecordsParams = {
         plugin_id: pluginId,
         page: 1,
         page_size: 10,
       };
-      return getSyncRecords(id, params);
+      return getSyncRecords(params);
     }));
     // 将每个数据源的最新状态存入 Map
     results.forEach((res, index) => {

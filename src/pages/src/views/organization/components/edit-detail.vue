@@ -219,7 +219,10 @@ const getOptionalDepartmentsList = (value = '') => {
     });
 };
 const getOptionalLeaderList = (value = '') => {
-  optionalLeaderList({ keyword: value, excluded_user_id: formData.id }).then((res) => {
+  optionalLeaderList({
+    keyword: value, exclude_user_id: formData.id,
+    data_source_id: props.dataSourceId,
+  }).then((res) => {
     leaderList.value = res.data;
   })
     .catch((e) => {

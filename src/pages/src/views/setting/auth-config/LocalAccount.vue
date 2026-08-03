@@ -25,7 +25,7 @@
         </bk-form-item>
       </Row>
       <EffectiveScopeEditor
-        v-model="formData.scopeIds"
+        v-model="formData.data_source_ids"
         local-only
         @change="handleChange"
       />
@@ -337,7 +337,7 @@ const formData = reactive({
   name: '',
   status: '',
   config: {} as LocalIdpPluginConfig,
-  scopeIds: [],
+  data_source_ids: [],
 });
 
 const maxTrailTimesList = reactive([
@@ -423,9 +423,7 @@ const handleSubmit = async () => {
       name: formData.name,
       status: formData.config?.enable_password ? 'enabled' : 'disabled',
       plugin_config: formData.config,
-      data_source_match_rules: formData.scopeIds.map(id => ({
-        data_source_id: id,
-      })),
+      data_source_ids: formData.data_source_ids,
     };
     if (props.data?.id) {
       params.id = props.data?.id;
@@ -551,9 +549,7 @@ onMounted(async () => {
       formData.name = props.data.name;
       formData.status = props.data.status;
       formData.config = props.data.plugin_config;
-      if (props.data.data_source_match_rules?.length) {
-        formData.scopeIds = props.data.data_source_match_rules.map(item => item.data_source_id);
-      }
+      formData.data_source_ids = props.data.data_source_ids;
     } else {
       // 新增态：回填认证源名称（父组件传入的默认对象）
       formData.name = props.data?.name || '';

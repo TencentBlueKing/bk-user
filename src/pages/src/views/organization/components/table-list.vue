@@ -25,7 +25,7 @@
       </bk-button>
       <batchOperation
         :select-list="selectList"
-        :data-source-id="selectedLocalSourceId"
+        :data-source-id="organizationStore.selectedOrg.dataSourceId"
         @move-org="batchMoveOrg"
         @reload-list="handleAfterBatchOperation"
       />
@@ -444,7 +444,7 @@
   <!-- 导入弹框 -->
   <ImportDialog
     v-model:is-show="importDialogShow"
-    :data-source-id="selectedLocalSourceId"
+    :data-source-id="organizationStore.selectedOrg.dataSourceId"
     @success="reloadList"
   />
 </template>
@@ -474,7 +474,6 @@ import { randomPasswords } from '@/http';
 import {
   batchCreate,
   batchDelete,
-  batchDelUpdate,
   delTenantsUser,
   getOrganizationPaths,
   getTenantsUserDetail,
@@ -482,11 +481,12 @@ import {
   getUsersList,
   optionalDepartmentsList,
   passwordRule,
+  putBatchUpdate,
   resetTenantsUserPassword,
   updateTenantsUserStatus,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
-import type { BatchUpdateParams, TenantsUserDetailData, TenantsUserItemData, TenantsUserListData } from '@/http/types/organizationFiles';
+import type { PutBatchUpdateParams, TenantsUserDetailData, TenantsUserItemData, TenantsUserListData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
 import useOrganizationStore from '@/store/organization';
 
@@ -543,7 +543,7 @@ const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: keyword,
   clearTableData: () => {
     tableData.value = [];
-  }
+  },
 });
 const selectedValue = ref<string[]>([]);
 const isDetailSlider = ref(false);
@@ -554,8 +554,8 @@ const selectList = ref([]);
 const password = ref('');
 const dataSource = ref([]);
 const moveDialogShow = ref(false);
-/** 批量操作回调类型 */
-type BatchConfirmFn = (params: BatchUpdateParams) => Promise<unknown>;
+/** 批量操作回调类型（清空并加入/追加目标组织共用，因两者 target_department_ids 元素类型不同，统一用 any） */
+type BatchConfirmFn = (params: any) => Promise<unknown>;
 
 /** 当前批量操作的上下文 */
 const currentHandle = ref<{
@@ -604,9 +604,6 @@ const searchSelectFilters = computed(() => {
 const isLocalDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'local'));
 /** 当前选中的是否为 LDAP 数据源 */
 const isLdapDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'ldap'));
-const selectedLocalSourceId = computed(() => (
-  isLocalDataSource.value ? organizationStore.selectedOrg.dataSourceId : undefined
-));
 const localSourceCount = computed(() => organizationStore.currentTenant.data_sources
   .filter(item => item.plugin_id === 'local').length);
 /**
@@ -710,7 +707,8 @@ const handleBatchRemoveFromOrg = () => {
     title: `${t('确认将选中的用户移出')}${organizationStore.selectedOrg.deptName}`,
     onConfirm: async () => {
       const params = {
-        user_ids: getBatchUserIds(true),
+        data_source_id: organizationStore.selectedOrg.dataSourceId,
+        user_ids: getBatchUserIds(true) as string,
         source_department_id: organizationStore.selectedOrg.deptId,
       };
       await batchDelete(params);
@@ -729,7 +727,7 @@ const handleBatchAppendOrg = () => {
 
 // 批量清空并加入组织
 const handleBatchReplaceOrg = () => {
-  currentHandle.value = { confirmFn: batchDelUpdate };
+  currentHandle.value = { confirmFn: putBatchUpdate };
   dialogTitle.value = t('清空并加入组织');
   handleOperations(t('清空'), t('的现有组织，并加入到以下组织'));
 };
@@ -742,7 +740,7 @@ const getUserListFun = async (keyword = '') => {
   const res = await getUsersList({
     tenant_id: organizationStore.selectedOrg.tenantId,
     keyword,
-    data_source_id: selectedLocalSourceId.value,
+    data_source_id: organizationStore.selectedOrg.dataSourceId,
   });
   getUserList.value = res.data;
 };
@@ -770,6 +768,7 @@ const remoteMethod = (word = '') => {
 const confirmGetUser = async () => {
   try {
     const param = {
+      data_source_id: organizationStore.selectedOrg.dataSourceId,
       target_department_ids: [organizationStore.selectedOrg.deptId],
       user_ids: getUsersValue.value,
     };
@@ -805,12 +804,13 @@ const handleOperations = async (prefix: string, suffix: string) => {
   const isMore = users.length > 3;
   const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
   moveTips.value = `${prefix}${users.slice(0, 3).join('、')}${showStr}${suffix}`;
-  const res = await optionalDepartmentsList({ data_source_id: selectedLocalSourceId.value });
+  const res = await optionalDepartmentsList({ data_source_id: organizationStore.selectedOrg.dataSourceId });
   dataSource.value = res.data;
 };
 
 const confirmOperations = async () => {
-  const params: BatchUpdateParams = {
+  const params: PutBatchUpdateParams = {
+    data_source_id: organizationStore.selectedOrg.dataSourceId,
     user_ids: getBatchUserIds() as string[],
     target_department_ids: selectedValue.value,
   };
@@ -870,7 +870,7 @@ const setItemRef = (el: PopoverInstanceType, key: string) => {
  * @description 仅本地数据源可以重置密码
  */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: selectedLocalSourceId.value });
+  const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
   password.value = res.data?.password;
 };
 

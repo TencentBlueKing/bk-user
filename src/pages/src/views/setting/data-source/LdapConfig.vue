@@ -307,6 +307,7 @@
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
+          class="w-[560px]"
           :config="fieldSettingData.username_generate_config"
           :disabled="isEdit"
         />

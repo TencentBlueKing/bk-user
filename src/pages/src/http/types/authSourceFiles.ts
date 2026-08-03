@@ -123,7 +123,7 @@ export interface NewLocalIdpsParams {
   name: string;
   status: string;
   plugin_config: LocalIdpPluginConfig;
-  data_source_match_rules: Omit<DataSourceMatchRule, 'field_compare_rules'>[];
+  data_source_ids: number[];
 };
 
 /**
@@ -134,7 +134,7 @@ export interface LocalIdpDetail {
   name: string;
   status: string;
   plugin_config: LocalIdpPluginConfig;
-  data_source_match_rules: DataSourceMatchRule[];
+  data_source_ids: number[];
 }
 
 export interface IdpsPluginsDataItem {
