@@ -62,9 +62,9 @@ urlpatterns = [
         views.DataSourceSyncRecordRetrieveApi.as_view(),
         name="data_source.sync_record.retrieve",
     ),
-    # 获取用户信息导入模板
+    # 获取用户信息导入模板（租户级，创建页无需 data_source_id）
     path(
-        "<int:id>/operations/download_template/",
+        "operations/download_template/",
         views.DataSourceTemplateApi.as_view(),
         name="data_source.download_template",
     ),

@@ -505,10 +505,6 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
     )
     def get(self, request, *args, **kwargs):
         """本地数据源导入模板"""
-        data_source = self.get_object()
-        if not (data_source.is_local and data_source.is_real_type):
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅支持下载本地数据源导入模板"))
-
         workbook = get_user_export_template(self.get_current_tenant_id())
         return convert_workbook_to_response(workbook, f"{settings.EXPORT_EXCEL_FILENAME_PREFIX}_org_tmpl.xlsx")
 
