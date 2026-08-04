@@ -248,7 +248,7 @@ const handleSubmit = async () => {
     await updateTenantsUserDetail(id, { ...param, extras: extraData });
     emit('updateUsers', t('更新成功'));
   } catch (err) {
-    console.log(err, 'err');
+    console.error(err);
   } finally {
     isLoading.value = false;
   }

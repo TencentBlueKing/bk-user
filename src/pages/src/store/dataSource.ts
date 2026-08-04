@@ -39,9 +39,10 @@ export const useDataSourceStore = defineStore('dataSource', () => {
    */
   const handleFetchSyncStatus = async (dataSources: { id: number; pluginId: string }[]) => {
     if (!dataSources || dataSources.length === 0) return;
-    // 并发获取所有目标数据源的同步记录
-    const results = await Promise.all(dataSources.map(({ pluginId }) => {
+    // 并发获取所有目标数据源的同步记录（按数据源 ID 精确查询，pluginId 一并带上）
+    const results = await Promise.all(dataSources.map(({ id, pluginId }) => {
       const params: SyncRecordsParams = {
+        data_source_id: id,
         plugin_id: pluginId,
         page: 1,
         page_size: 10,

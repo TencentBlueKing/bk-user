@@ -140,6 +140,7 @@ export interface TestConnectionParams {
 export interface SyncRecordsParams {
   page?: number;
   page_size?: number;
+  data_source_id?: number;
   plugin_id?: string;
   statuses?: string;
 }
