@@ -372,7 +372,7 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: Partial<NewDataSourceParams> = {
+    const params: NewDataSourceParams = {
       plugin_config: formData.plugin_config,
       field_mapping: [
         ...list,
@@ -382,8 +382,8 @@ const handleSubmit = async () => {
     };
 
     if (isEdit.value) {
-      params.id = props.dataSourceId;
-      await putDataSourceDetails(params);
+      params.name = formData.name;
+      await putDataSourceDetails(props.dataSourceId, params);
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
@@ -391,6 +391,7 @@ const handleSubmit = async () => {
       });
     } else {
       params.plugin_id = props.currentType;
+      params.name = formData.name;
       params.username_generate_config = conflictConfigRef.value?.getData();
       const res = await newDataSource(params);
       emit('updateSuccess', {
@@ -476,6 +477,7 @@ onMounted(async () => {
     getJsonSchema();
     if (isEdit.value) {
       const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      formData.name = details?.name ?? '';
       formData.plugin_config.plugin_id = details?.plugin?.id;
       if (JSON.stringify(details?.plugin_config) !== '{}') {
         formData.plugin_config.server_config = details?.plugin_config?.server_config;

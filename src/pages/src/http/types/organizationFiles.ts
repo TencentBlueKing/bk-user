@@ -38,6 +38,14 @@ export interface OptionalDepartmentsListData {
 }
 
 /**
+ * 当前租户下的部门列表参数
+ */
+export interface GetDepartmentsListParams {
+  parent_department_id: number;
+  data_source_id?: number;
+}
+
+/**
  * 创建部门参数
  */
 export interface AddDepartmentParams {

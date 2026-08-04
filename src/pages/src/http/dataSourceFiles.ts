@@ -94,8 +94,10 @@ export const getDefaultConfig = (id: string) => http.get<ResponseData<DataSource
 
 /**
  * 更新数据源
+ * @param id 数据源id
+ * @param params 更新参数
  */
-export const putDataSourceDetails = (params: PutDataSourceParams) => http.put(`/api/v3/web/data-sources/${params.id}/`, params);
+export const putDataSourceDetails = (id: number, params: PutDataSourceParams) => http.put(`/api/v3/web/data-sources/${id}/`, params);
 
 /**
  * 变更数据源状态

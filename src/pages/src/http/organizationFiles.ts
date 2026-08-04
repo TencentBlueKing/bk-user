@@ -4,7 +4,6 @@ import type {
   AddDepartmentParams,
   AddDepartmentResult,
   BatchCreateParams,
-  BatchCreatePreviewData,
   BatchCreatePreviewItemData,
   BatchCreatePreviewParams,
   BatchDeleteParams,
@@ -15,6 +14,7 @@ import type {
   CurrentTenantData,
   DepartmentsItemData,
   DepartmentsListParams,
+  GetDepartmentsListParams,
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
@@ -81,11 +81,12 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
 export const getCurrentTenant = () => http.get<ResponseData<CurrentTenantData>>(`${prefix}/current-tenant/`);
 
 /**
- * 当前租户下的部门列表，deptId为0时表示获取根部门
- * @param deptId 部门id
+ * 当前租户下的部门列表，parent_department_id 为 0 时 / 不传 parent_department_id 均表示获取根部门
+ * 传入 data_source_id 则只返回该数据源的根部门，否则返回该租户下全部实名数据源的根部门
  * @param tenantId 租户id
+ * @param params 查询参数
  */
-export const getDepartmentsList = (deptId: number, tenantId: string) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, { parent_department_id: deptId });
+export const getDepartmentsList = (tenantId: string, params: GetDepartmentsListParams) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, undefined, { params });
 
 /**
  * 创建租户组织

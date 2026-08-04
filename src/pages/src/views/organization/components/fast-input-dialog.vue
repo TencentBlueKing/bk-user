@@ -272,9 +272,12 @@ const closed = () => {
   emit('update:isShow', false);
 };
 const goToSetting = (name: string) => {
-  router.push({ name, query: {
-    isLink: true,
-  } });
+  router.push({
+    name,
+    query: {
+      id: organizationStore.selectedOrg.dataSourceId,
+    },
+  });
 };
 
 const importClick = () => {

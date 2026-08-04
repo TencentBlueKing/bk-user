@@ -8,8 +8,8 @@ export default function useOrganizationAside() {
   const organizationStore = useOrganizationStore();
   const treeRef = ref();
   const treeData = ref<IOrg[]>([]);
-  /** 根部门请求缓存（按租户），同一租户下多数据源展开时复用，切换租户时清除。 */
-  let rootDepartmentsCache: { tenantId: string; data: Promise<IOrg[]> } | null = null;
+  /** 根部门请求缓存（按租户+数据源），同一租户同一数据源下多次展开时复用，切换租户时清除。 */
+  let rootDepartmentsCache: { key: string; data: Promise<IOrg[]> } | null = null;
 
   /** 格式化为 bk-tree 可用的数据结构，并用数据源维度生成唯一节点 key。 */
   const formatDataSourceTreeData = (
@@ -39,16 +39,17 @@ export default function useOrganizationAside() {
     async: true,
   }));
 
-  /** 获取指定租户的根部门列表。 */
-  const getRootDepartments = async (tenantId: string) => {
-    if (!rootDepartmentsCache || rootDepartmentsCache.tenantId !== tenantId) {
-      const data = getDepartmentsList(0, tenantId)
+  /** 获取指定租户下指定数据源的根部门列表。 */
+  const getRootDepartments = async (tenantId: string, dataSourceId?: number) => {
+    const cacheKey = `${tenantId}:${dataSourceId ?? ''}`;
+    if (!rootDepartmentsCache || rootDepartmentsCache.key !== cacheKey) {
+      const data = getDepartmentsList(tenantId, { parent_department_id: 0, data_source_id: dataSourceId })
         .then(res => res.data)
         .catch((error) => {
           rootDepartmentsCache = null;
           throw error;
         });
-      rootDepartmentsCache = { tenantId, data };
+      rootDepartmentsCache = { key: cacheKey, data };
     }
     return rootDepartmentsCache.data;
   };
@@ -64,12 +65,18 @@ export default function useOrganizationAside() {
 
     // 数据源节点，获取根部门列表
     if (item.nodeType === 'source') {
-      const rootDepartments = await getRootDepartments(currentTenantId);
+      const rootDepartments = await getRootDepartments(currentTenantId, dataSourceId);
       return formatDataSourceTreeData(rootDepartments, dataSourceId);
     }
 
     // 部门节点，获取子部门列表
-    const res = await getDepartmentsList(item.id, currentTenantId);
+    const res = await getDepartmentsList(
+      currentTenantId,
+      {
+        parent_department_id: item.id,
+        data_source_id: dataSourceId,
+      }
+    );
     return formatDataSourceTreeData(res.data, dataSourceId);
   };
 

@@ -340,9 +340,9 @@ const handleSyncRecords = async () => {
   const res = await getSyncRecords(params);
   dataRecordConfig.list = res.data.results;
   pagination.count = res.data.count;
-  // stop time polling
-  const curStatus = res.data.results?.[0]?.status;
-  if (curStatus === 'success' || curStatus === 'failed') {
+  // 当前页不存在进行中的同步记录时才停止轮询
+  const hasRunning = res.data.results?.some(item => item.status === 'pending' || item.status === 'running');
+  if (!hasRunning) {
     clearInterval(interval.value);
   }
 

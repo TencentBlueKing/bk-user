@@ -99,7 +99,7 @@ export interface NewDataSourceResult {
  * 更新数据源参数
  */
 export interface PutDataSourceParams {
-  id: string;
+  name: string;
   plugin_config: {};
   field_mapping: FieldMapping[];
   username_generate_config?: UsernameGenerateConfig;
@@ -131,7 +131,7 @@ export interface LeadersParams {
 export interface TestConnectionParams {
   plugin_id: string;
   plugin_config: {};
-  data_source_id?: string;
+  data_source_id?: number;
 }
 
 /**

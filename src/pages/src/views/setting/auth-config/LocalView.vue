@@ -64,6 +64,7 @@ import EffectiveScopeView from './EffectiveScopeView.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
 import { getLocalIdps } from '@/http';
+import { LocalIdpLoginLimit, LocalIdpPasswordExpire, LocalIdpPasswordInitial, LocalIdpPasswordRule } from '@/http/types/authSourceFiles';
 import { t } from '@/language/index';
 import { noticeTimeMap, notificationMap, passwordMustIncludesMap, passwordNotAllowedMap } from '@/utils';
 
@@ -79,10 +80,10 @@ const isLoading = ref(false);
 const scopeIds = ref([]);
 const idpsName = ref({});
 const idpsStatus = ref(true);
-const passwordRule = ref({});
-const passwordInitial = ref({});
-const passwordExpire = ref({});
-const loginLimit = ref({});
+const passwordRule = ref<LocalIdpPasswordRule>({} as LocalIdpPasswordRule);
+const passwordInitial = ref<LocalIdpPasswordInitial>({} as LocalIdpPasswordInitial);
+const passwordExpire = ref<LocalIdpPasswordExpire>({} as LocalIdpPasswordExpire);
+const loginLimit = ref<LocalIdpLoginLimit>({} as LocalIdpLoginLimit);
 
 const passwordMethod = computed(() => (passwordInitial.value?.generate_method === 'random' ? t('随机') : t('固定')));
 
@@ -96,7 +97,7 @@ onMounted(async () => {
     passwordInitial.value = data?.plugin_config?.password_initial;
     passwordExpire.value = data?.plugin_config?.password_expire;
     loginLimit.value = data?.plugin_config?.login_limit;
-    scopeIds.value = data?.data_source_match_rules?.map(item => item.data_source_id) || [];
+    scopeIds.value = data?.data_source_ids || [];
     emit('detail-loaded', data);
   } catch (e) {
     console.warn(e);

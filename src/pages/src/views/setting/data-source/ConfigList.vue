@@ -435,9 +435,10 @@ const handleInit = async () => {
 
 onMounted(async () => {
   await handleInit();
-  /** 是否从快速导入跳转过来，是的话则默认打开导入弹框 */
-  if (router.currentRoute.value.query?.isLink) {
-    handleImport(dataSourceStore.getDataSourceInfo('local'));
+  /** 是否从快速导入跳转过来，是的话则默认打开对应数据源的导入弹框 */
+  if (router.currentRoute.value.query?.id) {
+    const dataSourceId = Number(router.currentRoute.value.query.id);
+    handleImport(dataSourceStore.getDataSourceById(dataSourceId));
   }
 });
 </script>

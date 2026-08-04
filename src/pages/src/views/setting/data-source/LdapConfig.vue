@@ -335,7 +335,12 @@ import Row from '@/components/layouts/ItemRow.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
-import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import {
+  LeaderConfig,
+  TestConnectionParams,
+  UserGroupConfig,
+  UsernameGenerateConfig,
+} from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
 import router from '@/router';
 import { useDataSourceStore } from '@/store';
@@ -427,6 +432,7 @@ const rulesLdapConfig = {
 
 const defaultLdapConfig = () => ({
   plugin_id: 'ldap',
+  name: '',
   server_config: {
     server_url: '',
     bind_dn: '',
@@ -481,12 +487,12 @@ const fieldSettingData = ref({
     enabled: true,
     object_class: '',
     search_base_dns: [''],
-    group_member_field: '',
-  },
+    group_member_field: 'member',
+  } as UserGroupConfig,
   leader_config: {
     enabled: true,
     leader_field: '',
-  },
+  } as LeaderConfig,
   // 同步配置
   sync_config: {
     sync_period: 24 * 60,
@@ -511,7 +517,7 @@ const rulesFieldSetting = {
   ...conflictRules,
 };
 
-const editLeaveBefore = inject('editLeaveBefore');
+const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
 const handleLastStep = async () => {
   let enableLeave = true;
   if (window.changeInput) {
@@ -549,7 +555,7 @@ const handleTestConnection = async () => {
     connectionLoading.value = true;
     connectionStatus.value = null;
     // LDAP连通性测试必需要带上user_group_config、leader_config
-    const params = {
+    const params: TestConnectionParams = {
       plugin_id: ldapConfigData.value.plugin_id,
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
@@ -756,13 +762,25 @@ onMounted(async () => {
     isLoading.value = true;
     if (isEdit.value) {
       const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      ldapConfigData.value.name = details?.name ?? '';
       ldapConfigData.value.plugin_id = details?.plugin?.id;
       if (JSON.stringify(details?.plugin_config) !== '{}') {
+        const { server_config: serverConfig, data_config: dataConfig } = details?.plugin_config || {};
         ldapConfigData.value.data_config = {
-          ...details?.plugin_config?.data_config,
-          uuid_attribute: details?.plugin_config?.data_config?.uuid_attribute || UUID_ATTR_LIST[0].value,
+          user_object_class: dataConfig?.user_object_class ?? '',
+          user_search_base_dns: dataConfig?.user_search_base_dns ?? [],
+          dept_object_class: dataConfig?.dept_object_class ?? '',
+          dept_search_base_dns: dataConfig?.dept_search_base_dns ?? [],
+          uuid_attribute: dataConfig?.uuid_attribute || UUID_ATTR_LIST[0].value,
         };
-        ldapConfigData.value.server_config = details?.plugin_config?.server_config;
+        ldapConfigData.value.server_config = {
+          server_url: serverConfig?.server_url ?? '',
+          bind_dn: serverConfig?.bind_dn ?? '',
+          bind_password: serverConfig?.bind_password ?? '',
+          base_dn: serverConfig?.base_dn ?? '',
+          page_size: serverConfig?.page_size ?? 100,
+          request_timeout: serverConfig?.request_timeout ?? 30,
+        };
         fieldSettingData.value.leader_config = details?.plugin_config?.leader_config;
         fieldSettingData.value.user_group_config = details?.plugin_config?.user_group_config;
       }
@@ -792,7 +810,9 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: Partial<NewDataSourceParams> = {
+    // 创建/编辑均需提交的公共字段
+    const commonParams = {
+      name: ldapConfigData.value.name,
       plugin_config: {
         server_config: ldapConfigData.value.server_config,
         data_config: ldapConfigData.value.data_config,
@@ -803,22 +823,22 @@ const handleSubmit = async () => {
         ...list,
         ...fieldSettingData.value.addFieldList,
       ],
-      sync_config: fieldSettingData.value.sync_config,
     };
 
     if (isEdit.value) {
-      params.id = props.dataSourceId;
-      await putDataSourceDetails(params);
+      await putDataSourceDetails(props.dataSourceId, commonParams);
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
         name: ldapConfigData.value.name,
       });
     } else {
-      params.plugin_id = ldapConfigData.value.plugin_id;
-      params.name = ldapConfigData.value.name;
-      params.username_generate_config = conflictConfigRef.value?.getData();
-      const res = await newDataSource(params);
+      const res = await newDataSource({
+        ...commonParams,
+        plugin_id: ldapConfigData.value.plugin_id,
+        sync_config: fieldSettingData.value.sync_config,
+        username_generate_config: conflictConfigRef.value?.getData(),
+      });
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,

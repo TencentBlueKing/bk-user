@@ -18,9 +18,6 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   /** 是否已配置其他数据源插件 */
   const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 0 && !isConfiguredLocalPlugin.value);
 
-  /** 本地数据源ID */
-  const localDataSourceId = computed(() => getDataSourceInfo('local')?.id);
-
   /** 获取当前配置的数据源插件 */
   const handleFetchCurrentDataSource = async () => {
     const res = await getDataSourceList({ type: 'real' });
@@ -59,9 +56,6 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     });
   };
 
-  /** 获取指定数据源信息 */
-  const getDataSourceInfo = (pluginId: string) => dataSource.value.find(item => item.plugin_id === pluginId);
-
   /** 获取指定数据源实例 */
   const getDataSourceById = (id?: number | string) => dataSource.value.find(item => item.id === Number(id));
 
@@ -86,8 +80,6 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     isConfiguredLocalPlugin,
     isConfiguredGeneralPlugin,
     isConfiguredOtherPlugin,
-    localDataSourceId,
-    getDataSourceInfo,
     getDataSourceById,
     getDataSourcesByPlugin,
     handleFetchCurrentDataSource,

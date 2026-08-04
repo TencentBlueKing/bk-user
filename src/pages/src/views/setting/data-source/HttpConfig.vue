@@ -275,7 +275,7 @@ import {
   postTestConnection,
   putDataSourceDetails,
 } from '@/http';
-import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import { AuthConfig, TestConnectionParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { useDataSourceStore, useUser } from '@/store';
@@ -305,7 +305,7 @@ const hasOtherDataSource = computed(() => dataSourceStore.dataSource
 
 const isLoading = ref(false);
 const formRef1 = ref();
-const editLeaveBefore = inject('editLeaveBefore');
+const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
 
 const formRef2 = ref();
 const conflictConfigRef = ref();
@@ -335,7 +335,7 @@ const defaultServerConfig = () => ({
   },
 });
 
-const serverConfigData = ref({});
+const serverConfigData = ref(defaultServerConfig());
 
 const fieldSettingData = ref({
   field_mapping: {
@@ -360,7 +360,7 @@ const fieldSettingData = ref({
 /** 是否展示服务配置-服务地址 form-item */
 const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigateway');
 
-watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigateway') => {
+watch(() => serverConfigData.value?.auth_config?.method, (curMethod) => {
   if (curMethod === 'bk_apigateway') {
     serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
   } else {
@@ -434,10 +434,20 @@ onMounted(async () => {
     isLoading.value = true;
     if (isEdit.value) {
       const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      serverConfigData.value.name = details?.name ?? '';
       serverConfigData.value.plugin_id = details?.plugin?.id;
       if (JSON.stringify(details?.plugin_config) !== '{}') {
-        serverConfigData.value.server_config = details?.plugin_config?.server_config;
-        serverConfigData.value.auth_config = details?.plugin_config?.auth_config;
+        const serverConfig = details?.plugin_config?.server_config;
+        serverConfigData.value.server_config = {
+          ...defaultServerConfig().server_config,
+          ...serverConfig,
+          request_timeout: String(serverConfig?.request_timeout ?? defaultServerConfig().server_config.request_timeout),
+          retries: String(serverConfig?.retries ?? defaultServerConfig().server_config.retries),
+        };
+        serverConfigData.value.auth_config = {
+          ...defaultServerConfig().auth_config,
+          ...details?.plugin_config?.auth_config,
+        };
       }
       fieldSettingData.value.sync_config = details?.sync_config;
       fieldMappingList.value = details?.field_mapping;
@@ -588,7 +598,7 @@ const handleTestConnection = async () => {
     serverConfigData.value.server_config.user_api_query_params = clearEmptyParams(user);
     serverConfigData.value.server_config.department_api_query_params = clearEmptyParams(department);
 
-    const params = {
+    const params: TestConnectionParams = {
       plugin_id: serverConfigData.value.plugin_id,
       plugin_config: {
         server_config: serverConfigData.value.server_config,
@@ -672,31 +682,38 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: Partial<NewDataSourceParams> = {
+    // 创建/编辑均需提交的公共字段
+    const commonParams = {
+      name: serverConfigData.value.name,
       plugin_config: {
-        server_config: serverConfigData.value.server_config,
-        auth_config: serverConfigData.value.auth_config,
+        // 表单超时/重试为字符串，提交时转换为 API 契约要求的 number
+        server_config: {
+          ...serverConfigData.value.server_config,
+          request_timeout: Number(serverConfigData.value.server_config.request_timeout),
+          retries: Number(serverConfigData.value.server_config.retries),
+        },
+        auth_config: serverConfigData.value.auth_config as AuthConfig,
       },
       field_mapping: [
         ...list,
         ...fieldSettingData.value.addFieldList,
       ],
-      sync_config: fieldSettingData.value.sync_config,
     };
 
     if (isEdit.value) {
-      params.id = props.dataSourceId;
-      await putDataSourceDetails(params);
+      await putDataSourceDetails(props.dataSourceId, commonParams);
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
         name: serverConfigData.value.name,
       });
     } else {
-      params.plugin_id = serverConfigData.value.plugin_id;
-      params.name = serverConfigData.value.name;
-      params.username_generate_config = conflictConfigRef.value?.getData();
-      const res = await newDataSource(params);
+      const res = await newDataSource({
+        ...commonParams,
+        plugin_id: serverConfigData.value.plugin_id,
+        sync_config: fieldSettingData.value.sync_config,
+        username_generate_config: conflictConfigRef.value?.getData(),
+      });
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,

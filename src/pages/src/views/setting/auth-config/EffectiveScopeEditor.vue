@@ -7,14 +7,13 @@
       :rules="formRules.data_source"
     >
       <bk-select
-        class="w-[560px]"
-        :model-value="modelValue"
+        v-model="modelValue"
         multiple
         multiple-mode="tag"
         collapse-tags
         :clearable="false"
         :placeholder="$t('请选择生效的数据源')"
-        @update:model-value="handleChange"
+        @change="handleChange"
       >
         <bk-option
           v-for="item in availableOptions"
@@ -41,16 +40,15 @@ interface ScopeOption {
   plugin_id: string;
 }
 
+const modelValue = defineModel<number[]>({ default: () => [] });
+
 const props = withDefaults(defineProps<{
-  modelValue?: number[];
   localOnly?: boolean;
 }>(), {
-  modelValue: () => [],
   localOnly: false,
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [value: number[]];
   change: [value: number[]];
 }>();
 
@@ -61,7 +59,7 @@ const formRules = {
   data_source: [{
     required: true,
     message: t('请选择生效的数据源'),
-    validator: () => props.modelValue?.length > 0,
+    validator: () => modelValue.value?.length > 0,
     trigger: 'change',
   }],
 };
@@ -78,7 +76,6 @@ const availableOptions = computed(() => (
 ));
 
 const handleChange = (value: number[]) => {
-  emit('update:modelValue', value);
   emit('change', value);
 };
 </script>
