@@ -21,6 +21,9 @@
         {{ authSourceData.plugin_config[key]}}
       </LabelContent>
       <LabelContent :label="$t('登录模式')">{{ $t('仅用于登录') }}</LabelContent>
+      <LabelContent :label="$t('生效范围')">
+        <EffectiveScopeView :source-ids="scopeIds" />
+      </LabelContent>
       <LabelContent :label="$t('登录认证匹配')">
         <div class="content-matching">
           <bk-exception
@@ -62,31 +65,30 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
+
+import EffectiveScopeView from './EffectiveScopeView.vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
 import { getDataSourceList, getIdpsDetails, getIdpsPluginsConfig } from '@/http';
 import { copy } from '@/utils';
 
-const props = defineProps({
-  currentId: {
-    type: String,
-    default: '',
-  },
-  authDetailsId: {
-    type: String,
-    default: '',
-  },
-});
-const emit = defineEmits(['updateRow']);
+interface IProps {
+  idpId: string;
+  pluginId: string;
+}
+
+const props = defineProps<IProps>();
+const emit = defineEmits(['detail-loaded']);
 const isLoading = ref(false);
 const authSourceData = ref({});
+const scopeIds = ref<number[]>([]);
 const onDataSources = ref([]);
 const notDataSources = ref([]);
 const jsonSchemaProperties = ref({});
 const getJsonSchema = () => {
-  getIdpsPluginsConfig(props?.authDetailsId).then((res) => {
+  getIdpsPluginsConfig(props?.pluginId).then((res) => {
     jsonSchemaProperties.value = res.data?.json_schema.properties;
   });
 };
@@ -94,12 +96,13 @@ onMounted(async () => {
   isLoading.value = true;
   try {
     const [authRes, dataRes] = await Promise.all([
-      getIdpsDetails(props?.currentId),
+      getIdpsDetails(props.idpId),
       getDataSourceList(''),
     ]);
     authSourceData.value = authRes.data;
+    scopeIds.value = authSourceData.value.data_source_match_rules?.map(item => item.data_source_id) || [];
     getJsonSchema();
-    emit('updateRow', authSourceData.value);
+    emit('detail-loaded', authSourceData.value);
     processMatchRules(dataRes.data);
   } catch (error) {
     console.warn(error);

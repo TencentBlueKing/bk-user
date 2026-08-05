@@ -704,7 +704,8 @@ const confirmPassword = async () => {
   try {
     if (emailValue.value) handleBlur();
     if (smsValue.value && !adminPasswordData.value.phone) changeTelError(true);
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     if (emailValue.value && emailError.value) return;
     if (telError.value) return;
 

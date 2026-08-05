@@ -61,7 +61,8 @@ const rules = ref({
 
 const handleNextStep = async () => {
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     await tokenUrls({
       tenant_id: props.tenantId,
       email: formData.email,

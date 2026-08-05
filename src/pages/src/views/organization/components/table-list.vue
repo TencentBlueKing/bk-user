@@ -2,9 +2,7 @@
   <div class="organization-table px-[24px] py-[24px]">
     <div class="table-search mb-[16px]">
       <bk-button
-        v-if="!isCollaborativeUsers
-          && isTenantStatus
-          && organizationStore.isConfiguredLocalSource"
+        v-if="isShowImport"
         class="mr-[16px] button-upload"
         @click="importDialogHandle"
       >
@@ -15,8 +13,7 @@
         v-if="isShowBtn"
         theme="primary"
         class="mr-[10px]"
-        @click="fastInputDialogShow = true"
-      >
+        @click="handleFastInput">
         <i class="user-icon icon-add-2 mr8" />
         {{ $t('快速录入') }}
       </bk-button>
@@ -28,6 +25,7 @@
       </bk-button>
       <batchOperation
         :select-list="selectList"
+        :data-source-id="organizationStore.selectedOrg.dataSourceId"
         @move-org="batchMoveOrg"
         @reload-list="handleAfterBatchOperation"
       />
@@ -112,7 +110,9 @@
       </template>
       <!-- 本地数据源才可操作 -->
       <TableColumn
-        v-if="tableData.length > 0 && organizationStore.isConfiguredLocalSource && !isCollaborativeUsers"
+        v-if="tableData.length > 0
+          && organizationStore.isConfiguredLocalSource
+          && !isCollaborativeUsers"
         fixed="left"
         type="checkbox"
         width="50"
@@ -197,7 +197,8 @@
         :label="$t('操作')"
       >
         <template #default="{ row, $rowIndex }: any">
-          <span v-if="organizationStore.isEqualLocalSourceId(row.data_source_id)">
+          <span
+            v-if="organizationStore.isEqualLocalSourceId(row.data_source_id)">
             <label class="table-operate" @click="editInfoHandle(row, true)">{{ $t('编辑') }}</label>
             <bk-popover
               ext-cls="operate-popover"
@@ -416,9 +417,12 @@
     <template #header>
       <div class="w-full">{{isDetailSlider ? $t('编辑用户') : $t('用户详情')}}</div>
       <bk-button
-        v-if="!isDetailSlider && !isCollaborativeUsers && isLocalDataSource"
+        v-if="!isDetailSlider
+          && !isCollaborativeUsers
+          && organizationStore.isEqualLocalSourceId(detailsInfo.data_source_id)"
         class="mr-[20px]"
-        @click="editInfoHandle(editDetailsInfo, true)">
+        @click="editInfoHandle(detailsInfo, true)"
+      >
         {{$t('编辑')}}
       </bk-button>
     </template>
@@ -432,14 +436,15 @@
       v-else
       :user-data="detailsInfo"
       :detail="editDetailsInfo"
-      :is-show-btn="!isCollaborativeUsers && (isLocalDataSource || isLdapDataSource)"
+      :is-show-btn="!isCollaborativeUsers
+        && (isLocalDataSource || isLdapDataSource)"
       @update-users="updateUsers"
     />
   </bk-sideslider>
   <!-- 导入弹框 -->
   <ImportDialog
     v-model:is-show="importDialogShow"
-    :data-source-id="organizationStore.localSourceId"
+    :data-source-id="organizationStore.selectedOrg.dataSourceId"
     @success="reloadList"
   />
 </template>
@@ -469,7 +474,6 @@ import { randomPasswords } from '@/http';
 import {
   batchCreate,
   batchDelete,
-  batchDelUpdate,
   delTenantsUser,
   getOrganizationPaths,
   getTenantsUserDetail,
@@ -477,11 +481,12 @@ import {
   getUsersList,
   optionalDepartmentsList,
   passwordRule,
+  putBatchUpdate,
   resetTenantsUserPassword,
   updateTenantsUserStatus,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
-import { TenantsUserItemData } from '@/http/types/organizationFiles';
+import type { PutBatchUpdateParams, TenantsUserDetailData, TenantsUserItemData, TenantsUserListData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
 import useOrganizationStore from '@/store/organization';
 
@@ -538,9 +543,9 @@ const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: keyword,
   clearTableData: () => {
     tableData.value = [];
-  }
+  },
 });
-const selectedValue = ref([]);
+const selectedValue = ref<string[]>([]);
 const isDetailSlider = ref(false);
 const moveTips = ref('');
 const tableRef = ref();
@@ -549,12 +554,18 @@ const selectList = ref([]);
 const password = ref('');
 const dataSource = ref([]);
 const moveDialogShow = ref(false);
-const currentHandle = ref({});
+/** 批量操作回调类型（清空并加入/追加目标组织共用，因两者 target_department_ids 元素类型不同，统一用 any） */
+type BatchConfirmFn = (params: any) => Promise<unknown>;
+
+/** 当前批量操作的上下文 */
+const currentHandle = ref<{
+  confirmFn: BatchConfirmFn | null;
+}>({ confirmFn: null });
 const dialogTitle = ref('');
 const passwordDialogShow = ref(false);
 const fastInputDialogShow = ref(false);
 const importDialogShow = ref(false);
-const editDetailsInfo = ref({});
+const editDetailsInfo = ref({} as TenantsUserDetailData);
 const getUsersDialogShow = ref(false);
 const getUsersValue = ref([]);
 const getUserList = ref([]);
@@ -573,14 +584,15 @@ const statusEnum = reactive<Record<string, string>>({
   disabled: t('停用'),
   expired: t('冻结'),
 });
-const tableData = ref<TenantsUserItemData[]>([]);
+/** 表格数据，前端拼接 organization_paths 字段避免二次请求 */
+type TableDataItem = TenantsUserItemData & { organization_paths?: string[] };
+const tableData = ref<TableDataItem[]>([]);
 const isResetPasswordLoading = ref(false);
 
 /** 是否为租户层级 */
-const isTenantStatus = computed(() => organizationStore.curSelectedTenant === 'current' && organizationStore.curSelectedType === 'tenant');
+const isTenantLevel = computed(() => organizationStore.curSelectedTenant === 'current' && organizationStore.curSelectedType === 'tenant');
 /** 是否为协同租户 */
 const isCollaborativeUsers = computed(() => organizationStore.curSelectedTenant === 'collaboration');
-
 const searchSelectFilters = computed(() => {
   const result: Record<string, string> = {};
   for (const item of keyword.value) {
@@ -592,6 +604,20 @@ const searchSelectFilters = computed(() => {
 const isLocalDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'local'));
 /** 当前选中的是否为 LDAP 数据源 */
 const isLdapDataSource = computed(() => (organizationStore.curSelectedDataSource?.plugin_id === 'ldap'));
+const localSourceCount = computed(() => organizationStore.currentTenant.data_sources
+  .filter(item => item.plugin_id === 'local').length);
+/**
+ * 导入按钮展示逻辑：
+ * - 数据源层级：必须是本地数据源才展示
+ * - 部门/员工层级：不展示
+ * - 租户层级：不展示（无目标本地数据源实例，导入会打到 undefined）
+ */
+const isShowImport = computed(() => {
+  if (isCollaborativeUsers.value || localSourceCount.value === 0) return false;
+  // 数据源层级
+  if (organizationStore.curSelectedType === 'source' && isLocalDataSource.value) return true;
+  return false;
+});
 /**
    * 是否展示
    *  - 快速录入
@@ -600,13 +626,13 @@ const isLdapDataSource = computed(() => (organizationStore.curSelectedDataSource
    */
 const isShowBtn = computed(() => (
   !isCollaborativeUsers.value
-    && !isTenantStatus.value
-    && organizationStore.selectedOrg?.dataSourceId === organizationStore.localSourceId));
+    && !isTenantLevel.value
+    && isLocalDataSource.value));
 
 /** 当前选中的是否包含非本地数据源 */
-// eslint-disable-next-line max-len
-const isSelectedNotLocalSource = computed(() => selectList.value.some(item => item.data_source_id !== organizationStore.localSourceId));
-
+const isSelectedNotLocalSource = computed(() => (
+  selectList.value.some(item => !organizationStore.isEqualLocalSourceId(item.data_source_id))
+));
 // 停用/启用用户点击事件
 const onToggleUserStatusClick = (row: TenantsUserItemData, index?: number) => {
   detailsInfo.value = row;
@@ -655,16 +681,16 @@ const onDeleteUserClick = (row: TenantsUserItemData, index: number) => {
 const editInfoHandle = async (row: TenantsUserItemData, isDetail = false) => {
   isDetailSlider.value = isDetail;
   detailsInfo.value = row;
-  const [useRes, fieldsRes] = await Promise.all([
-    getTenantsUserDetail(row.id),
+  const [userData, fieldsRes] = await Promise.all([
+    getTenantsUserDetail(row.id).then(res => res.data),
     getFields(),
   ]);
-  const { data } = useRes;
+  const data = userData;
   const extrasList = fieldsRes.data.custom_fields;
   extrasList.map(item => item.value = data.extras[item.name]);
   Object.assign(data, {
-    department_ids: getIdList(data?.departments),
-    leader_ids: getIdList(data?.leaders),
+    department_ids: data?.departments?.map(item => item.id),
+    leader_ids: data?.leaders?.map(item => item.id),
     extras: extrasList,
   });
   editDetailsInfo.value = data;
@@ -679,7 +705,8 @@ const handleBatchRemoveFromOrg = () => {
     title: `${t('确认将选中的用户移出')}${organizationStore.selectedOrg.deptName}`,
     onConfirm: async () => {
       const params = {
-        user_ids: getBatchUserIds(true),
+        data_source_id: organizationStore.selectedOrg.dataSourceId,
+        user_ids: getBatchUserIds(true) as string,
         source_department_id: organizationStore.selectedOrg.deptId,
       };
       await batchDelete(params);
@@ -698,20 +725,20 @@ const handleBatchAppendOrg = () => {
 
 // 批量清空并加入组织
 const handleBatchReplaceOrg = () => {
-  currentHandle.value = { confirmFn: batchDelUpdate };
+  currentHandle.value = { confirmFn: putBatchUpdate };
   dialogTitle.value = t('清空并加入组织');
   handleOperations(t('清空'), t('的现有组织，并加入到以下组织'));
 };
 
 /**
  * 拉取已有用户
- * @description 由于仅支持本地数据源拉取已有用户，因此直接使用organizationStore.localSourceId
+ * @description 仅支持从当前选中的本地数据源拉取已有用户
  */
 const getUserListFun = async (keyword = '') => {
   const res = await getUsersList({
     tenant_id: organizationStore.selectedOrg.tenantId,
     keyword,
-    data_source_id: organizationStore.localSourceId,
+    data_source_id: organizationStore.selectedOrg.dataSourceId,
   });
   getUserList.value = res.data;
 };
@@ -722,6 +749,10 @@ const handleGetUsersDialog = () => {
   getUsersDialogShow.value = true;
   getUserList.value = [];
   getUserListFun();
+};
+
+const handleFastInput = () => {
+  fastInputDialogShow.value = true;
 };
 
 const remoteMethod = (word = '') => {
@@ -735,6 +766,7 @@ const remoteMethod = (word = '') => {
 const confirmGetUser = async () => {
   try {
     const param = {
+      data_source_id: organizationStore.selectedOrg.dataSourceId,
       target_department_ids: [organizationStore.selectedOrg.deptId],
       user_ids: getUsersValue.value,
     };
@@ -748,7 +780,7 @@ const confirmGetUser = async () => {
 };
 
 const getBatchUserIds = (isArray = false) => {
-  const userId = [];
+  const userId: string[] = [];
   selectList.value.map(item => userId.push(item.id));
   if (isArray) {
     return userId.join(',');
@@ -762,22 +794,22 @@ const handleOperations = async (prefix: string, suffix: string) => {
   moveDialogShow.value = true;
   selectedValue.value = [];
   dataSource.value = [];
-  const users = [];
-  selectList.value.map((item) => {
+  const users: string[] = [];
+  selectList.value.forEach((item) => {
     chooseDepartments.value.push(...item.departments);
     users.push(item.full_name);
   });
   const isMore = users.length > 3;
   const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
   moveTips.value = `${prefix}${users.slice(0, 3).join('、')}${showStr}${suffix}`;
-  // 这里直接使用organizationStore.localSourceId 因为只有本地数据源支持移动组织
-  const res = await optionalDepartmentsList({ data_source_id: organizationStore.localSourceId });
+  const res = await optionalDepartmentsList({ data_source_id: organizationStore.selectedOrg.dataSourceId });
   dataSource.value = res.data;
 };
 
 const confirmOperations = async () => {
-  const params = {
-    user_ids: getBatchUserIds(),
+  const params: PutBatchUpdateParams = {
+    data_source_id: organizationStore.selectedOrg.dataSourceId,
+    user_ids: getBatchUserIds() as string[],
     target_department_ids: selectedValue.value,
   };
   await currentHandle.value.confirmFn(params);
@@ -785,14 +817,15 @@ const confirmOperations = async () => {
   handleClear();
 };
 
-const handleHoverOrg = (row) => {
+const handleHoverOrg = (row: TableDataItem) => {
   if (!row?.organization_paths) {
     const currentIndex = tableData.value.findIndex(item => item === row);
     isOrgPathLoading.value = true;
-    getOrganizationPaths(row.id).then((res) => {
-      const organization_paths = res?.data?.organization_paths;
-      tableData.value[currentIndex].organization_paths  = organization_paths;
-    })
+    getOrganizationPaths(row.id).then(res => res?.data)
+      .then((data) => {
+        const organization_paths = data?.organization_paths;
+        tableData.value[currentIndex].organization_paths  = organization_paths;
+      })
       .finally(() => isOrgPathLoading.value = false);
   }
 };
@@ -808,10 +841,13 @@ const initTenantsUserList = async () => {
       page_size: pagination.limit,
       department_id: organizationStore.selectedOrg.deptId,
       recursive: !recursive.value,
+      ...(organizationStore.curSelectedType === 'source'
+        ? { data_source_id: organizationStore.selectedOrg.dataSourceId }
+        : {}),
     };
-    const res = await getTenantsUserList(organizationStore.selectedOrg.tenantId, params);
-    pagination.count = res.data?.count;
-    tableData.value = res.data?.results;
+    const data = (await getTenantsUserList(organizationStore.selectedOrg.tenantId, params))?.data;
+    pagination.count = (data as TenantsUserListData).count;
+    tableData.value = (data as TenantsUserListData).results;
     clearErrorType();
   } catch (e) {
     console.warn(e);
@@ -829,10 +865,10 @@ const setItemRef = (el: PopoverInstanceType, key: string) => {
 
 /**
  * 生成随机密码
- * @description 仅本地数据源可以重置密码，直接使用organizationStore.localSourceId
+ * @description 仅本地数据源可以重置密码
  */
 const randomPasswordHandle = async () => {
-  const res = await randomPasswords({ data_source_id: organizationStore.localSourceId });
+  const res = await randomPasswords({ data_source_id: organizationStore.selectedOrg.dataSourceId });
   password.value = res.data?.password;
 };
 
@@ -916,23 +952,10 @@ const pageCurrentChange = (current: number) => {
   initTenantsUserList();
 };
 
-const getIdList = (data, key = 'id') => {
-  if (!Array.isArray(data)) {
-    return;
-  }
-  const values = data.reduce((acc, obj) => {
-    if (key in obj) {
-      acc.push(obj[key]);
-    }
-    return acc;
-  }, []);
-  return values;
-};
-
 const importDialogHandle = () => importDialogShow.value = true;
 
-const batchMoveOrg = (params) => {
-  currentHandle.value = params;
+const batchMoveOrg = (params: { confirmFn: BatchConfirmFn }) => {
+  currentHandle.value = { ...params };
   dialogTitle.value = t('移动至组织');
   handleOperations(t('将'), t('从当前组织移出，并追加到以下组织'));
 };
@@ -949,10 +972,17 @@ watch(
 );
 
 watch(
-  () => organizationStore.selectedOrg.deptId,
-  () => {
+  () => [
+    organizationStore.selectedOrg.tenantId,
+    organizationStore.selectedOrg.dataSourceId,
+    organizationStore.selectedOrg.deptId,
+    organizationStore.selectedOrg.nodeType,
+  ],
+  ([tenantId]) => {
+    if (!tenantId) return;
     reloadList();
   },
+  { immediate: true },
 );
 
 </script>
@@ -978,6 +1008,7 @@ watch(
     position: relative;
     display: flex;
     width: 100%;
+    min-height: 32px;
 
     .button-upload:hover {
       border-color: #3A84ff;

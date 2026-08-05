@@ -242,6 +242,7 @@ const handleOrg = () => {
     const newOrg = {
       name: deptName.value,
       parent_department_id: curDeptId,
+      data_source_id: props.dataSourceId,
     };
     addDepartment(props.tenant.id, newOrg).then((res) => {
       const node = {

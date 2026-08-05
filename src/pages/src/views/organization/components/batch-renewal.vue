@@ -47,6 +47,9 @@ const props = defineProps({
   userIds: {
     type: Array<String>,
   },
+  dataSourceId: {
+    type: Number,
+  },
 });
 const emits = defineEmits(['batchRenewal']);
 
@@ -64,7 +67,7 @@ const dateOptions = computed(() => {
     { num: 1, unit: 'month', label: t('一个月') },
     { num: 3, unit: 'month', label: t('三个月') },
     { num: 6, unit: 'month', label: t('六个月') },
-    { num: 1, unit: 'year', label: t('一年 ') },
+    { num: 1, unit: 'year', label: t('一年') },
   ] as Array<{
     num: number
     unit: ManipulateType
@@ -82,7 +85,8 @@ const dateOptions = computed(() => {
 });
 
 const confirmRenewal = async () => {
-  await formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   const params = { user_ids: props.userIds, account_expired_at: '' };
   params.account_expired_at = dayjs(formData.custom).format('YYYY-MM-DD HH:mm:ss');
   await batchAccountExpired(params);

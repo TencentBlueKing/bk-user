@@ -21,6 +21,9 @@
       <LabelContent label="Agent ID">{{ authSourceData.plugin_config?.agent_id }}</LabelContent>
       <LabelContent label="Secret">**********</LabelContent>
       <LabelContent :label="$t('登录模式')">{{ $t('仅用于登录') }}</LabelContent>
+      <LabelContent :label="$t('生效范围')">
+        <EffectiveScopeView :source-ids="scopeIds" />
+      </LabelContent>
       <LabelContent :label="$t('登录认证匹配')">
         <div class="content-matching">
           <bk-exception
@@ -62,42 +65,27 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
+
+import EffectiveScopeView from './EffectiveScopeView.vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
 import { getDataSourceList, getIdpsDetails } from '@/http';
 import { copy } from '@/utils';
 
-const emit = defineEmits(['updateRow']);
-const props = defineProps({
-  currentId: {
-    type: String,
-    default: '',
-  },
-});
+interface IProps {
+  idpId: string;
+}
+
+const props = defineProps<IProps>();
+const emit = defineEmits(['detail-loaded']);
 
 const isLoading = ref(false);
 const authSourceData = ref({});
+const scopeIds = ref<number[]>([]);
 const onDataSources = ref([]);
 const notDataSources = ref([]);
-
-onMounted(async () => {
-  isLoading.value = true;
-  try {
-    const [authRes, dataRes] = await Promise.all([
-      getIdpsDetails(props?.currentId),
-      getDataSourceList(''),
-    ]);
-    authSourceData.value = authRes.data;
-    emit('updateRow', authSourceData.value);
-    processMatchRules(dataRes.data);
-  } catch (error) {
-    console.warn(error);
-  } finally {
-    isLoading.value = false;
-  }
-});
 
 const processMatchRules = (list) => {
   const dataSourceIds = authSourceData.value.data_source_match_rules.map(item => item.data_source_id);
@@ -116,6 +104,24 @@ const processMatchRules = (list) => {
       data_source_name: val.name,
     }));
 };
+
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    const [authRes, dataRes] = await Promise.all([
+      getIdpsDetails(props?.idpId),
+      getDataSourceList(),
+    ]);
+    authSourceData.value = authRes.data;
+    scopeIds.value = authSourceData.value.data_source_match_rules?.map(item => item.data_source_id) || [];
+    emit('detail-loaded', authSourceData.value);
+    processMatchRules(dataRes.data);
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <style lang="less" scoped>

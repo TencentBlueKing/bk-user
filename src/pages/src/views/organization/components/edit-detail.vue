@@ -138,7 +138,6 @@ import {
   updateTenantsUserDetail,
 } from '@/http/organizationFiles';
 import { t } from '@/language/index';
-
 const props = defineProps({
   detailsInfo: {
     type: Object,
@@ -220,7 +219,10 @@ const getOptionalDepartmentsList = (value = '') => {
     });
 };
 const getOptionalLeaderList = (value = '') => {
-  optionalLeaderList({ keyword: value, excluded_user_id: formData.id }).then((res) => {
+  optionalLeaderList({
+    keyword: value, exclude_user_id: formData.id,
+    data_source_id: props.dataSourceId,
+  }).then((res) => {
     leaderList.value = res.data;
   })
     .catch((e) => {
@@ -236,18 +238,17 @@ const searchLeaders = (value: string) => {
 
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate().then(async () => {
-      if (telError.value) return;
-      isLoading.value = true;
-      const { id, status, extras, departments, leaders, ...param } = formData;
-      const extraData = {};
-      extras.map(item => extraData[item.name] = item.value || item.default);
-      await updateTenantsUserDetail(id, { ...param, ...{ extras: extraData } });
-      emit('updateUsers', t('更新成功'));
-    })
-      .catch((err) => {
-        console.log(err, 'err');
-      });
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
+    if (telError.value) return;
+    isLoading.value = true;
+    const { id, status, extras, departments, leaders, ...param } = formData;
+    const extraData = {};
+    extras.map(item => extraData[item.name] = item.value || item.default);
+    await updateTenantsUserDetail(id, { ...param, extras: extraData });
+    emit('updateUsers', t('更新成功'));
+  } catch (err) {
+    console.error(err);
   } finally {
     isLoading.value = false;
   }

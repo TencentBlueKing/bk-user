@@ -19,6 +19,7 @@ import type {
   OperationsSyncData,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  RandomPasswordsData,
   RelatedResourceStatistics,
   ResetPasswordParams,
   SyncRecords,
@@ -69,7 +70,7 @@ export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => htt
 /**
  * 数据源列表
  */
-export const getDataSourceList = (params: GetDataSourceListParams) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
+export const getDataSourceList = (params?: GetDataSourceListParams) => http.get<ResponseData<DataSourceItemData[]>>('/api/v3/web/data-sources/', params);
 
 /**
  * 数据源插件列表
@@ -93,8 +94,10 @@ export const getDefaultConfig = (id: string) => http.get<ResponseData<DataSource
 
 /**
  * 更新数据源
+ * @param id 数据源id
+ * @param params 更新参数
  */
-export const putDataSourceDetails = (params: PutDataSourceParams) => http.put(`/api/v3/web/data-sources/${params.id}/`, params);
+export const putDataSourceDetails = (id: number, params: PutDataSourceParams) => http.put(`/api/v3/web/data-sources/${id}/`, params);
 
 /**
  * 变更数据源状态
@@ -114,12 +117,12 @@ export const postOperationsSync = (id: number) => http.post<ResponseData<Operati
 /**
  * 生成数据源用户随机密码
  */
-export const randomPasswords = (params: GeneratePasswordParams) => http.post('/api/v3/web/data-sources/random-passwords/', params);
+export const randomPasswords = (params: GeneratePasswordParams) => http.post<ResponseData<RandomPasswordsData>>('/api/v3/web/data-sources/random-passwords/', params);
 
 /**
  * 数据源更新记录
  */
-export const getSyncRecords = (id: number, params: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>('/api/v3/web/data-sources/sync-records/', params);
+export const getSyncRecords = (params: SyncRecordsParams) => http.get<ResponseData<SyncRecords>>('/api/v3/web/data-sources/sync-records/', params);
 
 /**
  * 数据源更新日志

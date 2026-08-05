@@ -4,6 +4,9 @@
     class="json-schema-container user-scroll-y"
     :z-index="10"
   >
+    <DataSourceBasicInfo
+      v-model="formData.name"
+    />
     <template v-if="props.curStep === 1 && formData.plugin_config.plugin_id">
       <SchemaForm
         ref="schemaFormRef"
@@ -89,7 +92,7 @@
       </Row>
       <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
         <template #header>
-          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+          <ConflictTips :has-other-data-source="hasOtherDataSource" />
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
@@ -114,40 +117,39 @@ import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
+import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
-import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
-const props = defineProps({
-  currentType: {
-    type: String,
-  },
-  dataSourceId: {
-    type: String,
-  },
-  isReset: {
-    type: Boolean,
-    default: false,
-  },
-  curStep: {
-    type: Number,
-  },
+interface IProps {
+  currentType: string;
+  dataSourceId: number;
+  isReset?: boolean;
+  curStep: number;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  isReset: false,
 });
 
 const emit = defineEmits(['updateCurStep', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
+const hasOtherDataSource = computed(() => dataSourceStore.dataSource
+  .some(item => item.id !== props.dataSourceId));
 
 const formData = reactive({
+  name: '',
   plugin_config: {},
 });
 const jsonSchema = ref({});
@@ -352,8 +354,8 @@ const handleLastStep = async () => {
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
   if (isEdit.value) {
-    const res = await getDataSourceDetails(props.dataSourceId);
-    fieldSettingData.value.sync_config = res.data?.sync_config;
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    fieldSettingData.value.sync_config = details?.sync_config;
   } else {
     fieldSettingData.value.sync_config.sync_period = 24 * 60;
   }
@@ -370,7 +372,8 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: Partial<NewDataSourceParams> = {
+    const params = {
+      name: formData.name,
       plugin_config: formData.plugin_config,
       field_mapping: [
         ...list,
@@ -380,19 +383,23 @@ const handleSubmit = async () => {
     };
 
     if (isEdit.value) {
-      params.id = props.dataSourceId;
-      await putDataSourceDetails(params);
+      await putDataSourceDetails(props.dataSourceId, params);
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
+        name: formData.name,
       });
     } else {
-      params.plugin_id = props.currentType;
-      params.username_generate_config = conflictConfigRef.value?.getData();
-      const res = await newDataSource(params);
+      // 无类型注解的对象推断类型固定，不能动态加属性，这里展开补充新建所需字段
+      const res = await newDataSource({
+        ...params,
+        plugin_id: props.currentType,
+        username_generate_config: conflictConfigRef.value?.getData(),
+      });
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,
+        name: formData.name,
       });
     }
     window.changeInput = false;
@@ -471,15 +478,16 @@ onMounted(async () => {
     isLoading.value = true;
     getJsonSchema();
     if (isEdit.value) {
-      const res = await getDataSourceDetails(props.dataSourceId);
-      formData.plugin_config.plugin_id = res.data?.plugin?.id;
-      if (JSON.stringify(res.data?.plugin_config) !== '{}') {
-        formData.plugin_config.server_config = res.data?.plugin_config?.server_config;
-        formData.plugin_config.auth_config = res.data?.plugin_config?.auth_config;
+      const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      formData.name = details?.name ?? '';
+      formData.plugin_config.plugin_id = details?.plugin?.id;
+      if (JSON.stringify(details?.plugin_config) !== '{}') {
+        formData.plugin_config.server_config = details?.plugin_config?.server_config;
+        formData.plugin_config.auth_config = details?.plugin_config?.auth_config;
       }
-      fieldSettingData.value.sync_config = res.data?.sync_config;
-      fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_generate_config = res.data?.username_generate_config;
+      fieldSettingData.value.sync_config = details?.sync_config;
+      fieldMappingList.value = details?.field_mapping;
+      fieldSettingData.value.username_generate_config = details?.username_generate_config;
     } else {
       formData.plugin_config = defaultServerConfig();
     }

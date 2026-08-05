@@ -74,6 +74,7 @@ test/unit/coverage
 *.njsproj
 *.sln
 dist/
+dist-design-preview/
 
 .bk.local*.env
 .codecc

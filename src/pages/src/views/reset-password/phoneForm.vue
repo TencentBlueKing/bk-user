@@ -136,7 +136,8 @@ const handleBlur = async () => {
   try {
     isEnter.value = false;
     if (formData.phone && !telError.value) {
-      await formRef.value.validate();
+      const valid = await formRef.value?.validate?.().catch(() => false);
+      if (!valid) return;
       nextDisabled.value = false;
     }
   } catch (e) {
