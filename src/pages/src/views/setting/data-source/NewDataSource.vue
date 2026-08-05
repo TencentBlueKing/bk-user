@@ -58,6 +58,7 @@
         v-else
         :title="successText"
         :data-source-id="dataSourceId"
+        :is-local="isLocal"
       />
     </div>
   </div>
@@ -92,6 +93,8 @@ const userStore = useUser();
 
 const currentType = ref('');
 const dataSourceId = ref<number | null>(null);
+/** 当前数据源是否为本地数据源，成功页据此隐藏「立即同步」 */
+const isLocal = ref(false);
 
 const currentPlugins = ref({} as DataSourcePluginsItemData);
 const isLoading = ref(false);
@@ -124,6 +127,7 @@ const updateSuccess = ({ text, name, dataSourceId: newDataSourceId }: {
 }) => {
   successText.value = `${text}${name}${t('成功 ')}`;
   dataSourceId.value = newDataSourceId;
+  isLocal.value = currentType.value === 'local';
   isSuccess.value = true;
 };
 

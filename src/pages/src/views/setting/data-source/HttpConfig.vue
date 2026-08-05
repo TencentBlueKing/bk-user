@@ -698,6 +698,7 @@ const handleSubmit = async () => {
         ...list,
         ...fieldSettingData.value.addFieldList,
       ],
+      sync_config: fieldSettingData.value.sync_config,
     };
 
     if (isEdit.value) {
@@ -711,7 +712,6 @@ const handleSubmit = async () => {
       const res = await newDataSource({
         ...commonParams,
         plugin_id: serverConfigData.value.plugin_id,
-        sync_config: fieldSettingData.value.sync_config,
         username_generate_config: conflictConfigRef.value?.getData(),
       });
       emit('updateSuccess', {

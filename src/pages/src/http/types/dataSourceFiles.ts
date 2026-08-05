@@ -102,7 +102,7 @@ export interface PutDataSourceParams {
   name: string;
   plugin_config: {};
   field_mapping: FieldMapping[];
-  username_generate_config?: UsernameGenerateConfig;
+  sync_config?: SyncConfig;
 }
 
 /**

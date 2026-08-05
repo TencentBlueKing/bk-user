@@ -5,6 +5,7 @@
       <p class="title">{{ title }}</p>
       <div class="mt-[24px]">
         <bk-button
+          v-if="!isLocal"
           class="mr-[8px]"
           theme="primary"
           @click="handleSync"
@@ -34,10 +35,13 @@ import router from '@/router';
 interface IProps {
   title: string;
   dataSourceId: number;
+  /** 本地数据源不展示「立即同步」，由父组件按数据源类型传入 */
+  isLocal?: boolean;
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   title: '',
+  isLocal: false,
 });
 
 // 同步数据后跳转到数据源配置页面

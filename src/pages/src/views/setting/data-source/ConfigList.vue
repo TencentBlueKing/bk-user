@@ -107,8 +107,9 @@
                 {{ getDataSourceSyncStatus(source.id)?.start_at }}
               </span>
             </div>
-            <div v-if="source.plugin_id === 'local'" class="flex items-center">
+            <div class="flex items-center">
               <bk-button
+                v-if="source.plugin_id === 'local'"
                 class="min-w-[64px]"
                 theme="primary"
                 :disabled="isDataSourceRunning(source.id) || resetLoading.instances[source.id]"
@@ -117,18 +118,8 @@
                 <Upload class="mr-[8px] text-[16px]" />
                 {{ $t('导入') }}
               </bk-button>
-              <PopMenu
-                :list="getMoreMenuList(source)"
-                :click-hide="true"
-                :popover-props="{ offset: 15, arrow: false }"
-              >
-                <bk-button class="w-[32px] ml-[8px]">
-                  <i class="user-icon icon-more"></i>
-                </bk-button>
-              </PopMenu>
-            </div>
-            <div v-else class="flex items-center">
               <bk-pop-confirm
+                v-else
                 :content="$t('确认同步？')"
                 trigger="click"
                 @confirm="handleOperationsSync(source)"

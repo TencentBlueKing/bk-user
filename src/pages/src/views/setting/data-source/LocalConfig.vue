@@ -11,9 +11,10 @@
       form-type="vertical"
     >
       <DataSourceBasicInfo
+        :class="{ '!border-none': isEdit }"
         v-model="formModel.name"
       />
-      <Row :title="$t('导入')" class="!shadow-none !border-b-0">
+      <Row v-if="!isEdit" :title="$t('导入')" class="!shadow-none !border-b-0 !mb-[24px]">
         <div class="mb-[16px] w-[560px]">
           <ConflictTips
             type="alert"
@@ -27,28 +28,29 @@
           />
         </div>
         <ExcelUpload v-model="uploadFile" class="w-[560px]" />
-        <div class="btn mt-[16px]">
-          <bk-button
-            theme="primary"
-            class="mr8"
-            :loading="submitLoading"
-            @click="handleSubmit"
-          >
-            {{ $t('提交') }}
-          </bk-button>
-          <bk-button @click="emit('cancel')">
-            {{ $t('取消') }}
-          </bk-button>
-        </div>
       </Row>
+      <div class="btn">
+        <bk-button
+          theme="primary"
+          class="mr8"
+          :loading="submitLoading"
+          @click="handleSubmit"
+        >
+          {{ isEdit ? $t('保存') : $t('提交') }}
+        </bk-button>
+        <bk-button @click="emit('cancel')">
+          {{ $t('取消') }}
+        </bk-button>
+      </div>
     </bk-form>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
+import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
 import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
@@ -57,8 +59,13 @@ import ExcelUpload from '@/components/import-dialog/ExcelUpload.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { useDataSourceImport } from '@/hooks/useDataSourceImport';
-import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
-import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import {
+  getDataSourceDetails,
+  getDefaultConfig,
+  newDataSource,
+  putDataSourceDetails,
+} from '@/http/dataSourceFiles';
+import { DataSourceDetails, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
 
@@ -66,11 +73,16 @@ interface Props {
   dataSourceId: number | null;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<{
   cancel: [];
   updateSuccess: [payload: { text: string; dataSourceId: number; name: string }];
 }>();
+
+/** 编辑模式（仅改名称，不展示导入） */
+const isEdit = computed(() => !isNil(props.dataSourceId));
+/** 编辑模式回填的数据源详情，提交时原样带回，只替换名称 */
+const detailData = ref<DataSourceDetails>();
 
 const conflictConfigRef = ref();
 const conflictConfig = ref<UsernameGenerateConfig>({
@@ -91,6 +103,23 @@ const handleSubmit = async () => {
   try {
     const valid = await formRef.value?.validate().catch(() => false);
     if (!valid) return;
+    // 编辑模式：仅更新名称，其余配置原样带回
+    if (isEdit.value) {
+      submitLoading.value = true;
+      await putDataSourceDetails(props.dataSourceId, {
+        name: formModel.value.name,
+        plugin_config: detailData.value.plugin_config,
+        field_mapping: detailData.value.field_mapping,
+      });
+      window.changeInput = false;
+      emit('updateSuccess', {
+        text: t('更新'),
+        dataSourceId: props.dataSourceId,
+        name: formModel.value.name,
+      });
+      return;
+    }
+    // 新增模式：校验文件后创建数据源并导入
     if (!uploadFile.value) {
       Message({ theme: 'warning', message: t('请选择文件再上传') });
       return;
@@ -134,4 +163,27 @@ const handleSubmit = async () => {
     submitLoading.value = false;
   }
 };
+
+onMounted(async () => {
+  try {
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    formModel.value.name = details?.name ?? '';
+    detailData.value = details;
+  } catch (e) {
+    console.error(e);
+  }
+});
 </script>
+
+<style lang="less" scoped>
+.btn {
+  position: relative;
+  padding: 0 0 24px 24px;
+  margin-top: -24px;
+  background-color: #fff;
+
+  button {
+    min-width: 88px;
+  }
+}
+</style>

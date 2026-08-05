@@ -124,7 +124,7 @@ import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
-import { NewDataSourceParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { useDataSourceStore } from '@/store';
@@ -372,7 +372,8 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: NewDataSourceParams = {
+    const params = {
+      name: formData.name,
       plugin_config: formData.plugin_config,
       field_mapping: [
         ...list,
@@ -382,7 +383,6 @@ const handleSubmit = async () => {
     };
 
     if (isEdit.value) {
-      params.name = formData.name;
       await putDataSourceDetails(props.dataSourceId, params);
       emit('updateSuccess', {
         text: t('更新'),
@@ -390,10 +390,12 @@ const handleSubmit = async () => {
         name: formData.name,
       });
     } else {
-      params.plugin_id = props.currentType;
-      params.name = formData.name;
-      params.username_generate_config = conflictConfigRef.value?.getData();
-      const res = await newDataSource(params);
+      // 无类型注解的对象推断类型固定，不能动态加属性，这里展开补充新建所需字段
+      const res = await newDataSource({
+        ...params,
+        plugin_id: props.currentType,
+        username_generate_config: conflictConfigRef.value?.getData(),
+      });
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,

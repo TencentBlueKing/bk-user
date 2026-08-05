@@ -7,11 +7,16 @@ export default function useDataSourceSetting(callback?: Function) {
   const dataSourceStore = useDataSourceStore();
   const { dataSourceSyncStatusMap } = storeToRefs(dataSourceStore);
 
-  // 存储当前的定时器 ID
-  let timerId: ReturnType<typeof setInterval> | null = null;
+  // 存储各数据源当前的定时器（key: 数据源 ID），支持多个数据源同时轮询
+  const timerMap = new Map<number, ReturnType<typeof setInterval>>();
 
-  // 轮询是否激活
+  // 轮询是否激活（有任一数据源在轮询即为激活）
   const isActive = ref(false);
+
+  // 根据 timerMap 是否为空同步 isActive
+  const updateActive = () => {
+    isActive.value = timerMap.size > 0;
+  };
 
   /**
    * 检查数据源同步状态是否已完成
@@ -29,14 +34,14 @@ export default function useDataSourceSetting(callback?: Function) {
    * @param pluginId 数据源的插件 ID
    */
   const startDataSourceSync = (dataSourceId: number, pluginId: string) => {
-    // 如果已经在轮询中，先停止
-    if (isActive.value) {
-      stopDataSourceSync();
-    }
-
     if (!dataSourceId || !pluginId) {
       console.warn('未找到要轮询的数据源 ID 或插件 ID');
       return;
+    }
+
+    // 该数据源已在轮询中，先停止（重新开始轮询）
+    if (timerMap.has(dataSourceId)) {
+      stopDataSourceSync(dataSourceId);
     }
 
     // 定义轮询回调函数
@@ -46,9 +51,9 @@ export default function useDataSourceSetting(callback?: Function) {
       // 检查数据源是否已完成同步
       const isCompleted = isStatusCompleted(dataSourceId);
 
-      // 如果完成了，自动停止轮询并执行回调
-      if (isCompleted && isActive.value) {
-        stopDataSourceSync();
+      // 如果完成了，自动停止该数据源的轮询并执行回调
+      if (isCompleted && timerMap.has(dataSourceId)) {
+        stopDataSourceSync(dataSourceId);
         callback?.();
       }
     };
@@ -60,9 +65,11 @@ export default function useDataSourceSetting(callback?: Function) {
       const needPolling = status === 'pending' || status === 'running';
 
       if (needPolling) {
-        // 开启轮询
-        timerId = setInterval(pollingCallback, 5000);
-        isActive.value = true;
+        // 防重入：异步返回前若已创建过该数据源的定时器，不再重复创建
+        if (!timerMap.has(dataSourceId)) {
+          timerMap.set(dataSourceId, setInterval(pollingCallback, 5000));
+          updateActive();
+        }
       } else {
         callback?.();
       }
@@ -71,17 +78,26 @@ export default function useDataSourceSetting(callback?: Function) {
 
   /**
    * 停止轮询数据源同步状态
+   * @param dataSourceId 可选，指定要停止的数据源 ID；不传则停止所有数据源的轮询
    */
-  const stopDataSourceSync = () => {
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
-      callback?.();
+  const stopDataSourceSync = (dataSourceId?: number) => {
+    if (dataSourceId !== undefined) {
+      const timerId = timerMap.get(dataSourceId);
+      if (timerId) {
+        clearInterval(timerId);
+        timerMap.delete(dataSourceId);
+      }
+      updateActive();
+      return;
     }
-    isActive.value = false;
+
+    // 未指定数据源 ID，停止全部轮询
+    timerMap.forEach(timerId => clearInterval(timerId));
+    timerMap.clear();
+    updateActive();
   };
 
-  // 组件卸载时清理定时器
+  // 组件卸载时清理所有定时器
   onUnmounted(() => {
     stopDataSourceSync();
   });
