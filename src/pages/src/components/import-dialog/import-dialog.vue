@@ -68,7 +68,6 @@ const emit = defineEmits(['success']);
 
 const dataSourceStore = useDataSourceStore();
 
-const currentLocalDataSourceId = ref(props.dataSourceId);
 const importLoading = ref(false);
 const uploadInfo = reactive({
   file: null as File | null,
@@ -77,7 +76,7 @@ const uploadInfo = reactive({
 });
 /** 本地数据源插件 - 数据同步状态 */
 // eslint-disable-next-line max-len
-const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(currentLocalDataSourceId.value)?.status);
+const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(props.dataSourceId)?.status);
 
 /** 本地数据源是否同步中 */
 const isDataSourceSyncing = computed(() => dataSourceStore.isDataSourceSyncing(localDataSourceStatus.value));
@@ -104,7 +103,7 @@ const confirmImportUsers = async () => {
 
   try {
     importLoading.value = true;
-    const res = await uploadImport(currentLocalDataSourceId.value, uploadInfo.file, uploadInfo.overwrite);
+    const res = await uploadImport(props.dataSourceId, uploadInfo.file, uploadInfo.overwrite);
     // 确保 importLoading 在最终状态(success/failed/backend error) 下才停止loading
     // 因此取消在finally中处理loading的逻辑
     if (res.data.data.status === 'success') {
@@ -114,7 +113,7 @@ const confirmImportUsers = async () => {
       importLoading.value = false;
       Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      startDataSourceSync(currentLocalDataSourceId.value, 'local');
+      startDataSourceSync(props.dataSourceId, 'local');
     }
   } catch (e) {
     importLoading.value = false;

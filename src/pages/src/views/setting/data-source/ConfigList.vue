@@ -413,9 +413,10 @@ const handleInit = async () => {
       const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(item.id);
       if (syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status)) {
         if (item.plugin_id === 'local') {
-          localDataSourceSync(item.id, item.plugin_id);
+          // 初始化时 handleInitSyncStatus 已查询过状态，跳过立即查询直接开启轮询，避免重复请求
+          localDataSourceSync(item.id, item.plugin_id, false);
         } else {
-          otherDataSourceSync(item.id, item.plugin_id);
+          otherDataSourceSync(item.id, item.plugin_id, false);
         }
       }
     });
@@ -429,7 +430,13 @@ onMounted(async () => {
   /** 是否从快速导入跳转过来，是的话则默认打开对应数据源的导入弹框 */
   if (router.currentRoute.value.query?.id) {
     const dataSourceId = Number(router.currentRoute.value.query.id);
-    handleImport(dataSourceStore.getDataSourceById(dataSourceId));
+    const dataSource = dataSourceStore.getDataSourceById(dataSourceId);
+    if (dataSource) {
+      handleImport(dataSource);
+    } else {
+      // 数据源不存在（无效 id 或已被删除），不打开导入弹窗
+      Message({ theme: 'warning', message: t('未找到对应的数据源') });
+    }
   }
 });
 </script>

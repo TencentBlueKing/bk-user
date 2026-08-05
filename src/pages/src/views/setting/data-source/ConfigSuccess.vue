@@ -14,6 +14,7 @@
         </bk-button>
         <bk-button
           class="mr-[8px]"
+          theme="primary"
           @click="loginConfig"
         >
           {{ $t('登录配置') }}

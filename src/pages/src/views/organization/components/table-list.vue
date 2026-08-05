@@ -608,14 +608,12 @@ const localSourceCount = computed(() => organizationStore.currentTenant.data_sou
   .filter(item => item.plugin_id === 'local').length);
 /**
  * 导入按钮展示逻辑：
- * - 租户层级：有本地数据源即可展示
  * - 数据源层级：必须是本地数据源才展示
  * - 部门/员工层级：不展示
+ * - 租户层级：不展示（无目标本地数据源实例，导入会打到 undefined）
  */
 const isShowImport = computed(() => {
   if (isCollaborativeUsers.value || localSourceCount.value === 0) return false;
-  // 租户层级
-  if (isTenantLevel.value) return true;
   // 数据源层级
   if (organizationStore.curSelectedType === 'source' && isLocalDataSource.value) return true;
   return false;

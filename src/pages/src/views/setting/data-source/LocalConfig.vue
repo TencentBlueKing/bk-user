@@ -166,6 +166,7 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
+    if (!isEdit.value) return;
     const details = (await getDataSourceDetails(props.dataSourceId))?.data;
     formModel.value.name = details?.name ?? '';
     detailData.value = details;

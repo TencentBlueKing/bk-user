@@ -33,7 +33,13 @@ export default function useDataSourceSetting(callback?: Function) {
    * @param dataSourceId 要轮询的数据源 ID
    * @param pluginId 数据源的插件 ID
    */
-  const startDataSourceSync = (dataSourceId: number, pluginId: string) => {
+  /**
+   * 轮询获取数据源的同步状态
+   * @param dataSourceId 要轮询的数据源 ID
+   * @param pluginId 数据源的插件 ID
+   * @param immediate 是否立即执行一次状态查询，默认 true；调用方刚查询过状态时可传 false 跳过，避免重复请求
+   */
+  const startDataSourceSync = (dataSourceId: number, pluginId: string, immediate = true) => {
     if (!dataSourceId || !pluginId) {
       console.warn('未找到要轮询的数据源 ID 或插件 ID');
       return;
@@ -58,10 +64,8 @@ export default function useDataSourceSetting(callback?: Function) {
       }
     };
 
-    // 立即执行一次获取状态
-    dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }]).then(() => {
-      // 检查是否需要开启轮询
-      const status = dataSourceSyncStatusMap.value.get(dataSourceId)?.status;
+    // 根据最新同步状态决定是否开启轮询
+    const handleSyncStatus = (status?: string) => {
       const needPolling = status === 'pending' || status === 'running';
 
       if (needPolling) {
@@ -73,7 +77,16 @@ export default function useDataSourceSetting(callback?: Function) {
       } else {
         callback?.();
       }
-    });
+    };
+
+    if (immediate) {
+      // 立即执行一次获取状态
+      dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }])
+        .then(() => handleSyncStatus(dataSourceSyncStatusMap.value.get(dataSourceId)?.status));
+    } else {
+      // 跳过立即查询，直接按当前已知状态处理（调用方需保证刚查询过状态）
+      handleSyncStatus(dataSourceSyncStatusMap.value.get(dataSourceId)?.status);
+    }
   };
 
   /**

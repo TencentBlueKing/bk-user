@@ -145,7 +145,10 @@ const handleInit = async () => {
   try {
     isLoading.value = true;
     await Promise.all([
+      // 该页支持直接通过路由进入（刷新/直达链接），此时 store 中无数据，需在此兜底初始化：
+      // 插件目录，用于渲染当前类型插件的名称/图标/描述
       dataSourceStore.handleFetchAllDataSourcePlugins(),
+      // 当前租户已配置的数据源列表，用于新建/编辑时的数据源冲突提示
       dataSourceStore.handleFetchCurrentDataSource(),
     ]);
     updateDataSourceContext();

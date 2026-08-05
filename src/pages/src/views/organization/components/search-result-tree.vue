@@ -220,7 +220,11 @@ const getDataSourceIcon = (pluginId?: string) => ({
 const getTreeData = async () => {
   const { selectedOrg } = organizationStore;
   const departmentId = Number(selectedOrg.deptId);
-  const res = await getDepartmentsList(selectedOrg.tenantId, { parent_department_id: departmentId });
+  const dataSourceId = Number(selectedOrg.dataSourceId);
+  const res = await getDepartmentsList(selectedOrg.tenantId, {
+    parent_department_id: departmentId,
+    data_source_id: dataSourceId,
+  });
   treeData.value = getData(Boolean(res.data?.length));
 };
 
