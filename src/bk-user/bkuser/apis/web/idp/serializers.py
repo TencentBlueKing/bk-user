@@ -285,3 +285,16 @@ class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):
                 dictx.set_items(plugin_config, info.key, info.value)
 
         return super().validate_plugin_config(plugin_config)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        plugin_config = attrs["plugin_config"]
+        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+
+        status = attrs["status"]
+        # 启动登录和启用密码功能必须保持一致
+        if (plugin_config.enable_password and status == IdpStatus.DISABLED) or (
+            not plugin_config.enable_password and status == IdpStatus.ENABLED
+        ):
+            raise ValidationError("本地登录启用状态必须与密码功能启用保持一致")
+
+        return attrs
