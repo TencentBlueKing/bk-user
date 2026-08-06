@@ -149,7 +149,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
 
     @swagger_auto_schema(
         tags=["organization.department"],
-        operation_description="获取指定租户在当前租户的部门列表",
+        operation_description="获取指定用户在当前租户的部门列表",
         query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
