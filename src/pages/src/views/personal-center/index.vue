@@ -619,6 +619,8 @@ const submitTimeZone = async () => {
     });
     Message({ theme: 'success', message: t('保存成功') });
     originalValue.value.time_zone = currentUserInfo.value.time_zone;
+    // 同步全局用户信息，Header 时区展示随之更新
+    userStore.user.time_zone = currentUserInfo.value.time_zone;
   } catch (error) {
     console.warn(error);
   }
