@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 消息通知 -->
-    <!-- <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" /> -->
+    <NoticeComponent v-if="isNoticeEnabled" :api-url="apiUrl" @show-alert-change="showAlertChange" />
     <bk-navigation
       :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
@@ -99,11 +99,11 @@
           </bk-dropdown>
           <BkLoginUserinfo
             :userinfo="{
-              name: userInfo.username,
-              organization: userInfo.tenant_id,
-              timezone: userInfo.time_zone,
+              name: userStore.user.username,
+              organization: userStore.user.tenant_id,
+              timezone: userStore.user.time_zone,
             }">
-            <DisplayName :user-id="userInfo.username" class="help-info-name" />
+            <DisplayName :user-id="userStore.user.username" class="help-info-name" />
             <template #action>
               <ActionItem v-if="!isTenant" @click="toIndividualCenter">
                 <template #icon>
@@ -169,73 +169,12 @@ const state = reactive({
 });
 
 const userStore = useUser();
-const platformConfigData = platformConfig();
-const headerNav = ref([]);
-/** 顶部Header栏 - 用于展示的租户信息 */
-const headerTenantInfo = ref<Partial<TenantInfoData>>({
-  name: '',
-  logo: '',
-});
-const role = computed(() => userStore.user.role);
-const appName = computed(() => platformConfigData.i18n.productName);
-const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
-const userInfo = computed(() => {
-  const baseNav = [
-    { name: t('组织架构'), path: 'organization' },
-    { name: t('虚拟账号'), path: 'virtual-account' },
-    { name: t('操作历史'), path: 'operations-history' },
-    { name: t('设置'), path: 'setting' },
-  ];
-
-  // 根据变量开启或隐藏虚拟账号页面
-  if (window.ENABLE_VIRTUAL_USER === 'False') {
-    baseNav?.splice(1, 1);
-  }
-  // headerNav初始化
-  headerNav.value = [];
-  // 避免route.name undefined时照成的headerNav赋值
-  if (route.name) {
-    if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
-      headerNav.value = baseNav;
-    } else if (role.value === ROLE.TENANT_MANAGER) {
-      headerNav.value = baseNav;
-    }
-  }
-  return userStore.user;
-});
-
 const route = useRoute();
-const isTenant = computed(() => route.name === 'tenant');
+const platformConfigData = platformConfig();
 
-const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
-  const iconMap: Record<string, string> = {
-    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-  };
-  return {
-    name: option.label,
-    icon: iconMap[option.value] || '',
-    language: option.value,
-  };
-}));
-
-const toIndividualCenter = () => {
-  router.push({
-    name: 'personalCenter',
-  });
-};
-
-const toTenant = () => {
-  if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
-  router.push({ name: 'tenant' });
-  headerNav.value = [];
-};
-
-const initTenantInfo = async () => {
-  const res = await getTenantInfo();
-  headerTenantInfo.value = res.data;
-};
-
+// 消息通知配置信息
+const apiUrl = `${window.AJAX_BASE_URL}/api/v3/web/notices/announcements/`;
+const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 提供更新租户信息的方法给子组件
 const updateTenantInfo: UpdateTenantInfo = {
   updateName: (name: string) => {
@@ -258,11 +197,86 @@ const updateTenantInfo: UpdateTenantInfo = {
 
 provide(UPDATE_TENANT_INFO_KEY, updateTenantInfo);
 
-onMounted(() => {
-  if (role.value && role.value !== ROLE.NATURAL_USER) {
-    initTenantInfo();
-  }
+const headerNav = ref([]);
+/** 顶部Header栏 - 用于展示的租户信息 */
+const headerTenantInfo = ref<Partial<TenantInfoData>>({
+  name: '',
+  logo: '',
 });
+// 版本日志配置信息
+const showReleaseNote = ref(false);
+const releaseNoteDetail = ref('');
+const releaseLoading = ref(false);
+const releaseList = ref([]);
+const activeVersion = ref('');
+
+const role = computed(() => userStore.user.role);
+const appName = computed(() => platformConfigData.i18n.productName);
+const appLogo = computed(() => (platformConfigData.appLogo ?  platformConfigData.appLogo : logo));
+
+const isTenant = computed(() => route.name === 'tenant');
+
+const languageNav = computed(() => platformConfigData.languageOptions.map((option) => {
+  const iconMap: Record<string, string> = {
+    'zh-cn': 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    en: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+  };
+  return {
+    name: option.label,
+    icon: iconMap[option.value] || '',
+    language: option.value,
+  };
+}));
+
+// 产品文档
+const docUrl = computed(() => (
+  window?.BK_USER_DOC_URL?.replace(
+    'markdown',
+    `markdown/${locale.value === 'en' ? 'EN' : 'ZH'}`,
+  )
+));
+
+const toIndividualCenter = () => {
+  router.push({
+    name: 'personalCenter',
+  });
+};
+
+const toTenant = () => {
+  if (window.ENABLE_MULTI_TENANT_MODE === 'False') return;
+  router.push({ name: 'tenant' });
+  headerNav.value = [];
+};
+
+const initTenantInfo = async () => {
+  const res = await getTenantInfo();
+  headerTenantInfo.value = res.data;
+};
+
+// 初始化顶部导航
+const initHeaderNav = () => {
+  const baseNav = [
+    { name: t('组织架构'), path: 'organization' },
+    { name: t('虚拟账号'), path: 'virtual-account' },
+    { name: t('操作历史'), path: 'operations-history' },
+    { name: t('设置'), path: 'setting' },
+  ];
+
+  // 根据变量开启或隐藏虚拟账号页面
+  if (window.ENABLE_VIRTUAL_USER === 'False') {
+    baseNav?.splice(1, 1);
+  }
+  // headerNav初始化
+  headerNav.value = [];
+  // 避免route.name undefined时照成的headerNav赋值
+  if (route.name) {
+    if (role.value === ROLE.SUPER_MANAGER && !isTenant.value) {
+      headerNav.value = baseNav;
+    } else if (role.value === ROLE.TENANT_MANAGER) {
+      headerNav.value = baseNav;
+    }
+  }
+};
 
 const onGoBack = () => {
   if (role.value === ROLE.SUPER_MANAGER && route.name !== 'tenant') {
@@ -273,18 +287,6 @@ const onGoBack = () => {
     router.push({ name: 'organization' });
   } else if (role.value === ROLE.NATURAL_USER) return;
 };
-
-// 产品文档
-const docUrl = computed(() => (
-  window?.BK_USER_DOC_URL?.replace(
-    'markdown',
-    `markdown/${locale.value === 'en' ? 'EN' : 'ZH'}`,
-  )
-));
-
-// 消息通知配置信息
-const apiUrl = `${window.AJAX_BASE_URL}/api/v3/web/notices/announcements/`;
-const isNoticeEnabled = window.ENABLE_BK_NOTICE !== 'False';
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
   userStore.setShowAlert(isShow);
@@ -302,12 +304,6 @@ const openExternalLink = (type: 'doc' | 'feedback') => {
   }
 };
 
-// 版本日志配置信息
-const showReleaseNote = ref(false);
-const releaseNoteDetail = ref('');
-const releaseLoading = ref(false);
-const releaseList = ref([]);
-const activeVersion = ref('');
 // 获取版本日志
 const openVersionLog = async () => {
   showReleaseNote.value = true;
@@ -322,6 +318,13 @@ const openVersionLog = async () => {
     releaseLoading.value = false;
   }
 };
+
+onMounted(() => {
+  initHeaderNav();
+  if (role.value && role.value !== ROLE.NATURAL_USER) {
+    initTenantInfo();
+  }
+});
 </script>
 
 <style lang="less" scoped>
