@@ -175,7 +175,12 @@ AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
 LANGUAGE_CODE = "zh-cn"
-LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
+DEFAULT_LANGUAGES = (("zh-cn", "中文"), ("en-us", "English"))
+# 蓝鲸体系内置语言（使用蓝鲸规范语言码，如 en 而非 en-us）
+BK_LANGUAGES = (("zh-cn", "中文"), ("en", "英文"))
+# EXTRA_LANGUAGES=ja=日本語,ko=한국어
+EXTRA_LANGUAGES = tuple(env.dict("EXTRA_LANGUAGES", default={}).items())
+LANGUAGES = DEFAULT_LANGUAGES + EXTRA_LANGUAGES
 LANGUAGE_COOKIE_NAME = "blueking_language"
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
@@ -300,8 +305,8 @@ ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
 # 是否自动同步 Web 网关
 ENABLE_SYNC_WEB_APIGW = env.bool("ENABLE_SYNC_WEB_APIGW", default=False)
 
-# 版本日志
-VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
+# 版本日志目录
+VERSION_LOG_FILES_DIR = env.str("VERSION_LOG_FILES_DIR", default=str(BASE_DIR / "version_log"))
 # 前端 Console 展示构建的版本信息
 BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
 # 文档链接

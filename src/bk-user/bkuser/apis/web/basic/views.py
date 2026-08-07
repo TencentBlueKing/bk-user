@@ -19,8 +19,9 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apps.permission.permissions import get_user_role
+from bkuser.common.language import get_language_list
 
-from .serializers import CurrentUserRetrieveOutputSLZ
+from .serializers import CurrentUserRetrieveOutputSLZ, LanguageOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
@@ -44,3 +45,15 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
+
+
+class LanguageListApi(generics.ListAPIView):
+    pagination_class = None
+
+    @swagger_auto_schema(
+        operation_description="获取支持的语言列表",
+        responses={status.HTTP_200_OK: LanguageOutputSLZ(many=True)},
+        tags=["basic.languages"],
+    )
+    def get(self, request, *args, **kwargs):
+        return Response(LanguageOutputSLZ(get_language_list(), many=True).data)

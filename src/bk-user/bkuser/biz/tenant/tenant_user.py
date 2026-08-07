@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-
+import logging
 from typing import Dict, List, Optional
 
 from django.conf import settings
@@ -22,6 +22,9 @@ from pydantic import BaseModel
 
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.common.language import get_language_codes
+
+logger = logging.getLogger(__name__)
 
 
 class TenantUserPhoneInfo(BaseModel):
@@ -74,3 +77,11 @@ class TenantUserHandler:
         否则可能导致 N+1 查询问题
         """
         return {user.id: TenantUserHandler.get_login_name(user) for user in tenant_users}
+
+    @staticmethod
+    def update_tenant_user_language(tenant_user: TenantUser, language: str) -> None:
+        if language not in get_language_codes():
+            logger.warning("unsupported language %s for tenant_user %s, skipped", language, tenant_user.id)
+            return
+        tenant_user.language = language
+        tenant_user.save(update_fields=["language", "updated_at"])

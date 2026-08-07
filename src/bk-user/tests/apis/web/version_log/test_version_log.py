@@ -43,3 +43,16 @@ class TestVersionLog:
     def test_valid_language_code_zh(self, language):
         translation.get_language = lambda: language
         assert _get_change_log_file_name() == FILE_NAME
+
+    def test_extra_language_with_existing_file(self, tmp_path, settings, monkeypatch):
+        """存在对应语言的 changelog 文件时，返回该语言版本日志"""
+        (tmp_path / "changelog_ja.md").write_text("test", encoding="utf-8")
+        settings.VERSION_LOG_FILES_DIR = str(tmp_path)
+        monkeypatch.setattr(translation, "get_language", lambda: "ja")
+        assert _get_change_log_file_name() == "changelog_ja.md"
+
+    def test_extra_language_without_file_fallback_to_default(self, tmp_path, settings, monkeypatch):
+        """无对应语言文件时，回退到中文默认版本日志"""
+        settings.VERSION_LOG_FILES_DIR = str(tmp_path)
+        monkeypatch.setattr(translation, "get_language", lambda: "ja")
+        assert _get_change_log_file_name() == FILE_NAME

@@ -109,26 +109,54 @@ class TestTenantUserLanguageUpdateApi:
         ("language"),
         [("zh-cn"), ("en")],
     )
-    def test_update_legal_language(self, api_client, tenant_user, language):
+    def test_update_supported_language(self, api_client, tenant_user, language):
+        """更新为受支持语言，返回 204 且落库生效"""
         resp = api_client.put(
             reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
             data={"language": language},
         )
 
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+        tenant_user.refresh_from_db()
+        assert tenant_user.language == language
 
     @pytest.mark.parametrize(
         ("language"),
-        [("zh-US"), ("en-CN"), ""],
+        [("zh-US"), ("en-CN"), ("ja-JP")],
     )
-    def test_update_illegal_lanague(self, api_client, tenant_user, language):
+    def test_update_unsupported_language_is_ignored(self, api_client, tenant_user, language):
+        """未支持语言不报错，静默忽略并保持用户原有语言不变"""
+        original_language = tenant_user.language
+
         resp = api_client.put(
             reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
             data={"language": language},
         )
 
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        tenant_user.refresh_from_db()
+        assert tenant_user.language == original_language
+
+    def test_update_blank_language_rejected(self, api_client, tenant_user):
+        """空语言值仍按参数校验拦截，返回 400"""
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": ""},
+        )
+
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "不是合法选项" in resp.data["message"]
+
+    @override_settings(EXTRA_LANGUAGES=(("ja", "日本語"),))
+    def test_update_extra_language_supported(self, api_client, tenant_user):
+        """动态配置的 EXTRA_LANGUAGES 也应被视为受支持语言"""
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.language.update", kwargs={"id": tenant_user.id}),
+            data={"language": "ja"},
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        tenant_user.refresh_from_db()
+        assert tenant_user.language == "ja"
 
 
 class TestTenantUserTimeZoneUpdateApi:

@@ -408,8 +408,7 @@ class TenantUserLanguageUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         data = slz.validated_data
 
         tenant_user = self.get_object()
-        tenant_user.language = data["language"]
-        tenant_user.save(update_fields=["language", "updated_at"])
+        TenantUserHandler.update_tenant_user_language(tenant_user, data["language"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

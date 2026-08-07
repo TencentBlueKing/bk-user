@@ -360,7 +360,6 @@ class CurrentUserLanguageUpdateApi(ExcludePatchAPIViewMixin, OpenWebApiCommonMix
         data = slz.validated_data
 
         tenant_user = get_object_or_404(self.get_queryset(), id=request.user.username)
-        tenant_user.language = data["language"]
-        tenant_user.save(update_fields=["language", "updated_at"])
+        TenantUserHandler.update_tenant_user_language(tenant_user, data["language"])
 
         return Response(CurrentUserLanguageUpdateOutputSLZ(tenant_user).data)
