@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -31,7 +31,7 @@ def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_i
         id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
     )
     if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
-        raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
+        raise ValidationError(_("用户 ID {} 不存在或不属于当前数据源").format(", ".join(invalid_user_ids)))
 
 
 def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str, data_source_id: int) -> None:
@@ -40,12 +40,13 @@ def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str, d
         id__in=department_ids, tenant_id=tenant_id, data_source_id=data_source_id
     )
     if invalid_dept_ids := set(department_ids) - set(exists_tenant_depts.values_list("id", flat=True)):
-        raise ValidationError(_("部门 ID {} 在当前租户中不存在").format(invalid_dept_ids))
+        raise ValidationError(_("部门 ID {} 不存在或不属于当前数据源").format(invalid_dept_ids))
 
 
 class TenantDeptUserRelationBatchCreateInputSLZ(serializers.Serializer):
     """追加目标组织"""
 
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
     user_ids = serializers.ListField(
         help_text="用户 ID 列表",
         child=serializers.CharField(help_text="租户用户 ID"),
@@ -59,13 +60,13 @@ class TenantDeptUserRelationBatchCreateInputSLZ(serializers.Serializer):
         max_length=10,
     )
 
-    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
-        return user_ids
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], attrs["data_source_id"])
+        _validate_tenant_department_ids(
+            attrs["target_department_ids"], self.context["tenant_id"], attrs["data_source_id"]
+        )
 
-    def validate_target_department_ids(self, department_ids: List[int]) -> List[int]:
-        _validate_tenant_department_ids(department_ids, self.context["tenant_id"], self.context["data_source_id"])
-        return department_ids
+        return attrs
 
 
 class TenantDeptUserRelationBatchUpdateInputSLZ(TenantDeptUserRelationBatchCreateInputSLZ):
@@ -77,23 +78,27 @@ class TenantDeptUserRelationBatchPatchInputSLZ(TenantDeptUserRelationBatchCreate
 
     source_department_id = serializers.IntegerField(help_text="当前部门 ID")
 
-    def validate_source_department_id(self, department_id: int) -> int:
-        _validate_tenant_department_ids([department_id], self.context["tenant_id"], self.context["data_source_id"])
-        return department_id
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        attrs = super().validate(attrs)
+        _validate_tenant_department_ids(
+            [attrs["source_department_id"]], self.context["tenant_id"], attrs["data_source_id"]
+        )
+        return attrs
 
 
 class TenantDeptUserRelationBatchDeleteInputSLZ(serializers.Serializer):
     """移出当前组织"""
 
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
     user_ids = StringArrayField(
         help_text="用户 ID 列表", min_items=1, max_items=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT
     )
     source_department_id = serializers.IntegerField(help_text="当前部门 ID")
 
-    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
-        return user_ids
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], attrs["data_source_id"])
+        _validate_tenant_department_ids(
+            [attrs["source_department_id"]], self.context["tenant_id"], attrs["data_source_id"]
+        )
 
-    def validate_source_department_id(self, department_id: int) -> int:
-        _validate_tenant_department_ids([department_id], self.context["tenant_id"], self.context["data_source_id"])
-        return department_id
+        return attrs

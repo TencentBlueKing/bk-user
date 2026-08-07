@@ -40,6 +40,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
+from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -56,11 +57,10 @@ from bkuser.biz.auditor import TenantDepartmentAuditor
 from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
-from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.utils import gen_dept_code
 
 
-class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
+class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListCreateAPIView):
     """获取租户部门列表 / 创建租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -74,21 +74,26 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         )
         slz.is_valid(raise_exception=True)
         parent_dept_id = slz.validated_data["parent_department_id"]
+        data_source_id = slz.validated_data.get("data_source_id")
 
         # 如果指定父部门 ID，则获取其子部门
         if parent_dept_id:
             return self._get_children_depts(parent_dept_id)
 
         # 如果没有指定父部门 ID，则获取指定租户的根部门
-        return self._get_root_depts()
+        # 若传入 data_source_id 则只返回该数据源的根部门，否则返回全部实名数据源的根部门
+        return self._get_root_depts(data_source_id)
 
-    def _get_root_depts(self) -> QuerySet[TenantDepartment]:
+    def _get_root_depts(self, data_source_id: int | None = None) -> QuerySet[TenantDepartment]:
         owner_tenant_id = self.kwargs["id"]
         # 获取指定租户的数据源，通过数据源部门关系查询部门列表
         data_sources = DataSource.objects.filter(
             owner_tenant_id=owner_tenant_id,
             type=DataSourceTypeEnum.REAL,
         )
+        if data_source_id:
+            data_sources = data_sources.filter(id=data_source_id)
+
         if not data_sources.exists():
             return TenantDepartment.objects.none()
 
@@ -144,7 +149,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
 
     @swagger_auto_schema(
         tags=["organization.department"],
-        operation_description="获取指定租户在当前租户的部门列表",
+        operation_description="获取指定用户在当前租户的部门列表",
         query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
@@ -173,20 +178,14 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         if self.kwargs["id"] != current_tenant_id:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
 
-        # 必须存在本地实名用户数据源才可以创建租户部门
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=current_tenant_id,
-            type=DataSourceTypeEnum.REAL,
-            plugin_id=DataSourcePluginEnum.LOCAL,
-        ).first()
-        if not data_source:
-            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("租户数据源不存在"))
-
         slz = TenantDepartmentCreateInputSLZ(
-            data=request.data, context={"tenant_id": current_tenant_id, "data_source": data_source}
+            data=request.data,
+            context={"tenant_id": current_tenant_id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        data_source = self.get_local_real_data_source(data["data_source_id"])
 
         # 设置默认值（若父部门不存在，则所创建的部门为根部门）
         parent_dept_relation = None
@@ -375,14 +374,18 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantDepartment]:
         slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
-        keyword = slz.validated_data["keyword"]
+        params = slz.validated_data
 
         real_ds_ids = DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)
-        return TenantDepartment.objects.filter(
+        queryset = TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
             data_source_id__in=real_ds_ids,
-            data_source_department__name__icontains=keyword,
-        ).select_related("data_source_department")[: self.search_limit]
+            data_source_department__name__icontains=params["keyword"],
+        )
+
+        if data_source_id := params.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+        return queryset.select_related("data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -413,19 +416,17 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
     search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
-        slz = OptionalTenantDepartmentListInputSLZ(data=self.request.query_params)
+        cur_tenant_id = self.get_current_tenant_id()
+        slz = OptionalTenantDepartmentListInputSLZ(
+            data=self.request.query_params,
+            context={"tenant_id": cur_tenant_id},
+        )
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        cur_tenant_id = self.get_current_tenant_id()
         queryset = TenantDepartment.objects.filter(
-            tenant_id=cur_tenant_id,
-            data_source__type=DataSourceTypeEnum.REAL,
-            data_source__owner_tenant_id=cur_tenant_id,
+            tenant_id=cur_tenant_id, data_source_id=params["data_source_id"]
         ).select_related("data_source_department")
-
-        if data_source_id := params.get("data_source_id"):
-            queryset = queryset.filter(data_source_id=data_source_id)
 
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)

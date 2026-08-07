@@ -38,6 +38,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
 
+from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
@@ -71,6 +72,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -83,6 +85,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": {"enable_password": False},
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -94,6 +97,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "add_affix", "suffix": "_abc"},
@@ -112,6 +116,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "add_affix", "prefix": "corp_", "suffix": "_abc"},
@@ -124,6 +129,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "add_affix", "suffix": "invalid"},
@@ -136,6 +142,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged"},
@@ -147,6 +154,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged", "prefix": "corp_"},
@@ -159,6 +167,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": "not_exist_plugin",
                 "plugin_config": {},
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -171,6 +180,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
             },
@@ -183,6 +193,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -196,6 +207,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -209,6 +221,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": local_ds_plugin_cfg,
                 "username_generate_config": {"rule": "unchanged", "prefix": "", "suffix": ""},
@@ -224,6 +237,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
@@ -240,6 +254,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [],
@@ -256,6 +271,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [
@@ -277,6 +293,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": [
@@ -296,6 +313,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
@@ -309,6 +327,7 @@ class TestDataSourceCreateApi:
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
+                "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.GENERAL,
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
@@ -340,7 +359,7 @@ class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
         url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
         local_ds_plugin_cfg["enable_password"] = False
-        resp = api_client.put(url, data={"plugin_config": local_ds_plugin_cfg})
+        resp = api_client.put(url, data={"name": generate_random_string(), "plugin_config": local_ds_plugin_cfg})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(url)
@@ -350,7 +369,7 @@ class TestDataSourceUpdateApi:
         local_ds_plugin_cfg.pop("enable_password")
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_cfg},
+            data={"name": generate_random_string(), "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_password: Field required" in resp.data["message"]
@@ -361,6 +380,7 @@ class TestDataSourceUpdateApi:
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
+                "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
@@ -374,7 +394,11 @@ class TestDataSourceUpdateApi:
         """非本地数据源，需要字段映射配置"""
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
-            data={"plugin_config": general_ds_plugin_cfg, "sync_config": sync_config},
+            data={
+                "name": generate_random_string(),
+                "plugin_config": general_ds_plugin_cfg,
+                "sync_config": sync_config,
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须配置字段映射"
@@ -385,7 +409,11 @@ class TestDataSourceUpdateApi:
         """非本地数据源，需要同步配置"""
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
-            data={"plugin_config": general_ds_plugin_cfg, "field_mapping": field_mapping},
+            data={
+                "name": generate_random_string(),
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+            },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须提供同步配置"
@@ -402,6 +430,7 @@ class TestDataSourceUpdateApi:
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
+                "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
@@ -418,6 +447,7 @@ class TestDataSourceUpdateApi:
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
+                "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
                 "field_mapping": field_mapping,
                 "sync_config": sync_config,
@@ -492,6 +522,77 @@ class TestDataSourceDestroyApi:
         assert not Idp.objects.filter(id=disabled_idp.id).exists()
         assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
 
+    def test_destroy_one_of_multiple_scopes_keeps_idp_enabled(
+        self, api_client, data_source, bare_general_data_source, wecom_idp
+    ):
+        """多实例场景：重置认证源多个生效范围之一，idp 保持启用，仅移除对应关系"""
+        # 把 wecom_idp 的生效范围扩展为 {本地 data_source, general}
+        IdpDataSourceRelation.objects.create(
+            idp=wecom_idp,
+            data_source=bare_general_data_source,
+            idp_owner_tenant_id=wecom_idp.owner_tenant_id,
+            field_compare_rules=[{"source_field": "user_id", "target_field": "username"}],
+        )
+        # 重置 general 源（非最后一个范围），不连带删除 idp
+        resp = api_client.delete(
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
+            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        updated = Idp.objects.get(id=wecom_idp.id)
+        # 仍有其它范围（本地 data_source）→ 保持启用
+        assert updated.status == IdpStatus.ENABLED
+        remaining = set(IdpDataSourceRelation.objects.filter(idp=updated).values_list("data_source_id", flat=True))
+        assert remaining == {data_source.id}
+        assert not DataSource.objects.filter(id=bare_general_data_source.id).exists()
+
+
+class TestDataSourceBatchDeleteApi:
+    def test_batch_delete_all_real_data_sources(
+        self, api_client, data_source, bare_general_data_source, local_idp, wecom_idp, bare_virtual_data_source
+    ):
+        """全部重置：清空全部实名数据源；本地 IdP 删除，联邦 IdP 停用；非 REAL 源不受影响"""
+        # wecom 再挂上 general，确保批量删除会清掉多源关系
+        IdpDataSourceRelation.objects.create(
+            idp=wecom_idp,
+            data_source=bare_general_data_source,
+            idp_owner_tenant_id=wecom_idp.owner_tenant_id,
+            field_compare_rules=[{"source_field": "user_id", "target_field": "username"}],
+        )
+
+        resp = api_client.delete(
+            reverse("data_source.batch_delete"),
+            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(
+            owner_tenant_id=data_source.owner_tenant_id, type=DataSourceTypeEnum.REAL
+        ).exists()
+        assert DataSource.objects.filter(id=bare_virtual_data_source.id).exists()
+
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        updated_wecom = Idp.objects.get(id=wecom_idp.id)
+        assert updated_wecom.status == IdpStatus.DISABLED
+        assert not IdpDataSourceRelation.objects.filter(idp=updated_wecom).exists()
+
+    def test_batch_delete_with_delete_idp(
+        self, api_client, data_source, bare_general_data_source, local_idp, wecom_idp
+    ):
+        resp = api_client.delete(
+            reverse("data_source.batch_delete"),
+            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(
+            owner_tenant_id=data_source.owner_tenant_id, type=DataSourceTypeEnum.REAL
+        ).exists()
+        assert not Idp.objects.filter(id=local_idp.id).exists()
+        assert not Idp.objects.filter(id=wecom_idp.id).exists()
+        assert not IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
+
 
 class TestDataSourceRelatedResourceStatsApi:
     def test_list(self, api_client, full_local_data_source, default_tenant):
@@ -521,6 +622,8 @@ class TestDataSourceSyncRecordApi:
         assert len(tasks) == 2  # noqa: PLR2004
         assert set(tasks[0].keys()) == {
             "id",
+            "data_source_id",
+            "data_source_name",
             "plugin",
             "status",
             "has_warning",
@@ -550,7 +653,16 @@ class TestDataSourceSyncRecordApi:
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]
         resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": success_task.id}))
-        assert set(resp.data.keys()) == {"id", "status", "has_warning", "start_at", "duration", "logs"}
+        assert set(resp.data.keys()) == {
+            "id",
+            "data_source_id",
+            "data_source_name",
+            "status",
+            "has_warning",
+            "start_at",
+            "duration",
+            "logs",
+        }
 
     def test_retrieve_other_tenant_data_source_sync_record(self, api_client, data_source_sync_tasks):
         other_tenant_task = data_source_sync_tasks[2]

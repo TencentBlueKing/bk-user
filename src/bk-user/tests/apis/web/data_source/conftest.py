@@ -62,7 +62,7 @@ def local_idp(data_source) -> Idp:
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
     )
-    IdpDataSourceRelationHandler.set_local_real_relations(idp)
+    IdpDataSourceRelationHandler.set_local_real_relations(idp, [data_source])
     return idp
 
 
@@ -152,6 +152,7 @@ def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
     plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
     return DataSource.objects.create(
         owner_tenant_id=random_tenant.id,
+        name="通用 HTTP 数据源",
         type=DataSourceTypeEnum.REAL,
         plugin=plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),

@@ -33,6 +33,7 @@ from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_plugin_cfg_schema_map
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -169,10 +170,7 @@ class IdpRetrieveOutputSLZ(serializers.Serializer):
     callback_uri = serializers.CharField(help_text="回调地址")
 
     def get_data_source_match_rules(self, obj: Idp) -> List[Dict[str, Any]]:
-        # 当前管理页仍只展示一个实名数据源的登录配置模板，不返回完整 relations。
-        # 登录匹配必须读取 IdpDataSourceRelation 中的完整关系，不能依赖该响应字段。
-        match_rule = IdpDataSourceRelationHandler.get_primary_real_match_rule(obj)
-        return [match_rule.model_dump()] if match_rule else []
+        return [rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(obj)]
 
 
 class IdpPartialUpdateInputSLZ(serializers.Serializer):
@@ -221,6 +219,9 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     # Note: 本地认证源的密码配置实际上是写入本地数据源的
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源插件配置")
+    data_source_ids = serializers.ListField(
+        help_text="生效范围数据源 ID 列表", child=serializers.IntegerField(), allow_empty=False, min_length=1
+    )
 
     def validate_name(self, name: str) -> str:
         return _validate_duplicate_idp_name(name, self.context["tenant_id"])
@@ -231,9 +232,29 @@ class LocalIdpCreateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
 
+    def validate_data_source_ids(self, data_source_ids: List[int]) -> List[int]:
+        tenant_id = self.context["tenant_id"]
+        exists_ids = set(
+            DataSource.objects.filter(
+                id__in=data_source_ids,
+                owner_tenant_id=tenant_id,
+                type=DataSourceTypeEnum.REAL,
+                plugin_id=DataSourcePluginEnum.LOCAL,
+            ).values_list("id", flat=True)
+        )
+        if not_found := set(data_source_ids) - exists_ids:
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的本地数据源").format(not_found))
+        return data_source_ids
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_config = attrs["plugin_config"]
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+
+        # 检查是否已经存在对应的认证源
+        if IdpDataSourceRelationHandler.has_duplicate_plugin_real_relation(
+            self.context["tenant_id"], idp_plugin_id=DataSourcePluginEnum.LOCAL
+        ):
+            raise ValidationError(_("本地账密登录已存在"))
 
         status = attrs["status"]
         # 启动登录和启用密码功能必须保持一致
@@ -250,6 +271,7 @@ class LocalIdpRetrieveOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源密码配置")
+    data_source_ids = serializers.ListField(help_text="生效范围数据源 ID 列表", child=serializers.IntegerField())
 
 
 class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):
@@ -263,3 +285,16 @@ class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):
                 dictx.set_items(plugin_config, info.key, info.value)
 
         return super().validate_plugin_config(plugin_config)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        plugin_config = attrs["plugin_config"]
+        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+
+        status = attrs["status"]
+        # 启动登录和启用密码功能必须保持一致
+        if (plugin_config.enable_password and status == IdpStatus.DISABLED) or (
+            not plugin_config.enable_password and status == IdpStatus.ENABLED
+        ):
+            raise ValidationError("本地登录启用状态必须与密码功能启用保持一致")
+
+        return attrs

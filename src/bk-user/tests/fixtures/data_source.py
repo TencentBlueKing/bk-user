@@ -141,6 +141,7 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
         owner_tenant_id=random_tenant.id,
+        name="本地数据源",
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
@@ -152,6 +153,7 @@ def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin
     """裸虚拟数据源（没有用户数据）"""
     return DataSource.objects.create(
         owner_tenant_id=random_tenant.id,
+        name="虚拟用户数据源",
         type=DataSourceTypeEnum.VIRTUAL,
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
@@ -201,6 +203,7 @@ def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_pl
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
         owner_tenant_id=random_tenant.id,
+        name="通用 HTTP 数据源",
         type=DataSourceTypeEnum.REAL,
         plugin=general_ds_plugin,
         plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),

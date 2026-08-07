@@ -51,13 +51,12 @@ class TenantDeptUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixin, gen
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantDeptUserRelationBatchCreateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
-        )
+        slz = TenantDeptUserRelationBatchCreateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        data_source = self.get_local_real_data_source(data["data_source_id"])
 
         data_source_dept_ids = TenantDepartment.objects.filter(
             tenant_id=cur_tenant_id, id__in=data["target_department_ids"]
@@ -103,13 +102,12 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantDeptUserRelationBatchUpdateInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
-        )
+        slz = TenantDeptUserRelationBatchUpdateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        data_source = self.get_local_real_data_source(data["data_source_id"])
 
         data_source_dept_ids = TenantDepartment.objects.filter(
             tenant_id=cur_tenant_id, id__in=data["target_department_ids"]
@@ -152,13 +150,12 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
     )
     def patch(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantDeptUserRelationBatchPatchInputSLZ(
-            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
-        )
+        slz = TenantDeptUserRelationBatchPatchInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        data_source = self.get_local_real_data_source(data["data_source_id"])
 
         source_data_source_dept = TenantDepartment.objects.get(id=data["source_department_id"]).data_source_department
 
@@ -211,13 +208,15 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
     )
     def delete(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantDeptUserRelationBatchDeleteInputSLZ(
-            data=request.query_params, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+            data=request.query_params, context={"tenant_id": cur_tenant_id}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        # 校验数据源属于当前租户 & 是本地实名数据源
+        self.get_local_real_data_source(data["data_source_id"])
 
         source_data_source_dept = TenantDepartment.objects.get(id=data["source_department_id"]).data_source_department
 

@@ -74,6 +74,12 @@ urlpatterns = [
         views.DataSourceRetrieveUpdateDestroyApi.as_view(),
         name="data_source.retrieve_update_destroy",
     ),
+    # 数据源批量删除
+    path(
+        "operations/batch-delete/",
+        views.DataSourceBatchDeleteApi.as_view(),
+        name="data_source.batch_delete",
+    ),
     # 数据源关联资源查询
     path(
         "<int:id>/related-resource-statistics/",

@@ -22,6 +22,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.common.error_codes import error_codes
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 
 class CurrentUserTenantDataSourceMixin(CurrentUserTenantMixin):
@@ -36,10 +37,29 @@ class CurrentUserTenantDataSourceMixin(CurrentUserTenantMixin):
 
         return data_sources
 
-    def get_current_tenant_local_real_data_source(self) -> DataSource:
-        real_ds_list = self.get_current_tenant_real_data_sources()
-        real_data_source = next((ds for ds in real_ds_list if ds.is_local), None)
-        if not real_data_source:
+    def get_current_tenant_local_real_data_sources(self) -> List[DataSource]:
+        """获取当前租户下的所有本地实名用户数据源"""
+        data_sources = list(
+            DataSource.objects.filter(
+                owner_tenant_id=self.get_current_tenant_id(),
+                type=DataSourceTypeEnum.REAL,
+                plugin_id=DataSourcePluginEnum.LOCAL,
+            )
+        )
+        if not data_sources:
             raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在本地实名用户数据源"))
 
-        return real_data_source
+        return data_sources
+
+    def get_local_real_data_source(self, data_source_id: int) -> DataSource:
+        """按 id 获取当前租户下的本地实名数据源"""
+        data_source = DataSource.objects.filter(
+            id=data_source_id,
+            owner_tenant_id=self.get_current_tenant_id(),
+            type=DataSourceTypeEnum.REAL,
+            plugin_id=DataSourcePluginEnum.LOCAL,
+        ).first()
+
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("指定的本地实名数据源不存在"))
+        return data_source
