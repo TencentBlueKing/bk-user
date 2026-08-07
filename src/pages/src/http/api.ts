@@ -9,4 +9,4 @@ export const currentUser = () => http.get<ResponseData<CurrentUser>>('/api/v3/we
 export const getVersionLogs = () => http.get('/api/v3/web/version-logs/');
 
 /** 获取支持的语言列表 */
-export const getSupportedLanguages = () => http.get<ResponseData<SupportedLanguage[]>>('/api/v3/web/basic/supported-languages/');
+export const getSupportedLanguages = () => http.get<ResponseData<SupportedLanguage[]>>('/api/v3/web/basic/languages/');
