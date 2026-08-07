@@ -19,7 +19,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apps.permission.permissions import get_user_role
-from bkuser.common.language import get_language_choices
+from bkuser.common.language import get_language_list
 
 from .serializers import CurrentUserRetrieveOutputSLZ, LanguageOutputSLZ
 
@@ -56,5 +56,4 @@ class LanguageListApi(generics.ListAPIView):
         tags=["basic.languages"],
     )
     def get(self, request, *args, **kwargs):
-        languages = [{"code": code, "name": name} for code, name in get_language_choices()]
-        return Response(LanguageOutputSLZ(languages, many=True).data)
+        return Response(LanguageOutputSLZ(get_language_list(), many=True).data)

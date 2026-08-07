@@ -35,3 +35,7 @@ def get_language_choices() -> List[Tuple[str, str]]:
 
 def get_language_codes() -> List[str]:
     return [code for code, _ in get_language_choices()]
+
+
+def get_language_list() -> List[Dict[str, str]]:
+    return [{"code": code, "name": name} for code, name in get_language_choices()]

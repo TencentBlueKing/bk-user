@@ -33,7 +33,7 @@ from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
-from bkuser.common.language import get_language_choices
+from bkuser.common.language import get_language_list
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
@@ -95,7 +95,7 @@ class GlobalSettingListApi(LoginApiAccessControlMixin, generics.ListAPIView):
                 {
                     "bk_user_url": settings.BK_USER_URL.rstrip("/"),
                     "unique_enabled_tenant_idp": self._get_unique_enabled_tenant_idp(),
-                    "languages": [{"code": code, "name": name} for code, name in get_language_choices()],
+                    "languages": get_language_list(),
                 }
             ).data
         )
