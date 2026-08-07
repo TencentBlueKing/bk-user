@@ -36,11 +36,20 @@ def _read_file_content(file_path: str) -> str:
 
 
 def _get_change_log_file_name() -> str:
-    """获取日志文件名称"""
+    """
+    按当前语言选择版本日志文件:
+    - 约定文件名 changelog_<code>.md (中文为 changelog.md)
+    - 缺失文件则按 fallback 到 changelog.md
+    """
+    language = translation.get_language()
 
     # 检查语言名前缀是否与 BkLanguageEnum.EN 匹配，如 en-us 则视为与 en 匹配
-    if translation.get_language().startswith(BkLanguageEnum.EN):
+    if language.startswith(BkLanguageEnum.EN):
         return FILE_NAME_EN
+    file_name = f"changelog_{language}.md"
+    # 检查文件是否存在，如果存在则返回文件名，否则返回默认版本日志文件名
+    if os.path.isfile(os.path.join(settings.VERSION_LOG_FILES_DIR, file_name)):
+        return file_name
     return FILE_NAME
 
 
