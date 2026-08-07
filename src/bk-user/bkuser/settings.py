@@ -305,8 +305,8 @@ ENABLE_SYNC_APIGW = env.bool("ENABLE_SYNC_APIGW", default=False)
 # 是否自动同步 Web 网关
 ENABLE_SYNC_WEB_APIGW = env.bool("ENABLE_SYNC_WEB_APIGW", default=False)
 
-# 版本日志
-VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
+# 版本日志目录
+VERSION_LOG_FILES_DIR = env.str("VERSION_LOG_FILES_DIR", default=str(BASE_DIR / "version_log"))
 # 前端 Console 展示构建的版本信息
 BK_BUILD_VERSION = env.str("BK_BUILD_VERSION", default="unset")
 # 文档链接
