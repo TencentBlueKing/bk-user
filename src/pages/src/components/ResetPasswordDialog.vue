@@ -146,7 +146,8 @@ const handleRandomPassword = async () => {
 // 确认
 const handleConfirm = async () => {
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     emits('confirm', formData.password);
   } catch (e) {
     console.warn(e);

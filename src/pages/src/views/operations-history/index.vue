@@ -268,6 +268,9 @@ const pagination = reactive({
 
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: formData,
+  clearTableData: () => {
+    tableData.value = [];
+  }
 });
 
 // 获取 audit 数据

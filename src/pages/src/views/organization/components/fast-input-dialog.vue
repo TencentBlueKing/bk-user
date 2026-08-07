@@ -166,21 +166,23 @@ const showColumns = computed(() => {
   return columns;
 });
 const handleNext = async () => {
-  formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   if (!!formData.value.val && (currentId.value < objectSteps.value.length)) {
     isLoading.value = true;
     const param = {
+      data_source_id: organizationStore.selectedOrg.dataSourceId,
       user_infos: formData.value.val.split('\n'),
       department_id: organizationStore.selectedOrg.deptId,
     };
     try {
       const res = await batchCreatePreview(param);
-      const sourceData = res.data.map(item => Object.assign(item, item.extras));
+      const sourceData = res.data.map(item => Object.assign({}, item, item.extras));
       const transformData = transformEnumFields(sourceData);
       tableData.value = transformData;
       currentId.value += 1;
     } catch (e) {
-      console.warn(e);
+      console.error(e);
     } finally {
       isLoading.value = false;
     }
@@ -253,6 +255,7 @@ const confirm = async () => {
   isConfirmLoading.value = true;
   try {
     const param = {
+      data_source_id: organizationStore.selectedOrg.dataSourceId,
       user_infos: formData.value.val.split('\n'),
       department_id: organizationStore.selectedOrg.deptId,
     };
@@ -269,9 +272,12 @@ const closed = () => {
   emit('update:isShow', false);
 };
 const goToSetting = (name: string) => {
-  router.push({ name, query: {
-    isLink: true,
-  } });
+  router.push({
+    name,
+    query: {
+      id: organizationStore.selectedOrg.dataSourceId,
+    },
+  });
 };
 
 const importClick = () => {

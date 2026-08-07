@@ -1,6 +1,6 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
-    <div class="h-[calc(100%-36px)]" v-bkloading="{ loading: loading }">
+    <div class="h-[calc(100%-36px)]">
       <div
         class="tenant-node leading-[36px] text-[14px] px-[6px] inline-flex
           items-center w-full cursor-pointer relative pr-[12px]"
@@ -19,14 +19,6 @@
           {{ currentTenant?.name.charAt(0).toUpperCase() }}
         </span>
         {{ currentTenant?.name }}
-        <operate-more
-          v-if="organizationStore.hasPluginDataSource('local')"
-          :dept="currentTenant"
-          :tenant="currentTenant"
-          :data-source-id="organizationStore.localSourceId"
-          :is-root-add="true"
-          @add-node="addNode">
-        </operate-more>
       </div>
       <bk-tree
         :data="treeData"
@@ -34,33 +26,53 @@
         class="overflow-y-auto"
         ref="treeRef"
         label="name"
-        node-key="id"
+        node-key="treeKey"
         children="children"
-        :prefix-icon="getPrefixIcon"
         @node-click="(node: IOrg) => handleNodeClick(node)"
         :async="{
           callback: (node: IOrg) => getRemoteData(node, organizationStore.currentTenant.id),
           cache: true,
         }"
       >
-        <template #node="node: IOrg & { __attr__: { isRoot: boolean } }">
+        <template #nodeType="node: IOrg">
+          <img
+            v-if="node.nodeType === 'source' && node.logo"
+            class="source-node-logo"
+            :src="node.logo"
+            alt=""
+            @error="handleLogoError(node)" />
+          <i
+            v-else-if="node.nodeType === 'source'"
+            :class="['user-icon', getDataSourceIcon(node.plugin_id), 'source-node-fallback']" />
+          <i v-else class="bk-sq-icon icon-file-close department-node-icon" />
+        </template>
+        <template #node="node: IOrg">
           <div class="org-node pr-[12px] relative node-overflow">
             <span class="text-[14px] mr-[6px]">{{ node.name }}</span>
             <template v-if="organizationStore.isEqualLocalSourceId(node.data_source_id)">
-              <bk-tag
-                v-if="node.__attr__.isRoot && organizationStore.hasExternalDataSource"
-                theme="info"
-              >
-                {{ $t('本地') }}
-              </bk-tag>
+              <template v-if="node.nodeType === 'source'">
+                <bk-tag theme="info">
+                  {{ $t('本地') }}
+                </bk-tag>
+                <operate-more
+                  :dept="node"
+                  :tenant="currentTenant"
+                  :data-source-id="node.data_source_id"
+                  :is-root-add="true"
+                  @add-node="addNode"
+                >
+                </operate-more>
+              </template>
               <operate-more
+                v-else-if="node.nodeType === 'department'"
                 :dept="node"
                 :tenant="currentTenant"
                 :data-source-id="node.data_source_id"
                 @add-node="addNode"
                 @delete-node="deleteNode"
                 @update-node="updateNode"
-                @move-node="getTreeData">
+                @move-node="getTreeData"
+              >
               </operate-more>
             </template>
           </div>
@@ -93,7 +105,6 @@ defineProps<IProps>();
 const organizationStore = useOrganizationStore();
 
 const currentTenant = toRef(organizationStore, 'currentTenant');
-const loading = ref(false);
 const organizationAsideHooks = useOrganizationAside();
 const {
   treeData,
@@ -101,12 +112,13 @@ const {
   addNode,
   deleteNode,
   updateNode,
-  getPrefixIcon,
+  buildSourceTree,
+  clearRootDepartmentsCache,
 } = organizationAsideHooks;
 
-const getTreeData = async () => {
-  // id为0表示获取根部门
-  treeData.value = await getRemoteData({ id: 0 }, organizationStore.currentTenant.id);
+const getTreeData = () => {
+  clearRootDepartmentsCache();
+  treeData.value = buildSourceTree();
 };
 const selectedNode = ref();
 
@@ -118,6 +130,17 @@ const handleNodeClick = (data: CurrentTenantData | IOrg, isTenant = false) => {
       tenantId: currentTenant.value.id,
       tenantName: currentTenant.value.name,
       tenantLogo: currentTenant.value?.logo,
+      nodeType: 'tenant',
+    });
+  } else if ((data as IOrg).nodeType === 'source') {
+    organizationStore.updateSelectedOrg({
+      tenantId: currentTenant.value.id,
+      tenantName: currentTenant.value.name,
+      tenantLogo: currentTenant.value?.logo,
+      dataSourceId: (data as IOrg).data_source_id,
+      deptId: 0,
+      deptName: (data as IOrg).name,
+      nodeType: 'source',
     });
   } else {
     // 点击部门节点，传入完整信息
@@ -128,9 +151,20 @@ const handleNodeClick = (data: CurrentTenantData | IOrg, isTenant = false) => {
       dataSourceId: (data as IOrg).data_source_id,
       deptId: (data as IOrg).id,
       deptName: (data as IOrg).name,
+      nodeType: 'department',
     } as SelectedOrg);
   }
 };
+
+const handleLogoError = (node: IOrg) => {
+  node.logo = '';
+};
+
+const getDataSourceIcon = (pluginId?: string) => ({
+  general: 'icon-http',
+  ldap: 'icon-user-directory',
+  local: 'icon-shujuku',
+}[pluginId || ''] || 'icon-shujuyuanshu');
 /**
  * @description 监听当前租户变化，更新当前组织，组织架构会请求租户信息，避免该侧栏造成的多次请求
  */
@@ -138,10 +172,7 @@ watch(
   () => organizationStore.currentTenant.id,
   async (val) => {
     if (val) {
-      loading.value = true;
-      await getTreeData().finally(() => {
-        loading.value = false;
-      });
+      getTreeData();
     }
   },
   { immediate: true },
@@ -156,6 +187,22 @@ watch(
   text-overflow: ellipsis;
   white-space: nowrap;
   border-radius: 4px;
+}
+
+.source-node-logo,
+.source-node-fallback,
+.department-node-icon {
+  width: 18px;
+  height: 18px;
+  margin: 0 6px;
+  color: #A3C5FD;
+  object-fit: contain;
+}
+
+.source-node-fallback,
+.department-node-icon {
+  font-size: 18px;
+  line-height: 18px;
 }
 
 .tenant-node {

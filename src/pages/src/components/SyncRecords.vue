@@ -1,7 +1,11 @@
 <template>
-  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 10 }" class="sync-records-wrapper">
+  <div class="sync-records-wrapper">
     <div class="data-record-content">
       <Table
+        v-bkloading="{
+          loading: dataRecordConfig.loading,
+          zIndex: 10
+        }"
         class="user-info-table"
         :data="dataRecordConfig.list"
         :pagination="pagination"
@@ -37,9 +41,20 @@
           </template>
         </TableColumn>
         <TableColumn
+          field="data_source_name"
+          :label="$t('数据源名称')"
+          show-overflow="tooltip"
+          :min-width="160"
+        >
+          <template #default="{ row }">
+            <span>{{ row?.data_source_name || '--' }}</span>
+          </template>
+        </TableColumn>
+        <TableColumn
           field="plugin"
           :label="$t('数据源类型')"
           show-overflow="tooltip"
+          :filters="dataSourceTypeFilters"
           :min-width="160"
         >
           <template #default="{ row }">
@@ -81,8 +96,9 @@
         </TableColumn>
         <TableColumn
           field="action"
+          fixed="right"
           :label="$t('操作')"
-          :min-width="100"
+          :width="120"
         >
           <template #default="{ row }">
             <bk-button
@@ -133,7 +149,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
-import { onBeforeUnmount, onMounted, reactive, ref, toRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { Table, TableColumn } from '@blueking/table';
@@ -146,16 +162,18 @@ import Empty from '@/components/SearchEmpty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import useTableEmpty from '@/hooks/use-table-empty';
 import { getSyncLogs, getSyncRecords } from '@/http';
-import { SyncRecordsParams } from '@/http/types/dataSourceFiles';
+import { DataSourceItemData, SyncRecordsParams } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
+import { useDataSourceStore } from '@/store';
 import { dataRecordStatus, durationText } from '@/utils';
 
-const props = defineProps({
-  dataSource: {
-    type: Object,
-    default: () => ({}),
-  },
+const props = withDefaults(defineProps<{
+  dataSource?: DataSourceItemData[];
+}>(), {
+  dataSource: () => [],
 });
+
+const dataSourceStore = useDataSourceStore();
 
 const route = useRoute();
 
@@ -163,15 +181,25 @@ const dataRecordConfig = reactive({
   loading: false,
   list: [],
   status: '',
+  pluginId: '',
 });
 
 const settings = reactive({
-  checked: ['start_at', 'duration', 'plugin', 'operator', 'trigger', 'status', 'action'],
+  checked: ['start_at', 'duration', 'data_source_name', 'plugin', 'operator', 'trigger', 'status', 'action'],
+  disabled: ['action'],
   size: 'small',
 });
 
+const activeFilters = computed(() => ({
+  status: dataRecordConfig.status,
+  pluginId: dataRecordConfig.pluginId,
+}));
+
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
-  filters: toRef(dataRecordConfig, 'status'),
+  filters: activeFilters,
+  clearTableData: () => {
+    dataRecordConfig.list = [];
+  },
 });
 
 const pagination = reactive({
@@ -185,7 +213,13 @@ const logConfig = ref({
   isShow: false,
 });
 
-const logsDetails = ref({});
+const createEmptyLogDetails = () => ({
+  start_at: '',
+  status: '',
+  duration: '',
+  logs: '',
+});
+const logsDetails = ref(createEmptyLogDetails());
 
 const triggeMode = {
   crontab: t('定时'),
@@ -198,11 +232,23 @@ const updateStatusFilters = ref([
   { label: t('同步失败'), value: 'failed' },
 ]);
 
+const dataSourceTypeFilters = computed(() => {
+  const configuredPluginIds = new Set(props.dataSource.map(item => item.plugin_id));
+  return dataSourceStore.dataSourcePlugins
+    .filter(item => configuredPluginIds.has(item.id))
+    .map(item => ({
+      label: item.name,
+      value: item.id,
+    }));
+});
+
 const interval = ref(null);
+/** 首次展示日志详情，避免轮询导致日志详情重复展示 */
+let isShowLogDetails = false;
 onMounted(() => {
   getSyncRecordsList();
   interval.value =  setInterval(() => {
-    handleSyncRecords();
+    getSyncRecordsList();
   }, 5000);
 });
 
@@ -212,8 +258,14 @@ const getSyncRecordsList = async () => {
     clearErrorType();
     const { list } = await handleSyncRecords();
     const record = list[0];
-    if (route.params.type && (record.status === 'failed' || (record.status === 'success' && record.has_warning))) {
+    if (
+      route.params.type
+        && record
+        && (record.status === 'failed' || (record.status === 'success' && record.has_warning))
+        && !isShowLogDetails
+    ) {
       handleLogDetails(record);
+      isShowLogDetails = true;
     }
   } catch (e) {
     console.warn(e);
@@ -225,17 +277,20 @@ const getSyncRecordsList = async () => {
 
 const handleClearSearch = () => {
   dataRecordConfig.status = '';
+  dataRecordConfig.pluginId = '';
   updateStatusFilters.value = updateStatusFilters.value.map(item => ({ ...item, checked: false }));
   pagination.current = 1;
   getSyncRecordsList();
 };
 
 // 增加防抖，避免 bk-table 筛选重置时触发两次，导致重复请求
-const handleFilterChange = ({ values }: { values: string[] }) => {
-  if (values.length === 0) {
-    pagination.current = 1;
+const handleFilterChange = ({ field, values }: { field: string; values: string[] }) => {
+  if (field === 'status') {
+    dataRecordConfig.status = values.join(',');
   }
-  dataRecordConfig.status = values.join(',');
+  if (field === 'plugin') {
+    dataRecordConfig.pluginId = values.join(',');
+  }
   pagination.current = 1;
   getSyncRecordsList();
 };
@@ -251,9 +306,13 @@ const pageCurrentChange = (current: number) => {
 };
 
 const handleLogDetails = async (row) => {
+  logsDetails.value = createEmptyLogDetails();
   logConfig.value.isShow = true;
   const res = await getSyncLogs(row.id);
-  logsDetails.value = res.data;
+  logsDetails.value = {
+    ...createEmptyLogDetails(),
+    ...res.data,
+  };
 };
 
 const beforeClose = () => {
@@ -265,27 +324,29 @@ const handleSettingChange = (data: any) => {
 };
 
 const handleSyncRecords = async () => {
+  // 数据源列表为空时不做请求，避免携带无效 id
+  if (props.dataSource.length === 0) {
+    dataRecordConfig.list = [];
+    pagination.count = 0;
+    return { list: [] };
+  }
   const params: SyncRecordsParams = {
     page: pagination.current,
     page_size: pagination.limit,
+    plugin_id: dataRecordConfig.pluginId,
     statuses: dataRecordConfig.status,
   };
-  try {
-    const res = await getSyncRecords(props.dataSource?.id, params);
-    dataRecordConfig.list = res.data.results;
-    pagination.count = res.data.count;
-    // stop time polling
-    const curStatus = res.data.results?.[0]?.status;
-    if (curStatus === 'success' || curStatus === 'failed') {
-      clearInterval(interval.value);
-    }
 
-    return {
-      list: res.data.results,
-    };
-  } catch (e) {
-    console.warn(e);
+  const res = await getSyncRecords(params);
+  dataRecordConfig.list = res.data.results;
+  pagination.count = res.data.count;
+  // 当前页不存在进行中的同步记录时才停止轮询
+  const hasRunning = res.data.results?.some(item => item.status === 'pending' || item.status === 'running');
+  if (!hasRunning) {
+    clearInterval(interval.value);
   }
+
+  return { list: res.data.results };
 };
 
 onBeforeUnmount(() => {
@@ -397,4 +458,3 @@ onBeforeUnmount(() => {
   overflow-y: auto !important;
 }
 </style>
-

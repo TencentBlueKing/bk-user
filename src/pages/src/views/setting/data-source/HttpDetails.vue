@@ -1,6 +1,9 @@
 <template>
   <bk-loading :loading="isLoading" class="details-info-wrapper user-scroll-y">
     <div v-if="isPluginConfig">
+      <Row :title="$t('基础信息')">
+        <LabelContent :label="$t('数据源名称')">{{ dataSourceName || '--' }}</LabelContent>
+      </Row>
       <div v-if="pluginId !== 'ldap'">
         <Row :title="$t('服务配置')">
           <div class="flex">
@@ -59,7 +62,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <ConflictConfigDetail :config="usernameConfig" />
+          <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
       </div>
       <div v-if="pluginId === 'ldap'">
@@ -114,7 +117,7 @@
           </LabelContent>
         </Row>
         <Row :title="$t('冲突配置')">
-          <ConflictConfigDetail :config="usernameConfig" />
+          <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
       </div>
     </div>
@@ -163,21 +166,24 @@ const userGroupConfig = ref<PluginConfig['user_group_config']>({} as PluginConfi
 // 上级配置
 const leaderConfig = ref<PluginConfig['leader_config']>({} as PluginConfig['leader_config']);
 // 冲突配置
-const usernameConfig = ref<DataSourceDetails['username_config']>({ strategy: 'manual', prefix: '', suffix: '' });
+const usernameGenerateConfig = ref<DataSourceDetails['username_generate_config']>({ rule: 'unchanged', prefix: '', suffix: '' });
 
 const isPluginConfig = ref(true);
 
 const pluginId = ref('');
+/** 数据源名称 */
+const dataSourceName = ref('');
 
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const res = await getDataSourceDetails(props.dataSourceId);
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    dataSourceName.value = details?.data_source_name || '';
     const fieldList = await getFields();
 
-    pluginId.value = res.data?.plugin?.id;
+    pluginId.value = details?.plugin?.id;
 
-    res.data?.field_mapping?.forEach((item) => {
+    details?.field_mapping?.forEach((item) => {
       [...fieldList?.data?.builtin_fields, ...fieldList?.data?.custom_fields]?.forEach((demo) => {
         if (item.target_field === demo.name) {
           fieldMapping.value.push({
@@ -189,19 +195,19 @@ onMounted(async () => {
       });
     });
 
-    if (JSON.stringify(res.data?.plugin_config) === '{}') {
+    if (JSON.stringify(details?.plugin_config) === '{}') {
       isPluginConfig.value = false;
     } else {
-      serverConfig.value = res.data?.plugin_config?.server_config;
-      authConfig.value = res.data?.plugin_config?.auth_config;
-      dataConfig.value = res.data?.plugin_config?.data_config;
-      userGroupConfig.value = res.data?.plugin_config?.user_group_config;
-      leaderConfig.value = res.data?.plugin_config?.leader_config;
+      serverConfig.value = details?.plugin_config?.server_config;
+      authConfig.value = details?.plugin_config?.auth_config;
+      dataConfig.value = details?.plugin_config?.data_config;
+      userGroupConfig.value = details?.plugin_config?.user_group_config;
+      leaderConfig.value = details?.plugin_config?.leader_config;
       isPluginConfig.value = true;
     }
-    syncConfig.value = res.data?.sync_config;
-    plugin.value = res.data?.plugin;
-    usernameConfig.value = res.data?.username_config || { strategy: 'manual', prefix: '', suffix: '' };
+    syncConfig.value = details?.sync_config;
+    plugin.value = details?.plugin;
+    usernameGenerateConfig.value = details?.username_generate_config || { rule: 'unchanged', prefix: '', suffix: '' };
   } catch (e) {
     console.warn(e);
   } finally {

@@ -110,7 +110,7 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
     try {
       details[0].message = JSON.parse(details[0].message);
     } catch (error) {
-      console.log('error', error);
+      console.error(error);
     }
     const messageConfig = {
       overview: '',

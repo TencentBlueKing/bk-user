@@ -11,116 +11,51 @@
       </span>
     </template>
     <bk-loading :loading="importLoading || isDataSourceSyncing">
-      <template v-if="isFirstlyImport">
-        <ConflictTips
-          type="alert"
-          :has-other-data-source="!dataSourceStore.isConfiguredOtherPlugin"
-        />
-        <bk-form
-          ref="formRef"
-          :model="formModel"
-          :rules="conflictRules"
-          form-type="vertical"
-          class="mt-[16px]"
-        >
-          <ConflictConfig
-            ref="conflictConfigRef"
-            variant="dialog"
-            :config="conflictConfig"
-            class="mb-[16px]"
-          />
-        </bk-form>
-      </template>
-      <bk-upload
-        ref="uploadRef"
-        accept=".xlsx,.xls"
-        with-credentials
-        :limit="1"
-        :size="10"
-        :multiple="false"
-        :custom-request="customRequest"
-        @exceed="exceed">
-        <template #file="{ file }">
-          <div
-            :class="['excel-file', { 'excel-file-error': isError }]"
-            @mousemove="isHover = true"
-            @mouseleave="isHover = false">
-            <i class="user-icon icon-excel" />
-            <div class="file-text">
-              <bk-overflow-title
-                class="text-overflow">
-                {{ file.name }}
-              </bk-overflow-title>
-              <p class="text-overflow file-status">
-                <i v-if="!isError" class="user-icon icon-check-line" />
-                {{ textTips }}
-              </p>
-            </div>
-            <div class="file-operations">
-              <span v-if="!isHover">{{ getSize(file.size) }}</span>
-              <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
-            </div>
-          </div>
-        </template>
-        <template #tip>
-          <div class="mt-[8px]">
-            <span>{{ $t('支持 Excel 文件，文件小于 10 M，下载') }}</span>
-            <bk-button text theme="primary" @click="handleExportTemplate">{{ $t('模版文件') }}</bk-button>
-          </div>
-        </template>
-      </bk-upload>
+      <ExcelUpload v-model="uploadInfo.file" @exceed="handleExceed" />
     </bk-loading>
     <template #footer>
       <div class="footer-wrapper">
         <div class="footer-left">
-          <template v-if="!isFirstlyImport">
-            <bk-checkbox v-model="uploadInfo.overwrite">
-              {{ $t('允许对同名用户覆盖更新') }}
-            </bk-checkbox>
-            <bk-popover
-              ext-cls="popover-wrapper"
-              :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
-              placement="top"
-              width="280"
-            >
-              <InfoLine class="info" />
-            </bk-popover>
-          </template>
+          <bk-checkbox v-model="uploadInfo.overwrite">
+            {{ $t('允许对同名用户覆盖更新') }}
+          </bk-checkbox>
+          <bk-popover
+            ext-cls="popover-wrapper"
+            :content="$t('针对相同用户覆盖更新相应的字段值，包括所属部门、所属上级等')"
+            placement="top"
+            width="280"
+          >
+            <InfoLine class="info" />
+          </bk-popover>
         </div>
-        <div>
-          <bk-button
-            theme="primary"
-            class="w-[64px] mr-[8px]"
-            :disabled="importLoading || isDataSourceSyncing"
-            @click="handleConfirm">
-            {{ $t('导入') }}
-          </bk-button>
-          <bk-button
-            class="w-[64px]"
-            @click="closed">
-            {{ $t('取消') }}
-          </bk-button>
-        </div>
+      </div>
+      <div>
+        <bk-button
+          theme="primary"
+          class="w-[64px] mr-[8px]"
+          :disabled="importLoading || isDataSourceSyncing"
+          @click="confirmImportUsers">
+          {{ $t('导入') }}
+        </bk-button>
+        <bk-button
+          class="w-[64px]"
+          @click="closed">
+          {{ $t('取消') }}
+        </bk-button>
       </div>
     </template>
   </bk-dialog>
 </template>
 
 <script setup lang="ts">
-import axios from 'axios';
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine } from 'bkui-vue/lib/icon';
-import Cookies from 'js-cookie';
 import { computed, reactive, ref } from 'vue';
 
-import ConflictConfig from '../conflict-config/ConflictConfig.vue';
-import ConflictTips from '../conflict-config/ConflictTips.vue';
-
-import { isNil } from '@/common/util';
-import { useConflictRules } from '@/hooks/useConflictRules';
+import { UPLOAD_FILE_MAX_SIZE_BYTE } from '@/components/import-dialog/constants';
+import ExcelUpload from '@/components/import-dialog/ExcelUpload.vue';
+import { useDataSourceImport } from '@/hooks/useDataSourceImport';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
-import { getDefaultConfig, newDataSource } from '@/http/dataSourceFiles';
-import { UsernameConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
 
@@ -133,134 +68,42 @@ const emit = defineEmits(['success']);
 
 const dataSourceStore = useDataSourceStore();
 
-const conflictConfigRef = ref();
-const { rules: conflictRules } = useConflictRules(conflictConfigRef);
-const conflictConfig = ref<UsernameConfig>({
-  strategy: 'manual',
-  prefix: '',
-  suffix: '',
-});
-
-/** 这里无实际意义，但为了配合form校验，得有一个model */
-const formModel = ref({});
-
-const currentLocalDataSourceId = ref(props.dataSourceId);
 const importLoading = ref(false);
-const uploadRef = ref();
-const isHover = ref(false);
-const textTips = ref('');
-const isError = ref(false);
 const uploadInfo = reactive({
-  file: {},
+  file: null as File | null,
   overwrite: false,
   incremental: true,
 });
-const formRef = ref();
-
-const isFirstlyImport = computed(() => isNil(props.dataSourceId));
-
 /** 本地数据源插件 - 数据同步状态 */
 // eslint-disable-next-line max-len
-const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(currentLocalDataSourceId.value)?.status);
+const localDataSourceStatus = computed(() => dataSourceStore.dataSourceSyncStatusMap.get(props.dataSourceId)?.status);
 
 /** 本地数据源是否同步中 */
 const isDataSourceSyncing = computed(() => dataSourceStore.isDataSourceSyncing(localDataSourceStatus.value));
 
-
-const customRequest = (data) => {
-  if (data.file.size > (10 * 1024 * 1024)) {
-    isError.value = true;
-    textTips.value = t('文件大小超出限制');
-  } else {
-    isError.value = false;
-    textTips.value = t('上传成功');
-  }
-  uploadInfo.file = data.file;
-};
-
 /** 关闭弹窗 */
 const closed = () => {
-  uploadInfo.file = {};
+  uploadInfo.file = null;
   uploadInfo.overwrite = false;
   uploadInfo.incremental = true;
   isShow.value = false;
 };
-const exceed = () => {
+const handleExceed = () => {
   Message({ theme: 'error', message: t('最多上传1个文件，如需更新，请先删除已上传文件') });
-};
-
-const getSize = (value: number) => {
-  const size = value / 1024;
-  return `${parseFloat(size.toFixed(2))}KB`;
-};
-
-const handleUploadRemove = (file) => {
-  uploadRef.value?.handleRemove(file);
-  uploadInfo.file = {};
-};
-
-// 数据源导出模板
-const handleExportTemplate = () => {
-  const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/operations/download_template/`;
-  window.open(url);
-};
-
-/**
- * @description 首次导入本地数据源，需要先配置用户名冲突，创建dataSourceId后才可上传
- */
-const handleConfirm = async () => {
-  let allowUpload = true;
-  if (isFirstlyImport.value) {
-    allowUpload = await createDataSource();
-  }
-  if (!allowUpload) return;
-  await confirmImportUsers();
-};
-
-/** 创建本地数据源 */
-const createDataSource = async () => {
-  const valid = await formRef.value.validate().catch(() => false);
-  if (!valid) return;
-  const res = await getDefaultConfig('local');
-  const newDataSourceData = await newDataSource({
-    plugin_id: 'local',
-    plugin_config: {
-      ...res.data?.config,
-    },
-    username_config: conflictConfigRef.value.getData(),
-  });
-  currentLocalDataSourceId.value = newDataSourceData.data?.id;
-  return Boolean(newDataSourceData.data?.id);
 };
 
 // 导入用户
 const confirmImportUsers = async () => {
-  if (!uploadInfo.file.name) {
+  if (!uploadInfo.file) {
     return Message({ theme: 'warning', message: t('请选择文件再上传') });
   }
-  if (isError.value) {
-    return Message({ theme: 'warning', message: t('文件大小超出限制，请重新上传') });
+  if (uploadInfo.file.size > UPLOAD_FILE_MAX_SIZE_BYTE) {
+    return Message({ theme: 'warning', message: t('文件大小超出限制') });
   };
 
   try {
     importLoading.value = true;
-    const formData = new FormData();
-    formData.append('file', uploadInfo.file);
-    formData.append('overwrite', uploadInfo.overwrite);
-    if (conflictConfigRef.value) {
-      const usernameConfig = conflictConfigRef.value.getData();
-      formData.append('username_config', JSON.stringify(usernameConfig));
-    }
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
-        'x-requested-with': 'XMLHttpRequest',
-      },
-      withCredentials: true,
-    };
-    const url = `${window.AJAX_BASE_URL}/api/v3/web/data-sources/${currentLocalDataSourceId.value}/operations/import/`;
-    const res = await axios.post(url, formData, config);
+    const res = await uploadImport(props.dataSourceId, uploadInfo.file, uploadInfo.overwrite);
     // 确保 importLoading 在最终状态(success/failed/backend error) 下才停止loading
     // 因此取消在finally中处理loading的逻辑
     if (res.data.data.status === 'success') {
@@ -270,7 +113,7 @@ const confirmImportUsers = async () => {
       importLoading.value = false;
       Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      startDataSourceSync(currentLocalDataSourceId.value, 'local');
+      startDataSourceSync(props.dataSourceId, 'local');
     }
   } catch (e) {
     importLoading.value = false;
@@ -288,6 +131,7 @@ const afterSyncImportData = () => {
   }
 };
 
+const { uploadImport } = useDataSourceImport();
 const { startDataSourceSync } = useDataSourceSetting(afterSyncImportData);
 
 /** 导入成功时执行 */
@@ -303,43 +147,8 @@ const importSuccess = () => {
   });
 };
 </script>
+
 <style lang="less" scoped>
-.excel-file {
-  display: flex;
-  padding: 10px;
-  overflow: hidden;
-  font-size: 12px;
-  flex: 1;
-  align-items: center;
-
-  .icon-excel {
-    margin-right: 14px;
-    font-size: 26px;
-    color: #2dcb56;
-  }
-
-  .file-text {
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .file-status {
-    color: #2dcb56;
-  }
-
-  .file-operations {
-    span {
-      font-weight: 700;
-    }
-
-    .icon-delete {
-      margin-left: 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  }
-}
-
 .footer-wrapper {
   display: flex;
   align-items: center;

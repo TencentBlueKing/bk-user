@@ -133,7 +133,8 @@ const Cancel = () => {
 };
 
 const handleVerify = async () => {
-  await formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   isShow.value = false;
   window.changeInput = true;
   emit('saveParams', dataList.value);

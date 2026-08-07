@@ -1,11 +1,11 @@
 import { Ref } from 'vue';
 
-import { UsernameConfig } from '@/http/types/dataSourceFiles';
+import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 
 /** ConflictConfig 组件通过 defineExpose 暴露的接口 */
 interface ConflictConfigExposed {
-  getData: () => UsernameConfig;
+  getData: () => UsernameGenerateConfig;
   nameGeneration: 'add_prefix' | 'add_suffix';
 }
 
@@ -14,15 +14,15 @@ interface ConflictConfigExposed {
  * @param conflictConfigRef - ConflictConfig 组件的 ref
  */
 export const useConflictRules = (conflictConfigRef: Ref<ConflictConfigExposed | null>) => {
-  const getConflictData = () => conflictConfigRef.value?.getData() ?? { strategy: 'manual', prefix: '', suffix: '' };
+  const getConflictData = () => conflictConfigRef.value?.getData() ?? { rule: 'unchanged', prefix: '', suffix: '' };
 
   const rules = {
     nameGeneration: [
       {
         required: true,
         validator: () => {
-          const { strategy, prefix, suffix } = getConflictData();
-          if (strategy === 'add_affix') {
+          const { rule, prefix, suffix } = getConflictData();
+          if (rule === 'add_affix') {
             return !!(prefix || suffix);
           }
           return true;

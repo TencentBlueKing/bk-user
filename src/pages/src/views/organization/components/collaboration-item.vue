@@ -69,7 +69,7 @@ const collaborationTenant = toRef(props, 'collaborationTenant');
 const organizationAsideHooks = useOrganizationAside();
 const {
   treeData,
-  formatTreeData,
+  formatDataSourceTreeData,
   getRemoteData,
   getPrefixIcon,
 } = organizationAsideHooks;
@@ -100,7 +100,7 @@ const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) =
 };
 
 onMounted(async () => {
-  const deptData = await getDepartmentsList(0, collaborationTenant.value.id);
-  treeData.value = formatTreeData(deptData?.data);
+  const deptData = await getDepartmentsList(collaborationTenant.value.id, { parent_department_id: 0 });
+  treeData.value = formatDataSourceTreeData(deptData?.data);
 });
 </script>

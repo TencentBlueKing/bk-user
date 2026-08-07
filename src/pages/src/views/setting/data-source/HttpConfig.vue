@@ -10,6 +10,9 @@
       ref="formRef1"
       :model="serverConfigData"
       :rules="rulesServerConfig">
+      <DataSourceBasicInfo
+        v-model="serverConfigData.name"
+      />
       <Row :title="$t('认证配置')">
         <bk-form-item :label="$t('认证方式')" required>
           <bk-radio-group
@@ -232,11 +235,11 @@
       </Row>
       <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
         <template #header>
-          <ConflictTips :has-other-data-source="dataSourceStore.isConfiguredLocalPlugin" />
+          <ConflictTips :has-other-data-source="hasOtherDataSource" />
         </template>
         <ConflictConfig
           ref="conflictConfigRef"
-          :config="fieldSettingData.username_config"
+          :config="fieldSettingData.username_generate_config"
           :disabled="isEdit"
         />
       </Row>
@@ -259,6 +262,7 @@ import QueryParams from './query-params/QueryParams.vue';
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
 import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
+import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import Row from '@/components/layouts/ItemRow.vue';
 import passwordInput from '@/components/passwordInput.vue';
@@ -271,7 +275,7 @@ import {
   postTestConnection,
   putDataSourceDetails,
 } from '@/http';
-import { NewDataSourceParams, UsernameConfig } from '@/http/types/dataSourceFiles';
+import { AuthConfig, TestConnectionParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { useDataSourceStore, useUser } from '@/store';
@@ -296,10 +300,12 @@ const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
 const userStore = useUser();
 const dataSourceStore = useDataSourceStore();
+const hasOtherDataSource = computed(() => dataSourceStore.dataSource
+  .some(item => item.id !== props.dataSourceId));
 
 const isLoading = ref(false);
 const formRef1 = ref();
-const editLeaveBefore = inject('editLeaveBefore');
+const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
 
 const formRef2 = ref();
 const conflictConfigRef = ref();
@@ -307,6 +313,7 @@ const { rules: conflictRules } = useConflictRules(conflictConfigRef);
 
 const defaultServerConfig = () => ({
   plugin_id: 'general',
+  name: '',
   server_config: {
     server_base_url: '',
     user_api_path: '',
@@ -328,7 +335,7 @@ const defaultServerConfig = () => ({
   },
 });
 
-const serverConfigData = ref({});
+const serverConfigData = ref(defaultServerConfig());
 
 const fieldSettingData = ref({
   field_mapping: {
@@ -343,17 +350,17 @@ const fieldSettingData = ref({
     sync_timeout: 60 * 60,
   },
   addFieldList: [],
-  username_config: {
-    strategy: 'manual',
+  username_generate_config: {
+    rule: 'unchanged',
     prefix: '',
     suffix: '',
-  } as UsernameConfig,
+  } as UsernameGenerateConfig,
 });
 
 /** 是否展示服务配置-服务地址 form-item */
 const isShowServerConfig = computed(() => serverConfigData.value?.auth_config?.method !== 'bk_apigateway');
 
-watch(() => serverConfigData.value?.auth_config?.method, (curMethod: 'bearer_token' | 'basic_auth' | 'bk_apigateway') => {
+watch(() => serverConfigData.value?.auth_config?.method, (curMethod) => {
   if (curMethod === 'bk_apigateway') {
     serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
   } else {
@@ -426,15 +433,25 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     if (isEdit.value) {
-      const res = await getDataSourceDetails(props.dataSourceId);
-      serverConfigData.value.plugin_id = res.data?.plugin?.id;
-      if (JSON.stringify(res.data?.plugin_config) !== '{}') {
-        serverConfigData.value.server_config = res.data?.plugin_config?.server_config;
-        serverConfigData.value.auth_config = res.data?.plugin_config?.auth_config;
+      const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+      serverConfigData.value.name = details?.name ?? '';
+      serverConfigData.value.plugin_id = details?.plugin?.id;
+      if (JSON.stringify(details?.plugin_config) !== '{}') {
+        const serverConfig = details?.plugin_config?.server_config;
+        serverConfigData.value.server_config = {
+          ...defaultServerConfig().server_config,
+          ...serverConfig,
+          request_timeout: String(serverConfig?.request_timeout ?? defaultServerConfig().server_config.request_timeout),
+          retries: String(serverConfig?.retries ?? defaultServerConfig().server_config.retries),
+        };
+        serverConfigData.value.auth_config = {
+          ...defaultServerConfig().auth_config,
+          ...details?.plugin_config?.auth_config,
+        };
       }
-      fieldSettingData.value.sync_config = res.data?.sync_config;
-      fieldMappingList.value = res.data?.field_mapping;
-      fieldSettingData.value.username_config = res.data?.username_config;
+      fieldSettingData.value.sync_config = details?.sync_config;
+      fieldMappingList.value = details?.field_mapping;
+      fieldSettingData.value.username_generate_config = details?.username_generate_config;
     } else {
       serverConfigData.value = defaultServerConfig();
     }
@@ -552,8 +569,8 @@ const handleLastStep = async () => {
   apiFields.value = [];
   fieldSettingData.value.addFieldList = [];
   if (isEdit.value) {
-    const res = await getDataSourceDetails(props.dataSourceId);
-    fieldSettingData.value.sync_config = res.data?.sync_config;
+    const details = (await getDataSourceDetails(props.dataSourceId))?.data;
+    fieldSettingData.value.sync_config = details?.sync_config;
   } else {
     fieldSettingData.value.sync_config.sync_period = 24 * 60;
   }
@@ -581,7 +598,7 @@ const handleTestConnection = async () => {
     serverConfigData.value.server_config.user_api_query_params = clearEmptyParams(user);
     serverConfigData.value.server_config.department_api_query_params = clearEmptyParams(department);
 
-    const params = {
+    const params: TestConnectionParams = {
       plugin_id: serverConfigData.value.plugin_id,
       plugin_config: {
         server_config: serverConfigData.value.server_config,
@@ -665,10 +682,17 @@ const handleSubmit = async () => {
       source_field: item.source_field,
     }));
 
-    const params: Partial<NewDataSourceParams> = {
+    // 创建/编辑均需提交的公共字段
+    const commonParams = {
+      name: serverConfigData.value.name,
       plugin_config: {
-        server_config: serverConfigData.value.server_config,
-        auth_config: serverConfigData.value.auth_config,
+        // 表单超时/重试为字符串，提交时转换为 API 契约要求的 number
+        server_config: {
+          ...serverConfigData.value.server_config,
+          request_timeout: Number(serverConfigData.value.server_config.request_timeout),
+          retries: Number(serverConfigData.value.server_config.retries),
+        },
+        auth_config: serverConfigData.value.auth_config as AuthConfig,
       },
       field_mapping: [
         ...list,
@@ -678,19 +702,22 @@ const handleSubmit = async () => {
     };
 
     if (isEdit.value) {
-      params.id = props.dataSourceId;
-      await putDataSourceDetails(params);
+      await putDataSourceDetails(props.dataSourceId, commonParams);
       emit('updateSuccess', {
         text: t('更新'),
         dataSourceId: props.dataSourceId,
+        name: serverConfigData.value.name,
       });
     } else {
-      params.plugin_id = serverConfigData.value.plugin_id;
-      params.username_config = conflictConfigRef.value?.getData();
-      const res = await newDataSource(params);
+      const res = await newDataSource({
+        ...commonParams,
+        plugin_id: serverConfigData.value.plugin_id,
+        username_generate_config: conflictConfigRef.value?.getData(),
+      });
       emit('updateSuccess', {
         text: t('新建成功'),
         dataSourceId: res.data?.id,
+        name: serverConfigData.value.name,
       });
     }
     window.changeInput = false;

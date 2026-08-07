@@ -272,7 +272,8 @@ const cancelEdit = () => {
 };
 
 const saveEdit = async () => {
-  await formRef.value.validate();
+  const valid = await formRef.value?.validate?.().catch(() => false);
+  if (!valid) return;
   if (props.config.type === 'view') {
     await handleSave();
     isEdit.value = false;

@@ -287,7 +287,7 @@
         </bk-button>
       </template>
     </bk-dialog>
-    <footer class="footer">
+    <footer ref="footerRef" class="footer">
       <p class="text-[#3A84FF]" v-dompurify-html="contact"></p>
       <p class="text-[#63656E]">{{ copyright }}</p>
     </footer>
@@ -296,7 +296,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
 import { Table, TableColumn } from '@blueking/table';
 
@@ -332,13 +332,30 @@ store.customBreadcrumbs = false;
 const isCreateTenant = window.ENABLE_CREATE_TENANT !== 'False';
 
 const validate = useValidate();
-const tableMaxHeight = useTableMaxHeight(202);
+
+// 用 ResizeObserver 追踪 footer 实际渲染高度（含 padding），免去手动计算
+const footerRef = ref<HTMLElement>();
+const footerHeight = ref(40);
+let footerObserver: ResizeObserver | null = null;
+
+/* useTableMaxHeight 传值计算:
+ *   52  // header（顶部导航）
+ * + 24  // .group-details-wrapper padding-top
+ * + 32  // 新建租户按钮高度
+ * + 16  // .content-search margin-bottom
+ * + footerHeight  // footer 实际高度（ResizeObserver 实时追踪）
+ */
+const nonTableHeight = computed(() => 52 + 24 + 32 + 16 + footerHeight.value);
+const tableMaxHeight = useTableMaxHeight(nonTableHeight);
 const editLeaveBefore = inject('editLeaveBefore');
 const search = ref('');
 // 前端筛选状态
 const filterStatus = ref('');
 const { setTypeToError, clearErrorType, curExceptionType } = useTableEmpty({
   filters: [search, filterStatus],
+  clearTableData: () => {
+    state.list = [];
+  },
 });
 const state = reactive({
   list: [],
@@ -461,26 +478,26 @@ const fetchTenantsList = () => {
     .then((res: any) => {
       const newDate = new Date().getTime(); // 当前时间
       res.data.forEach((item) => {
-        const createdDate = new Date(item.created_at).getTime();
-        // 相差天数
-        item.new = Math.floor((newDate - createdDate) / (24 * 3600 * 1000)) <= 1;
-      });
+      const createdDate = new Date(item.created_at).getTime();
+      // 相差天数
+      item.new = Math.floor((newDate - createdDate) / (24 * 3600 * 1000)) <= 1;
+    });
 
-      if (isCreated.value) {
+    if (isCreated.value) {
         state.list = res.data.map((item) => {
-          item.add = item.id === newId.value;
-          return item;
-        }).sort((a, b) => !a.add - !b.add);
+        item.add = item.id === newId.value;
+        return item;
+      }).sort((a, b) => !a.add - !b.add);
 
-        const rows = getRows();
-        for (const i of rows) {
-          i.style.background = '#F2FCF5';
-        }
-      } else {
-        state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      const rows = getRows();
+      for (const i of rows) {
+        i.style.background = '#F2FCF5';
       }
-      clearErrorType();
-      state.tableLoading = false;
+    } else {
+      state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+    }
+    clearErrorType();
+    state.tableLoading = false;
     })
     .catch((error) => {
       console.error(error);
@@ -687,7 +704,8 @@ const confirmPassword = async () => {
   try {
     if (emailValue.value) handleBlur();
     if (smsValue.value && !adminPasswordData.value.phone) changeTelError(true);
-    await formRef.value.validate();
+    const valid = await formRef.value?.validate?.().catch(() => false);
+    if (!valid) return;
     if (emailValue.value && emailError.value) return;
     if (telError.value) return;
 
@@ -749,7 +767,17 @@ const emailBlur = () => {
 };
 
 onMounted(() => {
+  footerObserver = new ResizeObserver(([entry]) => {
+    footerHeight.value = entry.borderBoxSize?.[0]?.blockSize ?? (entry.target as HTMLElement).offsetHeight;
+  });
+  if (footerRef.value) {
+    footerObserver.observe(footerRef.value);
+  }
   fetchTenantsList();
+});
+
+onBeforeUnmount(() => {
+  footerObserver?.disconnect();
 });
 </script>
 

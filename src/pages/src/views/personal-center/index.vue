@@ -619,6 +619,8 @@ const submitTimeZone = async () => {
     });
     Message({ theme: 'success', message: t('保存成功') });
     originalValue.value.time_zone = currentUserInfo.value.time_zone;
+    // 同步全局用户信息，Header 时区展示随之更新
+    userStore.user.time_zone = currentUserInfo.value.time_zone;
   } catch (error) {
     console.warn(error);
   }
@@ -676,7 +678,7 @@ const toggleEmail = (value: OpenDialogSelect) => {
 };
 // 修改邮箱
 const changeEmail = async () => {
-  const result = await formRef.value.validate().catch(() => false);
+  const result = await formRef.value?.validate?.().catch(() => false);
   if (!result) return;
   patchUsersEmail({
     id: currentUserInfo.value.id,
@@ -819,7 +821,7 @@ const verifyIdentityInfo = async (type: OpenDialogType, value: any) => {
     showPhoneVerify.value = true;
   }
   if (type === OpenDialogType.email) {
-    const result = await formRef.value.validate();
+    const result = await formRef.value?.validate?.().catch(() => false);
     if (!result) return;
     emailInitialData.email = value.email;
     showEmailVerify.value = true;

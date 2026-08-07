@@ -78,7 +78,7 @@
       v-model:is-show="batchPasswordDialogShow"
       :loading="isResetPasswordLoading"
       :password-tips="passwordTips"
-      :data-source-id="organizationStore.localSourceId"
+      :data-source-id="dataSourceId"
       @confirm="handleBatchResetPasswordConfirm"
     />
     <!-- 批量修改信息弹窗 -->
@@ -107,7 +107,7 @@
               v-for="(item, index) in userInfoOptions"
               :key="index"
               :class="{ 'is-selected': item.selected, 'is-disabled': getOptionDisabled(item) }"
-              @click.native="selectOption(item)"
+              @click="selectOption(item)"
             >
               {{ item.text }}
               <i v-if="item.selected" class="user-icon icon-check-line" />
@@ -154,10 +154,11 @@
       </bk-form>
     </bk-dialog>
     <!-- 批量续期弹窗 -->
-    <batchRenewal
+    <BatchRenewal
       v-model:is-show-renewal="isShowRenewal"
       @batch-renewal="handleRenewal"
-      :user-ids="userIds" />
+      :user-ids="userIds"
+      :data-source-id="dataSourceId" />
   </div>
 </template>
 
@@ -168,13 +169,13 @@ import { AngleDown } from 'bkui-vue/lib/icon';
 import dayjs from 'dayjs';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
-import batchRenewal from './batch-renewal.vue';
+import BatchRenewal from './batch-renewal.vue';
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
 import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
-import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdate, batchUpdateStatus, optionalLeaderList, passwordRule } from '@/http/organizationFiles';
+import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule, putBatchUpdate } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { TenantsUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
@@ -182,6 +183,7 @@ import useOrganizationStore from '@/store/organization';
 
 interface IProps {
   selectList: TenantsUserItemData[];
+  dataSourceId?: number;
 }
 
 const props = defineProps<IProps>();
@@ -191,10 +193,12 @@ const emits = defineEmits(['updateNode', 'addNode', 'deleteNode', 'moveOrg', 're
 const organizationStore = useOrganizationStore();
 
 /** 当前选中的是否包含非本地数据源 */
-// eslint-disable-next-line max-len
-const isSelectedNotLocalSource = computed(() => props.selectList.some(item => item.data_source_id !== organizationStore.localSourceId));
+const isSelectedNotLocalSource = computed(() => (
+  props.selectList.some(item => !organizationStore.isEqualLocalSourceId(item.data_source_id))
+));
 /** 当前数据源是否为本地数据源 */
 const isLocalDataSource = computed(() => organizationStore.curSelectedDataSource?.plugin_id === 'local');
+
 const userIds = computed(() => props.selectList.map((item: any) => item.id as string));
 const state = reactive({
   logoutDropdown: false,
@@ -222,8 +226,9 @@ const userInfoOptions = ref([
 /**
  * @description 本地数据源是否启用了账密登录
  */
-// eslint-disable-next-line max-len
-const isEnabledPassword = computed(() => !!organizationStore.getDataSourceInfo(organizationStore.localSourceId)?.enable_password);
+const isEnabledPassword = computed(() => (
+  !!organizationStore.getDataSourceInfo(props.dataSourceId)?.enable_password
+));
 
 /**
  * 移动至组织按钮禁用配置
@@ -287,7 +292,7 @@ const deleteDisabledConfig = computed(() => {
  * 移动至组织
  */
 const handleMoveOrg = () => {
-  emits('moveOrg', { confirmFn: batchUpdate });
+  emits('moveOrg', { confirmFn: putBatchUpdate });
 };
 
 /**
@@ -338,9 +343,15 @@ const handleBatchRenewal = () => {
 onMounted(async () => {
   const [fieldsRes, leadersRes] = await Promise.all([
     getFields(),
-    isLocalDataSource.value ? optionalLeaderList() : Promise.resolve([]),
+    isLocalDataSource.value
+      ? optionalLeaderList({
+        data_source_id: props.dataSourceId,
+        exclude_user_id: '',
+      })
+      : Promise.resolve([]),
   ]);
   extrasList.value = fieldsRes.data.custom_fields;
+  leaderList.value = leadersRes.data;
   extrasList.value.forEach((item) => {
     userInfoOptions.value.push({
       text: item.display_name,
@@ -349,7 +360,6 @@ onMounted(async () => {
       selected: false,
     });
   });
-  leaderList.value = leadersRes.data;
 });
 
 watch(infoFormData, (val) => {
@@ -358,7 +368,7 @@ watch(infoFormData, (val) => {
   });
 }, { deep: true, immediate: true });
 
-const getOptionDisabled = (item) => isSelectedNotLocalSource.value && item.type === 'leader';
+const getOptionDisabled = item => isSelectedNotLocalSource.value && item.type === 'leader';
 
 const selectOption = (selectedItem) => {
   if (getOptionDisabled(selectedItem)) {
@@ -388,6 +398,7 @@ const handleBatchResetPasswordConfirm = async (password: string) => {
   try {
     isResetPasswordLoading.value = true;
     const params = {
+      data_source_id: props.dataSourceId,
       user_ids: userIds.value,
       password,
     };
@@ -418,10 +429,11 @@ const confirmBatchInfo = () => {
       params.account_expired_at = dayjs(infoFormData.value.dateTime).format('YYYY-MM-DD HH:mm:ss');
       return batchAccountExpired(params);
     },
-    leader: () => {
-      params.leader_ids = infoFormData.value.leader;
-      return batchLeader(params);
-    },
+    leader: () => batchLeader({
+      data_source_id: props.dataSourceId,
+      user_ids: userIds.value,
+      leader_ids: infoFormData.value.leader,
+    }),
     custom: async () => {
       await infoFormRef.value.validate();
       const {  name = '', value = null } = infoFormData.value.customField.length ? infoFormData.value.customField[0] : {};
@@ -480,7 +492,10 @@ const confirmBatchAction = (actionType: string) => {
     onConfirm: () => {
       switch (actionType) {
         case 'delete':
-          batchDeleteUser(actions.params)
+          batchDeleteUser({
+            data_source_id: props.dataSourceId,
+            user_ids: userIds.value?.join(','),
+          })
             .then(() => {
               emits('reloadList');
             });

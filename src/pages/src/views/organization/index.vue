@@ -60,19 +60,38 @@ import TableList from './components/table-list.vue';
 
 import useOrganizationStore from '@/store/organization';
 
+defineOptions({
+  name: 'OrganizationIndex',
+});
+
 const organizationStore = useOrganizationStore();
-const isShow = ref(null);
+const isShow = ref(true);
 const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
-/** 当前激活的组织信息（自动根据 deptId 判断是部门还是租户） */
+/** 当前激活的组织信息 */
 const activeOrgInfo = computed(() => {
-  const { deptId, deptName, tenantId, tenantName } = organizationStore.selectedOrg;
+  const {
+    dataSourceId,
+    deptId,
+    deptName,
+    nodeType,
+    tenantId,
+    tenantName,
+  } = organizationStore.selectedOrg;
 
-  if (deptId !== 0) {
+  if (nodeType === 'department' || deptId !== 0) {
     return {
       id: deptId,
       name: deptName,
       type: 'department' as const,
+    };
+  }
+
+  if (nodeType === 'source') {
+    return {
+      id: dataSourceId,
+      name: deptName,
+      type: 'source' as const,
     };
   }
 
@@ -92,17 +111,14 @@ const handleSearchSelect = () => {
 
 onMounted(async () => {
   await organizationStore.handleFetchCurrentTenant();
-  if (organizationStore.currentTenant?.data_sources?.length === 0) {
-    isShow.value = true;
-  } else {
-    isShow.value = false;
-  }
   // 首次载入页面，默认选中当前租户
   organizationStore.updateSelectedOrg({
     tenantId: organizationStore.currentTenant.id,
     tenantName: organizationStore.currentTenant.name,
     tenantLogo: organizationStore.currentTenant.logo,
+    nodeType: 'tenant',
   });
+  isShow.value = organizationStore.currentTenant?.data_sources?.length === 0;
 });
 </script>
 

@@ -1,5 +1,9 @@
 import http from './fetch';
+import { ResponseData } from './types';
 import type {
+  IdpsDataItem,
+  IdpsPluginsDataItem,
+  LocalIdpDetail,
   NewIdpsParams,
   NewLocalIdpsParams,
   PatchIdpsParams,
@@ -9,12 +13,12 @@ import type {
 /**
  * 认证源列表
  */
-export const getIdps = (keyword: string) => http.get(`/api/v3/web/idps/?keyword=${keyword}`);
+export const getIdps = (keyword: string) => http.get<ResponseData<IdpsDataItem[]>>(`/api/v3/web/idps/?keyword=${keyword}`);
 
 /**
  * 认证源插件列表
  */
-export const getIdpsPlugins = () => http.get('/api/v3/web/idps/plugins/');
+export const getIdpsPlugins = () => http.get<ResponseData<IdpsPluginsDataItem[]>>('/api/v3/web/idps/plugins/');
 
 /**
  * 新建认证源
@@ -49,7 +53,7 @@ export const postLocalIdps = (params: NewLocalIdpsParams) => http.post('/api/v3/
 /**
  * 本地认证源详情
  */
-export const getLocalIdps = (id: string) => http.get(`/api/v3/web/idps/local/${id}/`);
+export const getLocalIdps = (id: string) => http.get<ResponseData<LocalIdpDetail>>(`/api/v3/web/idps/local/${id}/`);
 
 /**
  * 更新本地认证源

@@ -16,10 +16,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   const isConfiguredGeneralPlugin = computed(() => dataSource.value.some(item => item.plugin_id === 'general'));
 
   /** 是否已配置其他数据源插件 */
-  const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 1 && !isConfiguredLocalPlugin.value);
-
-  /** 本地数据源ID */
-  const localDataSourceId = computed(() => getDataSourceInfo('local')?.id);
+  const isConfiguredOtherPlugin = computed(() => dataSource.value.length > 0 && !isConfiguredLocalPlugin.value);
 
   /** 获取当前配置的数据源插件 */
   const handleFetchCurrentDataSource = async () => {
@@ -39,30 +36,31 @@ export const useDataSourceStore = defineStore('dataSource', () => {
    */
   const handleFetchSyncStatus = async (dataSources: { id: number; pluginId: string }[]) => {
     if (!dataSources || dataSources.length === 0) return;
-
-    // 并发获取所有目标数据源的同步记录
-    const results = await Promise.all(
-      dataSources.map(({ id, pluginId }) => {
-        const params: SyncRecordsParams = {
-          plugin_id: pluginId,
-          page: 1,
-          page_size: 10,
-        };
-        return getSyncRecords(id, params);
-      }),
-    );
+    // 并发获取所有目标数据源的同步记录（按数据源 ID 精确查询，pluginId 一并带上）
+    const results = await Promise.all(dataSources.map(({ id, pluginId }) => {
+      const params: SyncRecordsParams = {
+        data_source_id: id,
+        plugin_id: pluginId,
+        page: 1,
+        page_size: 10,
+      };
+      return getSyncRecords(params);
+    }));
     // 将每个数据源的最新状态存入 Map
     results.forEach((res, index) => {
       const dataSourceId = dataSources[index].id;
-      const data = res.data.results?.[0];
+      const data = res?.data?.results?.[0];
       if (data) {
         dataSourceSyncStatusMap.value.set(dataSourceId, data);
       }
     });
   };
 
-  /** 获取指定数据源信息 */
-  const getDataSourceInfo = (pluginId: string) => dataSource.value.find(item => item.plugin_id === pluginId);
+  /** 获取指定数据源实例 */
+  const getDataSourceById = (id?: number | string) => dataSource.value.find(item => item.id === Number(id));
+
+  /** 获取指定插件类型下的所有数据源实例 */
+  const getDataSourcesByPlugin = (pluginId: string) => dataSource.value.filter(item => item.plugin_id === pluginId);
 
   /**
    * 初始化所有已配置数据源的同步状态
@@ -82,8 +80,8 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     isConfiguredLocalPlugin,
     isConfiguredGeneralPlugin,
     isConfiguredOtherPlugin,
-    localDataSourceId,
-    getDataSourceInfo,
+    getDataSourceById,
+    getDataSourcesByPlugin,
     handleFetchCurrentDataSource,
     handleFetchAllDataSourcePlugins,
     handleFetchSyncStatus,

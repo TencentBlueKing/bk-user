@@ -1,8 +1,6 @@
 import { ref } from 'vue';
 
-import { t } from '@/language/index';
-
-export const useCustomPlugin = (formData, dataSourceList, builtinFields, customFields) => {
+export const useCustomPlugin = (formData, dataSourceList) => {
   const changeDataSourceId = (val, oldVal) => {
     dataSourceList.value.forEach((item) => {
       if (item.key === val) {
@@ -15,14 +13,7 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
   };
 
   const currentIndex = ref(0);
-  const changeSourceField = (val, oldVal) => {
-    formData.value.data_source_match_rules[currentIndex.value].targetFields.forEach((item) => {
-      if (item.name === val) {
-        item.disabled = true;
-      } else if (item.name === oldVal) {
-        item.disabled = false;
-      }
-    });
+  const changeSourceField = () => {
     handleChange();
   };
 
@@ -40,13 +31,8 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
     handleChange();
   };
 
-  const handleDeleteItem = (val, index, fields, i) => {
+  const handleDeleteItem = (index, fields, i) => {
     fields.splice(i, 1);
-    formData.value.data_source_match_rules[index].targetFields.forEach((item) => {
-      if (item.name === val) {
-        item.disabled = false;
-      }
-    });
     handleChange();
   };
 
@@ -59,14 +45,6 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
           target_field: '',
           source_field: '',
         },
-      ],
-      targetFields: [
-        ...builtinFields.value?.map(item => ({
-          key: item.id, name: item.name, disabled: false, type: t('内置'),
-        })) || [],
-        ...customFields.value?.map(item => ({
-          key: item.id, name: item.name, disabled: false, type: t('自定义'),
-        })) || [],
       ],
     });
   };

@@ -73,18 +73,19 @@ export interface DataSourceUsersParams {
 /**
  * 新建数据源参数
  */
-export interface UsernameConfig {
-  strategy: 'manual' | 'add_affix';
+export interface UsernameGenerateConfig {
+  rule: 'unchanged' | 'add_affix';
   prefix: string;
   suffix: string;
 }
 
 export interface NewDataSourceParams {
   plugin_id: string;
+  name: string;
   plugin_config: GeneralDataSourcePluginConfig | LDAPDataSourcePluginConfig | LocalDataSourcePluginConfig;
   field_mapping?: FieldMapping[];
   sync_config?: SyncConfig;
-  username_config?: UsernameConfig;
+  username_generate_config?: UsernameGenerateConfig;
 }
 
 /**
@@ -98,10 +99,10 @@ export interface NewDataSourceResult {
  * 更新数据源参数
  */
 export interface PutDataSourceParams {
-  id: string;
+  name: string;
   plugin_config: {};
   field_mapping: FieldMapping[];
-  username_config?: UsernameConfig;
+  sync_config?: SyncConfig;
 }
 
 /**
@@ -130,7 +131,7 @@ export interface LeadersParams {
 export interface TestConnectionParams {
   plugin_id: string;
   plugin_config: {};
-  data_source_id?: string;
+  data_source_id?: number;
 }
 
 /**
@@ -139,6 +140,7 @@ export interface TestConnectionParams {
 export interface SyncRecordsParams {
   page?: number;
   page_size?: number;
+  data_source_id?: number;
   plugin_id?: string;
   statuses?: string;
 }
@@ -149,6 +151,11 @@ export interface SyncRecordsParams {
 export interface GeneratePasswordParams {
   data_source_id?: number;
   password_rule_config?: {};
+}
+
+/** 生成随机密码返回值 */
+export interface RandomPasswordsData {
+  password: string;
 }
 
 /**
@@ -172,6 +179,8 @@ export interface DeleteDataSourcesParams {
  */
 export interface DataSourceDetails {
   id: number;
+  /** 数据源名称 */
+  name?: string;
   owner_tenant_id: string;
   type: string;
   plugin: {
@@ -189,8 +198,8 @@ export interface DataSourceDetails {
   };
   sync_config: SyncConfig;
   field_mapping: FieldMapping[];
-  username_config: {
-    strategy: 'manual' | 'add_affix';
+  username_generate_config: {
+    rule: 'unchanged' | 'add_affix';
     prefix: string;
     suffix: string;
   };
@@ -249,6 +258,8 @@ export interface SyncRecords {
   count: number;
   results: {
     id: number;
+    data_source_id?: number;
+    data_source_name?: string;
     status: string;
     has_warning: boolean;
     trigger: string;
@@ -265,10 +276,11 @@ export interface SyncRecords {
 }
 
 export interface GetDataSourceListParams {
-  type: 'real' | 'virtual' | 'builtin_management';
+  type?: 'real' | 'virtual' | 'builtin_management';
 }
 
 export interface DataSourceItemData {
+  name: string;
   id: number;
   owner_tenant_id: string;
   type: string;
@@ -405,23 +417,4 @@ export interface RelatedResourceStatistics {
 
 export interface BatchDeleteDataSourcesParams {
   is_delete_idp?: boolean;
-}
-
-export interface SyncRecords {
-  count: number,
-  results: {
-    id: number,
-    status: string,
-    has_warning: boolean,
-    trigger: string,
-    operator: string,
-    start_at: string,
-    duration: string,
-    extras: {
-      incremental: boolean,
-      overwrite: boolean,
-      async_run: boolean,
-      sync_timeout: number,
-    }
-  }[],
 }

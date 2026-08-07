@@ -1,18 +1,34 @@
 import http, { Config } from './fetch';
 import { ResponseData } from './types';
 import type {
-  BatchUpdateParams,
+  AddDepartmentParams,
+  AddDepartmentResult,
+  BatchCreateParams,
+  BatchCreatePreviewItemData,
+  BatchCreatePreviewParams,
+  BatchDeleteParams,
+  BatchDeleteUserParams,
+  BatchLeaderParams,
+  BatchResetPasswordParams,
   CollaborationItemData,
   CurrentTenantData,
   DepartmentsItemData,
   DepartmentsListParams,
+  GetDepartmentsListParams,
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
+  OptionalLeaderListItemData,
+  OptionalLeaderListParams,
+  OrganizationPathsData,
+  PasswordRuleData,
+  PatchBatchUpdateParams,
+  PutBatchUpdateParams,
   SearchKeywordParams,
   SearchOrganizationItemData,
   SearchUserItemData,
   TenantListParams,
+  TenantsUserDetailData,
   TenantsUserListData,
   UpdateTenantParams,
 } from './types/organizationFiles';
@@ -65,16 +81,17 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
 export const getCurrentTenant = () => http.get<ResponseData<CurrentTenantData>>(`${prefix}/current-tenant/`);
 
 /**
- * 当前租户下的部门列表，deptId为0时表示获取根部门
- * @param deptId 部门id
+ * 当前租户下的部门列表，parent_department_id 为 0 时 / 不传 parent_department_id 均表示获取根部门
+ * 传入 data_source_id 则只返回该数据源的根部门，否则返回该租户下全部实名数据源的根部门
  * @param tenantId 租户id
+ * @param params 查询参数
  */
-export const getDepartmentsList = (deptId: number, tenantId: string) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, { parent_department_id: deptId });
+export const getDepartmentsList = (tenantId: string, params: GetDepartmentsListParams) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, undefined, { params });
 
 /**
  * 创建租户组织
  */
-export const addDepartment = (id: string, params: any) => http.post(`${prefix}/tenants/${id}/departments/`, params);
+export const addDepartment = (id: string, params: AddDepartmentParams) => http.post<ResponseData<AddDepartmentResult>>(`${prefix}/tenants/${id}/departments/`, params);
 
 /**
  * 删除租户组织
@@ -99,7 +116,7 @@ export const getTenantsUserList = (tenantId: string, params: any) => http.get<Re
 /**
  * 获取租户用户详情
  */
-export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
+export const getTenantsUserDetail = (id: string) => http.get<ResponseData<TenantsUserDetailData>>(`${prefix}/tenants/users/${id}/`);
 
 /**
  * 租户用户续期
@@ -114,7 +131,7 @@ export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${
 /**
  * 更新租户用户
  */
-export const getOrganizationPaths = (id: string, params?: any) => http.get(`${prefix}/tenants/users/${id}/organization-paths/`, params);
+export const getOrganizationPaths = (id: string, params?: any) => http.get<ResponseData<OrganizationPathsData>>(`${prefix}/tenants/users/${id}/organization-paths/`, params);
 
 /**
  * 删除租户用户
@@ -137,27 +154,27 @@ export const resetTenantsUserPassword = (id: string, params: any) => http.put(`$
 /**
  * 批量删除用户
  */
-export const batchDeleteUser = (user_ids: any) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, { user_ids });
+export const batchDeleteUser = (params: BatchDeleteUserParams) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, params);
 
 /**
  * 移出当前组织
  */
-export const batchDelete = (params: any) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
+export const batchDelete = (params: BatchDeleteParams) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
 
 /**
  * 移至目标组织
  */
-export const batchUpdate = (params: BatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const patchBatchUpdate = (params: PatchBatchUpdateParams) => http.patch(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 从其他组织拉取 / 追加目标组织
  */
-export const batchCreate = (params: any) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
+export const batchCreate = (params: BatchCreateParams) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
 
 /**
  * 清空并加入组织
  */
-export const batchDelUpdate = (params: any) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const putBatchUpdate = (params: PutBatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 批量停用/启用
@@ -167,7 +184,7 @@ export const batchUpdateStatus = (params: any) => http.put(`${prefix}/tenants/us
 /**
  * 批量重置密码
  */
-export const batchResetPassword = (params: any) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
+export const batchResetPassword = (params: BatchResetPasswordParams) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
 
 /**
  * 批量续期
@@ -177,7 +194,7 @@ export const batchAccountExpired = (params: any) => http.put(`${prefix}/tenants/
 /**
  * 批量修改上级
  */
-export const batchLeader = (params: any) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
+export const batchLeader = (params: BatchLeaderParams) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
 
 /**
  * 批量修改自定义字段
@@ -188,7 +205,7 @@ export const batchCustomField = (params: any) => http.put(`${prefix}/tenants/use
 /**
  * 快速录入
  */
-export const operationsCreate = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
+export const operationsCreate = (params: BatchCreatePreviewParams) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
 
 /**
  * 快速录入字段 tips 来源
@@ -198,7 +215,7 @@ export const getFieldsTips = () => http.get(`${prefix}/tenants/required-user-fie
 /**
  * 快速录入数据预览
  */
-export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
+export const batchCreatePreview = (params: BatchCreatePreviewParams) => http.post<ResponseData<BatchCreatePreviewItemData[]>>(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
 
 /**
  * 可选部门
@@ -208,7 +225,7 @@ export const optionalDepartmentsList = (params: OptionalDepartmentsListParams) =
 /**
  * 可选leader
  */
-export const optionalLeaderList = (params: any = null) => http.get(`${prefix}/tenants/optional-leaders/`, params);
+export const optionalLeaderList = (params: OptionalLeaderListParams) => http.get<ResponseData<OptionalLeaderListItemData[]>>(`${prefix}/tenants/optional-leaders/`, params);
 
 /**
  * 搜索组织
@@ -228,7 +245,7 @@ export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/
 /**
  * 密码规则
  */
-export const passwordRule = (id: string) => http.get(`${prefix}/tenants/users/${id}/password-rule/`);
+export const passwordRule = (id: string) => http.get<ResponseData<PasswordRuleData>>(`${prefix}/tenants/users/${id}/password-rule/`);
 
 /**
  * 组织树拖拽功能
