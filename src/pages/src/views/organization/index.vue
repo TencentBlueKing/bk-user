@@ -515,21 +515,22 @@ export default {
       this.searchFilterList = this.heardList;
     },
     'tableSearchKey'(val) {
-      this.searchFilterList = this.heardList;
-      if (val.length) {
-        val.filter((item) => {
-          if (item.id === 'username' || item.id === 'display_name') {
-            this.checkSearchKey = item.values[0].name;
-          }
-          this.searchFilterList = this.searchFilterList.filter((k) => {
-            if (!item.id.includes(k.id)) {
-              return k;
-            }
-          });
-        });
-      } else {
+      if (!val.length) {
         this.checkSearchKey = '';
+        this.searchFilterList = this.heardList;
+        return;
       }
+
+      const selectedConditions = val.filter(item => Array.isArray(item.values));
+      // 输入中的临时值由组件内部维护，避免其触发候选面板重新渲染。
+      if (selectedConditions.length !== val.length) return;
+
+      const selectedConditionIds = selectedConditions.map(item => item.id);
+      const primarySearchCondition = selectedConditions.find((item) => {
+        return item.id === 'username' || item.id === 'display_name';
+      });
+      this.checkSearchKey = primarySearchCondition ? primarySearchCondition.values[0].name : '';
+      this.searchFilterList = this.heardList.filter(item => !selectedConditionIds.includes(item.id));
     },
   },
   async mounted() {
@@ -750,26 +751,17 @@ export default {
       this.getTableData();
     },
     // 获取搜索框的参数
-    getQueryParams() {
+    getQueryParams(searchKeys = this.tableSearchKey) {
+      const defaultSearchField = this.heardList[0];
       const values = [];
-      this.tableSearchKey.forEach((item) => {
-        if (!Array.isArray(item.values)) {
-          const { id, name } = item;
-          Object.assign(item, { values: [{ id, name }] });
-          // 默认搜索第一个
-          item.id = this.searchFilterList[0].id;
-          item.name = this.searchFilterList[0].name;
-        }
-        let key = '';
-        const value = [];
-        if (Object.keys(this.enumList).includes(item.id)) {
-          key = this.enumList[item.id];
-        }
-        if (!item.values) return;
-        item.values.forEach((v) => {
-          value.push(v.id);
-        });
-        values.push(`${key}=${value}`);
+      searchKeys.forEach((item) => {
+        const isConditionSelected = Array.isArray(item.values);
+        const field = isConditionSelected ? item : defaultSearchField;
+        if (!field) return;
+
+        const key = this.enumList[field.id] || '';
+        const itemValues = isConditionSelected ? item.values : [{ id: item.id, name: item.name }];
+        values.push(`${key}=${itemValues.map(value => value.id)}`);
       });
       return values.join('&');
     },
@@ -790,7 +782,7 @@ export default {
         pageSize: this.paginationConfig.limit,
         recursive: true,
       };
-      params.values = this.getQueryParams();
+      params.values = this.getQueryParams(list);
       this.$store.dispatch('organization/getProfiles', params).then((res) => {
         if (res.result) {
           this.basicLoading = false;

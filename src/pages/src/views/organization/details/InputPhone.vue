@@ -158,8 +158,8 @@ export default {
       if (item.value === '') {
         return this.$emit('phone', true);
       }
-      if (item.value.includes('****')) {
-        return true;
+      if (this.editStatus && item.value.includes('****')) {
+        return false;
       }
       let validation = false;
       const currentIsoCode = this.iti && this.iti.getSelectedCountryData()
