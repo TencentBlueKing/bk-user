@@ -190,9 +190,7 @@ class TenantDepartmentHandler:
         ds_ancestor_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
 
         # 当前部门 + 祖先部门一并映射到当前租户的租户部门 ID
-        all_ds_ids = set(data_source_department_ids)
-        for ancestor_ds_ids in ds_ancestor_map.values():
-            all_ds_ids.update(ancestor_ds_ids)
+        all_ds_ids = set(data_source_department_ids).union(*ds_ancestor_map.values())
         ds_to_tenant = dict(
             TenantDepartment.objects.filter(
                 tenant_id=tenant_id,
