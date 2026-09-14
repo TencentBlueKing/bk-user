@@ -181,6 +181,32 @@ class TenantDepartmentHandler:
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
     @staticmethod
+    def get_ancestor_ids_map(tenant_id: str, data_source_department_ids: List[int]) -> Dict[int, List[int]]:
+        """获取租户部门的祖先部门 ID 映射"""
+        if not data_source_department_ids:
+            return {}
+
+        # 数据源部门 ID -> 祖先数据源部门 ID 列表
+        ds_ancestor_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
+
+        # 当前部门 + 祖先部门一并映射到当前租户的租户部门 ID
+        all_ds_ids = set(data_source_department_ids)
+        for ancestor_ds_ids in ds_ancestor_map.values():
+            all_ds_ids.update(ancestor_ds_ids)
+        ds_to_tenant = dict(
+            TenantDepartment.objects.filter(
+                tenant_id=tenant_id,
+                data_source_department_id__in=all_ds_ids,
+            ).values_list("data_source_department_id", "id")
+        )
+
+        return {
+            ds_to_tenant[ds_id]: [ds_to_tenant[aid] for aid in ancestor_ds_ids if aid in ds_to_tenant]
+            for ds_id, ancestor_ds_ids in ds_ancestor_map.items()
+            if ds_id in ds_to_tenant
+        }
+
+    @staticmethod
     def update_department_code(data_source_department: DataSourceDepartment):
         """
         更新数据源部门 code, 必须在事务内调用该方法

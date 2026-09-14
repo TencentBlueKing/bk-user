@@ -19,7 +19,8 @@ from typing import List
 
 import pytest
 from bkuser.apps.data_source.models import DataSourceDepartment
-from bkuser.biz.organization import TenantOrgPathHandler
+from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
 
 pytestmark = pytest.mark.django_db
 
@@ -67,3 +68,25 @@ class TestQueryOrganizationPath:
         data_source_department_ids: List[int] = []
         result = TenantOrgPathHandler._query_org_path(data_source_department_ids, include_self=True)
         assert result == {}
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestGetAncestorIdsMap:
+    """租户部门祖先 ID 映射测试"""
+
+    def test_empty_input(self, random_tenant):
+        assert TenantDepartmentHandler.get_ancestor_ids_map(random_tenant.id, []) == {}
+
+    def test_root_and_nested_departments(self, random_tenant):
+        company = TenantDepartment.objects.get(tenant=random_tenant, data_source_department__name="公司")
+        dept_a = TenantDepartment.objects.get(tenant=random_tenant, data_source_department__name="部门A")
+        center_aa = TenantDepartment.objects.get(tenant=random_tenant, data_source_department__name="中心AA")
+
+        result = TenantDepartmentHandler.get_ancestor_ids_map(
+            random_tenant.id,
+            [company.data_source_department_id, dept_a.data_source_department_id, center_aa.data_source_department_id],
+        )
+
+        assert result[company.id] == []
+        assert result[dept_a.id] == [company.id]
+        assert result[center_aa.id] == [company.id, dept_a.id]

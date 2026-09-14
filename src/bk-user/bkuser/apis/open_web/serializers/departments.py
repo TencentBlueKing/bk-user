@@ -14,7 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -37,6 +37,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
     has_child = serializers.SerializerMethodField(help_text="是否有子部门")
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
+    ancestor_ids = serializers.SerializerMethodField(help_text="祖先部门 ID 列表")
 
     def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
         return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
@@ -49,6 +50,9 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
 
     def get_has_user(self, obj: TenantDepartment) -> bool:
         return self.context["has_user_map"][obj.data_source_department_id]
+
+    def get_ancestor_ids(self, obj: TenantDepartment) -> List[int]:
+        return self.context["ancestor_ids_map"].get(obj.id, [])
 
 
 class TenantDepartmentChildrenListInputSLZ(serializers.Serializer):
@@ -69,12 +73,16 @@ class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
     has_child = serializers.SerializerMethodField(help_text="是否有子部门")
     has_user = serializers.SerializerMethodField(help_text="是否有用户")
+    ancestor_ids = serializers.SerializerMethodField(help_text="祖先部门 ID 列表")
 
     def get_has_child(self, obj: TenantDepartment) -> bool:
         return self.context["has_child_map"][obj.data_source_department_id]
 
     def get_has_user(self, obj: TenantDepartment) -> bool:
         return self.context["has_user_map"][obj.data_source_department_id]
+
+    def get_ancestor_ids(self, obj: TenantDepartment) -> List[int]:
+        return self.context["ancestor_ids_map"].get(obj.id, [])
 
 
 class TenantDepartmentUserListInputSLZ(serializers.Serializer):
@@ -108,9 +116,13 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
     owner_tenant_id = serializers.SerializerMethodField(help_text="所属租户 ID")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
+    ancestor_ids = serializers.SerializerMethodField(help_text="祖先部门 ID 列表")
 
     def get_owner_tenant_id(self, obj: TenantDepartment) -> str:
         return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
 
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return self.context["org_path_map"][obj.data_source_department_id]
+
+    def get_ancestor_ids(self, obj: TenantDepartment) -> List[int]:
+        return self.context["ancestor_ids_map"].get(obj.id, [])

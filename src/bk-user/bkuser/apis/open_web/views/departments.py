@@ -90,6 +90,9 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
+            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
+                self.tenant_id, data_source_department_ids
+            ),
         }
         return Response(TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -152,6 +155,9 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         context = {
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
+            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
+                self.tenant_id, data_source_department_ids
+            ),
         }
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -251,5 +257,8 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
             "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
+            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
+                self.tenant_id, data_source_department_ids
+            ),
         }
         return Response(TenantDepartmentLookupOutputSLZ(tenant_depts, many=True, context=context).data)
