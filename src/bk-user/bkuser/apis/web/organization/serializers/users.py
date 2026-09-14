@@ -107,7 +107,7 @@ class TenantUserListInputSLZ(serializers.Serializer):
     account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
     account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
 
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验创建时间范围
         created_at_start = attrs.get("created_at_start")
         created_at_end = attrs.get("created_at_end")
