@@ -7,112 +7,121 @@
     <DataSourceBasicInfo
       v-model="formData.name"
     />
-    <template v-if="props.curStep === 1 && formData.plugin_config.plugin_id">
-      <SchemaForm
-        ref="schemaFormRef"
-        :form-data="formData"
-        :plugins-config="jsonSchema"
-        class="json-schema-form"
-        @change-plugin-config="changePluginConfig" />
-      <div class="btn">
-        <div>
-          <bk-button
-            class="mr-[8px]"
-            theme="primary"
-            :outline="!nextDisabled"
-            :loading="connectionLoading"
-            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-            {{ $t('下一步') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
-        <div class="connection-alert" v-if="connectionStatus !== null">
-          <bk-alert
-            :theme="connectionStatus ? 'success' : 'error'"
-            :show-icon="false">
-            <template #title>
-              <span>
-                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                <i v-else class="bk-sq-icon icon-close-fill" />
-                {{ connectionText }}
-              </span>
-            </template>
-          </bk-alert>
-        </div>
-      </div>
-    </template>
-    <bk-form
-      v-else
-      form-type="vertical"
-      ref="formRef2"
-      :model="fieldSettingData"
-      :rules="rulesFieldSetting">
-      <Row :title="$t('字段映射')">
-        <FieldMapping
-          :field-setting-data="fieldSettingData"
-          :api-fields="apiFields"
-          :rules="rulesFieldSetting"
-          :source-field="$t('用户管理字段')"
-          :target-field="$t('API返回字段')"
-          @change-api-fields="changeApiFields"
-          @handle-add-field="handleAddField"
-          @handle-delete-field="handleDeleteField"
-          @change-custom-field="changeCustomField" />
-      </Row>
-      <Row :title="$t('同步配置')">
-        <bk-form-item :label="$t('同步周期')" required>
-          <bk-select
-            class="w-[560px]"
-            :clearable="false"
-            v-model="fieldSettingData.sync_config.sync_period"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_CONFIG_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item :label="$t('同步超时时间')" required>
-          <bk-select
-            class="w-[560px]"
-            :clearable="false"
-            v-model="fieldSettingData.sync_config.sync_timeout"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_TIMEOUT_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </bk-select>
-        </bk-form-item>
-      </Row>
-      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
-        <template #header>
-          <ConflictTips :has-other-data-source="hasOtherDataSource" />
+    <StepLayout :step="step" :steps="steps">
+      <template #step-1>
+        <template v-if="formData.plugin_config.plugin_id">
+          <SchemaForm
+            ref="schemaFormRef"
+            :form-data="formData"
+            :plugins-config="jsonSchema"
+            class="json-schema-form"
+            @change-plugin-config="changePluginConfig" />
+          <div class="data-source-footer-btn !border-t-0">
+            <div>
+              <bk-button
+                class="mr-[8px]"
+                theme="primary"
+                :outline="!nextDisabled"
+                :loading="connectionLoading"
+                @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+              <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+                {{ $t('下一步') }}
+              </bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+            </div>
+            <div class="connection-alert" v-if="connectionStatus !== null">
+              <bk-alert
+                :theme="connectionStatus ? 'success' : 'error'"
+                :show-icon="false">
+                <template #title>
+                  <span>
+                    <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                    <i v-else class="bk-sq-icon icon-close-fill" />
+                    {{ connectionText }}
+                  </span>
+                </template>
+              </bk-alert>
+            </div>
+          </div>
         </template>
-        <ConflictConfig
-          ref="conflictConfigRef"
-          :config="fieldSettingData.username_generate_config"
-          :disabled="isEdit"
-        />
-      </Row>
-      <div class="btn">
-        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-          {{ isEdit ? $t('保存') : $t('提交') }}
-        </bk-button>
-        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-      </div>
-    </bk-form>
+      </template>
+      <template #step-2>
+        <bk-form
+          class="flex flex-col divide-y divide-[#EAEBF0]"
+          form-type="vertical"
+          ref="formRef2"
+          :model="fieldSettingData"
+          :rules="rulesFieldSetting">
+          <Row :title="$t('字段映射')">
+            <FieldMapping
+              :field-setting-data="fieldSettingData"
+              :api-fields="apiFields"
+              :rules="rulesFieldSetting"
+              :source-field="$t('用户管理字段')"
+              :target-field="$t('API返回字段')"
+              @change-api-fields="changeApiFields"
+              @handle-add-field="handleAddField"
+              @handle-delete-field="handleDeleteField"
+              @change-custom-field="changeCustomField" />
+          </Row>
+          <Row :title="$t('同步配置')">
+            <bk-form-item :label="$t('同步周期')" required>
+              <bk-select
+                class="w-[560px]"
+                :clearable="false"
+                v-model="fieldSettingData.sync_config.sync_period"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_CONFIG_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+            <bk-form-item :label="$t('同步超时时间')" required>
+              <bk-select
+                class="w-[560px]"
+                :clearable="false"
+                v-model="fieldSettingData.sync_config.sync_timeout"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_TIMEOUT_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+          </Row>
+          <Row :title="$t('冲突配置')">
+            <template #header>
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
+            </template>
+            <ConflictConfig
+              ref="conflictConfigRef"
+              :config="fieldSettingData.username_generate_config"
+              :disabled="isEdit"
+            />
+          </Row>
+          <div class="data-source-footer-btn !border-t-0">
+            <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+            <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+              {{ isEdit ? $t('保存') : $t('提交') }}
+            </bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+          </div>
+        </bk-form>
+      </template>
+    </StepLayout>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+
+import StepLayout from './StepLayout.vue';
 
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
@@ -126,27 +135,30 @@ import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
 import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 interface IProps {
   currentType: string;
   dataSourceId: number;
-  isReset?: boolean;
-  curStep: number;
 }
 
-const props = withDefaults(defineProps<IProps>(), {
-  isReset: false,
-});
+const props = defineProps<IProps>();
 
-const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
+
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
 const hasOtherDataSource = computed(() => dataSourceStore.dataSource
   .some(item => item.id !== props.dataSourceId));
+
+// 当前步骤由组件自持（校验/请求完成后自行更新），不再经容器转发
+const step = ref(1);
+const steps = [
+  { title: t('服务配置') },
+  { title: t('字段设置') },
+];
 
 const formData = reactive({
   name: '',
@@ -218,10 +230,6 @@ const defaultServerConfig = () => ({
   auth_config: {},
 });
 
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
-
 // 连通性测试
 const handleTestConnection = async () => {
   try {
@@ -252,7 +260,7 @@ const handleTestConnection = async () => {
 
 const handleNext = async () => {
   try {
-    emit('updateCurStep', 2);
+    step.value = 2;
     isLoading.value = true;
     const res = await getFields();
     if (isEdit.value) {
@@ -335,19 +343,10 @@ const handleNext = async () => {
   }
 };
 
-const editLeaveBefore = inject('editLeaveBefore');
 const handleLastStep = async () => {
-  let enableLeave = true;
-  if (window.changeInput) {
-    enableLeave = await editLeaveBefore();
-  }
-  if (!enableLeave) {
-    return Promise.resolve(enableLeave);
-  }
-
   nextDisabled.value = true;
   connectionStatus.value = null;
-  emit('updateCurStep', 1);
+  step.value = 1;
 
   fieldSettingData.value.field_mapping.builtin_fields = [];
   fieldSettingData.value.field_mapping.custom_fields = [];
@@ -458,21 +457,6 @@ const handleChange = () => {
   connectionStatus.value = null;
 };
 
-// 重置数据
-watch(() => props.isReset, () => {
-  if (props.curStep === 1) {
-    nextDisabled.value = true;
-    connectionStatus.value = null;
-    formData.plugin_config = defaultServerConfig();
-  } else {
-    const { field_mapping: fieldMapping, addFieldList, sync_config: syncConfig } = fieldSettingData.value;
-    fieldMapping.builtin_fields.forEach(item => item.source_field = '');
-    addFieldList.forEach(item => item.source_field = '');
-    apiFields.value.forEach(item => item.disabled = false);
-    syncConfig.sync_period = 24 * 60;
-  }
-});
-
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -517,24 +501,7 @@ onMounted(async () => {
     }
   }
 
-  .row-wrapper {
-    padding: 0 24px;
-    margin-bottom: 0;
-    border-bottom: 1px solid #EAEBF0;
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-  .btn {
-    position: relative;
-    padding: 0px 0 24px 24px;
-    background-color: #fff;
-
-    button {
-      min-width: 88px;
-    }
-
+  .data-source-footer-btn {
     .connection-alert {
       width: 100%;
       margin-top: 8px;

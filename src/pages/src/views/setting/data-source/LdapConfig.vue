@@ -4,327 +4,341 @@
     class="data-source-content user-scroll-y"
     :z-index="10"
   >
-    <bk-form
-      v-if="props.curStep === 1 && ldapConfigData.plugin_id"
-      form-type="vertical"
-      ref="formRef1"
-      :model="ldapConfigData"
-      :rules="rulesLdapConfig">
-      <DataSourceBasicInfo
-        v-model="ldapConfigData.name"
-      />
-      <Row :title="$t('服务配置')">
-        <bk-form-item class="w-[560px]" :label="$t('LDAP 服务地址')" required property="server_config.server_url">
-          <bk-input
-            placeholder="ldap://127.0.0.1:3390"
-            v-model="ldapConfigData.server_config.server_url"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('Bind DN')" required property="server_config.bind_dn">
-          <bk-input
-            placeholder="cn=admin,ou=system_users,dc=bk,dc=example,dc=com"
-            v-model="ldapConfigData.server_config.bind_dn"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('Bind DN 密码')" required property="server_config.bind_password">
-          <bk-input
-            type="password"
-            autocomplete="new-password"
-            placeholder="*********"
-            v-model="ldapConfigData.server_config.bind_password"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('根目录 (Base DN)')" required property="server_config.base_dn">
-          <bk-input
-            placeholder="dc=bk,dc=example,dc=com"
-            v-model="ldapConfigData.server_config.base_dn"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <div class="flex w-[560px]">
-          <bk-form-item class="flex-1" :label="$t('分页请求每页数量')">
-            <bk-input
-              class="mb8"
-              v-model="ldapConfigData.server_config.page_size"
-              :max="100"
-              :min="1"
-              size="small"
-              type="number"
-              clearable
-            />
-          </bk-form-item>
-          <bk-form-item
-            class="ml-[24px] flex-1"
-            :label="$t('请求超时时间')">
-            <bk-input
-              class="mb8"
-              v-model="ldapConfigData.server_config.request_timeout"
-              :max="100"
-              :min="1"
-              size="small"
-              type="number"
-              clearable
-            />
-          </bk-form-item>
-        </div>
-      </Row>
-      <Row :title="$t('数据配置')">
-        <bk-form-item
-          required
-          class="w-[560px]"
-          :label="$t('UUID 属性')"
-          property="data_config.uuid_attribute"
-        >
-          <bk-select
-            v-model="ldapConfigData.data_config.uuid_attribute"
-            allow-create
-            :list="UUID_ATTR_LIST"
-            placeholder="请选择UUID 属性"
+    <StepLayout :step="step" :steps="steps">
+      <template #step-1>
+        <bk-form
+          v-if="ldapConfigData.plugin_id"
+          class="flex flex-col divide-y divide-[#EAEBF0]"
+          form-type="vertical"
+          ref="formRef1"
+          :model="ldapConfigData"
+          :rules="rulesLdapConfig">
+          <DataSourceBasicInfo
+            v-model="ldapConfigData.name"
           />
-        </bk-form-item>
-        <bk-form-item
-          class="w-[560px]"
-          :label="$t('用户对象类')"
-          required
-          property="data_config.user_object_class"
-        >
-          <bk-input
-            placeholder="inetOrgPerson"
-            v-model="ldapConfigData.data_config.user_object_class"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item
-          class="w-[560px]"
-          :label="$t('用户 Base DN')"
-          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
-          <div
-            v-for="(item, index) in ldapConfigData.data_config.user_search_base_dns"
-            :key="index"
-            class="my-[15px]"
-          >
-            <bk-input
-              placeholder="ou=company,dc=bk,dc=example,dc=com"
-              v-model="ldapConfigData.data_config.user_search_base_dns[index]"
-              @focus="handleFocus"
-              @input="handleChange" />
-            <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('user', index)" />
-          </div>
-          <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('user')">
-            <i class="user-icon icon-add-2 mr8" />
-            {{ $t('新增') }}
-          </bk-button>
-        </bk-form-item>
-        <bk-form-item class="w-[560px]" :label="$t('部门对象类')" required property="data_config.dept_object_class">
-          <bk-input
-            placeholder="organizationalUnit"
-            v-model="ldapConfigData.data_config.dept_object_class"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item
-          class="w-[560px] !mb-0"
-          :label="$t('部门 Base DN')"
-          :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
-          <div
-            v-for="(item, index) in ldapConfigData.data_config.dept_search_base_dns"
-            :key="index"
-            class="my-[15px]"
-          >
-            <bk-input
-              placeholder="ou=company,dc=bk,dc=example,dc=com"
-              v-model="ldapConfigData.data_config.dept_search_base_dns[index]"
-              @focus="handleFocus"
-              @input="handleChange" />
-            <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('dept', index)" />
-          </div>
-          <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('dept')">
-            <i class="user-icon icon-add-2 mr8" />
-            {{ $t('新增') }}
-          </bk-button>
-        </bk-form-item>
-      </Row>
-      <div class="btn">
-        <div>
-          <bk-button
-            class="mr-[8px]"
-            theme="primary"
-            :outline="!nextDisabled"
-            :loading="connectionLoading"
-            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-            {{ $t('下一步') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
-        <div class="connection-alert" v-if="connectionStatus !== null">
-          <bk-alert
-            :theme="connectionStatus ? 'success' : 'error'"
-            :show-icon="false">
-            <template #title>
-              <span>
-                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                <i v-else class="bk-sq-icon icon-close-fill" />
-                {{ connectionText }}
-              </span>
-            </template>
-          </bk-alert>
-        </div>
-      </div>
-    </bk-form>
-    <bk-form
-      v-else
-      form-type="vertical"
-      ref="formRef2"
-      :model="fieldSettingData"
-      :rules="rulesFieldSetting">
-      <Row :title="$t('字段映射')">
-        <FieldMapping
-          :field-setting-data="fieldSettingData"
-          :api-fields="apiFields"
-          :rules="rulesFieldSetting"
-          :source-field="$t('用户管理字段')"
-          :target-field="$t('API返回字段')"
-          @change-api-fields="changeApiFields"
-          @handle-add-field="handleAddField"
-          @handle-delete-field="handleDeleteField"
-          @change-custom-field="changeCustomField" />
-      </Row>
-      <Row :title="$t('用户组信息')">
-        <bk-checkbox class="mb-[10px]" v-model="fieldSettingData.user_group_config.enabled">
-          {{ $t('支持用户组') }}
-        </bk-checkbox>
-        <template v-if="fieldSettingData.user_group_config.enabled">
-          <bk-form-item
-            class="w-[560px]" :label="$t('用户组对象类')" required
-            property="user_group_config.object_class">
-            <bk-select
-              @change="handleChange"
-              placeholder="groupOfNames"
-              v-model="fieldSettingData.user_group_config.object_class">
-              <bk-option
-                v-for="item in userGroupClassOptions"
-                :key="item.value"
-                :value="item.value"
-                :label="item.label"
+          <Row :title="$t('服务配置')">
+            <bk-form-item class="w-[560px]" :label="$t('LDAP 服务地址')" required property="server_config.server_url">
+              <bk-input
+                placeholder="ldap://127.0.0.1:3390"
+                v-model="ldapConfigData.server_config.server_url"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <bk-form-item class="w-[560px]" :label="$t('Bind DN')" required property="server_config.bind_dn">
+              <bk-input
+                placeholder="cn=admin,ou=system_users,dc=bk,dc=example,dc=com"
+                v-model="ldapConfigData.server_config.bind_dn"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <bk-form-item class="w-[560px]" :label="$t('Bind DN 密码')" required property="server_config.bind_password">
+              <bk-input
+                type="password"
+                autocomplete="new-password"
+                placeholder="*********"
+                v-model="ldapConfigData.server_config.bind_password"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <bk-form-item class="w-[560px]" :label="$t('根目录 (Base DN)')" required property="server_config.base_dn">
+              <bk-input
+                placeholder="dc=bk,dc=example,dc=com"
+                v-model="ldapConfigData.server_config.base_dn"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <div class="flex w-[560px]">
+              <bk-form-item class="flex-1" :label="$t('分页请求每页数量')">
+                <bk-input
+                  class="mb8"
+                  v-model="ldapConfigData.server_config.page_size"
+                  :max="100"
+                  :min="1"
+                  size="small"
+                  type="number"
+                  clearable
+                />
+              </bk-form-item>
+              <bk-form-item
+                class="ml-[24px] flex-1"
+                :label="$t('请求超时时间')">
+                <bk-input
+                  class="mb8"
+                  v-model="ldapConfigData.server_config.request_timeout"
+                  :max="100"
+                  :min="1"
+                  size="small"
+                  type="number"
+                  clearable
+                />
+              </bk-form-item>
+            </div>
+          </Row>
+          <Row :title="$t('数据配置')">
+            <bk-form-item
+              required
+              class="w-[560px]"
+              :label="$t('UUID 属性')"
+              property="data_config.uuid_attribute"
+            >
+              <bk-select
+                v-model="ldapConfigData.data_config.uuid_attribute"
+                allow-create
+                :list="UUID_ATTR_LIST"
+                placeholder="请选择UUID 属性"
               />
-            </bk-select>
-          </bk-form-item>
-          <bk-form-item
-            class="w-[560px]" :label="$t('用户组 Base DN')" required
-            property="user_group_config.search_base_dns"
-            :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
-            <div
-              v-for="(item, index) in fieldSettingData.user_group_config.search_base_dns"
-              :key="index"
-              class="my-[15px]"
+            </bk-form-item>
+            <bk-form-item
+              class="w-[560px]"
+              :label="$t('用户对象类')"
+              required
+              property="data_config.user_object_class"
             >
               <bk-input
-                placeholder="ou=company,dc=bk,dc=example,dc=com"
-                v-model="fieldSettingData.user_group_config.search_base_dns[index]"
+                placeholder="inetOrgPerson"
+                v-model="ldapConfigData.data_config.user_object_class"
                 @focus="handleFocus"
-                @change="handleChange" />
-              <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('group', index)" />
-            </div>
-            <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('group')">
-              <i class="user-icon icon-add-2 mr8" />
-              {{ $t('新增') }}
-            </bk-button>
-          </bk-form-item>
-          <bk-form-item
-            class="w-[560px]" :label="$t('用户组成员字段')" required
-            property="user_group_config.group_member_field">
-            <bk-input
-              :disabled="true"
-              placeholder="member / uniqueMember"
-              v-model="fieldSettingData.user_group_config.group_member_field"
-              @focus="handleFocus"
-              @change="handleChange" />
-          </bk-form-item>
-        </template>
-      </Row>
-      <Row :title="$t('Leader 信息')">
-        <bk-checkbox class="mb-[10px]" v-model="fieldSettingData.leader_config.enabled" @change="handleChange">
-          {{ $t('支持用户 Leader') }}
-        </bk-checkbox>
-        <template v-if="fieldSettingData.leader_config.enabled">
-          <bk-form-item
-            class="w-[560px]" :label="$t('Leader 字段名')" required
-            property="leader_config.leader_field">
-            <bk-select
+                @input="handleChange" />
+            </bk-form-item>
+            <bk-form-item
               class="w-[560px]"
-              placeholder="manager"
-              v-model="fieldSettingData.leader_config.leader_field"
-              :clearable="false"
-              @change="(val: string, oldVal: string) => changeApiFields(val, oldVal)">
-              <bk-option
-                v-for="item in apiFields"
-                :key="item.key"
-                :value="item.key"
-                :label="item.key"
-                :disabled="item.disabled"
-              />
-            </bk-select>
-          </bk-form-item>
-        </template>
-      </Row>
-      <Row :title="$t('同步配置')">
-        <bk-form-item :label="$t('同步周期')">
-          <bk-select
-            class="w-[560px]"
-            v-model="fieldSettingData.sync_config.sync_period"
-            :clearable="false"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_CONFIG_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
+              :label="$t('用户 Base DN')"
+              :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
+              <div
+                v-for="(item, index) in ldapConfigData.data_config.user_search_base_dns"
+                :key="index"
+                class="my-[15px]"
+              >
+                <bk-input
+                  placeholder="ou=company,dc=bk,dc=example,dc=com"
+                  v-model="ldapConfigData.data_config.user_search_base_dns[index]"
+                  @focus="handleFocus"
+                  @input="handleChange" />
+                <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('user', index)" />
+              </div>
+              <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('user')">
+                <i class="user-icon icon-add-2 mr8" />
+                {{ $t('新增') }}
+              </bk-button>
+            </bk-form-item>
+            <bk-form-item class="w-[560px]" :label="$t('部门对象类')" required property="data_config.dept_object_class">
+              <bk-input
+                placeholder="organizationalUnit"
+                v-model="ldapConfigData.data_config.dept_object_class"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <bk-form-item
+              class="w-[560px] !mb-0"
+              :label="$t('部门 Base DN')"
+              :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
+              <div
+                v-for="(item, index) in ldapConfigData.data_config.dept_search_base_dns"
+                :key="index"
+                class="my-[15px]"
+              >
+                <bk-input
+                  placeholder="ou=company,dc=bk,dc=example,dc=com"
+                  v-model="ldapConfigData.data_config.dept_search_base_dns[index]"
+                  @focus="handleFocus"
+                  @input="handleChange" />
+                <i v-if="index !== 0" class="user-icon icon-minus-fill" @click="() => handleDelBaseDn('dept', index)" />
+              </div>
+              <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('dept')">
+                <i class="user-icon icon-add-2 mr8" />
+                {{ $t('新增') }}
+              </bk-button>
+            </bk-form-item>
+          </Row>
+          <div class="data-source-footer-btn !border-t-0">
+            <div>
+              <bk-button
+                class="mr-[8px]"
+                theme="primary"
+                :outline="!nextDisabled"
+                :loading="connectionLoading"
+                @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+              <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+                {{ $t('下一步') }}
+              </bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+            </div>
+            <div class="connection-alert" v-if="connectionStatus !== null">
+              <bk-alert
+                :theme="connectionStatus ? 'success' : 'error'"
+                :show-icon="false">
+                <template #title>
+                  <span>
+                    <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                    <i v-else class="bk-sq-icon icon-close-fill" />
+                    {{ connectionText }}
+                  </span>
+                </template>
+              </bk-alert>
+            </div>
+          </div>
+        </bk-form>
+      </template>
+      <template #step-2>
+        <bk-form
+          class="flex flex-col divide-y divide-[#EAEBF0]"
+          form-type="vertical"
+          ref="formRef2"
+          :model="fieldSettingData"
+          :rules="rulesFieldSetting">
+          <Row :title="$t('字段映射')">
+            <FieldMapping
+              :field-setting-data="fieldSettingData"
+              :api-fields="apiFields"
+              :rules="rulesFieldSetting"
+              :source-field="$t('用户管理字段')"
+              :target-field="$t('API返回字段')"
+              @change-api-fields="changeApiFields"
+              @handle-add-field="handleAddField"
+              @handle-delete-field="handleDeleteField"
+              @change-custom-field="changeCustomField" />
+          </Row>
+          <Row :title="$t('用户组信息')">
+            <bk-checkbox class="mb-[10px]" v-model="fieldSettingData.user_group_config.enabled">
+              {{ $t('支持用户组') }}
+            </bk-checkbox>
+            <template v-if="fieldSettingData.user_group_config.enabled">
+              <bk-form-item
+                class="w-[560px]" :label="$t('用户组对象类')" required
+                property="user_group_config.object_class">
+                <bk-select
+                  @change="handleChange"
+                  placeholder="groupOfNames"
+                  v-model="fieldSettingData.user_group_config.object_class">
+                  <bk-option
+                    v-for="item in userGroupClassOptions"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </bk-select>
+              </bk-form-item>
+              <bk-form-item
+                class="w-[560px]" :label="$t('用户组 Base DN')" required
+                property="user_group_config.search_base_dns"
+                :description="$t('支持同步多个 LDAP 树（森林），需为每棵树指定相应的 Base DN')">
+                <div
+                  v-for="(item, index) in fieldSettingData.user_group_config.search_base_dns"
+                  :key="index"
+                  class="my-[15px]"
+                >
+                  <bk-input
+                    placeholder="ou=company,dc=bk,dc=example,dc=com"
+                    v-model="fieldSettingData.user_group_config.search_base_dns[index]"
+                    @focus="handleFocus"
+                    @change="handleChange" />
+                  <i
+                    v-if="index !== 0"
+                    class="user-icon icon-minus-fill"
+                    @click="() => handleDelBaseDn('group', index)"
+                  />
+                </div>
+                <bk-button class="my-[12px] text-[14px]" text theme="primary" @click="() => handleAddBaseDn('group')">
+                  <i class="user-icon icon-add-2 mr8" />
+                  {{ $t('新增') }}
+                </bk-button>
+              </bk-form-item>
+              <bk-form-item
+                class="w-[560px]" :label="$t('用户组成员字段')" required
+                property="user_group_config.group_member_field">
+                <bk-input
+                  :disabled="true"
+                  placeholder="member / uniqueMember"
+                  v-model="fieldSettingData.user_group_config.group_member_field"
+                  @focus="handleFocus"
+                  @change="handleChange" />
+              </bk-form-item>
+            </template>
+          </Row>
+          <Row :title="$t('Leader 信息')">
+            <bk-checkbox class="mb-[10px]" v-model="fieldSettingData.leader_config.enabled" @change="handleChange">
+              {{ $t('支持用户 Leader') }}
+            </bk-checkbox>
+            <template v-if="fieldSettingData.leader_config.enabled">
+              <bk-form-item
+                class="w-[560px]" :label="$t('Leader 字段名')" required
+                property="leader_config.leader_field">
+                <bk-select
+                  class="w-[560px]"
+                  placeholder="manager"
+                  v-model="fieldSettingData.leader_config.leader_field"
+                  :clearable="false"
+                  @change="(val: string, oldVal: string) => changeApiFields(val, oldVal)">
+                  <bk-option
+                    v-for="item in apiFields"
+                    :key="item.key"
+                    :value="item.key"
+                    :label="item.key"
+                    :disabled="item.disabled"
+                  />
+                </bk-select>
+              </bk-form-item>
+            </template>
+          </Row>
+          <Row :title="$t('同步配置')">
+            <bk-form-item :label="$t('同步周期')">
+              <bk-select
+                class="w-[560px]"
+                v-model="fieldSettingData.sync_config.sync_period"
+                :clearable="false"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_CONFIG_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+            <bk-form-item :label="$t('同步超时时间')">
+              <bk-select
+                class="w-[560px]"
+                :clearable="false"
+                v-model="fieldSettingData.sync_config.sync_timeout"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_TIMEOUT_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+          </Row>
+          <Row :title="$t('冲突配置')">
+            <template #header>
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
+            </template>
+            <ConflictConfig
+              ref="conflictConfigRef"
+              class="w-[560px]"
+              :config="fieldSettingData.username_generate_config"
+              :disabled="isEdit"
             />
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item :label="$t('同步超时时间')">
-          <bk-select
-            class="w-[560px]"
-            :clearable="false"
-            v-model="fieldSettingData.sync_config.sync_timeout"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_TIMEOUT_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </bk-select>
-        </bk-form-item>
-      </Row>
-      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
-        <template #header>
-          <ConflictTips :has-other-data-source="hasOtherDataSource" />
-        </template>
-        <ConflictConfig
-          ref="conflictConfigRef"
-          class="w-[560px]"
-          :config="fieldSettingData.username_generate_config"
-          :disabled="isEdit"
-        />
-      </Row>
-      <div class="btn">
-        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-          {{ true ? $t('保存') : $t('提交') }}
-        </bk-button>
-        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-      </div>
-    </bk-form>
+          </Row>
+          <div class="data-source-footer-btn !border-t-0">
+            <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+            <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+              {{ true ? $t('保存') : $t('提交') }}
+            </bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+          </div>
+        </bk-form>
+      </template>
+    </StepLayout>
   </bk-loading>
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+
+import StepLayout from './StepLayout.vue';
 
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
@@ -342,27 +356,30 @@ import {
   UsernameGenerateConfig,
 } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
-import router from '@/router';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 
 interface IProps {
-  curStep: number;
   dataSourceId: number;
-  isReset?: boolean;
 }
 
-const props = withDefaults(defineProps<IProps>(), {
-  isReset: false,
-});
+const props = defineProps<IProps>();
 
-const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
 const hasOtherDataSource = computed(() => dataSourceStore.dataSource
   .some(item => item.id !== props.dataSourceId));
+
+// 当前步骤由组件自持（校验/请求完成后自行更新），不再经容器转发
+const step = ref(1);
+const steps = [
+  { title: t('服务配置') },
+  { title: t('字段设置') },
+];
+
 const isLoading = ref(false);
 const formRef1 = ref(null);
 const formRef2 = ref(null);
@@ -450,20 +467,6 @@ const defaultLdapConfig = () => ({
   },
 });
 
-// 重置数据
-watch(() => props.isReset, () => {
-  if (props.curStep === 1) {
-    nextDisabled.value = true;
-    connectionStatus.value = null;
-    ldapConfigData.value = defaultLdapConfig();
-  } else {
-    const { field_mapping: fieldMapping, addFieldList, sync_config: syncConfig } = fieldSettingData.value;
-    fieldMapping.builtin_fields.forEach(item => item.source_field = '');
-    addFieldList.forEach(item => item.source_field = '');
-    apiFields.value.forEach(item => item.disabled = false);
-    syncConfig.sync_period = 24 * 60;
-  }
-});
 
 const userGroupClassOptions = [
   {
@@ -517,19 +520,10 @@ const rulesFieldSetting = {
   ...conflictRules,
 };
 
-const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
 const handleLastStep = async () => {
-  let enableLeave = true;
-  if (window.changeInput) {
-    enableLeave = await editLeaveBefore();
-  }
-  if (!enableLeave) {
-    return Promise.resolve(enableLeave);
-  }
-
   nextDisabled.value = true;
   connectionStatus.value = null;
-  emit('updateCurStep', 1);
+  step.value = 1;
 
   fieldSettingData.value.field_mapping.builtin_fields = [];
   fieldSettingData.value.field_mapping.custom_fields = [];
@@ -612,7 +606,7 @@ interface Item {
 
 const handleNext = async () => {
   try {
-    emit('updateCurStep', 2);
+    step.value = 2;
     isLoading.value = true;
     const res = await getFields();
     if (isEdit.value) {
@@ -853,9 +847,6 @@ const handleSubmit = async () => {
   }
 };
 
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
 
 const handleAddBaseDn = (type: string) => {
   if (type === 'user') {
@@ -912,25 +903,7 @@ const handleDelBaseDn = (type: string, index: number) => {
   }
 }
 
-.row-wrapper {
-  padding: 0 24px;
-  margin-bottom: 0;
-  border-bottom: 1px solid #EAEBF0;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.btn {
-  position: relative;
-  padding: 0px 0 24px 24px;
-  background-color: #fff;
-
-  button {
-    min-width: 88px;
-  }
-
+.data-source-footer-btn {
   .connection-alert {
     width: 100%;
     margin-top: 8px;

@@ -77,7 +77,7 @@
     </div>
   </div>
   <div v-else style="padding: 24px;">
-    <Row title="">
+    <div class="bg-white rounded-sm shadow-[0_2px_4px_0_#1919290d] p-[24px]">
       <div class="flex items-top justify-between">
         <div>
           <LabelContent :label="$t('账号有效期')">
@@ -97,7 +97,7 @@
           {{ $t('编辑') }}
         </bk-button>
       </div>
-    </Row>
+    </div>
   </div>
 </template>
 
@@ -106,7 +106,6 @@ import { InfoBox, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { computed, onMounted, ref, watch } from 'vue';
 
-import Row from '@/components/layouts/ItemRow.vue';
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { getTenantUserValidityPeriod, putTenantUserValidityPeriod } from '@/http';

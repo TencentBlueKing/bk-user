@@ -1,5 +1,5 @@
 <template>
-  <Row :title="$t('基础信息')" class="data-source-name-row">
+  <Row :title="$t('基础信息')">
     <bk-form-item
       class="w-[560px]"
       :label="$t('数据源名称')"
@@ -34,10 +34,3 @@ const formRules = {
 
 </script>
 
-<style lang="less" scoped>
-.data-source-name-row {
-  margin-bottom: 0;
-  border-bottom: 1px solid #EAEBF0;
-  box-shadow: none;
-}
-</style>

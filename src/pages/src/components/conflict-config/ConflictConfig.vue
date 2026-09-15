@@ -1,35 +1,10 @@
 <template>
-  <div :class="variant === 'default' ? 'pl-[40px] pb-[8px]' : ''">
-    <bk-form-item :label="$t('用户名冲突规则')" :required="variant === 'default'">
-      <!-- default 变体：使用 radio-button -->
-      <template v-if="variant === 'default'">
-        <bk-radio-group v-model="rule" :disabled="disabled">
-          <bk-radio-button label="unchanged">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
-          <bk-radio-button label="add_affix">{{ $t('为新数据源统一添加前后缀') }}</bk-radio-button>
-        </bk-radio-group>
-      </template>
-
-      <!-- dialog 变体：竖向 radio 列表 -->
-      <template v-else>
-        <bk-radio-group v-model="rule" :disabled="disabled" class="conflict-radio-list">
-          <div
-            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'unchanged' }]"
-            @click="!disabled && (rule = 'unchanged')"
-          >
-            <bk-radio label="unchanged" :disabled="disabled">
-              {{ $t('不配置，发生冲突时手动处理') }}
-            </bk-radio>
-          </div>
-          <div
-            :class="['conflict-radio-item', { 'conflict-radio-item-active': rule === 'add_affix' }]"
-            @click="!disabled && (rule = 'add_affix')"
-          >
-            <bk-radio label="add_affix" :disabled="disabled">
-              {{ $t('为新数据源统一添加前后缀') }}
-            </bk-radio>
-          </div>
-        </bk-radio-group>
-      </template>
+  <div class="pl-[40px] pb-[8px]">
+    <bk-form-item :label="$t('用户名冲突规则')" required>
+      <bk-radio-group v-model="rule" :disabled="disabled">
+        <bk-radio-button label="unchanged">{{ $t('不配置，发生冲突时手动处理') }}</bk-radio-button>
+        <bk-radio-button label="add_affix">{{ $t('为新数据源统一添加前后缀') }}</bk-radio-button>
+      </bk-radio-group>
     </bk-form-item>
 
     <template v-if="rule === 'add_affix'">
@@ -51,6 +26,10 @@
               <bk-radio ref="suffixRadioRef" label="add_suffix">{{ $t('添加后缀') }}</bk-radio>
             </bk-radio-group>
           </div>
+          <!-- 校验错误通过 margin 位移到输入区 popover 下方展示，避免被浮层遮挡（!mb-[90px] 为 popover 预留空间） -->
+          <template #error="message">
+            <p class="mt-[62px] text-[12px] leading-[20px] text-[#EA3636]">{{ message }}</p>
+          </template>
         </bk-form-item>
 
         <!-- 输入区 popover：箭头指向当前选中的选项 -->
@@ -64,6 +43,7 @@
           ext-cls="username-rule-popover"
           :offset="inputPopoverOffset"
           :arrow="true"
+          :z-index="10"
         >
           <template #content>
             <div class="flex items-center bg-[#F5F7FA] p-[12px] min-w-[400px] w-[560px]">
@@ -161,7 +141,6 @@ import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 const props = withDefaults(defineProps<{
   config: UsernameGenerateConfig;
   disabled?: boolean;
-  variant?: 'default' | 'dialog';
 }>(), {
   config: () => ({
     rule: 'unchanged' as const,
@@ -169,7 +148,6 @@ const props = withDefaults(defineProps<{
     suffix: '',
   }),
   disabled: false,
-  variant: 'default',
 });
 
 const emit = defineEmits<{
@@ -224,8 +202,11 @@ const previewPopoverRef = ref();
 const inputPopoverRef = ref();
 const prefixRadioRef = ref();
 const suffixRadioRef = ref();
-// 输入区 popover 显隐，选中 radio 后展开，不再因重复点击同一项而关闭
-const inputPopoverShow = ref(false);
+// 输入区 popover 显隐，选中 radio 后展开，不再因重复点击同一项而关闭。
+// 初始值按 config 现状计算，使编辑态回显 add_affix 时 popover"出生即 show"——
+// 若挂载后才置 true，显示链路落后挂载一个周期，面板不会出现
+// （创建态由 radio 切换触发首次挂载，天然带 show，无此问题）
+const inputPopoverShow = ref(props.config.rule === 'add_affix');
 
 // 当前选中的选项元素，作为输入区 popover 锚点（箭头自动指向选中项）
 const currentOptionEl = computed(() => (
@@ -363,14 +344,11 @@ defineExpose({ getData, nameGeneration });
   background-color: #FAFBFD;
   // 修正 bk-select 容器与 input 的 1px 错位，使上下边框与 input 合并成单线
   margin-top: -1px;
+  margin-right: -1px;
+  margin-left: -1px;
 
   :deep(.bk-select-trigger) {
     height: 32px;
-
-    .bk-input {
-      height: 32px;
-      border: none;
-    }
   }
 }
 
@@ -388,42 +366,6 @@ defineExpose({ getData, nameGeneration });
   :deep(.bk-select-trigger) {
     .bk-input {
       border-right: 1px solid #C4C6CC;
-    }
-  }
-}
-
-.conflict-radio-list {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 0;
-
-  :deep(.bk-radio-group) {
-    flex-direction: column;
-  }
-}
-
-.conflict-radio-item {
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-  padding: 0 12px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #4D4F56;
-  transition: background-color 0.2s;
-  background-color: #F5F7FA;
-
-  &:first-child {
-    margin-top: unset;
-  }
-
-  &-active {
-    background-color: #E1ECFF;
-
-    &:hover {
-      background-color: #E1ECFF;
     }
   }
 }

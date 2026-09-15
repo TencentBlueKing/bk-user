@@ -6,6 +6,17 @@
   margin-right: 8px;
 }
 
+/* 数据源配置页脚按钮区（HTTP/LDAP/自定义 JSON/本地数据源配置共用） */
+.data-source-footer-btn {
+  position: relative;
+  padding: 0 0 24px 24px;
+  background-color: #fff;
+}
+
+.data-source-footer-btn button {
+  min-width: 88px;
+}
+
 .user-scroll-x {
   overflow-x: auto;
   scrollbar-color: #a0a0a0 transparent;
