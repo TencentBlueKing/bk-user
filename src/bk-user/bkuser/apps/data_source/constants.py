@@ -50,3 +50,7 @@ class DataSourceUsernameGenerateRule(StrStructuredEnum):
 
     UNCHANGED = EnumField("unchanged", label=_("保持原始值"))
     ADD_AFFIX = EnumField("add_affix", label=_("添加前后缀"))
+
+
+BUILTIN_DATA_SOURCE_NAME = "内置管理数据源"
+VIRTUAL_DATA_SOURCE_NAME = "虚拟用户数据源"

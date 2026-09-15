@@ -16,7 +16,7 @@
 # to the current version of the project delivered to anyone in the future.
 from typing import Optional
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import BUILTIN_DATA_SOURCE_NAME, DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -50,7 +50,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-        defaults={"name": "内置管理数据源", "plugin_config": plugin_config},
+        defaults={"name": BUILTIN_DATA_SOURCE_NAME, "plugin_config": plugin_config},
     )
 
     TenantUserDisplayNameExpressionConfig.objects.get_or_create(

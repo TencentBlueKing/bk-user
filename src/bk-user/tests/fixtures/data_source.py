@@ -18,7 +18,7 @@
 from typing import Any, Dict
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.constants import VIRTUAL_DATA_SOURCE_NAME, DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
@@ -152,7 +152,7 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
 def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸虚拟数据源（没有用户数据）"""
     return DataSource.objects.create(
-        name="虚拟用户数据源",
+        name=VIRTUAL_DATA_SOURCE_NAME,
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.VIRTUAL,
         plugin=local_ds_plugin,
