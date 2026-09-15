@@ -161,7 +161,7 @@
               <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
                 {{ $t('下一步') }}
               </bk-button>
-              <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
             </div>
             <div class="connection-alert" v-if="connectionStatus !== null">
               <bk-alert
@@ -310,9 +310,10 @@
               </bk-select>
             </bk-form-item>
           </Row>
-          <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+          <Row :title="$t('冲突配置')">
             <template #header>
-              <ConflictTips :has-other-data-source="hasOtherDataSource" />
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
             </template>
             <ConflictConfig
               ref="conflictConfigRef"
@@ -326,7 +327,7 @@
             <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
               {{ true ? $t('保存') : $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
           </div>
         </bk-form>
       </template>
@@ -355,7 +356,6 @@ import {
   UsernameGenerateConfig,
 } from '@/http/types/dataSourceFiles';
 import { t } from '@/language';
-import router from '@/router';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
@@ -366,7 +366,7 @@ interface IProps {
 
 const props = defineProps<IProps>();
 
-const emit = defineEmits(['updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
@@ -847,9 +847,6 @@ const handleSubmit = async () => {
   }
 };
 
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
 
 const handleAddBaseDn = (type: string) => {
   if (type === 'user') {

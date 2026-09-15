@@ -9,19 +9,6 @@
         >
           {{ $t('数据变更记录') }}
         </bk-button>
-        <PopMenu
-          :list="getHeaderMoreMenuList()"
-          :click-hide="true"
-          :popover-props="{ offset: 15, arrow: false }"
-        >
-          <bk-button
-            class="w-[32px]"
-            :loading="resetLoading.all"
-            :disabled="disabledSyncBtn || hasResettingInstance"
-          >
-            <i class="user-icon icon-more"></i>
-          </bk-button>
-        </PopMenu>
       </template>
     </MainBreadcrumbsDetails>
     <div
@@ -158,6 +145,10 @@
           v-if="expandedDetailsMap[source.id] && source.plugin_id !== 'local'"
           :data-source-id="source.id"
         />
+        <LocalDetails
+          v-if="expandedDetailsMap[source.id] && source.plugin_id === 'local'"
+          :data-source-id="source.id"
+        />
       </DataSourceItem>
     </div>
     <!-- 导入 -->
@@ -186,9 +177,10 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { Upload } from 'bkui-vue/lib/icon';
 import { storeToRefs } from 'pinia';
-import { computed, h, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import HttpDetails from './HttpDetails.vue';
+import LocalDetails from './LocalDetails.vue';
 
 import DataSourceItem from '@/components/DataSourceItem.vue';
 import ImportDialog from '@/components/import-dialog/import-dialog.vue';
@@ -197,7 +189,7 @@ import PopMenu from '@/components/PopMenu.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useInfoBoxContent } from '@/hooks';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
-import { batchDeleteDataSources, deleteDataSources, getRelatedResource, postOperationsSync } from '@/http';
+import { deleteDataSources, getRelatedResource, postOperationsSync } from '@/http';
 import type { DataSourceItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router';
@@ -216,10 +208,8 @@ const isShowImportDialog = ref(false);
 const currentImportSourceId = ref<number>();
 const isLoading = ref(false);
 const resetLoading = reactive<{
-  all: boolean;
   instances: Record<number, boolean>;
 }>({
-  all: false,
   instances: {},
 });
 const expandedDetailsMap = ref<Record<number, boolean>>({});
@@ -242,12 +232,6 @@ const sortedDataSourcePlugins = computed(() => {
   });
 });
 
-// 检查是否有任意数据源正在运行中（用于全部重置按钮）
-const disabledSyncBtn = computed(() => dataSource.value.some((item) => {
-  const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(item.id);
-  return syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status);
-}));
-const hasResettingInstance = computed(() => Object.values(resetLoading.instances).some(Boolean));
 const getInstanceCardData = (source: DataSourceItemData) => {
   const plugin = dataSourcePlugins.value.find(item => item.id === source.plugin_id);
   return {
@@ -270,7 +254,7 @@ const getDataSourceSyncStatus = (dataSourceId: number) => (
 
 const getMoreMenuList = (source: DataSourceItemData) => [{
   value: 'reset',
-  label: t('重置'),
+  label: t('移除'),
   disabled: isDataSourceRunning(source.id) || resetLoading.instances[source.id],
   onClick: () => handleResetSingle(source),
 }];
@@ -286,71 +270,31 @@ const getDataSourceIcon = (pluginId: string) => ({
 }[pluginId] || 'icon-shujuyuanshu');
 
 /**
- * @description 重置单个数据源
+ * @description 移除单个数据源
  */
 const handleResetSingle = async (source: DataSourceItemData) => {
   const relatedResources = (await getRelatedResource(source.id))?.data;
-  const { subContent, resetIdpConfig } = useInfoBoxContent(relatedResources, '');
+  const { subContent } = useInfoBoxContent(relatedResources, '');
 
   InfoBox({
     width: 600,
     infoType: 'warning',
-    title: t('是否重置数据源？'),
+    title: t('是否移除数据源？'),
     subTitle: subContent,
-    confirmText: t('重置'),
+    confirmText: t('移除'),
     theme: 'danger',
     onConfirm: async () => {
       try {
         resetLoading.instances[source.id] = true;
-        await deleteDataSources({
-          id: source.id,
-          is_delete_idp: resetIdpConfig.value ? 'True' : 'False',
-        });
+        await deleteDataSources({ id: source.id });
         await dataSourceStore.handleFetchCurrentDataSource();
-        Message({ theme: 'success', message: t('数据源重置成功') });
+        Message({ theme: 'success', message: t('数据源移除成功') });
       } finally {
         resetLoading.instances[source.id] = false;
       }
     },
   });
 };
-
-/** @description 重置所有数据源 */
-const handleResetAll = async () => {
-  InfoBox({
-    width: 400,
-    infoType: 'warning',
-    title: t('是否重置所有数据源？'),
-    content: () => h('div', {
-      class: 'w-calc(100%_-_64px) flex items-center justify-center',
-    }, [
-      h('div', {
-        class: 'bg-[#F5F7FA] mt-[16px] px-[16px] py-[12px] text-[#494B50]',
-      }, t('重置后，所有数据源内的用户信息将同步删除，请谨慎操作')),
-    ]),
-    confirmText: t('重置'),
-    cancelText: t('取消'),
-    theme: 'danger',
-    onConfirm: async () => {
-      try {
-        resetLoading.all = true;
-        await batchDeleteDataSources(null);
-        Message({ theme: 'success', message: t('数据源重置成功') });
-        // 重置数据源后，重新获取当前数据源信息
-        dataSourceStore.handleFetchCurrentDataSource();
-      } finally {
-        resetLoading.all = false;
-      }
-    },
-  });
-};
-
-const getHeaderMoreMenuList = () => [{
-  value: 'reset-all',
-  label: t('全部重置'),
-  disabled: disabledSyncBtn.value || hasResettingInstance.value || resetLoading.all,
-  onClick: handleResetAll,
-}];
 
 /** 点击同步 发起同步，并开启syncRecords轮询*/
 const handleOperationsSync = async (source: DataSourceItemData) => {
@@ -361,7 +305,6 @@ const handleOperationsSync = async (source: DataSourceItemData) => {
 
 // 点击数据源卡片
 const handleClickDataSource = (source: DataSourceItemData) => {
-  if (source.plugin_id === 'local') return;
   expandedDetailsMap.value[source.id] = !expandedDetailsMap.value[source.id];
 };
 

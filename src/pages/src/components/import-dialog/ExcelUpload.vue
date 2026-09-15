@@ -94,7 +94,7 @@ const handleExportTemplate = () => {
 .excel-file {
   display: flex;
   padding: 10px;
-  overflow: hidden;
+  overflow: visible;
   font-size: 12px;
   align-items: center;
   width: 100%;

@@ -29,79 +29,11 @@ export interface PutIdpsParams {
 }
 
 /**
- * 本地认证源密码规则
- */
-export interface LocalIdpPasswordRule {
-  min_length: number;
-  contain_lowercase: boolean;
-  contain_uppercase: boolean;
-  contain_digit: boolean;
-  contain_punctuation: boolean;
-  not_continuous_count: number;
-  not_keyboard_order: boolean;
-  not_continuous_letter: boolean;
-  not_continuous_digit: boolean;
-  not_repeated_symbol: boolean;
-}
-
-/**
- * 通知模板
- */
-export interface NotificationTemplate {
-  method: string;
-  scene: string;
-  title: string | null;
-  sender: string;
-  content: string;
-  content_html: string;
-}
-
-/**
- * 通知配置
- */
-export interface NotificationConfig {
-  enabled_methods: string[];
-  templates: NotificationTemplate[];
-}
-
-/**
- * 本地认证源 - 初始密码配置
- */
-export interface LocalIdpPasswordInitial {
-  cannot_use_previous_password: boolean;
-  reserved_previous_password_count: number;
-  generate_method: 'random' | 'fixed';
-  fixed_password?: string | null;
-  notification: NotificationConfig;
-}
-
-/**
- * 本地认证源 - 密码有效期配置
- */
-export interface LocalIdpPasswordExpire {
-  valid_time: number;
-  remind_before_expire: number[];
-  notification: NotificationConfig;
-}
-
-/**
- * 本地认证源 - 登录限制配置
- */
-export interface LocalIdpLoginLimit {
-  force_change_at_first_login: boolean;
-  max_retries: number;
-  lock_time: number;
-}
-
-/**
  * 本地认证源插件配置
+ * 密码规则/初始密码/登录限制/密码有效期已迁移至本地数据源（plugin_config），此处仅保留账密登录启用开关
  */
 export interface LocalIdpPluginConfig {
   enable_password: boolean;
-  password_rule: LocalIdpPasswordRule;
-  password_initial: LocalIdpPasswordInitial;
-  password_expire: LocalIdpPasswordExpire;
-  login_limit: LocalIdpLoginLimit;
 }
 
 /**

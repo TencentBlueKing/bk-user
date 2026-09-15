@@ -27,7 +27,7 @@
               <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
                 {{ $t('下一步') }}
               </bk-button>
-              <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
             </div>
             <div class="connection-alert" v-if="connectionStatus !== null">
               <bk-alert
@@ -96,7 +96,8 @@
           </Row>
           <Row :title="$t('冲突配置')">
             <template #header>
-              <ConflictTips :has-other-data-source="hasOtherDataSource" />
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
             </template>
             <ConflictConfig
               ref="conflictConfigRef"
@@ -109,7 +110,7 @@
             <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
               {{ isEdit ? $t('保存') : $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
           </div>
         </bk-form>
       </template>
@@ -134,7 +135,6 @@ import { useConflictRules } from '@/hooks/useConflictRules';
 import { getCustomPlugin, getDataSourceDetails, getFields, newDataSource, postTestConnection, putDataSourceDetails } from '@/http';
 import { UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { useDataSourceStore } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
@@ -145,7 +145,7 @@ interface IProps {
 
 const props = defineProps<IProps>();
 
-const emit = defineEmits(['updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 const dataSourceStore = useDataSourceStore();
 
 
@@ -229,10 +229,6 @@ const defaultServerConfig = () => ({
   },
   auth_config: {},
 });
-
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
 
 // 连通性测试
 const handleTestConnection = async () => {
