@@ -947,10 +947,10 @@ class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
         slz = TenantUserBatchCreatePreviewInputSLZ(
             data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
