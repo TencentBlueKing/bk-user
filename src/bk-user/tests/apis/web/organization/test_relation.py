@@ -31,14 +31,17 @@ class TestTenantDeptUserRelationBatchCreateApi:
     """测试 批量添加 / 拉取租户用户（添加部门 - 用户关系）"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant):
+    def test_standard(self, api_client, random_tenant, full_local_data_source):
         linshiyi = TenantUser.objects.get(data_source_user__username="linshiyi", tenant=random_tenant)
         baishier = TenantUser.objects.get(data_source_user__username="baishier", tenant=random_tenant)
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA", tenant=random_tenant)
         group_aba = TenantDepartment.objects.get(data_source_department__name="小组ABA", tenant=random_tenant)
 
         resp = api_client.post(
-            reverse("organization.tenant_dept_user_relation.batch_create"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_create",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={
                 "user_ids": [linshiyi.id, baishier.id],
                 "target_department_ids": [group_aaa.id, group_aba.id],
@@ -61,42 +64,51 @@ class TestTenantDeptUserRelationBatchCreateApi:
         assert dept_names == {"小组AAA", "小组ABA", "小组BAA"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_invalid_user_id(self, api_client, random_tenant):
+    def test_with_invalid_user_id(self, api_client, random_tenant, full_local_data_source):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
         resp = api_client.post(
-            reverse("organization.tenant_dept_user_relation.batch_create"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_create",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={"user_ids": ["not_exists"], "target_department_ids": [company.id]},
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "用户 ID not_exists 在当前租户中不存在" in resp.data["message"]
+        assert "用户 ID not_exists 不存在或不属于当前数据源" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_with_invalid_department_id(self, api_client, random_tenant):
+    def test_with_invalid_department_id(self, api_client, random_tenant, full_local_data_source):
         zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", tenant=random_tenant)
 
         resp = api_client.post(
-            reverse("organization.tenant_dept_user_relation.batch_create"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_create",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={"user_ids": [zhangsan.id], "target_department_ids": [-1]},
         )
 
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "部门 ID {-1} 在当前租户中不存在" in resp.data["message"]
+        assert "部门 ID {-1} 不存在或不属于当前数据源" in resp.data["message"]
 
 
 class TestTenantDeptUserRelationBatchUpdatePutApi:
     """测试 清空并加入到其他组织（会删除当前所有关系）"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant):
+    def test_standard(self, api_client, random_tenant, full_local_data_source):
         wangwu = TenantUser.objects.get(data_source_user__username="wangwu", tenant=random_tenant)
         liuqi = TenantUser.objects.get(data_source_user__username="liuqi", tenant=random_tenant)
         dept_b = TenantDepartment.objects.get(data_source_department__name="部门B", tenant=random_tenant)
         center_ab = TenantDepartment.objects.get(data_source_department__name="中心AB", tenant=random_tenant)
 
         resp = api_client.put(
-            reverse("organization.tenant_dept_user_relation.batch_update"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={
                 "user_ids": [wangwu.id, liuqi.id],
                 "target_department_ids": [dept_b.id, center_ab.id],
@@ -118,7 +130,7 @@ class TestTenantDeptUserRelationBatchUpdatePatchApi:
     """测试 移至其他组织（仅删除当前部门关系）"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant):
+    def test_standard(self, api_client, random_tenant, full_local_data_source):
         lushi = TenantUser.objects.get(data_source_user__username="lushi", tenant=random_tenant)
         linshiyi = TenantUser.objects.get(data_source_user__username="linshiyi", tenant=random_tenant)
         group_aaa = TenantDepartment.objects.get(data_source_department__name="小组AAA", tenant=random_tenant)
@@ -126,7 +138,10 @@ class TestTenantDeptUserRelationBatchUpdatePatchApi:
         group_baa = TenantDepartment.objects.get(data_source_department__name="小组BAA", tenant=random_tenant)
 
         resp = api_client.patch(
-            reverse("organization.tenant_dept_user_relation.batch_update"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={
                 "user_ids": [lushi.id, linshiyi.id],
                 "target_department_ids": [group_aaa.id, group_baa.id],
@@ -154,14 +169,17 @@ class TestTenantDeptUserRelationBatchDeleteApi:
     """测试 移出当前组织（仅删除当前部门关系）"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_standard(self, api_client, random_tenant):
+    def test_standard(self, api_client, random_tenant, full_local_data_source):
         lisi = TenantUser.objects.get(data_source_user__username="lisi", tenant=random_tenant)
         zhaoliu = TenantUser.objects.get(data_source_user__username="zhaoliu", tenant=random_tenant)
         dept_a = TenantDepartment.objects.get(data_source_department__name="部门A", tenant=random_tenant)
         center_aa = TenantDepartment.objects.get(data_source_department__name="中心AA", tenant=random_tenant)
 
         resp = api_client.delete(
-            reverse("organization.tenant_dept_user_relation.batch_delete"),
+            reverse(
+                "organization.tenant_dept_user_relation.batch_delete",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             QUERY_STRING=urlencode(
                 {
                     "user_ids": ",".join([lisi.id, zhaoliu.id]),

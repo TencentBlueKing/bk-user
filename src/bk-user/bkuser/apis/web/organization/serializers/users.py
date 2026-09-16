@@ -73,12 +73,12 @@ class OptionalTenantUserListOutputSLZ(serializers.Serializer):
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID", required=False)
-    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
     keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
@@ -96,8 +96,6 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
 
 class TenantUserListInputSLZ(serializers.Serializer):
-    recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
-    department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
     id = serializers.CharField(help_text="用户 ID", required=False)
     username = serializers.CharField(help_text="用户名", required=False)
     full_name = serializers.CharField(help_text="用户姓名", required=False)
@@ -108,15 +106,6 @@ class TenantUserListInputSLZ(serializers.Serializer):
     created_at_end = serializers.DateTimeField(help_text="创建时间结束", required=False)
     account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
     account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
-
-    def validate_department_id(self, department_id: int) -> int:
-        if (
-            department_id
-            and not TenantDepartment.objects.filter(tenant_id=self.context["tenant_id"], id=department_id).exists()
-        ):
-            raise ValidationError(_("部门不存在"))
-
-        return department_id
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验创建时间范围
@@ -132,6 +121,22 @@ class TenantUserListInputSLZ(serializers.Serializer):
             raise ValidationError(_("账户过期时间的开始时间不能大于结束时间"))
 
         return attrs
+
+
+class TenantUserListByDataSourceInputSLZ(TenantUserListInputSLZ):
+    recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
+    department_id = serializers.IntegerField(help_text="部门 ID（为 0 表示不指定部门）", default=0)
+
+    def validate_department_id(self, department_id: int) -> int:
+        if (
+            department_id
+            and not TenantDepartment.objects.filter(
+                tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"], id=department_id
+            ).exists()
+        ):
+            raise ValidationError(_("部门不存在"))
+
+        return department_id
 
 
 class TenantUserListOutputSLZ(serializers.Serializer):
@@ -170,7 +175,7 @@ def _validate_duplicate_username_in_tenant(
     return username
 
 
-def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: str) -> List[str]:
+def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: int) -> List[str]:
     """校验直属上级是否存在于指定数据源中"""
     exists_tenant_users = TenantUser.objects.filter(
         id__in=leader_ids, tenant_id=tenant_id, data_source_id=data_source_id
@@ -180,6 +185,29 @@ def _validate_leader_ids(leader_ids: List[str], tenant_id: str, data_source_id: 
         raise ValidationError(_("指定的直属上级 {} 不存在").format(",".join(invalid_leader_ids)))
 
     return leader_ids
+
+
+def _validate_department_ids(department_ids: List[int], tenant_id: str, data_source_id: int) -> List[int]:
+    """校验部门是否存在于指定数据源中"""
+    exists_tenant_departments = TenantDepartment.objects.filter(
+        id__in=department_ids, tenant_id=tenant_id, data_source_id=data_source_id
+    ).values_list("id", flat=True)
+
+    if invalid_department_ids := set(department_ids) - set(exists_tenant_departments):
+        raise ValidationError(_("指定的部门 {} 不存在").format(invalid_department_ids))
+
+    return department_ids
+
+
+def _validate_phone(phone: str, phone_country_code: str) -> None:
+    """若提供了手机号，则校验其与国际区号是否匹配"""
+    if not phone:
+        return
+
+    try:
+        validate_phone_with_country_code(phone=phone, country_code=phone_country_code)
+    except ValueError as e:
+        raise ValidationError(str(e))
 
 
 class TenantUserCreateInputSLZ(serializers.Serializer):
@@ -211,38 +239,24 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     )
 
     def validate_username(self, username: str) -> str:
-        transform = UsernameTransformer.load(self.context["data_source"].id)
+        transform = UsernameTransformer.load(self.context["data_source_id"])
         stored_username = transform.to_stored(username)
         validate_data_source_user_username(stored_username)
         _validate_duplicate_username_in_tenant(self.context["tenant_id"], stored_username)
         return username
 
     def validate_department_ids(self, department_ids: List[int]) -> List[int]:
-        invalid_department_ids = set(department_ids) - set(
-            TenantDepartment.objects.filter(
-                id__in=department_ids, data_source_id=self.context["data_source"].id
-            ).values_list("id", flat=True)
-        )
-        if invalid_department_ids:
-            raise ValidationError(_("指定的部门 {} 不存在").format(invalid_department_ids))
-
-        return department_ids
+        return _validate_department_ids(department_ids, self.context["tenant_id"], self.context["data_source_id"])
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source"].id)
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        return validate_user_extras(extras, custom_fields, self.context["data_source"].id)
+        return validate_user_extras(extras, custom_fields, self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果提供了手机号，则校验手机号是否合法
-        if attrs["phone"]:
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
-
+        _validate_phone(attrs["phone"], attrs["phone_country_code"])
         return attrs
 
 
@@ -388,7 +402,7 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
 
         extras = validate_user_extras(
-            extras, custom_fields, self.context["data_source"].id, self.context["data_source_user_id"]
+            extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
         )
         # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
         # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
@@ -621,7 +635,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         self, user_infos: List[Dict[str, Any]], custom_fields: QuerySet[TenantUserCustomField]
     ) -> None:
         """校验用户信息列表中数据是否合法"""
-        transform = UsernameTransformer.load(self.context["data_source"].id)
+        transform = UsernameTransformer.load(self.context["data_source_id"])
 
         raw_usernames = [u["username"].lower() for u in user_infos]
         # 检查新增的数据是否有用户名重复的，需要忽略大小写，因为 DB 中是忽略的
@@ -642,7 +656,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             data=user_infos,
             context={
                 "tenant_id": self.context["tenant_id"],
-                "data_source_id": self.context["data_source"].id,
+                "data_source_id": self.context["data_source_id"],
                 "custom_fields": custom_fields,
             },
             many=True,
@@ -691,28 +705,23 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
         help_text="用户 ID 列表", min_items=1, max_items=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT
     )
 
-    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_ids"])
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], [self.context["data_source_id"]])
+        return attrs
 
 
-class TenantUserPasswordBatchResetInputSLZ(TenantUserIDBatchSLZ):
+class TenantUserPasswordBatchResetInputSLZ(serializers.Serializer):
+    user_ids = serializers.ListField(
+        help_text="用户 ID 列表",
+        child=serializers.CharField(help_text="租户用户 ID"),
+        min_length=1,
+        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
     password = serializers.CharField(help_text="用户重置的新密码")
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验是否每一位用户都存在于当前租户和数据源中
-        exists_tenant_users = TenantUser.objects.filter(
-            id__in=attrs["user_ids"],
-            tenant_id=self.context["tenant_id"],
-            data_source_id__in=self.context["data_source_ids"],
-        )
-
-        # 校验密码是否符合每一位用户的密码策略
-        for tenant_user in exists_tenant_users:
-            validate_user_new_password(
-                password=attrs["password"],
-                data_source_user_id=tenant_user.data_source_user_id,
-                plugin_config=self.context["plugin_config"],
-            )
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], [self.context["data_source_id"]])
         return attrs
 
 
@@ -729,7 +738,13 @@ class TenantUserStatusBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     )
 
 
-class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
+class TenantUserLeaderBatchUpdateInputSLZ(serializers.Serializer):
+    user_ids = serializers.ListField(
+        help_text="用户 ID 列表",
+        child=serializers.CharField(help_text="租户用户 ID"),
+        min_length=1,
+        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
     leader_ids = serializers.ListField(
         help_text="租户上级 ID 列表",
         child=serializers.CharField(),
@@ -737,9 +752,12 @@ class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
     )
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
-        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_ids"][0])
+        return _validate_leader_ids(leader_ids, self.context["tenant_id"], self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        data_source_id = self.context["data_source_id"]
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], [data_source_id])
+
         # 校验是否自己设置为自己的上级
         if overlapping_ids := set(attrs["user_ids"]) & set(attrs["leader_ids"]):
             raise ValidationError(_("用户 {} 不能设置为自己的直属上级").format(", ".join(overlapping_ids)))
@@ -747,9 +765,18 @@ class TenantUserLeaderBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
         return attrs
 
 
-class TenantUserCustomFieldBatchUpdateInputSLZ(TenantUserIDBatchSLZ):
+class TenantUserCustomFieldBatchUpdateInputSLZ(serializers.Serializer):
+    user_ids = serializers.ListField(
+        help_text="用户 ID 列表",
+        child=serializers.CharField(help_text="租户用户 ID"),
+        min_length=1,
+        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
     field_name = serializers.CharField(help_text="自定义字段名")
     value = serializers.JSONField(help_text="自定义字段值", default=dict)
+
+    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
+        return _validate_tenant_user_ids(user_ids, self.context["tenant_id"], [self.context["data_source_id"]])
 
     def validate_value(self, value: Dict[str, Any]) -> Dict[str, Any]:
         if len(value) != 1:

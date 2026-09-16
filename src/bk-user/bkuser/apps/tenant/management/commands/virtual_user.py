@@ -99,6 +99,7 @@ class Command(BaseCommand):
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
+                "name": "虚拟用户数据源",
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
             },

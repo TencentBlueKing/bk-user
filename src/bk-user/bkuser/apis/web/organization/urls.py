@@ -20,6 +20,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # ==================================  租户维度  ==================================
     # 当前用户所在租户信息
     path(
         "current-tenant/",
@@ -38,17 +39,11 @@ urlpatterns = [
         views.RequiredTenantUserFieldListApi.as_view(),
         name="organization.tenant.required_user_field.list",
     ),
-    # 租户部门列表
+    # 指定租户在当前租户下的用户列表
     path(
-        "tenants/<str:id>/departments/",
-        views.TenantDepartmentListCreateApi.as_view(),
-        name="organization.tenant_department.list_create",
-    ),
-    # 更新 / 删除租户部门
-    path(
-        "tenants/departments/<str:id>/",
-        views.TenantDepartmentUpdateDestroyApi.as_view(),
-        name="organization.tenant_department.update_destroy",
+        "tenants/<str:tenant_id>/users/",
+        views.TenantUserListApi.as_view(),
+        name="organization.tenant_user.list",
     ),
     # 搜索租户部门（含协同数据）
     path(
@@ -56,33 +51,52 @@ urlpatterns = [
         views.TenantDepartmentSearchApi.as_view(),
         name="organization.tenant_department.search",
     ),
-    # 可选租户部门列表（下拉框数据用）
-    path(
-        "tenants/optional-departments/",
-        views.OptionalTenantDepartmentListApi.as_view(),
-        name="organization.optional_department.list",
-    ),
-    # 更新租户部门父部门
-    path(
-        "tenants/departments/<str:id>/parent/",
-        views.TenantDepartmentParentUpdateApi.as_view(),
-        name="organization.tenant_department.parent.update",
-    ),
-    # 可选租户用户上级列表（下拉框数据用）
-    path(
-        "tenants/optional-leaders/",
-        views.OptionalTenantUserListApi.as_view(),
-        name="organization.optional_leader.list",
-    ),
     # 搜索租户用户（含协同数据）
     path(
         "tenants/users/",
         views.TenantUserSearchApi.as_view(),
         name="organization.tenant_user.search",
     ),
+    # 更新租户用户账号有效期
+    path(
+        "tenants/users/<str:id>/account-expired-at/",
+        views.TenantUserAccountExpiredAtUpdateApi.as_view(),
+        name="organization.tenant_user.update_account_expired_at",
+    ),
+    # 租户用户 - 批量修改账号有效期
+    path(
+        "tenants/users/account-expired-at/operations/batch_update/",
+        views.TenantUserAccountExpiredAtBatchUpdateApi.as_view(),
+        name="organization.tenant_user.account_expired_at.batch_update",
+    ),
+    # 租户用户 - 批量更新状态
+    path(
+        "tenants/users/status/operations/batch_update/",
+        views.TenantUserStatusBatchUpdateApi.as_view(),
+        name="organization.tenant_user.status.batch_update",
+    ),
+    # ====================  数据源维度  ====================
+    # 租户部门列表 / 创建租户部门
+    path(
+        "tenants/data-sources/<int:data_source_id>/departments/",
+        views.TenantDepartmentListCreateApi.as_view(),
+        name="organization.tenant_department.list_create",
+    ),
+    # 可选租户部门列表（下拉框数据用）
+    path(
+        "tenants/data-sources/<int:data_source_id>/optional-departments/",
+        views.OptionalTenantDepartmentListApi.as_view(),
+        name="organization.optional_department.list",
+    ),
+    # 可选租户用户上级列表（下拉框数据用）
+    path(
+        "tenants/data-sources/<int:data_source_id>/optional-leaders/",
+        views.OptionalTenantUserListApi.as_view(),
+        name="organization.optional_leader.list",
+    ),
     # 租户用户列表 / 创建租户用户
     path(
-        "tenants/<str:id>/users/",
+        "tenants/data-sources/<int:data_source_id>/users/",
         views.TenantUserListCreateApi.as_view(),
         name="organization.tenant_user.list_create",
     ),
@@ -91,12 +105,6 @@ urlpatterns = [
         "tenants/users/<str:id>/",
         views.TenantUserRetrieveUpdateDestroyApi.as_view(),
         name="organization.tenant_user.retrieve_update_destroy",
-    ),
-    # 更新租户用户账号有效期
-    path(
-        "tenants/users/<str:id>/account-expired-at/",
-        views.TenantUserAccountExpiredAtUpdateApi.as_view(),
-        name="organization.tenant_user.update_account_expired_at",
     ),
     # 获取租户用户密码规则提示
     path(
@@ -122,69 +130,69 @@ urlpatterns = [
         views.TenantUserStatusUpdateApi.as_view(),
         name="organization.tenant_user.status.update",
     ),
+    # 更新 / 删除租户部门
+    path(
+        "tenants/departments/<str:id>/",
+        views.TenantDepartmentUpdateDestroyApi.as_view(),
+        name="organization.tenant_department.update_destroy",
+    ),
+    # 更新租户部门父部门
+    path(
+        "tenants/departments/<str:id>/parent/",
+        views.TenantDepartmentParentUpdateApi.as_view(),
+        name="organization.tenant_department.parent.update",
+    ),
+    # 租户用户 - 批量更新自定义字段信息
+    path(
+        "tenants/data-sources/<int:data_source_id>/users/custom-field/operations/batch_update/",
+        views.TenantUserCustomFieldBatchUpdateApi.as_view(),
+        name="organization.tenant_user.custom_field.batch_update",
+    ),
     # 租户用户 - 快速录入
     path(
-        "tenants/users/operations/batch_create/",
+        "tenants/data-sources/<int:data_source_id>/users/operations/batch_create/",
         views.TenantUserBatchCreateApi.as_view(),
         name="organization.tenant_user.batch_create",
     ),
     # 租户用户 - 快速录入 - 预览
     path(
-        "tenants/users/operations/batch_create_preview/",
+        "tenants/data-sources/<int:data_source_id>/users/operations/batch_create_preview/",
         views.TenantUserBatchCreatePreviewApi.as_view(),
         name="organization.tenant_user.batch_create_preview",
     ),
     # 租户用户 - 批量删除
     path(
-        "tenants/users/operations/batch_delete/",
+        "tenants/data-sources/<int:data_source_id>/users/operations/batch_delete/",
         views.TenantUserBatchDeleteApi.as_view(),
         name="organization.tenant_user.batch_delete",
     ),
-    # 租户用户 - 批量更新状态
-    path(
-        "tenants/users/status/operations/batch_update/",
-        views.TenantUserStatusBatchUpdateApi.as_view(),
-        name="organization.tenant_user.status.batch_update",
-    ),
-    # 批量修改租户用户账号有效期
-    path(
-        "tenants/users/account-expired-at/operations/batch_update/",
-        views.TenantUserAccountExpiredAtBatchUpdateApi.as_view(),
-        name="organization.tenant_user.account_expired_at.batch_update",
-    ),
-    # 租户用户 - 批量更新自定义字段信息
-    path(
-        "tenants/users/custom-field/operations/batch_update/",
-        views.TenantUserCustomFieldBatchUpdateApi.as_view(),
-        name="organization.tenant_user.custom_field.batch_update",
-    ),
     # 租户用户 - 批量修改租户用户上级关系
     path(
-        "tenants/users/leader/operations/batch_update/",
+        "tenants/data-sources/<int:data_source_id>/users/leader/operations/batch_update/",
         views.TenantUserLeaderBatchUpdateApi.as_view(),
         name="organization.tenant_user.leader.batch_update",
     ),
     # 租户用户 - 批量重置密码
     path(
-        "tenants/users/password/operations/batch_reset/",
+        "tenants/data-sources/<int:data_source_id>/users/password/operations/batch_reset/",
         views.TenantUserPasswordBatchResetApi.as_view(),
         name="organization.tenant_user.password.batch_reset",
     ),
     # 租户用户 - 从其他组织拉取 / 添加到其他组织
     path(
-        "tenants/department-user-relations/operations/batch_create/",
+        "tenants/data-sources/<int:data_source_id>/department-user-relations/operations/batch_create/",
         views.TenantDeptUserRelationBatchCreateApi.as_view(),
         name="organization.tenant_dept_user_relation.batch_create",
     ),
     # 租户用户 - 移动到其他组织 / 清空并加入到其他组织
     path(
-        "tenants/department-user-relations/operations/batch_update/",
+        "tenants/data-sources/<int:data_source_id>/department-user-relations/operations/batch_update/",
         views.TenantDeptUserRelationBatchUpdateApi.as_view(),
         name="organization.tenant_dept_user_relation.batch_update",
     ),
     # 租户用户 - 退出当前组织
     path(
-        "tenants/department-user-relations/operations/batch_delete/",
+        "tenants/data-sources/<int:data_source_id>/department-user-relations/operations/batch_delete/",
         views.TenantDeptUserRelationBatchDeleteApi.as_view(),
         name="organization.tenant_dept_user_relation.batch_delete",
     ),

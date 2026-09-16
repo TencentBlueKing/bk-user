@@ -44,6 +44,7 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
     # FIXME (su) 使用 data_source 这个 fixture 其实可以不用 random_tenant，因为使用了 get_or_create
     # 在移除默认租户的初始化 migration 中创建的 real 类型的数据源后，可以批量删除 random_tenant 逻辑
     ds, _ = DataSource.objects.get_or_create(
+        name="本地数据源",
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin_id=DataSourcePluginEnum.LOCAL,
@@ -151,6 +152,7 @@ def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
     """General HTTP data source in the same tenant for batch-delete tests"""
     plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
     return DataSource.objects.create(
+        name="通用 HTTP 数据源",
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=plugin,

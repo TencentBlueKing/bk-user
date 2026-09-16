@@ -36,7 +36,6 @@ from .relations import (
 from .tenants import (
     RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
-    TenantRetrieveOutputSLZ,
 )
 from .users import (
     OptionalTenantUserListInputSLZ,
@@ -51,6 +50,7 @@ from .users import (
     TenantUserCreateOutputSLZ,
     TenantUserCustomFieldBatchUpdateInputSLZ,
     TenantUserLeaderBatchUpdateInputSLZ,
+    TenantUserListByDataSourceInputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
@@ -68,7 +68,6 @@ from .users import (
 __all__ = [
     # 租户
     "TenantListOutputSLZ",
-    "TenantRetrieveOutputSLZ",
     "RequiredTenantUserFieldOutputSLZ",
     # 租户部门
     "TenantDepartmentListInputSLZ",
@@ -86,6 +85,7 @@ __all__ = [
     "OptionalTenantUserListOutputSLZ",
     "TenantUserSearchInputSLZ",
     "TenantUserSearchOutputSLZ",
+    "TenantUserListByDataSourceInputSLZ",
     "TenantUserListInputSLZ",
     "TenantUserListOutputSLZ",
     "TenantUserCreateInputSLZ",

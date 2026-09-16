@@ -35,6 +35,8 @@ class TestCurrentTenantRetrieveApi:
 
         data_source = resp.data["data_sources"][0]
         assert data_source["id"] == bare_local_data_source.id
+        assert data_source["name"] == "本地数据源"
+        assert data_source["logo"] == bare_local_data_source.plugin.logo
         assert data_source["type"] == DataSourceTypeEnum.REAL
         assert data_source["plugin_id"] == DataSourcePluginEnum.LOCAL
 
@@ -48,6 +50,6 @@ class TestCollaborationTenantListApi:
         assert len(resp.data) == 1
 
         first_tenant = resp.data[0]
-        assert first_tenant.keys() == {"id", "name", "logo"}
+        assert first_tenant.keys() == {"id", "name", "logo", "data_sources"}
         assert first_tenant["id"] == collaboration_tenant.id
         assert first_tenant["name"] == collaboration_tenant.name

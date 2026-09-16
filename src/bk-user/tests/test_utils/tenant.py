@@ -50,7 +50,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-        defaults={"plugin_config": plugin_config},
+        defaults={"name": "内置管理数据源", "plugin_config": plugin_config},
     )
 
     TenantUserDisplayNameExpressionConfig.objects.get_or_create(

@@ -25,8 +25,8 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
-    TenantRetrieveOutputSLZ,
 )
+from bkuser.apis.web.organization.serializers.tenants import TenantRetrieveOutputSLZ
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
