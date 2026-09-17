@@ -28,6 +28,11 @@ from bkuser.common.serializers import StringArrayField
 class TenantDepartmentSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64)
     owner_tenant_id = serializers.CharField(help_text="所属租户 ID", required=False, allow_blank=True, default="")
+    excluded_department_ids = StringArrayField(
+        help_text="需要排除的部门 ID（含其子孙部门），多个使用逗号分隔",
+        max_items=100,
+        required=False,
+    )
 
 
 class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
@@ -79,6 +84,17 @@ class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
 
 class TenantDepartmentUserListInputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False)
+    excluded_department_ids = StringArrayField(
+        help_text="需要排除的部门 ID（含其子孙部门），多个使用逗号分隔",
+        max_items=100,
+        required=False,
+    )
+    excluded_user_ids = StringArrayField(
+        help_text="需要排除的用户 ID（bk_username），多个使用逗号分隔",
+        max_items=100,
+        max_item_length=64,
+        required=False,
+    )
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         department_id = self.context["department_id"]
@@ -101,6 +117,11 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
 
 class TenantDepartmentLookupInputSLZ(serializers.Serializer):
     department_ids = StringArrayField(help_text="部门ID，多个使用逗号分隔", max_items=100)
+    excluded_department_ids = StringArrayField(
+        help_text="需要排除的部门 ID（含其子孙部门），多个使用逗号分隔",
+        max_items=100,
+        required=False,
+    )
 
 
 class TenantDepartmentLookupOutputSLZ(serializers.Serializer):

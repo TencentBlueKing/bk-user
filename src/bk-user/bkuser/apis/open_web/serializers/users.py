@@ -64,6 +64,17 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
     with_organization_paths = serializers.BooleanField(
         help_text="是否返回用户所属部门路径", required=False, default=False
     )
+    excluded_department_ids = StringArrayField(
+        help_text="需要排除的部门 ID（含其子孙部门），多个使用逗号分隔",
+        max_items=100,
+        required=False,
+    )
+    excluded_user_ids = StringArrayField(
+        help_text="需要排除的用户 ID（bk_username），多个使用逗号分隔",
+        max_items=100,
+        max_item_length=64,
+        required=False,
+    )
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -109,6 +120,17 @@ class TenantUserLookupInputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="归属租户 ID", required=False, allow_blank=True, default="")
     with_organization_paths = serializers.BooleanField(
         help_text="是否返回用户所属部门路径", required=False, default=False
+    )
+    excluded_department_ids = StringArrayField(
+        help_text="需要排除的部门 ID（含其子孙部门），多个使用逗号分隔",
+        max_items=100,
+        required=False,
+    )
+    excluded_user_ids = StringArrayField(
+        help_text="需要排除的用户 ID（bk_username），多个使用逗号分隔",
+        max_items=100,
+        max_item_length=64,
+        required=False,
     )
 
     def validate_lookups(self, lookups: List[str]) -> List[str]:

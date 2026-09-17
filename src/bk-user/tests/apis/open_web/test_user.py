@@ -17,8 +17,9 @@
 from unittest import mock
 
 import pytest
+from bkuser.apis.open_web.views.users import TenantUserSearchApi
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserDisplayNameExpressionConfig
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -315,6 +316,94 @@ class TestTenantUserSearchApi:
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserSearchApiWithExclusion:
+    """用户搜索 - 黑名单排除（必须发生在 search_limit 截断之前）"""
+
+    def test_exclude_user_ids(self, api_client):
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "lisi", "excluded_user_ids": lisi.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
+
+    def test_exclude_by_department_subtree(self, api_client):
+        """
+        排除「部门A」后，挂在其子树上的人都搜不到
+
+        keyword=十 可命中 鲁十(lushi)、林十一(linshiyi)、白十二(baishier)，
+        其中 lushi 同属「小组ABA」与「中心BA」（多组织任一命中即排除），linshiyi 属「小组ABA」
+        """
+        dept_a = TenantDepartment.objects.get(data_source_department__code="dept_a")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "十", "excluded_department_ids": str(dept_a.id)},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {d["login_name"] for d in resp.data} == {"baishier"}
+
+    def test_no_department_user_not_excluded_by_department(self, api_client):
+        """无部门用户不受 excluded_department_ids 影响"""
+        company = TenantDepartment.objects.get(data_source_department__code="company")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "freedom", "excluded_department_ids": str(company.id)},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [d["login_name"] for d in resp.data] == ["freedom"]
+
+    def test_exclude_before_search_limit(self, api_client):
+        """
+        关键用例：卡住「先截断再由调用方过滤」的实现
+
+        search_limit=1 时，keyword=十 命中 3 人，其中 2 人在「部门A」子树上；
+        若排除发生在截断之后，结果可能为空。正确实现应返回唯一的合格用户 baishier
+        """
+        dept_a = TenantDepartment.objects.get(data_source_department__code="dept_a")
+
+        with mock.patch.object(TenantUserSearchApi, "search_limit", 1):
+            resp = api_client.get(
+                reverse("open_web.tenant_user.search"),
+                data={"keyword": "十", "excluded_department_ids": str(dept_a.id)},
+            )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [d["login_name"] for d in resp.data] == ["baishier"]
+
+    def test_with_blank_exclusion_params(self, api_client):
+        """传空值等价于不传（DRF 会将 QueryDict 中非必填字段的空串视作未提供）"""
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "lisi", "excluded_department_ids": "", "excluded_user_ids": ""},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [d["login_name"] for d in resp.data] == ["lisi"]
+
+    def test_without_exclusion_params(self, api_client):
+        """不传排除参数时与现网行为一致"""
+        resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "lisi"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [d["login_name"] for d in resp.data] == ["lisi"]
+
+    def test_with_too_many_excluded_user_ids(self, api_client):
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "lisi", "excluded_user_ids": ",".join(map(str, range(1, 102)))},
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
 @pytest.mark.usefixtures("_init_collaboration_users_depts")
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
 class TestTenantUserLookupApi:
@@ -531,6 +620,83 @@ class TestTenantUserLookupApi:
         )
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
+
+
+@pytest.mark.usefixtures("_init_tenant_users_depts")
+class TestTenantUserLookupApiWithExclusion:
+    """用户 lookup - 黑名单排除（回填/批量录入场景，调用方无法自行判断所属组织）"""
+
+    def test_exclude_user_ids(self, api_client):
+        lisi = TenantUser.objects.get(data_source_user__username="lisi")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "zhangsan,lisi",
+                "lookup_fields": "login_name",
+                "excluded_user_ids": lisi.id,
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [t["login_name"] for t in resp.data] == ["zhangsan"]
+
+    def test_exclude_by_department_subtree(self, api_client):
+        """回填「中心AA」下的 zhaoliu 时排除其祖先「部门A」，zhaoliu 不应出现"""
+        dept_a = TenantDepartment.objects.get(data_source_department__code="dept_a")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "zhangsan,zhaoliu",
+                "lookup_fields": "login_name",
+                "excluded_department_ids": str(dept_a.id),
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [t["login_name"] for t in resp.data] == ["zhangsan"]
+
+    def test_exclude_multi_org_user(self, api_client):
+        """多组织用户 wangwu 属于「部门A」和「部门B」，排除任一即不应出现"""
+        dept_b = TenantDepartment.objects.get(data_source_department__code="dept_b")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "wangwu",
+                "lookup_fields": "login_name",
+                "excluded_department_ids": str(dept_b.id),
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
+
+    def test_virtual_user_not_excluded_by_department(self, api_client, random_tenant):
+        """无部门用户不受 excluded_department_ids 影响"""
+        company = TenantDepartment.objects.get(data_source_department__code="company")
+
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "freedom",
+                "lookup_fields": "login_name",
+                "excluded_department_ids": str(company.id),
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert [t["login_name"] for t in resp.data] == ["freedom"]
+
+    def test_without_exclusion_params(self, api_client):
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={"lookups": "zhangsan,zhaoliu", "lookup_fields": "login_name"},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {t["login_name"] for t in resp.data} == {"zhangsan", "zhaoliu"}
 
 
 @pytest.mark.usefixtures("_init_virtual_tenant_users")
