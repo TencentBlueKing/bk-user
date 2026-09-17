@@ -22,11 +22,7 @@ from django.db import transaction
 from django.utils import timezone
 from pydantic import BaseModel, Field
 
-from bkuser.apps.data_source.constants import (
-    BUILTIN_DATA_SOURCE_NAME,
-    VIRTUAL_DATA_SOURCE_NAME,
-    DataSourceTypeEnum,
-)
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceUser,
@@ -163,7 +159,7 @@ class TenantCreator:
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
             owner_tenant_id=tenant_id,
             defaults={
-                "name": BUILTIN_DATA_SOURCE_NAME,
+                "name": DataSourceTypeEnum.BUILTIN_MANAGEMENT,
                 "plugin_id": plugin_id,
                 "plugin_config": plugin_config,
             },
@@ -177,7 +173,7 @@ class TenantCreator:
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": VIRTUAL_DATA_SOURCE_NAME,
+                "name": DataSourceTypeEnum.VIRTUAL,
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },

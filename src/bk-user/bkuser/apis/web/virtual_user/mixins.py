@@ -15,7 +15,7 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import VIRTUAL_DATA_SOURCE_NAME, DataSourceTypeEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -29,7 +29,7 @@ class CurrentTenantVirtualDataSource(CurrentUserTenantMixin):
             owner_tenant_id=self.get_current_tenant_id(),
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": VIRTUAL_DATA_SOURCE_NAME,
+                "name": DataSourceTypeEnum.VIRTUAL,
                 "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
