@@ -17,8 +17,6 @@
 
 from django.db import migrations, models
 
-MAX_NAME_LENGTH = 64
-
 
 def forwards_func(apps, schema_editor):
     """为已有数据源回填名称"""
@@ -38,7 +36,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="datasource",
             name="name",
-            field=models.CharField(default="", max_length=MAX_NAME_LENGTH, verbose_name="数据源名称"),
+            field=models.CharField(default="", max_length=64, verbose_name="数据源名称"),
             preserve_default=False,
         ),
         migrations.RunPython(forwards_func, migrations.RunPython.noop),
