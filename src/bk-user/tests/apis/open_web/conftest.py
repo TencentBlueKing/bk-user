@@ -21,7 +21,13 @@ from unittest import mock
 import pytest
 from bkuser.apis.open_web.mixins import OpenWebApiCommonMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+    DataSourceUser,
+)
 from bkuser.apps.tenant.constants import CollaborationScopeType, CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
     CollaborationStrategy,
@@ -67,6 +73,61 @@ def api_client(random_tenant, browser_headers):
 @pytest.fixture
 def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
     """初始化租户部门 & 租户用户"""
+    sync_users_depts_to_tenant(random_tenant, full_local_data_source)
+
+
+@pytest.fixture
+def _init_second_root_dept(random_tenant, full_local_data_source) -> None:
+    """
+    在「公司」之外再初始化一个根部门，模拟组织选择器中并列多个根组织的真实场景
+
+    公司                    <- 已有根部门（另一棵 MPTT 树）
+    外部合作伙伴              partner_zhang
+     └── 合作中心A            partner_li
+
+    Note: MPTT 中每个根部门自成一棵树（tree_id 不同），该 fixture 用于覆盖
+     「拉黑整个根部门」这一组织选择器最常见的黑名单用法
+    """
+    partner = DataSourceDepartment.objects.create(
+        data_source=full_local_data_source, code="partner", name="外部合作伙伴"
+    )
+    partner_node = DataSourceDepartmentRelation.objects.create(
+        department=partner, parent=None, data_source=full_local_data_source
+    )
+    partner_center = DataSourceDepartment.objects.create(
+        data_source=full_local_data_source, code="partner_center_a", name="合作中心A"
+    )
+    DataSourceDepartmentRelation.objects.create(
+        department=partner_center, parent=partner_node, data_source=full_local_data_source
+    )
+
+    partner_zhang = DataSourceUser.objects.create(
+        code="partner_zhang",
+        username="partner_zhang",
+        full_name="伙伴张",
+        email="partner_zhang@m.com",
+        phone="13500000001",
+        data_source=full_local_data_source,
+    )
+    partner_li = DataSourceUser.objects.create(
+        code="partner_li",
+        username="partner_li",
+        full_name="伙伴李",
+        email="partner_li@m.com",
+        phone="13500000002",
+        data_source=full_local_data_source,
+    )
+    DataSourceDepartmentUserRelation.objects.bulk_create(
+        [
+            DataSourceDepartmentUserRelation(
+                department=partner, user=partner_zhang, data_source=full_local_data_source
+            ),
+            DataSourceDepartmentUserRelation(
+                department=partner_center, user=partner_li, data_source=full_local_data_source
+            ),
+        ]
+    )
+
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
 
 

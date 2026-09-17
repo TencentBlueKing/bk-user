@@ -20,6 +20,7 @@ from collections import defaultdict
 from typing import Dict, List, Set
 
 from django.db import transaction
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from bkuser.apps.data_source.cache import DepartmentAncestorCache
@@ -31,7 +32,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.plugins.local.utils import gen_dept_code
@@ -181,30 +182,6 @@ class TenantDepartmentHandler:
         return {dept_id: dept_id in dept_has_user_ids for dept_id in data_source_department_ids}
 
     @staticmethod
-    def get_ancestor_ids_map(tenant_id: str, data_source_department_ids: List[int]) -> Dict[int, List[int]]:
-        """获取租户部门的祖先部门 ID 映射"""
-        if not data_source_department_ids:
-            return {}
-
-        # 数据源部门 ID -> 祖先数据源部门 ID 列表
-        ds_ancestor_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
-
-        # 当前部门 + 祖先部门一并映射到当前租户的租户部门 ID
-        all_ds_ids = set(data_source_department_ids).union(*ds_ancestor_map.values())
-        ds_to_tenant = dict(
-            TenantDepartment.objects.filter(
-                tenant_id=tenant_id,
-                data_source_department_id__in=all_ds_ids,
-            ).values_list("data_source_department_id", "id")
-        )
-
-        return {
-            ds_to_tenant[ds_id]: [ds_to_tenant[aid] for aid in ancestor_ds_ids if aid in ds_to_tenant]
-            for ds_id, ancestor_ds_ids in ds_ancestor_map.items()
-            if ds_id in ds_to_tenant
-        }
-
-    @staticmethod
     def update_department_code(data_source_department: DataSourceDepartment):
         """
         更新数据源部门 code, 必须在事务内调用该方法
@@ -329,3 +306,72 @@ class TenantOrgPathHandler:
 
         descendant_ids = list(relation.get_descendants(include_self=True).values_list("department_id", flat=True))
         DepartmentAncestorCache().batch_delete(descendant_ids)
+
+
+class TenantOrgExclusionHandler:
+    """
+    按指定部门（含子孙）和用户 ID 从查询集中排除数据
+
+    Note: 这是调用方传入的结果过滤，不是权限隔离，不可用于数据鉴权。
+    """
+
+    @staticmethod
+    def _get_excluded_ds_dept_ids(tenant_id: str, excluded_department_ids: List[int] | None) -> QuerySet | None:
+        """
+        获取「被排除部门及其全部子孙部门」的数据源部门 ID 查询集，返回 None 表示无需排除
+
+        Note: 返回 QuerySet 而不是 list，避免拉黑大部门时拼出超长 IN 列表。
+        """
+        if not excluded_department_ids:
+            return None
+
+        # 组织树存储在数据源层（MPTT），而接口交互使用的是当前请求租户下的 TenantDepartment.id
+        excluded_roots = DataSourceDepartmentRelation.objects.filter(
+            department_id__in=TenantDepartment.objects.filter(
+                tenant_id=tenant_id,
+                id__in=excluded_department_ids,
+            ).values("data_source_department_id")
+        )
+
+        return DataSourceDepartmentRelation.objects.get_queryset_descendants(excluded_roots, include_self=True).values(
+            "department_id"
+        )
+
+    @staticmethod
+    def exclude_departments(
+        queryset: QuerySet[TenantDepartment],
+        tenant_id: str,
+        excluded_department_ids: List[int] | None,
+    ) -> QuerySet[TenantDepartment]:
+        """从租户部门查询集中排除指定部门及其全部子孙部门，未指定排除部门时原样返回"""
+        excluded_ds_dept_ids = TenantOrgExclusionHandler._get_excluded_ds_dept_ids(tenant_id, excluded_department_ids)
+        if excluded_ds_dept_ids is None:
+            return queryset
+
+        return queryset.exclude(data_source_department_id__in=excluded_ds_dept_ids)
+
+    @staticmethod
+    def exclude_users(
+        queryset: QuerySet[TenantUser],
+        tenant_id: str,
+        excluded_department_ids: List[int] | None,
+        excluded_user_ids: List[str] | None,
+    ) -> QuerySet[TenantUser]:
+        """
+        从租户用户查询集中排除指定用户，以及归属在「被排除部门及其子孙部门」上的用户，
+        两类排除条件均未指定时原样返回
+
+        Note: 多组织用户只要任一归属部门命中，即需要排除；无部门用户只受 excluded_user_ids 影响
+        """
+        if excluded_user_ids:
+            queryset = queryset.exclude(id__in=excluded_user_ids)
+
+        excluded_ds_dept_ids = TenantOrgExclusionHandler._get_excluded_ds_dept_ids(tenant_id, excluded_department_ids)
+        if excluded_ds_dept_ids is None:
+            return queryset
+
+        return queryset.exclude(
+            data_source_user_id__in=DataSourceDepartmentUserRelation.objects.filter(
+                department_id__in=excluded_ds_dept_ids
+            ).values("user_id")
+        )

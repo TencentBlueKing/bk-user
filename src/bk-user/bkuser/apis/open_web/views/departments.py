@@ -40,7 +40,7 @@ from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgPathHandler
+from bkuser.biz.organization import TenantDepartmentHandler, TenantOrgExclusionHandler, TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler
 
 
@@ -74,6 +74,10 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         queryset = TenantDepartment.objects.filter(**filters).select_related("data_source_department")
 
+        queryset = TenantOrgExclusionHandler.exclude_departments(
+            queryset, self.tenant_id, data.get("excluded_department_ids")
+        )
+
         return queryset[: self.search_limit]
 
     @swagger_auto_schema(
@@ -90,9 +94,6 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
-            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
-                self.tenant_id, data_source_department_ids
-            ),
         }
         return Response(TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -155,9 +156,6 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         context = {
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
-            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
-                self.tenant_id, data_source_department_ids
-            ),
         }
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -209,6 +207,10 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
                 data_source_user__datasourcedepartmentuserrelation__isnull=True,
             )
 
+        queryset = TenantOrgExclusionHandler.exclude_users(
+            queryset, self.tenant_id, data.get("excluded_department_ids"), data.get("excluded_user_ids")
+        )
+
         return queryset.order_by("id")
 
     @swagger_auto_schema(
@@ -239,11 +241,16 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        return TenantDepartment.objects.filter(
+        queryset = TenantDepartment.objects.filter(
             id__in=data["department_ids"],
             tenant_id=self.tenant_id,
             data_source_id__in=DataSourceCache.real_ids(),
         ).select_related("data_source_department")
+
+        # Note: 调用方只能看到部门自身的 ID，无法判断它是否为被排除部门的子孙
+        return TenantOrgExclusionHandler.exclude_departments(
+            queryset, self.tenant_id, data.get("excluded_department_ids")
+        )
 
     @swagger_auto_schema(
         tags=["open_web.department"],
@@ -257,8 +264,5 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
             "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
-            "ancestor_ids_map": TenantDepartmentHandler.get_ancestor_ids_map(
-                self.tenant_id, data_source_department_ids
-            ),
         }
         return Response(TenantDepartmentLookupOutputSLZ(tenant_depts, many=True, context=context).data)

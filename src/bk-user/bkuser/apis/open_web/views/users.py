@@ -46,7 +46,7 @@ from bkuser.apis.open_web.serializers.users import (
 from bkuser.apis.open_web.throttle import open_web_api_throttle_class
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.organization import TenantOrgPathHandler
+from bkuser.biz.organization import TenantOrgExclusionHandler, TenantOrgPathHandler
 from bkuser.biz.tenant import TenantUserDisplayNameHandler, TenantUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
@@ -173,8 +173,13 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             Q(data_source_id__in=real_ds_ids),
         ]
 
-        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")[: self.search_limit]
+        queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")
 
+        queryset = TenantOrgExclusionHandler.exclude_users(
+            queryset, self.tenant_id, data.get("excluded_department_ids"), data.get("excluded_user_ids")
+        )[: self.search_limit]
+
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
@@ -185,7 +190,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
-            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
 
         return Response(TenantUserSearchOutputSLZ(queryset, context=context, many=True).data)
@@ -245,6 +249,12 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         queryset = TenantUser.objects.filter(*filter_args).select_related("data_source_user")
 
+        # Note: 调用方只能看到用户自身的标识，无法判断该用户是否归属在被排除的组织子树上，因此必须由服务端排除
+        queryset = TenantOrgExclusionHandler.exclude_users(
+            queryset, self.tenant_id, data.get("excluded_department_ids"), data.get("excluded_user_ids")
+        )
+
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
@@ -255,7 +265,6 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
-            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
         return Response(TenantUserLookupOutputSLZ(queryset, context=context, many=True).data)
 
