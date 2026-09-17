@@ -21,6 +21,7 @@ from django.db import transaction
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.name import gen_data_source_name
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -99,7 +100,7 @@ class Command(BaseCommand):
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": DataSourceTypeEnum.VIRTUAL,
+                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL, DataSourcePluginEnum.LOCAL),
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
             },
