@@ -30,7 +30,7 @@ class CurrentTenantVirtualDataSource(CurrentUserTenantMixin):
             owner_tenant_id=self.get_current_tenant_id(),
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL, DataSourcePluginEnum.LOCAL),
+                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
                 "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },

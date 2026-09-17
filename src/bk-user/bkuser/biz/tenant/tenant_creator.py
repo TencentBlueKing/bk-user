@@ -160,7 +160,7 @@ class TenantCreator:
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
             owner_tenant_id=tenant_id,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT, DataSourcePluginEnum.LOCAL),
+                "name": gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT),
                 "plugin_id": plugin_id,
                 "plugin_config": plugin_config,
             },
@@ -174,7 +174,7 @@ class TenantCreator:
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL, DataSourcePluginEnum.LOCAL),
+                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },

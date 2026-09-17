@@ -131,7 +131,7 @@ class TestTenantCreator:
         """测试创建内置虚拟用户"""
         tenant = Tenant.objects.create(id="test-tenant", name="Test Tenant")
         data_source = DataSource.objects.create(
-            name=gen_data_source_name(DataSourceTypeEnum.VIRTUAL, DataSourcePluginEnum.LOCAL),
+            name=gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
             type=DataSourceTypeEnum.VIRTUAL,
             owner_tenant_id=tenant.id,
             plugin_id=DataSourcePluginEnum.LOCAL,

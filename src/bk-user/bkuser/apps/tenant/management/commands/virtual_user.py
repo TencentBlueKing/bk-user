@@ -100,7 +100,7 @@ class Command(BaseCommand):
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL, DataSourcePluginEnum.LOCAL),
+                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
             },

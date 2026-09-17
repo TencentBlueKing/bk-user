@@ -153,7 +153,7 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
 def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸虚拟数据源（没有用户数据）"""
     return DataSource.objects.create(
-        name=gen_data_source_name(DataSourceTypeEnum.VIRTUAL, local_ds_plugin.name),
+        name=gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.VIRTUAL,
         plugin=local_ds_plugin,

@@ -40,6 +40,10 @@ class TestGenDataSourceName:
     def test_gen_name(self, ds_type, expected):
         assert gen_data_source_name(ds_type, PLUGIN_NAME) == expected
 
+    def test_non_real_does_not_need_plugin_name(self):
+        assert gen_data_source_name(DataSourceTypeEnum.VIRTUAL) == DataSourceTypeEnum.VIRTUAL
+        assert gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT) == DataSourceTypeEnum.BUILTIN_MANAGEMENT
+
     def test_real_does_not_deduplicate(self):
         """实名不做冲突检测，相同 plugin_name 会得到相同结果"""
         assert gen_data_source_name(DataSourceTypeEnum.REAL, PLUGIN_NAME) == PLUGIN_NAME

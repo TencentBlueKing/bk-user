@@ -17,6 +17,6 @@
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 
-def gen_data_source_name(type: DataSourceTypeEnum, plugin_name: str) -> str:
+def gen_data_source_name(type: DataSourceTypeEnum, plugin_name: str = "") -> str:
     """这里是为了快捷生成数据源名称，特别是内置、虚拟数据源，对于实名，不做冲突检测，由调用方解决"""
     return plugin_name if type == DataSourceTypeEnum.REAL else type

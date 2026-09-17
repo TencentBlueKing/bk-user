@@ -52,7 +52,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         defaults={
-            "name": gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT, DataSourcePluginEnum.LOCAL),
+            "name": gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT),
             "plugin_config": plugin_config,
         },
     )
