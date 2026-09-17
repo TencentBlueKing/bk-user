@@ -17,7 +17,11 @@
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.name import gen_data_source_name
+from bkuser.apps.data_source.name import (
+    gen_builtin_management_data_source_name,
+    gen_data_source_name,
+    gen_virtual_data_source_name,
+)
 
 PLUGIN_NAME = "本地数据源"
 
@@ -40,9 +44,11 @@ class TestGenDataSourceName:
     def test_gen_name(self, ds_type, expected):
         assert gen_data_source_name(ds_type, PLUGIN_NAME) == expected
 
-    def test_non_real_does_not_need_plugin_name(self):
-        assert gen_data_source_name(DataSourceTypeEnum.VIRTUAL) == DataSourceTypeEnum.VIRTUAL
-        assert gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT) == DataSourceTypeEnum.BUILTIN_MANAGEMENT
+    def test_virtual_wrapper(self):
+        assert gen_virtual_data_source_name() == DataSourceTypeEnum.VIRTUAL
+
+    def test_builtin_management_wrapper(self):
+        assert gen_builtin_management_data_source_name() == DataSourceTypeEnum.BUILTIN_MANAGEMENT
 
     def test_real_does_not_deduplicate(self):
         """实名不做冲突检测，相同 plugin_name 会得到相同结果"""

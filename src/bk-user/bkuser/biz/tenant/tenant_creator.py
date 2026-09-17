@@ -28,7 +28,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.data_source.name import gen_data_source_name
+from bkuser.apps.data_source.name import gen_builtin_management_data_source_name, gen_virtual_data_source_name
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.constants import (
     DEFAULT_TENANT_USER_DISPLAY_NAME_EXPRESSION_CONFIG,
@@ -160,7 +160,7 @@ class TenantCreator:
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
             owner_tenant_id=tenant_id,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT),
+                "name": gen_builtin_management_data_source_name(),
                 "plugin_id": plugin_id,
                 "plugin_config": plugin_config,
             },
@@ -174,7 +174,7 @@ class TenantCreator:
             owner_tenant_id=tenant_id,
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
+                "name": gen_virtual_data_source_name(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },

@@ -18,7 +18,7 @@
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
-from bkuser.apps.data_source.name import gen_data_source_name
+from bkuser.apps.data_source.name import gen_virtual_data_source_name
 from bkuser.apps.idp.models import IdpDataSourceRelation
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import (
@@ -131,7 +131,7 @@ class TestTenantCreator:
         """测试创建内置虚拟用户"""
         tenant = Tenant.objects.create(id="test-tenant", name="Test Tenant")
         data_source = DataSource.objects.create(
-            name=gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
+            name=gen_virtual_data_source_name(),
             type=DataSourceTypeEnum.VIRTUAL,
             owner_tenant_id=tenant.id,
             plugin_id=DataSourcePluginEnum.LOCAL,

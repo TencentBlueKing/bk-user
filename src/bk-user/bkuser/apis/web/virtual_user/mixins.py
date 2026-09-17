@@ -17,7 +17,7 @@
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.name import gen_data_source_name
+from bkuser.apps.data_source.name import gen_virtual_data_source_name
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
@@ -30,7 +30,7 @@ class CurrentTenantVirtualDataSource(CurrentUserTenantMixin):
             owner_tenant_id=self.get_current_tenant_id(),
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
-                "name": gen_data_source_name(DataSourceTypeEnum.VIRTUAL),
+                "name": gen_virtual_data_source_name(),
                 "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
                 "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
