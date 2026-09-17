@@ -177,6 +177,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         with transaction.atomic():
             current_user = request.user.username
             ds = DataSource.objects.create(
+                name=data["name"],
                 owner_tenant_id=current_tenant_id,
                 type=DataSourceTypeEnum.REAL,
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
@@ -249,6 +250,7 @@ class DataSourceRetrieveUpdateDestroyApi(
             context={
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
+                "data_source_id": data_source.id,
                 "exists_sensitive_infos": DataSourceSensitiveInfo.objects.filter(data_source=data_source),
             },
         )
@@ -260,10 +262,11 @@ class DataSourceRetrieveUpdateDestroyApi(
         auditor.pre_record_data_before(data_source)
 
         with transaction.atomic():
+            data_source.name = data["name"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
-            data_source.save(update_fields=["field_mapping", "sync_config", "updater", "updated_at"])
+            data_source.save(update_fields=["name", "field_mapping", "sync_config", "updater", "updated_at"])
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
@@ -658,6 +661,9 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         if statuses := data.get("statuses"):
             queryset = queryset.filter(status__in=statuses)
+
+        if data_source_id := data.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
 
         return queryset
 

@@ -20,6 +20,7 @@ from typing import Any, Dict
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.data_source.name import gen_virtual_data_source_name
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -140,6 +141,7 @@ def local_ds_plugin() -> DataSourcePlugin:
 def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
+        name="本地数据源",
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
@@ -151,6 +153,7 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
 def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸虚拟数据源（没有用户数据）"""
     return DataSource.objects.create(
+        name=gen_virtual_data_source_name(),
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.VIRTUAL,
         plugin=local_ds_plugin,
@@ -200,6 +203,7 @@ def general_ds_plugin() -> DataSourcePlugin:
 def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
+        name="通用 HTTP 数据源",
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=general_ds_plugin,
