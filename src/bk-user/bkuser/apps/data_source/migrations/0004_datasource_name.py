@@ -17,14 +17,14 @@
 
 from django.db import migrations, models
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.name import gen_data_source_name
 
 
 def forwards_func(apps, schema_editor):
     """为已有数据源回填名称"""
     DataSource = apps.get_model("data_source", "DataSource")
     for data_source in DataSource.objects.select_related("plugin"):
-        data_source.name = data_source.plugin.name if data_source.type == DataSourceTypeEnum.REAL else data_source.type
+        data_source.name = gen_data_source_name(data_source.type, data_source.plugin.name)
         data_source.save(update_fields=["name"])
 
 
