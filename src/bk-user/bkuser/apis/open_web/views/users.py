@@ -179,7 +179,6 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
             queryset, self.tenant_id, data.get("excluded_department_ids"), data.get("excluded_user_ids")
         )[: self.search_limit]
 
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
@@ -190,6 +189,7 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
+            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
 
         return Response(TenantUserSearchOutputSLZ(queryset, context=context, many=True).data)
@@ -254,7 +254,6 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
             queryset, self.tenant_id, data.get("excluded_department_ids"), data.get("excluded_user_ids")
         )
 
-        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
@@ -265,6 +264,7 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
 
         # 若指定了 with_organization_paths，则返回用户的组织路径
         if with_organization_paths:
+            data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in queryset]
             context["org_path_map"] = TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)
         return Response(TenantUserLookupOutputSLZ(queryset, context=context, many=True).data)
 
