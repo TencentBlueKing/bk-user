@@ -16,7 +16,6 @@
 # to the current version of the project delivered to anyone in the future.
 
 from copy import deepcopy
-from urllib.parse import urlencode
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
@@ -28,9 +27,10 @@ from bkuser.apps.data_source.models import (
     DataSourceUsernameGenerateConfig,
 )
 from bkuser.apps.idp.constants import IdpStatus
-from bkuser.apps.idp.models import Idp, IdpDataSourceRelation, IdpSensitiveInfo
+from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from django.conf import settings
@@ -540,11 +540,28 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    def test_destroy(self, api_client, data_source, local_idp, wecom_idp):
-        resp = api_client.delete(
-            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            QUERY_STRING=urlencode({"is_delete_idp": False}, doseq=True),
+    def test_destroy_one_of_multiple_local_scopes_syncs_idp_config(self, api_client, data_source, local_idp):
+        other_data_source = DataSource.objects.create(
+            name="本地数据源 2",
+            owner_tenant_id=data_source.owner_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin=data_source.plugin,
+            plugin_config=data_source.get_plugin_cfg(),
         )
+        IdpDataSourceRelationHandler.set_local_real_relations(local_idp, [data_source, other_data_source])
+
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": other_data_source.id}))
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        local_idp.refresh_from_db()
+        assert local_idp.plugin_config["data_source_ids"] == [data_source.id]
+        assert set(IdpDataSourceRelation.objects.filter(idp=local_idp).values_list("data_source_id", flat=True)) == {
+            data_source.id
+        }
+
+    def test_destroy(self, api_client, data_source, local_idp, wecom_idp):
+        """删除数据源：本地认证源无剩余范围则删除，企业微信认证源无剩余范围则禁用"""
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         updated_wecom_idp = Idp.objects.get(id=wecom_idp.id)
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -556,35 +573,36 @@ class TestDataSourceDestroyApi:
         assert updated_wecom_idp.status == IdpStatus.DISABLED
         assert not IdpDataSourceRelation.objects.filter(idp=updated_wecom_idp, data_source_id=data_source.id).exists()
 
-    def test_destroy_with_delete_idp(self, api_client, data_source, local_idp, wecom_idp):
-        resp = api_client.delete(
-            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
-        )
+    def test_destroy_does_not_touch_orphan_idp(self, api_client, data_source, local_idp, disabled_idp):
+        """无关系记录的孤儿认证源与本次删除无关，保持原状"""
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
         assert not Idp.objects.filter(id=local_idp.id).exists()
-        assert not Idp.objects.filter(id=wecom_idp.id).exists()
-        assert not IdpSensitiveInfo.objects.filter(idp_id=wecom_idp.id).exists()
+        orphan = Idp.objects.get(id=disabled_idp.id)
+        assert orphan.status == IdpStatus.DISABLED
 
-    def test_destroy_with_delete_invalid_idp(self, api_client, data_source, local_idp, disabled_idp):
+    def test_destroy_one_of_multiple_scopes_keeps_idp_enabled(
+        self, api_client, data_source, bare_general_data_source, wecom_idp
+    ):
+        IdpDataSourceRelation.objects.create(
+            idp=wecom_idp,
+            data_source=bare_general_data_source,
+            idp_owner_tenant_id=wecom_idp.owner_tenant_id,
+            field_compare_rules=[{"source_field": "user_id", "target_field": "username"}],
+        )
+
         resp = api_client.delete(
-            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
-            QUERY_STRING=urlencode({"is_delete_idp": True}, doseq=True),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
-        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
-        assert not Idp.objects.filter(id=local_idp.id).exists()
-        assert not Idp.objects.filter(id=disabled_idp.id).exists()
-        assert not IdpSensitiveInfo.objects.filter(idp_id=disabled_idp.id).exists()
+        updated = Idp.objects.get(id=wecom_idp.id)
+        assert updated.status == IdpStatus.ENABLED
+        remaining = set(IdpDataSourceRelation.objects.filter(idp=updated).values_list("data_source_id", flat=True))
+        assert remaining == {data_source.id}
+        assert not DataSource.objects.filter(id=bare_general_data_source.id).exists()
 
 
 class TestDataSourceRelatedResourceStatsApi:

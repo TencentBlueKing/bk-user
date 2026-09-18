@@ -40,6 +40,7 @@ from bkuser.apps.tenant.models import (
     VirtualUserAppRelation,
     VirtualUserOwnerRelation,
 )
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.utils.django import get_model_dict
 
 
@@ -639,9 +640,17 @@ class IdpAuditor:
         self.tenant_id = tenant_id
         self.data_before: Dict[str, Any] = {}
 
+    @staticmethod
+    def _get_audit_data(idp: Idp) -> Dict[str, Any]:
+        data = get_model_dict(idp)
+        data["data_source_match_rules"] = [
+            rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(idp)
+        ]
+        return data
+
     def pre_record_data_before(self, idp: Idp):
         """记录变更前的相关数据记录"""
-        self.data_before = get_model_dict(idp)
+        self.data_before = self._get_audit_data(idp)
 
     def record_create(self, idp: Idp):
         """记录认证源创建操作"""
@@ -651,7 +660,7 @@ class IdpAuditor:
             operation=OperationEnum.CREATE_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
-            data_after=get_model_dict(idp),
+            data_after=self._get_audit_data(idp),
         )
 
     def record_update(self, idp: Idp):
@@ -663,7 +672,7 @@ class IdpAuditor:
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
             data_before=self.data_before,
-            data_after=get_model_dict(idp),
+            data_after=self._get_audit_data(idp),
         )
 
 

@@ -63,7 +63,7 @@ def local_idp(data_source) -> Idp:
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]),
     )
-    IdpDataSourceRelationHandler.set_local_real_relations(idp)
+    IdpDataSourceRelationHandler.set_local_real_relations(idp, [data_source])
     return idp
 
 
@@ -149,7 +149,7 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
 
 @pytest.fixture
 def general_data_source(random_tenant, general_ds_plugin_cfg) -> DataSource:
-    """General HTTP data source in the same tenant for batch-delete tests"""
+    """Additional General HTTP data source in the same tenant"""
     plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
     return DataSource.objects.create(
         name="通用 HTTP 数据源",
