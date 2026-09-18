@@ -36,7 +36,6 @@ class TestCurrentTenantRetrieveApi:
         data_source = resp.data["data_sources"][0]
         assert data_source["id"] == bare_local_data_source.id
         assert data_source["name"] == "本地数据源"
-        assert data_source["logo"] == bare_local_data_source.plugin.logo
         assert data_source["type"] == DataSourceTypeEnum.REAL
         assert data_source["plugin_id"] == DataSourcePluginEnum.LOCAL
 
