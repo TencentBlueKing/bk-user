@@ -172,6 +172,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
     )
     def post(self, request, *args, **kwargs):
         current_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         slz = TenantDepartmentCreateInputSLZ(
             data=request.data,
@@ -179,8 +180,6 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-
-        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         # 设置默认值（若父部门不存在，则所创建的部门为根部门）
         parent_dept_relation = None

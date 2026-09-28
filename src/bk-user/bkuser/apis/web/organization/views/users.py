@@ -252,9 +252,7 @@ class TenantUserListCreateByDataSourceApi(CurrentUserTenantDataSourceMixin, gene
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         cur_tenant_id = self.get_current_tenant_id()
-        data_source = DataSource.objects.filter(
-            owner_tenant_id=cur_tenant_id, type=DataSourceTypeEnum.REAL, id=self.kwargs["data_source_id"]
-        ).first()
+        data_source = DataSource.objects.filter(type=DataSourceTypeEnum.REAL, id=self.kwargs["data_source_id"]).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 

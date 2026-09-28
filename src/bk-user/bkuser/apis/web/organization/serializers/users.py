@@ -96,9 +96,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
 
 class TenantUserListInputSLZ(serializers.Serializer):
-    recursive = serializers.BooleanField(
-        help_text="为 false 时仅返回当前层级的用户，为 true 时同时包含下级组织中的用户", default=False
-    )
+    recursive = serializers.BooleanField(help_text="是否递归查询用户", default=False)
     id = serializers.CharField(help_text="用户 ID", required=False)
     username = serializers.CharField(help_text="用户名", required=False)
     full_name = serializers.CharField(help_text="用户姓名", required=False)
