@@ -36,6 +36,7 @@ from .relations import (
 from .tenants import (
     RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
+    TenantRetrieveOutputSLZ,
 )
 from .users import (
     OptionalTenantUserListInputSLZ,
@@ -68,6 +69,7 @@ from .users import (
 __all__ = [
     # 租户
     "TenantListOutputSLZ",
+    "TenantRetrieveOutputSLZ",
     "RequiredTenantUserFieldOutputSLZ",
     # 租户部门
     "TenantDepartmentListInputSLZ",
