@@ -176,7 +176,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
 
         slz = TenantDepartmentCreateInputSLZ(
             data=request.data,
-            context={"tenant_id": current_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": current_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -277,7 +277,7 @@ class TenantDepartmentUpdateDestroyApi(
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
             data_source__type=DataSourceTypeEnum.REAL,
-        ).select_related("data_source", "data_source_department")
+        )
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -372,16 +372,14 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get_queryset(self) -> QuerySet[TenantDepartment]:
         slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
-        params = slz.validated_data
+        keyword = slz.validated_data["keyword"]
 
         real_ds_ids = DataSource.objects.filter(type=DataSourceTypeEnum.REAL).values_list("id", flat=True)
-        queryset = TenantDepartment.objects.filter(
+        return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
             data_source_id__in=real_ds_ids,
-            data_source_department__name__icontains=params["keyword"],
-        )
-
-        return queryset.select_related("data_source_department")[: self.search_limit]
+            data_source_department__name__icontains=keyword,
+        ).select_related("data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -456,7 +454,7 @@ class TenantDepartmentParentUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
             data_source__type=DataSourceTypeEnum.REAL,
-        ).select_related("data_source_department")
+        )
 
     @swagger_auto_schema(
         tags=["organization.department"],
