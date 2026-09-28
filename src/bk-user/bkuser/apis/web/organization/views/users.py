@@ -980,15 +980,14 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
     )
     def delete(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         slz = TenantUserBatchDeleteInputSLZ(
             data=request.query_params,
-            context={"tenant_id": cur_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
-
-        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         # 注：需要通过 list() 提前求值，原因是：惰性求值会导致租户用户删除后，后续无法计算数据源用户 ID 列表，
         # 导致数据清理失败。而且最后才删除租户用户也不合适，因为租户用户是下游数据，应该最先被回收
@@ -1157,15 +1156,14 @@ class TenantUserLeaderBatchUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         slz = TenantUserLeaderBatchUpdateInputSLZ(
             data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-
-        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         leader_ids = TenantUser.objects.filter(tenant_id=cur_tenant_id, id__in=data["leader_ids"]).values_list(
             "data_source_user_id", flat=True
@@ -1213,16 +1211,15 @@ class TenantUserPasswordBatchResetApi(
     )
     def put(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         slz = TenantUserPasswordBatchResetInputSLZ(
             data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         raw_password = data["password"]
-
-        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
