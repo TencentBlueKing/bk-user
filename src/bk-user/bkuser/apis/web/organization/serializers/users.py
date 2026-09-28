@@ -96,6 +96,9 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
 
 
 class TenantUserListInputSLZ(serializers.Serializer):
+    recursive = serializers.BooleanField(
+        help_text="为 false 时仅返回当前层级的用户，为 true 时同时包含下级组织中的用户", default=False
+    )
     id = serializers.CharField(help_text="用户 ID", required=False)
     username = serializers.CharField(help_text="用户名", required=False)
     full_name = serializers.CharField(help_text="用户姓名", required=False)
@@ -106,9 +109,6 @@ class TenantUserListInputSLZ(serializers.Serializer):
     created_at_end = serializers.DateTimeField(help_text="创建时间结束", required=False)
     account_expired_at_start = serializers.DateTimeField(help_text="账号过期时间开始", required=False)
     account_expired_at_end = serializers.DateTimeField(help_text="账号过期时间结束", required=False)
-    recursive = serializers.BooleanField(
-        help_text="为 false 时仅返回当前层级的用户，为 true 时同时包含下级组织中的用户", default=False
-    )
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验创建时间范围
