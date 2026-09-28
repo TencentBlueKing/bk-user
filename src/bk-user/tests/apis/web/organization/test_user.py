@@ -177,7 +177,7 @@ class TestTenantUserListApi:
     def test_current_tenant_all_users(self, api_client, random_tenant):
         """租户维：指定租户在当前租户下的全部用户（不按部门树过滤）"""
         url = reverse("organization.tenant_user.list", kwargs={"tenant_id": random_tenant.id})
-        resp = api_client.get(url)
+        resp = api_client.get(url, data={"recursive": True})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 11  # noqa: PLR2004
         assert len(resp.data["results"]) == 10  # noqa: PLR2004
@@ -186,13 +186,13 @@ class TestTenantUserListApi:
     def test_collaboration_tenant(self, api_client, random_tenant, collaboration_tenant):
         """租户维：获取协同租户在当前租户下的用户"""
         url = reverse("organization.tenant_user.list", kwargs={"tenant_id": collaboration_tenant.id})
-        resp = api_client.get(url)
+        resp = api_client.get(url, data={"recursive": True})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 11  # noqa: PLR2004
         assert len(resp.data["results"]) == 10  # noqa: PLR2004
 
         # 虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
-        resp = api_client.get(url, data={"full_name": "李四"})
+        resp = api_client.get(url, data={"recursive": True, "full_name": "李四"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "lisi"

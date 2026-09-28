@@ -42,7 +42,7 @@ urlpatterns = [
     # 指定租户在当前租户下的用户列表
     path(
         "tenants/<str:tenant_id>/users/",
-        views.SourceTenantUserListApi.as_view(),
+        views.TenantUserListApi.as_view(),
         name="organization.tenant_user.list",
     ),
     # 搜索租户部门（含协同数据）
@@ -97,7 +97,7 @@ urlpatterns = [
     # 租户用户列表 / 创建租户用户
     path(
         "tenants/data-sources/<int:data_source_id>/users/",
-        views.TenantUserListCreateApi.as_view(),
+        views.TenantUserListCreateByDataSourceApi.as_view(),
         name="organization.tenant_user.list_create",
     ),
     # 获取 / 更新 / 删除租户用户

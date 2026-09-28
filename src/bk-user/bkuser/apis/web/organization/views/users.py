@@ -33,7 +33,6 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
-    SourceTenantUserListInputSLZ,
     TenantUserAccountExpiredAtBatchUpdateInputSLZ,
     TenantUserAccountExpiredAtUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
@@ -44,6 +43,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserCreateOutputSLZ,
     TenantUserCustomFieldBatchUpdateInputSLZ,
     TenantUserLeaderBatchUpdateInputSLZ,
+    TenantUserListByDataSourceInputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
@@ -187,12 +187,12 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class SourceTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         cur_tenant_id = self.get_current_tenant_id()
-        slz = SourceTenantUserListInputSLZ(data=self.request.query_params)
+        slz = TenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -221,12 +221,20 @@ class SourceTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         if lookup_filters:
             queryset = queryset.filter(**lookup_filters)
 
+        # 默认只返回未分配部门的用户；recursive 为 true 时返回该来源租户下的全部用户
+        if not params["recursive"]:
+            dept_user_ids = DataSourceDepartmentUserRelation.objects.filter(
+                data_source__owner_tenant_id=self.kwargs["tenant_id"],
+                data_source__type=DataSourceTypeEnum.REAL,
+            ).values_list("user_id", flat=True)
+            queryset = queryset.exclude(data_source_user_id__in=dept_user_ids)
+
         return queryset.order_by("data_source_user__username")
 
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="获取指定租户在当前租户下的用户列表",
-        query_serializer=SourceTenantUserListInputSLZ(),
+        query_serializer=TenantUserListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
@@ -239,7 +247,7 @@ class SourceTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return self.get_paginated_response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
 
 
-class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
+class TenantUserListCreateByDataSourceApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
@@ -250,7 +258,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
-        slz = TenantUserListInputSLZ(
+        slz = TenantUserListByDataSourceInputSLZ(
             data=self.request.query_params,
             context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
@@ -297,7 +305,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
                 department_id__in=filter_dept_ids
             ).values_list("user_id", flat=True)
             queryset = queryset.filter(data_source_user_id__in=data_source_user_ids)
-        # 不指定部门 & 不指定递归查询 -> 查询租户下的游离用户（没有部门）
+        # 不指定部门 & 不指定递归查询 -> 查询数据源下的游离用户（没有部门）
         elif not params["recursive"]:
             dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source)
             queryset = queryset.exclude(data_source_user_id__in=dept_user_relations.values_list("user_id", flat=True))
@@ -307,7 +315,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户列表",
-        query_serializer=TenantUserListInputSLZ(),
+        query_serializer=TenantUserListByDataSourceInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):

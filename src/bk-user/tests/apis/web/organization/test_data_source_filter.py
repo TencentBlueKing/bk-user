@@ -134,7 +134,10 @@ class TestTenantUserListDataSourceFilter:
         assert {u["username"] for u in resp.data["results"]} == {"user_b"}
 
         # 租户维列表覆盖该租户下全部实名源用户
-        resp = api_client.get(reverse("organization.tenant_user.list", kwargs={"tenant_id": random_tenant.id}))
+        resp = api_client.get(
+            reverse("organization.tenant_user.list", kwargs={"tenant_id": random_tenant.id}),
+            data={"recursive": True},
+        )
         assert resp.status_code == status.HTTP_200_OK
         assert {u["data_source_id"] for u in resp.data["results"]} == {ds_a.id, ds_b.id}
 
