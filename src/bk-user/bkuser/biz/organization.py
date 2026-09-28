@@ -268,7 +268,7 @@ class TenantOrgPathHandler:
             ).select_related("data_source_department")
         }
 
-        # 数据源用户 ID -> 部门名称列表
+        # 数据源用户 ID -> 部门 ID 列表
         data_source_user_dept_ids_map = defaultdict(list)
         for rel in relations:
             data_source_user_dept_ids_map[rel.user_id].append(rel.department_id)
