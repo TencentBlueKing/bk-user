@@ -254,7 +254,7 @@ class TenantUserListCreateByDataSourceApi(CurrentUserTenantDataSourceMixin, gene
         cur_tenant_id = self.get_current_tenant_id()
         data_source = DataSource.objects.filter(type=DataSourceTypeEnum.REAL, id=self.kwargs["data_source_id"]).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            return TenantUser.objects.none()
 
         slz = TenantUserListByDataSourceInputSLZ(
             data=self.request.query_params,
@@ -826,16 +826,14 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
 
         slz = TenantUserBatchCreateInputSLZ(
             data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": self.kwargs["data_source_id"]},
+            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant_dept = TenantDepartment.objects.filter(
+        tenant_dept = TenantDepartment.objects.get(
             id=data["department_id"], tenant_id=cur_tenant_id, data_source=data_source
-        ).first()
-        if not tenant_dept:
-            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("指定的租户部门不存在"))
+        )
 
         transform = UsernameTransformer.load(data_source.id)
 

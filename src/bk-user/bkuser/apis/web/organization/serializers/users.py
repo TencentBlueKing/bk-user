@@ -509,6 +509,14 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
     )
     department_id = serializers.IntegerField(help_text="目标租户部门 ID")
 
+    def validate_department_id(self, department_id: int) -> int:
+        if not TenantDepartment.objects.filter(
+            id=department_id, tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"]
+        ).exists():
+            raise ValidationError(_("指定的租户部门不存在"))
+
+        return department_id
+
     def validate_user_infos(self, raw_user_infos: List[str]) -> List[Dict[str, Any]]:
         builtin_fields = UserBuiltinField.objects.all()
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])

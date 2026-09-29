@@ -91,7 +91,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
         ).first()
 
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            return TenantDepartment.objects.none()
 
         root_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.root_nodes()

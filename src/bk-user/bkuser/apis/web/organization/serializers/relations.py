@@ -60,9 +60,10 @@ class TenantDeptUserRelationBatchCreateInputSLZ(serializers.Serializer):
     )
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        data_source_id = self.context["data_source_id"]
-        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], data_source_id)
-        _validate_tenant_department_ids(attrs["target_department_ids"], self.context["tenant_id"], data_source_id)
+        _validate_tenant_user_ids(attrs["user_ids"], self.context["tenant_id"], self.context["data_source_id"])
+        _validate_tenant_department_ids(
+            attrs["target_department_ids"], self.context["tenant_id"], self.context["data_source_id"]
+        )
 
         return attrs
 

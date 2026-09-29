@@ -167,13 +167,14 @@ class TestTenantDepartmentListApi:
         assert resp.data == []
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_rejects_unknown_data_source_id(self, api_client, random_tenant):
+    def test_unknown_data_source_id_returns_empty(self, api_client, random_tenant):
         resp = api_client.get(
             reverse("organization.tenant_department.list_create", kwargs={"data_source_id": 0}),
             data={"parent_department_id": 0},
         )
 
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data == []
 
 
 class TestTenantDepartmentCreateApi:

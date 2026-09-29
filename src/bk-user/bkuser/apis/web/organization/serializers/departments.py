@@ -103,6 +103,7 @@ class TenantDepartmentCreateInputSLZ(serializers.Serializer):
             # 一致性校验：父部门必须属于所指定的数据源，防止跨源
             if parent_tenant_dept.data_source_id != data_source_id:
                 raise ValidationError(_("父部门不属于当前的数据源"))
+            # 租户部门 -> 父部门关系表节点
             parent_dept_relation = DataSourceDepartmentRelation.objects.get(
                 department=parent_tenant_dept.data_source_department, data_source_id=data_source_id
             )

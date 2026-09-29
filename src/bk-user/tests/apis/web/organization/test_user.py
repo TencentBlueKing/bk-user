@@ -388,13 +388,15 @@ class TestTenantUserListApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_rejects_unknown_data_source_id(self, api_client, random_tenant):
+    def test_unknown_data_source_id_returns_empty(self, api_client, random_tenant):
         resp = api_client.get(
             reverse("organization.tenant_user.list_create", kwargs={"data_source_id": 0}),
             data={"recursive": True, "department_id": 0},
         )
 
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 0
+        assert resp.data["results"] == []
 
 
 class TestTenantUserCreateApi:
@@ -979,6 +981,28 @@ class TestTenantUserBatchCreateAndPreviewApi:
         resp = api_client.post(url, data={"user_infos": raw_user_infos, "department_id": company.id})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_department_from_other_data_source(
+        self,
+        api_client,
+        random_tenant,
+        random_tenant_custom_fields,
+        raw_user_infos,
+        full_local_data_source,
+        local_ds_plugin,
+        local_ds_plugin_cfg,
+    ):
+        other_ds = _create_local_data_source(random_tenant.id, local_ds_plugin, local_ds_plugin_cfg, "本地数据源B")
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        for url_name in ["organization.tenant_user.batch_create_preview", "organization.tenant_user.batch_create"]:
+            resp = api_client.post(
+                reverse(url_name, kwargs={"data_source_id": other_ds.id}),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+            assert "指定的租户部门不存在" in resp.data["message"]
 
 
 class TestTenantUserBatchDeleteApi:

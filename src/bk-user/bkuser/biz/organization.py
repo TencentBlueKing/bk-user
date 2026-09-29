@@ -277,6 +277,7 @@ class TenantOrgPathHandler:
             user.id: [
                 data_source_dept_id_name_map[dept_id]
                 for dept_id in data_source_user_dept_ids_map.get(user.data_source_user_id, [])
+                if dept_id in data_source_dept_id_name_map
             ]
             for user in tenant_users
         }
