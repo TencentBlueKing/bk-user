@@ -22,6 +22,13 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
+def _node(tenant, code: str, name: str) -> dict:
+    tenant_dept = TenantDepartment.objects.get(
+        tenant=tenant, data_source__owner_tenant_id=tenant.id, data_source_department__code=code
+    )
+    return {"id": tenant_dept.id, "name": name}
+
+
 @pytest.mark.usefixtures("_init_tenant_users_depts")
 @pytest.mark.usefixtures("_init_collaboration_users_depts")
 class TestTenantDepartmentSearchApi:
@@ -62,6 +69,11 @@ class TestTenantDepartmentSearchApi:
         assert resp.data[0]["name"] == "小组BAA"
         assert resp.data[0]["owner_tenant_id"] == random_tenant.id
         assert resp.data[0]["organization_path"] == "公司/部门B/中心BA"
+        assert resp.data[0]["ancestors"] == [
+            _node(random_tenant, "company", "公司"),
+            _node(random_tenant, "dept_b", "部门B"),
+            _node(random_tenant, "center_ba", "中心BA"),
+        ]
         assert not resp.data[0]["has_child"]
         assert resp.data[0]["has_user"]
 
@@ -138,6 +150,11 @@ class TestTenantDepartmentChildrenListApi:
         assert len(resp.data) == 1
         assert resp.data[0]["id"] == group_aaa.id
         assert resp.data[0]["name"] == "小组AAA"
+        assert resp.data[0]["ancestors"] == [
+            _node(random_tenant, "company", "公司"),
+            _node(random_tenant, "dept_a", "部门A"),
+            _node(random_tenant, "center_aa", "中心AA"),
+        ]
         assert not resp.data[0]["has_child"]
         assert resp.data[0]["has_user"]
 
@@ -219,6 +236,17 @@ class TestTenantDepartmentUserListApi:
         assert {d["bk_username"] for d in resp.data} == {lisi.id, wangwu.id}
         assert {d["login_name"] for d in resp.data} == {"lisi", "wangwu"}
         assert {d["display_name"] for d in resp.data} == {"lisi(李四)", "wangwu(王五)"}
+        company = _node(random_tenant, "company", "公司")
+        dept_a_node = _node(random_tenant, "dept_a", "部门A")
+        orgs = {d["login_name"]: d["organizations"] for d in resp.data}
+        assert orgs["lisi"] == [
+            [company, dept_a_node],
+            [company, dept_a_node, _node(random_tenant, "center_aa", "中心AA")],
+        ]
+        assert orgs["wangwu"] == [
+            [company, dept_a_node],
+            [company, _node(random_tenant, "dept_b", "部门B")],
+        ]
 
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_with_collaboration_tenant(self, api_client, collaboration_tenant):
@@ -247,6 +275,7 @@ class TestTenantDepartmentUserListApi:
         assert resp.data[0]["bk_username"] == freedom.id
         assert resp.data[0]["login_name"] == "freedom"
         assert resp.data[0]["display_name"] == "freedom(自由人)"
+        assert resp.data[0]["organizations"] == []
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_with_invalid_owner_tenant_id(self, api_client, random_tenant):
@@ -293,6 +322,13 @@ class TestTenantDepartmentLookupApi:
         assert {d["name"] for d in resp.data} == {"部门A", "中心AA"}
         assert {d["owner_tenant_id"] for d in resp.data} == {random_tenant.id, collaboration_tenant.id}
         assert {d["organization_path"] for d in resp.data} == {"公司", "公司/部门A"}
+        for d in resp.data:
+            assert d["organization_path"] == "/".join(a["name"] for a in d["ancestors"])
+        ancestors_map = {d["id"]: d["ancestors"] for d in resp.data}
+        assert ancestors_map[center_aa.id] == [
+            _node(random_tenant, "company", "公司"),
+            _node(random_tenant, "dept_a", "部门A"),
+        ]
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_department.lookup"), data={"department_ids": "123456"})

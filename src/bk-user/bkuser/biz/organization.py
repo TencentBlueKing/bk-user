@@ -17,7 +17,7 @@
 
 import datetime
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 from django.db import transaction
 from django.utils import timezone
@@ -31,7 +31,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.plugins.local.utils import gen_dept_code
@@ -270,6 +270,74 @@ class TenantOrgPathHandler:
             org_path_map[dept_id] = "/".join(dept_names)
 
         return org_path_map
+
+    @staticmethod
+    def _query_org_ancestors(
+        tenant_id: str, data_source_department_ids: List[int], include_self: bool
+    ) -> Dict[int, List[Dict[str, Any]]]:
+        """数据源部门 ID -> [{"id": 租户部门 ID | None, "name": 数据源部门名称}, ...]"""
+        # 1. 从缓存获取祖先 ID 列表
+        ancestor_id_map = DepartmentAncestorCache().batch_get(data_source_department_ids)
+
+        # 2. 批量查询部门名称
+        dept_ids = set(data_source_department_ids).union(*ancestor_id_map.values())
+        id_name_map = dict(DataSourceDepartment.objects.filter(id__in=dept_ids).values_list("id", "name"))
+
+        # 3. 数据源部门 -> 租户部门
+        ds_to_tenant_map = dict(
+            TenantDepartment.objects.filter(tenant_id=tenant_id, data_source_department_id__in=dept_ids).values_list(
+                "data_source_department_id", "id"
+            )
+        )
+
+        # 4. 构建缓存部门的组织链
+        org_ancestors_map = {}
+        for dept_id, ancestor_ids in ancestor_id_map.items():
+            org_ancestors_map[dept_id] = [
+                {"id": ds_to_tenant_map.get(ds_dept_id), "name": id_name_map.get(ds_dept_id, "")}
+                for ds_dept_id in ([*ancestor_ids, dept_id] if include_self else ancestor_ids)
+            ]
+
+        return org_ancestors_map
+
+    @staticmethod
+    def get_dept_ancestors_map(
+        tenant_id: str, data_source_department_ids: List[int]
+    ) -> Dict[int, List[Dict[str, Any]]]:
+        """获取部门的祖先部门列表"""
+        ancestors_map = TenantOrgPathHandler._query_org_ancestors(
+            tenant_id, data_source_department_ids, include_self=False
+        )
+        return {dept_id: ancestors_map.get(dept_id, []) for dept_id in data_source_department_ids}
+
+    @staticmethod
+    def get_user_organizations_map(
+        tenant_id: str, tenant_users: List[TenantUser]
+    ) -> Dict[str, List[List[Dict[str, Any]]]]:
+        """获取用户所属组织信息"""
+        user_dept_ids_map: Dict[int, List[int]] = defaultdict(list)
+        for user_id, dept_id in (
+            DataSourceDepartmentUserRelation.objects.filter(
+                user_id__in=[user.data_source_user_id for user in tenant_users]
+            )
+            .order_by("id")
+            .values_list("user_id", "department_id")
+        ):
+            user_dept_ids_map[user_id].append(dept_id)
+
+        data_source_dept_ids = list(set().union(*user_dept_ids_map.values()))
+        org_ancestors_map = TenantOrgPathHandler._query_org_ancestors(
+            tenant_id, data_source_dept_ids, include_self=True
+        )
+
+        return {
+            user.id: [
+                org_ancestors_map[dept_id]
+                for dept_id in user_dept_ids_map[user.data_source_user_id]
+                if dept_id in org_ancestors_map
+            ]
+            for user in tenant_users
+        }
 
     @staticmethod
     def get_dept_descendant_org_path_map(department_id: int) -> Dict[int, str]:
