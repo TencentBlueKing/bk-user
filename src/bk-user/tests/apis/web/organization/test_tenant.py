@@ -49,6 +49,6 @@ class TestCollaborationTenantListApi:
         assert len(resp.data) == 1
 
         first_tenant = resp.data[0]
-        assert first_tenant.keys() == {"id", "name", "logo"}
+        assert first_tenant.keys() == {"id", "name", "logo", "data_sources"}
         assert first_tenant["id"] == collaboration_tenant.id
         assert first_tenant["name"] == collaboration_tenant.name

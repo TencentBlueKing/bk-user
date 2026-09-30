@@ -150,6 +150,18 @@ def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) 
 
 
 @pytest.fixture
+def bare_local_data_source_b(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
+    """第二个裸本地数据源，用于同一租户下多数据源隔离"""
+    return DataSource.objects.create(
+        name="本地数据源B",
+        owner_tenant_id=random_tenant.id,
+        type=DataSourceTypeEnum.REAL,
+        plugin=local_ds_plugin,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+    )
+
+
+@pytest.fixture
 def bare_virtual_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸虚拟数据源（没有用户数据）"""
     return DataSource.objects.create(

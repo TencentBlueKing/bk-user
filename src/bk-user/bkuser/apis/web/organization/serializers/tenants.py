@@ -46,16 +46,10 @@ class TenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
+    data_sources = serializers.SerializerMethodField(help_text="实名用户数据源信息列表")
 
     def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.DEFAULT_TENANT_LOGO
-
-
-class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
-    data_sources = serializers.SerializerMethodField(help_text="实名用户数据源信息列表")
-
-    class Meta:
-        ref_name = "organization.TenantRetrieveOutputSLZ"
 
     @swagger_serializer_method(serializer_or_field=TenantDataSourceSLZ(many=True))
     def get_data_sources(self, obj: Tenant) -> List[Dict[str, Any]]:
@@ -64,6 +58,11 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
             return []
 
         return TenantDataSourceSLZ(data_sources, many=True).data
+
+
+class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
+    class Meta:
+        ref_name = "organization.TenantRetrieveOutputSLZ"
 
 
 class RequiredTenantUserFieldOutputSLZ(serializers.Serializer):

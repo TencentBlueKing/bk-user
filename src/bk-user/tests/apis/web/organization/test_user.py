@@ -21,13 +21,16 @@ from typing import Any, Dict, List
 
 import pytest
 import pytz
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, TenantUserIDRecord
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
@@ -37,6 +40,28 @@ from rest_framework import status
 from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
+
+
+def _create_local_data_source(tenant_id, plugin, plugin_cfg, name) -> DataSource:
+    return DataSource.objects.create(
+        owner_tenant_id=tenant_id,
+        name=name,
+        type=DataSourceTypeEnum.REAL,
+        plugin=plugin,
+        plugin_config=LocalDataSourcePluginConfig(**plugin_cfg),
+    )
+
+
+def _create_tenant_user(data_source, tenant, code, username, uid) -> TenantUser:
+    ds_user = DataSourceUser.objects.create(
+        data_source=data_source,
+        code=code,
+        username=username,
+        full_name=username,
+        email=f"{username}@example.com",
+        phone="13500000000",
+    )
+    return TenantUser.objects.create(id=uid, tenant=tenant, data_source=data_source, data_source_user=ds_user)
 
 
 class TestTenantUserSearchApi:
@@ -88,41 +113,92 @@ class TestTenantUserSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_returns_data_source_id(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        _create_tenant_user(ds_a, random_tenant, "sa", "searchuser_a", "uid_search_a")
+        _create_tenant_user(ds_b, random_tenant, "sb", "searchuser_b", "uid_search_b")
+
+        resp = api_client.get(reverse("organization.tenant_user.search"), data={"keyword": "searchuser"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert all("data_source_id" in u for u in resp.data)
+        assert {u["data_source_id"] for u in resp.data} == {ds_a.id, ds_b.id}
+
 
 class TestOptionalTenantUserListApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_username(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "shi"})
+    def test_search_username(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "shi"},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {user["username"] for user in resp.data} == {"lushi", "linshiyi", "baishier"}
         assert {user["full_name"] for user in resp.data} == {"鲁十", "林十一", "白十二"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_full_name(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_leader.list"), data={"keyword": "十二"})
+    def test_search_full_name(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "十二"},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
         assert resp.data[0]["username"] == "baishier"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_with_excluded_user(self, api_client, random_tenant):
+    def test_search_with_excluded_user(self, api_client, random_tenant, full_local_data_source):
         baishier = TenantUser.objects.get(data_source_user__username="baishier", tenant=random_tenant)
         resp = api_client.get(
-            reverse("organization.optional_leader.list"),
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
             data={"keyword": "shi", "excluded_user_id": baishier.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {user["username"] for user in resp.data} == {"lushi", "linshiyi"}
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_optional_leaders_isolated_by_data_source(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        _create_tenant_user(ds_a, random_tenant, "ola", "opt_leader_a", "uid_opt_leader_a")
+        _create_tenant_user(ds_b, random_tenant, "olb", "opt_leader_b", "uid_opt_leader_b")
+
+        resp = api_client.get(
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": ds_a.id}),
+            data={"keyword": "opt_leader"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {u["username"] for u in resp.data} == {"opt_leader_a"}
+
+        resp = api_client.get(
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": ds_b.id}),
+            data={"keyword": "opt_leader"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {u["username"] for u in resp.data} == {"opt_leader_b"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_optional_leaders_reject_external_data_source(self, api_client, random_tenant, bare_general_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_leader.list", kwargs={"data_source_id": bare_general_data_source.id}),
+            data={"keyword": "x"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
 
 class TestTenantUserListApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_current_tenant_root_dept(self, api_client, random_tenant):
+    def test_current_tenant_root_dept(self, api_client, random_tenant, full_local_data_source):
         """测试获取本租户的用户（从根部门起）"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         # 根部门层级的用户
         resp = api_client.get(url)
@@ -143,10 +219,10 @@ class TestTenantUserListApi:
         assert {user["username"] for user in resp.data["results"]} == {"lushi", "linshiyi", "baishier"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_current_tenant_sub_dept(self, api_client, random_tenant):
+    def test_current_tenant_sub_dept(self, api_client, random_tenant, full_local_data_source):
         """测试获取本租户的用户（从子部门起）"""
         dept_b = TenantDepartment.objects.get(data_source_department__name="部门B", tenant=random_tenant)
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         # 部门 B 层级的用户
         resp = api_client.get(url, data={"recursive": False, "department_id": dept_b.id})
@@ -167,49 +243,52 @@ class TestTenantUserListApi:
         assert wangwu["username"] == "wangwu"
         assert wangwu["departments"] == ["部门A", "部门B"]
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_current_tenant_all_users(self, api_client, random_tenant):
+        """租户维：指定租户在当前租户下的全部用户（不按部门树过滤）"""
+        url = reverse("organization.tenant_user.list", kwargs={"tenant_id": random_tenant.id})
+        resp = api_client.get(url, data={"recursive": True})
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 11  # noqa: PLR2004
+        assert len(resp.data["results"]) == 10  # noqa: PLR2004
+
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_collaboration_tenant(self, api_client, random_tenant, collaboration_tenant):
-        """测试获取协同租户的用户"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": collaboration_tenant.id})
-        # 根部门，不递归
-        resp = api_client.get(url)
+        """租户维：获取协同租户在当前租户下的用户"""
+        url = reverse("organization.tenant_user.list", kwargs={"tenant_id": collaboration_tenant.id})
+        resp = api_client.get(url, data={"recursive": True})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 1  # noqa: PLR2004  magic number here is ok
+        assert resp.data["count"] == 11  # noqa: PLR2004
+        assert len(resp.data["results"]) == 10  # noqa: PLR2004
 
-        dept_a = TenantDepartment.objects.get(data_source_department__name="部门A", tenant=random_tenant)
-        # 子部门，递归
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id})
-        assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["count"] == 8  # noqa: PLR2004
-
-        # 子部门，递归 + 关键字搜索，虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
-        resp = api_client.get(url, data={"recursive": True, "department_id": dept_a.id, "full_name": "李四"})
+        # 虽然李四在部门 A & 中心 AA 中，但是同一个人，只有一条记录
+        resp = api_client.get(url, data={"recursive": True, "full_name": "李四"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "lisi"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_filter_by_email(self, api_client, random_tenant):
+    def test_filter_by_email(self, api_client, random_tenant, full_local_data_source):
         """测试通过邮箱过滤用户"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "email": "wangwu"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "wangwu"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_filter_by_phone(self, api_client, random_tenant):
+    def test_filter_by_phone(self, api_client, random_tenant, full_local_data_source):
         """测试通过手机号过滤用户"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
         resp = api_client.get(url, data={"recursive": True, "department_id": 0, "phone": "13512345673"})
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data["count"] == 1  # noqa: PLR2004
         assert resp.data["results"][0]["username"] == "wangwu"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_filter_by_status(self, api_client, random_tenant):
+    def test_filter_by_status(self, api_client, random_tenant, full_local_data_source):
         """测试通过状态过滤用户"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         # 先禁用一个用户
         lisi = TenantUser.objects.get(data_source_user__username="lisi", tenant=random_tenant)
@@ -228,9 +307,9 @@ class TestTenantUserListApi:
         assert resp.data["results"][0]["username"] == "lisi"
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_filter_by_created_at_range(self, api_client, random_tenant):
+    def test_filter_by_created_at_range(self, api_client, random_tenant, full_local_data_source):
         """测试通过创建时间范围过滤用户"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         now = timezone.now()
         # 查询过去一天内创建的用户
@@ -248,9 +327,9 @@ class TestTenantUserListApi:
         assert resp.data["count"] >= 1
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_filter_created_at_invalid_range(self, api_client, random_tenant):
+    def test_filter_created_at_invalid_range(self, api_client, random_tenant, full_local_data_source):
         """测试创建时间范围校验：开始时间不能大于结束时间"""
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         now = timezone.now()
         resp = api_client.get(
@@ -264,6 +343,60 @@ class TestTenantUserListApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "创建时间的开始时间不能大于结束时间" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_filter_users_by_data_source(
+        self,
+        api_client,
+        random_tenant,
+        full_local_data_source,
+        bare_local_data_source_b,
+        local_ds_plugin,
+        local_ds_plugin_cfg,
+    ):
+        ds_a = _create_local_data_source(random_tenant.id, local_ds_plugin, local_ds_plugin_cfg, "本地数据源A")
+        ds_b = bare_local_data_source_b
+        _create_tenant_user(ds_a, random_tenant, "ua", "user_a", "uid_user_a")
+        _create_tenant_user(ds_b, random_tenant, "ub", "user_b", "uid_user_b")
+
+        resp = api_client.get(
+            reverse("organization.tenant_user.list_create", kwargs={"data_source_id": ds_a.id}),
+            data={"recursive": True, "department_id": 0},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {u["data_source_id"] for u in resp.data["results"]} == {ds_a.id}
+        assert {u["username"] for u in resp.data["results"]} == {"user_a"}
+
+        resp = api_client.get(
+            reverse("organization.tenant_user.list_create", kwargs={"data_source_id": ds_b.id}),
+            data={"recursive": True, "department_id": 0},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {u["data_source_id"] for u in resp.data["results"]} == {ds_b.id}
+        assert {u["username"] for u in resp.data["results"]} == {"user_b"}
+
+        # 租户维列表覆盖该租户下全部实名源用户
+        resp = api_client.get(
+            reverse("organization.tenant_user.list", kwargs={"tenant_id": random_tenant.id}),
+            data={"recursive": True},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {u["data_source_id"] for u in resp.data["results"]} == {
+            ds_a.id,
+            ds_b.id,
+            full_local_data_source.id,
+        }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_unknown_data_source_id_returns_empty(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("organization.tenant_user.list_create", kwargs={"data_source_id": 0}),
+            data={"recursive": True, "department_id": 0},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["count"] == 0
+        assert resp.data["results"] == []
 
 
 class TestTenantUserCreateApi:
@@ -294,7 +427,8 @@ class TestTenantUserCreateApi:
         tenant_user_data.update({"department_ids": [dept_b.id], "leader_ids": [wangwu.id]})
 
         resp = api_client.post(
-            reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id}), data=tenant_user_data
+            reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id}),
+            data=tenant_user_data,
         )
 
         assert resp.status_code == status.HTTP_201_CREATED
@@ -319,8 +453,8 @@ class TestTenantUserCreateApi:
         ).exists()
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_invalid_username(self, api_client, random_tenant, tenant_user_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_invalid_username(self, api_client, random_tenant, tenant_user_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["username"] = "%%%"
         resp = api_client.post(url, data=tenant_user_data)
@@ -333,8 +467,8 @@ class TestTenantUserCreateApi:
         assert "用户名 wangwu 已存在" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_invalid_department_ids(self, api_client, random_tenant, tenant_user_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_invalid_department_ids(self, api_client, random_tenant, tenant_user_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["department_ids"] = [-1]
         resp = api_client.post(url, data=tenant_user_data)
@@ -342,8 +476,8 @@ class TestTenantUserCreateApi:
         assert "指定的部门 {-1} 不存在" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_invalid_leader_ids(self, api_client, random_tenant, tenant_user_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_invalid_leader_ids(self, api_client, random_tenant, tenant_user_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["leader_ids"] = ["not_exists"]
         resp = api_client.post(url, data=tenant_user_data)
@@ -351,8 +485,8 @@ class TestTenantUserCreateApi:
         assert "指定的直属上级 not_exists 不存在" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_invalid_extras(self, api_client, random_tenant, tenant_user_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_invalid_extras(self, api_client, random_tenant, tenant_user_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["extras"] = {"invalid": "invalid"}
         resp = api_client.post(url, data=tenant_user_data)
@@ -368,8 +502,8 @@ class TestTenantUserCreateApi:
         ],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_legal_logo(self, api_client, random_tenant, tenant_user_data, logo_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_legal_logo(self, api_client, random_tenant, tenant_user_data, logo_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["logo"] = logo_data
         resp = api_client.post(url, data=tenant_user_data)
@@ -383,8 +517,8 @@ class TestTenantUserCreateApi:
         ],
     )
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_illegal_logo(self, api_client, random_tenant, tenant_user_data, logo_data):
-        url = reverse("organization.tenant_user.list_create", kwargs={"id": random_tenant.id})
+    def test_illegal_logo(self, api_client, random_tenant, tenant_user_data, logo_data, full_local_data_source):
+        url = reverse("organization.tenant_user.list_create", kwargs={"data_source_id": full_local_data_source.id})
 
         tenant_user_data["logo"] = logo_data
         resp = api_client.post(url, data=tenant_user_data)
@@ -702,12 +836,17 @@ class TestTenantUserBatchCreateAndPreviewApi:
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_preview(self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos):
+    def test_preview(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos, full_local_data_source
+    ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
         age_field, gender_field, region_field, hobbies_field = random_tenant_custom_fields
 
         resp = api_client.post(
-            reverse("organization.tenant_user.batch_create_preview"),
+            reverse(
+                "organization.tenant_user.batch_create_preview",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data={"user_infos": raw_user_infos, "department_id": company.id},
         )
 
@@ -781,12 +920,14 @@ class TestTenantUserBatchCreateAndPreviewApi:
         ]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_create(self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos):
+    def test_create(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos, full_local_data_source
+    ):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
         age_field, gender_field, region_field, hobbies_field = random_tenant_custom_fields
 
         resp = api_client.post(
-            reverse("organization.tenant_user.batch_create"),
+            reverse("organization.tenant_user.batch_create", kwargs={"data_source_id": full_local_data_source.id}),
             data={"user_infos": raw_user_infos, "department_id": company.id},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -805,8 +946,10 @@ class TestTenantUserBatchCreateAndPreviewApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_invalid_case(self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos):
-        url = reverse("organization.tenant_user.batch_create")
+    def test_invalid_case(
+        self, api_client, random_tenant, random_tenant_custom_fields, raw_user_infos, full_local_data_source
+    ):
+        url = reverse("organization.tenant_user.batch_create", kwargs={"data_source_id": full_local_data_source.id})
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
 
         raw_user_infos.append("dotKnifeBoy, Blade, blade@railway.com, 48, 男, StarCoreHunter, 学习/驾驶")
@@ -839,12 +982,34 @@ class TestTenantUserBatchCreateAndPreviewApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "值 1k 不能转换为数字" in resp.data["message"]
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_department_from_other_data_source(
+        self,
+        api_client,
+        random_tenant,
+        random_tenant_custom_fields,
+        raw_user_infos,
+        full_local_data_source,
+        local_ds_plugin,
+        local_ds_plugin_cfg,
+    ):
+        other_ds = _create_local_data_source(random_tenant.id, local_ds_plugin, local_ds_plugin_cfg, "本地数据源B")
+        company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
+
+        for url_name in ["organization.tenant_user.batch_create_preview", "organization.tenant_user.batch_create"]:
+            resp = api_client.post(
+                reverse(url_name, kwargs={"data_source_id": other_ds.id}),
+                data={"user_infos": raw_user_infos, "department_id": company.id},
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+            assert "指定的租户部门不存在" in resp.data["message"]
+
 
 class TestTenantUserBatchDeleteApi:
     """测试批量删除租户用户"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_layoffs(self, api_client, random_tenant):
+    def test_layoffs(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi", "baishier"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -852,7 +1017,7 @@ class TestTenantUserBatchDeleteApi:
         ).values_list("id", flat=True)
 
         resp = api_client.delete(
-            reverse("organization.tenant_user.batch_delete"),
+            reverse("organization.tenant_user.batch_delete", kwargs={"data_source_id": full_local_data_source.id}),
             QUERY_STRING=urlencode({"user_ids": ",".join(user_ids)}, doseq=True),
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -950,12 +1115,33 @@ class TestTenantUserStatusBatchUpdateApi:
             for tenant_user in TenantUser.objects.filter(id__in=user_ids)
         )
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_status_update_allows_users_from_multiple_data_sources(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        user_a = _create_tenant_user(ds_a, random_tenant, "batch_a", "batch_a", "uid_batch_a")
+        user_b = _create_tenant_user(ds_b, random_tenant, "batch_b", "batch_b", "uid_batch_b")
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.status.batch_update"),
+            data={
+                "user_ids": [user_a.id, user_b.id],
+                "status": TenantUserStatus.DISABLED,
+            },
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert TenantUser.objects.get(id=user_a.id).status == TenantUserStatus.DISABLED
+        assert TenantUser.objects.get(id=user_b.id).status == TenantUserStatus.DISABLED
+
 
 class TestTenantUserBatchUpdateCustomFieldApi:
     """测试批量更新租户用户指定字段"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_custom_field(self, api_client, random_tenant):
+    def test_batch_update_custom_field(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -972,7 +1158,10 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         }
 
         resp = api_client.put(
-            reverse("organization.tenant_user.custom_field.batch_update"),
+            reverse(
+                "organization.tenant_user.custom_field.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -982,7 +1171,7 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_custom_field_multiple_enum(self, api_client, random_tenant):
+    def test_batch_update_custom_field_multiple_enum(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -998,7 +1187,10 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         }
 
         resp = api_client.put(
-            reverse("organization.tenant_user.custom_field.batch_update"),
+            reverse(
+                "organization.tenant_user.custom_field.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -1008,7 +1200,7 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_unique_custom_field(self, api_client, random_tenant):
+    def test_batch_update_unique_custom_field(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -1029,14 +1221,17 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         ).update(unique=True)
 
         resp = api_client.put(
-            reverse("organization.tenant_user.custom_field.batch_update"),
+            reverse(
+                "organization.tenant_user.custom_field.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "不能在批量操作中修改设置了唯一性的自定义字段" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_uneditable_custom_field(self, api_client, random_tenant):
+    def test_batch_update_uneditable_custom_field(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -1057,14 +1252,17 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         ).update(manager_editable=False)
 
         resp = api_client.put(
-            reverse("organization.tenant_user.custom_field.batch_update"),
+            reverse(
+                "organization.tenant_user.custom_field.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "当前租户不存在管理员可编辑的自定义字段" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_multiple_custom_fields(self, api_client, random_tenant):
+    def test_batch_update_multiple_custom_fields(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -1086,18 +1284,47 @@ class TestTenantUserBatchUpdateCustomFieldApi:
         ).update(manager_editable=False)
 
         resp = api_client.put(
-            reverse("organization.tenant_user.custom_field.batch_update"),
+            reverse(
+                "organization.tenant_user.custom_field.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "一次只能批量更新一个自定义字段" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_custom_field_update_rejects_users_from_another_data_source(
+        self,
+        api_client,
+        random_tenant,
+        bare_local_data_source,
+        bare_local_data_source_b,
+        random_tenant_custom_fields,
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        user_a = _create_tenant_user(ds_a, random_tenant, "cf_a", "cf_a", "uid_cf_a")
+        user_b = _create_tenant_user(ds_b, random_tenant, "cf_b", "cf_b", "uid_cf_b")
+        age_field = random_tenant_custom_fields[0]
+
+        resp = api_client.put(
+            reverse("organization.tenant_user.custom_field.batch_update", kwargs={"data_source_id": ds_a.id}),
+            data={
+                "user_ids": [user_a.id, user_b.id],
+                "field_name": age_field.name,
+                "value": {age_field.name: 18},
+            },
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestTenantUserBatchUpdateLeaderApi:
     """测试批量更新租户用户 - 上级关系"""
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_valid_leader(self, api_client, random_tenant):
+    def test_batch_update_valid_leader(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
 
         tenant_users = TenantUser.objects.filter(
@@ -1114,7 +1341,10 @@ class TestTenantUserBatchUpdateLeaderApi:
         }
 
         resp = api_client.put(
-            reverse("organization.tenant_user.leader.batch_update"),
+            reverse(
+                "organization.tenant_user.leader.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
 
@@ -1125,7 +1355,7 @@ class TestTenantUserBatchUpdateLeaderApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_batch_update_invalid_leader(self, api_client, random_tenant):
+    def test_batch_update_invalid_leader(self, api_client, random_tenant, full_local_data_source):
         user_codes = ["zhangsan", "lisi", "wangwu", "liuqi", "lushi", "linshiyi"]
         user_ids = TenantUser.objects.filter(
             tenant=random_tenant,
@@ -1139,7 +1369,10 @@ class TestTenantUserBatchUpdateLeaderApi:
         }
 
         resp = api_client.put(
-            reverse("organization.tenant_user.leader.batch_update"),
+            reverse(
+                "organization.tenant_user.leader.batch_update",
+                kwargs={"data_source_id": full_local_data_source.id},
+            ),
             data=tenant_user_data,
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST

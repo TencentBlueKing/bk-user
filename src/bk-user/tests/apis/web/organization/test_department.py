@@ -16,7 +16,9 @@
 # to the current version of the project delivered to anyone in the future.
 
 import pytest
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
@@ -32,14 +34,20 @@ from tests.test_utils.tenant import sync_users_depts_to_tenant
 pytestmark = pytest.mark.django_db
 
 
+def _create_root_tenant_department(data_source, tenant, code, name) -> TenantDepartment:
+    ds_dept = DataSourceDepartment.objects.create(data_source=data_source, code=code, name=name)
+    DataSourceDepartmentRelation.objects.create(department=ds_dept, parent=None, data_source=data_source)
+    return TenantDepartment.objects.create(tenant=tenant, data_source=data_source, data_source_department=ds_dept)
+
+
 class TestTenantDepartmentListApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_list_root_depts(self, api_client, random_tenant):
+    def test_list_root_depts(self, api_client, random_tenant, full_local_data_source):
         """当前租户的根部门"""
         resp = api_client.get(
             reverse(
                 "organization.tenant_department.list_create",
-                kwargs={"id": random_tenant.id},
+                kwargs={"data_source_id": full_local_data_source.id},
             ),
             data={"parent_department_id": 0},
         )
@@ -57,7 +65,7 @@ class TestTenantDepartmentListApi:
         assert first_dept["has_children"] is True
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_list_child_depts(self, api_client, random_tenant):
+    def test_list_child_depts(self, api_client, random_tenant, full_local_data_source):
         """当前租户的某级子部门"""
         company = TenantDepartment.objects.get(
             data_source_department__name="公司",
@@ -66,7 +74,7 @@ class TestTenantDepartmentListApi:
         resp = api_client.get(
             reverse(
                 "organization.tenant_department.list_create",
-                kwargs={"id": random_tenant.id},
+                kwargs={"data_source_id": full_local_data_source.id},
             ),
             data={"parent_department_id": company.id},
         )
@@ -84,11 +92,9 @@ class TestTenantDepartmentListApi:
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_list_collaboration_root_depts(self, api_client, collaboration_tenant):
         """某协作租户的根部门"""
+        collab_ds = DataSource.objects.get(owner_tenant_id=collaboration_tenant.id, type=DataSourceTypeEnum.REAL)
         resp = api_client.get(
-            reverse(
-                "organization.tenant_department.list_create",
-                kwargs={"id": collaboration_tenant.id},
-            ),
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": collab_ds.id}),
             data={"parent_department_id": 0},
         )
 
@@ -108,11 +114,9 @@ class TestTenantDepartmentListApi:
             data_source_department__name="部门A",
             data_source__owner_tenant_id=collaboration_tenant.id,
         )
+        collab_ds = DataSource.objects.get(owner_tenant_id=collaboration_tenant.id, type=DataSourceTypeEnum.REAL)
         resp = api_client.get(
-            reverse(
-                "organization.tenant_department.list_create",
-                kwargs={"id": collaboration_tenant.id},
-            ),
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": collab_ds.id}),
             data={"parent_department_id": dept_a.id},
         )
 
@@ -123,11 +127,63 @@ class TestTenantDepartmentListApi:
         assert resp.status_code == status.HTTP_200_OK
         assert {d["id"] for d in resp.data} == set(excepted_depts.values_list("id", flat=True))
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_list_root_depts_isolated_by_data_source(
+        self, api_client, random_tenant, full_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = full_local_data_source
+        ds_b = bare_local_data_source_b
+        _create_root_tenant_department(ds_b, random_tenant, "root_b", "总部B")
+
+        resp = api_client.get(
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": ds_a.id}),
+            data={"parent_department_id": 0},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {d["data_source_id"] for d in resp.data} == {ds_a.id}
+        assert {d["name"] for d in resp.data} == {"公司"}
+
+        resp = api_client.get(
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": ds_b.id}),
+            data={"parent_department_id": 0},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {d["data_source_id"] for d in resp.data} == {ds_b.id}
+        assert {d["name"] for d in resp.data} == {"总部B"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_child_filter_rejects_cross_source_parent(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_b = bare_local_data_source_b
+        root_a = _create_root_tenant_department(bare_local_data_source, random_tenant, "root_a", "总部A")
+
+        resp = api_client.get(
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": ds_b.id}),
+            data={"parent_department_id": root_a.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data == []
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_unknown_data_source_id_returns_empty(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": 0}),
+            data={"parent_department_id": 0},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data == []
+
 
 class TestTenantDepartmentCreateApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     def test_standard(self, api_client, full_local_data_source, random_tenant):
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})
+        url = reverse(
+            "organization.tenant_department.list_create",
+            kwargs={"data_source_id": full_local_data_source.id},
+        )
 
         # 创建根部门
         root_dept_name = generate_random_string()
@@ -149,22 +205,28 @@ class TestTenantDepartmentCreateApi:
         assert TenantDepartmentIDRecord.objects.filter(tenant=random_tenant, code__in=codes).count() == 2
 
     def test_create_without_data_source(self, api_client, random_tenant):
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})
+        url = reverse("organization.tenant_department.list_create", kwargs={"data_source_id": 10**7})
         resp = api_client.post(url, data={"parent_department_id": 0, "name": generate_random_string()})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "租户数据源不存在" in resp.data["message"]
+        assert "指定的本地实名数据源不存在" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_create_with_invalid_parent_id(self, api_client, random_tenant):
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})
+    def test_create_with_invalid_parent_id(self, api_client, random_tenant, full_local_data_source):
+        url = reverse(
+            "organization.tenant_department.list_create",
+            kwargs={"data_source_id": full_local_data_source.id},
+        )
         resp = api_client.post(url, data={"parent_department_id": 10**7, "name": generate_random_string()})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "指定的父部门在当前租户中不存在" in resp.data["message"]
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_create_with_duplicate_name(self, api_client, random_tenant):
+    def test_create_with_duplicate_name(self, api_client, random_tenant, full_local_data_source):
         company = TenantDepartment.objects.get(data_source_department__name="公司", tenant=random_tenant)
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": random_tenant.id})
+        url = reverse(
+            "organization.tenant_department.list_create",
+            kwargs={"data_source_id": full_local_data_source.id},
+        )
 
         # duplicate with brother
         resp = api_client.post(url, data={"parent_department_id": company.id, "name": "部门A"})
@@ -176,11 +238,65 @@ class TestTenantDepartmentCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "上级部门中存在同名部门" in resp.data["message"]
 
+    @pytest.mark.usefixtures("_init_collaboration_users_depts")
     def test_create_other_tenant_dept(self, api_client, random_tenant, collaboration_tenant):
-        url = reverse("organization.tenant_department.list_create", kwargs={"id": collaboration_tenant.id})
+        collab_ds = DataSource.objects.get(owner_tenant_id=collaboration_tenant.id, type=DataSourceTypeEnum.REAL)
+        url = reverse("organization.tenant_department.list_create", kwargs={"data_source_id": collab_ds.id})
         resp = api_client.post(url, data={"parent_department_id": 0, "name": generate_random_string()})
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "仅可创建属于当前租户的部门" in resp.data["message"]
+        assert "指定的本地实名数据源不存在" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_root_binds_data_source(self, api_client, random_tenant, bare_local_data_source):
+        resp = api_client.post(
+            reverse(
+                "organization.tenant_department.list_create",
+                kwargs={"data_source_id": bare_local_data_source.id},
+            ),
+            data={"parent_department_id": 0, "name": "研发中心"},
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        dept = TenantDepartment.objects.get(id=resp.data["id"])
+        assert dept.data_source_id == bare_local_data_source.id
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_child_binds_parent_source(self, api_client, random_tenant, bare_local_data_source):
+        root = _create_root_tenant_department(bare_local_data_source, random_tenant, "root_a", "总部A")
+        resp = api_client.post(
+            reverse(
+                "organization.tenant_department.list_create",
+                kwargs={"data_source_id": bare_local_data_source.id},
+            ),
+            data={"parent_department_id": root.id, "name": "后端组"},
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        dept = TenantDepartment.objects.get(id=resp.data["id"])
+        assert dept.data_source_id == bare_local_data_source.id
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_child_cross_source_rejected(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_b = bare_local_data_source_b
+        root_a = _create_root_tenant_department(bare_local_data_source, random_tenant, "root_a", "总部A")
+        resp = api_client.post(
+            reverse("organization.tenant_department.list_create", kwargs={"data_source_id": ds_b.id}),
+            data={"parent_department_id": root_a.id, "name": "子部门"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "父部门不属于当前的数据源" in resp.data["message"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_create_on_external_source_rejected(self, api_client, random_tenant, bare_general_data_source):
+        resp = api_client.post(
+            reverse(
+                "organization.tenant_department.list_create",
+                kwargs={"data_source_id": bare_general_data_source.id},
+            ),
+            data={"parent_department_id": 0, "name": "研发"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "指定的本地实名数据源不存在" in resp.data["message"]
 
 
 class TestTenantDepartmentUpdateApi:
@@ -309,19 +425,39 @@ class TestTenantDepartmentSearchApi:
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 0
 
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_returns_data_source_id(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        _create_root_tenant_department(ds_a, random_tenant, "rd_a", "研发中心")
+        _create_root_tenant_department(ds_b, random_tenant, "rd_b", "研发中心")
+
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "研发"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert all("data_source_id" in d for d in resp.data)
+        assert {d["data_source_id"] for d in resp.data} == {ds_a.id, ds_b.id}
+
 
 class TestOptionalTenantDepartmentListApi:
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_dept(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "部门"})
+    def test_search_dept(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_department.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "部门"},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
         assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_aa_keyword(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.optional_department.list"), data={"keyword": "AA"})
+    def test_search_aa_keyword(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_department.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "AA"},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
         assert {dept["name"] for dept in resp.data} == {"中心AA", "小组AAA", "小组BAA"}
@@ -330,6 +466,39 @@ class TestOptionalTenantDepartmentListApi:
             "公司/部门A/中心AA/小组AAA",
             "公司/部门B/中心BA/小组BAA",
         }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_optional_departments_isolated_by_data_source(
+        self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
+    ):
+        ds_a = bare_local_data_source
+        ds_b = bare_local_data_source_b
+        _create_root_tenant_department(ds_a, random_tenant, "opt_rd_a", "可选部门A")
+        _create_root_tenant_department(ds_b, random_tenant, "opt_rd_b", "可选部门B")
+
+        resp = api_client.get(
+            reverse("organization.optional_department.list", kwargs={"data_source_id": ds_a.id}),
+            data={"keyword": "可选部门"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {d["name"] for d in resp.data} == {"可选部门A"}
+
+        resp = api_client.get(
+            reverse("organization.optional_department.list", kwargs={"data_source_id": ds_b.id}),
+            data={"keyword": "可选部门"},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert {d["name"] for d in resp.data} == {"可选部门B"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_optional_departments_reject_external_data_source(
+        self, api_client, random_tenant, bare_general_data_source
+    ):
+        resp = api_client.get(
+            reverse("organization.optional_department.list", kwargs={"data_source_id": bare_general_data_source.id}),
+            data={"keyword": "x"},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestTenantDepartmentParentUpdateApi:
