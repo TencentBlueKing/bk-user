@@ -25,13 +25,15 @@
             "id": 4,
             "name": "中心AA",
             "has_child": true,
-            "has_user": true
+            "has_user": true,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         },
         {
             "id": 5,
             "name": "中心AB",
             "has_child": false,
-            "has_user": true
+            "has_user": true,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         }
     ]
 }
@@ -45,3 +47,6 @@
 | name      | string | 部门名称   |
 | has_child | bool   | 是否有子部门 |
 | has_user  | bool   | 是否有用户  |
+| ancestors | array  | 祖先部门列表（从根部门到父部门，不含自身） |
+| ancestors[].id   | int    | 祖先部门唯一标识，当前租户未同步该部门时为 `null` |
+| ancestors[].name | string | 祖先部门名称 |

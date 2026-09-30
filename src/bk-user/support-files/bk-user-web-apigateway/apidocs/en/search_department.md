@@ -27,7 +27,8 @@ keyword=中心A
             "owner_tenant_id": "default",
             "organization_path": "公司/部门A",
             "has_child": false,
-            "has_user": true
+            "has_user": true,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         },
         {
             "id": 5,
@@ -35,7 +36,8 @@ keyword=中心A
             "owner_tenant_id": "collaborative_tenant",
             "organization_path": "公司/部门A",
             "has_child": false,
-            "has_user": false
+            "has_user": false,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         }
     ]
 }
@@ -51,3 +53,6 @@ keyword=中心A
 | organization_path | string | Department organizational path, format: `Department 1/Department 2/.../Department n`                                                                           |
 | has_child         | bool   | Whether the department has sub-departments                                                                                                                     |
 | has_user          | bool   | Whether the department has users                                                                                                                               |
+| ancestors         | array  | Ancestor departments (from the root department to the parent department, excluding itself); `organization_path` is their `name` joined by `/` |
+| ancestors[].id    | int    | Unique identifier of the ancestor department, `null` if the department has not been synchronized to the current tenant |
+| ancestors[].name  | string | Ancestor department name |

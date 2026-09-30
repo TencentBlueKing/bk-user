@@ -87,7 +87,7 @@ class TenantDepartmentSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         tenant_depts = self.get_queryset()
         data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
-            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
+            "ancestors_map": TenantOrgPathHandler.get_dept_ancestors_map(self.tenant_id, data_source_department_ids),
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
         }
@@ -152,6 +152,7 @@ class TenantDepartmentChildrenListApi(OpenWebApiCommonMixin, generics.ListAPIVie
         context = {
             "has_user_map": TenantDepartmentHandler.get_has_user_map(data_source_department_ids),
             "has_child_map": TenantDepartmentHandler.get_has_child_map(data_source_department_ids),
+            "ancestors_map": TenantOrgPathHandler.get_dept_ancestors_map(self.tenant_id, data_source_department_ids),
         }
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_depts, many=True, context=context).data)
 
@@ -215,8 +216,14 @@ class TenantDepartmentUserListApi(OpenWebApiCommonMixin, generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         tenant_users = self.paginate_queryset(self.get_queryset())
         display_name_map = TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(tenant_users)
+        organizations_map = TenantOrgPathHandler.get_user_organizations_map(self.tenant_id, tenant_users)
         slz = TenantDepartmentUserListOutputSLZ(
-            tenant_users, many=True, context={"display_name_map": display_name_map}
+            tenant_users,
+            many=True,
+            context={
+                "display_name_map": display_name_map,
+                "organizations_map": organizations_map,
+            },
         )
         return self.get_paginated_response(slz.data)
 
@@ -250,6 +257,6 @@ class TenantDepartmentLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         tenant_depts = self.get_queryset()
         data_source_department_ids = [dept.data_source_department_id for dept in tenant_depts]
         context = {
-            "org_path_map": TenantOrgPathHandler.get_dept_organization_path_map(data_source_department_ids),
+            "ancestors_map": TenantOrgPathHandler.get_dept_ancestors_map(self.tenant_id, data_source_department_ids),
         }
         return Response(TenantDepartmentLookupOutputSLZ(tenant_depts, many=True, context=context).data)
