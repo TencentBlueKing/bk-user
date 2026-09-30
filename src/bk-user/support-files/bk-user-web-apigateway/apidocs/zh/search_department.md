@@ -27,7 +27,8 @@ keyword=中心A
             "owner_tenant_id": "default",
             "organization_path": "公司/部门A",
             "has_child": false,
-            "has_user": true
+            "has_user": true,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         },
         {
             "id": 5,
@@ -35,7 +36,8 @@ keyword=中心A
             "owner_tenant_id": "collaborative_tenant",
             "organization_path": "公司/部门A",
             "has_child": false,
-            "has_user": false
+            "has_user": false,
+            "ancestors": [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
         }
     ]
 }
@@ -51,3 +53,6 @@ keyword=中心A
 | organization_path | string | 部门组织路径，格式为：`部门1/部门2/.../部门n`               |
 | has_child         | bool   | 是否有子部门                                     |
 | has_user          | bool   | 是否有所属用户                                    |
+| ancestors         | array  | 祖先部门列表（从根部门到父部门，不含自身），`organization_path` 由其 `name` 依次以 `/` 拼接而成 |
+| ancestors[].id    | int    | 祖先部门唯一标识，当前租户未同步该部门时为 `null`             |
+| ancestors[].name  | string | 祖先部门名称                                     |

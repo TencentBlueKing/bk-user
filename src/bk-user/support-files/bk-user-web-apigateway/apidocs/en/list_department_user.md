@@ -24,12 +24,19 @@ Query the user list under the department according to the department ID
         {
             "bk_username": "q9k6bhqks0ckl5ew",
             "login_name": "zhangsan",
-            "display_name": "zhangsan(张三)"
+            "display_name": "zhangsan(张三)",
+            "organizations": [
+                [{"id": 1, "name": "公司"}]
+            ]
         },
         {
             "bk_username": "er0ugcammqwf1q5w",
             "login_name": "lisi",
-            "display_name": "lisi(李四)"
+            "display_name": "lisi(李四)",
+            "organizations": [
+                [{"id": 1, "name": "公司"}],
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
+            ]
         }
     ]
 }
@@ -42,3 +49,6 @@ Query the user list under the department according to the department ID
 | bk_username  | string | Blueking user's unique identifier           |
 | login_name   | string | Unique ID of the user within the enterprise |
 | display_name | string | User's display name                         |
+| organizations | array | The organization chains to which the user belongs, one chain per direct department (from the root department to the direct department, inclusive) |
+| organizations[][].id   | int    | Unique identifier of the department, `null` if the department has not been synchronized to the current tenant |
+| organizations[][].name | string | Department name |

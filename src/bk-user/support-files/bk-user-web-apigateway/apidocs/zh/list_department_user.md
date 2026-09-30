@@ -24,12 +24,19 @@
         {
             "bk_username": "q9k6bhqks0ckl5ew",
             "login_name": "zhangsan",
-            "display_name": "zhangsan(张三)"
+            "display_name": "zhangsan(张三)",
+            "organizations": [
+                [{"id": 1, "name": "公司"}]
+            ]
         },
         {
             "bk_username": "er0ugcammqwf1q5w",
             "login_name": "lisi",
-            "display_name": "lisi(李四)"
+            "display_name": "lisi(李四)",
+            "organizations": [
+                [{"id": 1, "name": "公司"}],
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}]
+            ]
         }
     ]
 }
@@ -42,3 +49,6 @@
 | bk_username  | string | 蓝鲸用户唯一标识  |
 | login_name   | string | 企业内用户唯一标识 |
 | display_name | string | 用户展示名     |
+| organizations | array | 用户所属组织链列表，每个直属部门一条链（从根部门到直属部门，含直属部门自身） |
+| organizations[][].id   | int    | 部门唯一标识，当前租户未同步该部门时为 `null` |
+| organizations[][].name | string | 部门名称 |
