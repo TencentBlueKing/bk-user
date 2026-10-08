@@ -14,24 +14,17 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
-from django.urls import path
 
-from . import views
+def gen_data_source_name(type: DataSourceTypeEnum, plugin_name: str = "") -> str:
+    """这里是为了快捷生成数据源名称，特别是内置、虚拟数据源，对于实名，不做冲突检测，由调用方解决"""
+    return plugin_name if type == DataSourceTypeEnum.REAL else type
 
-urlpatterns = [
-    # 认证源插件列表
-    path("plugins/", views.IdpPluginListApi.as_view(), name="idp_plugin.list"),
-    # 认证源插件配置元数据
-    path(
-        "plugins/<str:id>/config-meta/",
-        views.IdpPluginConfigMetaRetrieveApi.as_view(),
-        name="idp_plugin.config_meta.retrieve",
-    ),
-    # 认证源创建/获取列表
-    path("", views.IdpListCreateApi.as_view(), name="idp.list_create"),
-    # 认证源获取/更新/删除
-    path("<str:id>/", views.IdpRetrieveUpdateDestroyApi.as_view(), name="idp.retrieve_update_destroy"),
-    # 认证源启 / 停
-    path("<str:id>/status/", views.IdpStatusUpdateApi.as_view(), name="idp.update_status"),
-]
+
+def gen_virtual_data_source_name() -> str:
+    return gen_data_source_name(DataSourceTypeEnum.VIRTUAL)
+
+
+def gen_builtin_management_data_source_name() -> str:
+    return gen_data_source_name(DataSourceTypeEnum.BUILTIN_MANAGEMENT)

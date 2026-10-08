@@ -40,6 +40,7 @@ from bkuser.apps.tenant.models import (
     VirtualUserAppRelation,
     VirtualUserOwnerRelation,
 )
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.utils.django import get_model_dict
 
 
@@ -49,12 +50,11 @@ class DataSourceAuditor:
     def __init__(self, operator: str, tenant_id: str):
         self.operator = operator
         self.tenant_id = tenant_id
-        self.data_befores: Dict[str, Any] = {}
+        self.data_before: Dict[str, Any] = {}
 
-    def pre_record_data_before(self, data_source: DataSource, waiting_delete_idps: List[Idp] | None = None):
+    def pre_record_data_before(self, data_source: DataSource):
         """记录变更前的相关数据记录"""
-        self.data_befores["data_source"] = get_model_dict(data_source)
-        self.data_befores["idps"] = [get_model_dict(idp) for idp in (waiting_delete_idps or [])]
+        self.data_before = get_model_dict(data_source)
 
     def record_create(self, data_source: DataSource):
         """记录数据源创建操作"""
@@ -75,33 +75,19 @@ class DataSourceAuditor:
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
-            data_before=self.data_befores["data_source"],
+            data_before=self.data_before,
             data_after=get_model_dict(data_source),
         )
 
     def record_delete(self):
         """记录数据源删除操作"""
-        data_source_audit_object = AuditObject(
-            id=self.data_befores["data_source"]["id"],
-            type=ObjectTypeEnum.DATA_SOURCE,
-            operation=OperationEnum.DELETE_DATA_SOURCE,
-            data_before=self.data_befores["data_source"],
-        )
-        # 记录 idp 删除前数据
-        idp_audit_objects = [
-            AuditObject(
-                id=data_before_idp["id"],
-                type=ObjectTypeEnum.IDP,
-                operation=OperationEnum.DELETE_IDP,
-                data_before=data_before_idp,
-            )
-            for data_before_idp in self.data_befores["idps"]
-        ]
-
-        batch_add_audit_records(
+        add_audit_record(
             operator=self.operator,
             tenant_id=self.tenant_id,
-            objects=[data_source_audit_object] + idp_audit_objects,
+            operation=OperationEnum.DELETE_DATA_SOURCE,
+            object_type=ObjectTypeEnum.DATA_SOURCE,
+            object_id=self.data_before["id"],
+            data_before=self.data_before,
         )
 
     def record_sync(self, data_source: DataSource, options: DataSourceSyncOptions):
@@ -639,9 +625,17 @@ class IdpAuditor:
         self.tenant_id = tenant_id
         self.data_before: Dict[str, Any] = {}
 
+    @staticmethod
+    def _get_audit_data(idp: Idp) -> Dict[str, Any]:
+        data = get_model_dict(idp)
+        data["data_source_match_rules"] = [
+            rule.model_dump() for rule in IdpDataSourceRelationHandler.get_real_match_rules(idp)
+        ]
+        return data
+
     def pre_record_data_before(self, idp: Idp):
         """记录变更前的相关数据记录"""
-        self.data_before = get_model_dict(idp)
+        self.data_before = self._get_audit_data(idp)
 
     def record_create(self, idp: Idp):
         """记录认证源创建操作"""
@@ -651,7 +645,7 @@ class IdpAuditor:
             operation=OperationEnum.CREATE_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
-            data_after=get_model_dict(idp),
+            data_after=self._get_audit_data(idp),
         )
 
     def record_update(self, idp: Idp):
@@ -663,7 +657,18 @@ class IdpAuditor:
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
             data_before=self.data_before,
-            data_after=get_model_dict(idp),
+            data_after=self._get_audit_data(idp),
+        )
+
+    def record_delete(self):
+        """记录认证源删除操作"""
+        add_audit_record(
+            operator=self.operator,
+            tenant_id=self.tenant_id,
+            operation=OperationEnum.DELETE_IDP,
+            object_type=ObjectTypeEnum.IDP,
+            object_id=self.data_before["id"],
+            data_before=self.data_before,
         )
 
 

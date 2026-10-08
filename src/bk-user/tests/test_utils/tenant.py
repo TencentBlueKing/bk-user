@@ -18,6 +18,7 @@ from typing import Optional
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.name import gen_builtin_management_data_source_name
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import TenantSyncOptions
@@ -50,7 +51,10 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-        defaults={"plugin_config": plugin_config},
+        defaults={
+            "name": gen_builtin_management_data_source_name(),
+            "plugin_config": plugin_config,
+        },
     )
 
     TenantUserDisplayNameExpressionConfig.objects.get_or_create(

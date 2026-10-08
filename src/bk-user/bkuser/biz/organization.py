@@ -31,7 +31,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord
+from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.plugins.local.utils import gen_dept_code
@@ -248,6 +248,38 @@ class TenantOrgPathHandler:
         return {
             user_id: [org_path_map[dept_id] for dept_id in user_dept_id_map[user_id] if dept_id in org_path_map]
             for user_id in data_source_user_ids
+        }
+
+    @staticmethod
+    def get_tenant_user_dept_names_map(tenant_id: str, tenant_users: List[TenantUser]) -> Dict[str, List[str]]:
+        """获取一批租户用户的部门信息
+
+        :return: {租户用户 ID: [部门名称]}
+        """
+        data_source_user_ids = [u.data_source_user_id for u in tenant_users]
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids)
+
+        data_source_dept_ids = relations.values_list("department_id", flat=True)
+        # 数据源部门 ID -> 部门名称
+        data_source_dept_id_name_map = {
+            dept.data_source_department_id: dept.data_source_department.name
+            for dept in TenantDepartment.objects.filter(
+                tenant_id=tenant_id, data_source_department_id__in=data_source_dept_ids
+            ).select_related("data_source_department")
+        }
+
+        # 数据源用户 ID -> 部门 ID 列表
+        data_source_user_dept_ids_map = defaultdict(list)
+        for rel in relations:
+            data_source_user_dept_ids_map[rel.user_id].append(rel.department_id)
+
+        return {
+            user.id: [
+                data_source_dept_id_name_map[dept_id]
+                for dept_id in data_source_user_dept_ids_map.get(user.data_source_user_id, [])
+                if dept_id in data_source_dept_id_name_map
+            ]
+            for user in tenant_users
         }
 
     @staticmethod
