@@ -63,17 +63,6 @@ from bkuser.common.validators import validate_phone_with_country_code
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
     excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（如 Leader 不能是自己）", required=False)
-    excluded_department_id = serializers.IntegerField(
-        help_text="排除该租户部门的直属用户（子部门用户不排除）", required=False
-    )
-
-    def validate_excluded_department_id(self, department_id: int) -> int:
-        if not TenantDepartment.objects.filter(
-            tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"], id=department_id
-        ).exists():
-            raise ValidationError(_("部门不存在"))
-
-        return department_id
 
 
 class OptionalTenantUserListOutputSLZ(serializers.Serializer):

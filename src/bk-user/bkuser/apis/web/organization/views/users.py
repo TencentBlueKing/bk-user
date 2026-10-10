@@ -111,9 +111,7 @@ class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListA
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
-        slz = OptionalTenantUserListInputSLZ(
-            data=self.request.query_params, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
-        )
+        slz = OptionalTenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -126,13 +124,6 @@ class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListA
 
         if excluded_user_id := params.get("excluded_user_id"):
             queryset = queryset.exclude(id=excluded_user_id)
-
-        if excluded_department_id := params.get("excluded_department_id"):
-            tenant_dept = TenantDepartment.objects.get(id=excluded_department_id)
-            dept_user_ids = DataSourceDepartmentUserRelation.objects.filter(
-                department_id=tenant_dept.data_source_department_id
-            ).values_list("user_id", flat=True)
-            queryset = queryset.exclude(data_source_user_id__in=dept_user_ids)
 
         return queryset.select_related("data_source_user")[: self.search_limit]
 
