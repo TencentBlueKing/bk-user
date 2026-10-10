@@ -8,7 +8,7 @@ export default function useOrganizationAside() {
   const organizationStore = useOrganizationStore();
   const treeRef = ref();
   const treeData = ref<IOrg[]>([]);
-  /** 根部门请求缓存（按租户+数据源），同一租户同一数据源下多次展开时复用，切换租户时清除。 */
+  /** 根部门请求缓存（按数据源），同一数据源下多次展开时复用。 */
   let rootDepartmentsCache: { key: string; data: Promise<IOrg[]> } | null = null;
 
   /** 格式化为 bk-tree 可用的数据结构，并用数据源维度生成唯一节点 key。 */
@@ -27,8 +27,16 @@ export default function useOrganizationAside() {
       };
     });
 
-  /** 当前租户的数据源作为部门树的固定一级节点。 */
-  const buildSourceTree = (): IOrg[] => organizationStore.currentTenant.data_sources.map(source => ({
+  /** 数据源一级节点的最小数据结构 */
+  type SourceTreeItem = { id: number; name: string; logo?: string; plugin_id: string };
+
+  /**
+   * 将数据源列表构建为部门树的固定一级节点。
+   * @description 默认取当前租户的数据源；协同租户等场景可传入自定义数据源列表
+   */
+  const buildSourceTree = (
+    sources: SourceTreeItem[] = organizationStore.currentTenant.data_sources,
+  ): IOrg[] => sources.map(source => ({
     id: source.id,
     name: source.name,
     data_source_id: source.id,
@@ -39,11 +47,11 @@ export default function useOrganizationAside() {
     async: true,
   }));
 
-  /** 获取指定租户下指定数据源的根部门列表。 */
-  const getRootDepartments = async (tenantId: string, dataSourceId?: number) => {
-    const cacheKey = `${tenantId}:${dataSourceId ?? ''}`;
+  /** 获取指定数据源的根部门列表。 */
+  const getRootDepartments = async (dataSourceId: number) => {
+    const cacheKey = `${dataSourceId}`;
     if (!rootDepartmentsCache || rootDepartmentsCache.key !== cacheKey) {
-      const data = getDepartmentsList(tenantId, { parent_department_id: 0, data_source_id: dataSourceId })
+      const data = getDepartmentsList(dataSourceId, { parent_department_id: 0 })
         .then(res => res.data)
         .catch((error) => {
           rootDepartmentsCache = null;
@@ -54,29 +62,23 @@ export default function useOrganizationAside() {
     return rootDepartmentsCache.data;
   };
 
-  /** 清除根部门请求缓存（切换租户时调用）。 */
+  /** 清除根部门请求缓存（重建本地租户部门树时调用）。 */
   const clearRootDepartmentsCache = () => {
     rootDepartmentsCache = null;
   };
 
   /** 获取远程数据 */
-  const getRemoteData = async (item: Partial<IOrg>, currentTenantId: string) => {
+  const getRemoteData = async (item: Partial<IOrg>) => {
     const dataSourceId = Number(item.data_source_id);
 
     // 数据源节点，获取根部门列表
     if (item.nodeType === 'source') {
-      const rootDepartments = await getRootDepartments(currentTenantId, dataSourceId);
+      const rootDepartments = await getRootDepartments(dataSourceId);
       return formatDataSourceTreeData(rootDepartments, dataSourceId);
     }
 
     // 部门节点，获取子部门列表
-    const res = await getDepartmentsList(
-      currentTenantId,
-      {
-        parent_department_id: item.id,
-        data_source_id: dataSourceId,
-      }
-    );
+    const res = await getDepartmentsList(dataSourceId, { parent_department_id: item.id });
     return formatDataSourceTreeData(res.data, dataSourceId);
   };
 

@@ -56,7 +56,7 @@
       class="organization-table-main"
       :data="tableData"
       :pagination="pagination"
-      v-bkloading="{ loading: isLoading }"
+      v-bkloading="{ loading: isLoading, zIndex: 10 }"
       :virtual-y-config="{ enabled: true, gt: 10 }"
       @checkbox-change="handleSelectTable"
       @checkbox-all="handleSelectAll"
@@ -73,7 +73,9 @@
       <template #prepend v-if="selectList.length > 0">
         <div class="table-total">
           <span>{{ $t('当前已选择')}} <b>{{selectList.length}}</b> {{ $t('条数据，可以批量')}}</span>
+          <!-- 租户层级为跨数据源用户，无法定位具体数据源，不展示移动入口 -->
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="table-operate ml-[12px]"
             :disabled="isSelectedNotLocalSource"
@@ -85,6 +87,7 @@
             {{$t('移出当前组织')}}
           </bk-button>
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="table-operate ml-[12px]"
             :disabled="isSelectedNotLocalSource"
@@ -96,6 +99,7 @@
             {{$t('追加目标组织')}}
           </bk-button>
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="table-operate ml-[12px]"
             :disabled="isSelectedNotLocalSource"
@@ -269,6 +273,7 @@
       multiple
       auto-focus
       :clearable="false"
+      :loading="userListLoading"
       id-key="id"
       multiple-mode="tag"
       display-key="username"
@@ -282,18 +287,18 @@
               :style="{ display: 'inline-block' }"
               class="text-[#979BA5] leading-[20px]"
               :class="{
-                'w-[370px]': !!item.organization_paths.length,
-                'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
+                'w-[370px]': !!item.organization_paths?.length,
+                'w-[270px]': !!(item.organization_paths?.length && item.status === 'disabled')
               }"
             >
-              {{ item.organization_paths[0] }}
+              {{ item.organization_paths?.[0] }}
             </bk-overflow-title>
             <bk-tag
-              v-if="item.organization_paths.length > 1"
+              v-if="item.organization_paths?.length > 1"
               theme="info"
               class="inline-block !m-0 h-[20px] !ml-[2px]"
               v-bk-tooltips="{
-                content: item.organization_paths.join('\n'),
+                content: item.organization_paths?.join('\n'),
                 placement: 'right',
                 extCls: 'tag-tool-tips',
               }"
@@ -475,6 +480,7 @@ import {
   batchCreate,
   batchDelete,
   delTenantsUser,
+  getOptionalUsers,
   getOrganizationPaths,
   getTenantsUserDetail,
   getTenantsUserList,
@@ -486,7 +492,7 @@ import {
   updateTenantsUserStatus,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
-import type { PutBatchUpdateParams, TenantsUserDetailData, TenantsUserItemData, TenantsUserListData } from '@/http/types/organizationFiles';
+import type { OptionalUserItemData, PutBatchUpdateParams, TenantsUserDetailData, TenantsUserItemData, TenantsUserListData, TenantsUserListParams } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
 import useOrganizationStore from '@/store/organization';
 
@@ -555,7 +561,7 @@ const password = ref('');
 const dataSource = ref([]);
 const moveDialogShow = ref(false);
 /** 批量操作回调类型（清空并加入/追加目标组织共用，因两者 target_department_ids 元素类型不同，统一用 any） */
-type BatchConfirmFn = (params: any) => Promise<unknown>;
+type BatchConfirmFn = (dataSourceId: number, params: any) => Promise<unknown>;
 
 /** 当前批量操作的上下文 */
 const currentHandle = ref<{
@@ -568,7 +574,8 @@ const importDialogShow = ref(false);
 const editDetailsInfo = ref({} as TenantsUserDetailData);
 const getUsersDialogShow = ref(false);
 const getUsersValue = ref([]);
-const getUserList = ref([]);
+const getUserList = ref<OptionalUserItemData[]>([]);
+const userListLoading = ref(false);
 const chooseDepartments = ref([]);
 const passwordTips = ref([]);
 const isOrgPathLoading = ref(false);
@@ -589,8 +596,6 @@ type TableDataItem = TenantsUserItemData & { organization_paths?: string[] };
 const tableData = ref<TableDataItem[]>([]);
 const isResetPasswordLoading = ref(false);
 
-/** 是否为租户层级 */
-const isTenantLevel = computed(() => organizationStore.curSelectedTenant === 'current' && organizationStore.curSelectedType === 'tenant');
 /** 是否为协同租户 */
 const isCollaborativeUsers = computed(() => organizationStore.curSelectedTenant === 'collaboration');
 const searchSelectFilters = computed(() => {
@@ -619,14 +624,12 @@ const isShowImport = computed(() => {
   return false;
 });
 /**
-   * 是否展示
-   *  - 快速录入
-   *  - 拉取已有用户
-   * @description 不为协同租户 && 不为租户层级 && 为本地数据源
-   */
+ * 是否展示「快速录入」「拉取已有用户」
+ * @description 不为协同租户 && 选中本地数据源下的部门节点（两者都需要目标部门 ID，数据源根节点下后端校验 department_id 不通过）
+ */
 const isShowBtn = computed(() => (
   !isCollaborativeUsers.value
-    && !isTenantLevel.value
+    && organizationStore.curSelectedType === 'department'
     && isLocalDataSource.value));
 
 /** 当前选中的是否包含非本地数据源 */
@@ -705,11 +708,10 @@ const handleBatchRemoveFromOrg = () => {
     title: `${t('确认将选中的用户移出')}${organizationStore.selectedOrg.deptName}`,
     onConfirm: async () => {
       const params = {
-        data_source_id: organizationStore.selectedOrg.dataSourceId,
         user_ids: getBatchUserIds(true) as string,
         source_department_id: organizationStore.selectedOrg.deptId,
       };
-      await batchDelete(params);
+      await batchDelete(organizationStore.selectedOrg.dataSourceId, params);
       moveDialogShow.value = false;
       reloadList();
     },
@@ -734,13 +736,30 @@ const handleBatchReplaceOrg = () => {
  * 拉取已有用户
  * @description 仅支持从当前选中的本地数据源拉取已有用户
  */
+/** 拉取已有用户请求序号：远程搜索存在竞态（慢响应后到会覆盖新结果），过期响应直接丢弃 */
+let getUserListRequestId = 0;
+
 const getUserListFun = async (keyword = '') => {
-  const res = await getUsersList({
-    tenant_id: organizationStore.selectedOrg.tenantId,
-    keyword,
-    data_source_id: organizationStore.selectedOrg.dataSourceId,
-  });
-  getUserList.value = res.data;
+  getUserListRequestId += 1;
+  const requestId = getUserListRequestId;
+  userListLoading.value = true;
+  try {
+    const res = await getOptionalUsers(organizationStore.selectedOrg.deptId, {
+      keyword: keyword || undefined,
+    });
+    // 响应返回前已触发新的搜索，本次为过期响应，直接丢弃
+    if (requestId !== getUserListRequestId) return;
+    getUserList.value = res.data || [];
+  } catch (e) {
+    console.warn(e);
+    // 仅最新请求失败时清空下拉，避免过期请求的失败覆盖新结果
+    if (requestId === getUserListRequestId) getUserList.value = [];
+  } finally {
+    // 仅最新请求允许关闭 loading，避免慢请求提前终止新请求的加载态
+    if (requestId === getUserListRequestId) {
+      userListLoading.value = false;
+    }
+  }
 };
 
 /** 点击拉取已有用户按钮 */
@@ -766,11 +785,10 @@ const remoteMethod = (word = '') => {
 const confirmGetUser = async () => {
   try {
     const param = {
-      data_source_id: organizationStore.selectedOrg.dataSourceId,
       target_department_ids: [organizationStore.selectedOrg.deptId],
       user_ids: getUsersValue.value,
     };
-    await batchCreate(param);
+    await batchCreate(organizationStore.selectedOrg.dataSourceId, param);
     getUsersDialogShow.value = false;
     Message({ theme: 'success', message: t('拉取已有用户成功') });
     handleClear();
@@ -802,17 +820,16 @@ const handleOperations = async (prefix: string, suffix: string) => {
   const isMore = users.length > 3;
   const showStr = isMore ? `...${t('等')}${users.length}${t('个用户')}` : '';
   moveTips.value = `${prefix}${users.slice(0, 3).join('、')}${showStr}${suffix}`;
-  const res = await optionalDepartmentsList({ data_source_id: organizationStore.selectedOrg.dataSourceId });
+  const res = await optionalDepartmentsList(organizationStore.selectedOrg.dataSourceId, {});
   dataSource.value = res.data;
 };
 
 const confirmOperations = async () => {
   const params: PutBatchUpdateParams = {
-    data_source_id: organizationStore.selectedOrg.dataSourceId,
     user_ids: getBatchUserIds() as string[],
     target_department_ids: selectedValue.value,
   };
-  await currentHandle.value.confirmFn(params);
+  await currentHandle.value.confirmFn(organizationStore.selectedOrg.dataSourceId, params);
   moveDialogShow.value = false;
   handleClear();
 };
@@ -830,30 +847,53 @@ const handleHoverOrg = (row: TableDataItem) => {
   }
 };
 
+/**
+ * 按当前选中节点类型选择请求：
+ * 租户节点 → 租户级用户列表；数据源/部门节点 → 数据源内用户列表（部门节点追加 department_id）
+ */
+const fetchUserList = (params: TenantsUserListParams) => {
+  const { curSelectedType, selectedOrg } = organizationStore;
+  if (curSelectedType === 'tenant') {
+    return getTenantsUserList(selectedOrg.tenantId, params);
+  }
+  // 数据源/部门节点必带 dataSourceId；deptId 为 0（数据源节点）时查数据源全量
+  const { dataSourceId, deptId } = selectedOrg;
+  return getUsersList(dataSourceId as number, deptId ? { ...params, department_id: deptId } : params);
+};
+
+/** 用户列表请求序号：切换节点存在竞态（慢请求后到会覆盖新数据），过期响应直接丢弃 */
+let tenantsUserListRequestId = 0;
+
 const initTenantsUserList = async () => {
+  tenantsUserListRequestId += 1;
+  const requestId = tenantsUserListRequestId;
+  // 切换节点或翻页后旧勾选项已失效，立即清空，避免批量操作带着旧用户请求新数据源
+  selectList.value = [];
   try {
-    tableData.value = [];
-    selectList.value = [];
     isLoading.value = true;
     const params = {
       ...searchSelectFilters.value,
       page: pagination.current,
       page_size: pagination.limit,
-      department_id: organizationStore.selectedOrg.deptId,
       recursive: !recursive.value,
-      ...(organizationStore.curSelectedType === 'source'
-        ? { data_source_id: organizationStore.selectedOrg.dataSourceId }
-        : {}),
     };
-    const data = (await getTenantsUserList(organizationStore.selectedOrg.tenantId, params))?.data;
-    pagination.count = (data as TenantsUserListData).count;
-    tableData.value = (data as TenantsUserListData).results;
+    const data = (await fetchUserList(params))?.data as TenantsUserListData;
+    // 响应返回前已切换节点/翻页，本次为过期响应，直接丢弃
+    if (requestId !== tenantsUserListRequestId) return;
+    pagination.count = data.count;
+    tableData.value = data.results;
     clearErrorType();
   } catch (e) {
     console.warn(e);
+    // 过期请求的失败同样不污染最新视图
+    if (requestId !== tenantsUserListRequestId) return;
+    // setTypeToError 内部会清空 tableData，失败时无需手动清空
     setTypeToError();
   } finally {
-    isLoading.value = false;
+    // 仅最新请求允许关闭 loading，避免慢请求提前终止新请求的加载态
+    if (requestId === tenantsUserListRequestId) {
+      isLoading.value = false;
+    }
   }
 };
 

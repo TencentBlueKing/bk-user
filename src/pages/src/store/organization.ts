@@ -89,6 +89,12 @@ export default defineStore('organization', () => {
     return 'department';
   });
 
+  /**
+   * 当前选中是否为租户层级（跨数据源用户视图）
+   * @description 租户层级下 dataSourceId 为 undefined，数据源级操作不可用
+   */
+  const isTenantLevel = computed(() => curSelectedTenant.value === 'current' && curSelectedType.value === 'tenant');
+
   /** 更新当前组织信息 */
   const updateSelectedOrg = (org: SelectedOrg) => {
     // 使用默认值覆盖，若未传入deptId则默认为0，即代表当前选中的实际为顶部租户，deptId为0
@@ -181,6 +187,7 @@ export default defineStore('organization', () => {
     currentTenant,
     curSelectedTenant,
     curSelectedType,
+    isTenantLevel,
     curSelectedDataSource,
     isConfiguredLocalSource,
     isSearchTree,

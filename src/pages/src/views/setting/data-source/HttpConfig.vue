@@ -4,260 +4,269 @@
     class="data-source-content user-scroll-y"
     :z-index="10"
   >
-    <bk-form
-      v-if="props.curStep === 1 && serverConfigData.plugin_id"
-      form-type="vertical"
-      ref="formRef1"
-      :model="serverConfigData"
-      :rules="rulesServerConfig">
-      <DataSourceBasicInfo
-        v-model="serverConfigData.name"
-      />
-      <Row :title="$t('认证配置')">
-        <bk-form-item :label="$t('认证方式')" required>
-          <bk-radio-group
-            v-model="serverConfigData.auth_config.method"
-            @change="handleChange">
-            <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
-            <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
-            <bk-radio-button style="width: 120px;" label="bk_apigateway">{{ $t('蓝鲸网关') }}</bk-radio-button>
-          </bk-radio-group>
-        </bk-form-item>
-        <bk-form-item
-          v-if="serverConfigData.auth_config.method === 'bearer_token'"
-          class="w-[560px]"
-          label="Token"
-          property="auth_config.bearer_token"
-          required>
-          <bk-input
-            type="password"
-            autocomplete="new-password"
-            v-model="serverConfigData.auth_config.bearer_token"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <div v-else-if="serverConfigData.auth_config.method === 'basic_auth'" class="item-flex w-[560px]">
-          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
-            <bk-input
-              v-model="serverConfigData.auth_config.username"
-              @focus="handleFocus"
-              @input="handleChange"
-            />
-          </bk-form-item>
-          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
-            <passwordInput
-              v-model="serverConfigData.auth_config.password"
-              @focus="handleFocus"
-              @input="inputPassword" />
-          </bk-form-item>
-        </div>
-        <div v-else-if="serverConfigData.auth_config.method === 'bk_apigateway'" class="item-flex w-[560px]">
-          <bk-form-item label="gateway_name" property="auth_config.gateway_name" required>
-            <bk-input
-              v-model="serverConfigData.auth_config.gateway_name"
-              @focus="handleFocus"
-              @input="handleChange"
-            />
-          </bk-form-item>
-          <bk-form-item label="gateway_stage" property="auth_config.gateway_stage" required>
-            <bk-input
-              v-model="serverConfigData.auth_config.gateway_stage"
-              @focus="handleFocus"
-              @input="handleChange"
-            />
-          </bk-form-item>
-        </div>
-      </Row>
-      <Row :title="$t('服务配置')" class="!shadow-none !border-b-0">
-        <bk-form-item
-          v-if="isShowServerConfig"
-          class="w-[560px]"
-          :label="$t('服务地址')"
-          property="server_config.server_base_url"
-          required>
-          <bk-input
-            v-model="serverConfigData.server_config.server_base_url"
-            :placeholder="validate.serverBaseUrl.message"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <div class="api-url-style">
-          <bk-form-item
-            class="w-[560px] mr-[24px]"
-            :label="$t('用户数据 API 路径')"
-            property="server_config.user_api_path"
-            required>
-            <bk-input
-              v-model="serverConfigData.server_config.user_api_path"
-              :placeholder="validate.apiPath.message"
-              @focus="handleFocus"
-              @input="handleChange" />
-          </bk-form-item>
-          <QueryParams
-            :current-id="dataSourceId"
-            :params-list="serverConfigData.server_config.user_api_query_params"
-            @save-params="(list) => saveParams(list, 'user')"
-            @update-status="handleChange" />
-        </div>
-        <div class="api-url-style">
-          <bk-form-item
-            class="w-[560px] mr-[24px]"
-            :label="$t('组织数据 API 路径')"
-            property="server_config.department_api_path"
-            required>
-            <bk-input
-              v-model="serverConfigData.server_config.department_api_path"
-              :placeholder="validate.apiPath.message"
-              @focus="handleFocus"
-              @input="handleChange" />
-          </bk-form-item>
-          <QueryParams
-            :current-id="dataSourceId"
-            :params-list="serverConfigData.server_config.department_api_query_params"
-            @save-params="(list) => saveParams(list, 'department')"
-            @update-status="handleChange" />
-        </div>
-        <div class="flex w-[560px]">
-          <bk-form-item class="flex-1" :label="$t('分页请求每页数量')" property="server_config.page_size" required>
-            <bk-select
-              :clearable="false"
-              v-model="serverConfigData.server_config.page_size"
-              @change="handleChange">
-              <bk-option
-                v-for="item in pageSizeList"
-                :key="item.value"
-                :value="item.value"
-                :label="item.label"
-              />
-            </bk-select>
-          </bk-form-item>
-          <bk-form-item
-            class="ml-[24px] flex-1"
-            :label="$t('请求超时时间')"
-            property="server_config.request_timeout"
-            required>
-            <bk-input
-              type="number"
-              :suffix="$t('秒')"
-              :min="5"
-              :max="120"
-              v-model="serverConfigData.server_config.request_timeout"
-              @change="handleChange"
-            />
-          </bk-form-item>
-          <bk-form-item class="ml-[24px] flex-1" :label="$t('重试次数')" property="server_config.retries" required>
-            <bk-input
-              type="number"
-              :suffix="$t('次')"
-              :min="0"
-              :max="3"
-              v-model="serverConfigData.server_config.retries"
-              @change="handleChange"
-            />
-          </bk-form-item>
-        </div>
-      </Row>
-      <div class="btn">
-        <div>
-          <bk-button
-            class="mr-[8px]"
-            theme="primary"
-            :outline="!nextDisabled"
-            :loading="connectionLoading"
-            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-            {{ $t('下一步') }}
-          </bk-button>
-          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-        </div>
-        <div class="connection-alert" v-if="connectionStatus !== null">
-          <bk-alert
-            :theme="connectionStatus ? 'success' : 'error'"
-            :show-icon="false">
-            <template #title>
-              <span>
-                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
-                <i v-else class="bk-sq-icon icon-close-fill" />
-                {{ connectionText }}
-              </span>
+    <StepLayout :step="step" :steps="steps">
+      <template #step-1>
+        <bk-form
+          v-if="serverConfigData.plugin_id"
+          class="flex flex-col divide-y divide-[#EAEBF0]"
+          form-type="vertical"
+          ref="formRef1"
+          :model="serverConfigData"
+          :rules="rulesServerConfig">
+          <DataSourceBasicInfo
+            v-model="serverConfigData.name"
+          />
+          <Row :title="$t('认证配置')">
+            <bk-form-item :label="$t('认证方式')" required>
+              <bk-radio-group
+                v-model="serverConfigData.auth_config.method"
+                @change="handleChange">
+                <bk-radio-button style="width: 120px;" label="bearer_token">Bearer Token</bk-radio-button>
+                <bk-radio-button style="width: 120px;" label="basic_auth">Basic Auth</bk-radio-button>
+                <bk-radio-button style="width: 120px;" label="bk_apigateway">{{ $t('蓝鲸网关') }}</bk-radio-button>
+              </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item
+              v-if="serverConfigData.auth_config.method === 'bearer_token'"
+              class="w-[560px]"
+              label="Token"
+              property="auth_config.bearer_token"
+              required>
+              <bk-input
+                type="password"
+                autocomplete="new-password"
+                v-model="serverConfigData.auth_config.bearer_token"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <div v-else-if="serverConfigData.auth_config.method === 'basic_auth'" class="item-flex w-[560px]">
+              <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
+                <bk-input
+                  v-model="serverConfigData.auth_config.username"
+                  @focus="handleFocus"
+                  @input="handleChange"
+                />
+              </bk-form-item>
+              <bk-form-item :label="$t('密码')" property="auth_config.password" required>
+                <passwordInput
+                  v-model="serverConfigData.auth_config.password"
+                  @focus="handleFocus"
+                  @input="inputPassword" />
+              </bk-form-item>
+            </div>
+            <div v-else-if="serverConfigData.auth_config.method === 'bk_apigateway'" class="item-flex w-[560px]">
+              <bk-form-item label="gateway_name" property="auth_config.gateway_name" required>
+                <bk-input
+                  v-model="serverConfigData.auth_config.gateway_name"
+                  @focus="handleFocus"
+                  @input="handleChange"
+                />
+              </bk-form-item>
+              <bk-form-item label="gateway_stage" property="auth_config.gateway_stage" required>
+                <bk-input
+                  v-model="serverConfigData.auth_config.gateway_stage"
+                  @focus="handleFocus"
+                  @input="handleChange"
+                />
+              </bk-form-item>
+            </div>
+          </Row>
+          <Row :title="$t('服务配置')">
+            <bk-form-item
+              v-if="isShowServerConfig"
+              class="w-[560px]"
+              :label="$t('服务地址')"
+              property="server_config.server_base_url"
+              required>
+              <bk-input
+                v-model="serverConfigData.server_config.server_base_url"
+                :placeholder="validate.serverBaseUrl.message"
+                @focus="handleFocus"
+                @input="handleChange" />
+            </bk-form-item>
+            <div class="api-url-style">
+              <bk-form-item
+                class="w-[560px] mr-[24px]"
+                :label="$t('用户数据 API 路径')"
+                property="server_config.user_api_path"
+                required>
+                <bk-input
+                  v-model="serverConfigData.server_config.user_api_path"
+                  :placeholder="validate.apiPath.message"
+                  @focus="handleFocus"
+                  @input="handleChange" />
+              </bk-form-item>
+              <QueryParams
+                :current-id="dataSourceId"
+                :params-list="serverConfigData.server_config.user_api_query_params"
+                @save-params="(list) => saveParams(list, 'user')"
+                @update-status="handleChange" />
+            </div>
+            <div class="api-url-style">
+              <bk-form-item
+                class="w-[560px] mr-[24px]"
+                :label="$t('组织数据 API 路径')"
+                property="server_config.department_api_path"
+                required>
+                <bk-input
+                  v-model="serverConfigData.server_config.department_api_path"
+                  :placeholder="validate.apiPath.message"
+                  @focus="handleFocus"
+                  @input="handleChange" />
+              </bk-form-item>
+              <QueryParams
+                :current-id="dataSourceId"
+                :params-list="serverConfigData.server_config.department_api_query_params"
+                @save-params="(list) => saveParams(list, 'department')"
+                @update-status="handleChange" />
+            </div>
+            <div class="flex w-[560px]">
+              <bk-form-item class="flex-1" :label="$t('分页请求每页数量')" property="server_config.page_size" required>
+                <bk-select
+                  :clearable="false"
+                  v-model="serverConfigData.server_config.page_size"
+                  @change="handleChange">
+                  <bk-option
+                    v-for="item in pageSizeList"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </bk-select>
+              </bk-form-item>
+              <bk-form-item
+                class="ml-[24px] flex-1"
+                :label="$t('请求超时时间')"
+                property="server_config.request_timeout"
+                required>
+                <bk-input
+                  type="number"
+                  :suffix="$t('秒')"
+                  :min="5"
+                  :max="120"
+                  v-model="serverConfigData.server_config.request_timeout"
+                  @change="handleChange"
+                />
+              </bk-form-item>
+              <bk-form-item class="ml-[24px] flex-1" :label="$t('重试次数')" property="server_config.retries" required>
+                <bk-input
+                  type="number"
+                  :suffix="$t('次')"
+                  :min="0"
+                  :max="3"
+                  v-model="serverConfigData.server_config.retries"
+                  @change="handleChange"
+                />
+              </bk-form-item>
+            </div>
+          </Row>
+          <div class="data-source-footer-btn !border-t-0">
+            <div>
+              <bk-button
+                class="mr-[8px]"
+                theme="primary"
+                :outline="!nextDisabled"
+                :loading="connectionLoading"
+                @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+              <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+                {{ $t('下一步') }}
+              </bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+            </div>
+            <div class="connection-alert" v-if="connectionStatus !== null">
+              <bk-alert
+                :theme="connectionStatus ? 'success' : 'error'"
+                :show-icon="false">
+                <template #title>
+                  <span>
+                    <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                    <i v-else class="bk-sq-icon icon-close-fill" />
+                    {{ connectionText }}
+                  </span>
+                </template>
+              </bk-alert>
+            </div>
+          </div>
+        </bk-form>
+      </template>
+      <template #step-2>
+        <bk-form
+          class="flex flex-col divide-y divide-[#EAEBF0]"
+          form-type="vertical"
+          ref="formRef2"
+          :model="fieldSettingData"
+          :rules="rulesFieldSetting">
+          <Row :title="$t('字段映射')">
+            <FieldMapping
+              :field-setting-data="fieldSettingData"
+              :api-fields="apiFields"
+              :rules="rulesFieldSetting"
+              :source-field="$t('用户管理字段')"
+              :target-field="$t('API返回字段')"
+              @change-api-fields="changeApiFields"
+              @handle-add-field="handleAddField"
+              @handle-delete-field="handleDeleteField"
+              @change-custom-field="changeCustomField" />
+          </Row>
+          <Row :title="$t('同步配置')">
+            <bk-form-item :label="$t('同步周期')" required>
+              <bk-select
+                class="w-[560px]"
+                :clearable="false"
+                v-model="fieldSettingData.sync_config.sync_period"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_CONFIG_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+            <bk-form-item :label="$t('同步超时时间')" required>
+              <bk-select
+                class="w-[560px]"
+                :clearable="false"
+                v-model="fieldSettingData.sync_config.sync_timeout"
+                @change="handleChange">
+                <bk-option
+                  v-for="item in SYNC_TIMEOUT_LIST"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </bk-select>
+            </bk-form-item>
+          </Row>
+          <Row :title="$t('冲突配置')">
+            <template #header>
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
             </template>
-          </bk-alert>
-        </div>
-      </div>
-    </bk-form>
-    <bk-form
-      v-else
-      form-type="vertical"
-      ref="formRef2"
-      :model="fieldSettingData"
-      :rules="rulesFieldSetting">
-      <Row :title="$t('字段映射')">
-        <FieldMapping
-          :field-setting-data="fieldSettingData"
-          :api-fields="apiFields"
-          :rules="rulesFieldSetting"
-          :source-field="$t('用户管理字段')"
-          :target-field="$t('API返回字段')"
-          @change-api-fields="changeApiFields"
-          @handle-add-field="handleAddField"
-          @handle-delete-field="handleDeleteField"
-          @change-custom-field="changeCustomField" />
-      </Row>
-      <Row :title="$t('同步配置')">
-        <bk-form-item :label="$t('同步周期')" required>
-          <bk-select
-            class="w-[560px]"
-            :clearable="false"
-            v-model="fieldSettingData.sync_config.sync_period"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_CONFIG_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
+            <ConflictConfig
+              ref="conflictConfigRef"
+              :config="fieldSettingData.username_generate_config"
+              :disabled="isEdit"
             />
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item :label="$t('同步超时时间')" required>
-          <bk-select
-            class="w-[560px]"
-            :clearable="false"
-            v-model="fieldSettingData.sync_config.sync_timeout"
-            @change="handleChange">
-            <bk-option
-              v-for="item in SYNC_TIMEOUT_LIST"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </bk-select>
-        </bk-form-item>
-      </Row>
-      <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
-        <template #header>
-          <ConflictTips :has-other-data-source="hasOtherDataSource" />
-        </template>
-        <ConflictConfig
-          ref="conflictConfigRef"
-          :config="fieldSettingData.username_generate_config"
-          :disabled="isEdit"
-        />
-      </Row>
-      <div class="btn">
-        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-          {{ isEdit ? $t('保存') : $t('提交') }}
-        </bk-button>
-        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-      </div>
-    </bk-form>
+          </Row>
+          <div class="data-source-footer-btn !border-t-0">
+            <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+            <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+              {{ isEdit ? $t('保存') : $t('提交') }}
+            </bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
+          </div>
+        </bk-form>
+      </template>
+    </StepLayout>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
+import StepLayout from './StepLayout.vue';
 
 import { isNil } from '@/common/util';
 import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
@@ -277,24 +286,16 @@ import {
 } from '@/http';
 import { AuthConfig, TestConnectionParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { useDataSourceStore, useUser } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
 const props = defineProps({
-  curStep: {
-    type: Number,
-  },
   dataSourceId: {
     type: Number,
   },
-  isReset: {
-    type: Boolean,
-    default: false,
-  },
 });
 
-const emit = defineEmits(['updateCurStep', 'updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
@@ -303,9 +304,15 @@ const dataSourceStore = useDataSourceStore();
 const hasOtherDataSource = computed(() => dataSourceStore.dataSource
   .some(item => item.id !== props.dataSourceId));
 
+// 当前步骤由组件自持（校验/请求完成后自行更新），不再经容器转发
+const step = ref(1);
+const steps = [
+  { title: t('服务配置') },
+  { title: t('字段设置') },
+];
+
 const isLoading = ref(false);
 const formRef1 = ref();
-const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
 
 const formRef2 = ref();
 const conflictConfigRef = ref();
@@ -365,21 +372,6 @@ watch(() => serverConfigData.value?.auth_config?.method, (curMethod) => {
     serverConfigData.value.auth_config.tenant_id = userStore.user.tenant_id;
   } else {
     serverConfigData.value.auth_config.tenant_id = '';
-  }
-});
-
-// 重置数据
-watch(() => props.isReset, () => {
-  if (props.curStep === 1) {
-    nextDisabled.value = true;
-    connectionStatus.value = null;
-    serverConfigData.value = defaultServerConfig();
-  } else {
-    const { field_mapping: fieldMapping, addFieldList, sync_config: syncConfig } = fieldSettingData.value;
-    fieldMapping.builtin_fields.forEach(item => item.source_field = '');
-    addFieldList.forEach(item => item.source_field = '');
-    apiFields.value.forEach(item => item.disabled = false);
-    syncConfig.sync_period = 24 * 60;
   }
 });
 
@@ -468,7 +460,7 @@ const saveParams = (list, type) => {
 
 const handleNext = async () => {
   try {
-    emit('updateCurStep', 2);
+    step.value = 2;
     isLoading.value = true;
     const res = await getFields();
     if (isEdit.value) {
@@ -552,17 +544,9 @@ const handleNext = async () => {
 };
 
 const handleLastStep = async () => {
-  let enableLeave = true;
-  if (window.changeInput) {
-    enableLeave = await editLeaveBefore();
-  }
-  if (!enableLeave) {
-    return Promise.resolve(enableLeave);
-  }
-
   nextDisabled.value = true;
   connectionStatus.value = null;
-  emit('updateCurStep', 1);
+  step.value = 1;
 
   fieldSettingData.value.field_mapping.builtin_fields = [];
   fieldSettingData.value.field_mapping.custom_fields = [];
@@ -743,9 +727,6 @@ const handleFocus = () => {
   window.changeInput = true;
 };
 
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
 </script>
 
 <style lang="less" scoped>
@@ -767,25 +748,7 @@ const handleCancel = () => {
   }
 }
 
-.row-wrapper {
-  padding: 0 24px;
-  margin-bottom: 0;
-  border-bottom: 1px solid #EAEBF0;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.btn {
-  position: relative;
-  padding: 0px 0 24px 24px;
-  background-color: #fff;
-
-  button {
-    min-width: 88px;
-  }
-
+.data-source-footer-btn {
   .connection-alert {
     width: 100%;
     margin-top: 8px;

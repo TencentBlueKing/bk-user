@@ -15,21 +15,25 @@ import type {
   DepartmentsItemData,
   DepartmentsListParams,
   GetDepartmentsListParams,
+  GetOptionalUsersParams,
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
   OptionalLeaderListItemData,
   OptionalLeaderListParams,
+  OptionalUserItemData,
   OrganizationPathsData,
   PasswordRuleData,
   PatchBatchUpdateParams,
   PutBatchUpdateParams,
   SearchKeywordParams,
   SearchOrganizationItemData,
+  SearchTenantUsersParams,
   SearchUserItemData,
   TenantListParams,
   TenantsUserDetailData,
   TenantsUserListData,
+  TenantsUserListParams,
   UpdateTenantParams,
 } from './types/organizationFiles';
 
@@ -81,17 +85,16 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
 export const getCurrentTenant = () => http.get<ResponseData<CurrentTenantData>>(`${prefix}/current-tenant/`);
 
 /**
- * 当前租户下的部门列表，parent_department_id 为 0 时 / 不传 parent_department_id 均表示获取根部门
- * 传入 data_source_id 则只返回该数据源的根部门，否则返回该租户下全部实名数据源的根部门
- * @param tenantId 租户id
+ * 获取数据源下的部门列表，parent_department_id 为 0 时 / 不传 parent_department_id 均表示获取根部门
+ * @param dataSourceId 数据源 ID
  * @param params 查询参数
  */
-export const getDepartmentsList = (tenantId: string, params: GetDepartmentsListParams) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/${tenantId}/departments/`, undefined, { params });
+export const getDepartmentsList = (dataSourceId: number, params: GetDepartmentsListParams) => http.get<ResponseData<DepartmentsItemData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/departments/`, undefined, { params });
 
 /**
  * 创建租户组织
  */
-export const addDepartment = (id: string, params: AddDepartmentParams) => http.post<ResponseData<AddDepartmentResult>>(`${prefix}/tenants/${id}/departments/`, params);
+export const addDepartment = (dataSourceId: number, params: AddDepartmentParams) => http.post<ResponseData<AddDepartmentResult>>(`${prefix}/tenants/data-sources/${dataSourceId}/departments/`, params);
 
 /**
  * 删除租户组织
@@ -111,7 +114,7 @@ export const getCollaboration = () => http.get<ResponseData<CollaborationItemDat
 /**
  * 拉取租户用户列表
  */
-export const getTenantsUserList = (tenantId: string, params: any) => http.get<ResponseData<TenantsUserListData>>(`${prefix}/tenants/${tenantId}/users/`, params);
+export const getTenantsUserList = (tenantId: string, params: TenantsUserListParams, config?: Config) => http.get<ResponseData<TenantsUserListData>>(`${prefix}/tenants/${tenantId}/users/`, params, config);
 
 /**
  * 获取租户用户详情
@@ -154,27 +157,27 @@ export const resetTenantsUserPassword = (id: string, params: any) => http.put(`$
 /**
  * 批量删除用户
  */
-export const batchDeleteUser = (params: BatchDeleteUserParams) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, params);
+export const batchDeleteUser = (dataSourceId: number, params: BatchDeleteUserParams) => http.delete(`${prefix}/tenants/data-sources/${dataSourceId}/users/operations/batch_delete/`, params);
 
 /**
  * 移出当前组织
  */
-export const batchDelete = (params: BatchDeleteParams) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
+export const batchDelete = (dataSourceId: number, params: BatchDeleteParams) => http.delete(`${prefix}/tenants/data-sources/${dataSourceId}/department-user-relations/operations/batch_delete/`, params);
 
 /**
  * 移至目标组织
  */
-export const patchBatchUpdate = (params: PatchBatchUpdateParams) => http.patch(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const patchBatchUpdate = (dataSourceId: number, params: PatchBatchUpdateParams) => http.patch(`${prefix}/tenants/data-sources/${dataSourceId}/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 从其他组织拉取 / 追加目标组织
  */
-export const batchCreate = (params: BatchCreateParams) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
+export const batchCreate = (dataSourceId: number, params: BatchCreateParams) => http.post(`${prefix}/tenants/data-sources/${dataSourceId}/department-user-relations/operations/batch_create/`, params);
 
 /**
  * 清空并加入组织
  */
-export const putBatchUpdate = (params: PutBatchUpdateParams) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+export const putBatchUpdate = (dataSourceId: number, params: PutBatchUpdateParams) => http.put(`${prefix}/tenants/data-sources/${dataSourceId}/department-user-relations/operations/batch_update/`, params);
 
 /**
  * 批量停用/启用
@@ -184,7 +187,7 @@ export const batchUpdateStatus = (params: any) => http.put(`${prefix}/tenants/us
 /**
  * 批量重置密码
  */
-export const batchResetPassword = (params: BatchResetPasswordParams) => http.put(`${prefix}/tenants/users/password/operations/batch_reset/`, params);
+export const batchResetPassword = (dataSourceId: number, params: BatchResetPasswordParams) => http.put(`${prefix}/tenants/data-sources/${dataSourceId}/users/password/operations/batch_reset/`, params);
 
 /**
  * 批量续期
@@ -194,18 +197,18 @@ export const batchAccountExpired = (params: any) => http.put(`${prefix}/tenants/
 /**
  * 批量修改上级
  */
-export const batchLeader = (params: BatchLeaderParams) => http.put(`${prefix}/tenants/users/leader/operations/batch_update/`, params);
+export const batchLeader = (dataSourceId: number, params: BatchLeaderParams) => http.put(`${prefix}/tenants/data-sources/${dataSourceId}/users/leader/operations/batch_update/`, params);
 
 /**
  * 批量修改自定义字段
  */
-export const batchCustomField = (params: any) => http.put(`${prefix}/tenants/users/custom-field/operations/batch_update/`, params);
+export const batchCustomField = (dataSourceId: number, params: any) => http.put(`${prefix}/tenants/data-sources/${dataSourceId}/users/custom-field/operations/batch_update/`, params);
 
 
 /**
  * 快速录入
  */
-export const operationsCreate = (params: BatchCreatePreviewParams) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
+export const operationsCreate = (dataSourceId: number, params: BatchCreatePreviewParams) => http.post(`${prefix}/tenants/data-sources/${dataSourceId}/users/operations/batch_create/`, params);
 
 /**
  * 快速录入字段 tips 来源
@@ -215,17 +218,22 @@ export const getFieldsTips = () => http.get(`${prefix}/tenants/required-user-fie
 /**
  * 快速录入数据预览
  */
-export const batchCreatePreview = (params: BatchCreatePreviewParams) => http.post<ResponseData<BatchCreatePreviewItemData[]>>(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
+export const batchCreatePreview = (dataSourceId: number, params: BatchCreatePreviewParams) => http.post<ResponseData<BatchCreatePreviewItemData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/users/operations/batch_create_preview/`, params);
 
 /**
  * 可选部门
  */
-export const optionalDepartmentsList = (params: OptionalDepartmentsListParams) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/optional-departments/`, params);
+export const optionalDepartmentsList = (dataSourceId: number, params: OptionalDepartmentsListParams) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/optional-departments/`, params);
+
+/**
+ * 获取部门可选用户列表（已排除部门内已有用户，用于拉取已有用户）
+ */
+export const getOptionalUsers = (departmentId: number, params: GetOptionalUsersParams, config?: Config) => http.get<ResponseData<OptionalUserItemData[]>>(`${prefix}/tenants/departments/${departmentId}/optional-users/`, params, config);
 
 /**
  * 可选leader
  */
-export const optionalLeaderList = (params: OptionalLeaderListParams) => http.get<ResponseData<OptionalLeaderListItemData[]>>(`${prefix}/tenants/optional-leaders/`, params);
+export const optionalLeaderList = (dataSourceId: number, params: OptionalLeaderListParams, config?: Config) => http.get<ResponseData<OptionalLeaderListItemData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/optional-leaders/`, params, config);
 
 /**
  * 搜索组织
@@ -233,9 +241,14 @@ export const optionalLeaderList = (params: OptionalLeaderListParams) => http.get
 export const searchOrganization = (params: SearchKeywordParams, config?: Config) => http.get<ResponseData<SearchOrganizationItemData[]>>(`${prefix}/tenants/departments/`, params, config);
 
 /**
- * 获取租户用户列表
+ * 获取数据源内用户列表
  */
-export const getUsersList = (params: GetUserListParams, config?: Config) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params, config);
+export const getUsersList = (dataSourceId: number, params: GetUserListParams, config?: Config) => http.get<ResponseData<TenantsUserListData>>(`${prefix}/tenants/data-sources/${dataSourceId}/users/`, params, config);
+
+/**
+ * 搜索租户用户（跨数据源，用于全局搜索）
+ */
+export const searchTenantUsers = (params: SearchTenantUsersParams, config?: Config) => http.get<ResponseData<SearchUserItemData[]>>(`${prefix}/tenants/users/`, params, config);
 
 /**
  * 租户下部门单个用户详情

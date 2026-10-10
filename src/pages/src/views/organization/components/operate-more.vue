@@ -150,7 +150,7 @@ const defaultDropdownList = ref<any[]>([
       isAddSubOrg.value = false;
       orgDialogVisible.value = false;
       moveDialogShow.value = true;
-      const res = await optionalDepartmentsList({ data_source_id: props.dataSourceId });
+      const res = await optionalDepartmentsList(props.dataSourceId, {});
       dataSource.value = res.data;
       moveOrg.value = item.id;
       moveTips.value = `${t('将')}${item.name}${t('从当前组织移出')}, ${t('并追加到以下组织')}`;
@@ -242,9 +242,8 @@ const handleOrg = () => {
     const newOrg = {
       name: deptName.value,
       parent_department_id: curDeptId,
-      data_source_id: props.dataSourceId,
     };
-    addDepartment(props.tenant.id, newOrg).then((res) => {
+    addDepartment(props.dataSourceId, newOrg).then((res) => {
       const node = {
         id: res.data.id,
         name: deptName.value,

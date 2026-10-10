@@ -45,23 +45,25 @@
           </bk-form-item>
         </Row>
       </bk-form>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        theme="primary"
-        @click="saveEdit"
-        :disabled="isDisabled"
-      >
-        {{ $t('保存') }}
-      </bk-button>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        @click="cancelEdit"
-      >
-        {{ $t('取消') }}
-      </bk-button>
+      <div class="mt-[16px]">
+        <bk-button
+          class="min-w-[88px] mr-[8px]"
+          theme="primary"
+          @click="saveEdit"
+          :disabled="isDisabled"
+        >
+          {{ $t('保存') }}
+        </bk-button>
+        <bk-button
+          class="min-w-[88px] mr-[8px]"
+          @click="cancelEdit"
+        >
+          {{ $t('取消') }}
+        </bk-button>
+      </div>
     </div>
     <div v-else>
-      <Row title="">
+      <div class="bg-white rounded-sm shadow-[0_2px_4px_0_#1919290d] p-[24px]">
         <div class="flex items-top justify-between">
           <div>
             <LabelContent :label="$t('租户名称')">{{ formData.name }}</LabelContent>
@@ -86,7 +88,7 @@
             {{ $t('编辑') }}
           </bk-button>
         </div>
-      </Row>
+      </div>
     </div>
   </div>
 </template>
