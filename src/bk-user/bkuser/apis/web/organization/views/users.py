@@ -99,25 +99,24 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
 class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
-    """可选租户用户上级列表（下拉框数据用）"""
+    """可选租户用户列表（下拉框数据用，如选择上级、拉取用户至部门）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
     # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
-    serializer_class = OptionalTenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
+        cur_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
+
         slz = OptionalTenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
-        data_source = self.get_local_real_data_source(self.kwargs["data_source_id"])
 
-        # 上级必须与被编辑的用户属于同一个本地实名数据源
-        queryset = TenantUser.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source=data_source
-        ).select_related("data_source_user")
+        # 可选用户必须与目标用户 / 部门属于同一个本地实名数据源
+        queryset = TenantUser.objects.filter(tenant_id=cur_tenant_id, data_source=data_source)
         if kw := params.get("keyword"):
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
@@ -126,7 +125,7 @@ class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListA
         if excluded_user_id := params.get("excluded_user_id"):
             queryset = queryset.exclude(id=excluded_user_id)
 
-        return queryset[: self.search_limit]
+        return queryset.select_related("data_source_user")[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.user"],
@@ -135,7 +134,11 @@ class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListA
         responses={status.HTTP_200_OK: OptionalTenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
+        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
+        resp_data = OptionalTenantUserListOutputSLZ(tenant_users, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
 
 
 class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
