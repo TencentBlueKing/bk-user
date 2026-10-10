@@ -71,7 +71,7 @@
               </bk-form-item>
             </div>
           </Row>
-          <Row :title="$t('服务配置')" class="!shadow-none !border-b-0">
+          <Row :title="$t('服务配置')">
             <bk-form-item
               v-if="isShowServerConfig"
               class="w-[560px]"
@@ -171,7 +171,7 @@
               <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
                 {{ $t('下一步') }}
               </bk-button>
-              <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
             </div>
             <div class="connection-alert" v-if="connectionStatus !== null">
               <bk-alert
@@ -238,9 +238,10 @@
               </bk-select>
             </bk-form-item>
           </Row>
-          <Row :title="$t('冲突配置')" class="!shadow-none !border-b-0">
+          <Row :title="$t('冲突配置')">
             <template #header>
-              <ConflictTips :has-other-data-source="hasOtherDataSource" />
+              <!-- 冲突规则编辑态不支持更新且控件已禁用，提示语随之隐藏 -->
+              <ConflictTips v-if="!isEdit" :has-other-data-source="hasOtherDataSource" />
             </template>
             <ConflictConfig
               ref="conflictConfigRef"
@@ -253,7 +254,7 @@
             <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
               {{ isEdit ? $t('保存') : $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
           </div>
         </bk-form>
       </template>
@@ -262,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import QueryParams from './query-params/QueryParams.vue';
 import StepLayout from './StepLayout.vue';
@@ -285,7 +286,6 @@ import {
 } from '@/http';
 import { AuthConfig, TestConnectionParams, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { useDataSourceStore, useUser } from '@/store';
 import { SYNC_CONFIG_LIST, SYNC_TIMEOUT_LIST } from '@/utils';
 
@@ -295,7 +295,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['updateSuccess']);
+const emit = defineEmits(['cancel', 'updateSuccess']);
 
 const isEdit = computed(() => !isNil(props.dataSourceId));
 const validate = useValidate();
@@ -543,7 +543,11 @@ const handleNext = async () => {
   }
 };
 
+const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
+
 const handleLastStep = async () => {
+  // 返回上一步会重置字段映射，存在未保存修改时需二次确认
+  if (window.changeInput && !(await editLeaveBefore())) return;
   nextDisabled.value = true;
   connectionStatus.value = null;
   step.value = 1;
@@ -727,9 +731,6 @@ const handleFocus = () => {
   window.changeInput = true;
 };
 
-const handleCancel = () => {
-  router.push({ name: 'dataSource' });
-};
 </script>
 
 <style lang="less" scoped>
