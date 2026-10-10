@@ -31,6 +31,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
+    OptionalTenantDepartmentUserListInputSLZ,
+    OptionalTenantDepartmentUserListOutputSLZ,
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
     TenantUserAccountExpiredAtBatchUpdateInputSLZ,
@@ -95,6 +97,7 @@ from bkuser.biz.validators import validate_user_new_password
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
@@ -184,6 +187,60 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             "org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids),
         }
         resp_data = TenantUserSearchOutputSLZ(tenant_users, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
+
+
+class OptionalTenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """可拉取至指定租户部门的租户用户列表（下拉框数据用）"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        cur_tenant_id = self.get_current_tenant_id()
+        # 仅当前租户本地实名数据源下的部门支持拉取用户
+        tenant_dept = TenantDepartment.objects.filter(
+            id=self.kwargs["id"],
+            tenant_id=cur_tenant_id,
+            data_source__owner_tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source__plugin_id=DataSourcePluginEnum.LOCAL,
+        ).first()
+        if not tenant_dept:
+            raise error_codes.OBJECT_NOT_FOUND.f(_("部门不存在"))
+
+        slz = OptionalTenantDepartmentUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        # 用户与部门必须属于同一数据源，且排除已直属于该部门的用户
+        dept_user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id=tenant_dept.data_source_department_id
+        ).values_list("user_id", flat=True)
+        queryset = TenantUser.objects.filter(
+            tenant_id=cur_tenant_id, data_source_id=tenant_dept.data_source_id
+        ).exclude(data_source_user_id__in=dept_user_ids)
+        if kw := params.get("keyword"):
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
+            )
+
+        return queryset.select_related("data_source_user")[: self.search_limit]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="获取可拉取至指定部门的租户用户列表",
+        query_serializer=OptionalTenantDepartmentUserListInputSLZ(),
+        responses={status.HTTP_200_OK: OptionalTenantDepartmentUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_users = self.get_queryset()
+        data_source_user_ids = [tenant_user.data_source_user_id for tenant_user in tenant_users]
+        context = {"org_path_map": TenantOrgPathHandler.get_user_organization_paths_map(data_source_user_ids)}
+        resp_data = OptionalTenantDepartmentUserListOutputSLZ(tenant_users, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
 
 

@@ -142,6 +142,12 @@ urlpatterns = [
         views.TenantDepartmentParentUpdateApi.as_view(),
         name="organization.tenant_department.parent.update",
     ),
+    # 可拉取至当前租户部门的租户用户列表（下拉框数据用）
+    path(
+        "tenants/departments/<str:id>/optional-users/",
+        views.OptionalTenantDepartmentUserListApi.as_view(),
+        name="organization.tenant_department.optional_user.list",
+    ),
     # 租户用户 - 批量更新自定义字段信息
     path(
         "tenants/data-sources/<int:data_source_id>/users/custom-field/operations/batch_update/",

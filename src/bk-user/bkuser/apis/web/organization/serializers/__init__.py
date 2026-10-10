@@ -39,6 +39,8 @@ from .tenants import (
     TenantRetrieveOutputSLZ,
 )
 from .users import (
+    OptionalTenantDepartmentUserListInputSLZ,
+    OptionalTenantDepartmentUserListOutputSLZ,
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
     TenantUserAccountExpiredAtBatchUpdateInputSLZ,
@@ -85,6 +87,8 @@ __all__ = [
     # 租户用户
     "OptionalTenantUserListInputSLZ",
     "OptionalTenantUserListOutputSLZ",
+    "OptionalTenantDepartmentUserListInputSLZ",
+    "OptionalTenantDepartmentUserListOutputSLZ",
     "TenantUserSearchInputSLZ",
     "TenantUserSearchOutputSLZ",
     "TenantUserListInputSLZ",

@@ -33,6 +33,7 @@ from .tenants import (
     RequiredTenantUserFieldListApi,
 )
 from .users import (
+    OptionalTenantDepartmentUserListApi,
     OptionalTenantUserListApi,
     TenantUserAccountExpiredAtBatchUpdateApi,
     TenantUserAccountExpiredAtUpdateApi,
@@ -66,6 +67,7 @@ __all__ = [
     "TenantDepartmentParentUpdateApi",
     # 租户用户
     "OptionalTenantUserListApi",
+    "OptionalTenantDepartmentUserListApi",
     "TenantUserSearchApi",
     "TenantUserListApi",
     "TenantUserListCreateByDataSourceApi",
