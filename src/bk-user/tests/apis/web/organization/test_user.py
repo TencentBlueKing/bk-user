@@ -129,7 +129,7 @@ class TestTenantUserSearchApi:
         assert {u["data_source_id"] for u in resp.data} == {ds_a.id, ds_b.id}
 
 
-class TestOptionalTenantDepartmentUserListApi:
+class TestOptionalTenantUserListApi:
     @staticmethod
     def _get_dept(tenant, name: str) -> TenantDepartment:
         return TenantDepartment.objects.get(
@@ -137,12 +137,51 @@ class TestOptionalTenantDepartmentUserListApi:
         )
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_exclude_direct_members(self, api_client, random_tenant):
-        dept = self._get_dept(random_tenant, "中心AA")
-        resp = api_client.get(reverse("organization.tenant_department.optional_user.list", kwargs={"id": dept.id}))
+    def test_search_username(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "shi"},
+        )
 
         assert resp.status_code == status.HTTP_200_OK
-        # 中心AA 直属用户 lisi, zhaoliu 被排除，子部门小组AAA 的 liuqi 仍可拉取
+        assert {user["username"] for user in resp.data} == {"lushi", "linshiyi", "baishier"}
+        assert {user["full_name"] for user in resp.data} == {"鲁十", "林十一", "白十二"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_full_name(self, api_client, random_tenant, full_local_data_source):
+        resp = api_client.get(
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "十一"},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
+        assert resp.data[0]["username"] == "linshiyi"
+        assert resp.data[0]["full_name"] == "林十一"
+        assert resp.data[0]["status"] == "enabled"
+        assert resp.data[0]["organization_paths"] == ["公司/部门A/中心AB/小组ABA"]
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_with_excluded_user(self, api_client, random_tenant, full_local_data_source):
+        baishier = TenantUser.objects.get(data_source_user__username="baishier", tenant=random_tenant)
+        resp = api_client.get(
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "shi", "excluded_user_id": baishier.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert {user["username"] for user in resp.data} == {"lushi", "linshiyi"}
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_search_with_excluded_department(self, api_client, random_tenant, full_local_data_source):
+        dept = self._get_dept(random_tenant, "中心AA")
+        resp = api_client.get(
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"excluded_department_id": dept.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        # 中心AA 直属用户 lisi, zhaoliu 被排除，子部门小组AAA 的 liuqi 仍可选
         assert {u["username"] for u in resp.data} == {
             "zhangsan",
             "wangwu",
@@ -156,38 +195,20 @@ class TestOptionalTenantDepartmentUserListApi:
         }
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_keyword(self, api_client, random_tenant):
-        dept = self._get_dept(random_tenant, "中心AA")
-        url = reverse("organization.tenant_department.optional_user.list", kwargs={"id": dept.id})
-
-        resp = api_client.get(url, data={"keyword": "liu"})
-        assert resp.status_code == status.HTTP_200_OK
-        assert [u["username"] for u in resp.data] == ["liuqi"]
-
-        resp = api_client.get(url, data={"keyword": "十一"})
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 1
-        assert resp.data[0]["username"] == "linshiyi"
-        assert resp.data[0]["full_name"] == "林十一"
-        assert resp.data[0]["status"] == "enabled"
-        assert resp.data[0]["organization_paths"] == ["公司/部门A/中心AB/小组ABA"]
-
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
-    def test_exclude_other_data_sources(
+    def test_search_with_excluded_department_ignore_other_data_sources(
         self, api_client, random_tenant, full_local_data_source, bare_local_data_source_b
     ):
         _create_tenant_user(bare_local_data_source_b, random_tenant, "ob", "baishier_b", "uid_other_ds")
 
         dept = self._get_dept(random_tenant, "中心AA")
         resp = api_client.get(
-            reverse("organization.tenant_department.optional_user.list", kwargs={"id": dept.id}),
-            data={"keyword": "hi"},
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"keyword": "hi", "excluded_department_id": dept.id},
         )
 
         assert resp.status_code == status.HTTP_200_OK
-        # 协同数据源 & 同租户其他数据源中存在同名用户，但不应出现在候选列表中
-        assert len(resp.data) == 3  # noqa: PLR2004  magic number here is ok
+        # 协同数据源 & 同租户其他数据源中存在同名用户，但不应出现在可选列表中
         assert {u["username"] for u in resp.data} == {"lushi", "linshiyi", "baishier"}
         assert set(
             TenantUser.objects.filter(id__in=[u["id"] for u in resp.data]).values_list("data_source_id", flat=True)
@@ -195,71 +216,44 @@ class TestOptionalTenantDepartmentUserListApi:
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
     @pytest.mark.usefixtures("_init_collaboration_users_depts")
-    def test_collaboration_department(self, api_client, random_tenant, full_local_data_source):
+    def test_excluded_department_from_collaboration(self, api_client, random_tenant, full_local_data_source):
         collaboration_dept = (
             TenantDepartment.objects.filter(tenant=random_tenant).exclude(data_source=full_local_data_source).first()
         )
-
         resp = api_client.get(
-            reverse("organization.tenant_department.optional_user.list", kwargs={"id": collaboration_dept.id})
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"excluded_department_id": collaboration_dept.id},
         )
 
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_non_local_data_source_department(self, api_client, random_tenant, bare_general_data_source):
-        ds_dept = DataSourceDepartment.objects.create(data_source=bare_general_data_source, name="通用部门")
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_excluded_department_from_other_data_source(
+        self, api_client, random_tenant, full_local_data_source, bare_local_data_source_b
+    ):
+        ds_dept = DataSourceDepartment.objects.create(data_source=bare_local_data_source_b, name="其他数据源部门")
         tenant_dept = TenantDepartment.objects.create(
-            tenant=random_tenant, data_source=bare_general_data_source, data_source_department=ds_dept
+            tenant=random_tenant, data_source=bare_local_data_source_b, data_source_department=ds_dept
         )
-
         resp = api_client.get(
-            reverse("organization.tenant_department.optional_user.list", kwargs={"id": tenant_dept.id})
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"excluded_department_id": tenant_dept.id},
         )
 
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_department_not_exists(self, api_client, random_tenant):
-        resp = api_client.get(reverse("organization.tenant_department.optional_user.list", kwargs={"id": 10**8}))
-
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-
-
-class TestOptionalTenantUserListApi:
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_username(self, api_client, random_tenant, full_local_data_source):
-        resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
-            data={"keyword": "shi"},
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert {user["username"] for user in resp.data} == {"lushi", "linshiyi", "baishier"}
-        assert {user["full_name"] for user in resp.data} == {"鲁十", "林十一", "白十二"}
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_full_name(self, api_client, random_tenant, full_local_data_source):
+    @pytest.mark.parametrize("department_id", [10**8, "abc"])
+    def test_excluded_department_invalid(self, api_client, full_local_data_source, department_id):
         resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
-            data={"keyword": "十二"},
+            reverse("organization.optional_user.list", kwargs={"data_source_id": full_local_data_source.id}),
+            data={"excluded_department_id": department_id},
         )
 
-        assert resp.status_code == status.HTTP_200_OK
-        assert len(resp.data) == 1  # noqa: PLR2004  magic number here is ok
-        assert resp.data[0]["username"] == "baishier"
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_search_with_excluded_user(self, api_client, random_tenant, full_local_data_source):
-        baishier = TenantUser.objects.get(data_source_user__username="baishier", tenant=random_tenant)
-        resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": full_local_data_source.id}),
-            data={"keyword": "shi", "excluded_user_id": baishier.id},
-        )
-
-        assert resp.status_code == status.HTTP_200_OK
-        assert {user["username"] for user in resp.data} == {"lushi", "linshiyi"}
-
-    @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_optional_leaders_isolated_by_data_source(
+    def test_isolated_by_data_source(
         self, api_client, random_tenant, bare_local_data_source, bare_local_data_source_b
     ):
         ds_a = bare_local_data_source
@@ -268,25 +262,26 @@ class TestOptionalTenantUserListApi:
         _create_tenant_user(ds_b, random_tenant, "olb", "opt_leader_b", "uid_opt_leader_b")
 
         resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": ds_a.id}),
+            reverse("organization.optional_user.list", kwargs={"data_source_id": ds_a.id}),
             data={"keyword": "opt_leader"},
         )
         assert resp.status_code == status.HTTP_200_OK
         assert {u["username"] for u in resp.data} == {"opt_leader_a"}
 
         resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": ds_b.id}),
+            reverse("organization.optional_user.list", kwargs={"data_source_id": ds_b.id}),
             data={"keyword": "opt_leader"},
         )
         assert resp.status_code == status.HTTP_200_OK
         assert {u["username"] for u in resp.data} == {"opt_leader_b"}
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_optional_leaders_reject_external_data_source(self, api_client, random_tenant, bare_general_data_source):
+    def test_reject_external_data_source(self, api_client, random_tenant, bare_general_data_source):
         resp = api_client.get(
-            reverse("organization.optional_leader.list", kwargs={"data_source_id": bare_general_data_source.id}),
+            reverse("organization.optional_user.list", kwargs={"data_source_id": bare_general_data_source.id}),
             data={"keyword": "x"},
         )
+
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 

@@ -62,13 +62,30 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
-    excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（Leader 不能是自己）", required=False)
+    excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（如 Leader 不能是自己）", required=False)
+    excluded_department_id = serializers.IntegerField(
+        help_text="排除该租户部门的直属用户（子部门用户不排除）", required=False
+    )
+
+    def validate_excluded_department_id(self, department_id: int) -> int:
+        if not TenantDepartment.objects.filter(
+            tenant_id=self.context["tenant_id"], data_source_id=self.context["data_source_id"], id=department_id
+        ).exists():
+            raise ValidationError(_("部门不存在"))
+
+        return department_id
 
 
 class OptionalTenantUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+    organization_paths = serializers.SerializerMethodField(help_text="组织路径")
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
+    def get_organization_paths(self, obj: TenantUser) -> List[str]:
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
@@ -89,22 +106,6 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_tenant_name(self, obj: TenantUser) -> str:
         return self.context["tenant_name_map"][obj.data_source.owner_tenant_id]
-
-    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
-    def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"].get(obj.data_source_user_id, [])
-
-
-class OptionalTenantDepartmentUserListInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
-
-
-class OptionalTenantDepartmentUserListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户 ID")
-    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
-    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
-    organization_paths = serializers.SerializerMethodField(help_text="组织路径")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
