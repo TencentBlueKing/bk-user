@@ -15,27 +15,16 @@
         @click="handleCollapse"
       >
         <template v-if="showContent">
-          <div v-if="currentType !== 'local'" class="steps-wrapper">
-            <bk-steps
-              ext-cls="steps"
-              :cur-step="curStep"
-              :steps="typeSteps"
-            />
-          </div>
           <div>
             <Http
               v-if="currentType === 'general'"
-              :cur-step="curStep"
               :data-source-id="dataSourceId"
-              :is-reset="isReset"
-              @update-cur-step="updateCurStep"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
             <Ldap
               v-if="currentType === 'ldap'"
-              :cur-step="curStep"
               :data-source-id="dataSourceId"
-              :is-reset="isReset"
-              @update-cur-step="updateCurStep"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
             <Local
               v-if="currentType === 'local'"
@@ -47,9 +36,7 @@
               v-if="!isNotJsonSchemaIds.includes(currentType)"
               :current-type="currentType"
               :data-source-id="dataSourceId"
-              :cur-step="curStep"
-              :is-reset="isReset"
-              @update-cur-step="updateCurStep"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
           </div>
         </template>
@@ -99,23 +86,12 @@ const isLocal = ref(false);
 const currentPlugins = ref({} as DataSourcePluginsItemData);
 const isLoading = ref(false);
 
-const curStep = ref(1);
-const typeSteps = ref([
-  { title: t('服务配置') },
-  { title: t('字段设置') },
-]);
-
 // 切换展示状态
 const showContent = ref(true);
 // 数据源创建、更新
 const successText = ref('新建企业微信数据源成功');
 const isSuccess = ref(false);
-const isReset = ref(false);
 
-// 切换步骤
-const updateCurStep = (value: number) => {
-  curStep.value = value;
-};
 const handleCollapse = () => {
   showContent.value = !showContent.value;
 };
@@ -197,23 +173,5 @@ onUnmounted(() => {
 .data-source-card {
   height: calc(100vh - var(--header-height) - var(--breadcrumbs-height));
   padding: 16px 24px;
-
-  .steps-wrapper {
-    padding: 12px 0;
-    text-align: center;
-    background: #FAFBFD;
-    box-shadow: 0 1px 0 0 #F0F1F5;
-
-    .steps {
-      width: 350px;
-      margin: auto;
-    }
-  }
-
-  .data-source-name-row {
-    margin-bottom: 0;
-    border-bottom: 1px solid #EAEBF0;
-    box-shadow: none;
-  }
 }
 </style>
