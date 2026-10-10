@@ -15,6 +15,7 @@
       <template #content>
         <div class="batch-operate-menu">
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="batch-operate-item"
             :disabled="moveOrgDisabledConfig.disabled"
@@ -24,6 +25,7 @@
             {{ $t('移动至组织') }}
           </bk-button>
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="batch-operate-item"
             :disabled="resetPasswordDisabledConfig.disabled"
@@ -33,6 +35,7 @@
             {{ $t('重置密码') }}
           </bk-button>
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="batch-operate-item"
             @click="handleBatchInfo"
@@ -54,6 +57,7 @@
             {{ $t('停用') }}
           </bk-button>
           <bk-button
+            v-if="!organizationStore.isTenantLevel"
             text
             class="batch-operate-item"
             :disabled="deleteDisabledConfig.disabled"
@@ -135,6 +139,7 @@
             v-model="infoFormData.leader"
             filterable
             multiple
+            :loading="leaderLoading"
             :input-search="false"
             multiple-mode="tag"
             collapse-tags
@@ -212,6 +217,9 @@ const passwordTips = ref([]);
 const extrasList = ref();
 const infoFormData = ref({});
 const leaderList = ref([]);
+const leaderLoading = ref(false);
+/** 本轮弹窗内是否已拉取过 leader 列表（重新打开弹窗时重置） */
+let leaderListFetched = false;
 const rules = ref({});
 const infoFormRef = ref();
 const dropdownVisible = ref(false);
@@ -307,6 +315,8 @@ const handleResetPassword = () => {
  * 修改用户信息
  */
 const handleBatchInfo = () => {
+  // 重新打开弹窗后 leader 列表需重新拉取
+  leaderListFetched = false;
   batchInfo.value = true;
 };
 
@@ -351,24 +361,23 @@ onMounted(async () => {
   });
 });
 
-/**
- * 切换数据源时重新拉取可选 leader 列表
- * @description 多数据源场景下，leader 列表需随当前选中的数据源实例变化而刷新
- */
-watch(() => props.dataSourceId, (dataSourceId) => {
+/** 拉取可选 leader 列表；本轮弹窗内已拉取过则跳过（切换操作项不重复请求） */
+const getOptionalLeaderList = async () => {
+  if (leaderListFetched) return;
+  leaderListFetched = true;
   leaderList.value = [];
-  if (dataSourceId !== undefined && organizationStore.isEqualLocalSourceId(dataSourceId)) {
-    optionalLeaderList({
-      data_source_id: dataSourceId,
-      exclude_user_id: '',
-    }).then((res) => {
-      leaderList.value = res.data;
-    })
-      .catch((e) => {
-        console.error(e);
-      });
+  leaderLoading.value = true;
+  try {
+    const res = await optionalLeaderList(props.dataSourceId, {});
+    leaderList.value = res.data;
+  } catch (e) {
+    console.error(e);
+    // 拉取失败允许再次选中时重试
+    leaderListFetched = false;
+  } finally {
+    leaderLoading.value = false;
   }
-}, { immediate: true });
+};
 
 watch(infoFormData, (val) => {
   val?.customField?.forEach((item) => {
@@ -390,6 +399,9 @@ const selectOption = (selectedItem) => {
   if (selectedItem.type === 'custom') {
     infoFormData.value.customField = [(extrasList.value.find(option => option.display_name === selectedItem.text))];
   }
+  if (selectedItem.type === 'leader') {
+    getOptionalLeaderList();
+  }
 };
 
 const handleClickOutside = () => {
@@ -406,11 +418,10 @@ const handleBatchResetPasswordConfirm = async (password: string) => {
   try {
     isResetPasswordLoading.value = true;
     const params = {
-      data_source_id: props.dataSourceId,
       user_ids: userIds.value,
       password,
     };
-    await batchResetPassword(params);
+    await batchResetPassword(props.dataSourceId, params);
     batchPasswordDialogShow.value = false;
     Message({ theme: 'success', message: t('重置密码成功') });
     emits('reloadList');
@@ -437,8 +448,7 @@ const confirmBatchInfo = () => {
       params.account_expired_at = dayjs(infoFormData.value.dateTime).format('YYYY-MM-DD HH:mm:ss');
       return batchAccountExpired(params);
     },
-    leader: () => batchLeader({
-      data_source_id: props.dataSourceId,
+    leader: () => batchLeader(props.dataSourceId, {
       user_ids: userIds.value,
       leader_ids: infoFormData.value.leader,
     }),
@@ -447,7 +457,7 @@ const confirmBatchInfo = () => {
       const {  name = '', value = null } = infoFormData.value.customField.length ? infoFormData.value.customField[0] : {};
       params.field_name = name;
       params.value = { [name]: value };
-      return batchCustomField(params);
+      return batchCustomField(props.dataSourceId, params);
     },
   };
 
@@ -500,8 +510,7 @@ const confirmBatchAction = (actionType: string) => {
     onConfirm: () => {
       switch (actionType) {
         case 'delete':
-          batchDeleteUser({
-            data_source_id: props.dataSourceId,
+          batchDeleteUser(props.dataSourceId, {
             user_ids: userIds.value?.join(','),
           })
             .then(() => {
@@ -586,6 +595,8 @@ const handleRenewal = () => {
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* 锁定最小宽度：不同层级可见项数量不同，避免面板宽度跳动 */
+  min-width: 96px;
 
   .batch-operate-item {
     display: block;

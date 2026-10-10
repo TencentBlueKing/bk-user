@@ -189,7 +189,7 @@ import PopMenu from '@/components/PopMenu.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useInfoBoxContent } from '@/hooks';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
-import { deleteDataSources, getRelatedResource, postOperationsSync } from '@/http';
+import { deleteDataSource, getRelatedResource, postOperationsSync } from '@/http';
 import type { DataSourceItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router';
@@ -286,7 +286,7 @@ const handleResetSingle = async (source: DataSourceItemData) => {
     onConfirm: async () => {
       try {
         resetLoading.instances[source.id] = true;
-        await deleteDataSources({ id: source.id });
+        await deleteDataSource({ id: source.id });
         await dataSourceStore.handleFetchCurrentDataSource();
         Message({ theme: 'success', message: t('数据源移除成功') });
       } finally {
