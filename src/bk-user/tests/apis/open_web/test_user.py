@@ -18,12 +18,26 @@ from unittest import mock
 
 import pytest
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import TenantUser, TenantUserDisplayNameExpressionConfig
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserDisplayNameExpressionConfig
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
 pytestmark = pytest.mark.django_db
+
+
+def _dept_nodes(tenant, *code_names: tuple[str, str]) -> list[dict]:
+    return [
+        {
+            "id": TenantDepartment.objects.get(
+                tenant=tenant,
+                data_source__owner_tenant_id=tenant.id,
+                data_source_department__code=code,
+            ).id,
+            "name": name,
+        }
+        for code, name in code_names
+    ]
 
 
 @pytest.mark.usefixtures("_init_tenant_users_depts")
@@ -308,6 +322,26 @@ class TestTenantUserSearchApi:
         assert {t["bk_username"] for t in resp.data} == {collab_zhangsan.id}
         assert {t["display_name"] for t in resp.data} == {"zhangsan(张三)"}
 
+    def test_organizations(self, api_client, random_tenant):
+        """白十二挂在小组 BAA，返回从根到直属部门的组织链，且与 organization_paths 对齐"""
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "白十", "owner_tenant_id": random_tenant.id, "with_organization_paths": True},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["organizations"] == [
+            _dept_nodes(
+                random_tenant,
+                ("company", "公司"),
+                ("dept_b", "部门B"),
+                ("center_ba", "中心BA"),
+                ("group_baa", "小组BAA"),
+            )
+        ]
+        assert resp.data[0]["organization_paths"] == ["公司/部门B/中心BA/小组BAA"]
+
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "chen"})
         assert resp.status_code == status.HTTP_200_OK
@@ -523,6 +557,27 @@ class TestTenantUserLookupApi:
             "公司/部门A/中心AA",
             "公司/部门A",
         }
+
+    def test_organizations(self, api_client, random_tenant):
+        """王五属于部门 A 和部门 B，每个直属部门一条链，organization_paths[i] 与 organizations[i] 对齐"""
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "wangwu",
+                "lookup_fields": "login_name",
+                "owner_tenant_id": random_tenant.id,
+                "data_source_type": "real",
+                "with_organization_paths": True,
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert resp.data[0]["organizations"] == [
+            _dept_nodes(random_tenant, ("company", "公司"), ("dept_a", "部门A")),
+            _dept_nodes(random_tenant, ("company", "公司"), ("dept_b", "部门B")),
+        ]
+        assert resp.data[0]["organization_paths"] == ["公司/部门A", "公司/部门B"]
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(
