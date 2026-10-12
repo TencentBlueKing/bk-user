@@ -115,7 +115,7 @@ class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListA
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # 可选用户必须与目标用户 / 部门属于同一个本地实名数据源
+        # 可选用户必须属于指定的本地实名数据源
         queryset = TenantUser.objects.filter(tenant_id=cur_tenant_id, data_source=data_source)
         if kw := params.get("keyword"):
             queryset = queryset.filter(
