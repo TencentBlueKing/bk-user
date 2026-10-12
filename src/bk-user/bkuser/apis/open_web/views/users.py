@@ -178,7 +178,11 @@ class TenantUserSearchApi(OpenWebApiCommonMixin, generics.ListAPIView):
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
-            "organizations_map": TenantOrgPathHandler.get_user_organizations_map(self.tenant_id, queryset),
+            "organizations_map": (
+                TenantOrgPathHandler.get_user_organizations_map(self.tenant_id, queryset)
+                if with_organization_paths
+                else {}
+            ),
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
             "login_name_map": TenantUserHandler.batch_get_login_name(queryset),
         }
@@ -243,7 +247,11 @@ class TenantUserLookupApi(OpenWebApiCommonMixin, generics.ListAPIView):
         with_organization_paths = data["with_organization_paths"]
         context: Dict[str, Any] = {
             "with_organization_paths": with_organization_paths,
-            "organizations_map": TenantOrgPathHandler.get_user_organizations_map(self.tenant_id, queryset),
+            "organizations_map": (
+                TenantOrgPathHandler.get_user_organizations_map(self.tenant_id, queryset)
+                if with_organization_paths
+                else {}
+            ),
             "display_name_map": TenantUserDisplayNameHandler.batch_generate_tenant_user_display_name(queryset),
             "login_name_map": TenantUserHandler.batch_get_login_name(queryset),
         }

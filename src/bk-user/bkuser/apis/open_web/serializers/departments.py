@@ -21,7 +21,7 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apis.open_web.serializers.users import TenantUserOrganizationSLZ
+from bkuser.apis.open_web.serializers.common import TenantDepartmentNodeSLZ
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.common.serializers import StringArrayField
@@ -30,11 +30,6 @@ from bkuser.common.serializers import StringArrayField
 class TenantDepartmentSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64)
     owner_tenant_id = serializers.CharField(help_text="所属租户 ID", required=False, allow_blank=True, default="")
-
-
-class TenantDepartmentAncestorSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="祖先部门 ID", allow_null=True)
-    name = serializers.CharField(help_text="祖先部门名称")
 
 
 class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
@@ -58,7 +53,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     def get_has_user(self, obj: TenantDepartment) -> bool:
         return self.context["has_user_map"][obj.data_source_department_id]
 
-    @swagger_serializer_method(serializer_or_field=TenantDepartmentAncestorSLZ(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantDepartmentNodeSLZ(many=True))
     def get_ancestors(self, obj: TenantDepartment) -> List[Dict[str, Any]]:
         return self.context["ancestors_map"][obj.data_source_department_id]
 
@@ -89,7 +84,7 @@ class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
     def get_has_user(self, obj: TenantDepartment) -> bool:
         return self.context["has_user_map"][obj.data_source_department_id]
 
-    @swagger_serializer_method(serializer_or_field=TenantDepartmentAncestorSLZ(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantDepartmentNodeSLZ(many=True))
     def get_ancestors(self, obj: TenantDepartment) -> List[Dict[str, Any]]:
         return self.context["ancestors_map"][obj.data_source_department_id]
 
@@ -116,7 +111,7 @@ class TenantDepartmentUserListOutputSLZ(serializers.Serializer):
     def get_display_name(self, obj: TenantUser) -> str:
         return self.context["display_name_map"][obj.id]
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantUserOrganizationSLZ(many=True)))
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantDepartmentNodeSLZ(many=True)))
     def get_organizations(self, obj: TenantUser) -> List[List[Dict[str, Any]]]:
         return self.context["organizations_map"][obj.id]
 
@@ -138,6 +133,6 @@ class TenantDepartmentLookupOutputSLZ(serializers.Serializer):
     def get_organization_path(self, obj: TenantDepartment) -> str:
         return "/".join(org["name"] for org in self.get_ancestors(obj))
 
-    @swagger_serializer_method(serializer_or_field=TenantDepartmentAncestorSLZ(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantDepartmentNodeSLZ(many=True))
     def get_ancestors(self, obj: TenantDepartment) -> List[Dict[str, Any]]:
         return self.context["ancestors_map"][obj.data_source_department_id]
