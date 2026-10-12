@@ -88,11 +88,11 @@ urlpatterns = [
         views.OptionalTenantDepartmentListApi.as_view(),
         name="organization.optional_department.list",
     ),
-    # 可选租户用户上级列表（下拉框数据用）
+    # 可选租户用户列表（下拉框数据用，如选择上级、拉取用户至部门）
     path(
-        "tenants/data-sources/<int:data_source_id>/optional-leaders/",
+        "tenants/data-sources/<int:data_source_id>/optional-users/",
         views.OptionalTenantUserListApi.as_view(),
-        name="organization.optional_leader.list",
+        name="organization.optional_user.list",
     ),
     # 租户用户列表 / 创建租户用户
     path(

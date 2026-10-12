@@ -62,13 +62,19 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 class OptionalTenantUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=1, max_length=64, required=False)
-    excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（Leader 不能是自己）", required=False)
+    excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（如 Leader 不能是自己）", required=False)
 
 
 class OptionalTenantUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+    organization_paths = serializers.SerializerMethodField(help_text="组织路径")
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
+    def get_organization_paths(self, obj: TenantUser) -> List[str]:
+        return self.context["org_path_map"].get(obj.data_source_user_id, [])
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
