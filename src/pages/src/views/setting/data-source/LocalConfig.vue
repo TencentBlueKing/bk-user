@@ -357,7 +357,7 @@ import passwordInput from '@/components/passwordInput.vue';
 import { useValidate } from '@/hooks';
 import { useConflictRules } from '@/hooks/useConflictRules';
 import { useDataSourceImport } from '@/hooks/useDataSourceImport';
-import { getIdps, getLocalIdps, randomPasswords } from '@/http';
+import { getIdps, getIdpsDetails, randomPasswords } from '@/http';
 import {
   getDataSourceDetails,
   getDefaultConfig,
@@ -432,7 +432,7 @@ const isUploadFailed = ref(false);
 const createdName = ref('');
 // 编辑模式取数（基础信息 + 密码相关配置）期间的整页 loading
 const contentLoading = ref(false);
-// 本地账密的生效范围是否已引用当前数据源：引用后不允许关闭密码规则（开关置灰）
+// 启用中的本地账密（认证源）生效范围是否已引用当前数据源：引用后不允许关闭密码规则（开关置灰），认证源关闭时不锁
 const isPasswordRuleReferenced = ref(false);
 // 是否启用密码规则：取数据源配置的 enable_password（新增态以 default-config 接口返回为准）；关闭后步骤 2 仅展示提示
 const enablePassword = computed({
@@ -689,6 +689,10 @@ const importToDataSource = async (dataSourceId: number) => {
     return true;
   } catch (e) {
     console.error(e);
+    // 裸 axios 不经过统一错误拦截，需自行透传后端错误信息（如名称重复等）
+    const errorMessage = (e as { response?: { data?: { error?: { message?: string } } } })
+      ?.response?.data?.error?.message;
+    Message({ theme: 'error', message: errorMessage || t('操作失败') });
     isUploadFailed.value = true;
     createdName.value = formModel.value.name;
     return false;
@@ -767,6 +771,25 @@ const handleSubmit = async () => {
   }
 };
 
+/**
+ * 判断当前数据源的密码规则是否被「启用中」的本地账密（认证源）的生效范围引用，用于锁定密码规则开关；
+ * 认证源关闭时不锁（规则可编辑），非法中间态由认证源编辑页的未启用拦截兜底；
+ * 请求失败按「未引用」降级，不影响表单初始化
+ */
+const checkPasswordRuleReferenced = async () => {
+  try {
+    const idpsRes = await getIdps('');
+    const localIdp = idpsRes?.data?.find(item => item.plugin?.id === 'local');
+    if (!localIdp) return;
+    const idpDetailRes = await getIdpsDetails(localIdp.id);
+    const scopeIds = (idpDetailRes?.data?.data_source_match_rules ?? []).map(item => item.data_source_id);
+    isPasswordRuleReferenced.value = idpDetailRes?.data?.status === 'enabled'
+      && scopeIds.includes(props.dataSourceId);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 /** 初始化表单：编辑模式回填数据源详情，新增模式以插件默认配置初始化 */
 const initForm = async () => {
   contentLoading.value = true;
@@ -783,14 +806,8 @@ const initForm = async () => {
       if (details?.plugin_config && Object.keys(details.plugin_config).length > 0) {
         formModel.value.config = details.plugin_config as LocalDataSourcePluginConfig;
       }
-      // 生效范围仍在本地账密（认证源）上，据此判断密码规则是否已被引用
-      const idpsRes = await getIdps('');
-      const localIdp = idpsRes?.data?.find(item => item.plugin?.id === 'local');
-      if (localIdp) {
-        const idpDetailRes = await getLocalIdps(localIdp.id);
-        const scopeIds = idpDetailRes?.data?.data_source_ids ?? [];
-        isPasswordRuleReferenced.value = scopeIds.includes(props.dataSourceId);
-      }
+      // 生效范围在本地账密（认证源）上，据此判断密码规则是否已被引用
+      await checkPasswordRuleReferenced();
     } else {
       // 新增模式：以插件默认配置初始化表单，用户修改后原样提交
       const res = await getDefaultConfig('local');

@@ -768,5 +768,6 @@
   "类型：{type}": "Type: {type}",
   "确认批量启用所选用户？": "Are you sure to batch enable selected users?",
   "确认批量停用所选用户？": "Are you sure to batch deactivate selected users?",
-  "创建数据源失败": "Failed to create data source"
+  "创建数据源失败": "Failed to create data source",
+  "操作失败": "Operation failed"
 }

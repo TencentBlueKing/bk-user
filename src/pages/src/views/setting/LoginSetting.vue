@@ -139,7 +139,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
 import { h, inject, onMounted, reactive, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import Custom from './auth-config/CustomLogin.vue';
 import CustomView from './auth-config/CustomView.vue';
@@ -156,7 +156,6 @@ import type { IdpsPluginsDataItem } from '@/http/types/authSourceFiles';
 import fallbackLogo from '@/images/source.png';
 import wecomLogo from '@/images/wecom.svg';
 import { t } from '@/language/index';
-import router from '@/router';
 import { useMainViewStore } from '@/store';
 import { useDataSourceStore } from '@/store/dataSource';
 import { copy } from '@/utils';
@@ -165,6 +164,7 @@ const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const editLeaveBefore = inject('editLeaveBefore');
 const route = useRoute();
+const router = useRouter();
 const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
@@ -181,6 +181,8 @@ onMounted(async () => {
   if (route.query.type === 'local') {
     const target = idpsPlugins.value.find(item => item.id === 'local');
     if (target) handleClickActive(target);
+    // 展开属一次性动作，replace 静默清掉标记，避免刷新/返回再次触发；仅移除 type，保留其余 query
+    router.replace({ query: { ...route.query, type: undefined } });
   }
 });
 

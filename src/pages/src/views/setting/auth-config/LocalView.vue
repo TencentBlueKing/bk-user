@@ -1,10 +1,8 @@
 <template>
   <div v-bkloading="{ loading: isLoading, zIndex: 10 }" class="details-info-wrapper">
     <ViewRow :title="$t('基础信息')">
-      <LabelContent :label="$t('名称')">{{ idpsName }}</LabelContent>
-      <LabelContent :label="$t('是否启用')">
-        {{ idpsStatus ? $t('是') : $t('否') }}
-      </LabelContent>
+      <LabelContent :label="$t('名称')">{{ authSourceData?.name }}</LabelContent>
+      <LabelContent :label="$t('是否启用')">{{ authSourceData?.status === 'enabled' ? $t('是') : $t('否') }}</LabelContent>
       <LabelContent :label="$t('生效范围')">
         <EffectiveScopeView :source-ids="scopeIds" />
       </LabelContent>
@@ -19,7 +17,8 @@ import EffectiveScopeView from './EffectiveScopeView.vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import ViewRow from '@/components/layouts/ViewRow.vue';
-import { getLocalIdps } from '@/http';
+import { getIdpsDetails } from '@/http';
+import type { IdpDetail } from '@/http/types/authSourceFiles';
 
 interface IProps {
   idpId: string;
@@ -30,18 +29,16 @@ const props = defineProps<IProps>();
 const emit = defineEmits(['detail-loaded']);
 
 const isLoading = ref(false);
-const scopeIds = ref([]);
-const idpsName = ref({});
-const idpsStatus = ref(true);
+const authSourceData = ref<IdpDetail>();
+const scopeIds = ref<number[]>([]);
 
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const data = (await getLocalIdps(props.idpId))?.data;
-    idpsName.value = data?.name;
-    idpsStatus.value = data?.plugin_config?.enable_password;
-    scopeIds.value = data?.data_source_ids || [];
-    emit('detail-loaded', data);
+    authSourceData.value = (await getIdpsDetails(props.idpId))?.data;
+    // 生效范围从通用详情的匹配规则反推，field_compare_rules 由后端固定为 id 对 id，展示不需要
+    scopeIds.value = authSourceData.value?.data_source_match_rules?.map(item => item.data_source_id) || [];
+    emit('detail-loaded', authSourceData.value);
   } catch (e) {
     console.warn(e);
   } finally {

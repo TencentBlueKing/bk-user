@@ -6,6 +6,7 @@
     :limit="1"
     :size="UPLOAD_FILE_MAX_SIZE"
     :multiple="false"
+    :files="files"
     :custom-request="customRequest"
     @exceed="exceed"
   >
@@ -43,7 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import type { UploadFile, UploadRawFile } from 'bkui-vue/lib/upload/upload.type';
+import { onMounted, ref } from 'vue';
 
 import { UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_MAX_SIZE_BYTE } from './constants';
 
@@ -59,6 +61,22 @@ const uploadRef = ref();
 const isHover = ref(false);
 const isError = ref(false);
 const textTips = ref('');
+const files = ref<UploadFile[]>([]);
+
+onMounted(() => {
+  // bk-upload 的内部文件列表不与 model 关联，步骤切换重挂载后需从 model 回填，否则显示为空但提交仍带旧文件
+  if (!model.value) return;
+  const file = model.value as UploadRawFile;
+  file.uid = Date.now();
+  files.value = [{
+    name: file.name,
+    size: file.size,
+    uid: file.uid,
+    status: 'success',
+    raw: file,
+  }];
+  textTips.value = t('上传成功');
+});
 
 const customRequest = (data: { file: File }) => {
   if (data.file.size > UPLOAD_FILE_MAX_SIZE_BYTE) {
