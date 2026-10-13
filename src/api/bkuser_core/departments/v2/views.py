@@ -12,7 +12,6 @@ import logging
 from typing import Type
 
 from django.conf import settings
-from django.core.cache import caches
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
@@ -21,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer
+from bkuser_core.apis.v2.user_pagination import UserResultsPagination
 from bkuser_core.apis.v2.viewset import (
     AdvancedListAPIView,
     AdvancedListSerializer,
@@ -124,57 +124,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(data=local_serializers.DepartmentSimpleSerializer(department_objs, many=True).data)
 
-    @staticmethod
-    def _profiles_cursor_cache_key(department_id, recursive, page, page_size):
-        return f"department_profiles_cursor:{department_id}:{str(recursive)}:{page}:{page_size}"
-
-    def _get_profiles_cursor_page(self, profiles, request, department_id, recursive):
-        """使用当前页缓存的最大 ID 查询递归成员。"""
-        if not recursive or request.query_params.get("wildcard_search"):
-            return None
-
-        try:
-            page_number = int(request.query_params.get("page", 1))
-        except (TypeError, ValueError):
-            return None
-
-        page_size = self.paginator.get_page_size(request)
-        if not page_size:
-            return None
-
-        cache_key = self._profiles_cursor_cache_key(department_id, recursive, page_number, page_size)
-        cached = caches["verification_code"].get(cache_key)
-        if not isinstance(cached, dict):
-            return None
-
-        cursor_id = cached.get("cursor_id")
-        if not cursor_id:
-            return None
-
-        page = profiles.filter(id__lte=cursor_id).order_by("-id")[:page_size]
-        return page, cached.get("count")
-
-    def _cache_profiles_cursor(self, page, request, department_id, recursive, count):
-        if not recursive or not page or request.query_params.get("wildcard_search"):
-            return
-
-        try:
-            page_number = int(request.query_params.get("page", 1))
-        except (TypeError, ValueError):
-            return
-
-        page_size = self.paginator.get_page_size(request)
-        if not page_size:
-            return
-
-        cache_key = self._profiles_cursor_cache_key(department_id, recursive, page_number, page_size)
-        caches["verification_code"].set(
-            cache_key,
-            {"cursor_id": page[0].id, "count": count},
-            timeout=None,
-        )
-
-    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(query_serializer=local_serializers.DepartmentGetProfilesSerializer())
     def get_profiles(self, request, *args, **kwargs):
         """获取部门内的人员"""
@@ -200,40 +149,10 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             select_params=(default_domain,),
         )
 
-        # 递归成员已按 id 倒序，优先使用当前页缓存的最大 id。
-        _serializer = RapidProfileSerializer
-        if recursive:
-            cursor_page = self._get_profiles_cursor_page(profiles, request, instance.id, recursive)
-            if cursor_page and cursor_page[1] is not None:
-                page, count = cursor_page
-                context = self.get_serializer_context()
-                data = _serializer(page, many=True, context=context).data
-                return Response({"count": count, "results": data})
-
-        page = self.paginate_queryset(profiles)
-        # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
-        _serializer = RapidProfileSerializer
-        if page is not None:
-            if recursive:
-                self._cache_profiles_cursor(
-                    page,
-                    request,
-                    instance.id,
-                    recursive,
-                    self.paginator.page.paginator.count,
-                )
-            context = self.get_serializer_context()
-            return self.get_paginated_response(_serializer(page, many=True, context=context).data)
-
-        # NOTE: no_page=True, will hit this branch. should not use no_page=True in the future
-        serializer_fields = list(_serializer().get_fields().keys())
-        model_fields_keys = [x.name for x in profiles.model._meta.get_fields()]
-        values_fields = [x for x in serializer_fields if x in model_fields_keys]
-
-        # 全量数据太大，使用 serializer 效率非常低
-        # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
-        # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
-        return Response(data=list(profiles.only(*values_fields).values(*values_fields)))
+        paginator = UserResultsPagination()
+        page = paginator.paginate_queryset(profiles, request, self)
+        data = RapidProfileSerializer(page, many=True, context=self.get_serializer_context()).data
+        return paginator.get_paginated_response(data)
 
     @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)

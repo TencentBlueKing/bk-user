@@ -16,7 +16,6 @@ from django.core.exceptions import FieldError
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.generics import get_object_or_404
@@ -26,6 +25,7 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import AdvancedListSerializer, AdvancedRetrieveSerializer
+from bkuser_core.apis.v2.user_pagination import UserResultsPagination
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
@@ -43,7 +43,6 @@ from bkuser_core.profiles.utils import (
     check_former_passwords,
     make_password_by_config,
     parse_username_domain,
-    remove_sensitive_fields_for_profile,
 )
 from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
@@ -144,7 +143,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(data=self.serializer_class(leaders, many=True).data)
 
-    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(query_serializer=AdvancedListSerializer())
     def list(self, request, *args, **kwargs):
         """获取用户列表"""
@@ -163,6 +161,14 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         fields = query_data.get("fields", [])
         if fields:
             self._check_fields(fields)
+            if force_str_2_bool(request.query_params.get("no_page", False)):
+                unsupported = set(fields) - set(serializer_class().fields)
+                if unsupported:
+                    raise error_codes.QUERY_PARAMS_ERROR.format(
+                        message=_("fields 包含用户列表不支持返回的字段：%(fields)s")
+                        % {"fields": ",".join(sorted(unsupported))},
+                        replace=True,
+                    )
         else:
             # FIXME: 这里应该用 model 的字段, 并且应该最小集合, 目前全获取, 导致放大(last_login_time/departments等)
             # 这里没传fields默认使用slz.fields是有问题的, 但是先保持接口行为一致, 不动fields声明(新版接口解决)
@@ -194,26 +200,10 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 select_params=(default_domain,),
             )
 
-        page = self.paginate_queryset(queryset)
-        # page may be empty list
-        if page is not None:
-            # BUG: slz 中的 last_login_time 会导致放大查询, 需要剔除(即, 这个接口将不再支持last_login_time)
-            # another two property not in slz fields are: latest_check_time bad_check_cnt
-            # if "last_login_time" in fields:
-            #     del fields["last_login_time"]
-
-            # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
-            # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
-            serializer = serializer_class(page, fields=fields, many=True, context=self.get_serializer_context())
-            return self.get_paginated_response(serializer.data)
-
-        fields = [x for x in fields if x in self._get_model_field_names()]
-        # 全量数据太大，使用 serializer 效率非常低
-        # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
-        # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
-        data = list(queryset.values(*fields))
-        data = [remove_sensitive_fields_for_profile(request, d) for d in data]
-        return Response(data=data)
+        paginator = UserResultsPagination()
+        page = paginator.paginate_queryset(queryset, request, self)
+        serializer = serializer_class(page, fields=fields, many=True, context=self.get_serializer_context())
+        return paginator.get_paginated_response(serializer.data)
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
