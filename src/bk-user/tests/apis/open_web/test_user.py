@@ -342,6 +342,17 @@ class TestTenantUserSearchApi:
         ]
         assert resp.data[0]["organization_paths"] == ["公司/部门B/中心BA/小组BAA"]
 
+    def test_without_organization_paths(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("open_web.tenant_user.search"),
+            data={"keyword": "白十", "owner_tenant_id": random_tenant.id},
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert "organization_paths" not in resp.data[0]
+        assert "organizations" not in resp.data[0]
+
     def test_with_not_match(self, api_client):
         resp = api_client.get(reverse("open_web.tenant_user.search"), data={"keyword": "chen"})
         assert resp.status_code == status.HTTP_200_OK
@@ -578,6 +589,22 @@ class TestTenantUserLookupApi:
             _dept_nodes(random_tenant, ("company", "公司"), ("dept_b", "部门B")),
         ]
         assert resp.data[0]["organization_paths"] == ["公司/部门A", "公司/部门B"]
+
+    def test_without_organization_paths(self, api_client, random_tenant):
+        resp = api_client.get(
+            reverse("open_web.tenant_user.lookup"),
+            data={
+                "lookups": "wangwu",
+                "lookup_fields": "login_name",
+                "owner_tenant_id": random_tenant.id,
+                "data_source_type": "real",
+            },
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 1
+        assert "organization_paths" not in resp.data[0]
+        assert "organizations" not in resp.data[0]
 
     def test_with_not_match(self, api_client):
         resp = api_client.get(

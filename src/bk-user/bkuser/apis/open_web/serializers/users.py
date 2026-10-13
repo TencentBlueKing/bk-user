@@ -22,6 +22,7 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.open_web.serializers.common import TenantDepartmentNodeSLZ
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
@@ -67,11 +68,6 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
     )
 
 
-class TenantUserOrganizationSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="部门 ID", allow_null=True)
-    name = serializers.CharField(help_text="部门名称")
-
-
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     bk_username = serializers.CharField(help_text="蓝鲸用户唯一标识", source="id")
     # 用 login_name 对外暴露 username 字段，作为企业内用户唯一标识
@@ -96,14 +92,15 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return ["/".join(org["name"] for org in orgs) for orgs in self.get_organizations(obj)]
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantUserOrganizationSLZ(many=True)))
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantDepartmentNodeSLZ(many=True)))
     def get_organizations(self, obj: TenantUser) -> List[List[Dict[str, Any]]]:
-        return self.context["organizations_map"][obj.id]
+        return self.context["organizations_map"].get(obj.id, [])
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not self.context["with_organization_paths"]:
             data.pop("organization_paths")
+            data.pop("organizations")
         return data
 
 
@@ -164,14 +161,15 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
         return ["/".join(org["name"] for org in orgs) for orgs in self.get_organizations(obj)]
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantUserOrganizationSLZ(many=True)))
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantDepartmentNodeSLZ(many=True)))
     def get_organizations(self, obj: TenantUser) -> List[List[Dict[str, Any]]]:
-        return self.context["organizations_map"][obj.id]
+        return self.context["organizations_map"].get(obj.id, [])
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not self.context["with_organization_paths"]:
             data.pop("organization_paths")
+            data.pop("organizations")
         return data
 
 
