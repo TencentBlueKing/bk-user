@@ -30,7 +30,7 @@
         children="children"
         @node-click="(node: IOrg) => handleNodeClick(node)"
         :async="{
-          callback: (node: IOrg) => getRemoteData(node, organizationStore.currentTenant.id),
+          callback: (node: IOrg) => getRemoteData(node),
           cache: true,
         }"
       >

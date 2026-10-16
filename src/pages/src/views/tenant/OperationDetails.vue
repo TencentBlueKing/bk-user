@@ -1,7 +1,7 @@
 <template>
   <div class="operation-wrapper">
     <bk-form
-      class="operation-content"
+      class="operation-content flex flex-col gap-[16px]"
       ref="formRef"
       form-type="vertical"
       :model="formData"

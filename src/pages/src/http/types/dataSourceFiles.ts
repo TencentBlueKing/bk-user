@@ -1,4 +1,69 @@
 /**
+ * 本地数据源密码规则
+ */
+export interface LocalDataSourcePasswordRule {
+  min_length: number;
+  contain_lowercase: boolean;
+  contain_uppercase: boolean;
+  contain_digit: boolean;
+  contain_punctuation: boolean;
+  not_continuous_count: number;
+  not_keyboard_order: boolean;
+  not_continuous_letter: boolean;
+  not_continuous_digit: boolean;
+  not_repeated_symbol: boolean;
+}
+
+/**
+ * 通知模板
+ */
+export interface NotificationTemplate {
+  method: string;
+  scene: string;
+  title: string | null;
+  sender: string;
+  content: string;
+  content_html: string;
+}
+
+/**
+ * 通知配置
+ */
+export interface NotificationConfig {
+  enabled_methods: string[];
+  templates: NotificationTemplate[];
+}
+
+/**
+ * 本地数据源 - 初始密码配置
+ */
+export interface LocalDataSourcePasswordInitial {
+  cannot_use_previous_password: boolean;
+  reserved_previous_password_count: number;
+  generate_method: 'random' | 'fixed';
+  fixed_password?: string | null;
+  notification: NotificationConfig;
+}
+
+/**
+ * 本地数据源 - 密码有效期配置
+ */
+export interface LocalDataSourcePasswordExpire {
+  valid_time: number;
+  remind_before_expire: number[];
+  notification: NotificationConfig;
+}
+
+/**
+ * 本地数据源 - 登录限制配置
+ */
+export interface LocalDataSourceLoginLimit {
+  force_change_at_first_login: boolean;
+  max_retries: number;
+  lock_time: number;
+}
+
+/**
  * 同步配置
  */
 export interface SyncConfig {
@@ -167,11 +232,10 @@ export interface ResetPasswordParams {
 }
 
 /**
- * 数据源重置参数
+ * 数据源删除参数
  */
-export interface DeleteDataSourcesParams {
+export interface DeleteDataSourceParams {
   id: number;
-  is_delete_idp?: string;
 }
 
 /**
@@ -391,10 +455,10 @@ export interface LDAPDataSourcePluginConfig {
  */
 export interface LocalDataSourcePluginConfig {
   enable_password?: boolean;
-  password_rule?: Record<string, any>;
-  password_initial?: Record<string, any>;
-  password_expire?: Record<string, any>;
-  login_limit?: Record<string, any>;
+  password_rule?: LocalDataSourcePasswordRule;
+  password_initial?: LocalDataSourcePasswordInitial;
+  password_expire?: LocalDataSourcePasswordExpire;
+  login_limit?: LocalDataSourceLoginLimit;
 }
 
 /**
@@ -413,8 +477,4 @@ export interface RelatedResourceStatistics {
   shared_to_tenant_count: number;
   shared_to_department_count: number;
   shared_to_user_count: number;
-}
-
-export interface BatchDeleteDataSourcesParams {
-  is_delete_idp?: boolean;
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-setting-wrapper" v-bkloading="{ loading: isLoading }">
+  <div class="admin-setting-wrapper flex flex-col gap-[16px]" v-bkloading="{ loading: isLoading }">
     <Row class="admin-setting-item" :title="$t('内置管理员')">
       <LabelContent :label="$t('状态')">
         <bk-tag :theme="adminAccount.enable_login ? 'success' : ''">

@@ -25,12 +25,12 @@
       :data="treeData"
       :selected="selectedNode"
       label="name"
-      node-key="id"
+      node-key="treeKey"
       children="children"
       :prefix-icon="getPrefixIcon"
       @node-click="(node: IOrg) => handleNodeClick(node)"
       :async="{
-        callback: (node: IOrg) => getRemoteData(node, collaborationTenant.id),
+        callback: (node: IOrg) => getRemoteData(node),
         cache: true,
       }"
     >
@@ -49,7 +49,6 @@ import { onMounted, ref, toRef } from 'vue';
 import OperateMore from './operate-more.vue';
 
 import useOrganizationAside from '@/hooks/useOrganizationAside';
-import { getDepartmentsList } from '@/http/organizationFiles';
 import { CollaborationItemData } from '@/http/types/organizationFiles';
 import useOrganizationStore from '@/store/organization';
 import { IOrg } from '@/types/organization';
@@ -69,7 +68,7 @@ const collaborationTenant = toRef(props, 'collaborationTenant');
 const organizationAsideHooks = useOrganizationAside();
 const {
   treeData,
-  formatDataSourceTreeData,
+  buildSourceTree,
   getRemoteData,
   getPrefixIcon,
 } = organizationAsideHooks;
@@ -86,6 +85,17 @@ const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) =
       tenantName: collaborationTenant.value.name,
       tenantLogo: collaborationTenant.value?.logo,
     });
+  } else if ((data as IOrg).nodeType === 'source') {
+    // 点击数据源节点
+    organizationStore.updateSelectedOrg({
+      tenantId: collaborationTenant.value.id,
+      tenantName: collaborationTenant.value.name,
+      tenantLogo: collaborationTenant.value?.logo,
+      dataSourceId: (data as IOrg).data_source_id,
+      deptId: 0,
+      deptName: (data as IOrg).name,
+      nodeType: 'source',
+    } as SelectedOrg);
   } else {
     // 点击部门节点，传入完整信息
     organizationStore.updateSelectedOrg({
@@ -95,12 +105,13 @@ const handleNodeClick = (data: CollaborationItemData | IOrg, isTenant = false) =
       dataSourceId: (data as IOrg).data_source_id,
       deptId: (data as IOrg).id,
       deptName: (data as IOrg).name,
+      nodeType: 'department',
     } as SelectedOrg);
   }
 };
 
-onMounted(async () => {
-  const deptData = await getDepartmentsList(collaborationTenant.value.id, { parent_department_id: 0 });
-  treeData.value = formatDataSourceTreeData(deptData?.data);
+onMounted(() => {
+  // 协同租户的数据源作为一级节点，子部门展开时懒加载（走数据源内部门接口）
+  treeData.value = buildSourceTree(collaborationTenant.value.data_sources || []);
 });
 </script>

@@ -1,14 +1,13 @@
 import http from './fetch';
 import { ResponseData } from './types';
 import type {
-  BatchDeleteDataSourcesParams,
   DataSourceDetails,
   DataSourceItemData,
   DataSourcePluginDefaultConfig,
   DataSourcePluginsItemData,
   DataSourceUsersParams,
   DataSourceUsersResult,
-  DeleteDataSourcesParams,
+  DeleteDataSourceParams,
   DepartmentsParams,
   GeneratePasswordParams,
   GetDataSourceListParams,
@@ -135,9 +134,9 @@ export const getSyncLogs = (id: string) => http.get(`/api/v3/web/data-sources/sy
 export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/v3/web/data-sources/users/${params.id}/password/`, params);
 
 /**
- * 重置数据源
+ * 移除数据源
  */
-export const deleteDataSources = (params: DeleteDataSourcesParams) => http.delete(`/api/v3/web/data-sources/${params.id}/`, params);
+export const deleteDataSource = (params: DeleteDataSourceParams) => http.delete(`/api/v3/web/data-sources/${params.id}/`, params);
 
 /**
  * 数据源关联资源信息
@@ -148,8 +147,3 @@ export const getRelatedResource = (dataSourceId: number) => http.get<ResponseDat
  * 自定义数据源插件配置信息
  */
 export const getCustomPlugin = (id: string) => http.get(`/api/v3/web/data-sources/plugins/${id}/config-meta/`);
-
-/**
- * 批量重置数据源
- */
-export const batchDeleteDataSources = (params: BatchDeleteDataSourcesParams) => http.delete('/api/v3/web/data-sources/operations/batch-delete/', params);

@@ -83,6 +83,7 @@
             v-if="!detailsConfig.isEdit"
             outline
             theme="primary"
+            :disabled="!editData"
             @click="handleEditDetails">
             {{ $t('编辑') }}
           </bk-button>
@@ -93,6 +94,7 @@
         <template v-if="activeItem?.id === 'local'">
           <LocalView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             @detail-loaded="handleDetailLoaded"
           />
@@ -106,6 +108,7 @@
         <template v-else-if="activeItem?.id === 'wecom'">
           <WeComView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             @detail-loaded="handleDetailLoaded"
           />
@@ -119,6 +122,7 @@
         <template v-else>
           <CustomView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             :plugin-id="activeItem?.id"
             @detail-loaded="handleDetailLoaded"
@@ -139,6 +143,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
 import { h, inject, onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import Custom from './auth-config/CustomLogin.vue';
 import CustomView from './auth-config/CustomView.vue';
@@ -155,7 +160,6 @@ import type { IdpsPluginsDataItem } from '@/http/types/authSourceFiles';
 import fallbackLogo from '@/images/source.png';
 import wecomLogo from '@/images/wecom.svg';
 import { t } from '@/language/index';
-import router from '@/router';
 import { useMainViewStore } from '@/store';
 import { useDataSourceStore } from '@/store/dataSource';
 import { copy } from '@/utils';
@@ -163,6 +167,8 @@ import { copy } from '@/utils';
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const editLeaveBefore = inject('editLeaveBefore');
+const route = useRoute();
+const router = useRouter();
 const dataSourceStore = useDataSourceStore();
 
 const isLoading = ref(false);
@@ -175,6 +181,13 @@ const idpsPlugins = ref<IdpPluginItem[]>([]);
 onMounted(async () => {
   await initDataSources();
   await initIdpsPlugins();
+  // 从数据源配置「去设置」跳回时，自动展开本地账密的详情侧栏（仅 local 入口）
+  if (route.query.type === 'local') {
+    const target = idpsPlugins.value.find(item => item.id === 'local');
+    if (target) handleClickActive(target);
+    // 展开属一次性动作，replace 静默清掉标记，避免刷新/返回再次触发；仅移除 type，保留其余 query
+    router.replace({ query: { ...route.query, type: undefined } });
+  }
 });
 
 // 初始化数据源
@@ -231,10 +244,14 @@ const detailsConfig = reactive({
 
 
 const activeItem = ref<IdpPluginItem | null>(null);
+// 侧栏每次打开自增，作为 View 组件的 key：sideslider 内容常驻（关闭不卸载），
+// 不重挂载则 detail-loaded 只在首次触发，handleClickActive 置空的 editData 将无人回填
+const detailsKey = ref(0);
 
 const handleClickActive = (item) => {
   // 本地数据源未配置时，不支持点击
   if (!dataSourceStore.isConfiguredLocalPlugin && item.id === 'local') return;
+  detailsKey.value += 1;
   const isNewConfig = !item.idp_id;
   // 新增态构造默认对象传入 Edit，编辑态等 View emit 详情后再传入
   editData.value = isNewConfig

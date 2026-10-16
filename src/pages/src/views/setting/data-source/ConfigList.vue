@@ -9,19 +9,6 @@
         >
           {{ $t('数据变更记录') }}
         </bk-button>
-        <PopMenu
-          :list="getHeaderMoreMenuList()"
-          :click-hide="true"
-          :popover-props="{ offset: 15, arrow: false }"
-        >
-          <bk-button
-            class="w-[32px]"
-            :loading="resetLoading.all"
-            :disabled="disabledSyncBtn || hasResettingInstance"
-          >
-            <i class="user-icon icon-more"></i>
-          </bk-button>
-        </PopMenu>
       </template>
     </MainBreadcrumbsDetails>
     <div
@@ -78,87 +65,101 @@
         </span>
       </div>
 
-      <DataSourceItem
-        v-for="source in dataSource"
-        :key="source.id"
-        :data="getInstanceCardData(source)"
-        class="data-source-instance"
-        @click="handleClickDataSource(source)"
-      >
-        <template #right>
-          <div class="flex items-center" @click.stop>
-            <div
-              v-if="getDataSourceSyncStatus(source.id)"
-              class="mr-[40px]"
-            >
-              <span
-                v-if="!isDataSourceRunning(source.id)"
-                :class="['tag-style', dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.theme]">
-                {{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}
-              </span>
-              <span v-else class="flex">
-                <img
-                  class="h-[19.25px] w-[19.25px] mr-[9.37px]"
-                  :src="dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.icon"
-                />
-                <span>{{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}</span>
-              </span>
-              <span v-if="!isDataSourceRunning(source.id)">
-                {{ getDataSourceSyncStatus(source.id)?.start_at }}
-              </span>
-            </div>
-            <div class="flex items-center">
-              <bk-button
-                v-if="source.plugin_id === 'local'"
-                class="min-w-[64px]"
-                theme="primary"
-                :disabled="isDataSourceRunning(source.id) || resetLoading.instances[source.id]"
-                @click="handleImport(source)"
+      <div v-if="dataSource.length === 0" class="data-source-empty">
+        <bk-exception
+          type="empty"
+          scene="page"
+          :title="$t('当前暂无数据源')"
+          :description="$t('请点击添加按钮添加数据源')"
+        />
+      </div>
+      <template v-else>
+        <DataSourceItem
+          v-for="source in dataSource"
+          :key="source.id"
+          :data="getInstanceCardData(source)"
+          class="data-source-instance"
+          @click="handleClickDataSource(source)"
+        >
+          <template #right>
+            <div class="flex items-center" @click.stop>
+              <div
+                v-if="getDataSourceSyncStatus(source.id)"
+                class="mr-[40px]"
               >
-                <Upload class="mr-[8px] text-[16px]" />
-                {{ $t('导入') }}
-              </bk-button>
-              <bk-pop-confirm
-                v-else
-                :content="$t('确认同步？')"
-                trigger="click"
-                @confirm="handleOperationsSync(source)"
-              >
+                <span
+                  v-if="!isDataSourceRunning(source.id)"
+                  :class="['tag-style', dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.theme]">
+                  {{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}
+                </span>
+                <span v-else class="flex">
+                  <img
+                    class="h-[19.25px] w-[19.25px] mr-[9.37px]"
+                    :src="dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.icon"
+                  />
+                  <span>{{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}</span>
+                </span>
+                <span v-if="!isDataSourceRunning(source.id)">
+                  {{ getDataSourceSyncStatus(source.id)?.start_at }}
+                </span>
+              </div>
+              <div class="flex items-center">
                 <bk-button
+                  v-if="source.plugin_id === 'local'"
                   class="min-w-[64px]"
                   theme="primary"
-                  :disabled="isDataSourceRunning(source.id) || resetLoading.instances[source.id]"
-                  @click.stop
+                  :disabled="isDataSourceRunning(source.id) || removeLoading.instances[source.id]"
+                  @click="handleImport(source)"
                 >
-                  {{ $t('同步') }}
+                  <Upload class="mr-[8px] text-[16px]" />
+                  {{ $t('导入') }}
                 </bk-button>
-              </bk-pop-confirm>
-              <bk-button
-                class="min-w-[64px] ml-[8px]"
-                outline
-                theme="primary"
-                :disabled="resetLoading.instances[source.id]"
-                @click.stop="handleEdit(source)"
-              >
-                {{ $t('编辑') }}
-              </bk-button>
-              <PopMenu
-                :list="getMoreMenuList(source)"
-                :click-hide="true"
-                :popover-props="{ offset: 15, arrow: false }"
-              >
-                <bk-button class="w-[32px] ml-[8px]">
-                  <i class="user-icon icon-more"></i>
+                <bk-pop-confirm
+                  v-else
+                  :content="$t('确认同步？')"
+                  trigger="click"
+                  @confirm="handleOperationsSync(source)"
+                >
+                  <bk-button
+                    class="min-w-[64px]"
+                    theme="primary"
+                    :disabled="isDataSourceRunning(source.id) || removeLoading.instances[source.id]"
+                    @click.stop
+                  >
+                    {{ $t('同步') }}
+                  </bk-button>
+                </bk-pop-confirm>
+                <bk-button
+                  class="min-w-[64px] ml-[8px]"
+                  outline
+                  theme="primary"
+                  :disabled="removeLoading.instances[source.id]"
+                  @click.stop="handleEdit(source)"
+                >
+                  {{ $t('编辑') }}
                 </bk-button>
-              </PopMenu>
+                <PopMenu
+                  :list="getMoreMenuList(source)"
+                  :click-hide="true"
+                  :popover-props="{ offset: 15, arrow: false }"
+                >
+                  <bk-button class="w-[32px] ml-[8px]">
+                    <i class="user-icon icon-more"></i>
+                  </bk-button>
+                </PopMenu>
+              </div>
             </div>
-          </div>
-        </template>
-        <HttpDetails
-          v-if="expandedDetailsMap[source.id] && source.plugin_id !== 'local'"
-          :data-source-id="source.id"
-        />
-      </DataSourceItem>
+          </template>
+          <HttpDetails
+            v-if="expandedDetailsMap[source.id] && source.plugin_id !== 'local'"
+            :data-source-id="source.id"
+          />
+          <LocalDetails
+            v-if="expandedDetailsMap[source.id] && source.plugin_id === 'local'"
+            :data-source-id="source.id"
+          />
+        </DataSourceItem>
+      </template>
     </div>
     <!-- 导入 -->
     <ImportDialog
@@ -186,9 +187,10 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { Upload } from 'bkui-vue/lib/icon';
 import { storeToRefs } from 'pinia';
-import { computed, h, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import HttpDetails from './HttpDetails.vue';
+import LocalDetails from './LocalDetails.vue';
 
 import DataSourceItem from '@/components/DataSourceItem.vue';
 import ImportDialog from '@/components/import-dialog/import-dialog.vue';
@@ -197,7 +199,7 @@ import PopMenu from '@/components/PopMenu.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useInfoBoxContent } from '@/hooks';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
-import { batchDeleteDataSources, deleteDataSources, getRelatedResource, postOperationsSync } from '@/http';
+import { deleteDataSource, getRelatedResource, postOperationsSync } from '@/http';
 import type { DataSourceItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router';
@@ -215,11 +217,9 @@ const { startDataSourceSync: localDataSourceSync } = useDataSourceSetting();
 const isShowImportDialog = ref(false);
 const currentImportSourceId = ref<number>();
 const isLoading = ref(false);
-const resetLoading = reactive<{
-  all: boolean;
+const removeLoading = reactive<{
   instances: Record<number, boolean>;
 }>({
-  all: false,
   instances: {},
 });
 const expandedDetailsMap = ref<Record<number, boolean>>({});
@@ -242,12 +242,6 @@ const sortedDataSourcePlugins = computed(() => {
   });
 });
 
-// 检查是否有任意数据源正在运行中（用于全部重置按钮）
-const disabledSyncBtn = computed(() => dataSource.value.some((item) => {
-  const syncStatus = dataSourceStore.dataSourceSyncStatusMap.get(item.id);
-  return syncStatus && dataSourceStore.isDataSourceSyncing(syncStatus.status);
-}));
-const hasResettingInstance = computed(() => Object.values(resetLoading.instances).some(Boolean));
 const getInstanceCardData = (source: DataSourceItemData) => {
   const plugin = dataSourcePlugins.value.find(item => item.id === source.plugin_id);
   return {
@@ -269,10 +263,10 @@ const getDataSourceSyncStatus = (dataSourceId: number) => (
 );
 
 const getMoreMenuList = (source: DataSourceItemData) => [{
-  value: 'reset',
-  label: t('重置'),
-  disabled: isDataSourceRunning(source.id) || resetLoading.instances[source.id],
-  onClick: () => handleResetSingle(source),
+  value: 'remove',
+  label: t('移除'),
+  disabled: isDataSourceRunning(source.id) || removeLoading.instances[source.id],
+  onClick: () => handleRemoveSingle(source),
 }];
 
 const handlePluginLogoError = (pluginId: string) => {
@@ -286,71 +280,31 @@ const getDataSourceIcon = (pluginId: string) => ({
 }[pluginId] || 'icon-shujuyuanshu');
 
 /**
- * @description 重置单个数据源
+ * @description 移除单个数据源
  */
-const handleResetSingle = async (source: DataSourceItemData) => {
+const handleRemoveSingle = async (source: DataSourceItemData) => {
   const relatedResources = (await getRelatedResource(source.id))?.data;
-  const { subContent, resetIdpConfig } = useInfoBoxContent(relatedResources, '');
+  const { subContent } = useInfoBoxContent(relatedResources, '');
 
   InfoBox({
     width: 600,
     infoType: 'warning',
-    title: t('是否重置数据源？'),
+    title: t('是否移除数据源？'),
     subTitle: subContent,
-    confirmText: t('重置'),
+    confirmText: t('移除'),
     theme: 'danger',
     onConfirm: async () => {
       try {
-        resetLoading.instances[source.id] = true;
-        await deleteDataSources({
-          id: source.id,
-          is_delete_idp: resetIdpConfig.value ? 'True' : 'False',
-        });
+        removeLoading.instances[source.id] = true;
+        await deleteDataSource({ id: source.id });
         await dataSourceStore.handleFetchCurrentDataSource();
-        Message({ theme: 'success', message: t('数据源重置成功') });
+        Message({ theme: 'success', message: t('数据源移除成功') });
       } finally {
-        resetLoading.instances[source.id] = false;
+        removeLoading.instances[source.id] = false;
       }
     },
   });
 };
-
-/** @description 重置所有数据源 */
-const handleResetAll = async () => {
-  InfoBox({
-    width: 400,
-    infoType: 'warning',
-    title: t('是否重置所有数据源？'),
-    content: () => h('div', {
-      class: 'w-calc(100%_-_64px) flex items-center justify-center',
-    }, [
-      h('div', {
-        class: 'bg-[#F5F7FA] mt-[16px] px-[16px] py-[12px] text-[#494B50]',
-      }, t('重置后，所有数据源内的用户信息将同步删除，请谨慎操作')),
-    ]),
-    confirmText: t('重置'),
-    cancelText: t('取消'),
-    theme: 'danger',
-    onConfirm: async () => {
-      try {
-        resetLoading.all = true;
-        await batchDeleteDataSources(null);
-        Message({ theme: 'success', message: t('数据源重置成功') });
-        // 重置数据源后，重新获取当前数据源信息
-        dataSourceStore.handleFetchCurrentDataSource();
-      } finally {
-        resetLoading.all = false;
-      }
-    },
-  });
-};
-
-const getHeaderMoreMenuList = () => [{
-  value: 'reset-all',
-  label: t('全部重置'),
-  disabled: disabledSyncBtn.value || hasResettingInstance.value || resetLoading.all,
-  onClick: handleResetAll,
-}];
 
 /** 点击同步 发起同步，并开启syncRecords轮询*/
 const handleOperationsSync = async (source: DataSourceItemData) => {
@@ -361,7 +315,6 @@ const handleOperationsSync = async (source: DataSourceItemData) => {
 
 // 点击数据源卡片
 const handleClickDataSource = (source: DataSourceItemData) => {
-  if (source.plugin_id === 'local') return;
   expandedDetailsMap.value[source.id] = !expandedDetailsMap.value[source.id];
 };
 
@@ -466,6 +419,14 @@ onMounted(async () => {
 
 .data-source-instance {
   margin-bottom: 12px;
+}
+
+/* 空态在剩余高度内水平垂直居中（减去添加按钮行及其下间距） */
+.data-source-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 48px);
 }
 
 ::v-deep .card-header {
