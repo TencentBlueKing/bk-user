@@ -151,18 +151,15 @@
             </bk-form-item>
           </Row>
           <div class="data-source-footer-btn !border-t-0">
-            <div>
-              <bk-button
-                class="mr-[8px]"
-                theme="primary"
-                :outline="!nextDisabled"
-                :loading="connectionLoading"
-                @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
-              <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
-                {{ $t('下一步') }}
-              </bk-button>
-              <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
-            </div>
+            <bk-button
+              theme="primary"
+              :outline="!nextDisabled"
+              :loading="connectionLoading"
+              @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+            <bk-button theme="primary" :disabled="nextDisabled" @click="handleNext">
+              {{ $t('下一步') }}
+            </bk-button>
+            <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
             <div class="connection-alert" v-if="connectionStatus !== null">
               <bk-alert
                 :theme="connectionStatus ? 'success' : 'error'"
@@ -323,8 +320,8 @@
             />
           </Row>
           <div class="data-source-footer-btn !border-t-0">
-            <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
-            <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
+            <bk-button @click="handleLastStep">{{ $t('上一步') }}</bk-button>
+            <bk-button theme="primary" :loading="submitLoading" @click="handleSubmit">
               {{ true ? $t('保存') : $t('提交') }}
             </bk-button>
             <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
@@ -910,7 +907,6 @@ const handleDelBaseDn = (type: string, index: number) => {
 .data-source-footer-btn {
   .connection-alert {
     width: 100%;
-    margin-top: 8px;
   }
 
   .icon-close-fill {

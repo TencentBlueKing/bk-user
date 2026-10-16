@@ -32,7 +32,8 @@
           </template>
         </bk-form-item>
 
-        <!-- 输入区 popover：箭头指向当前选中的选项 -->
+        <!-- 输入区 popover：箭头指向当前选中的选项；
+             disable-teleport 让浮层留在组件树内，页签切换销毁面板时随之卸载（bk-popover 卸载时不清理 teleport 到 body 的浮层） -->
         <bk-popover
           ref="inputPopoverRef"
           trigger="manual"
@@ -44,6 +45,7 @@
           :offset="inputPopoverOffset"
           :arrow="true"
           :z-index="10"
+          :disable-teleport="true"
         >
           <template #content>
             <div class="flex items-center bg-[#F5F7FA] p-[12px] min-w-[400px] w-[560px]">

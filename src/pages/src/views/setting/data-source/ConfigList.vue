@@ -65,91 +65,101 @@
         </span>
       </div>
 
-      <DataSourceItem
-        v-for="source in dataSource"
-        :key="source.id"
-        :data="getInstanceCardData(source)"
-        class="data-source-instance"
-        @click="handleClickDataSource(source)"
-      >
-        <template #right>
-          <div class="flex items-center" @click.stop>
-            <div
-              v-if="getDataSourceSyncStatus(source.id)"
-              class="mr-[40px]"
-            >
-              <span
-                v-if="!isDataSourceRunning(source.id)"
-                :class="['tag-style', dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.theme]">
-                {{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}
-              </span>
-              <span v-else class="flex">
-                <img
-                  class="h-[19.25px] w-[19.25px] mr-[9.37px]"
-                  :src="dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.icon"
-                />
-                <span>{{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}</span>
-              </span>
-              <span v-if="!isDataSourceRunning(source.id)">
-                {{ getDataSourceSyncStatus(source.id)?.start_at }}
-              </span>
-            </div>
-            <div class="flex items-center">
-              <bk-button
-                v-if="source.plugin_id === 'local'"
-                class="min-w-[64px]"
-                theme="primary"
-                :disabled="isDataSourceRunning(source.id) || removeLoading.instances[source.id]"
-                @click="handleImport(source)"
+      <div v-if="dataSource.length === 0" class="data-source-empty">
+        <bk-exception
+          type="empty"
+          scene="page"
+          :title="$t('当前暂无数据源')"
+          :description="$t('请点击新建按钮新建数据源')"
+        />
+      </div>
+      <template v-else>
+        <DataSourceItem
+          v-for="source in dataSource"
+          :key="source.id"
+          :data="getInstanceCardData(source)"
+          class="data-source-instance"
+          @click="handleClickDataSource(source)"
+        >
+          <template #right>
+            <div class="flex items-center" @click.stop>
+              <div
+                v-if="getDataSourceSyncStatus(source.id)"
+                class="mr-[40px]"
               >
-                <Upload class="mr-[8px] text-[16px]" />
-                {{ $t('导入') }}
-              </bk-button>
-              <bk-pop-confirm
-                v-else
-                :content="$t('确认同步？')"
-                trigger="click"
-                @confirm="handleOperationsSync(source)"
-              >
+                <span
+                  v-if="!isDataSourceRunning(source.id)"
+                  :class="['tag-style', dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.theme]">
+                  {{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}
+                </span>
+                <span v-else class="flex">
+                  <img
+                    class="h-[19.25px] w-[19.25px] mr-[9.37px]"
+                    :src="dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.icon"
+                  />
+                  <span>{{ dataRecordStatus[getDataSourceSyncStatus(source.id)?.status]?.text }}</span>
+                </span>
+                <span v-if="!isDataSourceRunning(source.id)">
+                  {{ getDataSourceSyncStatus(source.id)?.start_at }}
+                </span>
+              </div>
+              <div class="flex items-center">
                 <bk-button
+                  v-if="source.plugin_id === 'local'"
                   class="min-w-[64px]"
                   theme="primary"
                   :disabled="isDataSourceRunning(source.id) || removeLoading.instances[source.id]"
-                  @click.stop
+                  @click="handleImport(source)"
                 >
-                  {{ $t('同步') }}
+                  <Upload class="mr-[8px] text-[16px]" />
+                  {{ $t('导入') }}
                 </bk-button>
-              </bk-pop-confirm>
-              <bk-button
-                class="min-w-[64px] ml-[8px]"
-                outline
-                theme="primary"
-                :disabled="removeLoading.instances[source.id]"
-                @click.stop="handleEdit(source)"
-              >
-                {{ $t('编辑') }}
-              </bk-button>
-              <PopMenu
-                :list="getMoreMenuList(source)"
-                :click-hide="true"
-                :popover-props="{ offset: 15, arrow: false }"
-              >
-                <bk-button class="w-[32px] ml-[8px]">
-                  <i class="user-icon icon-more"></i>
+                <bk-pop-confirm
+                  v-else
+                  :content="$t('确认同步？')"
+                  trigger="click"
+                  @confirm="handleOperationsSync(source)"
+                >
+                  <bk-button
+                    class="min-w-[64px]"
+                    theme="primary"
+                    :disabled="isDataSourceRunning(source.id) || removeLoading.instances[source.id]"
+                    @click.stop
+                  >
+                    {{ $t('同步') }}
+                  </bk-button>
+                </bk-pop-confirm>
+                <bk-button
+                  class="min-w-[64px] ml-[8px]"
+                  outline
+                  theme="primary"
+                  :disabled="removeLoading.instances[source.id]"
+                  @click.stop="handleEdit(source)"
+                >
+                  {{ $t('编辑') }}
                 </bk-button>
-              </PopMenu>
+                <PopMenu
+                  :list="getMoreMenuList(source)"
+                  :click-hide="true"
+                  :popover-props="{ offset: 15, arrow: false }"
+                >
+                  <bk-button class="w-[32px] ml-[8px]">
+                    <i class="user-icon icon-more"></i>
+                  </bk-button>
+                </PopMenu>
+              </div>
             </div>
-          </div>
-        </template>
-        <HttpDetails
-          v-if="expandedDetailsMap[source.id] && source.plugin_id !== 'local'"
-          :data-source-id="source.id"
-        />
-        <LocalDetails
-          v-if="expandedDetailsMap[source.id] && source.plugin_id === 'local'"
-          :data-source-id="source.id"
-        />
-      </DataSourceItem>
+          </template>
+          <HttpDetails
+            v-if="expandedDetailsMap[source.id] && source.plugin_id !== 'local'"
+            :data-source-id="source.id"
+          />
+          <LocalDetails
+            v-if="expandedDetailsMap[source.id] && source.plugin_id === 'local'"
+            :data-source-id="source.id"
+          />
+        </DataSourceItem>
+      </template>
     </div>
     <!-- 导入 -->
     <ImportDialog
@@ -409,6 +419,14 @@ onMounted(async () => {
 
 .data-source-instance {
   margin-bottom: 12px;
+}
+
+/* 空态在剩余高度内水平垂直居中（减去添加按钮行及其下间距） */
+.data-source-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 48px);
 }
 
 ::v-deep .card-header {

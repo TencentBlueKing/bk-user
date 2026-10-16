@@ -769,5 +769,16 @@
   "确认批量启用所选用户？": "Are you sure to batch enable selected users?",
   "确认批量停用所选用户？": "Are you sure to batch deactivate selected users?",
   "创建数据源失败": "Failed to create data source",
-  "操作失败": "Operation failed"
+  "操作失败": "Operation failed",
+  "导入数据": "Import Data",
+  "导入并继续": "Import and Continue",
+  "重新导入": "Re-import",
+  "跳过，稍后导入": "Skip, import later",
+  "文件导入": "File Import",
+  "该数据源的用户可以通过账号密码登录，以下规则会用于生成和校验密码": "Users of this data source can log in with username and password; the rules below are used to generate and validate passwords",
+  "未启用时，该数据源的用户不能通过账密登录，之后可在编辑页开启": "When disabled, users of this data source cannot log in with username and password; it can be enabled later on the edit page",
+  "当前暂无数据源": "No data sources yet",
+  "请点击新建按钮新建数据源": "Click the \"Add\" button to create a data source",
+  "跳过": "Skip",
+  "数据源「x」已创建，导入或跳过都不影响该数据源": "Data source \"{name}\" has been created. Importing or skipping does not affect it"
 }

@@ -144,13 +144,13 @@ const handleChange = (value: number[]) => {
   emit('change', value);
 };
 
-/** 前往对应本地数据源编辑页的密码设置步骤（query.step 直达，多个本地数据源按提示逐个处理）；from=login 供数据源保存后跳回登录设置 */
+/** 前往对应本地数据源编辑页的密码规则页签（query.section 直达，多个本地数据源按提示逐个处理）；from=login 供数据源保存后跳回登录设置 */
 const goToDataSourceSetting = async (item: ScopeOption) => {
   // 跳转会离开登录设置，存在未保存修改时需二次确认，避免静默丢弃
   if (window.changeInput && !(await editLeaveBefore())) return;
   router.push({
     name: 'newDataSource',
-    query: { type: 'local', id: item.id, step: 2, from: 'login' },
+    query: { type: 'local', id: item.id, section: 'password', from: 'login' },
   });
 };
 
