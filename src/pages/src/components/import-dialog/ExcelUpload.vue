@@ -54,7 +54,7 @@ import { t } from '@/language/index';
 
 const model = defineModel<File | null>({ default: null });
 
-const props = defineProps<{ disabled?: boolean }>();
+defineProps<{ disabled?: boolean }>();
 
 const emit = defineEmits<{
   exceed: [];

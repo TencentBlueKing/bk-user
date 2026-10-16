@@ -82,7 +82,9 @@ export default function useDataSourceSetting(callback?: Function) {
     if (immediate) {
       // 立即执行一次获取状态
       dataSourceStore.handleFetchSyncStatus([{ id: dataSourceId, pluginId }])
-        .then(() => handleSyncStatus(dataSourceSyncStatusMap.value.get(dataSourceId)?.status));
+        .then(() => handleSyncStatus(dataSourceSyncStatusMap.value.get(dataSourceId)?.status))
+        // 首次查询失败时也要通知调用方结束，避免 loading 卡死
+        .catch(() => callback?.());
     } else {
       // 跳过立即查询，直接按当前已知状态处理（调用方需保证刚查询过状态）
       handleSyncStatus(dataSourceSyncStatusMap.value.get(dataSourceId)?.status);

@@ -68,10 +68,11 @@
         </div>
       </template>
     </StepLayout>
-    <!-- 编辑态：三页签独立保存（基础信息 / 导入数据 / 密码规则） -->
+    <!-- 编辑态：三页签独立保存（基础信息 / 导入数据 / 密码规则）；导入任务进行中禁止切换，避免面板卸载后丢失任务结果 -->
     <bk-tab
       v-else
       v-model:active="activeTab"
+      :before-change="() => !importLoading"
       render-directive="if"
       type="unborder-card"
       class="edit-data-source-tab"
@@ -118,7 +119,7 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import BasicInfoPanel from './components/basic-info-panel.vue';
@@ -185,15 +186,19 @@ const createSteps = [
 
 // 编辑态页签：支持 section=password 深链（账密登录「去设置」直达密码规则页签）
 const activeTab = ref<'base' | 'import' | 'password'>(route.query.section === 'password' ? 'password' : 'base');
-const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
+// 页签间共享 formModel，切换本身不丢数据、不弹确认；按页签记录未保存修改，
+// 保存只清当前页签的标记，页面离开提示由汇总后的 window.changeInput 驱动
+const dirtyTabs = ref<Record<'base' | 'password', boolean>>({
+  base: false,
+  password: false,
+});
 
-// 页签间共享 formModel，切换本身不丢数据，但存在未保存修改时仍需二次确认，取消则留在原页签
 let previousTab = activeTab.value;
-const handleTabChange = async (tab: 'base' | 'import' | 'password') => {
-  if (window.changeInput && !(await editLeaveBefore())) {
-    activeTab.value = previousTab;
-    return;
-  }
+const handleTabChange = (tab: 'base' | 'import' | 'password') => {
+  // 同一时刻只有当前页签可编辑，切走时把全局脏标记归账到刚离开的页签；
+  // 全局标记无法区分来源，宁可多记（多一次离开确认）也不漏记（静默丢失）。
+  // 导入页签的脏状态由文件选择状态推导，不参与归账
+  if (window.changeInput && previousTab !== 'import') dirtyTabs.value[previousTab] = true;
   previousTab = tab;
   router.replace({ query: { ...route.query, section: tab === 'password' ? 'password' : undefined } });
 };
@@ -205,10 +210,17 @@ const submitLoading = ref(false);
 // 导入动作由容器驱动（面板 expose importFile），loading 与失败态由返回值推导，用于按钮文案切换
 const importLoading = ref(false);
 const importFailed = ref(false);
-// 面板上报的文件选中状态：未选文件时禁用「导入并继续 / 导入」
+// 面板上报的文件选中状态：未选文件时禁用「导入」
 const hasImportFile = ref(false);
 // 最近一次导入是否成功：成功后禁用导入按钮，文件变化时恢复
 const imported = ref(false);
+
+// 汇总页面脏标记：导入页签的脏状态可直接推导——选了文件但尚未导入成功（导入失败、换文件后重算）
+const syncChangeInput = () => {
+  window.changeInput = dirtyTabs.value.base
+    || dirtyTabs.value.password
+    || (hasImportFile.value && !imported.value);
+};
 // 创建态是否已成功导入过：控制步骤 2「跳过」按钮显示为「下一步」，文件变化不重置
 const importDone = ref(false);
 
@@ -241,7 +253,7 @@ const createFooterButtons = computed<Record<1 | 2 | 3, FooterButton[]>>(() => ({
   ],
   2: [
     {
-      text: importFailed.value ? t('重新导入') : t('导入并继续'),
+      text: importFailed.value ? t('重新导入') : t('导入'),
       theme: 'primary',
       loading: importLoading.value,
       disabled: !hasImportFile.value || imported.value,
@@ -249,6 +261,8 @@ const createFooterButtons = computed<Record<1 | 2 | 3, FooterButton[]>>(() => ({
     },
     {
       text: skipButtonText.value,
+      // 导入成功后主操作转移到「下一步」，加主色引导，避免用户误以为页面卡住
+      theme: importDone.value ? 'primary' : undefined,
       disabled: importLoading.value,
       onClick: handleSkipImport,
     },
@@ -319,6 +333,8 @@ const handleCreateDataSource = async () => {
     });
     const dataSourceId = result.data?.id;
     createdDataSourceId.value = dataSourceId;
+    // 名称已随创建落库，清除步骤 1 输入产生的脏标记
+    syncChangeInput();
     step.value = 2;
   } catch (e) {
     // 接口错误已由 http 拦截器统一提示，此处仅记录日志
@@ -328,7 +344,7 @@ const handleCreateDataSource = async () => {
   }
 };
 
-// 步骤2「导入并继续 / 重新导入」与编辑导入页签「导入」共用：
+// 步骤2「导入 / 重新导入」与编辑导入页签「导入」共用：
 // 成功后停留当前步骤展示结果 Alert（创建态由「跳过→下一步」按钮继续），失败停留原地可重试
 const handleImport = async () => {
   importLoading.value = true;
@@ -337,6 +353,8 @@ const handleImport = async () => {
     importFailed.value = !success;
     // 成功后禁用导入按钮，文件变化时恢复，防止对同一份文件重复导入
     imported.value = success;
+    // 导入成功清除待导入脏标记，失败保持
+    syncChangeInput();
     // 创建态据此把「跳过」切换为「下一步」；跳过进入第 3 步不置位，回上一步仍显示「跳过」
     importDone.value = success;
   } finally {
@@ -348,6 +366,7 @@ const handleImport = async () => {
 const onFileChange = (hasFile: boolean) => {
   hasImportFile.value = hasFile;
   imported.value = false;
+  syncChangeInput();
 };
 
 // 步骤 2 右侧按钮（「跳过 / 下一步」共用）：不导入直接进入密码规则步骤，后续可在编辑页导入页签补导
@@ -383,9 +402,11 @@ const handleFinishCreate = async () => {
 
 // ===== 编辑态：三页签独立保存 =====
 
-/** 保存成功后停留编辑页（另一页签未保存的修改仍在表单中，可继续编辑保存）；from=login 仍跳回登录设置 */
+/** 保存成功后只清当前页签的脏标记（另一页签未保存的修改仍在表单中，由其自己的标记追踪）；from=login 仍跳回登录设置 */
 const handleSaveSuccess = () => {
-  window.changeInput = false;
+  // 仅 base/password 走表单保存，导入页签的脏标记由导入结果推导
+  if (activeTab.value !== 'import') dirtyTabs.value[activeTab.value] = false;
+  syncChangeInput();
   if (backToLoginIfNeeded()) return;
   Message({ theme: 'success', message: t('保存成功') });
 };
