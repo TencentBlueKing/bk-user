@@ -19,10 +19,12 @@
             <Http
               v-if="currentType === 'general'"
               :data-source-id="dataSourceId"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
             <Ldap
               v-if="currentType === 'ldap'"
               :data-source-id="dataSourceId"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
             <Local
               v-if="currentType === 'local'"
@@ -34,6 +36,7 @@
               v-if="!isNotJsonSchemaIds.includes(currentType)"
               :current-type="currentType"
               :data-source-id="dataSourceId"
+              @cancel="handleBack"
               @update-success="updateSuccess" />
           </div>
         </template>
