@@ -144,7 +144,8 @@
             :reset-password-email="$t('重设密码后的邮件')"
             :create-account-sms="$t('创建账户短信')"
             :reset-password-sms="$t('重设密码后的短信')"
-            @handle-editor-text="handleEditorText">
+            @handle-editor-text="handleEditorText"
+            @change="handleChange">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
@@ -238,7 +239,8 @@
             :expired-email-key="'password_expired'"
             :expiring-sms-key="'password_expiring'"
             :expired-sms-key="'password_expired'"
-            @handle-editor-text="handleEditorText">
+            @handle-editor-text="handleEditorText"
+            @change="handleChange">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
@@ -355,6 +357,7 @@ const mustIncludeList = computed({
     return mustIncludeOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
   },
   set: (value: string[]) => {
+    window.changeInput = true;
     const rule = config.value?.password_rule;
     if (!rule) return;
     mustIncludeOptions.forEach((opt) => {
@@ -371,6 +374,7 @@ const continuousRuleList = computed({
     return continuousOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
   },
   set: (value: string[]) => {
+    window.changeInput = true;
     const rule = config.value?.password_rule;
     if (!rule) return;
     continuousOptions.forEach((opt) => {
@@ -385,6 +389,7 @@ const handleChange = () => {
 
 // 编辑通知方式
 const handleEditorText = (html: string, text: string, key: string, type: string) => {
+  window.changeInput = true;
   const templates = key === 'password_expiring' || key === 'password_expired'
     ? config.value?.password_expire?.notification?.templates ?? []
     : config.value?.password_initial?.notification?.templates ?? [];
@@ -429,11 +434,13 @@ const setIsIntPutEyesDisabled = (fixed_password: string) => {
 };
 
 const inputPassword = (val: string) => {
+  window.changeInput = true;
   config.value.password_initial.fixed_password = val;
 };
 
 // 密码不能连续出现的次数
 const handleNotContinuousCountInput = (value: string | number) => {
+  handleChange();
   // 空字符串/undefined/null 视为不合法
   if (value === '' || value === undefined || value === null) {
     passwordCountError.value = true;

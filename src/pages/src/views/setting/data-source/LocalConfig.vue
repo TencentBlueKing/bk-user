@@ -33,7 +33,7 @@
           :data-source-id="createdDataSourceId"
           :data-source-name="formModel.name"
           show-created-tip
-          @file-change="hasImportFile = $event"
+          @file-change="onFileChange"
         />
         <div class="data-source-footer-btn !border-t-0">
           <bk-button
@@ -89,7 +89,7 @@
         <ImportDataPanel
           ref="importPanelRef"
           :data-source-id="props.dataSourceId"
-          @file-change="hasImportFile = $event"
+          @file-change="onFileChange"
         />
       </bk-tab-panel>
       <bk-tab-panel name="password" :label="$t('密码规则')">
@@ -117,7 +117,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { Message } from 'bkui-vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import BasicInfoPanel from './components/basic-info-panel.vue';
@@ -184,7 +185,16 @@ const createSteps = [
 
 // 编辑态页签：支持 section=password 深链（账密登录「去设置」直达密码规则页签）
 const activeTab = ref<'base' | 'import' | 'password'>(route.query.section === 'password' ? 'password' : 'base');
-const handleTabChange = (tab: string) => {
+const editLeaveBefore = inject<() => Promise<boolean>>('editLeaveBefore');
+
+// 页签间共享 formModel，切换本身不丢数据，但存在未保存修改时仍需二次确认，取消则留在原页签
+let previousTab = activeTab.value;
+const handleTabChange = async (tab: 'base' | 'import' | 'password') => {
+  if (window.changeInput && !(await editLeaveBefore())) {
+    activeTab.value = previousTab;
+    return;
+  }
+  previousTab = tab;
   router.replace({ query: { ...route.query, section: tab === 'password' ? 'password' : undefined } });
 };
 
@@ -197,9 +207,15 @@ const importLoading = ref(false);
 const importFailed = ref(false);
 // 面板上报的文件选中状态：未选文件时禁用「导入并继续 / 导入」
 const hasImportFile = ref(false);
+// 最近一次导入是否成功：成功后禁用导入按钮，文件变化时恢复
+const imported = ref(false);
+// 创建态是否已成功导入过：控制步骤 2「跳过」按钮显示为「下一步」，文件变化不重置
+const importDone = ref(false);
 
 // 步骤 × 状态 → 按钮组映射：向导各步按钮的文案/loading/禁用集中于此，流程一目了然
 const handlePrevStep = () => {
+  // 回到第 2 步面板会重挂载，文件与失败原因已清空，容器的失败标记需同步重置，否则按钮文案与实际状态不符
+  importFailed.value = false;
   step.value = 2;
 };
 
@@ -211,25 +227,36 @@ interface FooterButton {
   onClick: () => void;
 }
 
+// 步骤 2 右侧按钮文案：失败提示可稍后补导；已成功导入则引导进入下一步；默认跳过导入
+const skipButtonText = computed(() => {
+  if (importFailed.value) return t('跳过，稍后导入');
+  if (importDone.value) return t('下一步');
+  return t('跳过');
+});
+
 const createFooterButtons = computed<Record<1 | 2 | 3, FooterButton[]>>(() => ({
   1: [
     { text: t('下一步'), theme: 'primary', loading: submitLoading.value, onClick: handleCreateDataSource },
-    { text: t('取消'), onClick: handleCancel },
+    { text: t('取消'), disabled: submitLoading.value, onClick: handleCancel },
   ],
   2: [
     {
       text: importFailed.value ? t('重新导入') : t('导入并继续'),
       theme: 'primary',
       loading: importLoading.value,
-      disabled: !hasImportFile.value,
+      disabled: !hasImportFile.value || imported.value,
       onClick: handleImport,
     },
-    { text: importFailed.value ? t('跳过，稍后导入') : t('跳过'), disabled: importLoading.value, onClick: handleSkipImport },
+    {
+      text: skipButtonText.value,
+      disabled: importLoading.value,
+      onClick: handleSkipImport,
+    },
   ],
   3: [
-    { text: t('上一步'), onClick: handlePrevStep },
+    { text: t('上一步'), disabled: submitLoading.value, onClick: handlePrevStep },
     { text: t('提交'), theme: 'primary', loading: submitLoading.value, onClick: handleFinishCreate },
-    { text: t('取消'), onClick: handleCancel },
+    { text: t('稍后设置'), disabled: submitLoading.value, onClick: handleCancel },
   ],
 }));
 
@@ -241,15 +268,15 @@ const editFooterButtons = computed<FooterButton[]>(() => {
         text: t('导入'),
         theme: 'primary',
         loading: importLoading.value,
-        disabled: !hasImportFile.value,
+        disabled: !hasImportFile.value || imported.value,
         onClick: handleImport,
       },
-      { text: t('取消'), onClick: handleCancel },
+      { text: t('取消'), disabled: importLoading.value, onClick: handleCancel },
     ];
   }
   return [
     { text: t('保存'), theme: 'primary', loading: submitLoading.value, onClick: handleEditSave },
-    { text: t('取消'), onClick: handleCancel },
+    { text: t('取消'), disabled: submitLoading.value, onClick: handleCancel },
   ];
 });
 
@@ -301,19 +328,29 @@ const handleCreateDataSource = async () => {
   }
 };
 
-// 步骤2「导入并继续 / 重新导入」与编辑导入页签「导入」共用：成功后创建态进入密码规则步骤，失败停留原地
+// 步骤2「导入并继续 / 重新导入」与编辑导入页签「导入」共用：
+// 成功后停留当前步骤展示结果 Alert（创建态由「跳过→下一步」按钮继续），失败停留原地可重试
 const handleImport = async () => {
   importLoading.value = true;
   try {
     const success = await importPanelRef.value?.importFile();
     importFailed.value = !success;
-    if (success && !isEdit.value) step.value = 3;
+    // 成功后禁用导入按钮，文件变化时恢复，防止对同一份文件重复导入
+    imported.value = success;
+    // 创建态据此把「跳过」切换为「下一步」；跳过进入第 3 步不置位，回上一步仍显示「跳过」
+    importDone.value = success;
   } finally {
     importLoading.value = false;
   }
 };
 
-// 步骤2「跳过」：不导入直接进入密码规则步骤，后续可在编辑页导入页签补导
+// 文件变化即恢复导入按钮：上一次的导入结果只对当时的文件有效
+const onFileChange = (hasFile: boolean) => {
+  hasImportFile.value = hasFile;
+  imported.value = false;
+};
+
+// 步骤 2 右侧按钮（「跳过 / 下一步」共用）：不导入直接进入密码规则步骤，后续可在编辑页导入页签补导
 const handleSkipImport = () => {
   step.value = 3;
 };
@@ -346,15 +383,11 @@ const handleFinishCreate = async () => {
 
 // ===== 编辑态：三页签独立保存 =====
 
-/** 保存成功后的统一去向：from=login 跳回登录设置，否则进入成功页 */
-const handleSaveSuccess = (name: string) => {
+/** 保存成功后停留编辑页（另一页签未保存的修改仍在表单中，可继续编辑保存）；from=login 仍跳回登录设置 */
+const handleSaveSuccess = () => {
   window.changeInput = false;
   if (backToLoginIfNeeded()) return;
-  emit('updateSuccess', {
-    text: t('更新'),
-    dataSourceId: props.dataSourceId,
-    name,
-  });
+  Message({ theme: 'success', message: t('保存成功') });
 };
 
 // 基础信息页签：仅更新名称，plugin_config/field_mapping 取最新落库值，避免覆盖密码页签未保存的输入
@@ -373,7 +406,7 @@ const handleEditSave = async () => {
       plugin_config: saveBase ? detailsRes?.data?.plugin_config : formModel.value.config,
       field_mapping: detailsRes?.data?.field_mapping,
     });
-    handleSaveSuccess(saveBase ? formModel.value.name : detailsRes?.data?.name ?? '');
+    handleSaveSuccess();
   } catch (e) {
     console.error(e);
   } finally {
@@ -398,8 +431,7 @@ const checkPasswordRuleReferenced = async () => {
     if (!localIdp) return;
     const idpDetailRes = await getIdpsDetails(localIdp.id);
     const scopeIds = (idpDetailRes?.data?.data_source_match_rules ?? []).map(item => item.data_source_id);
-    isPasswordRuleReferenced.value = idpDetailRes?.data?.status === 'enabled'
-      && scopeIds.includes(props.dataSourceId);
+    isPasswordRuleReferenced.value = scopeIds.includes(props.dataSourceId);
   } catch (e) {
     console.error(e);
   }

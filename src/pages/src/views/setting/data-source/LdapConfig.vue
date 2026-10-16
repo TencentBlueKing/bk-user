@@ -322,7 +322,7 @@
           <div class="data-source-footer-btn !border-t-0">
             <bk-button @click="handleLastStep">{{ $t('上一步') }}</bk-button>
             <bk-button theme="primary" :loading="submitLoading" @click="handleSubmit">
-              {{ true ? $t('保存') : $t('提交') }}
+              {{ isEdit ? $t('保存') : $t('提交') }}
             </bk-button>
             <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
           </div>

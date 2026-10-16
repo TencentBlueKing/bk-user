@@ -6,6 +6,7 @@
     :limit="1"
     :size="UPLOAD_FILE_MAX_SIZE"
     :multiple="false"
+    :disabled="disabled"
     :files="files"
     :custom-request="customRequest"
     @exceed="exceed"
@@ -27,7 +28,7 @@
           </p>
         </div>
         <div class="file-operations">
-          <span v-if="!isHover">{{ getSize(file.size) }}</span>
+          <span v-if="!isHover || disabled">{{ getSize(file.size) }}</span>
           <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
         </div>
       </div>
@@ -52,6 +53,8 @@ import { UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_MAX_SIZE_BYTE } from './constants';
 import { t } from '@/language/index';
 
 const model = defineModel<File | null>({ default: null });
+
+const props = defineProps<{ disabled?: boolean }>();
 
 const emit = defineEmits<{
   exceed: [];

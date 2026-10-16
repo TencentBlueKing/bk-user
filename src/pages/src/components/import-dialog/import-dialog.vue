@@ -54,8 +54,7 @@ import { computed, reactive, ref } from 'vue';
 
 import { UPLOAD_FILE_MAX_SIZE_BYTE } from '@/components/import-dialog/constants';
 import ExcelUpload from '@/components/import-dialog/ExcelUpload.vue';
-import { useDataSourceImport } from '@/hooks/useDataSourceImport';
-import useDataSourceSetting from '@/hooks/useDataSourceSetting';
+import { useDataSourceImportTask } from '@/hooks/useDataSourceImportTask';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
 
@@ -103,17 +102,13 @@ const confirmImportUsers = async () => {
 
   try {
     importLoading.value = true;
-    const res = await uploadImport(props.dataSourceId, uploadInfo.file, uploadInfo.overwrite);
-    // 确保 importLoading 在最终状态(success/failed/backend error) 下才停止loading
-    // 因此取消在finally中处理loading的逻辑
-    if (res.data.data.status === 'success') {
-      importLoading.value = false;
+    // 异步任务：importTask 在任务出最终结果后才兑现，loading 由轮询期间的同步状态共同驱动
+    const { success, summary } = await importTask(props.dataSourceId, uploadInfo.file, uploadInfo.overwrite);
+    importLoading.value = false;
+    if (success) {
       importSuccess();
-    } else if (res.data.data.status === 'failed') {
-      importLoading.value = false;
-      Message({ theme: 'error', message: res.data.data.summary });
     } else {
-      startDataSourceSync(props.dataSourceId, 'local');
+      Message({ theme: 'error', message: summary || t('同步失败') });
     }
   } catch (e) {
     importLoading.value = false;
@@ -121,18 +116,7 @@ const confirmImportUsers = async () => {
   }
 };
 
-/** 停止轮询时的钩子方法 [获取导入本地数据源状态] */
-const afterSyncImportData = () => {
-  importLoading.value = false;
-  if (localDataSourceStatus.value === 'success') {
-    importSuccess();
-  } else if (localDataSourceStatus.value === 'failed') {
-    Message({ theme: 'error', message: t('同步失败') });
-  }
-};
-
-const { uploadImport } = useDataSourceImport();
-const { startDataSourceSync } = useDataSourceSetting(afterSyncImportData);
+const { importTask } = useDataSourceImportTask();
 
 /** 导入成功时执行 */
 const importSuccess = () => {

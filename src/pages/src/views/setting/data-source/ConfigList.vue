@@ -70,7 +70,7 @@
           type="empty"
           scene="page"
           :title="$t('当前暂无数据源')"
-          :description="$t('请点击新建按钮新建数据源')"
+          :description="$t('请点击添加按钮添加数据源')"
         />
       </div>
       <template v-else>
