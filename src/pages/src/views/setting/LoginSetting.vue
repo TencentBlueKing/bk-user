@@ -83,6 +83,7 @@
             v-if="!detailsConfig.isEdit"
             outline
             theme="primary"
+            :disabled="!editData"
             @click="handleEditDetails">
             {{ $t('编辑') }}
           </bk-button>
@@ -93,6 +94,7 @@
         <template v-if="activeItem?.id === 'local'">
           <LocalView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             @detail-loaded="handleDetailLoaded"
           />
@@ -106,6 +108,7 @@
         <template v-else-if="activeItem?.id === 'wecom'">
           <WeComView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             @detail-loaded="handleDetailLoaded"
           />
@@ -119,6 +122,7 @@
         <template v-else>
           <CustomView
             v-if="!detailsConfig.isEdit"
+            :key="detailsKey"
             :idp-id="activeItem?.idp_id"
             :plugin-id="activeItem?.id"
             @detail-loaded="handleDetailLoaded"
@@ -240,10 +244,14 @@ const detailsConfig = reactive({
 
 
 const activeItem = ref<IdpPluginItem | null>(null);
+// 侧栏每次打开自增，作为 View 组件的 key：sideslider 内容常驻（关闭不卸载），
+// 不重挂载则 detail-loaded 只在首次触发，handleClickActive 置空的 editData 将无人回填
+const detailsKey = ref(0);
 
 const handleClickActive = (item) => {
   // 本地数据源未配置时，不支持点击
   if (!dataSourceStore.isConfiguredLocalPlugin && item.id === 'local') return;
+  detailsKey.value += 1;
   const isNewConfig = !item.idp_id;
   // 新增态构造默认对象传入 Edit，编辑态等 View emit 详情后再传入
   editData.value = isNewConfig
