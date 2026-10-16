@@ -199,7 +199,7 @@ const loadNodeChildren = (node: IOrg) => {
   if (node.nodeType !== 'department' || node.departmentId === undefined) {
     return Promise.resolve([]);
   }
-  return getRemoteData(node, organizationStore.selectedOrg.tenantId);
+  return getRemoteData(node);
 };
 
 const handleLogoError = (node: IOrg) => {
@@ -221,9 +221,8 @@ const getTreeData = async () => {
   const { selectedOrg } = organizationStore;
   const departmentId = Number(selectedOrg.deptId);
   const dataSourceId = Number(selectedOrg.dataSourceId);
-  const res = await getDepartmentsList(selectedOrg.tenantId, {
+  const res = await getDepartmentsList(dataSourceId, {
     parent_department_id: departmentId,
-    data_source_id: dataSourceId,
   });
   treeData.value = getData(Boolean(res.data?.length));
 };

@@ -13,13 +13,15 @@
               <p class="title">{{ $t('标题') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
-                v-model="expiringEmail.title" />
+                v-model="expiringEmail.title"
+                @change="emit('change')" />
             </div>
             <div class="email-info clearfix">
               <p class="title">{{ $t('发件人') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
-                v-model="expiringEmail.sender" />
+                v-model="expiringEmail.sender"
+                @change="emit('change')" />
             </div>
             <div class="email-info clearfix">
               <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
@@ -35,13 +37,15 @@
               <p class="title">{{ $t('标题') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
-                v-model="expiredEmail.title" />
+                v-model="expiredEmail.title"
+                @change="emit('change')" />
             </div>
             <div class="email-info clearfix">
               <p class="title">{{ $t('发件人') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
-                v-model="expiredEmail.sender" />
+                v-model="expiredEmail.sender"
+                @change="emit('change')" />
             </div>
             <div class="email-info clearfix">
               <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
@@ -149,7 +153,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['handleEditorText']);
+const emit = defineEmits(['handleEditorText', 'change']);
 
 /* 邮箱工具栏配置 */
 const emailConfig = reactive({

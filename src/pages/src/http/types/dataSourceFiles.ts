@@ -232,9 +232,9 @@ export interface ResetPasswordParams {
 }
 
 /**
- * 数据源重置参数
+ * 数据源删除参数
  */
-export interface DeleteDataSourcesParams {
+export interface DeleteDataSourceParams {
   id: number;
 }
 
