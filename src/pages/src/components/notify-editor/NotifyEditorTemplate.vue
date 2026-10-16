@@ -85,22 +85,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, reactive } from 'vue';
+import type { PropType } from 'vue';
+import { computed, reactive } from 'vue';
 
 import edtiorTemplate from './editorTemplate.vue';
 
+import type { NotificationTemplate } from '@/http/types/dataSourceFiles';
+
+interface NotifyCheckboxItem {
+  value: string;
+  label: string;
+  status: boolean;
+}
+
 const props = defineProps({
   activeMethods: {
-    type: String,
-    default: '',
+    type: Array as PropType<string[]>,
+    default: (): string[] => [],
   },
   checkboxInfo: {
-    type: Array,
-    default: () => ([]),
+    type: Array as PropType<NotifyCheckboxItem[]>,
+    default: (): NotifyCheckboxItem[] => [],
   },
   dataList: {
-    type: Object,
-    default: () => ({}),
+    type: Array as PropType<NotificationTemplate[]>,
+    default: (): NotificationTemplate[] => [],
   },
   isTemplate: {
     type: Boolean,
@@ -163,8 +172,9 @@ const infoConfig = reactive({
   toolbarKeys: ['insertLink'],
 });
 
-const findMethodScene = (method, sceneKey) => computed(() => props.dataList
-  .find(item => item.method === method && item.scene === sceneKey) || {});
+/** 按（通知方式, 场景）查找模板；未命中时返回空模板占位，保证模板绑定路径可用 */
+const findMethodScene = (method: string, sceneKey: string) => computed<NotificationTemplate>(() => props.dataList
+  .find(item => item.method === method && item.scene === sceneKey) ?? ({} as NotificationTemplate));
 
 const expiredEmail = findMethodScene('email', props.expiredEmailKey);
 const expiringEmail = findMethodScene('email', props.expiringEmailKey);

@@ -1,12 +1,12 @@
 <template>
   <div class="details-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 10 }">
     <bk-form
-      class="auth-source-form"
+      class="auth-source-form flex flex-col gap-[16px]"
       ref="formRef"
       form-type="vertical"
       :model="formData"
       :rules="rules">
-      <Row :title="$t('基本信息')">
+      <Row :title="$t('基本信息')" class="!pb-[8px]">
         <bk-form-item :label="$t('名称')" property="name" required>
           <bk-input v-model="formData.name" :placeholder="validate.loginName.message" @change="handleChange" />
         </bk-form-item>
@@ -19,14 +19,14 @@
           />
         </bk-form-item>
       </Row>
-      <Row :title="$t('基础配置')" v-if="formData.plugin_config">
+      <Row v-if="formData.plugin_config" :title="$t('基础配置')" class="!pb-[8px]">
         <SchemaForm
           ref="schemaFormRef"
           :form-data="formData"
           :plugins-config="jsonSchema"
           @change-plugin-config="changePluginConfig" />
       </Row>
-      <Row :title="$t('登录模式')">
+      <Row :title="$t('登录模式')" class="!pb-[8px]">
         <bk-form-item>
           <bk-radio-group v-model="LoginMethod">
             <bk-radio-button label="a">{{ $t('仅用于登录') }}</bk-radio-button>
@@ -38,7 +38,7 @@
         v-model="scopeValue"
         @change="handleScopeChange"
       />
-      <Row :title="$t('登录认证匹配')">
+      <Row :title="$t('登录认证匹配')" class="!pb-[32px]">
         <div class="item-flex-header">
           <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
           <bk-form-item class="w-[236px] auth-source-fields" :label="$t('认证源字段')" required />

@@ -1,10 +1,10 @@
 <template>
   <bk-loading :loading="isLoading" class="details-info-wrapper user-scroll-y">
-    <div v-if="isPluginConfig">
+    <div v-if="isPluginConfig" class="flex flex-col divide-y divide-[#EAEBF0]">
       <Row :title="$t('基础信息')">
         <LabelContent :label="$t('数据源名称')">{{ dataSourceName || '--' }}</LabelContent>
       </Row>
-      <div v-if="pluginId !== 'ldap'">
+      <template v-if="pluginId !== 'ldap'">
         <Row :title="$t('服务配置')">
           <div class="flex">
             <div class="flex-1">
@@ -64,8 +64,8 @@
         <Row :title="$t('冲突配置')">
           <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
-      </div>
-      <div v-if="pluginId === 'ldap'">
+      </template>
+      <template v-if="pluginId === 'ldap'">
         <Row :title="$t('服务配置')">
           <div class="flex">
             <div class="flex-1">
@@ -119,7 +119,7 @@
         <Row :title="$t('冲突配置')">
           <ConflictConfigDetail :config="usernameGenerateConfig" />
         </Row>
-      </div>
+      </template>
     </div>
     <div class="details-info-box" v-else>
       <bk-button theme="primary" @click="handleClickEdit">
@@ -286,14 +286,7 @@ const handleClickEdit = () => {
 
 .details-info-wrapper {
   :deep(.row-wrapper) {
-    padding: 0 24px 24px;
-    margin-bottom: 0;
-    border-bottom: 1px solid #EAEBF0;
-
-    &:last-child {
-      padding-bottom: 24px;
-      border-bottom: none;
-    }
+    padding-bottom: 24px;
   }
 
   :deep(.label-content .label-key) {
