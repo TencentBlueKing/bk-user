@@ -1,11 +1,12 @@
 import http from './fetch';
 import { ResponseData } from './types';
 import type {
+  IdpCreateOutput,
+  IdpDetail,
+  IdpPluginConfigMeta,
   IdpsDataItem,
   IdpsPluginsDataItem,
-  LocalIdpDetail,
   NewIdpsParams,
-  NewLocalIdpsParams,
   PatchIdpsParams,
   PutIdpsParams,
 } from './types/authSourceFiles';
@@ -21,41 +22,26 @@ export const getIdps = (keyword: string) => http.get<ResponseData<IdpsDataItem[]
 export const getIdpsPlugins = () => http.get<ResponseData<IdpsPluginsDataItem[]>>('/api/v3/web/idps/plugins/');
 
 /**
- * 新建认证源
+ * 新建认证源（201，返回认证源 ID 与回调地址）
  */
-export const postIdps = (params: NewIdpsParams) => http.post('/api/v3/web/idps/', params);
+export const postIdps = (params: NewIdpsParams) => http.post<ResponseData<IdpCreateOutput>>('/api/v3/web/idps/', params);
 
 /**
- * 认证源详情
+ * 认证源详情（GET /idps/{id}/，所有插件统一返回 IdpRetrieveOutputSLZ 结构）
  */
-export const getIdpsDetails = (id: string) => http.get(`/api/v3/web/idps/${id}/`);
+export const getIdpsDetails = (id: string) => http.get<ResponseData<IdpDetail>>(`/api/v3/web/idps/${id}/`);
 
 /**
- * 更新认证源部分字段(local)
+ * 更新认证源部分字段(local)（204 无响应体）
  */
-export const patchIdps = (params: PatchIdpsParams) => http.patch(`/api/v3/web/idps/${params.id}/`, params);
+export const patchIdps = (params: PatchIdpsParams) => http.patch<void>(`/api/v3/web/idps/${params.id}/`, params);
 
 /**
- * 更新认证源
+ * 更新认证源（204 无响应体）
  */
-export const putIdps = (params: PutIdpsParams) => http.put(`/api/v3/web/idps/${params.id}/`, params);
+export const putIdps = (params: PutIdpsParams) => http.put<void>(`/api/v3/web/idps/${params.id}/`, params);
 
 /**
- * 认证源插件默认配置
+ * 认证源插件配置元信息（JSON Schema）
  */
-export const getIdpsPluginsConfig = (id: string) => http.get(`/api/v3/web/idps/plugins/${id}/config-meta/`);
-
-/**
- * 新建本地账密认证源
- */
-export const postLocalIdps = (params: NewLocalIdpsParams) => http.post('/api/v3/web/idps/local/', params);
-
-/**
- * 本地认证源详情
- */
-export const getLocalIdps = (id: string) => http.get<ResponseData<LocalIdpDetail>>(`/api/v3/web/idps/local/${id}/`);
-
-/**
- * 更新本地认证源
- */
-export const putLocalIdps = (params: NewLocalIdpsParams) => http.put(`/api/v3/web/idps/local/${params.id}/`, params);
+export const getIdpsPluginsConfig = (id: string) => http.get<ResponseData<IdpPluginConfigMeta>>(`/api/v3/web/idps/plugins/${id}/config-meta/`);

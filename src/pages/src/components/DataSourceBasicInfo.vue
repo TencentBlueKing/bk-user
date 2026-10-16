@@ -11,6 +11,7 @@
         v-model="name"
         :maxlength="64"
         :placeholder="$t('请输入数据源名称')"
+        @change="handleChange"
       />
     </bk-form-item>
   </Row>
@@ -21,6 +22,11 @@ import Row from '@/components/layouts/ItemRow.vue';
 import { t } from '@/language/index';
 
 const name = defineModel<string>({ required: true });
+
+// 名称改动即标记未保存，交由页面级离开守卫（window.changeInput）统一拦截
+const handleChange = () => {
+  window.changeInput = true;
+};
 
 const formRules = {
   name: [

@@ -5,8 +5,9 @@ export interface NewIdpsParams {
   name: string;
   status: string;
   plugin_id: string;
-  plugin_config: {};
-  data_source_match_rules?: DataSourceMatchRule[];
+  /** 插件级配置，结构由各插件 schema 决定（local 提交空对象，wecom 为 corp_id/agent_id/secret） */
+  plugin_config: Record<string, unknown>;
+  data_source_match_rules: DataSourceMatchRule[];
 }
 
 /**
@@ -24,16 +25,9 @@ export interface PutIdpsParams {
   id: string;
   name: string;
   status: string;
-  plugin_config: {};
-  data_source_match_rules?: DataSourceMatchRule[];
-}
-
-/**
- * 本地认证源插件配置
- * 密码规则/初始密码/登录限制/密码有效期已迁移至本地数据源（plugin_config），此处仅保留账密登录启用开关
- */
-export interface LocalIdpPluginConfig {
-  enable_password: boolean;
+  /** 插件级配置，结构由各插件 schema 决定（local 提交空对象，wecom 为 corp_id/agent_id/secret） */
+  plugin_config: Record<string, unknown>;
+  data_source_match_rules: DataSourceMatchRule[];
 }
 
 /**
@@ -48,25 +42,32 @@ export interface DataSourceMatchRule {
 }
 
 /**
- * 新建本地认证源参数
+ * 认证源详情（GET /idps/{id}/ 返回，通用认证源，所有插件统一 IdpRetrieveOutputSLZ 结构）
  */
-export interface NewLocalIdpsParams {
-  id?: string;
-  name: string;
-  status: string;
-  plugin_config: LocalIdpPluginConfig;
-  data_source_ids: number[];
-};
-
-/**
- * 本地认证源详情（getLocalIdps 返回）
- */
-export interface LocalIdpDetail {
+export interface IdpDetail {
   id: string;
   name: string;
   status: string;
-  plugin_config: LocalIdpPluginConfig;
-  data_source_ids: number[];
+  plugin: IdpsPluginsDataItem;
+  plugin_config: Record<string, unknown>;
+  callback_uri: string;
+  data_source_match_rules: DataSourceMatchRule[];
+}
+
+/**
+ * 新建认证源返回（IdpCreateOutputSLZ）
+ */
+export interface IdpCreateOutput {
+  id: string;
+  callback_uri: string;
+}
+
+/**
+ * 认证源插件配置元信息返回（IdpPluginConfigMetaRetrieveOutputSLZ）
+ */
+export interface IdpPluginConfigMeta {
+  id: string;
+  json_schema: Record<string, unknown>;
 }
 
 export interface IdpsPluginsDataItem {
@@ -76,6 +77,9 @@ export interface IdpsPluginsDataItem {
   logo: string;
 }
 
+/**
+ * 认证源列表项（GET /idps/ 返回，对应 IdpListOutputSLZ）
+ */
 export interface IdpsDataItem {
   id: string;
   plugin: IdpsPluginsDataItem;

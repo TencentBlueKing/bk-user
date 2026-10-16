@@ -4,372 +4,140 @@
     class="data-source-content user-scroll-y"
     :z-index="10"
   >
-    <StepLayout :step="step" :steps="steps">
+    <!-- 创建态：三步向导（步骤1落库创建 → 步骤2导入 → 步骤3密码规则），全程不改 URL -->
+    <StepLayout v-if="!isEdit" :step="step" :steps="createSteps">
       <template #step-1>
-        <bk-form
-          class="flex flex-col divide-y divide-[#EAEBF0]"
-          ref="formRef1"
-          :model="formModel"
-          :rules="stepOneRules"
-          form-type="vertical"
-        >
-          <DataSourceBasicInfo
-            v-model="formModel.name"
-          />
-          <!-- 冲突配置：编辑态仅回显不可改（后端不支持更新，提交不携带），提示语仅新增展示 -->
-          <Row :title="$t('冲突配置')">
-            <div class="w-[560px]">
-              <ConflictTips
-                v-if="!isEdit"
-                type="alert"
-                :has-other-data-source="hasOtherDataSource"
-              />
-              <ConflictConfig
-                ref="conflictConfigRef"
-                :config="conflictConfig"
-                :disabled="isEdit || isUploadFailed"
-                class="mt-[16px]"
-              />
-            </div>
-          </Row>
-          <Row v-if="!isEdit" :title="$t('导入')">
-            <bk-form-item property="uploadFile" class="mb-[24px] w-[560px]">
-              <ExcelUpload v-model="formModel.uploadFile" />
-            </bk-form-item>
-          </Row>
-        </bk-form>
+        <BasicInfoPanel
+          ref="basicInfoRef"
+          v-model:name="formModel.name"
+          :conflict-config="conflictConfig"
+          :has-other-data-source="hasOtherDataSource"
+          show-tips
+        />
+        <div class="data-source-footer-btn !border-t-0">
+          <bk-button
+            v-for="btn in createFooterButtons[1]"
+            :key="btn.text"
+            :theme="btn.theme"
+            :loading="btn.loading"
+            :disabled="btn.disabled"
+            @click="btn.onClick"
+          >
+            {{ btn.text }}
+          </bk-button>
+        </div>
       </template>
       <template #step-2>
-        <bk-form
-          class="flex flex-col divide-y divide-[#EAEBF0]"
-          ref="formRef2"
-          :model="formModel"
-          :rules="stepTwoRules"
-          form-type="vertical"
-        >
-          <Row :title="$t('密码设置')">
-            <bk-form-item :label="$t('启用密码规则')" required>
-              <!-- 仅在「被引用 + 开关当前开启」的锁定态展示 tooltip，正常状态不展示 -->
-              <bk-switcher
-                v-model="enablePassword"
-                theme="primary"
-                :disabled="isPasswordRuleSwitchLocked"
-                v-bk-tooltips="{
-                  content: $t('已被本地账密的生效范围引用，无法关闭'),
-                  disabled: !isPasswordRuleSwitchLocked,
-                  placement: 'right'
-                }"
-                @change="handleEnablePasswordChange"
-              />
-            </bk-form-item>
-          </Row>
-          <!-- 密码相关配置（密码规则/初始密码/登录限制/密码有效期）存储于本地数据源 plugin_config，
-           取数与提交均走数据源详情接口（getDataSourceDetails / putDataSourceDetails） -->
-          <template v-if="enablePassword && formModel.config">
-            <Row :title="$t('密码规则')" v-if="formModel.config?.password_rule">
-              <bk-form-item :label="$t('密码长度')" property="config.password_rule.min_length" required>
-                <bk-input
-                  style="width: 200px;"
-                  type="number"
-                  :suffix="$t('至32位')"
-                  :min="10"
-                  :max="32"
-                  v-model="formModel.config.password_rule.min_length"
-                  @change="handleChange"
-                />
-              </bk-form-item>
-              <bk-form-item :label="$t('密码必须包含')" required>
-                <bk-checkbox-group v-model="mustIncludeList" @change="handleMustIncludeRuleChange">
-                  <bk-checkbox
-                    v-for="opt in mustIncludeOptions"
-                    :key="opt.label"
-                    :label="opt.label">
-                    {{ $t(opt.text) }}
-                  </bk-checkbox>
-                </bk-checkbox-group>
-                <p class="error-text" v-show="passwordRuleError">{{ $t('至少包含一类字符') }}</p>
-              </bk-form-item>
-              <bk-form-item label="" required>
-                <div class="div-flex">
-                  <span>{{ $t('密码不允许连续') }}</span>
-                  <!-- 增减按钮只 emit change 不 emit input（bkui-vue handleInc），input/change 双绑覆盖所有改值路径，重复校验幂等 -->
-                  <bk-input
-                    style="width: 85px;"
-                    type="number"
-                    behavior="simplicity"
-                    :min="0"
-                    :max="10"
-                    v-model="formModel.config.password_rule.not_continuous_count"
-                    @input="handleNotContinuousCountInput"
-                    @change="handleNotContinuousCountInput"
-                  />
-                  <span>{{ $t('位 出现') }}</span>
-                </div>
-                <p
-                  v-show="passwordCountError"
-                  class="error-text"
-                >
-                  {{ $t('可选值范围：0（不限制）或 3-10') }}
-                </p>
-                <bk-checkbox-group
-                  v-model="continuousRuleList"
-                  @change="triggerPasswordConfigValidate"
-                >
-                  <bk-checkbox
-                    v-for="opt in continuousOptions"
-                    :key="opt.label"
-                    :label="opt.label"
-                    :disabled="isContinuousDisabled"
-                  >
-                    {{ $t(opt.text) }}
-                  </bk-checkbox>
-                </bk-checkbox-group>
-                <p class="error-text" v-show="passwordConfigError">{{ $t('至少包含一类连续性场景') }}</p>
-              </bk-form-item>
-            </Row>
-            <Row :title="$t('初始密码设置')" v-if="formModel.config?.password_initial">
-              <bk-form-item label="" required>
-                <div class="div-flex">
-                  <bk-checkbox
-                    v-model="formModel.config.password_initial.cannot_use_previous_password"
-                    @change="handleChange">
-                    {{ $t('修改密码时不能重复前') }}
-                  </bk-checkbox>
-                  <bk-input
-                    style="width: 85px;"
-                    type="number"
-                    behavior="simplicity"
-                    :min="0"
-                    :max="5"
-                    v-model="formModel.config.password_initial.reserved_previous_password_count"
-                    @change="handleChange"
-                  />
-                  <span>{{ $t('次 用过的密码') }}</span>
-                </div>
-              </bk-form-item>
-              <bk-form-item class="form-item-flex" :label="$t('密码生成方式')" required>
-                <bk-radio-group v-model="formModel.config.password_initial.generate_method" @change="handleChange">
-                  <bk-radio label="random">{{ $t('随机') }}</bk-radio>
-                  <bk-radio label="fixed">{{ $t('固定') }}</bk-radio>
-                </bk-radio-group>
-                <div v-if="formModel.config.password_initial.generate_method === 'fixed'">
-                  <passwordInput
-                    v-model="formModel.config.password_initial.fixed_password"
-                    :is-password-disabled="isInputEyesDisabled"
-                    :is-fast-clear-enable="isInputEyesDisabled"
-                    @input="inputPassword" />
-                  <bk-button
-                    outline
-                    theme="primary"
-                    class="ml-[8px]"
-                    @click="handleRandomPassword">{{ $t('随机生成') }}</bk-button>
-                </div>
-              </bk-form-item>
-              <bk-form-item
-                :label="$t('通知方式')"
-                :required="formModel.config.password_initial.generate_method === 'random'">
-                <NotifyEditorTemplate
-                  :active-methods="formModel.config.password_initial.notification.enabled_methods"
-                  :checkbox-info="NOTIFICATION_METHODS"
-                  :data-list="formModel.config.password_initial.notification.templates"
-                  :is-template="isPasswordInitial"
-                  :expiring-email-key="'user_initialize'"
-                  :expired-email-key="'reset_password'"
-                  :expiring-sms-key="'user_initialize'"
-                  :expired-sms-key="'reset_password'"
-                  :create-account-email="$t('创建账户邮件')"
-                  :reset-password-email="$t('重设密码后的邮件')"
-                  :create-account-sms="$t('创建账户短信')"
-                  :reset-password-sms="$t('重设密码后的短信')"
-                  @handle-editor-text="handleEditorText"
-                  @change="handleChange">
-                  <template #label>
-                    <div class="password-header">
-                      <bk-checkbox-group
-                        v-model="formModel.config.password_initial.notification.enabled_methods"
-                        @change="handleChange">
-                        <bk-checkbox
-                          v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
-                          :class="['password-tab', item.status ? 'active-tab' : '']"
-                          style="margin-left: 5px;"
-                          :label="item.value">
-                          <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
-                        </bk-checkbox>
-                      </bk-checkbox-group>
-                      <div class="edit-info" @click="passwordInitialTemplate">
-                        <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
-                        <AngleUp v-if="isDropdownPasswordInitial" />
-                        <AngleDown v-else />
-                      </div>
-                    </div>
-                  </template>
-                </NotifyEditorTemplate>
-                <p class="error" v-show="enabledMethodsError">{{ $t('通知方式不能为空') }}</p>
-              </bk-form-item>
-            </Row>
-            <Row :title="$t('登录限制')" v-if="formModel.config?.login_limit">
-              <bk-form-item label="" required>
-                <bk-checkbox
-                  v-model="formModel.config.login_limit.force_change_at_first_login"
-                  @change="handleChange">
-                  {{ $t('首次登录强制修改密码') }}
-                </bk-checkbox>
-              </bk-form-item>
-              <bk-form-item :label="$t('密码试错次数')" required>
-                <bk-radio-group v-model="formModel.config.login_limit.max_retries" @change="handleChange">
-                  <bk-radio-button
-                    v-for="(item, index) in maxTrailTimesList"
-                    :key="index"
-                    :label="item.times"
-                  >
-                    {{ item.text }}
-                  </bk-radio-button>
-                </bk-radio-group>
-              </bk-form-item>
-              <bk-form-item :label="$t('锁定时间')" property="config.login_limit.lock_time" required>
-                <bk-input
-                  style="width: 200px;"
-                  type="number"
-                  :suffix="$t('秒')"
-                  :min="0"
-                  v-model="formModel.config.login_limit.lock_time"
-                  @change="handleChange"
-                />
-              </bk-form-item>
-            </Row>
-            <Row :title="$t('密码有效期设置')" v-if="formModel.config?.password_expire">
-              <bk-form-item :label="$t('密码有效期')" required>
-                <bk-radio-group v-model="formModel.config.password_expire.valid_time" @change="handleChange">
-                  <bk-radio-button
-                    v-for="(item, index) in VALID_TIME"
-                    :key="index"
-                    :label="item.days"
-                  >
-                    {{ item.text }}
-                  </bk-radio-button>
-                </bk-radio-group>
-              </bk-form-item>
-              <bk-form-item :label="$t('到期提醒时间')" property="config.password_expire.remind_before_expire" required>
-                <bk-checkbox-group
-                  v-model="formModel.config.password_expire.remind_before_expire"
-                  @change="handleChange"
-                >
-                  <bk-checkbox
-                    v-for="(item, index) in REMIND_DAYS"
-                    :key="index"
-                    :label="item.value"
-                  >{{ item.label }}</bk-checkbox
-                  >
-                </bk-checkbox-group>
-              </bk-form-item>
-              <bk-form-item
-                :label="$t('通知方式')"
-                property="config.password_expire.notification.enabled_methods"
-                required
-              >
-                <NotifyEditorTemplate
-                  :active-methods="formModel.config.password_expire.notification.enabled_methods"
-                  :checkbox-info="NOTIFICATION_METHODS"
-                  :data-list="formModel.config.password_expire.notification.templates"
-                  :is-template="isPasswordExpire"
-                  :expiring-email-key="'password_expiring'"
-                  :expired-email-key="'password_expired'"
-                  :expiring-sms-key="'password_expiring'"
-                  :expired-sms-key="'password_expired'"
-                  @handle-editor-text="handleEditorText"
-                  @change="handleChange">
-                  <template #label>
-                    <div class="password-header">
-                      <bk-checkbox-group
-                        v-model="formModel.config.password_expire.notification.enabled_methods"
-                        @change="handleChange">
-                        <bk-checkbox
-                          v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
-                          :class="['password-tab', item.status ? 'active-tab' : '']"
-                          style="margin-left: 5px;"
-                          :label="item.value">
-                          <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
-                        </bk-checkbox>
-                      </bk-checkbox-group>
-                      <div class="edit-info" @click="passwordExpireTemplate">
-                        <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
-                        <AngleUp v-if="isDropdownPasswordExpire" />
-                        <AngleDown v-else />
-                      </div>
-                    </div>
-                  </template>
-                </NotifyEditorTemplate>
-              </bk-form-item>
-            </Row>
-          </template>
-        </bk-form>
+        <ImportDataPanel
+          ref="importPanelRef"
+          :data-source-id="createdDataSourceId"
+          :data-source-name="formModel.name"
+          show-created-tip
+          @file-change="onFileChange"
+        />
+        <div class="data-source-footer-btn !border-t-0">
+          <bk-button
+            v-for="btn in createFooterButtons[2]"
+            :key="btn.text"
+            :theme="btn.theme"
+            :loading="btn.loading"
+            :disabled="btn.disabled"
+            @click="btn.onClick"
+          >
+            {{ btn.text }}
+          </bk-button>
+        </div>
+      </template>
+      <template #step-3>
+        <PasswordConfigPanel
+          ref="passwordPanelRef"
+          v-model:config="formModel.config"
+          :is-password-rule-switch-locked="isPasswordRuleSwitchLocked"
+        />
+        <div class="data-source-footer-btn !border-t-0">
+          <bk-button
+            v-for="btn in createFooterButtons[3]"
+            :key="btn.text"
+            :theme="btn.theme"
+            :loading="btn.loading"
+            :disabled="btn.disabled"
+            @click="btn.onClick"
+          >
+            {{ btn.text }}
+          </bk-button>
+        </div>
       </template>
     </StepLayout>
-    <div class="data-source-footer-btn !border-t-0">
-      <div>
-        <bk-button
-          v-if="step === 1"
-          theme="primary"
-          class="mr8"
-          @click="handleNextStep"
-        >
-          {{ $t('下一步') }}
-        </bk-button>
-        <template v-else>
-          <bk-button
-            class="mr-[8px]"
-            @click="handlePrevStep"
-          >
-            {{ $t('上一步') }}
-          </bk-button>
-          <bk-button
-            theme="primary"
-            class="mr8"
-            :loading="submitLoading"
-            @click="handleSubmit"
-          >
-            {{ isEdit ? $t('保存') : $t('提交') }}
-          </bk-button>
-        </template>
-        <bk-button @click="handleCancel">
-          {{ $t('取消') }}
-        </bk-button>
-      </div>
+    <!-- 编辑态：三页签独立保存（基础信息 / 导入数据 / 密码规则）；导入任务进行中禁止切换，避免面板卸载后丢失任务结果 -->
+    <bk-tab
+      v-else
+      v-model:active="activeTab"
+      :before-change="() => !importLoading"
+      render-directive="if"
+      type="unborder-card"
+      class="edit-data-source-tab"
+      @change="handleTabChange"
+    >
+      <bk-tab-panel name="base" :label="$t('基础信息')">
+        <BasicInfoPanel
+          ref="basicInfoRef"
+          v-model:name="formModel.name"
+          :conflict-config="conflictConfig"
+          conflict-disabled
+        />
+      </bk-tab-panel>
+      <bk-tab-panel name="import" :label="$t('导入数据')">
+        <ImportDataPanel
+          ref="importPanelRef"
+          :data-source-id="props.dataSourceId"
+          @file-change="onFileChange"
+        />
+      </bk-tab-panel>
+      <bk-tab-panel name="password" :label="$t('密码规则')">
+        <PasswordConfigPanel
+          ref="passwordPanelRef"
+          v-model:config="formModel.config"
+          :is-password-rule-switch-locked="isPasswordRuleSwitchLocked"
+        />
+      </bk-tab-panel>
+    </bk-tab>
+
+    <div v-if="isEdit" class="data-source-footer-btn !border-t-0">
+      <bk-button
+        v-for="btn in editFooterButtons"
+        :key="btn.text"
+        :theme="btn.theme"
+        :loading="btn.loading"
+        :disabled="btn.disabled"
+        @click="btn.onClick"
+      >
+        {{ btn.text }}
+      </bk-button>
     </div>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import BasicInfoPanel from './components/basic-info-panel.vue';
+import ImportDataPanel from './components/import-data-panel.vue';
+import PasswordConfigPanel from './components/password-config-panel.vue';
 import StepLayout from './StepLayout.vue';
 
 import { isNil } from '@/common/util';
-import ConflictConfig from '@/components/conflict-config/ConflictConfig.vue';
-import ConflictTips from '@/components/conflict-config/ConflictTips.vue';
-import DataSourceBasicInfo from '@/components/DataSourceBasicInfo.vue';
-import { UPLOAD_FILE_MAX_SIZE_BYTE } from '@/components/import-dialog/constants';
-import ExcelUpload from '@/components/import-dialog/ExcelUpload.vue';
-import Row from '@/components/layouts/ItemRow.vue';
-import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
-import passwordInput from '@/components/passwordInput.vue';
-import { useValidate } from '@/hooks';
-import { useConflictRules } from '@/hooks/useConflictRules';
-import { useDataSourceImport } from '@/hooks/useDataSourceImport';
-import { getIdps, getLocalIdps, randomPasswords } from '@/http';
+import { getIdps, getIdpsDetails } from '@/http';
 import {
   getDataSourceDetails,
   getDefaultConfig,
   newDataSource,
   putDataSourceDetails,
 } from '@/http/dataSourceFiles';
-import { DataSourceDetails, LocalDataSourceLoginLimit, LocalDataSourcePasswordExpire, LocalDataSourcePasswordInitial, LocalDataSourcePasswordRule, LocalDataSourcePluginConfig, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import { LocalDataSourcePluginConfig, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
-import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
 interface Props {
   dataSourceId: number | null;
@@ -381,395 +149,312 @@ const emit = defineEmits<{
   updateSuccess: [payload: { text: string; dataSourceId: number; name: string }];
 }>();
 
-/** 编辑模式（仅改名称，不展示导入） */
+/** 编辑模式（三页签）与创建模式（三步向导）共用容器 */
 const isEdit = computed(() => !isNil(props.dataSourceId));
-/** 编辑模式回填的数据源详情，提交时原样带回，只替换名称 */
-const detailData = ref<DataSourceDetails>();
 
-const conflictConfigRef = ref();
+const basicInfoRef = ref();
+const importPanelRef = ref();
+const passwordPanelRef = ref();
 const conflictConfig = ref<UsernameGenerateConfig>({
   rule: 'unchanged',
   prefix: '',
   suffix: '',
 });
-const { rules: conflictRules } = useConflictRules(conflictConfigRef);
-const formRef1 = ref();
-const formRef2 = ref();
-// 空通知结构：骨架阶段占位，保证模板中 notification 的绑定路径始终存在
-const emptyNotification = (): LocalDataSourcePasswordInitial['notification'] => ({ enabled_methods: [], templates: [] });
 
-const formModel = ref<{ name?: string; config?: LocalDataSourcePluginConfig; uploadFile?: File | null }>({
+const formModel = ref<{ name: string; config: LocalDataSourcePluginConfig }>({
   name: '',
-  uploadFile: null,
   // 初始化四段空骨架：首帧即渲染完整表单结构，接口数据到位后仅填值，避免分批出现
   config: {
     enable_password: false,
-    password_rule: {} as LocalDataSourcePasswordRule,
-    password_initial: { notification: emptyNotification() } as LocalDataSourcePasswordInitial,
-    password_expire: { valid_time: 90, notification: emptyNotification() } as LocalDataSourcePasswordExpire,
-    login_limit: { max_retries: 5 } as LocalDataSourceLoginLimit,
-  },
+    password_rule: {},
+    password_initial: { notification: { enabled_methods: [], templates: [] } },
+    password_expire: { valid_time: 90, notification: { enabled_methods: [], templates: [] } },
+    login_limit: { max_retries: 5 },
+  } as LocalDataSourcePluginConfig,
 });
-const dataSourceStore = useDataSourceStore();
 
-// 当前步骤由组件自持（校验完成后自行更新），不再经容器转发；
-// 支持路由 query.step 直达（生效范围"去设置"提示跳入编辑页密码设置步骤，刷新/直达链接同样生效）。
-// 仅编辑态生效：新增态直达会跳过步骤 1 的 name/上传文件校验，造成无导入文件的脏数据源
 const route = useRoute();
 const router = useRouter();
-const step = ref(isEdit.value && Number(route.query.step) === 2 ? 2 : 1);
-const steps = [
-  { title: t('基础配置') },
-  { title: t('密码设置') },
+
+// 创建向导当前步骤：步骤1「下一步」即落库创建，此后不可回退到步骤1（名称与冲突规则不可再改）；步骤3可「上一步」回步骤2补导入
+const step = ref(1);
+const createSteps = [
+  { title: t('基础信息') },
+  { title: t('导入数据') },
+  { title: t('密码规则') },
 ];
 
+// 编辑态页签：支持 section=password 深链（账密登录「去设置」直达密码规则页签）
+const activeTab = ref<'base' | 'import' | 'password'>(route.query.section === 'password' ? 'password' : 'base');
+// 页签间共享 formModel，切换本身不丢数据、不弹确认；按页签记录未保存修改，
+// 保存只清当前页签的标记，页面离开提示由汇总后的 window.changeInput 驱动
+const dirtyTabs = ref<Record<'base' | 'password', boolean>>({
+  base: false,
+  password: false,
+});
+
+let previousTab = activeTab.value;
+const handleTabChange = (tab: 'base' | 'import' | 'password') => {
+  // 同一时刻只有当前页签可编辑，切走时把全局脏标记归账到刚离开的页签；
+  // 全局标记无法区分来源，宁可多记（多一次离开确认）也不漏记（静默丢失）。
+  // 导入页签的脏状态由文件选择状态推导，不参与归账
+  if (window.changeInput && previousTab !== 'import') dirtyTabs.value[previousTab] = true;
+  previousTab = tab;
+  router.replace({ query: { ...route.query, section: tab === 'password' ? 'password' : undefined } });
+};
+
+const dataSourceStore = useDataSourceStore();
 const hasOtherDataSource = computed(() => dataSourceStore.dataSource.length > 0);
-const { uploadImport } = useDataSourceImport();
+
 const submitLoading = ref(false);
-// 新增模式：已成功创建的数据源 id（创建成功但导入失败时，重试只重跑导入，不重复创建）
-const createdDataSourceId = ref<number | null>(null);
-// 导入失败待重试：冲突配置锁定（后端不支持更新），名称可改（重试提交时补 PUT 同步）
-const isUploadFailed = ref(false);
-// 已创建数据源的名称快照（导入失败时记录，用于重试时判断是否需要补 PUT）
-const createdName = ref('');
-// 编辑模式取数（基础信息 + 密码相关配置）期间的整页 loading
-const contentLoading = ref(false);
-// 本地账密的生效范围是否已引用当前数据源：引用后不允许关闭密码规则（开关置灰）
-const isPasswordRuleReferenced = ref(false);
-// 是否启用密码规则：取数据源配置的 enable_password（新增态以 default-config 接口返回为准）；关闭后步骤 2 仅展示提示
-const enablePassword = computed({
-  get: () => formModel.value.config?.enable_password ?? false,
-  set: (value: boolean) => {
-    if (formModel.value.config) {
-      formModel.value.config.enable_password = value;
-    }
-  },
-});
-// 开关锁定仅作用于「关闭」方向：被引用但规则未启用时允许打开，避免存量脏数据死锁
-const isPasswordRuleSwitchLocked = computed(() => isPasswordRuleReferenced.value && enablePassword.value);
+// 导入动作由容器驱动（面板 expose importFile），loading 与失败态由返回值推导，用于按钮文案切换
+const importLoading = ref(false);
+const importFailed = ref(false);
+// 面板上报的文件选中状态：未选文件时禁用「导入」
+const hasImportFile = ref(false);
+// 最近一次导入是否成功：成功后禁用导入按钮，文件变化时恢复
+const imported = ref(false);
 
-const validate = useValidate();
-const stepOneRules = {
-  ...conflictRules,
-  uploadFile: [
-    { required: true, message: t('请选择文件再上传'), trigger: 'change' },
-    {
-      validator: (value: File | null) => !value || value.size <= UPLOAD_FILE_MAX_SIZE_BYTE,
-      message: t('文件大小超出限制'),
-      trigger: 'change',
-    },
-  ],
+// 汇总页面脏标记：导入页签的脏状态可直接推导——选了文件但尚未导入成功（导入失败、换文件后重算）
+const syncChangeInput = () => {
+  window.changeInput = dirtyTabs.value.base
+    || dirtyTabs.value.password
+    || (hasImportFile.value && !imported.value);
 };
-const stepTwoRules = {
-  // key 需与 form-item 的 property 完整路径一致，否则规则无法命中
-  'config.password_rule.min_length': [validate.required],
-};
+// 创建态是否已成功导入过：控制步骤 2「跳过」按钮显示为「下一步」，文件变化不重置
+const importDone = ref(false);
 
-// ==== 迁移自「设置 > 登录设置 - 本地账密」的密码相关配置逻辑 ====
-// 不允许连续场景的复选项，key 需与 password_rule 字段一致
-const continuousOptions: { label: 'not_keyboard_order' | 'not_continuous_letter' | 'not_continuous_digit' | 'not_repeated_symbol'; text: string }[] = [
-  { label: 'not_keyboard_order', text: '键盘序' },
-  { label: 'not_continuous_letter', text: '连续字母序' },
-  { label: 'not_continuous_digit', text: '连续数字序' },
-  { label: 'not_repeated_symbol', text: '重复字母、数字、特殊符号' },
-];
-
-/**
- * 密码必须包含的复选项，key 需与 password_rule 字段一致
- * bk-checkbox-group 绑定数组与接口布尔字段的转换
- */
-const mustIncludeOptions: { label: 'contain_lowercase' | 'contain_uppercase' | 'contain_digit' | 'contain_punctuation'; text: string }[] = [
-  { label: 'contain_lowercase', text: '小写字母' },
-  { label: 'contain_uppercase', text: '大写字母' },
-  { label: 'contain_digit', text: '数字' },
-  { label: 'contain_punctuation', text: '特殊字符（除空格）' },
-];
-
-// 初始密码/密码到期的通知模板展开态
-const isPasswordInitial = ref(false);
-const isDropdownPasswordInitial = ref(false);
-const isPasswordExpire = ref(false);
-const isDropdownPasswordExpire = ref(false);
-const passwordRuleError = ref(false);
-const passwordCountError = ref(false);
-const passwordConfigError = ref(false);
-const enabledMethodsError = ref(false);
-const isInputEyesDisabled = ref(false);
-
-const maxTrailTimesList = reactive([
-  { times: 3, text: `3 ${t('次')}` },
-  { times: 5, text: `5 ${t('次')}` },
-  { times: 10, text: `10 ${t('次')}` },
-]);
-
-const isContinuousDisabled = computed(() => Number(formModel.value.config?.password_rule?.not_continuous_count) === 0);
-
-const mustIncludeList = computed({
-  get: () => {
-    const rule = formModel.value.config?.password_rule;
-    if (!rule) return [];
-    return mustIncludeOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
-  },
-  set: (value: string[]) => {
-    window.changeInput = true;
-    const rule = formModel.value.config?.password_rule;
-    if (!rule) return;
-    mustIncludeOptions.forEach((opt) => {
-      rule[opt.label] = value.includes(opt.label);
-    });
-  },
-});
-
-// bk-checkbox-group 绑定数组与接口布尔字段的转换
-const continuousRuleList = computed({
-  get: () => {
-    const rule = formModel.value.config?.password_rule;
-    if (!rule) return [];
-    return continuousOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
-  },
-  set: (value: string[]) => {
-    window.changeInput = true;
-    const rule = formModel.value.config?.password_rule;
-    if (!rule) return;
-    continuousOptions.forEach((opt) => {
-      rule[opt.label] = value.includes(opt.label);
-    });
-  },
-});
-
-/** 步骤 1 → 步骤 2：基础信息与导入文件（uploadFile）均走 form-item 校验 */
-const handleNextStep = async () => {
-  const valid = await formRef1.value?.validate().catch(() => false);
-  if (!valid) return;
-  // 切步后第一步随 v-if 卸载，而提交发生在第二步，故在此同步冲突配置，避免 getData() 取不到导致参数缺失
-  conflictConfig.value = conflictConfigRef.value?.getData() ?? conflictConfig.value;
+// 步骤 × 状态 → 按钮组映射：向导各步按钮的文案/loading/禁用集中于此，流程一目了然
+const handlePrevStep = () => {
+  // 回到第 2 步面板会重挂载，文件与失败原因已清空，容器的失败标记需同步重置，否则按钮文案与实际状态不符
+  importFailed.value = false;
   step.value = 2;
 };
 
-const handlePrevStep = () => {
-  step.value = 1;
-};
+interface FooterButton {
+  text: string;
+  theme?: 'primary';
+  loading?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}
 
-/** 从登录设置「去设置」跳入时，取消与保存成功的去向保持一致，均返回登录设置并展开本地账密 */
-const handleCancel = () => {
-  if (route.query.from === 'login') {
-    router.push({ name: 'login', query: { type: 'local' } });
-    return;
+// 步骤 2 右侧按钮文案：失败提示可稍后补导；已成功导入则引导进入下一步；默认跳过导入
+const skipButtonText = computed(() => {
+  if (importFailed.value) return t('跳过，稍后导入');
+  if (importDone.value) return t('下一步');
+  return t('跳过');
+});
+
+const createFooterButtons = computed<Record<1 | 2 | 3, FooterButton[]>>(() => ({
+  1: [
+    { text: t('下一步'), theme: 'primary', loading: submitLoading.value, onClick: handleCreateDataSource },
+    { text: t('取消'), disabled: submitLoading.value, onClick: handleCancel },
+  ],
+  2: [
+    {
+      text: importFailed.value ? t('重新导入') : t('导入'),
+      theme: 'primary',
+      loading: importLoading.value,
+      disabled: !hasImportFile.value || imported.value,
+      onClick: handleImport,
+    },
+    {
+      text: skipButtonText.value,
+      // 导入成功后主操作转移到「下一步」，加主色引导，避免用户误以为页面卡住
+      theme: importDone.value ? 'primary' : undefined,
+      disabled: importLoading.value,
+      onClick: handleSkipImport,
+    },
+  ],
+  3: [
+    { text: t('上一步'), disabled: submitLoading.value, onClick: handlePrevStep },
+    { text: t('提交'), theme: 'primary', loading: submitLoading.value, onClick: handleFinishCreate },
+    { text: t('稍后设置'), disabled: submitLoading.value, onClick: handleCancel },
+  ],
+}));
+
+// 编辑态页签 × 按钮组：三个页签统一带取消，与创建态去向一致
+const editFooterButtons = computed<FooterButton[]>(() => {
+  if (activeTab.value === 'import') {
+    return [
+      {
+        text: t('导入'),
+        theme: 'primary',
+        loading: importLoading.value,
+        disabled: !hasImportFile.value || imported.value,
+        onClick: handleImport,
+      },
+      { text: t('取消'), disabled: importLoading.value, onClick: handleCancel },
+    ];
   }
-  emit('cancel');
-};
+  return [
+    { text: t('保存'), theme: 'primary', loading: submitLoading.value, onClick: handleEditSave },
+    { text: t('取消'), disabled: submitLoading.value, onClick: handleCancel },
+  ];
+});
 
-const handleChange = () => {
-  window.changeInput = true;
-};
+// 新增模式：步骤1创建成功后的数据源 id
+const createdDataSourceId = ref<number | null>(null);
 
-// 编辑通知方式
-const handleEditorText = (html: string, text: string, key: string, type: string) => {
-  window.changeInput = true;
-  const templates = key === 'password_expiring' || key === 'password_expired'
-    ? formModel.value.config?.password_expire?.notification?.templates ?? []
-    : formModel.value.config?.password_initial?.notification?.templates ?? [];
-  templates.forEach((item) => {
-    if (item.method === type && item.scene === key) {
-      item.content = text;
-      item.content_html = html;
-    }
-  });
-};
+// 编辑模式取数（基础信息 + 密码相关配置）期间的整页 loading
+const contentLoading = ref(false);
 
-const handleClickLabel = (item: typeof NOTIFICATION_METHODS[number]) => {
-  NOTIFICATION_METHODS.forEach((element) => {
-    element.status = element.value === item.value;
-  });
-};
-
-const passwordInitialTemplate = () => {
-  isPasswordInitial.value = !isPasswordInitial.value;
-  isDropdownPasswordInitial.value = !isDropdownPasswordInitial.value;
-};
-
-const passwordExpireTemplate = () => {
-  isPasswordExpire.value = !isPasswordExpire.value;
-  isDropdownPasswordExpire.value = !isDropdownPasswordExpire.value;
-};
-
-const handleRandomPassword = async () => {
-  try {
-    const params = { password_rule_config: formModel.value.config?.password_rule };
-    const passwordRes = await randomPasswords(params);
-    formModel.value.config.password_initial.fixed_password = passwordRes.data.password;
-    window.changeInput = true;
-  } catch (e) {
-    console.warn(e);
-  }
-};
-
-/** 密码生成方式 - 固定时是否禁用eyes */
-const setIsIntPutEyesDisabled = (fixed_password: string) => {
-  isInputEyesDisabled.value = !!fixed_password;
-};
-
-const inputPassword = (val: string) => {
-  window.changeInput = true;
-  formModel.value.config.password_initial.fixed_password = val;
-};
-
-/** 密码不能连续出现的次数 */
-const handleNotContinuousCountInput = (value: string | number) => {
-  // 空字符串/undefined/null 视为不合法
-  if (value === '' || value === undefined || value === null) {
-    passwordCountError.value = true;
-    triggerPasswordConfigValidate();
-    return;
-  }
-  const numValue = Number(value);
-  const isValueInRange = numValue === 0 || (numValue >= 3 && numValue <= 10);
-  passwordCountError.value = !isValueInRange;
-  triggerPasswordConfigValidate();
-  if (numValue === 0) {
-    continuousRuleList.value = [];
-    passwordConfigError.value = false;
-  }
-};
-
-/** 密码规则 */
-const triggerPasswordConfigValidate = () => {
-  // 未启用密码规则时跳过校验
-  if (!enablePassword.value) return;
-  const enabledRules = Object.entries(formModel.value.config?.password_rule ?? {})
-    .filter(([key, val]) => passwordNotAllowed[key as keyof typeof passwordNotAllowed] && val);
-  // 密码不能连续出现的次数不为0时，必须选择至少一个密码不能连续出现的规则
-  if (formModel.value.config?.password_rule?.not_continuous_count !== 0) {
-    passwordConfigError.value = enabledRules.length === 0;
-  }
-};
-/** 密码必须包含规则校验 */
-const handleMustIncludeRuleChange = () => {
-  if (!enablePassword.value) return;
-  const list = Object.entries(formModel.value.config?.password_rule ?? {})
-    .filter(([key, val]) => passwordMustIncludes[key as keyof typeof passwordMustIncludes] && val);
-  passwordRuleError.value = !list.some(([, val]) => val);
-};
-
-/** 切换密码规则开关：开启时补齐缺失的配置段并重新执行组合校验 */
-const handleEnablePasswordChange = async (value: boolean) => {
-  window.changeInput = true;
-  if (!value || !formModel.value.config) return;
-  const { config } = formModel.value;
-  // 关闭状态下后端允许配置段为 null，开启前用插件默认配置补齐，保证表单可填写
-  if (!config.password_rule || !config.password_initial || !config.password_expire || !config.login_limit) {
-    try {
-      const res = await getDefaultConfig('local');
-      const defaults = res?.data?.config as LocalDataSourcePluginConfig;
-      config.password_rule ??= defaults?.password_rule;
-      config.password_initial ??= defaults?.password_initial;
-      config.password_expire ??= defaults?.password_expire;
-      config.login_limit ??= defaults?.login_limit;
-    } catch (e) {
-      // 补齐失败回滚开关，避免提交 enable_password: true + 空配置段
-      enablePassword.value = false;
-      console.error(e);
-      return;
-    }
-  }
-  handleMustIncludeRuleChange();
-  triggerPasswordConfigValidate();
-};
+// 启用中的本地账密（认证源）生效范围是否已引用当前数据源：引用后不允许关闭密码规则（开关置灰），认证源关闭时不锁
+const isPasswordRuleReferenced = ref(false);
+// 开关锁定仅作用于「关闭」方向：被引用但规则未启用时允许打开，避免存量脏数据死锁
+const isPasswordRuleSwitchLocked = computed(() => (
+  isPasswordRuleReferenced.value && (formModel.value.config?.enable_password ?? false)
+));
 
 /**
- * 密码相关组合校验：必须包含/连续性规则/连续次数/通知方式，任一不合法则阻止提交
- * 未启用密码规则时不参与校验（此时密码配置区块不展示）
+ * 从登录设置「去设置」跳入时（from=login），保存/取消统一返回登录设置并自动展开本地账密详情侧栏
+ * @returns 是否已执行跳转，调用方据此跳过各自的默认去向
  */
-const validatePasswordConfig = () => !enablePassword.value || (
-  !passwordRuleError.value
-  && !passwordCountError.value
-  && !passwordConfigError.value
-  && !enabledMethodsError.value
-);
-
-/** 导入失败时记录重试状态，名称快照取失败时刻（此后名称才可能被用户改动） */
-const importToDataSource = async (dataSourceId: number) => {
-  try {
-    await uploadImport(dataSourceId, formModel.value.uploadFile!);
-    isUploadFailed.value = false;
-    return true;
-  } catch (e) {
-    console.error(e);
-    isUploadFailed.value = true;
-    createdName.value = formModel.value.name;
-    return false;
-  }
+const backToLoginIfNeeded = () => {
+  if (route.query.from !== 'login') return false;
+  router.push({ name: 'login', query: { type: 'local' } });
+  return true;
 };
 
-const handleSubmit = async () => {
+// ===== 创建向导：步骤流转与提交编排 =====
+
+// 步骤1「下一步」：校验通过即创建数据源（名称与冲突规则落库，之后不可修改）
+const handleCreateDataSource = async () => {
+  const valid = await basicInfoRef.value?.validate();
+  if (!valid) return;
+  submitLoading.value = true;
   try {
-    const valid = await formRef2.value?.validate().catch(() => false);
-    if (!valid) return;
-    // 密码相关的组合校验跨多个字段，不在 stepTwoRules 内，需单独拦截，避免只显示红字却放行提交
-    if (!validatePasswordConfig()) return;
-    // 编辑模式：名称与密码相关配置（plugin_config）一并提交，字段映射原样保留
-    if (isEdit.value) {
-      submitLoading.value = true;
-      await putDataSourceDetails(props.dataSourceId, {
-        name: formModel.value.name,
-        plugin_config: formModel.value.config,
-        field_mapping: detailData.value.field_mapping,
-      });
-      window.changeInput = false;
-      // 从登录设置「去设置」跳入时，保存后返回登录设置并自动展开本地账密详情侧栏，不再进入成功页
-      if (route.query.from === 'login') {
-        router.push({ name: 'login', query: { type: 'local' } });
-        return;
-      }
-      emit('updateSuccess', {
-        text: t('更新'),
-        dataSourceId: props.dataSourceId,
-        name: formModel.value.name,
-      });
-      return;
-    }
-    // 新增模式：创建数据源并导入（文件已在步骤 1 通过 form-item 校验，此处不再重复校验）
-    submitLoading.value = true;
-    let dataSourceId = createdDataSourceId.value;
-    if (!dataSourceId) {
-      const result = await newDataSource({
-        plugin_id: 'local',
-        name: formModel.value.name,
-        plugin_config: formModel.value.config,
-        username_generate_config: conflictConfig.value,
-      });
-      dataSourceId = result.data?.id;
-      if (!dataSourceId) {
-        Message({ theme: 'error', message: t('创建数据源失败') });
-        return;
-      }
-      createdDataSourceId.value = dataSourceId;
-    }
-
-    // 导入失败后重试：名称有变化时先补一次 PUT 同步（顺带携带当前密码配置），再重跑导入
-    if (isUploadFailed.value && formModel.value.name !== createdName.value) {
-      const detailsRes = await getDataSourceDetails(dataSourceId);
-      await putDataSourceDetails(dataSourceId, {
-        name: formModel.value.name,
-        plugin_config: formModel.value.config,
-        field_mapping: detailsRes?.data?.field_mapping,
-      });
-      createdName.value = formModel.value.name;
-    }
-
-    const isImportSuccess = await importToDataSource(dataSourceId);
-    if (!isImportSuccess) return;
-    window.changeInput = false;
-    emit('updateSuccess', {
-      text: t('新建成功'),
-      dataSourceId,
+    const result = await newDataSource({
+      plugin_id: 'local',
       name: formModel.value.name,
+      plugin_config: formModel.value.config,
+      username_generate_config: basicInfoRef.value?.getData(),
     });
+    const dataSourceId = result.data?.id;
+    createdDataSourceId.value = dataSourceId;
+    // 名称已随创建落库，清除步骤 1 输入产生的脏标记
+    syncChangeInput();
+    step.value = 2;
   } catch (e) {
-    // 接口错误已由 http 拦截器统一提示，此处仅记录日志，避免同一错误重复弹出
+    // 接口错误已由 http 拦截器统一提示，此处仅记录日志
     console.error(e);
   } finally {
     submitLoading.value = false;
+  }
+};
+
+// 步骤2「导入 / 重新导入」与编辑导入页签「导入」共用：
+// 成功后停留当前步骤展示结果 Alert（创建态由「跳过→下一步」按钮继续），失败停留原地可重试
+const handleImport = async () => {
+  importLoading.value = true;
+  try {
+    const success = await importPanelRef.value?.importFile();
+    importFailed.value = !success;
+    // 成功后禁用导入按钮，文件变化时恢复，防止对同一份文件重复导入
+    imported.value = success;
+    // 导入成功清除待导入脏标记，失败保持
+    syncChangeInput();
+    // 创建态据此把「跳过」切换为「下一步」；跳过进入第 3 步不置位，回上一步仍显示「跳过」
+    importDone.value = success;
+  } finally {
+    importLoading.value = false;
+  }
+};
+
+// 文件变化即恢复导入按钮：上一次的导入结果只对当时的文件有效
+const onFileChange = (hasFile: boolean) => {
+  hasImportFile.value = hasFile;
+  imported.value = false;
+  syncChangeInput();
+};
+
+// 步骤 2 右侧按钮（「跳过 / 下一步」共用）：不导入直接进入密码规则步骤，后续可在编辑页导入页签补导
+const handleSkipImport = () => {
+  step.value = 3;
+};
+
+// 步骤3「完成」：提交密码相关配置后进入成功页
+const handleFinishCreate = async () => {
+  const valid = await passwordPanelRef.value?.validate();
+  if (!valid) return;
+  submitLoading.value = true;
+  try {
+    const detailsRes = await getDataSourceDetails(createdDataSourceId.value);
+    await putDataSourceDetails(createdDataSourceId.value, {
+      name: formModel.value.name,
+      plugin_config: formModel.value.config,
+      field_mapping: detailsRes?.data?.field_mapping,
+    });
+    window.changeInput = false;
+    if (backToLoginIfNeeded()) return;
+    emit('updateSuccess', {
+      text: t('新建成功'),
+      dataSourceId: createdDataSourceId.value,
+      name: formModel.value.name,
+    });
+  } catch (e) {
+    console.error(e);
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+// ===== 编辑态：三页签独立保存 =====
+
+/** 保存成功后只清当前页签的脏标记（另一页签未保存的修改仍在表单中，由其自己的标记追踪）；from=login 仍跳回登录设置 */
+const handleSaveSuccess = () => {
+  // 仅 base/password 走表单保存，导入页签的脏标记由导入结果推导
+  if (activeTab.value !== 'import') dirtyTabs.value[activeTab.value] = false;
+  syncChangeInput();
+  if (backToLoginIfNeeded()) return;
+  Message({ theme: 'success', message: t('保存成功') });
+};
+
+// 基础信息页签：仅更新名称，plugin_config/field_mapping 取最新落库值，避免覆盖密码页签未保存的输入
+// 密码规则页签：仅更新 plugin_config，name 取最新落库值，同理互不覆盖
+const handleEditSave = async () => {
+  const saveBase = activeTab.value === 'base';
+  const valid = saveBase
+    ? await basicInfoRef.value?.validate()
+    : await passwordPanelRef.value?.validate();
+  if (!valid) return;
+  submitLoading.value = true;
+  try {
+    const detailsRes = await getDataSourceDetails(props.dataSourceId);
+    await putDataSourceDetails(props.dataSourceId, {
+      name: saveBase ? formModel.value.name : detailsRes?.data?.name,
+      plugin_config: saveBase ? detailsRes?.data?.plugin_config : formModel.value.config,
+      field_mapping: detailsRes?.data?.field_mapping,
+    });
+    handleSaveSuccess();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+const handleCancel = () => {
+  if (backToLoginIfNeeded()) return;
+  emit('cancel');
+};
+
+/**
+ * 判断当前数据源的密码规则是否被「启用中」的本地账密（认证源）的生效范围引用，用于锁定密码规则开关；
+ * 认证源关闭时不锁（规则可编辑），非法中间态由认证源编辑页的未启用拦截兜底；
+ * 请求失败按「未引用」降级，不影响表单初始化
+ */
+const checkPasswordRuleReferenced = async () => {
+  try {
+    const idpsRes = await getIdps('');
+    const localIdp = idpsRes?.data?.find(item => item.plugin?.id === 'local');
+    if (!localIdp) return;
+    const idpDetailRes = await getIdpsDetails(localIdp.id);
+    const scopeIds = (idpDetailRes?.data?.data_source_match_rules ?? []).map(item => item.data_source_id);
+    isPasswordRuleReferenced.value = scopeIds.includes(props.dataSourceId);
+  } catch (e) {
+    console.error(e);
   }
 };
 
@@ -781,30 +466,20 @@ const initForm = async () => {
       const detailsRes = await getDataSourceDetails(props.dataSourceId);
       const details = detailsRes?.data;
       formModel.value.name = details?.name ?? '';
-      detailData.value = details;
-      // 冲突配置回填：编辑态仅回显（提交不携带该字段），无数据时兜底为不配置
+      // 冲突配置回填：编辑态仅回显（后端不支持更新），无数据时兜底为不配置
       conflictConfig.value = details?.username_generate_config
         || { rule: 'unchanged', prefix: '', suffix: '' };
       // 密码相关配置取数：已迁移至数据源详情的 plugin_config（存量数据由后端迁移），为空时保留骨架默认值
       if (details?.plugin_config && Object.keys(details.plugin_config).length > 0) {
         formModel.value.config = details.plugin_config as LocalDataSourcePluginConfig;
       }
-      // 生效范围仍在本地账密（认证源）上，据此判断密码规则是否已被引用
-      const idpsRes = await getIdps('');
-      const localIdp = idpsRes?.data?.find(item => item.plugin?.id === 'local');
-      if (localIdp) {
-        const idpDetailRes = await getLocalIdps(localIdp.id);
-        const scopeIds = idpDetailRes?.data?.data_source_ids ?? [];
-        isPasswordRuleReferenced.value = scopeIds.includes(props.dataSourceId);
-      }
+      // 生效范围在本地账密（认证源）上，据此判断密码规则是否已被引用
+      await checkPasswordRuleReferenced();
     } else {
       // 新增模式：以插件默认配置初始化表单，用户修改后原样提交
       const res = await getDefaultConfig('local');
       formModel.value.config = res?.data?.config as LocalDataSourcePluginConfig;
     }
-    setIsIntPutEyesDisabled(formModel.value.config?.password_initial?.fixed_password);
-    handleMustIncludeRuleChange();
-    triggerPasswordConfigValidate();
   } catch (e) {
     console.error(e);
   } finally {
@@ -812,60 +487,16 @@ const initForm = async () => {
   }
 };
 
-// 监听密码生成方式
-watch(() => formModel.value.config?.password_initial?.generate_method, (value) => {
-  enabledMethodsError.value = value === 'random'
-    && !(formModel.value.config?.password_initial?.notification?.enabled_methods ?? []).length;
-  if (value === 'random') {
-    formModel.value.config.password_initial.fixed_password = null;
-  }
-});
-
-watch(() => formModel.value.config?.password_initial?.notification?.enabled_methods, (value) => {
-  if (formModel.value.config?.password_initial?.generate_method === 'fixed') {
-    return enabledMethodsError.value = false;
-  }
-  enabledMethodsError.value = !(value ?? []).length;
-});
-
 onMounted(initForm);
 </script>
 
 <style lang="less" scoped>
-@import url('@/components/notify-editor/NotifyEditor.less');
+.edit-data-source-tab {
+  background: #fff;
+  border-radius: 2px;
 
-.div-flex {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #63656e;
-}
-
-.form-item-flex {
-  ::v-deep .bk-form-content {
-    display: flex;
-
-    .input-password {
-      width: 240px;
-      margin-left: 28px;
-    }
+  :deep(.bk-tab-content) {
+    padding: 10px 0 0 0;
   }
-}
-
-.error-text {
-  font-size: 12px;
-  line-height: 1;
-  color: #ea3636;
-}
-
-.error {
-  position: absolute;
-  left: 0;
-  padding-top: 4px;
-  font-size: 12px;
-  line-height: 1;
-  color: #ea3636;
-  text-align: left;
-  animation: form-error-appear-animation 0.15s;
 }
 </style>
