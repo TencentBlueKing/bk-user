@@ -45,11 +45,16 @@ class DataSourceMatchRule(BaseModel):
 DataSourceMatchRuleList = TypeAdapter(List[DataSourceMatchRule])
 
 
+def gen_field_compare_rules_of_local() -> List[FieldCompareRule]:
+    """生成本地账密认证源字段匹配规则"""
+    return [FieldCompareRule(source_field="id", target_field="id")]
+
+
 def gen_data_source_match_rule_of_local(data_source_id: int) -> DataSourceMatchRule:
     """生成本地账密认证源的匹配规则"""
     return DataSourceMatchRule(
         data_source_id=data_source_id,
-        field_compare_rules=[FieldCompareRule(source_field="id", target_field="id")],
+        field_compare_rules=gen_field_compare_rules_of_local(),
     )
 
 

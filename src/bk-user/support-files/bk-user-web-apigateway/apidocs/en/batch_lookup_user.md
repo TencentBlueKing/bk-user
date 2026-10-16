@@ -9,7 +9,7 @@ Batch query the users (including collaborative users)
 | lookups                 | string | Yes      | Exact matching value (can be bk_username, login_name or full_name), multiple separated by separator, limit number is 100, maximum input length per value is 64                                                              |
 | lookup_fields           | string | Yes      | Matching fields, multiple separated by commas, the optional values of each element are `bk_username`, `login_name`, `full_name`                                                                                             |
 | owner_tenant_id         | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to query the corresponding tenant users. The default value is empty (query the users of this tenant and the users of the cooperating tenants) |
-| with_organization_paths | bool   | No       | Whether to return the organization paths of the user. The default value is `false`                                                                                                                                          |
+| with_organization_paths | bool   | No       | Whether to return the organization info (`organization_paths` and `organizations`) of the user. The default value is `false`                                                                                                                                          |
 
 ### Request Example
 
@@ -31,6 +31,9 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
             "owner_tenant_id": "default",
             "status": "enabled",
             "organization_paths": ["公司/部门A/中心AA"],
+            "organizations": [
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}, {"id": 4, "name": "中心AA"}],
+            ],
         },
         {
             "bk_username": "frywzyv2n0bilwgb",
@@ -40,6 +43,10 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
             "owner_tenant_id": "collaborative_tenant",
             "status": "enabled",
             "organization_paths": ["公司/部门A/中心AB", "公司/部门B/中心BA"],
+            "organizations": [
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}, {"id": 5, "name": "中心AB"}],
+                [{"id": 1, "name": "公司"}, {"id": 3, "name": "部门B"}, {"id": 6, "name": "中心BA"}],
+            ],
         },
     ]
 }
@@ -55,4 +62,7 @@ lookups=zhangsan,lisi&lookup_fields=login_name,bk_username&with_organization_pat
 | display_name       | string | User's display name                                                                                                                                            |
 | owner_tenant_id    | string | The tenant ID to which the data source belongs. The tenant user is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
 | status             | string | User's status, including the states of 'enabled', 'disabled' and 'expired'                                                                                     |
-| organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`                         |
+| organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`, only returned when `with_organization_paths=true`                         |
+| organizations      | array  | The organization chains to which the user belongs, one chain per direct department (from the root department to the direct department, inclusive), aligned with `organization_paths` by index, only returned when `with_organization_paths=true` |
+| organizations[][].id   | int    | Unique identifier of the department, `null` if the department has not been synchronized to the current tenant |
+| organizations[][].name | string | Department name |

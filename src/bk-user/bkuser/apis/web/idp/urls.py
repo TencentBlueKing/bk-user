@@ -28,13 +28,10 @@ urlpatterns = [
         views.IdpPluginConfigMetaRetrieveApi.as_view(),
         name="idp_plugin.config_meta.retrieve",
     ),
-    # 本地账密登录，比较特殊单独 API
-    path("local/", views.LocalIdpCreateApi.as_view(), name="idp.local.create"),
-    path("local/<str:id>/", views.LocalIdpRetrieveUpdateApi.as_view(), name="idp.local.retrieve_update"),
-    # 通用认证源创建/获取列表
+    # 认证源创建/获取列表
     path("", views.IdpListCreateApi.as_view(), name="idp.list_create"),
-    # 通用认证源获取/更新
-    path("<str:id>/", views.IdpRetrieveUpdateApi.as_view(), name="idp.retrieve_update"),
-    # 通用认证源启 / 停
+    # 认证源获取/更新/删除
+    path("<str:id>/", views.IdpRetrieveUpdateDestroyApi.as_view(), name="idp.retrieve_update_destroy"),
+    # 认证源启 / 停
     path("<str:id>/status/", views.IdpStatusUpdateApi.as_view(), name="idp.update_status"),
 ]

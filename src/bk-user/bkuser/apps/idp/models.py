@@ -141,8 +141,8 @@ class IdpSensitiveInfo(TimestampedModel):
 class IdpDataSourceRelation(TimestampedModel):
     """认证源与数据源关联关系
 
-    注意：当关联的实名数据源被重置时，关系记录会随之删除，IDP 变为孤儿态。
-    虚拟数据源和内置管理数据源场景不会触发孤儿，因此孤儿 IDP 几乎都源自实名数据源重置。
+    注意：当关联的实名数据源被删除时，关系记录会随之删除，IDP 变为孤儿态。
+    虚拟数据源和内置管理数据源场景不会触发孤儿，因此孤儿 IDP 几乎都源自实名数据源删除。
 
     约束：每个 IDP 只能关联一种类型的数据源。
     """

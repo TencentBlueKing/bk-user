@@ -14,13 +14,15 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-from typing import List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.open_web.serializers.common import TenantDepartmentNodeSLZ
 from bkuser.apps.data_source.cache import DataSourceCache
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.tenant.constants import TenantUserStatus
@@ -76,6 +78,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.SerializerMethodField(help_text="归属租户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+    organizations = serializers.SerializerMethodField(help_text="用户所属部门列表")
 
     def get_owner_tenant_id(self, obj: TenantUser) -> str:
         return DataSourceCache.get_owner_tenant_id(obj.data_source_id)
@@ -87,12 +90,17 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         return self.context["display_name_map"][obj.id]
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"].get(obj.data_source_user_id, [])
+        return ["/".join(org["name"] for org in orgs) for orgs in self.get_organizations(obj)]
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantDepartmentNodeSLZ(many=True)))
+    def get_organizations(self, obj: TenantUser) -> List[List[Dict[str, Any]]]:
+        return self.context["organizations_map"].get(obj.id, [])
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not self.context["with_organization_paths"]:
             data.pop("organization_paths")
+            data.pop("organizations")
         return data
 
 
@@ -136,6 +144,7 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.SerializerMethodField(help_text="归属租户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
     organization_paths = serializers.SerializerMethodField(help_text="用户所属部门路径")
+    organizations = serializers.SerializerMethodField(help_text="用户所属部门列表")
 
     def get_data_source_type(self, obj: TenantUser) -> str:
         return DataSourceCache.get_type(obj.data_source_id)
@@ -150,12 +159,17 @@ class TenantUserLookupOutputSLZ(serializers.Serializer):
         return self.context["display_name_map"][obj.id]
 
     def get_organization_paths(self, obj: TenantUser) -> List[str]:
-        return self.context["org_path_map"].get(obj.data_source_user_id, [])
+        return ["/".join(org["name"] for org in orgs) for orgs in self.get_organizations(obj)]
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListField(child=TenantDepartmentNodeSLZ(many=True)))
+    def get_organizations(self, obj: TenantUser) -> List[List[Dict[str, Any]]]:
+        return self.context["organizations_map"].get(obj.id, [])
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not self.context["with_organization_paths"]:
             data.pop("organization_paths")
+            data.pop("organizations")
         return data
 
 

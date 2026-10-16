@@ -8,7 +8,7 @@ Search user (including collaborative users). The search results return the first
 |-------------------------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | keyword                 | string | Yes      | Search keywords (you can enter the values of login_name (unique ID of user in the enterprise) or full_name (name)). The minimum input length is 1 and the maximum input length is 64                                          |
 | owner_tenant_id         | string | No       | The tenant ID to which the data source belongs. You can specify the tenant ID to search the corresponding tenant users. The default value is empty (search the users of this tenant and the users of the cooperating tenants) |
-| with_organization_paths | bool   | No       | Whether to return the organization paths of the user. The default value is `false`                                                                                                                                            |
+| with_organization_paths | bool   | No       | Whether to return the organization info (`organization_paths` and `organizations`) of the user. The default value is `false`                                                                                                                                            |
 
 ### Request Example
 
@@ -30,6 +30,9 @@ keyword=zhang&with_organization_paths=true
             "owner_tenant_id": "default",
             "status": "enabled",
             "organization_paths": ["公司/部门A/中心AA"],
+            "organizations": [
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}, {"id": 4, "name": "中心AA"}],
+            ],
         },
         {
             "bk_username": "frywzyv2n0bilwgb",
@@ -39,6 +42,10 @@ keyword=zhang&with_organization_paths=true
             "owner_tenant_id": "collaborative_tenant",
             "status": "enabled",
             "organization_paths": ["公司/部门A/中心AB", "公司/部门B/中心BA"],
+            "organizations": [
+                [{"id": 1, "name": "公司"}, {"id": 2, "name": "部门A"}, {"id": 5, "name": "中心AB"}],
+                [{"id": 1, "name": "公司"}, {"id": 3, "name": "部门B"}, {"id": 6, "name": "中心BA"}],
+            ],
         },
     ]
 }
@@ -54,4 +61,7 @@ keyword=zhang&with_organization_paths=true
 | display_name       | string | User's display name                                                                                                                          |
 | owner_tenant_id    | string | The tenant ID to which the data source belongs. The tenant user is returned as the tenant ID, and the collaborative user is returned as the original tenant ID |
 | status             | string | User's status, including the states of 'enabled', 'disabled' and 'expired'                                                                   |
-| organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`       |
+| organization_paths | array  | The organization paths to which the user belongs, separated by commas, with the format of `Department 1/Department 2/.../Department n`, only returned when `with_organization_paths=true`       |
+| organizations      | array  | The organization chains to which the user belongs, one chain per direct department (from the root department to the direct department, inclusive), aligned with `organization_paths` by index, only returned when `with_organization_paths=true` |
+| organizations[][].id   | int    | Unique identifier of the department, `null` if the department has not been synchronized to the current tenant |
+| organizations[][].name | string | Department name |

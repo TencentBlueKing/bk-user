@@ -96,8 +96,6 @@ class ErrorCodes:
 
     # 认证源
     IDP_PLUGIN_NOT_LOAD = ErrorCode(_("认证源插件未加载"))
-    IDP_CREATE_FAILED = ErrorCode(_("创建认证源失败"))
-    CANNOT_UPDATE_IDP = ErrorCode(_("该认证源不允许更新配置"))
 
     # 租户
     TENANT_UPDATE_FAILED = ErrorCode(_("租户更新失败"))
