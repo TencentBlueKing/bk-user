@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white px-[12px] h-[52px] flex shadow-[0_3px_4px_0_#0000000a] pt-[10px] z-10 relative">
+  <div class="bg-white px-[12px] h-[52px] flex shadow-[0_3px_4px_0_#0000000a] pt-[10px] z-[20] relative">
     <bk-input
       v-model="search"
       type="search"
@@ -121,7 +121,7 @@ import ViewUser from './view-user.vue';
 
 import DisplayName from '@/components/display-name.vue';
 import { useCustomFields } from '@/hooks';
-import { getTenantsUserDetail, getUsersList, searchOrganization } from '@/http/organizationFiles';
+import { getTenantsUserDetail, searchOrganization, searchTenantUsers } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { SearchOrganizationItemData, SearchUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
@@ -177,7 +177,7 @@ const searchData = () => {
     keyword: search.value,
   };
   const httpConfig = { customMessage: true };
-  Promise.allSettled([searchOrganization(payload, httpConfig), getUsersList(payload, httpConfig)])
+  Promise.allSettled([searchOrganization(payload, httpConfig), searchTenantUsers(payload, httpConfig)])
     .then((results) => {
       const orgResult = results[0];
       const userResult = results[1];
