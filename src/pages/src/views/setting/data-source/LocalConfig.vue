@@ -181,7 +181,8 @@
                   :reset-password-email="$t('重设密码后的邮件')"
                   :create-account-sms="$t('创建账户短信')"
                   :reset-password-sms="$t('重设密码后的短信')"
-                  @handle-editor-text="handleEditorText">
+                  @handle-editor-text="handleEditorText"
+                  @change="handleChange">
                   <template #label>
                     <div class="password-header">
                       <bk-checkbox-group
@@ -275,7 +276,8 @@
                   :expired-email-key="'password_expired'"
                   :expiring-sms-key="'password_expiring'"
                   :expired-sms-key="'password_expired'"
-                  @handle-editor-text="handleEditorText">
+                  @handle-editor-text="handleEditorText"
+                  @change="handleChange">
                   <template #label>
                     <div class="password-header">
                       <bk-checkbox-group
@@ -364,7 +366,7 @@ import {
   newDataSource,
   putDataSourceDetails,
 } from '@/http/dataSourceFiles';
-import { DataSourceDetails, LocalDataSourcePluginConfig, LocalDataSourceLoginLimit, LocalDataSourcePasswordExpire, LocalDataSourcePasswordInitial, LocalDataSourcePasswordRule, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
+import { DataSourceDetails, LocalDataSourceLoginLimit, LocalDataSourcePasswordExpire, LocalDataSourcePasswordInitial, LocalDataSourcePasswordRule, LocalDataSourcePluginConfig, UsernameGenerateConfig } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import { useDataSourceStore } from '@/store';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
@@ -509,6 +511,7 @@ const mustIncludeList = computed({
     return mustIncludeOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
   },
   set: (value: string[]) => {
+    window.changeInput = true;
     const rule = formModel.value.config?.password_rule;
     if (!rule) return;
     mustIncludeOptions.forEach((opt) => {
@@ -525,6 +528,7 @@ const continuousRuleList = computed({
     return continuousOptions.filter(opt => rule[opt.label]).map(opt => opt.label);
   },
   set: (value: string[]) => {
+    window.changeInput = true;
     const rule = formModel.value.config?.password_rule;
     if (!rule) return;
     continuousOptions.forEach((opt) => {
@@ -561,6 +565,7 @@ const handleChange = () => {
 
 // 编辑通知方式
 const handleEditorText = (html: string, text: string, key: string, type: string) => {
+  window.changeInput = true;
   const templates = key === 'password_expiring' || key === 'password_expired'
     ? formModel.value.config?.password_expire?.notification?.templates ?? []
     : formModel.value.config?.password_initial?.notification?.templates ?? [];
@@ -605,6 +610,7 @@ const setIsIntPutEyesDisabled = (fixed_password: string) => {
 };
 
 const inputPassword = (val: string) => {
+  window.changeInput = true;
   formModel.value.config.password_initial.fixed_password = val;
 };
 
@@ -649,7 +655,7 @@ const handleMustIncludeRuleChange = () => {
 const handleEnablePasswordChange = async (value: boolean) => {
   window.changeInput = true;
   if (!value || !formModel.value.config) return;
-  const config = formModel.value.config;
+  const { config } = formModel.value;
   // 关闭状态下后端允许配置段为 null，开启前用插件默认配置补齐，保证表单可填写
   if (!config.password_rule || !config.password_initial || !config.password_expire || !config.login_limit) {
     try {

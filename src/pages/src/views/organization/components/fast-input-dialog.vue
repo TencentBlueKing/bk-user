@@ -171,12 +171,11 @@ const handleNext = async () => {
   if (!!formData.value.val && (currentId.value < objectSteps.value.length)) {
     isLoading.value = true;
     const param = {
-      data_source_id: organizationStore.selectedOrg.dataSourceId,
       user_infos: formData.value.val.split('\n'),
       department_id: organizationStore.selectedOrg.deptId,
     };
     try {
-      const res = await batchCreatePreview(param);
+      const res = await batchCreatePreview(organizationStore.selectedOrg.dataSourceId, param);
       const sourceData = res.data.map(item => Object.assign({}, item, item.extras));
       const transformData = transformEnumFields(sourceData);
       tableData.value = transformData;
@@ -255,11 +254,10 @@ const confirm = async () => {
   isConfirmLoading.value = true;
   try {
     const param = {
-      data_source_id: organizationStore.selectedOrg.dataSourceId,
       user_infos: formData.value.val.split('\n'),
       department_id: organizationStore.selectedOrg.deptId,
     };
-    await operationsCreate(param);
+    await operationsCreate(organizationStore.selectedOrg.dataSourceId, param);
     emit('success');
     Message({ theme: 'success', message: t('录入成功') });
   } catch (err) {
