@@ -133,8 +133,8 @@ import PhoneInput from '@/components/phoneInput.vue';
 import UploadImg from '@/components/upload-img.vue';
 import { useValidate } from '@/hooks';
 import {
+  getOptionalUsers,
   optionalDepartmentsList,
-  optionalLeaderList,
   updateTenantsUserDetail,
 } from '@/http/organizationFiles';
 import { t } from '@/language/index';
@@ -219,7 +219,7 @@ const getOptionalDepartmentsList = (value = '') => {
     });
 };
 const getOptionalLeaderList = (value = '') => {
-  optionalLeaderList(props.dataSourceId, {
+  getOptionalUsers(props.dataSourceId, {
     keyword: value || undefined, excluded_user_id: formData.id,
   }).then((res) => {
     leaderList.value = res.data;
