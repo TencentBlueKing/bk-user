@@ -203,7 +203,7 @@ export interface GetOptionalUsersParams {
   excluded_user_id?: string;
 }
 
-/** 数据源可选用户（已排除数据源内已有用户，用于拉取已有用户） */
+/** 数据源可选用户（用于拉取已有用户、直属上级选择等场景） */
 export interface OptionalUserItemData {
   /** 租户用户 ID */
   id: string;
@@ -270,12 +270,6 @@ export interface BatchCreatePreviewParams {
   department_id: number;
 }
 
-export interface OptionalLeaderListParams {
-  keyword?: string;
-  /** 需要排除的用户 ID（编辑用户时排除自己） */
-  excluded_user_id?: string;
-}
-
 export interface BatchResetPasswordParams {
   user_ids: string[];
   password: string;
@@ -298,12 +292,6 @@ export interface BatchCreateParams {
 export interface BatchDeleteParams {
   user_ids: string;
   source_department_id: number;
-}
-
-export interface OptionalLeaderListItemData {
-  id: string;
-  username: string;
-  full_name: string;
 }
 
 export interface BatchCreatePreviewItemData {

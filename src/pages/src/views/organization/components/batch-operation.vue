@@ -182,7 +182,7 @@ import CustomFields from '@/components/custom-fields/index.vue';
 import DisplayName from '@/components/display-name.vue';
 import LocalDatePicker from '@/components/LocalDatePicker.vue';
 import ResetPasswordDialog from '@/components/ResetPasswordDialog.vue';
-import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, optionalLeaderList, passwordRule, putBatchUpdate } from '@/http/organizationFiles';
+import { batchAccountExpired, batchCustomField, batchDeleteUser, batchLeader, batchResetPassword, batchUpdateStatus, getOptionalUsers, passwordRule, putBatchUpdate } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
 import { TenantsUserItemData } from '@/http/types/organizationFiles';
 import { t } from '@/language/index';
@@ -385,7 +385,7 @@ const getOptionalLeaderList = async () => {
   leaderList.value = [];
   leaderLoading.value = true;
   try {
-    const res = await optionalLeaderList(props.dataSourceId, {});
+    const res = await getOptionalUsers(props.dataSourceId, {});
     leaderList.value = res.data;
   } catch (e) {
     console.error(e);

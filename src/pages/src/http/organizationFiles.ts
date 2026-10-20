@@ -19,8 +19,6 @@ import type {
   GetUserListParams,
   OptionalDepartmentsListData,
   OptionalDepartmentsListParams,
-  OptionalLeaderListItemData,
-  OptionalLeaderListParams,
   OptionalUserItemData,
   OrganizationPathsData,
   PasswordRuleData,
@@ -226,14 +224,9 @@ export const batchCreatePreview = (dataSourceId: number, params: BatchCreatePrev
 export const optionalDepartmentsList = (dataSourceId: number, params: OptionalDepartmentsListParams) => http.get<ResponseData<OptionalDepartmentsListData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/optional-departments/`, params);
 
 /**
- * 获取数据源可选用户列表（已排除数据源内已有用户，用于拉取已有用户）
+ * 获取数据源可选用户列表（用于拉取已有用户、直属上级选择等场景；排除指定用户由 excluded_user_id 参数控制）
  */
 export const getOptionalUsers = (dataSourceId: number, params: GetOptionalUsersParams, config?: Config) => http.get<ResponseData<OptionalUserItemData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/optional-users/`, params, config);
-
-/**
- * 可选leader
- */
-export const optionalLeaderList = (dataSourceId: number, params: OptionalLeaderListParams, config?: Config) => http.get<ResponseData<OptionalLeaderListItemData[]>>(`${prefix}/tenants/data-sources/${dataSourceId}/optional-leaders/`, params, config);
 
 /**
  * 搜索组织
