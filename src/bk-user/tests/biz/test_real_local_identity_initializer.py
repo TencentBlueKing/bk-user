@@ -70,12 +70,6 @@ def test_config_rejects_empty_admin_password():
         RealLocalIdentityConfig(username="manager", password="")
 
 
-@pytest.mark.parametrize("password", ["weak", "bluking@2025"])
-def test_config_rejects_weak_admin_password(password):
-    with pytest.raises(ValidationError, match="password does not satisfy"):
-        RealLocalIdentityConfig(username="manager", password=password)
-
-
 def test_config_requires_new_user_fixed_password_when_method_is_fixed():
     with pytest.raises(ValidationError, match="new_user_fixed_password is required"):
         RealLocalIdentityConfig(
@@ -83,19 +77,29 @@ def test_config_requires_new_user_fixed_password_when_method_is_fixed():
         )
 
 
-def test_config_rejects_weak_new_user_fixed_password():
-    with pytest.raises(ValidationError, match="new_user_fixed_password does not satisfy"):
-        RealLocalIdentityConfig(
-            username="manager",
-            password=ADMIN_PASSWORD,
+def test_config_rejects_new_user_fixed_password_when_method_is_random():
+    with pytest.raises(ValidationError, match="only allowed"):
+        RealLocalIdentityConfig(username="manager", password=ADMIN_PASSWORD, new_user_fixed_password=NEW_USER_PASSWORD)
+
+
+@pytest.mark.parametrize("password", ["weak", "bluking@2025"])
+def test_initialize_rejects_weak_admin_password(default_tenant, password):
+    config = RealLocalIdentityConfig(username="manager", password=password)
+    with pytest.raises(RealLocalIdentityInitError, match="password does not satisfy"):
+        RealLocalIdentityInitializer(default_tenant.id, config).initialize()
+
+    assert not DataSource.objects.filter(owner_tenant_id=default_tenant.id, type=DataSourceTypeEnum.REAL).exists()
+
+
+def test_initialize_rejects_weak_new_user_fixed_password(default_tenant):
+    with pytest.raises(RealLocalIdentityInitError, match="固定密码的值不符合密码规则"):
+        _initialize(
+            default_tenant.id,
             new_user_password_method=PasswordGenerateMethod.FIXED,
             new_user_fixed_password="weak",
         )
 
-
-def test_config_rejects_new_user_fixed_password_when_method_is_random():
-    with pytest.raises(ValidationError, match="only allowed"):
-        RealLocalIdentityConfig(username="manager", password=ADMIN_PASSWORD, new_user_fixed_password=NEW_USER_PASSWORD)
+    assert not DataSource.objects.filter(owner_tenant_id=default_tenant.id, type=DataSourceTypeEnum.REAL).exists()
 
 
 def test_initialize_requires_existing_tenant():

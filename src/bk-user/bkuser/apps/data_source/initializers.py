@@ -32,6 +32,15 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordIni
 logger = logging.getLogger(__name__)
 
 
+def get_password_expired_at(valid_days: int) -> datetime.datetime:
+    """根据密码有效天数获取密码过期的具体时间"""
+    # 有效时间 -1 表示永远有效
+    if valid_days < 0:
+        return PERMANENT_TIME
+
+    return timezone.now() + datetime.timedelta(days=valid_days)
+
+
 class PasswordProvider:
     """本地数据源用户密码"""
 
@@ -110,7 +119,7 @@ class LocalDataSourceIdentityInfoInitializer:
     def _init_users_identity_info(self, users: List[DataSourceUser]) -> Dict[int, str]:
         """初始化用户身份信息，返回 {user_id: password} 映射表"""
         time_now = timezone.now()
-        expired_at = self._get_password_expired_at()
+        expired_at = get_password_expired_at(self.plugin_cfg.password_expire.valid_time)  # type: ignore
 
         # 由于用户密码将采用 HASH 加密，因此只有在初始化的时候才能获取到明文密码，用于后续通知
         user_password_map = {user.id: self.password_provider.generate() for user in users}
@@ -134,12 +143,3 @@ class LocalDataSourceIdentityInfoInitializer:
             LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos)
 
         return user_password_map
-
-    def _get_password_expired_at(self) -> datetime.datetime:
-        """获取密码过期的具体时间"""
-        valid_time: int = self.plugin_cfg.password_expire.valid_time  # type: ignore
-        # 有效时间 -1 表示永远有效
-        if valid_time < 0:
-            return PERMANENT_TIME
-
-        return timezone.now() + datetime.timedelta(days=valid_time)

@@ -15,13 +15,12 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-import datetime
-
 from django.db import transaction
 from django.utils import timezone
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.data_source.initializers import get_password_expired_at
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.data_source.name import gen_data_source_name
 from bkuser.apps.idp.constants import IdpStatus
@@ -30,7 +29,6 @@ from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
-from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -39,12 +37,7 @@ from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import USERNAME_REGEX, PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-
-
-def _get_default_local_plugin_config() -> LocalDataSourcePluginConfig:
-    plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
-    assert isinstance(plugin_config, LocalDataSourcePluginConfig)
-    return plugin_config
+from bkuser.utils.pydantic import stringify_pydantic_error
 
 
 class RealLocalIdentityConfig(BaseModel):
@@ -61,23 +54,13 @@ class RealLocalIdentityConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_passwords(self) -> "RealLocalIdentityConfig":
-        plugin_config = _get_default_local_plugin_config()
-        assert plugin_config.password_rule is not None
-        validator = PasswordValidator(plugin_config.password_rule.to_rule())
-
-        # 空字符串会让密码强度校验直接报错，需先单独拦截
+        # 此处只校验参数间约束，不校验密码强度；密码强度由 RealLocalIdentityInitializer 按实际数据源配置校验
         if not self.password:
             raise ValueError("password is required")
-        if not (ret := validator.validate(self.password)).ok:
-            raise ValueError(f"password does not satisfy the password rules: {ret.exception_message}")
 
         if self.new_user_password_method == PasswordGenerateMethod.FIXED:
             if not self.new_user_fixed_password:
                 raise ValueError("new_user_fixed_password is required when new_user_password_method is fixed")
-            if not (ret := validator.validate(self.new_user_fixed_password)).ok:
-                raise ValueError(
-                    f"new_user_fixed_password does not satisfy the password rules: {ret.exception_message}"
-                )
         elif self.new_user_fixed_password:
             raise ValueError("new_user_fixed_password is only allowed when new_user_password_method is fixed")
 
@@ -99,8 +82,10 @@ class RealLocalIdentityInitializer:
     def initialize(self) -> bool:
         """初始化租户，返回是否有新创建数据。
 
-        已有实名本地数据源，或已有本地实名认证源时跳过。
+        已有实名本地数据源，或已有本地账密登录认证源时跳过。
         """
+        plugin_config = self._build_local_plugin_config()
+
         tenant = Tenant.objects.filter(id=self.tenant_id).first()
         if tenant is None:
             raise RealLocalIdentityInitError(f"tenant [{self.tenant_id}] does not exist")
@@ -117,22 +102,35 @@ class RealLocalIdentityInitializer:
         if IdpDataSourceRelationHandler.has_duplicate_plugin_real_relation(tenant.id, BuiltinIdpPluginEnum.LOCAL):
             return False
 
-        data_source = self._create_local_data_source(tenant)
+        data_source = self._create_local_data_source(tenant, plugin_config)
         self._create_local_idp(tenant, data_source)
         tenant_user = self._create_tenant_user(tenant, data_source)
         TenantManager.objects.create(tenant=tenant, tenant_user=tenant_user)
         return True
 
-    def _create_local_data_source(self, tenant: Tenant) -> DataSource:
-        plugin_config = _get_default_local_plugin_config()
-
+    def _build_local_plugin_config(self) -> LocalDataSourcePluginConfig:
+        """构建实名本地数据源的插件配置，并按其密码规则校验管理员密码"""
         # 除启用账密登录及新增用户的初始密码外，其余配置与页面新建本地数据源时的默认配置保持一致
-        plugin_config.enable_password = True
+        cfg = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).model_dump()
+        cfg["enable_password"] = True
         if self.config.new_user_password_method == PasswordGenerateMethod.FIXED:
-            assert plugin_config.password_initial is not None
-            plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
-            plugin_config.password_initial.fixed_password = self.config.new_user_fixed_password
+            cfg["password_initial"]["generate_method"] = PasswordGenerateMethod.FIXED
+            cfg["password_initial"]["fixed_password"] = self.config.new_user_fixed_password
 
+        # LocalDataSourcePluginConfig 未开启赋值校验，需通过构建触发固定密码强度等校验
+        try:
+            plugin_config = LocalDataSourcePluginConfig.model_validate(cfg)
+        except ValidationError as e:
+            raise RealLocalIdentityInitError(f"invalid local data source plugin config: {stringify_pydantic_error(e)}")
+
+        assert plugin_config.password_rule is not None
+        ret = PasswordValidator(plugin_config.password_rule.to_rule()).validate(self.config.password)
+        if not ret.ok:
+            raise RealLocalIdentityInitError(f"password does not satisfy the password rules: {ret.exception_message}")
+
+        return plugin_config
+
+    def _create_local_data_source(self, tenant: Tenant, plugin_config: LocalDataSourcePluginConfig) -> DataSource:
         plugin = DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL)
         return DataSource.objects.create(
             owner_tenant_id=tenant.id,
@@ -159,6 +157,11 @@ class RealLocalIdentityInitializer:
         return idp
 
     def _create_tenant_user(self, tenant: Tenant, data_source: DataSource) -> TenantUser:
+        """仅为当前租户创建实名管理员，不处理页面创建用户的扩展流程：
+
+        - 不转换用户名，不关联部门、上级及协同租户
+        - 使用指定密码直接初始化身份，不应用新用户初始密码策略，也不发送通知
+        """
         data_source_user = DataSourceUser.objects.create(
             data_source=data_source,
             code=self.config.username,
@@ -176,13 +179,11 @@ class RealLocalIdentityInitializer:
         plugin_config = data_source.get_plugin_cfg()
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_expire is not None
-        now = timezone.now()
-        valid_time = plugin_config.password_expire.valid_time
         LocalDataSourceIdentityInfo.objects.create(
             user=data_source_user,
             password=make_password(self.config.password),
-            password_updated_at=now,
-            password_expired_at=PERMANENT_TIME if valid_time < 0 else now + datetime.timedelta(days=valid_time),
+            password_updated_at=timezone.now(),
+            password_expired_at=get_password_expired_at(plugin_config.password_expire.valid_time),
             data_source=data_source,
             username=data_source_user.username,
         )
