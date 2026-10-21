@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-import datetime
 import logging
 from typing import Dict, List, Tuple
 
@@ -23,22 +22,12 @@ from django.utils import timezone
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
-from bkuser.common.passwd import PasswordGenerator
+from bkuser.common.passwd import PasswordGenerator, get_password_expired_at
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig, PasswordRuleConfig
 
 logger = logging.getLogger(__name__)
-
-
-def get_password_expired_at(valid_days: int) -> datetime.datetime:
-    """根据密码有效天数获取密码过期的具体时间"""
-    # 有效时间 -1 表示永远有效
-    if valid_days < 0:
-        return PERMANENT_TIME
-
-    return timezone.now() + datetime.timedelta(days=valid_days)
 
 
 class PasswordProvider:

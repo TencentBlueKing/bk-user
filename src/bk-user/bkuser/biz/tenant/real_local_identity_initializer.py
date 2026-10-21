@@ -20,7 +20,6 @@ from django.utils import timezone
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.initializers import get_password_expired_at
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.data_source.name import gen_data_source_name
 from bkuser.apps.idp.constants import IdpStatus
@@ -30,7 +29,7 @@ from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.hashers import make_password
-from bkuser.common.passwd import PasswordValidator
+from bkuser.common.passwd import PasswordValidator, get_password_expired_at
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
