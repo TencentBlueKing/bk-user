@@ -14,7 +14,21 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import datetime
 from hashlib import sha256
+
+from django.utils import timezone
+
+from bkuser.common.constants import PERMANENT_TIME
+from bkuser.plugins.local.constants import NEVER_EXPIRE_TIME
+
+
+def get_password_expired_at(valid_days: int) -> datetime.datetime:
+    """根据密码有效天数获取密码过期时间"""
+    if valid_days == NEVER_EXPIRE_TIME:
+        return PERMANENT_TIME
+
+    return timezone.now() + datetime.timedelta(days=valid_days)
 
 
 def gen_dept_code(org: str) -> str:

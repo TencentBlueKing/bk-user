@@ -15,7 +15,6 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 
-import datetime
 from collections import defaultdict
 from typing import Any, Dict, List, Set
 
@@ -32,9 +31,8 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantDepartmentIDRecord, TenantUser
-from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
-from bkuser.plugins.local.utils import gen_dept_code
+from bkuser.plugins.local.utils import gen_dept_code, get_password_expired_at
 
 
 class DataSourceUserHandler:
@@ -55,10 +53,7 @@ class DataSourceUserHandler:
             identify_info.password = make_password(password)
             identify_info.password_updated_at = timezone.now()
             # 注意：更新密码会重置有效期
-            if valid_days < 0:
-                identify_info.password_expired_at = PERMANENT_TIME
-            else:
-                identify_info.password_expired_at = timezone.now() + datetime.timedelta(days=valid_days)
+            identify_info.password_expired_at = get_password_expired_at(valid_days)
 
             identify_info.save(update_fields=["password", "password_updated_at", "password_expired_at", "updated_at"])
 
@@ -89,7 +84,7 @@ class DataSourceUserHandler:
         ]
 
         now = timezone.now()
-        password_expired_at = now + datetime.timedelta(days=valid_days) if valid_days >= 0 else PERMANENT_TIME
+        password_expired_at = get_password_expired_at(valid_days)
 
         # Note：虽然原始密码相同，但是 make_password 中进行了加盐操作，所以每个用户的密码都必须单独 make_password，
         #  这样才能保证 DB 存储的加密串不一样。

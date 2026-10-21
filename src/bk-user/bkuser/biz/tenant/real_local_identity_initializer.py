@@ -29,13 +29,14 @@ from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.apps.tenant.utils import TenantUserIDGenerator
 from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.hashers import make_password
-from bkuser.common.passwd import PasswordValidator, get_password_expired_at
+from bkuser.common.passwd import PasswordValidator
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import USERNAME_REGEX, PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.plugins.local.utils import get_password_expired_at
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 

@@ -23,9 +23,10 @@ from django.utils import timezone
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.common.hashers import make_password
-from bkuser.common.passwd import PasswordGenerator, get_password_expired_at
+from bkuser.common.passwd import PasswordGenerator
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig, PasswordRuleConfig
+from bkuser.plugins.local.utils import get_password_expired_at
 
 logger = logging.getLogger(__name__)
 

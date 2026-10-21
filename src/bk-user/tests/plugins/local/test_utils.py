@@ -14,8 +14,14 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+import datetime
+from unittest.mock import patch
+
 import pytest
-from bkuser.plugins.local.utils import gen_dept_code
+from bkuser.common.constants import PERMANENT_TIME
+from bkuser.plugins.local.constants import NEVER_EXPIRE_TIME
+from bkuser.plugins.local.utils import gen_dept_code, get_password_expired_at
+from django.utils import timezone
 
 
 @pytest.mark.parametrize(
@@ -32,3 +38,13 @@ def test_gen_dept_code(raw, excepted):
     # 重要：如果该单元测试挂了，说明修改了本地数据源部门的 Code 的生成规则
     # 该行为会导致新同步的数据，无法与 DB 中的数据匹配上，将会触发数据重建！！！
     assert gen_dept_code(raw) == excepted
+
+
+def test_get_password_expired_at_returns_permanent_time_when_never_expire():
+    assert get_password_expired_at(NEVER_EXPIRE_TIME) == PERMANENT_TIME
+
+
+def test_get_password_expired_at_returns_time_after_valid_days():
+    now = timezone.now()
+    with patch("bkuser.plugins.local.utils.timezone.now", return_value=now):
+        assert get_password_expired_at(90) == now + datetime.timedelta(days=90)

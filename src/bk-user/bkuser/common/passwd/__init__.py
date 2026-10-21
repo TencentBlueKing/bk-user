@@ -15,14 +15,11 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from .exceptions import PasswordGenerateError, PasswordStrengthError
-from .expiration import get_password_expired_at
 from .generator import PasswordGenerator
 from .models import PasswordRule, ValidateResult
 from .validator import PasswordValidator
 
 __all__ = [
-    # 密码过期时间
-    "get_password_expired_at",
     # 密码规则
     "PasswordRule",
     # 密码生成器
