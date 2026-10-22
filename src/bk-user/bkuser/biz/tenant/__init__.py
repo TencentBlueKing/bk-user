@@ -16,6 +16,11 @@
 # to the current version of the project delivered to anyone in the future.
 
 from .display_name import TenantUserDisplayNameHandler
+from .real_local_identity_initializer import (
+    RealLocalIdentityConfig,
+    RealLocalIdentityInitError,
+    RealLocalIdentityInitializer,
+)
 from .tenant_creator import (
     BuiltinManagementDataSourceConfig,
     BuiltinManagerInfo,
@@ -28,6 +33,10 @@ from .tenant_user import TenantUserEmailInfo, TenantUserHandler, TenantUserPhone
 __all__ = [
     # display_name
     "TenantUserDisplayNameHandler",
+    # real_local_identity_initializer
+    "RealLocalIdentityConfig",
+    "RealLocalIdentityInitError",
+    "RealLocalIdentityInitializer",
     # tenant_creator
     "TenantCreator",
     "TenantInfo",

@@ -54,7 +54,7 @@ jobs:
       - name: Start Redis Container
         uses: supercharge/redis-github-action@1.4.0
         with:
-          redis-version: "3.2.0"
+          redis-version: "6.2.0"
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
