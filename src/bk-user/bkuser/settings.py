@@ -30,12 +30,15 @@ from django.db.backends.mysql.features import DatabaseFeatures
 from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
 
+from bkuser.kms import get_env
+
 pymysql.install_as_MySQLdb()
 
-# environ
-env = environ.Env()
 # load environment variables from .env file
 environ.Env.read_env()
+
+# environ, credentials are overridden by the decrypted KMS envelope when ENABLE_KMS is true
+env = get_env()
 
 # no more useless warning
 urllib3.disable_warnings()

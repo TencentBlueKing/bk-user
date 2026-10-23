@@ -14,8 +14,3 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
-import os
-
-BK_USER_APP_CODE = os.environ.get("BK_USER_APP_CODE", default="bk_user")
-BK_USER_APP_SECRET = os.environ.get("BK_USER_APP_SECRET", "")
-BK_USER_API_URL = os.environ.get("BK_USER_API_URL", "http://bk-user")
