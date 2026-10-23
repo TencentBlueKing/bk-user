@@ -19,7 +19,7 @@ dependencies = [
     "concurrent-log-handler==0.9.28",
     "django-prometheus==2.4.1",
     "pydantic==2.11.7",
-    "blue-krill==2.1.3",
+    "blue-krill==3.1.1",
     "django-cors-headers==4.7.0",
     "sentry-sdk==2.33.0",
     "opentelemetry-api==1.35.0",
@@ -33,8 +33,9 @@ dependencies = [
     "opentelemetry-instrumentation-celery==0.56b0",
     "opentelemetry-instrumentation-logging==0.56b0",
     "bk-notice-sdk==1.4.2",
-    "pyjwt[crypto]==2.10.1",
+    "pyjwt[crypto]==2.15.1",
     "apigw-manager[cryptography]==4.1.0",
+    "bk-kms-sdk[gm]==1.0.0",
     # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
     "setuptools==80.8.0",
 ]

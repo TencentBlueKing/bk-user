@@ -86,7 +86,8 @@ grant_permissions:
   - bk_app_code: "bk_iam_v4"
     grant_dimension: "resource"
     resource_names:
-      - list_user
-      - list_virtual_user
-      - list_department
-      - list_department_user_relation
+      - "retrieve_user"
+      - "list_user"
+      - "list_virtual_user"
+      - "list_department"
+      - "list_department_user_relation"
