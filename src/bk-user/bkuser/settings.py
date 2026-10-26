@@ -20,7 +20,7 @@ import re
 import ssl
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import environ
 import pymysql
@@ -511,10 +511,11 @@ RABBITMQ_TLS_CERT_CA_FILE = env.str("RABBITMQ_TLS_CERT_CA_FILE", default="")
 RABBITMQ_TLS_CERT_FILE = env.str("RABBITMQ_TLS_CERT_FILE", default="")
 RABBITMQ_TLS_CERT_KEY_FILE = env.str("RABBITMQ_TLS_CERT_KEY_FILE", default="")
 if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASSWORD]):
-    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+    _rabbitmq_password = quote(RABBITMQ_PASSWORD, safe="")
+    CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{_rabbitmq_password}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
     if RABBITMQ_TLS_ENABLED:
         CELERY_BROKER_URL = (
-            f"amqps://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
+            f"amqps://{RABBITMQ_USER}:{_rabbitmq_password}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_VHOST}"
         )
         CELERY_BROKER_USE_SSL = {
             "ca_certs": RABBITMQ_TLS_CERT_CA_FILE,
@@ -528,9 +529,10 @@ if not CELERY_BROKER_URL and all([RABBITMQ_VHOST, RABBITMQ_HOST, RABBITMQ_PORT, 
 # default celery broker
 if not CELERY_BROKER_URL:
     # use Redis as the default broker
-    CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    _redis_password = quote(REDIS_PASSWORD, safe="")
+    CELERY_BROKER_URL = f"redis://:{_redis_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     if REDIS_TLS_ENABLED:
-        CELERY_BROKER_URL = f"rediss://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        CELERY_BROKER_URL = f"rediss://:{_redis_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
         CELERY_BROKER_USE_SSL = {
             "ssl_cert_reqs": ssl.CERT_REQUIRED,
             "ssl_ca_certs": REDIS_TLS_CERT_CA_FILE,
@@ -544,7 +546,7 @@ if not CELERY_BROKER_URL:
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
         CELERY_BROKER_URL = ";".join(
-            [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
+            [f"sentinel://:{_redis_password}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
         )
         CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,

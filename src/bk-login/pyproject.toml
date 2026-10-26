@@ -34,7 +34,7 @@ dependencies = [
     "opentelemetry-instrumentation-logging==0.56b0",
     "bk-notice-sdk==1.4.2",
     "pyjwt[crypto]==2.15.1",
-    "apigw-manager[cryptography]==4.1.0",
+    "apigw-manager[cryptography]==5.0.3",
     "bk-kms-sdk[gm]==1.0.0",
     # Note: setuptools > 80.8.0 will issue pkg_resources warnings when executing Python-related commands.
     "setuptools==80.8.0",
