@@ -86,8 +86,20 @@ DEFAULT_IOS_CODE = "CN"
 # 是否模拟发送邮件（满足一部分系统静默需要）
 FAKE_SEND_EMAIL = env.bool("FAKE_SEND_EMAIL", default=False)
 
-# 最大分页数量
+# 普通分页允许的单页最大记录数，保留兼容性默认上限 10000，并非性能最优页大小。
+# 设置过大会增加单次 SQL、关系预取、序列化、内存和响应体压力；超过该值的 page_size 沿用旧行为自动收敛。
 MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=10000)
+
+# 是否允许两个 v2 用户列表接口在深分页时采用“先查 ID、再查完整用户”的两段查询。
+# 关闭时仍保留用户去重和 no_page 限额，只回退为普通 OFFSET 分页。
+ENABLE_DEFERRED_PAGINATION = env.bool("ENABLE_DEFERRED_PAGINATION", default=False)
+# 两段查询的最小实际 OFFSET：以常用每页 50、100、500 条的小分页为对象，默认以 20000 作为启用候选值。
+# 设置过低会让大 page_size 的浅分页额外增加一次 SQL；设置过高会让更多深分页继续直接读取完整用户字段。
+# 该值并非所有企业数据分布、筛选条件与 page_size 下的通用最优值，上线前应结合实际请求复测。
+DEFERRED_PAGINATION_MIN_OFFSET = env.int("DEFERRED_PAGINATION_MIN_OFFSET", default=20000)
+# no_page 一次允许返回的最大唯一用户数，保留默认安全上限 10000，并非已验证的性能最优值。
+# 该值独立于 MAX_PAGE_SIZE；设置过大会显著增加用户资料、部门、上级关系查询以及响应体内存压力。
+USER_LIST_NO_PAGE_LIMIT = env.int("USER_LIST_NO_PAGE_LIMIT", default=10000)
 
 # 登录次数统计时间周期, 默认为一个月
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)

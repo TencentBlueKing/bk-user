@@ -63,6 +63,38 @@ REDIS_SENTINEL_NODES = env.list("CACHE_REDIS_SENTINEL_NODES", default=[])
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
+CELERY_TASK_DEFAULT_QUEUE_TYPE = env("CELERY_TASK_DEFAULT_QUEUE_TYPE", default="classic").lower()
+CELERY_TASK_DEFAULT_EXCHANGE_TYPE = env(
+    "CELERY_TASK_DEFAULT_EXCHANGE_TYPE",
+    default="topic" if CELERY_TASK_DEFAULT_QUEUE_TYPE == "quorum" else "direct",
+).lower()
+CELERY_WORKER_DETECT_QUORUM_QUEUES = env.bool("CELERY_WORKER_DETECT_QUORUM_QUEUES", default=True)
+CELERY_BROKER_NATIVE_DELAYED_DELIVERY_QUEUE_TYPE = env(
+    "CELERY_BROKER_NATIVE_DELAYED_DELIVERY_QUEUE_TYPE", default="quorum"
+).lower()
+CELERY_BROKER_TRANSPORT_OPTIONS = {}
+
+if CELERY_TASK_DEFAULT_QUEUE_TYPE not in {"classic", "quorum"}:
+    raise ValueError("CELERY_TASK_DEFAULT_QUEUE_TYPE must be 'classic' or 'quorum'")
+
+if CELERY_TASK_DEFAULT_EXCHANGE_TYPE not in {"direct", "topic"}:
+    raise ValueError("CELERY_TASK_DEFAULT_EXCHANGE_TYPE must be 'direct' or 'topic'")
+
+if CELERY_BROKER_NATIVE_DELAYED_DELIVERY_QUEUE_TYPE not in {"classic", "quorum"}:
+    raise ValueError("CELERY_BROKER_NATIVE_DELAYED_DELIVERY_QUEUE_TYPE must be 'classic' or 'quorum'")
+
+_CELERY_BROKER_IS_RABBITMQ = CELERY_BROKER_URL.startswith(("amqp://", "amqps://", "pyamqp://"))
+if CELERY_TASK_DEFAULT_QUEUE_TYPE == "quorum":
+    if not _CELERY_BROKER_IS_RABBITMQ:
+        raise ValueError("Celery Quorum Queue requires an AMQP RabbitMQ broker")
+    if CELERY_TASK_DEFAULT_EXCHANGE_TYPE != "topic":
+        raise ValueError("CELERY_TASK_DEFAULT_EXCHANGE_TYPE must be 'topic' for Quorum Queue")
+    if not CELERY_WORKER_DETECT_QUORUM_QUEUES:
+        raise ValueError("CELERY_WORKER_DETECT_QUORUM_QUEUES must be enabled for Quorum Queue")
+    if not env.bool("CELERY_BROKER_CONFIRM_PUBLISH", default=True):
+        raise ValueError("CELERY_BROKER_CONFIRM_PUBLISH must be enabled for Quorum Queue")
+
+    CELERY_BROKER_TRANSPORT_OPTIONS["confirm_publish"] = True
 
 # 如果启用了 Celery Broker TLS 且 URL 是 Redis，自动转换为 rediss:// 协议
 if REDIS_TLS_ENABLED and CELERY_BROKER_URL.startswith("redis://"):
@@ -83,10 +115,10 @@ if REDIS_SENTINEL and REDIS_SENTINEL_NODES:
     )
 
     # 添加 Sentinel 配置
-    CELERY_BROKER_TRANSPORT_OPTIONS = {
+    CELERY_BROKER_TRANSPORT_OPTIONS.update({
         "master_name": REDIS_SENTINEL_MASTER_NAME,
         "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
-    }
+    })
 
     # 如果启用 TLS
     if REDIS_TLS_ENABLED:

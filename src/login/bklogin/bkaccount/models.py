@@ -47,6 +47,9 @@ class BkToken(models.Model):
     is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
     # 无操作过期时间戳
     inactive_expire_time = models.IntegerField("无操作失效时间戳", default=0)
+    # 增加时间字段
+    create_time = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, blank=True, null=True, verbose_name="更新时间")
 
     def __str__(self):
         return self.token
