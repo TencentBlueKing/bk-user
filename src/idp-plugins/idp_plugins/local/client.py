@@ -17,9 +17,9 @@
 import logging
 from typing import Any, Dict, List
 
+from django.conf import settings
 from requests.auth import HTTPBasicAuth
 
-from .settings import BK_USER_API_URL, BK_USER_APP_CODE, BK_USER_APP_SECRET
 from ..exceptions import RequestAPIError, ValidationError
 from ..http import http_post
 from ..utils import urljoin
@@ -31,13 +31,16 @@ class BkUserAPIClient:
     """请求蓝鲸用户管理接口的Client"""
 
     def __init__(self):
+        # Q: 为什么从 Django settings 读取，而不是直接读取环境变量？
+        # A: 开启 KMS 时，解密后的凭据只会覆盖 Django settings，不会写回 os.environ
+        self.api_url = settings.BK_USER_API_URL
         # 接口调用认证
-        self.auth = HTTPBasicAuth(BK_USER_APP_CODE, BK_USER_APP_SECRET)
+        self.auth = HTTPBasicAuth(settings.BK_USER_APP_CODE, settings.BK_USER_APP_SECRET)
 
     def _call(self, http_func, url_path: str, **kwargs) -> Dict[str, Any]:
         """调用用户管理接口"""
         # FIXME (nan): 对于密码，是敏感信息，不应该出现在日志里
-        url = urljoin(BK_USER_API_URL, url_path)
+        url = urljoin(self.api_url, url_path)
         # API认证
         kwargs.setdefault("auth", self.auth)
         status, resp_data = http_func(url, **kwargs)
@@ -56,7 +59,7 @@ class BkUserAPIClient:
         error = resp_data.get("error")
         logger.error("bk_user api error,  %s %s, data: %s, error: %s", http_func.__name__, url, kwargs, error)
         raise RequestAPIError(
-            f"request bk_user api error! " f"Request=[{http_func.__name__} {url} Response[error={error}]"
+            f"request bk_user api error! Request=[{http_func.__name__} {url} Response[error={error}]"
         )
 
     def auth_credentials_of_local_user(

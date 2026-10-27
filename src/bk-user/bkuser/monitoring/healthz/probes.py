@@ -15,11 +15,14 @@
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
 from typing import Type
+from urllib.parse import quote
 
 from blue_krill.monitoring.probe.mysql import MySQLProbe, transfer_django_db_settings
 from blue_krill.monitoring.probe.redis import RedisProbe, RedisSentinelProbe
 from django.conf import settings
 from django.utils.module_loading import import_string
+
+_redis_password = quote(settings.REDIS_PASSWORD, safe="")
 
 
 def get_default_probes():
@@ -33,13 +36,13 @@ class MysqlProbe(MySQLProbe):
 
 class _RedisProbe(RedisProbe):
     name = "bkuser-redis"
-    redis_url = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+    redis_url = f"redis://:{_redis_password}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
 
 
 class _RedisSentinelProbe(RedisSentinelProbe):
     name = "bkuser-redis"
     redis_url = ";".join(
-        [f"sentinel://:{settings.REDIS_PASSWORD}@{addr}/{settings.REDIS_DB}" for addr in settings.REDIS_SENTINEL_ADDR]
+        [f"sentinel://:{_redis_password}@{addr}/{settings.REDIS_DB}" for addr in settings.REDIS_SENTINEL_ADDR]
     )
     master_name = settings.REDIS_SENTINEL_MASTER_NAME
     sentinel_kwargs = {"password": settings.REDIS_SENTINEL_PASSWORD}
