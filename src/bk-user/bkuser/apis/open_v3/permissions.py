@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from django.conf import settings
 from rest_framework import permissions
 
 
@@ -22,3 +23,17 @@ class ApiGatewayAppVerifiedPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return hasattr(request, "app") and request.app.verified
+
+
+class GlobalTenantAppPermission(ApiGatewayAppVerifiedPermission):
+    """校验来源应用是否为全租户应用"""
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
+        # 非多租户模式下只有默认租户，不需要区分
+        if not settings.ENABLE_MULTI_TENANT_MODE:
+            return True
+
+        return request.app.tenant_mode == "global"
