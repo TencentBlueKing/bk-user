@@ -26,7 +26,7 @@ class ApiGatewayAppVerifiedPermission(permissions.BasePermission):
 
 
 class GlobalTenantAppPermission(ApiGatewayAppVerifiedPermission):
-    """校验来源应用是否为全租户应用"""
+    """校验来源应用是否已认证，并且是全租户应用"""
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
