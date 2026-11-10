@@ -17,7 +17,7 @@
 from django.conf import settings
 from rest_framework import permissions
 
-from bkuser.common.constants import BkAppTenantModeEnum
+from bkuser.common.constants import BkTenantModeEnum
 
 
 class ApiGatewayAppVerifiedPermission(permissions.BasePermission):
@@ -38,4 +38,4 @@ class GlobalTenantAppPermission(ApiGatewayAppVerifiedPermission):
         if not settings.ENABLE_MULTI_TENANT_MODE:
             return True
 
-        return request.app.tenant_mode == BkAppTenantModeEnum.GLOBAL
+        return request.app.tenant_mode == BkTenantModeEnum.GLOBAL

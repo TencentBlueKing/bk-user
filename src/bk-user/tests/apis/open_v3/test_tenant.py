@@ -20,7 +20,7 @@ import pytest
 from apigw_manager.drf.authentication import App
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.common.constants import BkAppTenantModeEnum
+from bkuser.common.constants import BkTenantModeEnum
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestTenantListApi:
-    @pytest.mark.parametrize("request_app", [App("test_app", True, BkAppTenantModeEnum.GLOBAL, "")])
+    @pytest.mark.parametrize("request_app", [App("test_app", True, BkTenantModeEnum.GLOBAL, "")])
     def test_global_tenant_app(self, api_client, default_tenant, random_tenant):
         resp = api_client.get(reverse("open_v3.tenant.list"))
 
@@ -42,11 +42,11 @@ class TestTenantListApi:
         "request_app",
         [
             # 单租户应用
-            App("test_app", True, BkAppTenantModeEnum.SINGLE, "default"),
+            App("test_app", True, BkTenantModeEnum.SINGLE, "default"),
             # JWT 中未携带租户模式
             App("test_app", True, "", ""),
             # 未认证的全租户应用
-            App("test_app", False, BkAppTenantModeEnum.GLOBAL, ""),
+            App("test_app", False, BkTenantModeEnum.GLOBAL, ""),
         ],
     )
     def test_forbidden_app(self, api_client):
@@ -61,7 +61,7 @@ class TestTenantListApi:
 
     @pytest.mark.parametrize(
         "request_app",
-        [App("test_app", True, BkAppTenantModeEnum.SINGLE, "default"), App("test_app", True, "", "")],
+        [App("test_app", True, BkTenantModeEnum.SINGLE, "default"), App("test_app", True, "", "")],
     )
     def test_single_tenant_deploy_with_any_app(self, api_client, default_tenant):
         with override_settings(ENABLE_MULTI_TENANT_MODE=False):

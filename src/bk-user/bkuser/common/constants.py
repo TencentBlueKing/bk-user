@@ -27,8 +27,8 @@ class BkLanguageEnum(StrStructuredEnum):
     EN = EnumField("en", label="英文")
 
 
-class BkAppTenantModeEnum(StrStructuredEnum):
-    """蓝鲸应用租户模式，由 APIGateway 通过 JWT 传递"""
+class BkTenantModeEnum(StrStructuredEnum):
+    """蓝鲸租户模式"""
 
     GLOBAL = EnumField("global", label=_("全租户"))
     SINGLE = EnumField("single", label=_("单租户"))

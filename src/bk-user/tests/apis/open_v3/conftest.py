@@ -21,7 +21,7 @@ import pytest
 from apigw_manager.drf.authentication import App
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apps.tenant.models import TenantCommonVariable
-from bkuser.common.constants import BkAppTenantModeEnum
+from bkuser.common.constants import BkTenantModeEnum
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import caches
 from django.test.utils import override_settings
@@ -47,7 +47,7 @@ def request_app(random_tenant) -> App:
     return App(
         bk_app_code="test_app",
         verified=True,
-        tenant_mode=BkAppTenantModeEnum.SINGLE,
+        tenant_mode=BkTenantModeEnum.SINGLE,
         tenant_id=random_tenant.id,
     )
 
