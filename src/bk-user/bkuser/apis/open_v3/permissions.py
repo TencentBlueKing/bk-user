@@ -17,6 +17,8 @@
 from django.conf import settings
 from rest_framework import permissions
 
+from bkuser.common.constants import BkAppTenantModeEnum
+
 
 class ApiGatewayAppVerifiedPermission(permissions.BasePermission):
     """校验来源 APIGateway JWT 的应用是否认证"""
@@ -36,4 +38,4 @@ class GlobalTenantAppPermission(ApiGatewayAppVerifiedPermission):
         if not settings.ENABLE_MULTI_TENANT_MODE:
             return True
 
-        return request.app.tenant_mode == "global"
+        return request.app.tenant_mode == BkAppTenantModeEnum.GLOBAL
