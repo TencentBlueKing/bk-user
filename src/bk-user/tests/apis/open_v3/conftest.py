@@ -18,10 +18,14 @@ from typing import List
 from unittest import mock
 
 import pytest
+from apigw_manager.drf.authentication import App
 from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apps.tenant.models import TenantCommonVariable
+from bkuser.common.constants import BkTenantModeEnum
+from django.contrib.auth.models import AnonymousUser
 from django.core.cache import caches
 from django.test.utils import override_settings
+from rest_framework.authentication import BaseAuthentication
 from rest_framework.test import APIClient
 
 from tests.test_utils.tenant import sync_users_depts_to_tenant
@@ -38,14 +42,28 @@ def _clear_cache():
 
 
 @pytest.fixture
-def api_client(random_tenant):
+def request_app(random_tenant) -> App:
+    """调用方应用信息，用例可通过 parametrize 覆盖"""
+    return App(
+        bk_app_code="test_app",
+        verified=True,
+        tenant_mode=BkTenantModeEnum.SINGLE,
+        tenant_id=random_tenant.id,
+    )
+
+
+@pytest.fixture
+def api_client(random_tenant, request_app):
+    class FakeAppAuthentication(BaseAuthentication):
+        def authenticate(self, request):
+            request.app = request_app
+            # 与 ApiGatewayJWTAuthentication 一致，始终视为认证成功，由权限类决定是否放行
+            return AnonymousUser(), None
+
     with override_settings(ENABLE_MULTI_TENANT_MODE=True):
         client = APIClient()
         client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
-        with (
-            mock.patch.object(OpenApiCommonMixin, "authentication_classes", []),
-            mock.patch.object(OpenApiCommonMixin, "permission_classes", []),
-        ):
+        with mock.patch.object(OpenApiCommonMixin, "authentication_classes", [FakeAppAuthentication]):
             yield client
 
 

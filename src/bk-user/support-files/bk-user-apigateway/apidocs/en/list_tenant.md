@@ -1,6 +1,6 @@
 ### Description
 
-Query the tenant list
+Query the tenant list. In multi-tenant mode, only global tenant apps are allowed to call this API; single tenant apps will receive 403.
 
 ### Response Example
 

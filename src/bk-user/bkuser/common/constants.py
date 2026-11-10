@@ -27,6 +27,13 @@ class BkLanguageEnum(StrStructuredEnum):
     EN = EnumField("en", label="英文")
 
 
+class BkTenantModeEnum(StrStructuredEnum):
+    """蓝鲸租户模式"""
+
+    GLOBAL = EnumField("global", label=_("全租户"))
+    SINGLE = EnumField("single", label=_("单租户"))
+
+
 class BKNonEntityUser(StrStructuredEnum):
     """蓝鲸非实体用户，主要用于 API 调用时的审计，区别于正常的实体用户"""
 

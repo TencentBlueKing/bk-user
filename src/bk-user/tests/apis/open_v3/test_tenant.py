@@ -14,8 +14,14 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+from unittest import mock
+
 import pytest
+from apigw_manager.drf.authentication import App
+from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
 from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.common.constants import BkTenantModeEnum
+from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -23,12 +29,53 @@ pytestmark = pytest.mark.django_db
 
 
 class TestTenantListApi:
-    def test_standard(self, api_client, default_tenant, random_tenant):
+    @pytest.mark.parametrize("request_app", [App("test_app", True, BkTenantModeEnum.GLOBAL, "")])
+    def test_global_tenant_app(self, api_client, default_tenant, random_tenant):
         resp = api_client.get(reverse("open_v3.tenant.list"))
+
         assert resp.status_code == status.HTTP_200_OK
         assert len(resp.data) == 2
         assert {t["id"] for t in resp.data} == {default_tenant.id, random_tenant.id}
         assert set(resp.data[0].keys()) == {"id", "name", "status"}
+
+    @pytest.mark.parametrize(
+        "request_app",
+        [
+            # 单租户应用
+            App("test_app", True, BkTenantModeEnum.SINGLE, "default"),
+            # JWT 中未携带租户模式
+            App("test_app", True, "", ""),
+            # 未认证的全租户应用
+            App("test_app", False, BkTenantModeEnum.GLOBAL, ""),
+        ],
+    )
+    def test_forbidden_app(self, api_client):
+        resp = api_client.get(reverse("open_v3.tenant.list"))
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_without_app(self, api_client):
+        with mock.patch.object(OpenApiCommonMixin, "authentication_classes", []):
+            resp = api_client.get(reverse("open_v3.tenant.list"))
+
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.parametrize(
+        "request_app",
+        [App("test_app", True, BkTenantModeEnum.SINGLE, "default"), App("test_app", True, "", "")],
+    )
+    def test_single_tenant_deploy_with_any_app(self, api_client, default_tenant):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False):
+            resp = api_client.get(reverse("open_v3.tenant.list"))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert default_tenant.id in {t["id"] for t in resp.data}
+
+    @pytest.mark.parametrize("request_app", [App("test_app", False, "", "")])
+    def test_single_tenant_deploy_with_unverified_app(self, api_client):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False):
+            resp = api_client.get(reverse("open_v3.tenant.list"))
+
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
 class TestTenantCommonVariableListApi:

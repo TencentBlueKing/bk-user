@@ -20,7 +20,7 @@ from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
-from bkuser.apis.open_v3.mixins import OpenApiCommonMixin
+from bkuser.apis.open_v3.mixins import GlobalTenantOpenApiMixin, OpenApiCommonMixin
 from bkuser.apis.open_v3.serializers.tenant import (
     TenantCommonVariableListOutputSLZ,
     TenantListOutputSLZ,
@@ -32,7 +32,7 @@ from bkuser.apps.tenant.models import Tenant, TenantCommonVariable, TenantUserCu
 logger = logging.getLogger(__name__)
 
 
-class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
+class TenantListApi(GlobalTenantOpenApiMixin, generics.ListAPIView):
     pagination_class = None
     serializer_class = TenantListOutputSLZ
     queryset = Tenant.objects.all()

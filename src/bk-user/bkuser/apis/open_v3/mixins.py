@@ -25,7 +25,7 @@ from rest_framework.request import Request
 
 from bkuser.apps.data_source.cache import DataSourceCache
 
-from .permissions import ApiGatewayAppVerifiedPermission
+from .permissions import ApiGatewayAppVerifiedPermission, GlobalTenantAppPermission
 
 
 class OpenApiCommonMixin:
@@ -59,3 +59,7 @@ class OpenApiCommonMixin:
     @method_decorator(override("en-us"))
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+
+class GlobalTenantOpenApiMixin(OpenApiCommonMixin):
+    permission_classes = [GlobalTenantAppPermission]
