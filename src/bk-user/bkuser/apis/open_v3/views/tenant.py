@@ -33,8 +33,7 @@ from bkuser.apps.tenant.models import Tenant, TenantCommonVariable, TenantUserCu
 logger = logging.getLogger(__name__)
 
 
-class TenantListApi(OpenApiCommonMixin, generics.ListAPIView):
-    permission_classes = [GlobalTenantAppPermission]
+class TenantListApi(GlobalTenantAppPermission, generics.ListAPIView):
     pagination_class = None
     serializer_class = TenantListOutputSLZ
     queryset = Tenant.objects.all()
