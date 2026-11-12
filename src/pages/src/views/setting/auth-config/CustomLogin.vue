@@ -37,58 +37,26 @@
       <EffectiveScopeEditor
         v-model="scopeValue"
         @change="handleScopeChange"
-      />
-      <Row :title="$t('登录认证匹配')" class="!pb-[32px]">
-        <div class="item-flex-header">
-          <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
-          <bk-form-item class="w-[236px] auth-source-fields" :label="$t('认证源字段')" required />
-        </div>
-        <div v-for="(item, index) in formData.data_source_match_rules" :key="index">
-          <div class="item-flex" v-for="(field, i) in item.field_compare_rules" :key="i">
-            <bk-form-item
-              class="w-[236px]"
-              error-display-type="tooltips"
-              :property="`data_source_match_rules.${index}.field_compare_rules.${i}.target_field`"
-              :rules="rulesData.target_field">
-              <bk-select
-                v-model="field.target_field"
-                @change="changeSourceField"
-                @toggle="handleToggle(index)"
-              >
-                <bk-option
-                  class="option-select"
-                  v-for="option in fieldOptions"
-                  :key="option.name"
-                  :id="option.name"
-                  :name="option.name"
-                  :disabled="item.field_compare_rules.some(c => c.target_field === option.name)">
-                  <span>{{option.name}}</span>
-                  <span>{{option.type}}</span>
-                </bk-option>
-              </bk-select>
-            </bk-form-item>
-            <bk-form-item
-              class="w-[236px] auth-source-fields"
-              error-display-type="tooltips"
-              :property="`data_source_match_rules.${index}.field_compare_rules.${i}.source_field`"
-              :rules="rulesData.source_field">
-              <bk-input v-model="field.source_field" @focus="handleChange" />
-            </bk-form-item>
-            <bk-button
-              text
-              @click="handleAddItem(item.field_compare_rules, i)"
-            >
-              <i class="user-icon icon-plus-fill" />
-            </bk-button>
-            <bk-button
-              text
-              :disabled="item.field_compare_rules.length === 1"
-              @click="handleDeleteItem(index, item.field_compare_rules, i)">
-              <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
-            </bk-button>
-          </div>
-        </div>
-      </Row>
+      >
+        <!-- 卡片随生效范围增删，全部删掉时不展示登录认证匹配区块 -->
+        <template v-if="formData.data_source_match_rules.length" #default>
+          <bk-form-item class="!mt-[16px] !mb-[12px]" :label="$t('登录认证匹配')" required />
+          <DataSourceMatchCard
+            v-for="(rule, index) in formData.data_source_match_rules"
+            :key="rule.data_source_id"
+            :data-source-id="rule.data_source_id"
+            :data-source-name="getDataSourceName(rule.data_source_id)"
+            :rule-index="index"
+            :field-compare-rules="rule.field_compare_rules"
+            :field-options="fieldOptions"
+            show-header
+            @remove="handleRemoveCard"
+            @add="(i) => handleAddItem(rule.field_compare_rules, i)"
+            @delete="(i) => handleDeleteItem(index, rule.field_compare_rules, i)"
+            @change="handleChange"
+          />
+        </template>
+      </EffectiveScopeEditor>
     </bk-form>
     <div class="footer">
       <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit" :disabled="isDisabled">
@@ -103,14 +71,14 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
+import DataSourceMatchCard from './DataSourceMatchCard.vue';
 import EffectiveScopeEditor from './EffectiveScopeEditor.vue';
-import { buildDataSourceMatchRules } from './utils';
 
 import Row from '@/components/layouts/ItemRow.vue';
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
-import { useCustomPlugin, useValidate } from '@/hooks';
+import { useCustomPlugin, useDataSourceMatch, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsPluginsConfig, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
 
@@ -152,31 +120,22 @@ const formData = ref({
   ],
 });
 
-let originalData = {};
-let originalScope: number[] = [];
-const isDisabled = ref(true);
+const {
+  dataSourceList,
+  builtinFields,
+  customFields,
+  fieldOptions,
+  isDisabled,
+  markOriginalSnapshot,
+  handleRemoveCard,
+  getDataSourceName,
+} = useDataSourceMatch(formData, scopeValue, computed(() => !!props.data?.id));
 
 const LoginMethod = ref('a');
 
 const rules = {
   name: [validate.required, validate.loginName],
 };
-
-const rulesData = {
-  data_source_id: [validate.required],
-  target_field: [validate.required],
-  source_field: [validate.required, validate.sourceField],
-};
-
-const dataSourceList = ref([]);
-const builtinFields = ref([]);
-const customFields = ref([]);
-
-// 目标字段下拉选项（全局一份，disabled 由各规则的 field_compare_rules 实时计算）
-const fieldOptions = computed(() => [
-  ...(builtinFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('内置') })),
-  ...(customFields.value as Array<{ id: number; name: string }>).map(item => ({ key: item.id, name: item.name, type: t('自定义') })),
-]);
 
 onMounted(async () => {
   try {
@@ -208,8 +167,7 @@ onMounted(async () => {
     builtinFields.value = fieldRes.data?.builtin_fields || [];
     customFields.value = fieldRes.data?.custom_fields || [];
 
-    originalData = JSON.parse(JSON.stringify(toRaw(formData.value)));
-    originalScope = [...scopeValue.value];
+    markOriginalSnapshot();
     // watch(scopeValue) 回调异步执行会把 isDisabled 覆盖为 false，需等其执行完再重置
     nextTick(() => {
       isDisabled.value = !!props.data?.id;
@@ -227,15 +185,6 @@ const getJsonSchema = () => {
     jsonSchema.value = res.data?.json_schema;
   });
 };
-watch(formData, () => {
-  isDisabled.value = props.data?.id
-    ? JSON.stringify(originalData) === JSON.stringify(toRaw(formData.value))
-      && JSON.stringify(scopeValue.value) === JSON.stringify(originalScope)
-    : false;
-}, { deep: true });
-watch(scopeValue, () => {
-  isDisabled.value = false;
-}, { deep: true });
 // 切换启用状态
 const changeStatus = (value: boolean) => {
   if (!value) {
@@ -266,10 +215,6 @@ const handleSubmit = async () => {
     if (!valid) return;
     btnLoading.value = true;
     const data = formData.value;
-    data.data_source_match_rules = buildDataSourceMatchRules(
-      data.data_source_match_rules[0]?.field_compare_rules || [],
-      scopeValue.value,
-    );
     if (!formData.value.id) {
       const res = await postIdps(data);
       emit('success', res.data?.callback_uri);
@@ -285,16 +230,7 @@ const handleSubmit = async () => {
   }
 };
 
-const {
-  changeSourceField,
-  handleToggle,
-  handleAddItem,
-  handleDeleteItem,
-  handleChange,
-} = useCustomPlugin(
-  formData,
-  dataSourceList,
-);
+const { handleChange, handleAddItem, handleDeleteItem } = useCustomPlugin(formData, dataSourceList);
 
 const changePluginConfig = (value: any) => {
   formData.value.plugin_config = value;

@@ -33,31 +33,14 @@
             scene="part"
             :description="$t('暂无数据源匹配')"
           />
-          <div v-else v-for="(item, index) in onDataSources" :key="index">
-            <div class="field-rules">
-              <dl>
-                <dt>{{ $t('数据源字段') }}：</dt>
-                <bk-overflow-title
-                  type="tips"
-                  class="source-field"
-                  v-for="(val, i) in item.field_compare_rules"
-                  :key="i">
-                  {{ val.target_field }}
-                </bk-overflow-title>
-              </dl>
-              <dl>
-                <dt>{{ $t('认证源字段') }}：</dt>
-                <bk-overflow-title
-                  type="tips"
-                  class="source-field"
-                  v-for="(val, i) in item.field_compare_rules"
-                  :key="i">
-                  {{ val.source_field }}
-                </bk-overflow-title>
-              </dl>
-            </div>
-            <span class="or" v-if="index !== 0">or</span>
-          </div>
+          <template v-else>
+            <DataSourceMatchViewCard
+              v-for="item in onDataSources"
+              :key="item.data_source_id"
+              :data-source-name="item.data_source_name"
+              :field-compare-rules="item.field_compare_rules"
+            />
+          </template>
         </div>
       </LabelContent>
     </ViewRow>
@@ -67,6 +50,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import DataSourceMatchViewCard from './DataSourceMatchViewCard.vue';
 import EffectiveScopeView from './EffectiveScopeView.vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
@@ -127,6 +111,17 @@ onMounted(async () => {
 <style lang="less" scoped>
 .details-wrapper {
   padding: 28px 40px;
+
+  /* 本页认证源信息各 LabelContent 的 label 统一 12px（LabelContent 为共用组件，仅在页面级覆写） */
+  :deep(.label-key) {
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* 登录认证匹配的表格内容较宽，须允许 value 收缩，否则会把 label 挤窄且自身撑出容器 */
+  :deep(.label-value) {
+    min-width: 0;
+  }
 
   .details-type {
     display: flex;
@@ -189,7 +184,6 @@ onMounted(async () => {
 
   .content-matching {
     width: 100%;
-    background: #F5F7FA;
 
     ::v-deep .exception-part {
       position: relative;
@@ -203,29 +197,6 @@ onMounted(async () => {
         position: absolute;
         bottom: 0;
         font-size: 14px;
-      }
-    }
-
-    .field-rules {
-      display: flex;
-      padding: 12px 24px;
-      border-radius: 2px;
-
-      dl {
-        width: 50%;
-
-        dt {
-          font-size: 14px;
-          line-height: 22px;
-          color: #979BA5;
-        }
-
-        .source-field {
-          width: 120px;
-          font-size: 14px;
-          line-height: 22px;
-          color: #313238;
-        }
       }
     }
   }

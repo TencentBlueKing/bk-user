@@ -146,7 +146,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   cancel: [];
-  updateSuccess: [payload: { text: string; dataSourceId: number; name: string }];
+  updateSuccess: [payload: { text: string; isCreate: boolean; dataSourceId: number; name: string }];
 }>();
 
 /** 编辑模式（三页签）与创建模式（三步向导）共用容器 */
@@ -390,6 +390,7 @@ const handleFinishCreate = async () => {
     if (backToLoginIfNeeded()) return;
     emit('updateSuccess', {
       text: t('新建成功'),
+      isCreate: true,
       dataSourceId: createdDataSourceId.value,
       name: formModel.value.name,
     });

@@ -81,6 +81,16 @@
           class="data-source-instance"
           @click="handleClickDataSource(source)"
         >
+          <template #name-suffix>
+            <bk-tag
+              v-for="tag in dataSourceLoginTags[source.id]"
+              :key="tag.text"
+              class="ml-[8px] login-tag"
+              :theme="tag.theme"
+            >
+              {{ tag.text }}
+            </bk-tag>
+          </template>
           <template #right>
             <div class="flex items-center" @click.stop>
               <div
@@ -167,6 +177,14 @@
       :data-source-id="currentImportSourceId"
       @success="handleImportSuccess"
     />
+    <!-- 登录配置：把当前数据源加入对应认证源的生效范围 -->
+    <LoginConfigDialog
+      v-model:is-show="isShowLoginConfig"
+      :data-source-id="loginConfigSource?.id"
+      :data-source-name="loginConfigSource?.name"
+      :is-local="loginConfigSource?.plugin_id === 'local'"
+      @success="loadDataSourceLoginTags"
+    />
     <!-- 数据更新记录 -->
     <bk-sideslider
       v-model:is-show="updateConfig.isShow"
@@ -189,6 +207,7 @@ import { Upload } from 'bkui-vue/lib/icon';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import LoginConfigDialog from './components/LoginConfigDialog.vue';
 import HttpDetails from './HttpDetails.vue';
 import LocalDetails from './LocalDetails.vue';
 
@@ -199,7 +218,7 @@ import PopMenu from '@/components/PopMenu.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
 import { useInfoBoxContent } from '@/hooks';
 import useDataSourceSetting from '@/hooks/useDataSourceSetting';
-import { deleteDataSource, getRelatedResource, postOperationsSync } from '@/http';
+import { deleteDataSource, getIdps, getIdpsDetails, getRelatedResource, postOperationsSync } from '@/http';
 import type { DataSourceItemData } from '@/http/types/dataSourceFiles';
 import { t } from '@/language/index';
 import router from '@/router';
@@ -216,6 +235,8 @@ const { startDataSourceSync: localDataSourceSync } = useDataSourceSetting();
 
 const isShowImportDialog = ref(false);
 const currentImportSourceId = ref<number>();
+const isShowLoginConfig = ref(false);
+const loginConfigSource = ref<DataSourceItemData | null>(null);
 const isLoading = ref(false);
 const removeLoading = reactive<{
   instances: Record<number, boolean>;
@@ -262,12 +283,22 @@ const getDataSourceSyncStatus = (dataSourceId: number) => (
   dataSourceStore.dataSourceSyncStatusMap.get(dataSourceId)
 );
 
-const getMoreMenuList = (source: DataSourceItemData) => [{
-  value: 'remove',
-  label: t('移除'),
-  disabled: isDataSourceRunning(source.id) || removeLoading.instances[source.id],
-  onClick: () => handleRemoveSingle(source),
-}];
+const getMoreMenuList = (source: DataSourceItemData) => [
+  {
+    value: 'loginConfig',
+    label: t('登录配置'),
+    onClick: () => {
+      loginConfigSource.value = source;
+      isShowLoginConfig.value = true;
+    },
+  },
+  {
+    value: 'remove',
+    label: t('移除'),
+    disabled: isDataSourceRunning(source.id) || removeLoading.instances[source.id],
+    onClick: () => handleRemoveSingle(source),
+  },
+];
 
 const handlePluginLogoError = (pluginId: string) => {
   addMenuLogoErrors.value[pluginId] = true;
@@ -352,12 +383,40 @@ const changeLog = () => {
   updateConfig.isShow = true;
 };
 
+/** 登录方式标签配置：目前仅支持账密/企微两种，theme 对应 bk-tag */
+const LOGIN_TAG_CONFIG: Record<string, { text: string; theme: 'success' | 'info' }> = {
+  local: { text: t('账密登录'), theme: 'success' },
+  wecom: { text: t('企微登录'), theme: 'info' },
+};
+
+/** 各数据源被哪些登录方式的认证源覆盖（key 为数据源 id） */
+const dataSourceLoginTags = ref<Record<number, { text: string; theme: 'success' | 'info' }[]>>({});
+
+// 认证源列表接口不返回生效范围，需逐个取详情后反查数据源 id（认证源数量少，可接受）
+const loadDataSourceLoginTags = async () => {
+  const idpsRes = await getIdps('');
+  const targets = (idpsRes.data || []).filter(item => LOGIN_TAG_CONFIG[item.plugin.id] && item.status === 'enabled');
+  const details = await Promise.all(targets.map(item => getIdpsDetails(item.id)));
+  const tagMap: Record<number, { text: string; theme: 'success' | 'info' }[]> = {};
+  details.forEach((detail) => {
+    const config = LOGIN_TAG_CONFIG[detail.data.plugin.id];
+    detail.data.data_source_match_rules.forEach((rule) => {
+      (tagMap[rule.data_source_id] ||= []).push({ text: config.text, theme: config.theme });
+    });
+  });
+  dataSourceLoginTags.value = tagMap;
+};
+
 const handleInit = async () => {
   try {
     isLoading.value = true;
     await Promise.all([
       dataSourceStore.handleFetchAllDataSourcePlugins(),
       dataSourceStore.handleFetchCurrentDataSource(),
+      // 标签属于附加信息，加载失败不影响列表主体
+      loadDataSourceLoginTags().catch((error) => {
+        console.error(error);
+      }),
     ]);
     await dataSourceStore.handleInitSyncStatus();
 
@@ -419,6 +478,11 @@ onMounted(async () => {
 
 .data-source-instance {
   margin-bottom: 12px;
+
+  .login-tag {
+    font-size: 12px;
+    line-height: 20px;
+  }
 }
 
 /* 空态在剩余高度内水平垂直居中（减去添加按钮行及其下间距） */

@@ -51,6 +51,8 @@
         </bk-alert>
       </div>
     </bk-form-item>
+    <!-- 数据源选完后渲染的登录认证匹配卡片等后续内容，由父级控制是否渲染 -->
+    <slot />
   </Row>
 </template>
 

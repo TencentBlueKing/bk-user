@@ -690,6 +690,7 @@ const handleSubmit = async () => {
       await putDataSourceDetails(props.dataSourceId, commonParams);
       emit('updateSuccess', {
         text: t('更新'),
+        isCreate: false,
         dataSourceId: props.dataSourceId,
         name: serverConfigData.value.name,
       });
@@ -701,6 +702,7 @@ const handleSubmit = async () => {
       });
       emit('updateSuccess', {
         text: t('新建成功'),
+        isCreate: true,
         dataSourceId: res.data?.id,
         name: serverConfigData.value.name,
       });
