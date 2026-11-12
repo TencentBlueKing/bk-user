@@ -51,6 +51,11 @@ onMounted(async () => {
 .details-info-wrapper {
   padding: 28px 40px;
 
+  /* 本页认证源信息各 LabelContent 的 label 统一 12px（LabelContent 为共用组件，仅在页面级覆写） */
+  :deep(.label-key) {
+    font-size: 12px;
+  }
+
   .row-wrapper {
     padding-bottom: 24px;
     border-bottom: 1px solid #EAEBF0;

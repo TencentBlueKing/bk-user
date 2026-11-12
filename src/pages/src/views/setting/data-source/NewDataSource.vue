@@ -46,6 +46,7 @@
         :title="successText"
         :data-source-id="dataSourceId"
         :is-local="isLocal"
+        :is-create="isCreate"
       />
     </div>
   </div>
@@ -82,6 +83,8 @@ const currentType = ref('');
 const dataSourceId = ref<number | null>(null);
 /** 当前数据源是否为本地数据源，成功页据此隐藏「立即同步」 */
 const isLocal = ref(false);
+/** 是否为新建成功（更新成功不展示认证源快捷配置） */
+const isCreate = ref(false);
 
 const currentPlugins = ref({} as DataSourcePluginsItemData);
 const isLoading = ref(false);
@@ -96,14 +99,16 @@ const handleCollapse = () => {
   showContent.value = !showContent.value;
 };
 
-const updateSuccess = ({ text, name, dataSourceId: newDataSourceId }: {
+const updateSuccess = ({ text, name, dataSourceId: newDataSourceId, isCreate: created }: {
   text: string;
+  isCreate: boolean;
   name: string;
   dataSourceId: number;
 }) => {
   successText.value = `${text}${name}${t('成功 ')}`;
   dataSourceId.value = newDataSourceId;
   isLocal.value = currentType.value === 'local';
+  isCreate.value = created;
   isSuccess.value = true;
 };
 

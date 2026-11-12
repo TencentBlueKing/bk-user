@@ -9,3 +9,4 @@ export * from './useAdminPassword';
 export * from './useInfoBoxContent';
 export * from './useCountDown';
 export * from './useConflictRules';
+export * from './useDataSourceMatch';

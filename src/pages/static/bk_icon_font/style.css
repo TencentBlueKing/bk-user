@@ -290,3 +290,6 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-logout:before {
 	content: "\e162";
 }
+.icon-del:before {
+	content: "\e163";
+}
