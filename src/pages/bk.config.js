@@ -42,4 +42,16 @@ module.exports = {
       },
     };
   },
+
+  // 降级到 es2015 时 esbuild 会在 chunk 顶层生成对象展开等 helper，异步 chunk 无函数包裹会被泄漏成 window 全局变量，
+  // 各 chunk 独立分配的压缩短名互相覆盖会导致运行时报错（如 fg 同时是 Object.defineProperties 和 __spreadProps，
+  // 使 @blueking/table 的列配置 slots 丢失、渲染报 reading 'header'），因此用 IIFE 包裹限制作用域。
+  chainWebpack(config) {
+    if (!config.optimization.minimizers.has('js')) {
+      // 脚手架未按预期注册 minimizer 时直接失败，避免修复静默失效
+      throw new Error('未找到 js minimizer，format: iife 未生效，请检查 @blueking/cli-service-webpack 版本');
+    }
+    config.optimization.minimizer('js').tap(([options]) => [{ ...options, format: 'iife' }]);
+    return config;
+  },
 };
