@@ -47,6 +47,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             key_property.value = value
             key_property.save()
 
+    @property
+    def tenant_id(self) -> str | None:
+        return self.get_property("tenant_id")
+
 
 class UserProperty(models.Model):
     """

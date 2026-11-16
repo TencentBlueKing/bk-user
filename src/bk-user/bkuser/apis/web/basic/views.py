@@ -33,7 +33,7 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         # FIXME: 待新版登录后重构，return更多信息
         current_user = request.user
-        current_tenant_id = current_user.get_property("tenant_id")
+        current_tenant_id = current_user.tenant_id
 
         info = {
             "username": current_user.username,
