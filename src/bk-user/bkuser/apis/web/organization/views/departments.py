@@ -253,7 +253,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantDataSourceMixin, generics.L
             data_after_tenant_depts = TenantDepartment.objects.filter(
                 data_source=data_source,
                 data_source_department=data_source_dept,
-            )
+            ).select_related("data_source_department")
 
             # 【审计】创建租户部门审计对象
             auditor = TenantDepartmentAuditor(request.user.username, current_tenant_id)
@@ -339,7 +339,7 @@ class TenantDepartmentUpdateDestroyApi(
         # 【审计】记录变更前的数据
         data_before_tenant_departments = TenantDepartment.objects.filter(
             data_source_department_id__in=data_source_dept_ids
-        )
+        ).select_related("data_source_department")
 
         # 【审计】创建租户部门审计对象并记录变更前的数据
         auditor = TenantDepartmentAuditor(request.user.username, self.get_current_tenant_id())

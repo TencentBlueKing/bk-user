@@ -578,7 +578,9 @@ class TenantUserRetrieveUpdateDestroyApi(
         data_source_user = tenant_user.data_source_user
 
         # 【审计】记录待删除的租户用户
-        data_before_tenant_users = list(TenantUser.objects.filter(data_source_user=data_source_user))
+        data_before_tenant_users = list(
+            TenantUser.objects.filter(data_source_user=data_source_user).select_related("data_source_user")
+        )
 
         # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））# noqa: E501
         auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
@@ -876,7 +878,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         # 【审计】重新查询租户用户和协同租户用户
         data_after_tenant_users = TenantUser.objects.filter(
             data_source=data_source, data_source_user__in=data_source_users
-        )
+        ).select_related("data_source_user")
 
         # 【审计】创建租户用户创建操作审计对象
         auditor = TenantUserCreateAuditor(request.user.username, cur_tenant_id)
@@ -1001,7 +1003,9 @@ class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.Destro
         )
 
         # 【审计】记录待删除的租户用户
-        data_before_tenant_users = list(TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids))
+        data_before_tenant_users = list(
+            TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).select_related("data_source_user")
+        )
 
         # 【审计】创建租户用户删除操作审计对象并记录待删除的用户相关信息（数据源用户、部门、上级、租户用户（包括协同租户用户））# noqa: E501
         auditor = TenantUserDestroyAuditor(request.user.username, cur_tenant_id)
