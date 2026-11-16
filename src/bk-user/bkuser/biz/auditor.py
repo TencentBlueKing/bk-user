@@ -711,7 +711,6 @@ class TenantDepartmentAuditor:
         else:
             self.data_befores[tenant_department.id] = {
                 "collaboration_tenant_department": get_model_dict(tenant_department),
-                "name": tenant_department.data_source_department.name,
                 "tenant_id": tenant_department.tenant_id,
             }
 
@@ -744,7 +743,6 @@ class TenantDepartmentAuditor:
                         AuditObject(
                             id=tenant_department.id,
                             type=ObjectTypeEnum.TENANT_DEPARTMENT,
-                            name=data_source_department.name,
                             operation=OperationEnum.CREATE_TENANT_DEPARTMENT,
                             data_after=get_model_dict(tenant_department),
                         ),
@@ -769,7 +767,6 @@ class TenantDepartmentAuditor:
                     AuditObject(
                         id=tenant_department.id,
                         type=ObjectTypeEnum.TENANT_DEPARTMENT,
-                        name=tenant_department.data_source_department.name,
                         operation=OperationEnum.CREATE_COLLABORATION_TENANT_DEPARTMENT,
                         data_after=get_model_dict(tenant_department),
                         extras={"collaboration_tenant_id": tenant_department.tenant_id},
@@ -826,7 +823,6 @@ class TenantDepartmentAuditor:
                         AuditObject(
                             id=tenant_department_id,
                             type=ObjectTypeEnum.TENANT_DEPARTMENT,
-                            name=ds_dept_object["name"],
                             operation=OperationEnum.DELETE_TENANT_DEPARTMENT,
                             data_before=data_befores["tenant_department"],
                         ),
@@ -851,7 +847,6 @@ class TenantDepartmentAuditor:
                     AuditObject(
                         id=tenant_department_id,
                         type=ObjectTypeEnum.TENANT_DEPARTMENT,
-                        name=data_befores["name"],
                         operation=OperationEnum.DELETE_COLLABORATION_TENANT_DEPARTMENT,
                         data_before=data_befores["collaboration_tenant_department"],
                         extras={"collaboration_tenant_id": data_befores["tenant_id"]},
