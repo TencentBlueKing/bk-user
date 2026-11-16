@@ -182,7 +182,6 @@ class TenantUserUpdateAuditor:
                 AuditObject(
                     id=tenant_user.id,
                     type=ObjectTypeEnum.TENANT_USER,
-                    name=ds_user_name,
                     operation=OperationEnum.MODIFY_TENANT_USER,
                     data_before=self.data_befores["tenant_user"],
                     data_after=get_model_dict(tenant_user),
@@ -231,7 +230,6 @@ class TenantUserDestroyAuditor:
         else:
             self.data_befores[tenant_user_id] = {
                 "tenant_user": get_model_dict(tenant_user),
-                "username": tenant_user.data_source_user.username,
                 "tenant_id": tenant_user.tenant_id,
             }
 
@@ -261,7 +259,6 @@ class TenantUserDestroyAuditor:
                     AuditObject(
                         id=tenant_user_id,
                         type=ObjectTypeEnum.TENANT_USER,
-                        name=data_befores["username"],
                         operation=OperationEnum.DELETE_COLLABORATION_TENANT_USER,
                         data_before=data_befores["tenant_user"],
                         extras={"collaboration_tenant_id": data_befores["tenant_id"]},
@@ -296,7 +293,6 @@ class TenantUserDestroyAuditor:
             AuditObject(
                 id=tenant_user_id,
                 type=ObjectTypeEnum.TENANT_USER,
-                name=ds_user_object["name"],
                 operation=OperationEnum.DELETE_TENANT_USER,
                 data_before=data_befores["tenant_user"],
             ),
@@ -347,7 +343,6 @@ class TenantUserCreateAuditor:
                         AuditObject(
                             id=tenant_user.id,
                             type=ObjectTypeEnum.TENANT_USER,
-                            name=data_source_user.username,
                             operation=OperationEnum.CREATE_TENANT_USER,
                             data_after=get_model_dict(tenant_user),
                         ),
@@ -360,7 +355,6 @@ class TenantUserCreateAuditor:
                     AuditObject(
                         id=tenant_user.id,
                         type=ObjectTypeEnum.TENANT_USER,
-                        name=tenant_user.data_source_user.username,
                         operation=OperationEnum.CREATE_COLLABORATION_TENANT_USER,
                         data_after=get_model_dict(tenant_user),
                         extras={"collaboration_tenant_id": tenant_user.tenant_id},
@@ -534,7 +528,6 @@ class TenantUserAccountExpiredAtUpdateAuditor:
                 AuditObject(
                     id=tenant_user.id,
                     type=ObjectTypeEnum.TENANT_USER,
-                    name=tenant_user.data_source_user.username,
                     operation=OperationEnum.MODIFY_USER_ACCOUNT_EXPIRED_AT,
                     data_before=self.data_befores[tenant_user.id],
                     data_after={
@@ -570,7 +563,6 @@ class TenantUserStatusUpdateAuditor:
             operation=OperationEnum.MODIFY_USER_STATUS,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            object_name=tenant_user.data_source_user.username,
             data_before=self.data_befores[tenant_user.id],
             data_after={"status": tenant_user.status},
         )
@@ -583,7 +575,6 @@ class TenantUserStatusUpdateAuditor:
                 AuditObject(
                     id=tenant_user.id,
                     type=ObjectTypeEnum.TENANT_USER,
-                    name=tenant_user.data_source_user.username,
                     operation=OperationEnum.MODIFY_USER_STATUS,
                     data_before=self.data_befores[tenant_user.id],
                     data_after={"status": tenant_user.status},
@@ -894,7 +885,6 @@ class VirtualUserAuditor:
             operation=OperationEnum.CREATE_VIRTUAL_USER,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            object_name=tenant_user.data_source_user.username,
             data_after=tenant_user_dict,
             extras={"object_type": ObjectTypeEnum.VIRTUAL_USER},
         )
@@ -928,7 +918,6 @@ class VirtualUserAuditor:
             operation=OperationEnum.MODIFY_VIRTUAL_USER,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            object_name=tenant_user.data_source_user.username,
             data_before={
                 "tenant_user": self.data_befores["tenant_user"],
                 "app_codes": self.data_befores["app_codes"],
@@ -958,7 +947,6 @@ class VirtualUserAuditor:
             operation=OperationEnum.DELETE_VIRTUAL_USER,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=self.data_befores["tenant_user"]["id"],
-            object_name=self.data_befores["data_source_user"]["username"],
             data_before={
                 "tenant_user": self.data_befores["tenant_user"],
                 "app_codes": self.data_befores["app_codes"],
@@ -1005,7 +993,6 @@ class TenantUserPersonalInfoUpdateAuditor:
             operation=OperationEnum.MODIFY_USER_EMAIL,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            object_name=tenant_user.data_source_user.username,
             data_before={"email": self.data_befores["email"]},
             data_after={"email": tenant_user.email},
         )
@@ -1023,7 +1010,6 @@ class TenantUserPersonalInfoUpdateAuditor:
             operation=OperationEnum.MODIFY_USER_PHONE,
             object_type=ObjectTypeEnum.TENANT_USER,
             object_id=tenant_user.id,
-            object_name=tenant_user.data_source_user.username,
             data_before={"phone_info": self.data_befores["phone_info"]},
             data_after={"phone_info": tenant_user.phone_info},
         )
