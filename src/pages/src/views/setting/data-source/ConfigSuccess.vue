@@ -20,7 +20,7 @@
           :disabled="operating"
           @click="handleOperate('dataSource', true)"
         >
-          {{ $t('立即同步') }}
+          {{ $t('保存并同步') }}
         </bk-button>
         <bk-button
           class="mr-[8px]"
@@ -50,7 +50,7 @@ import router from '@/router';
 interface IProps {
   title: string;
   dataSourceId: number;
-  /** 本地数据源不展示「立即同步」，账密登录快捷勾选仅本地数据源可用，由父组件按数据源类型传入 */
+  /** 本地数据源不展示「保存并同步」，账密登录快捷勾选仅本地数据源可用，由父组件按数据源类型传入 */
   isLocal?: boolean;
   /** 是否为新建成功；更新成功沿用原有展示，不出现认证源快捷配置 */
   isCreate?: boolean;
@@ -68,7 +68,7 @@ const loginConfigRef = ref<InstanceType<typeof QuickLoginConfig>>();
 /** 三个操作按钮的执行中状态，执行中禁用入口 */
 const operating = ref(false);
 
-// 三个操作按钮离开本页前都会先保存快捷认证源配置（见 saveBeforeLeave）
+// 「保存并同步」离开本页前会先保存快捷认证源配置（见 saveBeforeLeave）
 const handleSave = async () => {
   btnLoading.value = true;
   try {
@@ -89,15 +89,15 @@ const saveBeforeLeave = async () => {
   return !window.changeInput;
 };
 
-// 三个操作按钮共用：先保存快捷认证源配置，再跳转；needSync 为 true 时先触发数据同步
+// 三个操作按钮共用：仅「保存并同步」先落库快捷认证源配置再触发同步；另两个按钮等同于取消，不保存直接离开
 const handleOperate = async (routeName: string, needSync = false) => {
   if (operating.value) return;
   operating.value = true;
   try {
-    if (!await saveBeforeLeave()) {
-      return;
-    }
     if (needSync) {
+      if (!await saveBeforeLeave()) {
+        return;
+      }
       const res = await postOperationsSync(props.dataSourceId);
       Message({ theme: res.data.status, message: res.data.summary });
     }
