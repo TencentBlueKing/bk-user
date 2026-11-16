@@ -1,4 +1,4 @@
-import { computed, inject } from 'vue';
+import { computed, inject, watch } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, useRoute, useRouter } from 'vue-router';
 
 import { useMainViewStore } from '@/store';
@@ -17,7 +17,6 @@ export const useMenuInfo = () => {
 
   // 获取 menu 默认激活信息
   const activeMenu = computed<RouteLocationNormalizedLoaded | RouteRecordRaw | undefined>(() => {
-    store.breadCrumbsTitle = route.meta.navName;
     const { activeMenu } = route.meta;
     if (activeMenu) {
       return routes.value.find((route: RouteRecordRaw) => route.name === activeMenu);
@@ -25,6 +24,12 @@ export const useMenuInfo = () => {
 
     return route;
   });
+
+  // 标题只在切换路由记录时重置；放在 computed 里会被同页面 query 变化（如编辑数据源切页签）触发，覆盖掉页面自定义标题
+  watch(() => route.name, () => {
+    store.breadCrumbsTitle = route.meta.navName;
+  }, { immediate: true });
+
   const activeKey = computed(() => activeMenu.value?.name as string | undefined);
   const openedKeys = computed(() => (activeMenu.value?.meta?.submenuId ? [activeMenu.value.meta.submenuId] : []));
 
