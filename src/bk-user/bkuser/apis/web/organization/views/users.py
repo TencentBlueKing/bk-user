@@ -1070,7 +1070,11 @@ class TenantUserAccountExpiredAtBatchUpdateApi(
             )
 
         # 【审计】记录变更后的租户用户数据
-        data_after_tenant_users = list(TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id))
+        data_after_tenant_users = list(
+            TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id).select_related(
+                "data_source_user"
+            )
+        )
 
         # 【审计】将审计记录保存至数据库
         auditor.batch_record(data_after_tenant_users)
@@ -1134,7 +1138,9 @@ class TenantUserStatusBatchUpdateApi(
                 )
 
         # 【审计】记录变更后的租户用户数据
-        data_after_tenant_users = TenantUser.objects.filter(id__in=data["user_ids"], tenant_id=cur_tenant_id)
+        data_after_tenant_users = TenantUser.objects.filter(
+            id__in=data["user_ids"], tenant_id=cur_tenant_id
+        ).select_related("data_source_user")
 
         # 【审计】将审计记录保存至数据库
         auditor.batch_record(data_after_tenant_users)
