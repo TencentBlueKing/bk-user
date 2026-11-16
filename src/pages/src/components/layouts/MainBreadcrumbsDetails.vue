@@ -25,7 +25,12 @@ import { useRoute } from 'vue-router';
 
 import { useMainViewStore } from '@/store';
 
-defineProps({
+const props = defineProps({
+  /** 页面自定的面包屑标题，传了就不再跟随路由级标题 */
+  title: {
+    type: String,
+    default: '',
+  },
   subtitle: {
     type: String,
     default: '',
@@ -40,7 +45,7 @@ store.customBreadcrumbs = true;
 /**
  * 当前面包屑展示文案
  */
-const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
+const current = computed(() => props.title || store.breadCrumbsTitle || route.meta.navName);
 const showBack = computed(() => route.meta.showBack);
 /**
  * back control

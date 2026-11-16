@@ -1,6 +1,7 @@
 <template>
   <div>
     <MainBreadcrumbsDetails
+      :title="route.query.id ? t('编辑数据源') : t('添加数据源')"
       :subtitle="currentPlugins.name"
       @to-back="handleBack"
     />
@@ -53,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import Success from './ConfigSuccess.vue';
@@ -81,7 +82,7 @@ const userStore = useUser();
 
 const currentType = ref('');
 const dataSourceId = ref<number | null>(null);
-/** 当前数据源是否为本地数据源，成功页据此隐藏「立即同步」 */
+/** 当前数据源是否为本地数据源，成功页据此隐藏「保存并同步」 */
 const isLocal = ref(false);
 /** 是否为新建成功（更新成功不展示认证源快捷配置） */
 const isCreate = ref(false);
@@ -115,7 +116,6 @@ const updateSuccess = ({ text, name, dataSourceId: newDataSourceId, isCreate: cr
 const updateDataSourceContext = () => {
   currentPlugins.value = dataSourceStore.dataSourcePlugins
     .find(item => item.id === currentType.value) || {} as DataSourcePluginsItemData;
-  store.breadCrumbsTitle = dataSourceId.value === null ? t('添加数据源') : t('编辑数据源');
 };
 
 const handleBack = () => {
@@ -163,10 +163,6 @@ watch(() => route.query.type, (val: string | string[]) => {
 onMounted(() => {
   // 初始化数据源列表 - 若直接在新建/编辑页刷新，store中没有数据源列表
   handleInit();
-});
-
-onUnmounted(() => {
-  store.breadCrumbsTitle = '';
 });
 </script>
 
