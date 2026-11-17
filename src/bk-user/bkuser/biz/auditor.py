@@ -64,6 +64,7 @@ class DataSourceAuditor:
             operation=OperationEnum.CREATE_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
+            object_name=data_source.name,
             data_after=get_model_dict(data_source),
         )
 
@@ -75,6 +76,7 @@ class DataSourceAuditor:
             operation=OperationEnum.MODIFY_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
+            object_name=self.data_before["name"],
             data_before=self.data_before,
             data_after=get_model_dict(data_source),
         )
@@ -87,6 +89,7 @@ class DataSourceAuditor:
             operation=OperationEnum.DELETE_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=self.data_before["id"],
+            object_name=self.data_before["name"],
             data_before=self.data_before,
         )
 
@@ -98,6 +101,7 @@ class DataSourceAuditor:
             operation=OperationEnum.SYNC_DATA_SOURCE,
             object_type=ObjectTypeEnum.DATA_SOURCE,
             object_id=data_source.id,
+            object_name=data_source.name,
             extras={"overwrite": options.overwrite, "incremental": options.incremental, "trigger": options.trigger},
         )
 
@@ -645,6 +649,7 @@ class IdpAuditor:
             operation=OperationEnum.CREATE_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
+            object_name=idp.name,
             data_after=self._get_audit_data(idp),
         )
 
@@ -656,6 +661,7 @@ class IdpAuditor:
             operation=OperationEnum.MODIFY_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=idp.id,
+            object_name=self.data_before["name"],
             data_before=self.data_before,
             data_after=self._get_audit_data(idp),
         )
@@ -668,6 +674,7 @@ class IdpAuditor:
             operation=OperationEnum.DELETE_IDP,
             object_type=ObjectTypeEnum.IDP,
             object_id=self.data_before["id"],
+            object_name=self.data_before["name"],
             data_before=self.data_before,
         )
 

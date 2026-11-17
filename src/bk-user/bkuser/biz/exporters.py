@@ -154,7 +154,7 @@ def get_user_export_template(tenant_id: str) -> Workbook:
         "张三",
         "zhangsan@qq.com",
         "+8613512345678",
-        "公司/部门 A，公司/部门 B",
+        "公司/部门 A,公司/部门 B",
         "lisi,wangwu",
     ]
 
