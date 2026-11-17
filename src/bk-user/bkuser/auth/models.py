@@ -49,6 +49,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def tenant_id(self) -> str | None:
+        """获取当前登录用户所属租户 ID
+
+        用户扩展信息通过 UserProperty 存储和读取，但 bk_notice_sdk 在多租户模式
+        下会直接访问 request.user.tenant_id，因此提供此属性以兼容。
+        """
         return self.get_property("tenant_id")
 
 
