@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def tenant_user(bk_user) -> TenantUser:
-    return TenantUser.objects.get(tenant_id=bk_user.get_property("tenant_id"), id=bk_user.username)
+    return TenantUser.objects.get(tenant_id=bk_user.tenant_id, id=bk_user.username)
 
 
 class TestTenantUserExtrasUpdateApi:

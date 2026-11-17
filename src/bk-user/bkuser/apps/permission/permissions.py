@@ -40,7 +40,7 @@ def perm_class(action: PermAction):  # noqa: C901
     class Permission(BasePermission):
         def has_permission(self, request, view):
             username = request.user.username
-            cur_tenant_id = request.user.get_property("tenant_id")
+            cur_tenant_id = request.user.tenant_id
 
             if action == PermAction.MANAGE_PLATFORM:
                 return is_super_manager(cur_tenant_id, username)
@@ -54,7 +54,7 @@ def perm_class(action: PermAction):  # noqa: C901
 
         def has_object_permission(self, request, view, obj):  # noqa: C901
             username = request.user.username
-            cur_tenant_id = request.user.get_property("tenant_id")
+            cur_tenant_id = request.user.tenant_id
 
             # 校验平台权限，只需要校验是否超级管理员，与数据对象无关
             if action == PermAction.MANAGE_PLATFORM:

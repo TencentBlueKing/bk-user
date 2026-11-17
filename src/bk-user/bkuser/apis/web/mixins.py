@@ -28,7 +28,7 @@ class CurrentUserTenantMixin:
         """
         获取当前登录用户所属租户的 ID
         """
-        tenant_id = self.request.user.get_property("tenant_id")
+        tenant_id = self.request.user.tenant_id
         if not tenant_id:
             raise error_codes.GET_CURRENT_TENANT_FAILED
 
