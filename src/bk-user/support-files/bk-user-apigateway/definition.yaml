@@ -62,6 +62,7 @@ grant_permissions:
       - "list_department_descendant"
       - "list_department"
       - "list_user_department"
+      - "retrieve_user"
   - bk_app_code: "bk_paas"
     grant_dimension: "resource"
     resource_names:
@@ -91,3 +92,12 @@ grant_permissions:
       - "list_virtual_user"
       - "list_department"
       - "list_department_user_relation"
+  - bk_app_code: "bk_audit"
+    grant_dimension: "resource"
+    resource_names:
+      - "list_user_department"
+      - "list_user_leader"
+  - bk_app_code: "bk_ms"
+    grant_dimension: "resource"
+    resource_names:
+      - "retrieve_user"
