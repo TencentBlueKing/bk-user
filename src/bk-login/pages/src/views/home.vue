@@ -1,6 +1,6 @@
 <template>
   <bk-form form-type="vertical" v-bkloading="{ loading }">
-    <div class="switch-tenant" v-if="hasStorage" @click="changeTenant">
+    <div class="switch-tenant" v-if="hasStorage && !isSingleTenantMode" @click="changeTenant">
       &lt; {{ $t('切换企业') }}
     </div>
 
@@ -93,8 +93,8 @@
       </bk-form-item>
     </section>
 
-    <section v-else-if="hasStorage">
-      <div class="tenant-header">
+    <section v-else-if="hasStorage" :class="{ 'single-tenant': isSingleTenantMode }">
+      <div class="tenant-header" v-if="!isSingleTenantMode">
         <img v-if="selectedTenant?.logo" class="logo-img" :src="selectedTenant?.logo" />
         <span v-else class="logo">
           {{ selectedTenant?.name?.charAt(0).toUpperCase() }}
@@ -174,6 +174,10 @@ interface Idp {
  * 应用状态管理
  */
 const appStore = useAppStore();
+/**
+ * 是否为单租户模式：不展示企业切换与企业信息条
+ */
+const isSingleTenantMode = window.ENABLE_MULTI_TENANT_MODE === 'False';
 /**
  * 加载状态
  */
@@ -425,7 +429,11 @@ onBeforeMount(async () => {
       }
     });
   }
-  settings.value = await getGlobalSettings();
+  try {
+    settings.value = await getGlobalSettings();
+  } catch (error) {
+    console.error(error);
+  }
   loading.value = false;
 });
 
@@ -519,6 +527,10 @@ const handleTenantKeydown = (value: string, event: KeyboardEvent) => {
   .tenant-name {
     width: 280px;
   }
+}
+
+.single-tenant {
+  padding-top: 32px;
 }
 
 .tenant-tab {
