@@ -6,5 +6,6 @@ declare interface Window {
   BK_COMPONENT_API_URL: string
   BK_DOMAIN: string
   ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE: string
+  ENABLE_MULTI_TENANT_MODE: string
   BK_STATIC_URL: string
 }
