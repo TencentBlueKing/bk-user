@@ -34,4 +34,6 @@ def basic_settings(request):
         "BK_SHARED_RES_URL": settings.BK_SHARED_RES_URL,
         # 是否允许浏览器密码自动填充功能
         "ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE": settings.ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE,
+        # 是否开启多租户模式
+        "ENABLE_MULTI_TENANT_MODE": settings.ENABLE_MULTI_TENANT_MODE,
     }
