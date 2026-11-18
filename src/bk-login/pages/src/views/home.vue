@@ -183,6 +183,10 @@ const isSingleTenantMode = window.ENABLE_MULTI_TENANT_MODE === 'False';
  */
 const loading = ref(false);
 /**
+ * 是否已确定登录租户
+ */
+const hasStorage = ref(false);
+/**
  * 当前选中的企业
  */
 const selectedTenant = ref<Tenant | null>(null);
@@ -190,10 +194,6 @@ const selectedTenant = ref<Tenant | null>(null);
  * 最近登录的企业列表，从 localStorage 中加载
  */
 const tenantList = ref<Tenant[]>([]);
-/**
- * 是否存在 localStorage 中的企业列表
- */
-const hasStorage = ref(!!localStorage.getItem('tenantId'));
 /**
  * 输入的企业ID或名称
  */
@@ -226,14 +226,6 @@ const activeIdp: Ref<Idp> = ref();
  * 全局配置
  */
 const settings = ref<GlobalSettingsResult>();
-
-// 从 localStorage 中加载租户列表
-try {
-  tenantList.value = JSON.parse(localStorage.getItem('tenantList') || '[]');
-  appStore.tenantId = localStorage.getItem('tenantId');
-} catch (error) {
-  console.error('Failed to load tenant list from localStorage:', error);
-}
 
 /**
  * 处理租户搜索
@@ -407,27 +399,49 @@ const handleResetPassword = () => {
   window.location.href = `${settings.value.bk_user_url}/password/?tenantId=${appStore.tenantId}`;
 };
 
+/**
+ * 初始化登录租户与最近登录的企业列表
+ */
+const initTenant = () => {
+  // 单租户模式固定为 default，不读取浏览器缓存
+  appStore.tenantId = isSingleTenantMode ? 'default' : localStorage.getItem('tenantId');
+  hasStorage.value = !!appStore.tenantId;
+  if (isSingleTenantMode) {
+    return;
+  }
+  try {
+    tenantList.value = JSON.parse(localStorage.getItem('tenantList') || '[]');
+  } catch (error) {
+    console.error('Failed to load tenant list from localStorage:', error);
+  }
+};
+
 // 组件挂载前初始化
 onBeforeMount(async () => {
   loading.value = true;
-  // 兼容之前版本，之前版本没有 tenantList 数据
-  if (appStore.tenantId && !tenantList.value.length) {
-    tenantList.value = [{
-      id: appStore.tenantId,
-      name: '',
-      logo: '',
-    }];
-  }
-  if (tenantList.value.length) {
-    getTenantList({
-      tenant_ids: tenantList.value.map(item => item.id).join(','),
-    }).then((res) => {
-      tenantList.value = res;
-      if (hasStorage.value) {
-        selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
-        getIdps();
-      }
-    });
+  initTenant();
+  if (isSingleTenantMode) {
+    getIdps();
+  } else {
+    // 兼容之前版本，之前版本没有 tenantList 数据
+    if (appStore.tenantId && !tenantList.value.length) {
+      tenantList.value = [{
+        id: appStore.tenantId,
+        name: '',
+        logo: '',
+      }];
+    }
+    if (tenantList.value.length) {
+      getTenantList({
+        tenant_ids: tenantList.value.map(item => item.id).join(','),
+      }).then((res) => {
+        tenantList.value = res;
+        if (hasStorage.value) {
+          selectedTenant.value = tenantList.value.find(item => item.id === appStore.tenantId);
+          getIdps();
+        }
+      });
+    }
   }
   try {
     settings.value = await getGlobalSettings();
