@@ -178,7 +178,7 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     const details = (await getDataSourceDetails(props.dataSourceId))?.data;
-    dataSourceName.value = details?.data_source_name || '';
+    dataSourceName.value = details?.name || '';
     const fieldList = await getFields();
 
     pluginId.value = details?.plugin?.id;
