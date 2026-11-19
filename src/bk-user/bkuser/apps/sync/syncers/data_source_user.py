@@ -23,7 +23,6 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -31,7 +30,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
@@ -44,9 +42,6 @@ class DataSourceUserSyncer:
 
     # 单次批量创建 / 更新数量
     batch_size = 250
-
-    # 最多展示的冲突用户名数量
-    conflict_display_limit = 10
 
     def __init__(
         self,
@@ -65,7 +60,6 @@ class DataSourceUserSyncer:
         self.raw_users = raw_users
         self.overwrite = overwrite
         self.incremental = incremental
-        self.transformer = UsernameTransformer.load(data_source.id)
         self.converter = DataSourceUserConverter(data_source, ctx.logger)
         # 由于在部分老版本迁移过来的数据源中租户用户 ID 会由 username + 规则 拼接生成，
         # 该类数据源同步时候不可更新 username，而全新数据源对应租户 ID 都是 uuid 则不受影响
@@ -73,47 +67,8 @@ class DataSourceUserSyncer:
 
     def sync(self):
         self.ctx.logger.info("start sync users...")
-        self._filter_conflict_users()
         self._sync_users()
         self.ctx.logger.info("users sync finished")
-
-    def _filter_conflict_users(self):
-        if not self.raw_users:
-            return
-
-        code_username_map = {
-            user.code: self.transformer.to_stored(user.properties["username"]) for user in self.raw_users
-        }
-
-        # 查询同租户下其他数据源中已存在的冲突用户名
-        conflict_usernames = set(
-            DataSourceUser.objects.filter(
-                data_source__owner_tenant_id=self.data_source.owner_tenant_id,
-                data_source__type=DataSourceTypeEnum.REAL,
-                username__in=code_username_map.values(),
-            )
-            .exclude(data_source=self.data_source)
-            .values_list("username", flat=True)
-        )
-
-        if not conflict_usernames:
-            return
-
-        # 过滤冲突用户
-        filtered_users, skipped_usernames = [], []
-        for user in self.raw_users:
-            if code_username_map[user.code] in conflict_usernames:
-                skipped_usernames.append(code_username_map[user.code])
-            else:
-                filtered_users.append(user)
-
-        self.ctx.logger.warning(
-            f"found {len(skipped_usernames)} users with username conflict in other data sources "
-            f"of the same tenant, these users will be skipped: {', '.join(skipped_usernames[:self.conflict_display_limit])}"  # noqa: E501
-            f"{'...' if len(skipped_usernames) > self.conflict_display_limit else ''}"
-        )
-
-        self.raw_users = filtered_users
 
     def _sync_users(self):
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))

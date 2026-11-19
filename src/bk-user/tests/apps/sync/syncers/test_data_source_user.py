@@ -28,6 +28,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUsernameGenerateConfig,
 )
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
+from bkuser.apps.sync.filters import DataSourceUserConflictFilter
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentRelationSyncer,
     DataSourceDepartmentSyncer,
@@ -371,6 +372,53 @@ class TestSyncDataSourceUser:
         assert data_source_sync_task_ctx.logger.has_warning is True
         assert "zhangsan" in data_source_sync_task_ctx.logger.logs
 
+    def test_filter_conflict_users_in_incremental_overwrite_mode(
+        self, data_source_sync_task_ctx, bare_local_data_source, local_ds_plugin, local_ds_plugin_cfg
+    ):
+        """增量覆盖模式下，冲突用户被跳过后，关系同步也不应受其影响"""
+        other_ds = DataSource.objects.create(
+            owner_tenant_id=bare_local_data_source.owner_tenant_id,
+            type=DataSourceTypeEnum.REAL,
+            plugin=local_ds_plugin,
+            plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
+        )
+        DataSourceUser.objects.create(
+            code="existing_zhangsan",
+            username="zhangsan",
+            full_name="张三",
+            email="zhangsan@m.com",
+            phone="13500000001",
+            data_source=other_ds,
+        )
+
+        raw_users = [
+            RawDataSourceUser(
+                code="zhangsan",
+                properties={"username": "zhangsan", "full_name": "张三", "email": "z@m.com", "phone": "13500000000"},
+                leaders=[],
+                departments=[],
+            ),
+            RawDataSourceUser(
+                code="unique_user",
+                properties={
+                    "username": "unique_user",
+                    "full_name": "唯一",
+                    "email": "u@m.com",
+                    "phone": "13500000002",
+                },
+                leaders=["zhangsan"],
+                departments=[],
+            ),
+        ]
+        self._sync_data_source_users(
+            data_source_sync_task_ctx, bare_local_data_source, raw_users, overwrite=True, incremental=True
+        )
+
+        users = DataSourceUser.objects.filter(data_source=bare_local_data_source)
+        assert list(users.values_list("username", flat=True)) == ["unique_user"]
+        assert not DataSourceUserLeaderRelation.objects.filter(data_source=bare_local_data_source).exists()
+        assert "zhangsan" in data_source_sync_task_ctx.logger.logs
+
     def test_filter_conflict_users_with_same_ds(self, data_source_sync_task_ctx, full_local_data_source, raw_users):
         """同数据源已有的同名用户不算冲突，同步应正常进行"""
         self._sync_data_source_users(
@@ -459,7 +507,8 @@ class TestSyncDataSourceUser:
         overwrite: bool,
         incremental: bool,
     ):
-        """执行数据源部门同步（所有步骤）"""
+        """执行数据源用户同步（所有步骤）"""
+        raw_users = DataSourceUserConflictFilter(data_source_sync_task_ctx, data_source).filter(raw_users)
         kwargs = {
             "ctx": data_source_sync_task_ctx,
             "data_source": data_source,
