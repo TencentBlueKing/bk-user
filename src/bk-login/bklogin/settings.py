@@ -443,6 +443,8 @@ if ENABLE_BK_NOTICE:
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
 ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", default=False)
+# 是否兼容 ESB 和直调的旧版本 API，仅单租户模式下生效（全新安装默认关闭，从旧版本升级需开启）
+ENABLE_ESB = not ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_ESB", default=False)
 
 # 是否允许浏览器保存密码自动填充功能
 ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE = env.bool("ENABLE_BROWSER_PASSWORD_AUTOCOMPLETE", default=True)

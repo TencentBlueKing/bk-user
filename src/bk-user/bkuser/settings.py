@@ -781,6 +781,8 @@ if ENABLE_BK_NOTICE:
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 # 是否开启多租户模式
 ENABLE_MULTI_TENANT_MODE = env.bool("ENABLE_MULTI_TENANT_MODE", False)
+# 是否兼容 ESB 调用旧版本 OpenAPI，仅单租户模式下生效（全新安装默认关闭，从旧版本升级需开启）
+ENABLE_ESB = not ENABLE_MULTI_TENANT_MODE and env.bool("ENABLE_ESB", default=False)
 # 是否启用虚拟账号页面功能
 ENABLE_VIRTUAL_USER = env.bool("ENABLE_VIRTUAL_USER", default=False)
 # 开启多租户模式后，才支持是否启用页面新建租户功能
