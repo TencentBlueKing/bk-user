@@ -30,7 +30,7 @@ def create_user(tenant: Tenant, username: Optional[str] = None) -> User:
     """创建测试用用户"""
     username = username or generate_random_string(length=8)
     user, _ = User.objects.get_or_create(username=username)
-    user.set_property("tenant_id", tenant.id)
+    user.tenant_id = tenant.id
 
     # 获取租户内置的管理数据源
     data_source = DataSource.objects.get(

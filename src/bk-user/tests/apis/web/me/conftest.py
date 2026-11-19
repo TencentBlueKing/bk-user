@@ -75,7 +75,7 @@ def _init_cross_tenant_user() -> None:
 def api_client(random_tenant) -> APIClient:
     zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan", tenant=random_tenant)
     user, _ = User.objects.get_or_create(username=zhangsan.id)
-    user.set_property("tenant_id", random_tenant.id)
+    user.tenant_id = random_tenant.id
 
     client = APIClient()
     client.force_authenticate(user=user)
