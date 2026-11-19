@@ -27,7 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     #
     # Q: 为什么不定义为 property（读取 UserProperty）？
     # A: apigw_manager 的 UserModelBackend 构造的 User 只存在于内存中，无法读写 UserProperty，
-    #    且会直接赋值 user.tenant_id，所以 tenant_id 作为特殊情况处理，其他用户属性仍通过 UserProperty 读写
+    #    且会直接赋值 user.tenant_id，所以 tenant_id 作为特殊情况处理，其他用户扩展属性仍通过 UserProperty 读写
     tenant_id: str
 
     username = models.CharField(max_length=64, unique=True)
