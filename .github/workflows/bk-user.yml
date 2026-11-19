@@ -85,5 +85,6 @@ jobs:
           export MYSQL_HOST="127.0.0.1"
           export INITIAL_ADMIN_USERNAME=admin
           export INITIAL_ADMIN_PASSWORD=admin_pwd
+          export ENABLE_ESB=True
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           pytest ./tests

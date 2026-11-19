@@ -47,8 +47,8 @@ urlpatterns = [
     ),
 ]
 
-# 如果不是多租户模式，则需要兼容 ESB 和直调的方式
-if not settings.ENABLE_MULTI_TENANT_MODE:
+# 单租户模式且开启 ESB 兼容时，需要兼容 ESB 和直调的方式
+if settings.ENABLE_ESB:
     urlpatterns += [
         # 兼容 API, 兼容原有通过 ESB 和直接调用的两种方式
         path("accounts/is_login/", compatibility_views.TokenIntrospectCompatibilityApi.as_view(api_version="v1")),
