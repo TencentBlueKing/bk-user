@@ -43,8 +43,8 @@ class TokenBackend(BaseBackend):
         user, _ = user_model.objects.get_or_create(username=username)
         user.set_property(key="language", value=user_info["language"])
         user.set_property(key="time_zone", value=user_info["time_zone"])
-        user.set_property(key="tenant_id", value=user_info["tenant_id"])
         user.set_property(key="display_name", value=user_info["display_name"])
+        user.tenant_id = user_info["tenant_id"]
 
         return user
 

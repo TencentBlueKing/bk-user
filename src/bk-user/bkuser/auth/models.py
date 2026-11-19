@@ -22,6 +22,14 @@ from django.utils import timezone
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    # Q: 为什么 User 上需要 tenant_id？
+    # A: bk_notice_sdk 会直接读取 request.user.tenant_id
+    #
+    # Q: 为什么不定义为 property（读取 UserProperty）？
+    # A: apigw_manager 的 UserModelBackend 构造的 User 只存在于内存中，无法读写 UserProperty，
+    #    且会直接赋值 user.tenant_id，所以 tenant_id 作为特殊情况处理，其他用户属性仍通过 UserProperty 读写
+    tenant_id: str
+
     username = models.CharField(max_length=64, unique=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -46,15 +54,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         if key_property.value != value:
             key_property.value = value
             key_property.save()
-
-    @property
-    def tenant_id(self) -> str | None:
-        """获取当前登录用户所属租户 ID
-
-        用户扩展信息通过 UserProperty 存储和读取，但 bk_notice_sdk 在多租户模式
-        下会直接访问 request.user.tenant_id，因此提供此属性以兼容。
-        """
-        return self.get_property("tenant_id")
 
 
 class UserProperty(models.Model):
