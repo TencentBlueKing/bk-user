@@ -40,6 +40,7 @@ from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserRese
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.senders import (
     EmailResetPasswdTokenSender,
@@ -71,27 +72,25 @@ class GetFirstTenantUserMixin:
         tenant_users = TenantUser.objects.filter_by_phone(tenant_id, phone, phone_country_code).filter(
             data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL, status=TenantUserStatus.ENABLED
         )
+        for tenant_user in tenant_users.select_related("data_source"):
+            if IdpDataSourceRelationHandler.can_login_by_password(tenant_user.data_source):
+                return tenant_user
 
-        if not tenant_users.exists():
-            logger.warning(
-                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
-            )
-            raise error_codes.TENANT_USER_NOT_EXIST.f(
-                _("手机号码 +{} {} 在租户 {} 中匹配不到用户").format(phone_country_code, phone, tenant_id),
-            )
-
-        return tenant_users.first()
+        logger.warning("failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id)
+        raise error_codes.TENANT_USER_NOT_EXIST.f(
+            _("手机号码 +{} {} 在租户 {} 中匹配不到用户").format(phone_country_code, phone, tenant_id),
+        )
 
     def _get_first_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
         tenant_users = TenantUser.objects.filter_by_email(tenant_id, email).filter(
             data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL, status=TenantUserStatus.ENABLED
         )
+        for tenant_user in tenant_users.select_related("data_source"):
+            if IdpDataSourceRelationHandler.can_login_by_password(tenant_user.data_source):
+                return tenant_user
 
-        if not tenant_users.exists():
-            logger.warning("failed to get tenant user by email %s in tenant %s", email, tenant_id)
-            raise error_codes.TENANT_USER_NOT_EXIST.f(_("邮箱 {} 在租户 {} 中匹配不到用户").format(email, tenant_id))
-
-        return tenant_users.first()
+        logger.warning("failed to get tenant user by email %s in tenant %s", email, tenant_id)
+        raise error_codes.TENANT_USER_NOT_EXIST.f(_("邮箱 {} 在租户 {} 中匹配不到用户").format(email, tenant_id))
 
 
 class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):

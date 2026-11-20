@@ -25,8 +25,8 @@ from django.utils.translation import gettext_lazy as _
 from bkuser import settings
 from bkuser.apis.web.password.constants import TokenRelatedObjType
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
-from bkuser.plugins.constants import DataSourcePluginEnum
 
 
 class GenerateTokenTooFrequently(Exception):
@@ -86,8 +86,13 @@ class UserResetPasswordTokenManager:
             return TenantUser.objects.none()
 
         # FIXME (su) 补充 status 过滤
-        # 只有本地数据源用户关联的租户用户才可以修改密码
-        return tenant_users.filter(data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL)
+        # 只有能使用账密登录的用户才可以修改密码
+        tenant_user_ids = [
+            tenant_user.id
+            for tenant_user in tenant_users.select_related("data_source")
+            if IdpDataSourceRelationHandler.can_login_by_password(tenant_user.data_source)
+        ]
+        return tenant_users.filter(id__in=tenant_user_ids)
 
     def _gen_token(self) -> str:
         """生成重置密码用 Token，字符集：数字，大小写字母"""

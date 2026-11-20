@@ -60,6 +60,7 @@ from bkuser.biz.auditor import (
     TenantUserPersonalInfoUpdateAuditor,
     TenantUserWeixinBindAuditor,
 )
+from bkuser.biz.idp_data_source import IdpDataSourceRelationHandler
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.password_rule import PasswordRuleHandler
@@ -519,8 +520,8 @@ class TenantUserFeatureFlagListApi(CurrentTenantPhoneOrEmailUpdateRestrictionMix
         data_source = tenant_user.data_source_user.data_source
 
         feature_flags = {
-            PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: bool(
-                data_source.is_local and data_source.plugin_config.get("enable_password", False)
+            PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: IdpDataSourceRelationHandler.can_login_by_password(
+                data_source
             ),
             PersonalCenterFeatureFlag.PHONE_UPDATE_RESTRICTION: self.get_phone_update_restriction(
                 tenant_user.tenant_id
@@ -549,10 +550,8 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         data_source = data_source_user.data_source
         plugin_config = data_source.get_plugin_cfg()
 
-        if not (data_source.is_local and plugin_config.enable_password):
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _("仅可以重置 已经启用密码功能 的 本地数据源 的用户密码")
-            )
+        if not IdpDataSourceRelationHandler.can_login_by_password(data_source):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("当前用户无法使用账密登录，不支持修改密码"))
 
         slz = TenantUserPasswordUpdateInputSLZ(
             data=request.data,
