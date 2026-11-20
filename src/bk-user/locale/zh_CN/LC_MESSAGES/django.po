@@ -475,9 +475,12 @@ msgid "该租户用户没有可用的密码规则"
 msgstr "该租户用户没有可用的密码规则"
 
 #: bkuser/apis/web/organization/views/users.py:680
-#: bkuser/apis/web/personal_center/views.py:553
 msgid "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
 msgstr "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码"
+
+#: bkuser/apis/web/personal_center/views.py:553
+msgid "当前用户无法使用账密登录，不支持修改密码"
+msgstr "当前用户无法使用账密登录，不支持修改密码"
 
 #: bkuser/apis/web/organization/views/users.py:822
 msgid "指定的租户部门不存在"
