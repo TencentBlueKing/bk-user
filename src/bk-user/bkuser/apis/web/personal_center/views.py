@@ -548,11 +548,11 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
         data_source = data_source_user.data_source
+        plugin_config = data_source.get_plugin_cfg()
 
         if not IdpDataSourceRelationHandler.can_login_by_password(data_source):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("当前用户无法使用账密登录，不支持修改密码"))
 
-        plugin_config = data_source.get_plugin_cfg()
         slz = TenantUserPasswordUpdateInputSLZ(
             data=request.data,
             context={
