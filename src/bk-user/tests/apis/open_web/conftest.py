@@ -36,6 +36,7 @@ from django.core.cache import caches
 from django.test.utils import override_settings
 from rest_framework.test import APIClient
 
+from tests.test_utils.auth import make_gateway_user
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
@@ -57,10 +58,8 @@ def api_client(random_tenant, browser_headers):
         client = APIClient()
         client.defaults["HTTP_X_BK_TENANT_ID"] = random_tenant.id
         client.defaults.update(browser_headers)
-        with (
-            mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []),
-            mock.patch.object(OpenWebApiCommonMixin, "permission_classes", []),
-        ):
+        client.force_authenticate(user=make_gateway_user(random_tenant.id))
+        with mock.patch.object(OpenWebApiCommonMixin, "authentication_classes", []):
             yield client
 
 
@@ -146,7 +145,9 @@ def _init_virtual_tenant_users(random_tenant, full_virtual_data_source) -> None:
 def auth_user() -> User:
     """用户认证后的 user 对象"""
     zhangsan = TenantUser.objects.get(data_source_user__username="zhangsan")
-    return User.objects.create(username=zhangsan.id)
+    user = User.objects.create(username=zhangsan.id)
+    user.tenant_id = zhangsan.tenant_id
+    return user
 
 
 @pytest.fixture
