@@ -25,12 +25,13 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
+from bkuser.apis.open_web.permissions import IsCurrentUserTenant
 from bkuser.apps.data_source.cache import DataSourceCache
 
 
 class OpenWebApiCommonMixin:
     authentication_classes = [ApiGatewayJWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCurrentUserTenant]
 
     request: Request
 

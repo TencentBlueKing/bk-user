@@ -59,3 +59,10 @@ def create_user(tenant: Tenant, username: Optional[str] = None) -> User:
     TenantManager.objects.get_or_create(tenant=tenant, tenant_user=tenant_user)
 
     return user
+
+
+def make_gateway_user(tenant_id: str, username: Optional[str] = None) -> User:
+    """构造与 APIGateway JWT 认证结果一致的内存用户（不落库）"""
+    user = User(username=username or generate_random_string(length=8))
+    user.tenant_id = tenant_id
+    return user
