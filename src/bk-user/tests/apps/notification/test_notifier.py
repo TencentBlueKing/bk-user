@@ -61,18 +61,8 @@ class TestTenantUserNotifier:
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_sms", return_value=None)
     def test_batch_send_with_esb(self, mocked_send_sms, mocked_send_mail, data_source):
-        notifier = TenantUserNotifier(
-            scene=NotificationScene.USER_INITIALIZE,
-            data_source_id=data_source.id,
-            tenant_id=data_source.owner_tenant_id,
-        )
-        tenant_users = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id)
-        notifier.batch_send(tenant_users, user_passwd_map={u.data_source_user_id: "123456" for u in tenant_users})
-
-    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
-    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
-    def test_batch_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+        # 开启 ESB 但不部署 cmsi 网关，消息仍走 ESB
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=True, HAS_BK_CMSI_APIGW=False):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.USER_INITIALIZE,
                 data_source_id=data_source.id,
@@ -81,7 +71,20 @@ class TestTenantUserNotifier:
             tenant_users = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id)
             notifier.batch_send(tenant_users, user_passwd_map={u.data_source_user_id: "123456" for u in tenant_users})
 
-        with override_settings(HAS_BK_CMSI_APIGW=True):
+    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
+    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
+    def test_batch_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True, ENABLE_ESB=False, HAS_BK_CMSI_APIGW=False):
+            notifier = TenantUserNotifier(
+                scene=NotificationScene.USER_INITIALIZE,
+                data_source_id=data_source.id,
+                tenant_id=data_source.owner_tenant_id,
+            )
+            tenant_users = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id)
+            notifier.batch_send(tenant_users, user_passwd_map={u.data_source_user_id: "123456" for u in tenant_users})
+
+        # 部署了 cmsi 网关时走网关，即使 ESB 仍然开启
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=True, HAS_BK_CMSI_APIGW=True):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.USER_INITIALIZE,
                 data_source_id=data_source.id,
@@ -93,23 +96,32 @@ class TestTenantUserNotifier:
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkEsbCmsiClient.send_sms", return_value=None)
     def test_send_with_esb(self, mocked_send_sms, mocked_send_mail, data_source):
-        notifier = TenantUserNotifier(
-            scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
-        )
-        tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
-        notifier.send(tenant_user, passwd="123456")
-
-    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
-    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
-    def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=True, HAS_BK_CMSI_APIGW=False):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
             )
             tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
             notifier.send(tenant_user, passwd="123456")
 
-        with override_settings(HAS_BK_CMSI_APIGW=True):
+    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
+    @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
+    def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True, ENABLE_ESB=False, HAS_BK_CMSI_APIGW=False):
+            notifier = TenantUserNotifier(
+                scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
+            )
+            tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
+            notifier.send(tenant_user, passwd="123456")
+
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=True, HAS_BK_CMSI_APIGW=True):
+            notifier = TenantUserNotifier(
+                scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
+            )
+            tenant_user = TenantUser.objects.filter(tenant_id=data_source.owner_tenant_id).first()
+            notifier.send(tenant_user, passwd="123456")
+
+        # 单租户未开启 ESB 也未部署 cmsi 网关时，回落到网关
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=False, HAS_BK_CMSI_APIGW=False):
             notifier = TenantUserNotifier(
                 scene=NotificationScene.MANAGER_RESET_PASSWORD, tenant_id=data_source.owner_tenant_id
             )
@@ -128,7 +140,7 @@ class TestContactNotifier:
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.BkApigwCmsiClient.send_sms", return_value=None)
     def test_send_with_apigw(self, mocked_send_sms, mocked_send_mail, data_source):
-        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True, ENABLE_ESB=False, HAS_BK_CMSI_APIGW=False):
             notifier = ContactNotifier(
                 scene=NotificationScene.SEND_VERIFICATION_CODE,
                 method=NotificationMethod.EMAIL,
@@ -136,7 +148,7 @@ class TestContactNotifier:
             )
             notifier.send(email="test@test.com", verification_code="123456")
 
-        with override_settings(HAS_BK_CMSI_APIGW=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=False, ENABLE_ESB=True, HAS_BK_CMSI_APIGW=True):
             notifier = ContactNotifier(
                 scene=NotificationScene.SEND_VERIFICATION_CODE,
                 method=NotificationMethod.SMS,
@@ -144,7 +156,7 @@ class TestContactNotifier:
             )
             notifier.send(phone="12345678901", phone_country_code="86", verification_code="123456")
 
-        with override_settings(ENABLE_MULTI_TENANT_MODE=True):
+        with override_settings(ENABLE_MULTI_TENANT_MODE=True, ENABLE_ESB=False, HAS_BK_CMSI_APIGW=False):
             notifier = ContactNotifier(
                 scene=NotificationScene.RESET_PASSWORD,
                 tenant_id=data_source.owner_tenant_id,
