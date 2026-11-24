@@ -29,9 +29,6 @@ from bkuser.plugins.models import RawDataSourceUser
 class DataSourceUserConflictFilter:
     """过滤与同租户下其他数据源存在用户名冲突的用户"""
 
-    # 最多展示的冲突用户名数量
-    conflict_display_limit = 10
-
     def __init__(self, ctx: DataSourceSyncTaskContext, data_source: DataSource):
         self.ctx = ctx
         self.data_source = data_source
@@ -65,9 +62,8 @@ class DataSourceUserConflictFilter:
                 filtered_users.append(user)
 
         self.ctx.logger.warning(
-            f"found {len(skipped_usernames)} users with username conflict in other data sources "
-            f"of the same tenant, these users will be skipped: {', '.join(skipped_usernames[:self.conflict_display_limit])}"  # noqa: E501
-            f"{'...' if len(skipped_usernames) > self.conflict_display_limit else ''}"
+            f"skip {len(skipped_usernames)} users whose username already exists in other data sources "
+            f"of the same tenant: {', '.join(skipped_usernames)}"
         )
 
         return filtered_users
