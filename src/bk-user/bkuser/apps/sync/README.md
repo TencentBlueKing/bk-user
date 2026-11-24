@@ -52,6 +52,7 @@ sync/
 ├── converters.py         # 数据转换器
 ├── data_models.py        # Pydantic 数据模型（同步选项、同步配置）
 ├── exceptions.py         # 自定义异常
+├── filters.py            # 数据过滤器（同步前过滤冲突用户等）
 ├── handlers.py           # Django 信号处理器
 ├── locks.py              # 分布式锁（基于 Redis）
 ├── loggers.py            # 任务日志记录器
@@ -118,6 +119,8 @@ sequenceDiagram
     Runner->>Plugin: fetch_users()
     Plugin-->>Runner: raw_users
 
+    Runner->>Runner: DataSourceUserConflictFilter.filter()
+    Note over Runner: skip users whose username conflicts with other data sources
     Runner->>Syncers: DataSourceUserSyncer.sync()
     Note over Syncers: delete -> update -> create users
     Runner->>Syncers: DataSourceUserLeaderRelationSyncer.sync()
