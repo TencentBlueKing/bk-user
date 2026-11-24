@@ -114,11 +114,11 @@ def get_notification_client(tenant_id: str) -> NotificationClient:
     选择对应消息通知 API（ESB 或 API 网关）
     :param tenant_id: 租户 ID
     """
-    # 有单独部署 bk-cmsi 网关 或 开启多租户模式，使用 bk-cmsi 网关提供的消息通知 API
-    if settings.HAS_BK_CMSI_APIGW or settings.ENABLE_MULTI_TENANT_MODE:
-        return BkApigwCmsiClient(tenant_id)
-    # 否则使用 ESB 提供的消息通知 API
-    return BkEsbCmsiClient()
+    # 单租户开启 ESB 且未单独部署 bk-cmsi 网关时，使用 ESB 提供的消息通知 API
+    if settings.ENABLE_ESB and not settings.HAS_BK_CMSI_APIGW:
+        return BkEsbCmsiClient()
+    # 其他情况使用 bk-cmsi 网关
+    return BkApigwCmsiClient(tenant_id)
 
 
 class BkEsbCmsiClient:
