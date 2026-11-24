@@ -26,7 +26,7 @@ from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.plugins.models import RawDataSourceUser
 
 
-class DataSourceUserConflictFilter:
+class CrossDataSourceUsernameConflictFilter:
     """过滤与同租户下其他数据源存在用户名冲突的用户"""
 
     def __init__(self, ctx: DataSourceSyncTaskContext, data_source: DataSource):

@@ -119,7 +119,7 @@ sequenceDiagram
     Runner->>Plugin: fetch_users()
     Plugin-->>Runner: raw_users
 
-    Runner->>Runner: DataSourceUserConflictFilter.filter()
+    Runner->>Runner: CrossDataSourceUsernameConflictFilter.filter()
     Note over Runner: skip users whose username conflicts with other data sources
     Runner->>Syncers: DataSourceUserSyncer.sync()
     Note over Syncers: delete -> update -> create users
