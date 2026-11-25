@@ -224,6 +224,7 @@ class TestDataSourceSyncRunnerExcludeConflictUsers:
         assert data_source_sync_task.status == SyncTaskStatus.SUCCESS
         assert data_source_sync_task.has_warning
         assert "zhangsan" in data_source_sync_task.logs
+        assert "1 users remain after excluding username conflict users" in data_source_sync_task.logs
 
         users = DataSourceUser.objects.filter(data_source=bare_local_data_source)
         assert list(users.values_list("username", flat=True)) == ["lisi"]

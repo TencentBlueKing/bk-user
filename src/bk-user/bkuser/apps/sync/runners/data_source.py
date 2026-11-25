@@ -108,6 +108,7 @@ class DataSourceSyncTaskRunner:
         ctx.logger.info(f"receive {len(raw_users)} users from data source plugin")
         # 排除与同租户其他数据源用户名冲突的用户
         raw_users = self._exclude_cross_data_source_conflict_users(ctx, raw_users)
+        ctx.logger.info(f"{len(raw_users)} users remain after excluding username conflict users")
 
         kwargs = {
             "ctx": ctx,
