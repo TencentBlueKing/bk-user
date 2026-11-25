@@ -17,10 +17,13 @@
 
 import pytest
 from bkuser.apis.web.personal_center.constants import PhoneOrEmailUpdateRestrictionEnum
+from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpDataSourceRelation
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.common.hashers import check_password, make_password
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.plugins.constants import DataSourcePluginEnum
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -160,12 +163,56 @@ class TestTenantUserFeatureFlagListApi:
 
 
 class TestTenantUserPasswordUpdateApi:
+    OLD_PASSWORD = "Uric8822IOw039x^#ke&old="
+    NEW_PASSWORD = "uric8822IOw039x^#ke&239="
+
+    def test_update(self, api_client, password_enabled_tenant_user):
+        data_source_user = password_enabled_tenant_user.data_source_user
+        LocalDataSourceIdentityInfo.objects.create(
+            user=data_source_user,
+            data_source=data_source_user.data_source,
+            username=data_source_user.username,
+            password=make_password(self.OLD_PASSWORD),
+        )
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.password.update", kwargs={"id": password_enabled_tenant_user.id}),
+            data={"old_password": self.OLD_PASSWORD, "new_password": self.NEW_PASSWORD},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        identity_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        assert check_password(self.NEW_PASSWORD, identity_info.password)
+
     def test_update_when_local_idp_disabled(self, api_client, password_enabled_tenant_user):
         Idp.objects.filter(id=get_local_idp(password_enabled_tenant_user).id).update(status=IdpStatus.DISABLED)
 
         resp = api_client.put(
             reverse("personal_center.tenant_users.password.update", kwargs={"id": password_enabled_tenant_user.id}),
-            data={"old_password": "old-password", "new_password": "new-password"},
+            data={"old_password": self.OLD_PASSWORD, "new_password": self.NEW_PASSWORD},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "当前用户无法使用账密登录，不支持修改密码" in resp.data["message"]
+
+    def test_update_when_password_disabled(self, api_client, tenant_user):
+        """bk_user 所属的内置管理数据源默认未启用密码功能"""
+        assert not tenant_user.data_source_user.data_source.plugin_config["enable_password"]
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.password.update", kwargs={"id": tenant_user.id}),
+            data={"old_password": self.OLD_PASSWORD, "new_password": self.NEW_PASSWORD},
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "当前用户无法使用账密登录，不支持修改密码" in resp.data["message"]
+
+    def test_update_when_not_local_data_source(self, api_client, password_enabled_tenant_user, general_ds_plugin_cfg):
+        DataSource.objects.filter(id=password_enabled_tenant_user.data_source_id).update(
+            plugin_id=DataSourcePluginEnum.GENERAL, plugin_config=general_ds_plugin_cfg
+        )
+
+        resp = api_client.put(
+            reverse("personal_center.tenant_users.password.update", kwargs={"id": password_enabled_tenant_user.id}),
+            data={"old_password": self.OLD_PASSWORD, "new_password": self.NEW_PASSWORD},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "当前用户无法使用账密登录，不支持修改密码" in resp.data["message"]

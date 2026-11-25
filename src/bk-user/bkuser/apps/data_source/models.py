@@ -86,7 +86,7 @@ class DataSource(AuditedModel):
     @property
     def is_local(self) -> bool:
         """检查类型是否为本地数据源"""
-        return self.plugin.id == DataSourcePluginEnum.LOCAL
+        return self.plugin_id == DataSourcePluginEnum.LOCAL
 
     @property
     def is_real_type(self) -> bool:

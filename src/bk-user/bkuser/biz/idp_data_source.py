@@ -138,7 +138,7 @@ class IdpDataSourceRelationHandler:
         """本地数据源 + 启用密码 + 在已启用的本地认证源生效范围内"""
         if not data_source.is_local:
             return False
-        if not data_source.get_plugin_cfg().enable_password:  # type: ignore
+        if not data_source.plugin_config.get("enable_password", False):
             return False
         return IdpDataSourceRelation.objects.filter(
             data_source=data_source,
