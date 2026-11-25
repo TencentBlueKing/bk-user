@@ -118,6 +118,8 @@ sequenceDiagram
     Runner->>Plugin: fetch_users()
     Plugin-->>Runner: raw_users
 
+    Runner->>Runner: _exclude_cross_data_source_conflict_users()
+    Note over Runner: skip users whose username conflicts with other data sources
     Runner->>Syncers: DataSourceUserSyncer.sync()
     Note over Syncers: delete -> update -> create users
     Runner->>Syncers: DataSourceUserLeaderRelationSyncer.sync()

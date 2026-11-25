@@ -18,9 +18,11 @@
 # ignore custom logger must use %s string format in this file
 # ruff: noqa: G004
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.transform import UsernameTransformer
 from bkuser.apps.sync.constants import DataSourceSyncObjectType
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -36,6 +38,7 @@ from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_plugin_cls
+from bkuser.plugins.models import RawDataSourceUser
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +106,9 @@ class DataSourceSyncTaskRunner:
         """同步用户信息"""
         raw_users = self.plugin.fetch_users()
         ctx.logger.info(f"receive {len(raw_users)} users from data source plugin")
+        # 排除与同租户其他数据源用户名冲突的用户
+        raw_users = self._exclude_cross_data_source_conflict_users(ctx, raw_users)
+        ctx.logger.info(f"{len(raw_users)} users remain after excluding username conflict users")
 
         kwargs = {
             "ctx": ctx,
@@ -131,6 +137,46 @@ class DataSourceSyncTaskRunner:
         ctx.synced_obj_types.add(DataSourceSyncObjectType.USER_DEPARTMENT_RELATION)
 
         ctx.logger.info("succeed to sync users and their leader & dept relations from data source plugin")
+
+    def _exclude_cross_data_source_conflict_users(
+        self, ctx: DataSourceSyncTaskContext, raw_users: List[RawDataSourceUser]
+    ) -> List[RawDataSourceUser]:
+        """排除与同租户下其他数据源存在用户名冲突的用户"""
+        if not raw_users:
+            return raw_users
+
+        transformer = UsernameTransformer.load(self.data_source.id)
+        code_username_map = {user.code: transformer.to_stored(user.properties["username"]) for user in raw_users}
+
+        # 查询同租户下其他数据源中已存在的冲突用户名
+        # Note: DB 中用户名忽略大小写
+        conflict_usernames = {
+            username.lower()
+            for username in DataSourceUser.objects.filter(
+                data_source__owner_tenant_id=self.data_source.owner_tenant_id,
+                data_source__type=DataSourceTypeEnum.REAL,
+                username__in=code_username_map.values(),
+            )
+            .exclude(data_source=self.data_source)
+            .values_list("username", flat=True)
+        }
+        if not conflict_usernames:
+            return raw_users
+
+        remaining_users, excluded_usernames = [], []
+        for user in raw_users:
+            username = code_username_map[user.code]
+            if username.lower() in conflict_usernames:
+                excluded_usernames.append(username)
+            else:
+                remaining_users.append(user)
+
+        ctx.logger.warning(
+            f"skip {len(excluded_usernames)} users whose username already exists in other data sources "
+            f"of the same tenant: {', '.join(excluded_usernames)}"
+        )
+
+        return remaining_users
 
     def _validate_unique_fields(self, ctx: DataSourceSyncTaskContext):
         """对有唯一性要求的自定义字段的校验"""
