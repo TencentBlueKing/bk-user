@@ -148,6 +148,7 @@ REDIS_DB=0
 
 INITIAL_ADMIN_USERNAME=admin
 INITIAL_ADMIN_PASSWORD=admin_pwd
+BK_ADMIN_USERNAME=bk_admin
 ```
 
 您可能还需要定义其他的环境变量，详见 `bkuser/settings.py`

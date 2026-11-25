@@ -14,6 +14,7 @@
 #
 # We undertake not to change the open source license (MIT license) applicable
 # to the current version of the project delivered to anyone in the future.
+
 from django.conf import settings
 from django.core.management import BaseCommand
 
@@ -47,9 +48,11 @@ class Command(BaseCommand):
         # 获取管理员账号密码
         admin_username = settings.INITIAL_ADMIN_USERNAME
         admin_password = settings.INITIAL_ADMIN_PASSWORD
+        # 获取内置虚拟用户 username
+        bk_admin_username = settings.BK_ADMIN_USERNAME
 
         # 内置虚拟用户，非多租户需要兼容 2.x 版本内置的 admin 用户
-        virtual_users = [VirtualUserInfo(username="bk_admin")]
+        virtual_users = [VirtualUserInfo(username=bk_admin_username)]
         if not settings.ENABLE_MULTI_TENANT_MODE:
             # Note: 仅在非多租户模式下，才需要兼容 2.x 版本的 admin 用户且指定 tenant_user_id
             virtual_users.append(VirtualUserInfo(username="admin", tenant_user_id="admin"))

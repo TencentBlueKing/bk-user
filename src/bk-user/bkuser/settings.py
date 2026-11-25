@@ -799,6 +799,8 @@ ENABLE_COLLABORATION_TENANT = env.bool("ENABLE_COLLABORATION_TENANT", default=Fa
 INITIAL_ADMIN_USERNAME = env.str("INITIAL_ADMIN_USERNAME", "admin")
 # 内置租户管理员密码
 INITIAL_ADMIN_PASSWORD = env.str("INITIAL_ADMIN_PASSWORD", "")
+# 初始化租户时创建的内置虚拟用户 username
+BK_ADMIN_USERNAME = env.str("BK_ADMIN_USERNAME", default="bk_admin")
 
 # logo 文件大小限制，单位为：KB
 MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
