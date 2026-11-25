@@ -23,7 +23,7 @@ from typing import Any, Dict
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DataSourceSyncObjectType
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
-from bkuser.apps.sync.filters import CrossDataSourceUsernameConflictFilter
+from bkuser.apps.sync.excluders import CrossDataSourceUsernameConflictExcluder
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.sync.signals import post_sync_data_source
 from bkuser.apps.sync.syncers import (
@@ -104,8 +104,8 @@ class DataSourceSyncTaskRunner:
         """同步用户信息"""
         raw_users = self.plugin.fetch_users()
         ctx.logger.info(f"receive {len(raw_users)} users from data source plugin")
-        # 跳过与同租户其他数据源用户名冲突的用户
-        raw_users = CrossDataSourceUsernameConflictFilter(ctx, self.data_source).filter(raw_users)
+        # 排除与同租户其他数据源用户名冲突的用户
+        raw_users = CrossDataSourceUsernameConflictExcluder(ctx, self.data_source).exclude(raw_users)
 
         kwargs = {
             "ctx": ctx,

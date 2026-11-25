@@ -28,7 +28,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUsernameGenerateConfig,
 )
 from bkuser.apps.sync.contexts import DataSourceSyncTaskContext
-from bkuser.apps.sync.filters import CrossDataSourceUsernameConflictFilter
+from bkuser.apps.sync.excluders import CrossDataSourceUsernameConflictExcluder
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentRelationSyncer,
     DataSourceDepartmentSyncer,
@@ -556,7 +556,7 @@ class TestSyncDataSourceUser:
         incremental: bool,
     ):
         """执行数据源用户同步（所有步骤）"""
-        raw_users = CrossDataSourceUsernameConflictFilter(data_source_sync_task_ctx, data_source).filter(raw_users)
+        raw_users = CrossDataSourceUsernameConflictExcluder(data_source_sync_task_ctx, data_source).exclude(raw_users)
         kwargs = {
             "ctx": data_source_sync_task_ctx,
             "data_source": data_source,
