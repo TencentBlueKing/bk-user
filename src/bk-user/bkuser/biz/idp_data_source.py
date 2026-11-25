@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.data_models import (
     DataSourceMatchRule,
     gen_data_source_match_rule_of_local,
@@ -130,6 +131,19 @@ class IdpDataSourceRelationHandler:
         """检查数据源是否被本地认证源关联"""
         return IdpDataSourceRelation.objects.filter(
             data_source=data_source, idp__plugin_id=BuiltinIdpPluginEnum.LOCAL
+        ).exists()
+
+    @staticmethod
+    def can_login_by_password(data_source: DataSource) -> bool:
+        """本地数据源 + 启用密码 + 在已启用的本地认证源生效范围内"""
+        if not data_source.is_local:
+            return False
+        if not data_source.plugin_config.get("enable_password", False):
+            return False
+        return IdpDataSourceRelation.objects.filter(
+            data_source=data_source,
+            idp__plugin_id=BuiltinIdpPluginEnum.LOCAL,
+            idp__status=IdpStatus.ENABLED,
         ).exists()
 
     @staticmethod
