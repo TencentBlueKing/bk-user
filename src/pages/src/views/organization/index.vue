@@ -1,50 +1,58 @@
 <template>
-  <blank-page v-if="isShow"></blank-page>
-  <bk-resize-layout
-    v-else
-    class="h-[calc(100vh-var(--header-height))] user-aside"
-    immediate
-    :min="280"
-    :max="400"
-    :initial-divide="280">
-    <template #aside>
-      <search @select="handleSearchSelect"></search>
-      <div v-show="organizationStore.isSearchTree">
-        <search-result-tree
-          ref="searchResultTreeRef"
-          :active-org="activeOrgInfo"
-        />
-      </div>
-      <bk-resize-layout
-        v-show="!organizationStore.isSearchTree"
-        :key="organizationStore.reloadIndex"
-        placement="top"
-        style="height: calc(100vh - var(--header-height) - 54px)"
-        :border="false"
-        immediate
-        :initial-divide="isShowCollaboration ? '50%' : '100%'">
-        <template #aside>
-          <aside-tenant :active-org="activeOrgInfo" />
-        </template>
-        <template #main v-if="isShowCollaboration">
-          <aside-collaboration :active-org="activeOrgInfo" />
-        </template>
-      </bk-resize-layout>
-    </template>
-    <template #main>
-      <section>
-        <div
-          class="
-          text-[#313238] leading-[52px] h-[52px] px-[24px]
-            text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
-          {{ activeOrgInfo.name }}
+  <!-- 需高于表格内 v-bkloading 的 zIndex: 10，否则表格 loading 会盖住整页遮罩 -->
+  <bk-loading
+    :loading="isLoading"
+    :opacity="1"
+    class="h-[calc(100vh-var(--header-height))]"
+    :z-index="11"
+  >
+    <blank-page v-if="!isLoading && isShow"></blank-page>
+    <bk-resize-layout
+      v-else-if="!isLoading"
+      class="h-full user-aside"
+      immediate
+      :min="280"
+      :max="400"
+      :initial-divide="280">
+      <template #aside>
+        <search @select="handleSearchSelect"></search>
+        <div v-show="organizationStore.isSearchTree">
+          <search-result-tree
+            ref="searchResultTreeRef"
+            :active-org="activeOrgInfo"
+          />
         </div>
-        <div class="table-main">
-          <TableList />
-        </div>
-      </section>
-    </template>
-  </bk-resize-layout>
+        <bk-resize-layout
+          v-show="!organizationStore.isSearchTree"
+          :key="organizationStore.reloadIndex"
+          placement="top"
+          style="height: calc(100vh - var(--header-height) - 54px)"
+          :border="false"
+          immediate
+          :initial-divide="isShowCollaboration ? '50%' : '100%'">
+          <template #aside>
+            <aside-tenant :active-org="activeOrgInfo" />
+          </template>
+          <template #main v-if="isShowCollaboration">
+            <aside-collaboration :active-org="activeOrgInfo" />
+          </template>
+        </bk-resize-layout>
+      </template>
+      <template #main>
+        <section>
+          <div
+            class="
+              text-[#313238] leading-[52px] h-[52px] px-[24px]
+                text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
+            {{ activeOrgInfo.name }}
+          </div>
+          <div class="table-main">
+            <TableList />
+          </div>
+        </section>
+      </template>
+    </bk-resize-layout>
+  </bk-loading>
 </template>
 
 <script setup lang="ts">
@@ -65,7 +73,10 @@ defineOptions({
 });
 
 const organizationStore = useOrganizationStore();
-const isShow = ref(true);
+
+const isLoading = ref(true);
+
+const isShow = computed(() => organizationStore.currentTenant?.data_sources?.length === 0);
 const isShowCollaboration = computed(() => window.ENABLE_COLLABORATION_TENANT !== 'False');
 
 /** 当前激活的组织信息 */
@@ -118,7 +129,7 @@ onMounted(async () => {
     tenantLogo: organizationStore.currentTenant.logo,
     nodeType: 'tenant',
   });
-  isShow.value = organizationStore.currentTenant?.data_sources?.length === 0;
+  isLoading.value = false;
 });
 </script>
 
